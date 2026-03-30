@@ -125,8 +125,8 @@
   .forgot-msg { font-size: 12px; margin-top: 6px; min-height: 18px; font-weight: 600; }
   .forgot-msg.success { color: #22a35a; }
   .forgot-msg.error { color: #c85070; }
-  .top-bar { position: fixed; top: 14px; right: 16px; z-index: 1000; display: none; gap: 8px; align-items: center; }
-  .top-bar-btn { background: rgba(255,255,255,0.85); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s ease; }
+  .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: none; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 16px; background: rgba(255,248,240,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(232,115,138,0.15); box-shadow: 0 2px 12px rgba(232,115,138,0.08); }
+  .top-bar-btn { background: rgba(255,255,255,0.9); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
   .top-bar-btn:hover { background: #fff; color: var(--rose); border-color: var(--rose); }
 
   /* PROFIL OVERLAY */
@@ -495,11 +495,11 @@
     const playerKey = user.toLowerCase();
     const vSnap = await get(ref(db, `quiz/${otherUser}/version`));
     const currentVer = vSnap.val() || 0;
-    if (currentVer === 0) return;
+    const badge = document.getElementById('quizNewBadge');
+    if (currentVer === 0) { badge.style.display = 'none'; return; }
     const playedSnap = await get(ref(db, `quiz/${otherUser}/${playerKey}_played_version`));
     const playedVer = playedSnap.val() || 0;
-    const badge = document.getElementById('quizNewBadge');
-    badge.style.display = currentVer > playedVer ? 'block' : 'none';
+    badge.style.display = (currentVer > playedVer) ? 'block' : 'none';
   }
 
   // Only check after auth is confirmed via quizUserSet event
