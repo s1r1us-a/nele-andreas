@@ -98,63 +98,7 @@
   .stat-count-nele { color: #7c3aed; }
   .stats-verdict { margin-top: 14px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-mid); letter-spacing: 0.5px; min-height: 20px; }
 
-  /* QUIZ */
-  .quiz-section { margin-top: 35px; max-width: 420px; width: 100%; }
-  .quiz-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-  .quiz-tab { flex: 1; background: rgba(255,255,255,0.6); border: 1.5px solid rgba(232,115,138,0.2); border-radius: 50px; padding: 10px 16px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; text-align: center; }
-  .quiz-tab.active { background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; border-color: transparent; box-shadow: 0 4px 16px rgba(232,115,138,0.35); }
-  .quiz-panel { display: none; }
-  .quiz-panel.active { display: block; }
-  .quiz-card { background: rgba(255,255,255,0.75); backdrop-filter: blur(20px); border: 1px solid rgba(232,115,138,0.2); border-radius: 24px; padding: 24px; box-shadow: 0 8px 40px rgba(232,115,138,0.1); }
-  .quiz-card-title { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 18px; }
-  .quiz-question-block { margin-bottom: 18px; }
-  .quiz-q-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--rose); font-weight: 600; margin-bottom: 6px; }
-  .quiz-q-input { width: 100%; border: 1.5px solid rgba(232,115,138,0.25); border-radius: 14px; padding: 10px 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; color: var(--text-dark); background: rgba(255,255,255,0.8); outline: none; transition: border-color 0.2s; }
-  .quiz-q-input:focus { border-color: var(--rose); }
-  .quiz-options-row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .quiz-opt-input { flex: 1; min-width: 80px; border: 1.5px solid rgba(232,115,138,0.2); border-radius: 10px; padding: 7px 10px; font-family: 'Quicksand', sans-serif; font-size: 13px; color: var(--text-dark); background: rgba(255,255,255,0.8); outline: none; transition: border-color 0.2s; }
-  .quiz-opt-input:focus { border-color: var(--rose); }
-  .quiz-correct-row { display: flex; gap: 6px; margin-top: 6px; }
-  .quiz-correct-btn { flex: 1; border: 1.5px solid rgba(232,115,138,0.2); border-radius: 10px; padding: 6px 8px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; background: transparent; transition: all 0.2s; }
-  .quiz-correct-btn.selected { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-color: transparent; }
-  .quiz-save-btn { width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: white; cursor: pointer; margin-top: 8px; box-shadow: 0 4px 16px rgba(232,115,138,0.35); transition: transform 0.2s ease; }
-  .quiz-save-btn:hover { transform: scale(1.02) translateY(-1px); }
-  .quiz-status { text-align: center; font-size: 13px; color: var(--text-mid); font-weight: 600; margin-top: 10px; min-height: 20px; }
-  .play-quiz-info { text-align: center; padding: 8px 0 16px; }
-  .play-quiz-info p { font-size: 13px; color: var(--text-mid); font-weight: 500; }
-  .play-quiz-btn { width: 100%; background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); border: none; border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 16px rgba(124,58,237,0.35); transition: transform 0.2s ease; }
-  .play-quiz-btn:hover { transform: scale(1.02) translateY(-1px); }
-  .quiz-play-area { display: none; }
-  .quiz-play-area.visible { display: block; }
-  .quiz-progress { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 12px; }
-  .quiz-question-text { font-family: 'Dancing Script', cursive; font-size: 20px; color: var(--text-dark); font-weight: 700; text-align: center; margin-bottom: 16px; line-height: 1.4; }
-  .quiz-opt-btns { display: flex; flex-direction: column; gap: 8px; }
-  .quiz-opt-btn { border: 1.5px solid rgba(232,115,138,0.2); border-radius: 14px; padding: 12px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-dark); cursor: pointer; background: rgba(255,255,255,0.8); transition: all 0.2s; text-align: left; }
-  .quiz-opt-btn:hover { border-color: var(--rose); background: rgba(232,115,138,0.07); }
-  .quiz-opt-btn.correct { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-color: transparent; }
-  .quiz-opt-btn.wrong { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-color: transparent; }
-  .quiz-result { display: none; text-align: center; padding: 8px 0; }
-  .quiz-result.visible { display: block; }
-  .quiz-result-score { font-family: 'Dancing Script', cursive; font-size: 48px; color: var(--rose); font-weight: 700; }
-  .quiz-result-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 16px; }
-  .quiz-result-details { text-align: left; margin-top: 12px; }
-  .quiz-result-item { background: rgba(255,255,255,0.6); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
-  .quiz-result-item.correct-item { border-left: 3px solid #22c55e; }
-  .quiz-result-item.wrong-item { border-left: 3px solid #ef4444; }
-  .quiz-result-q { font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
-  .quiz-result-a { color: var(--text-mid); }
-  .quiz-highscore { margin-top: 20px; }
-  .quiz-hs-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 10px; }
-  .quiz-hs-list { display: flex; flex-direction: column; gap: 6px; }
-  .quiz-hs-item { background: rgba(255,255,255,0.6); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: box-shadow 0.2s; flex-wrap: wrap; gap: 4px; }
-  .quiz-hs-item:hover { box-shadow: 0 4px 12px rgba(232,115,138,0.12); }
-  .quiz-hs-score { font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--rose); }
-  .quiz-hs-score.nele-score { color: #7c3aed; }
-  .quiz-hs-meta { font-size: 12px; color: var(--text-mid); font-weight: 500; }
-  .quiz-hs-wrong { font-size: 11px; color: #ef4444; font-weight: 600; }
-  .quiz-hs-detail { display: none; background: rgba(255,255,255,0.5); border-radius: 10px; padding: 8px 12px; margin-top: 4px; font-size: 12px; color: var(--text-mid); width: 100%; }
-  .quiz-hs-detail.open { display: block; }
-  .quiz-empty { text-align: center; font-size: 13px; color: var(--text-mid); padding: 16px 0; font-weight: 500; }
+
 
   .footer { margin-top: 50px; text-align: center; }
   .footer-text { font-family: 'Dancing Script', cursive; font-size: 20px; color: var(--text-mid); font-weight: 600; }
@@ -267,59 +211,8 @@
     </div>
     <div class="stats-verdict" id="statsVerdict">–</div>
   </div>
-  <div class="quiz-section">
-    <div class="quiz-tabs">
-      <div class="quiz-tab active" id="tabCreate" onclick="switchQuizTab('create')">✏️ Mein Quiz</div>
-      <div class="quiz-tab" id="tabPlay" onclick="switchQuizTab('play')">🧠 Quiz spielen</div>
-      <div class="quiz-tab" id="tabHighscore" onclick="switchQuizTab('highscore')">🏆 Highscore</div>
-    </div>
-
-    <!-- CREATE TAB -->
-    <div class="quiz-panel active" id="panelCreate">
-      <div class="quiz-card">
-        <div class="quiz-card-title" id="createTitle">Mein Quiz erstellen</div>
-        <div id="quizEditorContainer"></div>
-        <button class="quiz-save-btn" onclick="saveQuiz()">Quiz speichern 💾</button>
-        <div class="quiz-status" id="quizSaveStatus"></div>
-      </div>
-    </div>
-
-    <!-- PLAY TAB -->
-    <div class="quiz-panel" id="panelPlay">
-      <div class="quiz-card">
-        <div class="quiz-card-title" id="playTitle">Quiz spielen</div>
-        <div id="playInfoArea" class="play-quiz-info">
-          <p id="playInfoText">Lädt...</p>
-        </div>
-        <button class="play-quiz-btn" id="startPlayBtn" onclick="startQuiz()" style="display:none">Quiz starten 🎯</button>
-        <div class="quiz-play-area" id="quizPlayArea">
-          <div class="quiz-progress" id="quizProgress"></div>
-          <div class="quiz-question-text" id="quizQuestionText"></div>
-          <div class="quiz-opt-btns" id="quizOptBtns"></div>
-        </div>
-        <div class="quiz-result" id="quizResultArea">
-          <div class="quiz-result-score" id="resultScore"></div>
-          <div class="quiz-result-label">von 5 Fragen richtig</div>
-          <div class="quiz-result-details" id="resultDetails"></div>
-          <button class="play-quiz-btn" onclick="switchQuizTab('play')" style="margin-top:16px">Nochmal anschauen 🔄</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- HIGHSCORE TAB -->
-    <div class="quiz-panel" id="panelHighscore">
-      <div class="quiz-card">
-        <div class="quiz-card-title">Highscore 🏆</div>
-        <div class="quiz-highscore">
-          <div class="quiz-hs-title">Andreas spielt Neles Quiz 🌸</div>
-          <div class="quiz-hs-list" id="hsAndreas"></div>
-        </div>
-        <div class="quiz-highscore" style="margin-top:20px">
-          <div class="quiz-hs-title">Nele spielt Andreas' Quiz 🐾</div>
-          <div class="quiz-hs-list" id="hsNele"></div>
-        </div>
-      </div>
-    </div>
+  <div class="quiz-section" style="margin-top: 35px; max-width: 420px; width: 100%;">
+    <a href="quiz.html" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
   </div>
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
@@ -328,10 +221,16 @@
 </div>
 
 <script>
-  var currentUser = null;
+  var currentUser = localStorage.getItem('neleandreas_user') || null;
+  window.currentUser = currentUser;
+  if (currentUser) {
+    var o = document.getElementById('modalOverlay');
+    if (o) { o.style.display = 'none'; }
+  }
 
   document.getElementById('btnAndreas').onclick = function() {
     currentUser = 'Andreas';
+    localStorage.setItem('neleandreas_user', 'Andreas');
     var o = document.getElementById('modalOverlay');
     o.style.opacity = '0';
     o.style.transition = 'opacity 0.3s ease';
@@ -340,6 +239,7 @@
   };
   document.getElementById('btnNele').onclick = function() {
     currentUser = 'Nele';
+    localStorage.setItem('neleandreas_user', 'Nele');
     var o = document.getElementById('modalOverlay');
     o.style.opacity = '0';
     o.style.transition = 'opacity 0.3s ease';
@@ -453,284 +353,7 @@
   });
 </script>
 
-<script type="module" id="quizScript">
-  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, get, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
-    authDomain: "nele-und-andreas.firebaseapp.com",
-    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "nele-und-andreas",
-    storageBucket: "nele-und-andreas.firebasestorage.app",
-    messagingSenderId: "694973604970",
-    appId: "1:694973604970:web:331975714dca0cd32ad613"
-  };
-
-  const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  // ---- STATE ----
-  let quizCorrects = [0,0,0,0,0]; // index of correct answer per question
-  let playQuestions = [];
-  let currentQIdx = 0;
-  let userAnswers = []; // {chosen, correct, question, options}
-  let score = 0;
-
-  // ---- EDITOR ----
-  function buildEditor() {
-    const user = window.currentUser;
-    const container = document.getElementById('quizEditorContainer');
-    const title = document.getElementById('createTitle');
-    if (!user) {
-      container.innerHTML = '<div class="quiz-empty">Bitte erst einloggen 🐾</div>';
-      return;
-    }
-    title.textContent = user === 'Andreas' ? 'Andreas' Quiz erstellen 🐾' : 'Neles Quiz erstellen 🌸';
-    let html = '';
-    for (let i = 0; i < 5; i++) {
-      html += `<div class="quiz-question-block">
-        <div class="quiz-q-label">Frage ${i+1}</div>
-        <input class="quiz-q-input" id="q${i}" placeholder="Frage über dich..." />
-        <div class="quiz-options-row">
-          <input class="quiz-opt-input" id="q${i}o0" placeholder="Option A" />
-          <input class="quiz-opt-input" id="q${i}o1" placeholder="Option B" />
-          <input class="quiz-opt-input" id="q${i}o2" placeholder="Option C" />
-        </div>
-        <div style="font-size:11px;color:var(--text-mid);margin-top:6px;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Richtige Antwort:</div>
-        <div class="quiz-correct-row">
-          <button class="quiz-correct-btn selected" id="q${i}c0" onclick="selectCorrect(${i},0)">A</button>
-          <button class="quiz-correct-btn" id="q${i}c1" onclick="selectCorrect(${i},1)">B</button>
-          <button class="quiz-correct-btn" id="q${i}c2" onclick="selectCorrect(${i},2)">C</button>
-        </div>
-      </div>`;
-    }
-    container.innerHTML = html;
-    // Load existing quiz if any
-    const userKey = user.toLowerCase();
-    get(ref(db, `quiz/${userKey}/questions`)).then(snap => {
-      if (snap.exists()) {
-        const qs = snap.val();
-        qs.forEach((q, i) => {
-          if (document.getElementById(`q${i}`)) {
-            document.getElementById(`q${i}`).value = q.question || '';
-            q.options.forEach((opt, j) => {
-              if (document.getElementById(`q${i}o${j}`)) document.getElementById(`q${i}o${j}`).value = opt || '';
-            });
-            quizCorrects[i] = q.correct || 0;
-            selectCorrect(i, q.correct || 0);
-          }
-        });
-      }
-    });
-  }
-
-  window.selectCorrect = function(qIdx, optIdx) {
-    quizCorrects[qIdx] = optIdx;
-    for (let j = 0; j < 3; j++) {
-      const btn = document.getElementById(`q${qIdx}c${j}`);
-      if (btn) btn.classList.toggle('selected', j === optIdx);
-    }
-  };
-
-  window.saveQuiz = async function() {
-    const user = window.currentUser;
-    if (!user) { alert('Bitte erst einloggen!'); return; }
-    const userKey = user.toLowerCase();
-    const questions = [];
-    for (let i = 0; i < 5; i++) {
-      const qEl = document.getElementById(`q${i}`);
-      const o0 = document.getElementById(`q${i}o0`);
-      const o1 = document.getElementById(`q${i}o1`);
-      const o2 = document.getElementById(`q${i}o2`);
-      if (!qEl || !qEl.value.trim()) { alert(`Frage ${i+1} fehlt!`); return; }
-      if (!o0.value.trim() || !o1.value.trim() || !o2.value.trim()) { alert(`Alle 3 Optionen bei Frage ${i+1} ausfüllen!`); return; }
-      questions.push({ question: qEl.value.trim(), options: [o0.value.trim(), o1.value.trim(), o2.value.trim()], correct: quizCorrects[i] });
-    }
-    // Get current version and increment
-    const versionSnap = await get(ref(db, `quiz/${userKey}/version`));
-    const newVersion = (versionSnap.val() || 0) + 1;
-    await set(ref(db, `quiz/${userKey}/questions`), questions);
-    await set(ref(db, `quiz/${userKey}/version`), newVersion);
-    document.getElementById('quizSaveStatus').textContent = 'Quiz gespeichert! ✅';
-    setTimeout(() => { document.getElementById('quizSaveStatus').textContent = ''; }, 3000);
-  };
-
-  // ---- PLAY ----
-  async function loadPlayTab() {
-    const user = window.currentUser;
-    const infoEl = document.getElementById('playInfoText');
-    const startBtn = document.getElementById('startPlayBtn');
-    const titleEl = document.getElementById('playTitle');
-    document.getElementById('quizPlayArea').classList.remove('visible');
-    document.getElementById('quizResultArea').classList.remove('visible');
-
-    if (!user) { infoEl.textContent = 'Bitte erst einloggen 🐾'; startBtn.style.display = 'none'; return; }
-
-    const otherUser = user === 'Andreas' ? 'nele' : 'andreas';
-    const otherName = user === 'Andreas' ? 'Neles' : 'Andreas'';
-    titleEl.textContent = `${otherName} Quiz spielen`;
-
-    const qSnap = await get(ref(db, `quiz/${otherUser}/questions`));
-    if (!qSnap.exists()) {
-      infoEl.textContent = `${otherName} Quiz existiert noch nicht. Warte bis ${otherName.replace("'","")} eines erstellt! 🕐`;
-      startBtn.style.display = 'none';
-      return;
-    }
-
-    // Check if user already played this version
-    const vSnap = await get(ref(db, `quiz/${otherUser}/version`));
-    const currentVer = vSnap.val() || 0;
-    const playedKey = user.toLowerCase();
-    const playedVerSnap = await get(ref(db, `quiz/${otherUser}/${playedKey}_played_version`));
-    const playedVer = playedVerSnap.val() || 0;
-
-    playQuestions = qSnap.val();
-
-    if (playedVer >= currentVer) {
-      infoEl.textContent = `Du hast dieses Quiz bereits gespielt! Warte bis ${otherName.replace("'","")} neue Fragen erstellt. 🎯`;
-      startBtn.style.display = 'none';
-    } else {
-      infoEl.textContent = `${otherName} Quiz hat 5 Fragen für dich bereit! 🎉`;
-      startBtn.style.display = 'block';
-    }
-  }
-
-  window.startQuiz = function() {
-    currentQIdx = 0;
-    userAnswers = [];
-    score = 0;
-    document.getElementById('playInfoArea').style.display = 'none';
-    document.getElementById('startPlayBtn').style.display = 'none';
-    document.getElementById('quizPlayArea').classList.add('visible');
-    showQuestion();
-  };
-
-  function showQuestion() {
-    const q = playQuestions[currentQIdx];
-    document.getElementById('quizProgress').textContent = `Frage ${currentQIdx+1} von 5`;
-    document.getElementById('quizQuestionText').textContent = q.question;
-    const btns = document.getElementById('quizOptBtns');
-    btns.innerHTML = '';
-    q.options.forEach((opt, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'quiz-opt-btn';
-      btn.textContent = ['A', 'B', 'C'][i] + ') ' + opt;
-      btn.onclick = () => answerQuestion(i, btn);
-      btns.appendChild(btn);
-    });
-  }
-
-  async function answerQuestion(chosen, btnEl) {
-    // disable all buttons
-    document.querySelectorAll('.quiz-opt-btn').forEach(b => b.onclick = null);
-    const q = playQuestions[currentQIdx];
-    const isCorrect = chosen === q.correct;
-    if (isCorrect) { score++; btnEl.classList.add('correct'); }
-    else {
-      btnEl.classList.add('wrong');
-      document.querySelectorAll('.quiz-opt-btn')[q.correct].classList.add('correct');
-    }
-    userAnswers.push({ question: q.question, options: q.options, chosen, correct: q.correct, isCorrect });
-    await new Promise(r => setTimeout(r, 900));
-    currentQIdx++;
-    if (currentQIdx < 5) { showQuestion(); }
-    else { await finishQuiz(); }
-  }
-
-  async function finishQuiz() {
-    const user = window.currentUser;
-    const otherUser = user === 'Andreas' ? 'nele' : 'andreas';
-    const playerKey = user.toLowerCase();
-
-    // Save result
-    const wrongCount = 5 - score;
-    const entry = { score, wrong: wrongCount, date: Date.now(), answers: userAnswers.map(a => ({ question: a.question, chosen: a.chosen, correct: a.correct, isCorrect: a.isCorrect, options: a.options })) };
-    const hsKey = user === 'Andreas' ? 'hs_andreas_on_nele' : 'hs_nele_on_andreas';
-    await push(ref(db, `quiz/highscore/${hsKey}`), entry);
-
-    // Mark version as played
-    const vSnap = await get(ref(db, `quiz/${otherUser}/version`));
-    await set(ref(db, `quiz/${otherUser}/${playerKey}_played_version`), vSnap.val() || 1);
-
-    // Show result
-    document.getElementById('quizPlayArea').classList.remove('visible');
-    const resultArea = document.getElementById('quizResultArea');
-    resultArea.classList.add('visible');
-    document.getElementById('resultScore').textContent = score + ' / 5';
-    const details = document.getElementById('resultDetails');
-    details.innerHTML = userAnswers.map((a, i) => {
-      const cls = a.isCorrect ? 'correct-item' : 'wrong-item';
-      const icon = a.isCorrect ? '✅' : '❌';
-      const chosenText = a.options[a.chosen];
-      const correctText = a.options[a.correct];
-      return `<div class="quiz-result-item ${cls}">
-        <div class="quiz-result-q">${icon} ${a.question}</div>
-        <div class="quiz-result-a">${a.isCorrect ? `Richtig: ${chosenText}` : `Gewählt: ${chosenText} → Richtig: ${correctText}`}</div>
-      </div>`;
-    }).join('');
-    loadHighscore();
-  }
-
-  // ---- HIGHSCORE ----
-  async function loadHighscore() {
-    renderHighscoreList('hs_andreas_on_nele', 'hsAndreas', false);
-    renderHighscoreList('hs_nele_on_andreas', 'hsNele', true);
-  }
-
-  async function renderHighscoreList(key, elId, isNele) {
-    const el = document.getElementById(elId);
-    const snap = await get(ref(db, `quiz/highscore/${key}`));
-    if (!snap.exists()) { el.innerHTML = '<div class="quiz-empty">Noch keine Ergebnisse 🕐</div>'; return; }
-    const entries = Object.entries(snap.val()).map(([k,v]) => ({...v, key: k}));
-    entries.sort((a,b) => b.date - a.date);
-    const best = Math.max(...entries.map(e => e.score));
-    el.innerHTML = entries.map((e, idx) => {
-      const date = new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'});
-      const isBest = e.score === best;
-      const scoreClass = isNele ? 'quiz-hs-score nele-score' : 'quiz-hs-score';
-      const answerDetails = e.answers ? e.answers.map(a => {
-        const icon = a.isCorrect ? '✅' : '❌';
-        const chosenText = a.options ? a.options[a.chosen] : '?';
-        const correctText = a.options ? a.options[a.correct] : '?';
-        return `${icon} ${a.question}: ${a.isCorrect ? chosenText : `${chosenText} → ${correctText}`}`;
-      }).join('<br>') : '';
-      return `<div>
-        <div class="quiz-hs-item" onclick="toggleHsDetail('hsd_${idx}_${key}')">
-          <div>
-            <span class="${scoreClass}">${e.score}/5</span>
-            ${isBest ? ' 🌟' : ''}
-          </div>
-          <div>
-            <div class="quiz-hs-meta">${date}</div>
-            <div class="quiz-hs-wrong">${e.wrong} falsch</div>
-          </div>
-        </div>
-        <div class="quiz-hs-detail" id="hsd_${idx}_${key}">${answerDetails || 'Keine Details'}</div>
-      </div>`;
-    }).join('');
-  }
-
-  window.toggleHsDetail = function(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('open');
-  };
-
-  // ---- TAB SWITCHING ----
-  window.switchQuizTab = function(tab) {
-    ['create','play','highscore'].forEach(t => {
-      document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.toggle('active', t===tab);
-      document.getElementById(`panel${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.toggle('active', t===tab);
-    });
-    if (tab === 'play') loadPlayTab();
-    if (tab === 'highscore') loadHighscore();
-    if (tab === 'create') buildEditor();
-  };
-
-  // Init
-  window.addEventListener('quizUserSet', buildEditor);
-  setTimeout(buildEditor, 400);
-</script>
 
 </body>
 </html>
