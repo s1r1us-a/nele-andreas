@@ -292,6 +292,9 @@
       </div>
     </div>
   </div>
+  <div style="margin-top: 16px; max-width: 420px; width: 100%;">
+    <a href="stats.html" style="display: block; width: 100%; background: rgba(255,255,255,0.75); backdrop-filter: blur(20px); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--rose); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(232,115,138,0.1);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📊 Statistik</a>
+  </div>
   <div class="quiz-section" style="margin-top: 35px; max-width: 420px; width: 100%; position: relative;">
     <a href="quiz.html" id="quizBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
     <div id="quizNewBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #f59e0b, #d97706); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(245,158,11,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap;">✨ Neu!</div>
@@ -584,7 +587,11 @@
     runTransaction(momentsRef, c => (c||0)+1);
     runTransaction(user === 'Andreas' ? andreasRef : neleRef, c => (c||0)+1);
     runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
-    set(lastClickRef, { name: user, time: Date.now() });
+    const now = Date.now();
+    set(lastClickRef, { name: user, time: now });
+    // Log individual click for stats
+    const clickDate = new Date(now).toISOString().slice(0, 10);
+    set(ref(db, `moments/clicks/${clickDate}/${now}_${user.toLowerCase()}`), { user, time: now });
     heartCount.classList.remove('bump');
     void heartCount.offsetWidth;
     heartCount.classList.add('bump');

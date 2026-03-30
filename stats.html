@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistik 📊 – Nele & Andreas</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8738a;
+    --rose-light: #f5a3b5;
+    --rose-pale: #fde8ed;
+    --cream: #fff8f0;
+    --gold: #d4a061;
+    --text-dark: #5a2d3a;
+    --text-mid: #8b5565;
+    --nele: #7c3aed;
+    --nele-light: #a78bfa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sans-serif; overflow-x: hidden; }
+
+  .bg-gradient {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.08) 0%, transparent 50%),
+      linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%);
+    z-index: 0;
+  }
+
+  /* TOP BAR */
+  .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 99999; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #fff8f0; border-bottom: 1px solid rgba(232,115,138,0.2); box-shadow: 0 2px 12px rgba(232,115,138,0.08); }
+  .top-bar-back { background: rgba(255,255,255,0.9); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; text-decoration: none; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
+  .top-bar-back:hover { background: #fff; color: var(--rose); border-color: var(--rose); }
+  .top-bar-title { font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--rose); }
+
+  /* LOGIN */
+  .modal-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(253,232,237,0.92); }
+  .modal-card { background: #fff; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 28px; padding: 40px 36px 36px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2); max-height: 90vh; overflow-y: auto; }
+  .modal-emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+  .modal-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .modal-subtitle { font-size: 13px; color: var(--text-mid); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px; font-weight: 500; }
+  .login-field { width: 100%; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 14px; padding: 13px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 500; color: var(--text-dark); background: var(--cream); outline: none; margin-bottom: 12px; transition: border-color 0.2s ease; box-sizing: border-box; }
+  .login-field:focus { border-color: var(--rose); }
+  .login-btn { width: 100%; border: none; border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; }
+  .login-btn:hover { transform: scale(1.03) translateY(-2px); }
+  .login-error { font-size: 12px; color: #c85070; margin-top: 10px; min-height: 18px; font-weight: 600; }
+
+  /* PAGE */
+  .page { position: relative; z-index: 2; min-height: 100vh; padding: 80px 20px 60px; max-width: 520px; margin: 0 auto; }
+  .page-hidden { visibility: hidden; opacity: 0; }
+
+  .page-title { font-family: 'Dancing Script', cursive; font-size: clamp(36px, 8vw, 52px); font-weight: 700; text-align: center; background: linear-gradient(135deg, var(--rose) 0%, #c85070 40%, var(--rose-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+  .page-subtitle { text-align: center; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 32px; }
+
+  /* LEGEND */
+  .legend { display: flex; justify-content: center; gap: 20px; margin-bottom: 24px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-mid); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot-andreas { background: var(--rose); }
+  .legend-dot-nele { background: var(--nele); }
+
+  /* CARDS */
+  .card { background: rgba(255,255,255,0.75); backdrop-filter: blur(20px); border: 1px solid rgba(232,115,138,0.2); border-radius: 24px; padding: 24px 20px; margin-bottom: 20px; box-shadow: 0 8px 40px rgba(232,115,138,0.1); }
+  .card-title { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 20px; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 40px; color: var(--text-mid); font-size: 14px; font-weight: 600; }
+
+  /* CHART BARS */
+  .chart-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 4px; min-height: 140px; padding-top: 10px; }
+  .bar-group { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 28px; }
+  .bar-group-bars { display: flex; gap: 2px; align-items: flex-end; width: 100%; }
+  .bar { border-radius: 4px 4px 0 0; transition: height 0.6s cubic-bezier(0.22,1,0.36,1); min-height: 3px; flex: 1; cursor: pointer; position: relative; }
+  .bar-andreas { background: linear-gradient(180deg, var(--rose-light), var(--rose)); }
+  .bar-nele    { background: linear-gradient(180deg, var(--nele-light), var(--nele)); }
+  .bar-label { font-size: 9px; color: var(--text-mid); font-weight: 600; text-align: center; white-space: nowrap; }
+
+  /* WEEKDAY CHART */
+  .weekday-chart { display: flex; gap: 6px; align-items: flex-end; min-height: 120px; padding-top: 10px; }
+  .weekday-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .weekday-bars { display: flex; gap: 2px; align-items: flex-end; width: 100%; }
+  .weekday-label { font-size: 10px; color: var(--text-mid); font-weight: 600; text-align: center; }
+
+  /* HOUR CHART */
+  .hour-chart { display: flex; gap: 2px; align-items: flex-end; min-height: 100px; padding-top: 10px; overflow-x: auto; }
+  .hour-group { flex-shrink: 0; width: 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .hour-bar-wrap { display: flex; gap: 1px; align-items: flex-end; width: 100%; }
+  .hour-bar { border-radius: 2px 2px 0 0; min-height: 2px; flex: 1; }
+  .hour-label { font-size: 8px; color: var(--text-mid); font-weight: 600; }
+
+  /* SUMMARY ROW */
+  .summary-row { display: flex; gap: 12px; margin-bottom: 20px; }
+  .summary-card { flex: 1; background: rgba(255,255,255,0.75); border: 1px solid rgba(232,115,138,0.2); border-radius: 18px; padding: 16px 12px; text-align: center; box-shadow: 0 4px 20px rgba(232,115,138,0.08); }
+  .summary-val { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; }
+  .summary-val-andreas { color: var(--rose); }
+  .summary-val-nele { color: var(--nele); }
+  .summary-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-top: 4px; }
+  .summary-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+
+  /* TABLE */
+  .day-table { width: 100%; border-collapse: collapse; }
+  .day-table th { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; padding: 8px 6px; text-align: left; border-bottom: 1px solid rgba(232,115,138,0.15); }
+  .day-table td { font-size: 13px; padding: 10px 6px; border-bottom: 1px solid rgba(232,115,138,0.08); color: var(--text-dark); font-weight: 500; }
+  .day-table tr:last-child td { border-bottom: none; }
+  .td-andreas { color: var(--rose); font-weight: 700; font-family: 'Dancing Script', cursive; font-size: 16px; }
+  .td-nele    { color: var(--nele); font-weight: 700; font-family: 'Dancing Script', cursive; font-size: 16px; }
+  .td-winner  { font-size: 14px; }
+
+  /* NO DATA */
+  .no-data { text-align: center; padding: 24px; color: var(--text-mid); font-size: 13px; font-weight: 600; }
+
+  @media (max-width: 480px) {
+    .page { padding: 70px 14px 50px; }
+    .card { padding: 20px 14px; border-radius: 20px; }
+    .summary-row { gap: 8px; }
+    .summary-card { padding: 12px 8px; border-radius: 14px; }
+    .summary-val { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-gradient page-hidden" id="bgGradient"></div>
+
+<!-- Login -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card">
+    <span class="modal-emoji">📊</span>
+    <div class="modal-title">Statistik</div>
+    <div class="modal-subtitle">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar page-hidden" id="topBar">
+  <a href="index.html" class="top-bar-back">← Zurück</a>
+  <div class="top-bar-title">Statistik 📊</div>
+  <div style="width: 80px;"></div>
+</div>
+
+<div class="page page-hidden" id="mainPage">
+  <div class="page-title">Statistik</div>
+  <div class="page-subtitle">Nele & Andreas · Alle Zeiten</div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot legend-dot-andreas"></div> Andreas 🐾</div>
+    <div class="legend-item"><div class="legend-dot legend-dot-nele"></div> Nele 🌸</div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-row" id="summaryRow">
+    <div class="summary-card">
+      <div class="summary-name" style="color:var(--rose)">Andreas 🐾</div>
+      <div class="summary-val summary-val-andreas" id="sumAndreas">–</div>
+      <div class="summary-label">Gesamt</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-name" style="color:var(--nele)">Nele 🌸</div>
+      <div class="summary-val summary-val-nele" id="sumNele">–</div>
+      <div class="summary-label">Gesamt</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-name" style="color:var(--text-mid)">Tage 📅</div>
+      <div class="summary-val" style="color:var(--gold)" id="sumDays">–</div>
+      <div class="summary-label">erfasst</div>
+    </div>
+  </div>
+
+  <!-- Daily Chart -->
+  <div class="card">
+    <div class="card-title">Klicks pro Tag</div>
+    <div id="dailyChartWrap" class="loading">Lade Daten…</div>
+  </div>
+
+  <!-- Weekday Chart -->
+  <div class="card">
+    <div class="card-title">Verteilung nach Wochentag</div>
+    <div id="weekdayChartWrap" class="loading">Lade Daten…</div>
+  </div>
+
+  <!-- Hour Chart -->
+  <div class="card">
+    <div class="card-title">Verteilung nach Uhrzeit</div>
+    <div id="hourChartWrap" class="loading">Lade Daten…</div>
+  </div>
+
+  <!-- Day Table -->
+  <div class="card">
+    <div class="card-title">Tagesübersicht</div>
+    <div id="dayTableWrap" class="loading">Lade Daten…</div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  function displayName(email) {
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
+    return email.split('@')[0];
+  }
+
+  // AUTH
+  const overlay  = document.getElementById('modalOverlay');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginErr = document.getElementById('loginError');
+
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPassword').value;
+    loginErr.textContent = '';
+    loginBtn.textContent = '…';
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch {
+      loginBtn.textContent = 'Einloggen 🌸';
+      loginErr.textContent = 'E-Mail oder Passwort falsch.';
+    }
+  });
+  document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
+
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => { overlay.style.display = 'none'; }, 320);
+      document.getElementById('mainPage').classList.remove('page-hidden');
+      document.getElementById('bgGradient').classList.remove('page-hidden');
+      document.getElementById('topBar').classList.remove('page-hidden');
+      loadStats();
+    } else {
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+      document.getElementById('mainPage').classList.add('page-hidden');
+      document.getElementById('bgGradient').classList.add('page-hidden');
+      document.getElementById('topBar').classList.add('page-hidden');
+      loginBtn.textContent = 'Einloggen 🌸';
+    }
+  });
+
+  // STATS
+  const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const MAX_BAR_HEIGHT = 120;
+
+  async function loadStats() {
+    // Load individual clicks
+    const clicksSnap = await get(ref(db, 'moments/clicks'));
+    // Load daily totals as fallback for days before click logging
+    const dailySnap  = await get(ref(db, 'moments/daily'));
+
+    // Build per-day data from clicks
+    const dayData = {}; // { 'YYYY-MM-DD': { andreas: N, nele: N, clicks: [{user, time}] } }
+
+    if (clicksSnap.exists()) {
+      clicksSnap.forEach(daySnap => {
+        const date = daySnap.key;
+        if (!dayData[date]) dayData[date] = { andreas: 0, nele: 0, clicks: [] };
+        daySnap.forEach(clickSnap => {
+          const c = clickSnap.val();
+          if (!c || !c.user || !c.time) return;
+          const user = c.user.toLowerCase();
+          if (user === 'andreas') dayData[date].andreas++;
+          else if (user === 'nele') dayData[date].nele++;
+          dayData[date].clicks.push({ user: c.user, time: c.time });
+        });
+      });
+    }
+
+    // Merge daily totals for days that have no click entries (before logging was added)
+    if (dailySnap.exists()) {
+      dailySnap.forEach(daySnap => {
+        const date = daySnap.key;
+        const val  = daySnap.val();
+        if (!val) return;
+        if (!dayData[date]) {
+          // Day only has summary, no individual clicks
+          dayData[date] = {
+            andreas: val.andreas || 0,
+            nele: val.nele || 0,
+            clicks: []
+          };
+        }
+      });
+    }
+
+    const dates = Object.keys(dayData).sort();
+    if (dates.length === 0) {
+      ['dailyChartWrap','weekdayChartWrap','hourChartWrap','dayTableWrap'].forEach(id => {
+        document.getElementById(id).innerHTML = '<div class="no-data">Noch keine Daten vorhanden 🌸</div>';
+      });
+      return;
+    }
+
+    // Totals
+    let totalA = 0, totalN = 0;
+    dates.forEach(d => { totalA += dayData[d].andreas; totalN += dayData[d].nele; });
+    document.getElementById('sumAndreas').textContent = totalA.toLocaleString('de-DE');
+    document.getElementById('sumNele').textContent    = totalN.toLocaleString('de-DE');
+    document.getElementById('sumDays').textContent    = dates.length;
+
+    renderDailyChart(dates, dayData);
+    renderWeekdayChart(dates, dayData);
+    renderHourChart(dayData);
+    renderDayTable(dates, dayData);
+  }
+
+  function renderDailyChart(dates, dayData) {
+    const maxVal = Math.max(...dates.map(d => Math.max(dayData[d].andreas, dayData[d].nele)), 1);
+    // Show last 30 days max to keep it readable; user can scroll
+    const show = dates.slice(-60);
+
+    let html = '<div class="chart-wrap"><div class="bar-chart">';
+    show.forEach(d => {
+      const a = dayData[d].andreas, n = dayData[d].nele;
+      const hA = Math.max(3, Math.round(a / maxVal * MAX_BAR_HEIGHT));
+      const hN = Math.max(3, Math.round(n / maxVal * MAX_BAR_HEIGHT));
+      const label = d.slice(5); // MM-DD
+      html += `<div class="bar-group">
+        <div class="bar-group-bars">
+          <div class="bar bar-andreas" style="height:${hA}px" title="Andreas: ${a}"></div>
+          <div class="bar bar-nele"    style="height:${hN}px" title="Nele: ${n}"></div>
+        </div>
+        <div class="bar-label">${label}</div>
+      </div>`;
+    });
+    html += '</div></div>';
+    if (dates.length > 60) html += `<div style="text-align:center;font-size:11px;color:var(--text-mid);margin-top:8px;font-weight:600;">Zeigt die letzten 60 Tage</div>`;
+    document.getElementById('dailyChartWrap').innerHTML = html;
+  }
+
+  function renderWeekdayChart(dates, dayData) {
+    const wdA = [0,0,0,0,0,0,0];
+    const wdN = [0,0,0,0,0,0,0];
+    dates.forEach(d => {
+      const wd = new Date(d + 'T12:00:00').getDay();
+      wdA[wd] += dayData[d].andreas;
+      wdN[wd] += dayData[d].nele;
+    });
+    const maxVal = Math.max(...wdA, ...wdN, 1);
+    let html = '<div class="weekday-chart">';
+    WEEKDAYS.forEach((label, i) => {
+      const hA = Math.max(3, Math.round(wdA[i] / maxVal * MAX_BAR_HEIGHT));
+      const hN = Math.max(3, Math.round(wdN[i] / maxVal * MAX_BAR_HEIGHT));
+      html += `<div class="weekday-group">
+        <div class="weekday-bars">
+          <div class="bar bar-andreas" style="height:${hA}px" title="Andreas ${label}: ${wdA[i]}"></div>
+          <div class="bar bar-nele"    style="height:${hN}px" title="Nele ${label}: ${wdN[i]}"></div>
+        </div>
+        <div class="weekday-label">${label}</div>
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('weekdayChartWrap').innerHTML = html;
+  }
+
+  function renderHourChart(dayData) {
+    const hA = new Array(24).fill(0);
+    const hN = new Array(24).fill(0);
+    let hasClicks = false;
+
+    Object.values(dayData).forEach(d => {
+      d.clicks.forEach(c => {
+        const hour = new Date(c.time).getHours();
+        if (c.user.toLowerCase() === 'andreas') hA[hour]++;
+        else hN[hour]++;
+        hasClicks = true;
+      });
+    });
+
+    if (!hasClicks) {
+      document.getElementById('hourChartWrap').innerHTML = '<div class="no-data">Uhrzeitdaten erst ab jetzt verfügbar 🌸</div>';
+      return;
+    }
+
+    const maxVal = Math.max(...hA, ...hN, 1);
+    let html = '<div class="hour-chart">';
+    for (let i = 0; i < 24; i++) {
+      const barA = Math.max(2, Math.round(hA[i] / maxVal * 90));
+      const barN = Math.max(2, Math.round(hN[i] / maxVal * 90));
+      html += `<div class="hour-group">
+        <div class="hour-bar-wrap">
+          <div class="hour-bar bar-andreas" style="height:${barA}px" title="Andreas ${i}:00 – ${hA[i]}x"></div>
+          <div class="hour-bar bar-nele"    style="height:${barN}px" title="Nele ${i}:00 – ${hN[i]}x"></div>
+        </div>
+        <div class="hour-label">${i}</div>
+      </div>`;
+    }
+    html += '</div>';
+    document.getElementById('hourChartWrap').innerHTML = html;
+  }
+
+  function renderDayTable(dates, dayData) {
+    if (dates.length === 0) {
+      document.getElementById('dayTableWrap').innerHTML = '<div class="no-data">Keine Daten 🌸</div>';
+      return;
+    }
+    let html = '<div style="overflow-x:auto"><table class="day-table"><thead><tr><th>Datum</th><th>Andreas 🐾</th><th>Nele 🌸</th><th>Führung</th></tr></thead><tbody>';
+    [...dates].reverse().forEach(d => {
+      const a = dayData[d].andreas, n = dayData[d].nele;
+      const date = new Date(d + 'T12:00:00');
+      const label = date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+      let winner = '–';
+      if (a > n)      winner = `<span style="color:var(--rose)">🐾 +${a-n}</span>`;
+      else if (n > a) winner = `<span style="color:var(--nele)">🌸 +${n-a}</span>`;
+      else if (a > 0) winner = '🤝';
+      html += `<tr>
+        <td>${label}</td>
+        <td class="td-andreas">${a}</td>
+        <td class="td-nele">${n}</td>
+        <td class="td-winner">${winner}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('dayTableWrap').innerHTML = html;
+  }
+</script>
+</body>
+</html>
