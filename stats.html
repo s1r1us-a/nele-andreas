@@ -235,6 +235,12 @@
     }
   });
 
+  // German local date helper
+  function getGermanDate(ts) {
+    const d = ts ? new Date(ts) : new Date();
+    return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(d);
+  }
+
   // STATE
   let allData = {}; // { 'YYYY-MM-DD': { a, n, clicks[] } }
   let activeRange = 0;
@@ -253,7 +259,7 @@
     if (!activeRange) return all;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - activeRange);
-    const cut = cutoff.toISOString().slice(0,10);
+    const cut = getGermanDate(cutoff);
     return all.filter(d => d >= cut);
   }
 
@@ -337,10 +343,12 @@
     // Current streak (all data, consecutive days with any activity)
     const all = Object.keys(allData).sort();
     let streak = 0;
-    const today = new Date().toISOString().slice(0,10);
+    const todayDE = getGermanDate();
+    const yesterdayDE = getGermanDate(Date.now() - 86400000);
     for (let i = all.length-1; i >= 0; i--) {
       const d = all[i];
-      if (streak===0 && d!==today) break; // must start from today
+      // Streak must start from today or yesterday (in case nobody clicked yet today)
+      if (streak===0 && d!==todayDE && d!==yesterdayDE) break;
       const v = allData[d];
       if (v.a>0||v.n>0) {
         if (streak===0) { streak=1; continue; }
@@ -367,7 +375,7 @@
       const wd=new Date(d+'T12:00:00').getDay();
       wdA[wd]+=v.a; wdN[wd]+=v.n;
       v.clicks.forEach(c=>{
-        const h=new Date(c.time).getHours();
+        const h=parseInt(new Intl.DateTimeFormat('de-DE',{hour:'numeric',timeZone:'Europe/Berlin'}).format(new Date(c.time)));
         if(c.user.toLowerCase()==='andreas')hrA[h]++;else hrN[h]++;
       });
     });

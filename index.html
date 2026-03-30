@@ -527,8 +527,14 @@
   const andreasRef   = ref(db, 'moments/andreas');
   const neleRef      = ref(db, 'moments/nele');
 
+  // German local date helper (handles UTC+1/UTC+2 DST)
+  function getGermanDate(ts) {
+    const d = ts ? new Date(ts) : new Date();
+    return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(d);
+  }
+
   // Daily counters
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = getGermanDate();
   const andreasRefToday = ref(db, `moments/daily/${today}/andreas`);
   const neleRefToday    = ref(db, `moments/daily/${today}/nele`);
 
@@ -596,7 +602,7 @@
     const now = Date.now();
     set(lastClickRef, { name: user, time: now });
     // Log individual click for stats
-    const clickDate = new Date(now).toISOString().slice(0, 10);
+    const clickDate = getGermanDate(now);
     set(ref(db, `moments/clicks/${clickDate}/${now}_${user.toLowerCase()}`), { user, time: now });
     heartCount.classList.remove('bump');
     void heartCount.offsetWidth;
