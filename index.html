@@ -39,6 +39,7 @@
   }
 
   .page { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px 60px; }
+  .page-hidden { visibility: hidden; opacity: 0; }
 
   .header { text-align: center; margin-bottom: 20px; }
   .header-title {
@@ -160,8 +161,8 @@
 </head>
 <body>
 
-<div class="bg-gradient"></div>
-<div class="petals-container" id="petals"></div>
+<div class="bg-gradient page-hidden" id="bgGradient"></div>
+<div class="petals-container page-hidden" id="petals"></div>
 
 <!-- Login -->
 <div class="modal-overlay" id="modalOverlay">
@@ -178,7 +179,7 @@
 
 <button class="logout-btn" id="logoutBtn">Ausloggen</button>
 
-<div class="page">
+<div class="page page-hidden" id="mainPage">
   <div class="header">
     <h1 class="header-title">Nele & Andreas</h1>
   </div>
@@ -342,6 +343,10 @@
       setTimeout(() => { overlay.style.display = 'none'; }, 320);
       logoutBtn.style.display = 'block';
       logoutBtn.textContent = window.currentUser + ' ausloggen';
+      // Reveal page content
+      document.getElementById('mainPage').classList.remove('page-hidden');
+      document.getElementById('bgGradient').classList.remove('page-hidden');
+      document.getElementById('petals').classList.remove('page-hidden');
       window.dispatchEvent(new Event('quizUserSet'));
     } else {
       window.currentUser = null;
@@ -349,6 +354,10 @@
       overlay.style.opacity = '1';
       logoutBtn.style.display = 'none';
       loginBtn.textContent = 'Einloggen 🌸';
+      // Hide page content
+      document.getElementById('mainPage').classList.add('page-hidden');
+      document.getElementById('bgGradient').classList.add('page-hidden');
+      document.getElementById('petals').classList.add('page-hidden');
     }
   });
 
