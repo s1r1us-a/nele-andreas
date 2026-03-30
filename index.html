@@ -125,7 +125,7 @@
   .forgot-msg { font-size: 12px; margin-top: 6px; min-height: 18px; font-weight: 600; }
   .forgot-msg.success { color: #22a35a; }
   .forgot-msg.error { color: #c85070; }
-  .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: none; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 16px; background: rgba(255,248,240,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(232,115,138,0.15); box-shadow: 0 2px 12px rgba(232,115,138,0.08); }
+  .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 99999; display: none; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 16px; background: #fff8f0; border-bottom: 1px solid rgba(232,115,138,0.2); box-shadow: 0 2px 12px rgba(232,115,138,0.1); }
   .top-bar-btn { background: rgba(255,255,255,0.9); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
   .top-bar-btn:hover { background: #fff; color: var(--rose); border-color: var(--rose); }
 
@@ -180,6 +180,12 @@
 </head>
 <body>
 
+<!-- Top Bar -->
+<div class="top-bar" id="topBar">
+  <button class="top-bar-btn" id="profileBtn">⚙️ Profil</button>
+  <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
+</div>
+
 <div class="bg-gradient page-hidden" id="bgGradient"></div>
 <div class="petals-container page-hidden" id="petals"></div>
 
@@ -198,11 +204,6 @@
   </div>
 </div>
 
-<!-- Top Bar -->
-<div class="top-bar" id="topBar">
-  <button class="top-bar-btn" id="profileBtn">⚙️ Profil</button>
-  <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
-</div>
 
 <!-- Profil Overlay -->
 <div class="profile-overlay" id="profileOverlay">
@@ -418,10 +419,9 @@
 
   // Map email → display name
   function displayName(email) {
-    if (email.toLowerCase().startsWith('andreas')) return 'Andreas';
-    if (email.toLowerCase().startsWith('nele'))    return 'Nele';
-    // fallback: capitalize first part before @
-    return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
+    return email.split('@')[0];
   }
 
   loginBtn.addEventListener('click', async () => {
