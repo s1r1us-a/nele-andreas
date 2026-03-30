@@ -110,7 +110,7 @@
   .footer-hearts { margin-top: 8px; font-size: 20px; letter-spacing: 4px; animation: heartPulse 2.5s ease-in-out infinite; }
 
   /* LOGIN */
-  .modal-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(253,232,237,0.92); }
+  .modal-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(253,232,237,0.92); }
   .modal-card { background: #fff; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 28px; padding: 40px 36px 36px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2); max-height: 90vh; overflow-y: auto; }
   .modal-emoji { font-size: 40px; margin-bottom: 12px; display: block; }
   .modal-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%, var(--rose-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
@@ -184,9 +184,15 @@
     .profile-card { padding: 24px 20px 20px; }
     .modal-card { padding: 24px 20px 20px; }
   }
+
+  /* AUTH LOADING SPINNER */
+  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
+  .auth-spinner { width:36px; height:36px; border:3px solid rgba(232,115,138,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
 <!-- Top Bar -->
 <div class="top-bar" id="topBar">
@@ -474,9 +480,8 @@
   onAuthStateChanged(auth, user => {
     if (user) {
       window.currentUser = displayName(user.email);
-      overlay.style.opacity = '0';
-      overlay.style.transition = 'opacity 0.3s ease';
-      setTimeout(() => { overlay.style.display = 'none'; }, 320);
+      document.getElementById('authLoading').style.display='none';
+      overlay.style.display = 'none';
       topBar.style.display = 'flex';
       logoutBtn.textContent = window.currentUser + ' ausloggen';
       // Reveal page content
@@ -486,6 +491,7 @@
       window.dispatchEvent(new Event('quizUserSet'));
     } else {
       window.currentUser = null;
+      document.getElementById('authLoading').style.display='none';
       overlay.style.display = 'flex';
       overlay.style.opacity = '1';
       topBar.style.display = 'none';

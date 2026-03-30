@@ -22,7 +22,7 @@
   .top-bar-back:hover { background:#fff; color:var(--rose); border-color:var(--rose); }
   .top-bar-title { font-family:'Dancing Script',cursive; font-size:22px; font-weight:700; color:var(--rose); }
 
-  .modal-overlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(253,232,237,0.92); }
+  .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(253,232,237,0.92); }
   .modal-card { background:#fff; border:1.5px solid rgba(232,115,138,0.3); border-radius:28px; padding:40px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 16px 60px rgba(232,115,138,0.2); max-height:90vh; overflow-y:auto; }
   .modal-emoji { font-size:40px; margin-bottom:12px; display:block; }
   .modal-title { font-family:'Dancing Script',cursive; font-size:32px; font-weight:700; background:linear-gradient(135deg,var(--rose) 0%,#c85070 60%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
@@ -105,9 +105,15 @@
     .sval { font-size:24px; }
     .ftab { padding:6px 12px; font-size:11px; }
   }
+
+  /* AUTH LOADING SPINNER */
+  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
+  .auth-spinner { width:36px; height:36px; border:3px solid rgba(232,115,138,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 <div class="bg-gradient page-hidden" id="bgGradient"></div>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -222,6 +228,7 @@
       ['mainPage','bgGradient','topBar'].forEach(id => document.getElementById(id).classList.remove('page-hidden'));
       loadData();
     } else {
+      document.getElementById('authLoading').style.display='none';
       overlay.style.display='flex'; overlay.style.opacity='1';
       ['mainPage','bgGradient','topBar'].forEach(id => document.getElementById(id).classList.add('page-hidden'));
       loginBtn.textContent = 'Einloggen 🌸';
