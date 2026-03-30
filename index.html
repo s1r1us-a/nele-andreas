@@ -120,7 +120,43 @@
   .modal-btn-andreas { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: white; box-shadow: 0 4px 20px rgba(124,58,237,0.35); }
   .modal-btn-nele { background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4); }
 
-  @media (max-width: 480px) { .quote-card { padding: 22px 20px; } .facts-grid { gap: 10px; } .heart-btn { padding: 14px 28px; } }
+  @media (max-width: 480px) {
+    .page { padding: 28px 16px 50px; }
+    .header { margin-bottom: 12px; }
+    .header-title { font-size: clamp(42px, 14vw, 64px); }
+    .hearts-row { margin: 8px 0 20px; }
+    .image-wrapper { padding: 6px; border-radius: 22px; }
+    .image-frame { border-radius: 18px; }
+    .image-frame img { width: min(340px, 92vw); }
+    .sparkle { font-size: 16px; }
+    .quote-card { margin-top: 24px; padding: 20px 18px; border-radius: 20px; }
+    .quote-text { font-size: 19px; }
+    .love-counter { margin-top: 22px; gap: 10px; }
+    .heart-count { font-size: 32px; }
+    .heart-btn { padding: 18px 36px; font-size: 17px; min-height: 56px; width: 100%; max-width: 300px; justify-content: center; }
+    .last-click { font-size: 12px; text-align: center; }
+    .stats-section { margin-top: 20px; padding: 20px 18px; border-radius: 20px; }
+    .stat-label { font-size: 12px; width: 64px; }
+    .stat-bar-wrap { height: 12px; }
+    .stat-count { font-size: 16px; }
+    .stat-pct { font-size: 10px; }
+    .stats-verdict { font-size: 12px; margin-top: 12px; }
+    .facts-grid { margin-top: 20px; gap: 10px; }
+    .fact-card { padding: 16px 12px; border-radius: 16px; }
+    .fact-emoji { font-size: 24px; }
+    .fact-value { font-size: 16px; }
+    .footer { margin-top: 36px; }
+    .modal-card { padding: 32px 24px 28px; border-radius: 24px; }
+    .modal-title { font-size: 28px; }
+    .modal-btn { padding: 18px 10px; font-size: 14px; min-height: 56px; }
+  }
+
+  @media (max-width: 360px) {
+    .header-title { font-size: 38px; }
+    .modal-buttons { flex-direction: column; }
+    .modal-btn { width: 100%; }
+    .heart-btn { padding: 18px 24px; }
+  }
 </style>
 </head>
 <body>
