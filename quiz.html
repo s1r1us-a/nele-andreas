@@ -142,6 +142,57 @@
   .footer { margin-top: 40px; text-align: center; }
   .footer-text { font-family: 'Dancing Script', cursive; font-size: 18px; color: var(--text-mid); font-weight: 600; }
 
+  /* SUCCESS MODAL */
+  .quiz-modal-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(90,45,58,0.35);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .quiz-modal-overlay.visible { opacity: 1; pointer-events: all; }
+  .quiz-modal {
+    background: rgba(255,255,255,0.95);
+    border: 1.5px solid rgba(232,115,138,0.25);
+    border-radius: 28px;
+    padding: 36px 32px 28px;
+    max-width: 320px; width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(232,115,138,0.2);
+    transform: scale(0.85) translateY(20px);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .quiz-modal-overlay.visible .quiz-modal { transform: scale(1) translateY(0); }
+  .quiz-modal-check {
+    font-size: 56px;
+    animation: checkPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
+    display: block; margin-bottom: 12px;
+  }
+  @keyframes checkPop {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .quiz-modal-title {
+    font-family: 'Dancing Script', cursive;
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+  .quiz-modal-sub {
+    font-size: 14px; color: var(--text-mid); font-weight: 500; line-height: 1.5; margin-bottom: 22px;
+  }
+  .quiz-modal-close {
+    background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%);
+    border: none; border-radius: 50px; padding: 12px 32px;
+    font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700;
+    color: white; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(232,115,138,0.35);
+    transition: transform 0.2s ease;
+  }
+  .quiz-modal-close:hover { transform: scale(1.04) translateY(-1px); }
+
   @media (max-width: 480px) {
     .page { padding: 20px 16px 50px; }
     .quiz-card { padding: 18px 16px; }
@@ -215,6 +266,16 @@
 
   <div class="footer">
     <p class="footer-text">Teste euer Wissen 🐾</p>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="quiz-modal-overlay" id="quizSuccessModal">
+  <div class="quiz-modal">
+    <span class="quiz-modal-check">✅</span>
+    <div class="quiz-modal-title">Quiz gespeichert!</div>
+    <div class="quiz-modal-sub" id="quizModalSub"></div>
+    <button class="quiz-modal-close" onclick="closeQuizModal()">Super! 🎉</button>
   </div>
 </div>
 
@@ -345,8 +406,10 @@
     const newVersion = (versionSnap.val() || 0) + 1;
     await set(ref(db, `quiz/${userKey}/questions`), questions);
     await set(ref(db, `quiz/${userKey}/version`), newVersion);
-    document.getElementById('quizSaveStatus').textContent = 'Quiz gespeichert! ✅';
-    setTimeout(() => { document.getElementById('quizSaveStatus').textContent = ''; }, 3000);
+    const otherName = user === 'Andreas' ? 'Nele' : 'Andreas';
+    const otherEmoji = user === 'Andreas' ? '🌸' : '🐾';
+    document.getElementById('quizModalSub').textContent = `Dein Quiz wurde für ${otherName} gespeichert und wartet auf ${user === 'Andreas' ? 'sie' : 'ihn'}! ${otherEmoji}`;
+    document.getElementById('quizSuccessModal').classList.add('visible');
   };
 
   // ---- PLAY ----
@@ -507,6 +570,10 @@
   window.toggleHsDetail = function(id) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('open');
+  };
+
+  window.closeQuizModal = function() {
+    document.getElementById('quizSuccessModal').classList.remove('visible');
   };
 
   // ---- TAB SWITCHING ----
