@@ -139,8 +139,19 @@
   .quiz-hs-detail.open { display: block; }
   .quiz-empty { text-align: center; font-size: 13px; color: var(--text-mid); padding: 16px 0; font-weight: 500; }
 
-  .footer { margin-top: 40px; text-align: center; }
-  .footer-text { font-family: 'Dancing Script', cursive; font-size: 18px; color: var(--text-mid); font-weight: 600; }
+  .quiz-stat-row { margin-bottom: 14px; }
+  .quiz-stat-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .quiz-stat-name { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+  .quiz-stat-pct { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; }
+  .quiz-stat-pct.good { color: #22c55e; }
+  .quiz-stat-pct.mid  { color: var(--gold); }
+  .quiz-stat-pct.bad  { color: #ef4444; }
+  .quiz-stat-bar-wrap { height: 10px; background: rgba(232,115,138,0.1); border-radius: 99px; overflow: hidden; }
+  .quiz-stat-bar { height: 100%; border-radius: 99px; transition: width 0.7s cubic-bezier(0.22,1,0.36,1); }
+  .quiz-stat-bar.andreas { background: linear-gradient(90deg, var(--rose-light), var(--rose)); }
+  .quiz-stat-bar.nele    { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+  .quiz-stat-bar.total   { background: linear-gradient(90deg, var(--gold), #c8890a); }
+  .quiz-stat-sub { font-size: 11px; color: var(--text-mid); font-weight: 500; margin-top: 3px; }
 
   /* SUCCESS MODAL */
   .quiz-modal-overlay {
@@ -155,43 +166,22 @@
   .quiz-modal {
     background: rgba(255,255,255,0.95);
     border: 1.5px solid rgba(232,115,138,0.25);
-    border-radius: 28px;
-    padding: 36px 32px 28px;
-    max-width: 320px; width: 90%;
-    text-align: center;
+    border-radius: 28px; padding: 36px 32px 28px;
+    max-width: 320px; width: 90%; text-align: center;
     box-shadow: 0 20px 60px rgba(232,115,138,0.2);
     transform: scale(0.85) translateY(20px);
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
   }
   .quiz-modal-overlay.visible .quiz-modal { transform: scale(1) translateY(0); }
-  .quiz-modal-check {
-    font-size: 56px;
-    animation: checkPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
-    display: block; margin-bottom: 12px;
-  }
-  @keyframes checkPop {
-    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-  .quiz-modal-title {
-    font-family: 'Dancing Script', cursive;
-    font-size: 28px; font-weight: 700;
-    background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 8px;
-  }
-  .quiz-modal-sub {
-    font-size: 14px; color: var(--text-mid); font-weight: 500; line-height: 1.5; margin-bottom: 22px;
-  }
-  .quiz-modal-close {
-    background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%);
-    border: none; border-radius: 50px; padding: 12px 32px;
-    font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700;
-    color: white; cursor: pointer;
-    box-shadow: 0 4px 16px rgba(232,115,138,0.35);
-    transition: transform 0.2s ease;
-  }
+  .quiz-modal-check { font-size: 56px; animation: checkPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both; display: block; margin-bottom: 12px; }
+  @keyframes checkPop { 0% { transform: scale(0) rotate(-20deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+  .quiz-modal-title { font-family: 'Dancing Script', cursive; font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .quiz-modal-sub { font-size: 14px; color: var(--text-mid); font-weight: 500; line-height: 1.5; margin-bottom: 22px; }
+  .quiz-modal-close { background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 12px 32px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 16px rgba(232,115,138,0.35); transition: transform 0.2s ease; }
   .quiz-modal-close:hover { transform: scale(1.04) translateY(-1px); }
+
+  .footer { margin-top: 40px; text-align: center; }
+  .footer-text { font-family: 'Dancing Script', cursive; font-size: 18px; color: var(--text-mid); font-weight: 600; }
 
   @media (max-width: 480px) {
     .page { padding: 20px 16px 50px; }
@@ -259,6 +249,14 @@
         <div class="quiz-highscore" style="margin-top:20px">
           <div class="quiz-hs-title">Nele spielt Andreas' Quiz 🐾</div>
           <div class="quiz-hs-list" id="hsNele"></div>
+        </div>
+
+        <!-- STATISTIK -->
+        <div style="margin-top:28px; border-top: 1px solid rgba(232,115,138,0.15); padding-top:20px;">
+          <div class="quiz-card-title">Gesamtstatistik 📊</div>
+          <div id="quizStatsBlock">
+            <div class="quiz-empty">Lädt...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -406,6 +404,17 @@
     const newVersion = (versionSnap.val() || 0) + 1;
     await set(ref(db, `quiz/${userKey}/questions`), questions);
     await set(ref(db, `quiz/${userKey}/version`), newVersion);
+    // Clear all input fields
+    for (let i = 0; i < 5; i++) {
+      const qEl = document.getElementById(`q${i}`);
+      if (qEl) qEl.value = '';
+      for (let j = 0; j < 3; j++) {
+        const oEl = document.getElementById(`q${i}o${j}`);
+        if (oEl) oEl.value = '';
+      }
+      quizCorrects[i] = 0;
+      selectCorrect(i, 0);
+    }
     const otherName = user === 'Andreas' ? 'Nele' : 'Andreas';
     const otherEmoji = user === 'Andreas' ? '🌸' : '🐾';
     document.getElementById('quizModalSub').textContent = `Dein Quiz wurde für ${otherName} gespeichert und wartet auf ${user === 'Andreas' ? 'sie' : 'ihn'}! ${otherEmoji}`;
@@ -532,6 +541,56 @@
   async function loadHighscore() {
     renderHighscoreList('hs_andreas_on_nele', 'hsAndreas', false);
     renderHighscoreList('hs_nele_on_andreas', 'hsNele', true);
+    renderStats();
+  }
+
+  async function renderStats() {
+    const el = document.getElementById('quizStatsBlock');
+
+    const [snapA, snapN] = await Promise.all([
+      get(ref(db, 'quiz/highscore/hs_andreas_on_nele')),
+      get(ref(db, 'quiz/highscore/hs_nele_on_andreas'))
+    ]);
+
+    function calcFromSnap(snap) {
+      if (!snap.exists()) return { right: 0, wrong: 0, games: 0 };
+      const entries = Object.values(snap.val());
+      const right = entries.reduce((s, e) => s + (e.score || 0), 0);
+      const wrong = entries.reduce((s, e) => s + (e.wrong || 0), 0);
+      return { right, wrong, games: entries.length };
+    }
+
+    const a = calcFromSnap(snapA); // Andreas spielt Neles Quiz
+    const n = calcFromSnap(snapN); // Nele spielt Andreas' Quiz
+    const total = { right: a.right + n.right, wrong: a.wrong + n.wrong, games: a.games + n.games };
+
+    if (total.games === 0) {
+      el.innerHTML = '<div class="quiz-empty">Noch keine Spiele 🕐</div>';
+      return;
+    }
+
+    function pct(r, w) { const t = r + w; return t === 0 ? 0 : Math.round(r / t * 100); }
+    function pctClass(p) { return p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad'; }
+    function statRow(name, barClass, r, w, games) {
+      const p = pct(r, w);
+      return `<div class="quiz-stat-row">
+        <div class="quiz-stat-label">
+          <span class="quiz-stat-name">${name}</span>
+          <span class="quiz-stat-pct ${pctClass(p)}">${p}%</span>
+        </div>
+        <div class="quiz-stat-bar-wrap">
+          <div class="quiz-stat-bar ${barClass}" style="width:${p}%"></div>
+        </div>
+        <div class="quiz-stat-sub">${r} richtig · ${w} falsch · ${games} ${games === 1 ? 'Spiel' : 'Spiele'}</div>
+      </div>`;
+    }
+
+    el.innerHTML =
+      statRow('Andreas 🐾', 'andreas', a.right, a.wrong, a.games) +
+      statRow('Nele 🌸',    'nele',    n.right, n.wrong, n.games) +
+      `<div style="border-top:1px solid rgba(232,115,138,0.15);margin:14px 0 0;padding-top:14px;">` +
+      statRow('Gesamt ✨',  'total',   total.right, total.wrong, total.games) +
+      `</div>`;
   }
 
   async function renderHighscoreList(key, elId, isNele) {
