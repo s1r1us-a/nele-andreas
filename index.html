@@ -120,8 +120,22 @@
   .login-btn { width: 100%; border: none; border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; margin-top: 4px; }
   .login-btn:hover { transform: scale(1.03) translateY(-2px); }
   .login-error { font-size: 12px; color: #c85070; margin-top: 10px; min-height: 18px; font-weight: 600; }
-  .logout-btn { position: fixed; top: 14px; right: 16px; z-index: 100; background: rgba(255,255,255,0.8); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s ease; display: none; }
-  .logout-btn:hover { background: rgba(255,255,255,1); color: var(--rose); border-color: var(--rose); }
+  .top-bar { position: fixed; top: 14px; right: 16px; z-index: 1000; display: none; gap: 8px; align-items: center; }
+  .top-bar-btn { background: rgba(255,255,255,0.85); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s ease; }
+  .top-bar-btn:hover { background: #fff; color: var(--rose); border-color: var(--rose); }
+
+  /* PROFIL OVERLAY */
+  .profile-overlay { position: fixed; inset: 0; z-index: 9998; display: none; align-items: center; justify-content: center; background: rgba(253,232,237,0.92); }
+  .profile-overlay.open { display: flex; }
+  .profile-card { background: #fff; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 28px; padding: 36px 32px 32px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2); }
+  .profile-title { font-family: 'Dancing Script', cursive; font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+  .profile-user { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 24px; }
+  .profile-section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: left; margin-bottom: 8px; margin-top: 16px; }
+  .profile-msg { font-size: 12px; min-height: 18px; font-weight: 600; margin-top: 8px; }
+  .profile-msg.success { color: #22a35a; }
+  .profile-msg.error { color: #c85070; }
+  .profile-close { margin-top: 20px; width: 100%; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 50px; padding: 12px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); background: transparent; cursor: pointer; transition: all 0.2s ease; }
+  .profile-close:hover { border-color: var(--rose); color: var(--rose); }
 
   @media (max-width: 480px) {
     .page { padding: 28px 16px 50px; }
@@ -177,7 +191,34 @@
   </div>
 </div>
 
-<button class="logout-btn" id="logoutBtn">Ausloggen</button>
+<!-- Top Bar -->
+<div class="top-bar" id="topBar">
+  <button class="top-bar-btn" id="profileBtn">⚙️ Profil</button>
+  <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
+</div>
+
+<!-- Profil Overlay -->
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-card">
+    <div class="profile-title">Mein Profil</div>
+    <div class="profile-user" id="profileUserLabel"></div>
+
+    <div class="profile-section-label">E-Mail ändern</div>
+    <input class="login-field" type="email" id="profileEmail" placeholder="Neue E-Mail-Adresse">
+    <input class="login-field" type="password" id="profileEmailPw" placeholder="Aktuelles Passwort bestätigen">
+    <button class="login-btn" id="saveEmailBtn">E-Mail speichern</button>
+    <div class="profile-msg" id="emailMsg"></div>
+
+    <div class="profile-section-label">Passwort ändern</div>
+    <input class="login-field" type="password" id="profilePwCurrent" placeholder="Aktuelles Passwort">
+    <input class="login-field" type="password" id="profilePwNew" placeholder="Neues Passwort">
+    <input class="login-field" type="password" id="profilePwConfirm" placeholder="Neues Passwort bestätigen">
+    <button class="login-btn" id="savePwBtn">Passwort speichern</button>
+    <div class="profile-msg" id="pwMsg"></div>
+
+    <button class="profile-close" id="profileCloseBtn">Schließen</button>
+  </div>
+</div>
 
 <div class="page page-hidden" id="mainPage">
   <div class="header">
@@ -287,7 +328,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -305,7 +346,68 @@
   const overlay     = document.getElementById('modalOverlay');
   const loginBtn    = document.getElementById('loginBtn');
   const logoutBtn   = document.getElementById('logoutBtn');
+  const topBar      = document.getElementById('topBar');
+  const profileBtn  = document.getElementById('profileBtn');
+  const profileOverlay   = document.getElementById('profileOverlay');
+  const profileCloseBtn  = document.getElementById('profileCloseBtn');
   const loginError  = document.getElementById('loginError');
+
+  // Profile overlay open/close
+  profileBtn.addEventListener('click', () => {
+    document.getElementById('profileUserLabel').textContent = window.currentUser || '';
+    document.getElementById('profileEmail').value = auth.currentUser?.email || '';
+    document.getElementById('profileEmailPw').value = '';
+    document.getElementById('profilePwCurrent').value = '';
+    document.getElementById('profilePwNew').value = '';
+    document.getElementById('profilePwConfirm').value = '';
+    document.getElementById('emailMsg').textContent = '';
+    document.getElementById('pwMsg').textContent = '';
+    profileOverlay.classList.add('open');
+  });
+  profileCloseBtn.addEventListener('click', () => profileOverlay.classList.remove('open'));
+  profileOverlay.addEventListener('click', e => { if (e.target === profileOverlay) profileOverlay.classList.remove('open'); });
+
+  // Save email
+  document.getElementById('saveEmailBtn').addEventListener('click', async () => {
+    const newEmail = document.getElementById('profileEmail').value.trim();
+    const pw       = document.getElementById('profileEmailPw').value;
+    const msg      = document.getElementById('emailMsg');
+    msg.className  = 'profile-msg';
+    if (!newEmail || !pw) { msg.classList.add('error'); msg.textContent = 'Bitte alle Felder ausfüllen.'; return; }
+    try {
+      const cred = EmailAuthProvider.credential(auth.currentUser.email, pw);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      await updateEmail(auth.currentUser, newEmail);
+      msg.classList.add('success'); msg.textContent = 'E-Mail erfolgreich geändert ✓';
+    } catch(e) {
+      msg.classList.add('error');
+      msg.textContent = e.code === 'auth/wrong-password' ? 'Falsches Passwort.' : 'Fehler: ' + e.message;
+    }
+  });
+
+  // Save password
+  document.getElementById('savePwBtn').addEventListener('click', async () => {
+    const current  = document.getElementById('profilePwCurrent').value;
+    const newPw    = document.getElementById('profilePwNew').value;
+    const confirm  = document.getElementById('profilePwConfirm').value;
+    const msg      = document.getElementById('pwMsg');
+    msg.className  = 'profile-msg';
+    if (!current || !newPw || !confirm) { msg.classList.add('error'); msg.textContent = 'Bitte alle Felder ausfüllen.'; return; }
+    if (newPw !== confirm) { msg.classList.add('error'); msg.textContent = 'Passwörter stimmen nicht überein.'; return; }
+    if (newPw.length < 6)  { msg.classList.add('error'); msg.textContent = 'Passwort muss mind. 6 Zeichen haben.'; return; }
+    try {
+      const cred = EmailAuthProvider.credential(auth.currentUser.email, current);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      await updatePassword(auth.currentUser, newPw);
+      msg.classList.add('success'); msg.textContent = 'Passwort erfolgreich geändert ✓';
+      document.getElementById('profilePwCurrent').value = '';
+      document.getElementById('profilePwNew').value = '';
+      document.getElementById('profilePwConfirm').value = '';
+    } catch(e) {
+      msg.classList.add('error');
+      msg.textContent = e.code === 'auth/wrong-password' ? 'Aktuelles Passwort falsch.' : 'Fehler: ' + e.message;
+    }
+  });
 
   // Map email → display name
   function displayName(email) {
@@ -341,7 +443,7 @@
       overlay.style.opacity = '0';
       overlay.style.transition = 'opacity 0.3s ease';
       setTimeout(() => { overlay.style.display = 'none'; }, 320);
-      logoutBtn.style.display = 'block';
+      topBar.style.display = 'flex';
       logoutBtn.textContent = window.currentUser + ' ausloggen';
       // Reveal page content
       document.getElementById('mainPage').classList.remove('page-hidden');
@@ -352,7 +454,8 @@
       window.currentUser = null;
       overlay.style.display = 'flex';
       overlay.style.opacity = '1';
-      logoutBtn.style.display = 'none';
+      topBar.style.display = 'none';
+      profileOverlay.classList.remove('open');
       loginBtn.textContent = 'Einloggen 🌸';
       // Hide page content
       document.getElementById('mainPage').classList.add('page-hidden');
