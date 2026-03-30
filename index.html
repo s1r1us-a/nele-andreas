@@ -99,23 +99,28 @@
   .stat-count-nele { color: #7c3aed; }
   .stats-verdict { margin-top: 14px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-mid); letter-spacing: 0.5px; min-height: 20px; }
 
+  .stats-divider { margin: 16px 0 14px; border: none; border-top: 1px solid rgba(232,115,138,0.15); }
+  .stats-today-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 12px; }
+
 
 
   .footer { margin-top: 50px; text-align: center; }
   .footer-text { font-family: 'Dancing Script', cursive; font-size: 20px; color: var(--text-mid); font-weight: 600; }
   .footer-hearts { margin-top: 8px; font-size: 20px; letter-spacing: 4px; animation: heartPulse 2.5s ease-in-out infinite; }
 
-  /* MODAL */
+  /* LOGIN */
   .modal-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(253,232,237,0.92); }
   .modal-card { background: #fff; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 28px; padding: 40px 36px 36px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2); }
   .modal-emoji { font-size: 40px; margin-bottom: 12px; display: block; }
   .modal-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%, var(--rose-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
-  .modal-subtitle { font-size: 13px; color: var(--text-mid); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 28px; font-weight: 500; }
-  .modal-buttons { display: flex; gap: 12px; justify-content: center; }
-  .modal-btn { flex: 1; border: none; border-radius: 50px; padding: 16px 12px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease; }
-  .modal-btn:hover { transform: scale(1.05) translateY(-2px); }
-  .modal-btn-andreas { background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4); }
-  .modal-btn-nele { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: white; box-shadow: 0 4px 20px rgba(124,58,237,0.35); }
+  .modal-subtitle { font-size: 13px; color: var(--text-mid); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px; font-weight: 500; }
+  .login-field { width: 100%; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 14px; padding: 13px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 500; color: var(--text-dark); background: var(--cream); outline: none; margin-bottom: 12px; transition: border-color 0.2s ease; box-sizing: border-box; }
+  .login-field:focus { border-color: var(--rose); }
+  .login-btn { width: 100%; border: none; border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; margin-top: 4px; }
+  .login-btn:hover { transform: scale(1.03) translateY(-2px); }
+  .login-error { font-size: 12px; color: #c85070; margin-top: 10px; min-height: 18px; font-weight: 600; }
+  .logout-btn { position: fixed; top: 14px; right: 16px; z-index: 100; background: rgba(255,255,255,0.8); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s ease; display: none; }
+  .logout-btn:hover { background: rgba(255,255,255,1); color: var(--rose); border-color: var(--rose); }
 
   @media (max-width: 480px) {
     .page { padding: 28px 16px 50px; }
@@ -158,18 +163,20 @@
 <div class="bg-gradient"></div>
 <div class="petals-container" id="petals"></div>
 
-<!-- Modal -->
+<!-- Login -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-card">
     <span class="modal-emoji">🐾</span>
-    <div class="modal-title">Wer bist du?</div>
-    <div class="modal-subtitle">Sag uns kurz Bescheid</div>
-    <div class="modal-buttons">
-      <button class="modal-btn modal-btn-andreas" id="btnAndreas">Andreas 🐾</button>
-      <button class="modal-btn modal-btn-nele" id="btnNele">Nele 🌸</button>
-    </div>
+    <div class="modal-title">Willkommen</div>
+    <div class="modal-subtitle">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
   </div>
 </div>
+
+<button class="logout-btn" id="logoutBtn">Ausloggen</button>
 
 <div class="page">
   <div class="header">
@@ -211,6 +218,21 @@
       </div>
     </div>
     <div class="stats-verdict" id="statsVerdict">–</div>
+
+    <hr class="stats-divider">
+    <div class="stats-today-title">Heute 📅</div>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-label">Andreas 🐾</div>
+        <div class="stat-bar-wrap"><div class="stat-bar stat-bar-andreas" id="barAndreasToday" style="width:50%"></div></div>
+        <div class="stat-count stat-count-andreas"><span id="countAndreasToday">0</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Nele 🌸</div>
+        <div class="stat-bar-wrap"><div class="stat-bar stat-bar-nele" id="barNeleToday" style="width:50%"></div></div>
+        <div class="stat-count stat-count-nele"><span id="countNeleToday">0</span></div>
+      </div>
+    </div>
   </div>
   <div class="quiz-section" style="margin-top: 35px; max-width: 420px; width: 100%; position: relative;">
     <a href="quiz.html" id="quizBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
@@ -223,31 +245,8 @@
 </div>
 
 <script>
-  var currentUser = localStorage.getItem('neleandreas_user') || null;
-  window.currentUser = currentUser;
-  if (currentUser) {
-    var o = document.getElementById('modalOverlay');
-    if (o) { o.style.display = 'none'; }
-  }
-
-  document.getElementById('btnAndreas').onclick = function() {
-    currentUser = 'Andreas';
-    localStorage.setItem('neleandreas_user', 'Andreas');
-    var o = document.getElementById('modalOverlay');
-    o.style.opacity = '0';
-    o.style.transition = 'opacity 0.3s ease';
-    setTimeout(function() { o.style.display = 'none'; }, 320);
-    window.dispatchEvent(new Event('quizUserSet'));
-  };
-  document.getElementById('btnNele').onclick = function() {
-    currentUser = 'Nele';
-    localStorage.setItem('neleandreas_user', 'Nele');
-    var o = document.getElementById('modalOverlay');
-    o.style.opacity = '0';
-    o.style.transition = 'opacity 0.3s ease';
-    setTimeout(function() { o.style.display = 'none'; }, 320);
-    window.dispatchEvent(new Event('quizUserSet'));
-  };
+  // Auth state handled by Firebase module below
+  window.currentUser = null;
 
   // Petals
   var petalEmojis = ['🌸','🌷','🌺','💮','🌼','💐','🩷','💕'];
@@ -287,8 +286,9 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  const db = getDatabase(initializeApp({
+  const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
     authDomain: "nele-und-andreas.firebaseapp.com",
     databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
@@ -296,7 +296,61 @@
     storageBucket: "nele-und-andreas.firebasestorage.app",
     messagingSenderId: "694973604970",
     appId: "1:694973604970:web:331975714dca0cd32ad613"
-  }));
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ---- AUTH ----
+  const overlay     = document.getElementById('modalOverlay');
+  const loginBtn    = document.getElementById('loginBtn');
+  const logoutBtn   = document.getElementById('logoutBtn');
+  const loginError  = document.getElementById('loginError');
+
+  // Map email → display name
+  function displayName(email) {
+    if (email.toLowerCase().startsWith('andreas')) return 'Andreas';
+    if (email.toLowerCase().startsWith('nele'))    return 'Nele';
+    // fallback: capitalize first part before @
+    return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPassword').value;
+    loginError.textContent = '';
+    loginBtn.textContent = '…';
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch (err) {
+      loginBtn.textContent = 'Einloggen 🌸';
+      loginError.textContent = 'E-Mail oder Passwort falsch 🐾';
+    }
+  });
+
+  // Allow Enter key in password field
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      window.currentUser = displayName(user.email);
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => { overlay.style.display = 'none'; }, 320);
+      logoutBtn.style.display = 'block';
+      logoutBtn.textContent = window.currentUser + ' ausloggen';
+      window.dispatchEvent(new Event('quizUserSet'));
+    } else {
+      window.currentUser = null;
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+      logoutBtn.style.display = 'none';
+      loginBtn.textContent = 'Einloggen 🌸';
+    }
+  });
 
   // ---- QUIZ BADGE ----
   async function checkQuizBadge() {
@@ -306,18 +360,13 @@
     const playerKey = user.toLowerCase();
     const vSnap = await get(ref(db, `quiz/${otherUser}/version`));
     const currentVer = vSnap.val() || 0;
-    if (currentVer === 0) return; // other person hasn't created a quiz yet
+    if (currentVer === 0) return;
     const playedSnap = await get(ref(db, `quiz/${otherUser}/${playerKey}_played_version`));
     const playedVer = playedSnap.val() || 0;
     const badge = document.getElementById('quizNewBadge');
-    if (currentVer > playedVer) {
-      badge.style.display = 'block';
-    } else {
-      badge.style.display = 'none';
-    }
+    badge.style.display = currentVer > playedVer ? 'block' : 'none';
   }
 
-  // Check on load and whenever user is set
   checkQuizBadge();
   window.addEventListener('quizUserSet', checkQuizBadge);
 
@@ -325,6 +374,11 @@
   const lastClickRef = ref(db, 'moments/lastClick');
   const andreasRef   = ref(db, 'moments/andreas');
   const neleRef      = ref(db, 'moments/nele');
+
+  // Daily counters
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const andreasRefToday = ref(db, `moments/daily/${today}/andreas`);
+  const neleRefToday    = ref(db, `moments/daily/${today}/nele`);
 
   const heartCount  = document.getElementById('heartCount');
   const lastClickEl = document.getElementById('lastClick');
@@ -335,8 +389,12 @@
   const pctA        = document.getElementById('pctAndreas');
   const pctN        = document.getElementById('pctNele');
   const verdict     = document.getElementById('statsVerdict');
+  const barAndreasToday = document.getElementById('barAndreasToday');
+  const barNeleToday    = document.getElementById('barNeleToday');
+  const cntAToday       = document.getElementById('countAndreasToday');
+  const cntNToday       = document.getElementById('countNeleToday');
   const emojis      = ['✨','🌸','💫','🌷','⭐','🌼'];
-  let sA = 0, sN = 0;
+  let sA = 0, sN = 0, sAT = 0, sNT = 0;
 
   onValue(momentsRef, s => {
     const c = s.val() || 0;
@@ -365,11 +423,24 @@
   onValue(andreasRef, s => { sA = s.val()||0; updateStats(); });
   onValue(neleRef,    s => { sN = s.val()||0; updateStats(); });
 
+  function updateTodayStats() {
+    const t = sAT + sNT;
+    cntAToday.textContent = sAT;
+    cntNToday.textContent = sNT;
+    if (t === 0) { barAndreasToday.style.width='50%'; barNeleToday.style.width='50%'; return; }
+    barAndreasToday.style.width = Math.max(6, Math.round(sAT/t*100)) + '%';
+    barNeleToday.style.width    = Math.max(6, Math.round(sNT/t*100)) + '%';
+  }
+
+  onValue(andreasRefToday, s => { sAT = s.val()||0; updateTodayStats(); });
+  onValue(neleRefToday,    s => { sNT = s.val()||0; updateTodayStats(); });
+
   document.getElementById('heartBtn').addEventListener('click', e => {
     const user = window.currentUser;
     if (!user) { alert('Bitte erst oben auswählen wer du bist 🐾'); return; }
     runTransaction(momentsRef, c => (c||0)+1);
     runTransaction(user === 'Andreas' ? andreasRef : neleRef, c => (c||0)+1);
+    runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
     set(lastClickRef, { name: user, time: Date.now() });
     heartCount.classList.remove('bump');
     void heartCount.offsetWidth;
