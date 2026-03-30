@@ -502,7 +502,7 @@
     badge.style.display = currentVer > playedVer ? 'block' : 'none';
   }
 
-  checkQuizBadge();
+  // Only check after auth is confirmed via quizUserSet event
   window.addEventListener('quizUserSet', checkQuizBadge);
 
   const momentsRef   = ref(db, 'moments/count');
