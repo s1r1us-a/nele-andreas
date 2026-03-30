@@ -91,7 +91,8 @@
   .stat-bar { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); min-width: 6px; }
   .stat-bar-andreas { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
   .stat-bar-nele { background: linear-gradient(90deg, var(--rose-light), var(--rose)); }
-  .stat-count { font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
+  .stat-count { font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 700; text-align: right; flex-shrink: 0; }
+  .stat-pct { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; opacity: 0.65; margin-left: 2px; }
   .stat-count-andreas { color: #7c3aed; }
   .stat-count-nele { color: var(--rose); }
   .stats-verdict { margin-top: 14px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-mid); letter-spacing: 0.5px; min-height: 20px; }
@@ -171,12 +172,12 @@
       <div class="stat-item">
         <div class="stat-label">Andreas 🐾</div>
         <div class="stat-bar-wrap"><div class="stat-bar stat-bar-andreas" id="barAndreas" style="width:50%"></div></div>
-        <div class="stat-count stat-count-andreas" id="countAndreas">0</div>
+        <div class="stat-count stat-count-andreas"><span id="countAndreas">0</span><span class="stat-pct" id="pctAndreas"></span></div>
       </div>
       <div class="stat-item">
         <div class="stat-label">Nele 🌸</div>
         <div class="stat-bar-wrap"><div class="stat-bar stat-bar-nele" id="barNele" style="width:50%"></div></div>
-        <div class="stat-count stat-count-nele" id="countNele">0</div>
+        <div class="stat-count stat-count-nele"><span id="countNele">0</span><span class="stat-pct" id="pctNele"></span></div>
       </div>
     </div>
     <div class="stats-verdict" id="statsVerdict">–</div>
@@ -271,6 +272,8 @@
   const barNele     = document.getElementById('barNele');
   const cntA        = document.getElementById('countAndreas');
   const cntN        = document.getElementById('countNele');
+  const pctA        = document.getElementById('pctAndreas');
+  const pctN        = document.getElementById('pctNele');
   const verdict     = document.getElementById('statsVerdict');
   const emojis      = ['✨','🌸','💫','🌷','⭐','🌼'];
   let sA = 0, sN = 0;
@@ -288,9 +291,12 @@
   function updateStats() {
     const t = sA + sN;
     cntA.textContent = sA; cntN.textContent = sN;
-    if (t === 0) { barAndreas.style.width='50%'; barNele.style.width='50%'; verdict.textContent='–'; return; }
-    barAndreas.style.width = Math.max(6, Math.round(sA/t*100)) + '%';
-    barNele.style.width    = Math.max(6, Math.round(sN/t*100)) + '%';
+    if (t === 0) { barAndreas.style.width='50%'; barNele.style.width='50%'; verdict.textContent='–'; pctA.textContent=''; pctN.textContent=''; return; }
+    const pA = Math.round(sA/t*100), pN = Math.round(sN/t*100);
+    barAndreas.style.width = Math.max(6, pA) + '%';
+    barNele.style.width    = Math.max(6, pN) + '%';
+    pctA.textContent = ' · ' + pA + '%';
+    pctN.textContent = ' · ' + pN + '%';
     if (sA > sN)      verdict.textContent = 'Andreas führt mit ' + (sA-sN) + ' Momenten 🐾';
     else if (sN > sA) verdict.textContent = 'Nele führt mit ' + (sN-sA) + ' Momenten 🌸';
     else              verdict.textContent = 'Gleichstand! 🤝';
