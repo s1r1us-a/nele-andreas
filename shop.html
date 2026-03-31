@@ -317,9 +317,10 @@
       <div class="lootbox-desc">Enthält Coins, exklusive Badges oder seltene Profilrahmen 👀</div>
       <div class="lootbox-odds">
         <div class="lootbox-odds-title">Mögliche Gewinne</div>
-        <div class="lootbox-odds-row"><span>200 🪙</span><span>33%</span></div>
-        <div class="lootbox-odds-row"><span>500 🪙</span><span>20%</span></div>
-        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>10%</span></div>
+        <div class="lootbox-odds-row"><span>100 🪙</span><span>33%</span></div>
+        <div class="lootbox-odds-row"><span>300 🪙</span><span>20%</span></div>
+        <div class="lootbox-odds-row"><span>500 🪙</span><span>10%</span></div>
+        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>5%</span></div>
         <div class="lootbox-odds-row"><span>5.000 🪙</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>7%</span></div>
         <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>4%</span></div>
@@ -329,9 +330,11 @@
         <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>6%</span></div>
         <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>4%</span></div>
+        <div class="lootbox-odds-row" style="border-top:1px solid rgba(212,160,97,0.2);margin-top:6px;padding-top:6px;"><span>⏳ Cooldown</span><span>5 Min.</span></div>
       </div>
-      <div class="lootbox-price">🪙 200 Coins pro Box</div>
+      <div class="lootbox-price">🪙 300 Coins pro Box</div>
       <button class="btn-open-box" id="openBoxBtn">📦 Box öffnen</button>
+      <div id="cooldownTimer" style="display:none;margin-top:10px;font-size:12px;font-weight:700;color:var(--text-mid);text-align:center;letter-spacing:0.5px;">⏳ Nächste Box in <span id="cooldownCountdown"></span></div>
     </div>
   </div>
 
@@ -376,7 +379,7 @@
       name: 'Ocean Breeze',
       emoji: '🌊',
       desc: 'Kühles Türkis & tiefes Blau',
-      price: 1500,
+      price: 5000,
       previewBar: 'rgba(42,157,143,0.7)',
       vars: { rose:'#2a9d8f','rose-light':'#4ecdc4','rose-pale':'#e0f7f5',cream:'#f0fafa',gold:'#264653',warm:'#e8f8f7','text-dark':'#1a3a3a','text-mid':'#2a7a72' },
       ui: {}
@@ -386,7 +389,7 @@
       name: 'Forest',
       emoji: '🌿',
       desc: 'Erdiges Grün & warme Brauntöne',
-      price: 1500,
+      price: 5000,
       previewBar: 'rgba(74,124,89,0.7)',
       vars: { rose:'#4a7c59','rose-light':'#7db890','rose-pale':'#e8f5ec',cream:'#f4faf5',gold:'#6b4c2a',warm:'#ebf5ee','text-dark':'#1e3a26','text-mid':'#3a6b4a' },
       ui: {}
@@ -396,7 +399,7 @@
       name: 'Midnight',
       emoji: '🌙',
       desc: 'Mystisches Dunkel & Violett',
-      price: 3000,
+      price: 10000,
       dark: true,
       previewBg: 'linear-gradient(135deg, #2a1f4a 0%, #7c5cbf 50%, #a78bfa 100%)',
       previewBar: 'rgba(124,92,191,0.8)',
@@ -430,7 +433,7 @@
       name: 'Golden Hour',
       emoji: '✨',
       desc: 'Warmes Gold & Bernstein',
-      price: 5000,
+      price: 18000,
       dark: false,
       previewBg: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #d97706 100%)',
       previewBar: 'rgba(217,119,6,0.7)',
@@ -442,7 +445,7 @@
       name: 'Candy',
       emoji: '🍬',
       desc: 'Knalliges Pink & Lila',
-      price: 5000,
+      price: 18000,
       dark: false,
       previewBg: 'linear-gradient(135deg, #fce7f3 0%, #f9a8d4 50%, #ec4899 100%)',
       previewBar: 'rgba(236,72,153,0.7)',
@@ -683,6 +686,7 @@
       activeTheme = shopData.activeTheme || 'sakura';
       applyTheme(activeTheme);
       await loadBadges();
+      await loadBoxState();
 
       onValue(ref(db, `coins/${userKey}`), snap => {
         const raw = snap.val();
@@ -732,23 +736,72 @@
     { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
-  const BOX_PRICE = 200;
+  const BOX_PRICES = [300, 450, 650, 900, 1200]; // skalierend, letzter Wert = Cap
+  let boxesOpenedToday = 0;
+  let lastBoxDate = null; // 'YYYY-MM-DD' string
+
+  function getTodayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function getCurrentBoxPrice() {
+    return BOX_PRICES[Math.min(boxesOpenedToday, BOX_PRICES.length - 1)];
+  }
+
+  function updateBoxPriceDisplay() {
+    const price = getCurrentBoxPrice();
+    const priceEl = document.querySelector('.lootbox-price');
+    if (priceEl) priceEl.textContent = '🪙 ' + price.toLocaleString('de-DE') + ' Coins pro Box';
+    const btn = document.getElementById('openBoxBtn');
+    // Nächster Preis anzeigen wenn nicht letzter
+    const nextIdx = Math.min(boxesOpenedToday + 1, BOX_PRICES.length - 1);
+    const nextPrice = BOX_PRICES[nextIdx];
+    if (boxesOpenedToday < BOX_PRICES.length - 1) {
+      btn.title = 'Nächste Box kostet ' + nextPrice.toLocaleString('de-DE') + ' 🪙';
+    } else {
+      btn.title = 'Maximaler Preis erreicht';
+    }
+  }
+
+  async function loadBoxState() {
+    if (!userKey) return;
+    const snap = await get(ref(db, 'lootbox/' + userKey));
+    const data = snap.val() || {};
+    const today = getTodayStr();
+    if (data.date === today) {
+      boxesOpenedToday = data.count || 0;
+    } else {
+      // Neuer Tag – Reset
+      boxesOpenedToday = 0;
+      await set(ref(db, 'lootbox/' + userKey), { date: today, count: 0 });
+    }
+    updateBoxPriceDisplay();
+  }
+
+  async function saveBoxState() {
+    const today = getTodayStr();
+    boxesOpenedToday++;
+    await set(ref(db, 'lootbox/' + userKey), { date: today, count: boxesOpenedToday });
+    updateBoxPriceDisplay();
+  }
   let ownedBadges = [];
   let ownedFrames = [];
 
   function rollLootbox() {
     const r = Math.random() * 100;
-    if (r < 33)  return { type: 'coins', amount: 200 };
-    if (r < 53)  return { type: 'coins', amount: 500 };
-    if (r < 63)  return { type: 'coins', amount: 1500 };
-    if (r < 65)  return { type: 'coins', amount: 5000 };
-    if (r < 72)  return { type: 'badge', rarity: 'common' };
-    if (r < 76)  return { type: 'badge', rarity: 'rare' };
-    if (r < 78)  return { type: 'badge', rarity: 'legendary' };
-    if (r < 84)  return { type: 'frame', rarity: 'common' };
-    if (r < 88)  return { type: 'frame', rarity: 'rare' };
-    if (r < 90)  return { type: 'frame', rarity: 'legendary' };
-    if (r < 96)  return { type: 'booster', boosterId: 'coins_booster' };
+    if (r < 33)  return { type: 'coins', amount: 100 };
+    if (r < 53)  return { type: 'coins', amount: 300 };
+    if (r < 63)  return { type: 'coins', amount: 500 };
+    if (r < 68)  return { type: 'coins', amount: 1500 };
+    if (r < 70)  return { type: 'coins', amount: 5000 };
+    if (r < 77)  return { type: 'badge', rarity: 'common' };
+    if (r < 81)  return { type: 'badge', rarity: 'rare' };
+    if (r < 83)  return { type: 'badge', rarity: 'legendary' };
+    if (r < 89)  return { type: 'frame', rarity: 'common' };
+    if (r < 93)  return { type: 'frame', rarity: 'rare' };
+    if (r < 95)  return { type: 'frame', rarity: 'legendary' };
+    if (r < 99)  return { type: 'booster', boosterId: 'coins_booster' };
     return               { type: 'booster', boosterId: 'moments_booster' };
   }
 
@@ -841,12 +894,36 @@
 
   let boxOpening = false;
   let lastBoxTime = 0;
-  const BOX_COOLDOWN = 1500; // ms zwischen zwei Box-Öffnungen
+  const BOX_COOLDOWN = 5 * 60 * 1000; // 5 Minuten
+  let cooldownInterval = null;
+
+  function startCooldownTimer() {
+    const btn = document.getElementById('openBoxBtn');
+    const timerEl = document.getElementById('cooldownTimer');
+    const countdown = document.getElementById('cooldownCountdown');
+    btn.disabled = true;
+    timerEl.style.display = 'block';
+    if (cooldownInterval) clearInterval(cooldownInterval);
+    cooldownInterval = setInterval(() => {
+      const remaining = BOX_COOLDOWN - (Date.now() - lastBoxTime);
+      if (remaining <= 0) {
+        clearInterval(cooldownInterval);
+        cooldownInterval = null;
+        btn.disabled = false;
+        timerEl.style.display = 'none';
+        return;
+      }
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      countdown.textContent = m + ':' + String(s).padStart(2, '0');
+    }, 1000);
+  }
 
   async function openBox() {
     const now = Date.now();
     if (boxOpening) return;
-    if (now - lastBoxTime < BOX_COOLDOWN) { showToast('⏳ Kurz warten…'); return; }
+    if (now - lastBoxTime < BOX_COOLDOWN) { showToast('⏳ Noch Cooldown aktiv!'); return; }
+    const BOX_PRICE = getCurrentBoxPrice();
     if (!userKey || currentCoins < BOX_PRICE) { showToast('❌ Nicht genug Coins!'); return; }
     boxOpening = true;
     lastBoxTime = now;
@@ -924,6 +1001,8 @@
 
       console.log('Lootbox result:', result, 'isDuplicate:', isDuplicate);
       showReward(result, isDuplicate);
+      startCooldownTimer();
+      await saveBoxState();
     } catch (err) {
       console.error('Lootbox-Fehler Details:', err.name, err.message, err.stack);
       showToast('❌ Fehler: ' + err.message);
