@@ -41,102 +41,27 @@
     .back-btn:hover { border-color: var(--rose); color: var(--rose); transform: translateX(-3px); }
 
     /* PROFILE HEADER */
-    .profile-header { text-align: center; margin-bottom: 28px; }
+    .profile-header { text-align: center; margin-bottom: 8px; }
     .profile-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-top: 14px; margin-bottom: 4px; }
     .profile-subtitle { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; }
 
     /* AVATAR */
     .initials-avatar { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); margin: 0 auto; transition: box-shadow 0.3s ease; }
-    /* ── SAKURA: sanftes rosa Pulsieren ── */
-    .frame-sakura {
-      background: linear-gradient(135deg,#e8738a,#f5a3b5);
-      box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.5);
-      animation: glowSakura 2.5s ease-in-out infinite;
-    }
-    @keyframes glowSakura {
-      0%,100% { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.4); }
-      50%      { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 6px #e8738a, 0 0 24px 6px rgba(232,115,138,0.7); }
-    }
-
-    /* ── OZEAN: türkiser Wellen-Glow ── */
-    .frame-ocean {
-      background: linear-gradient(135deg,#2a9d8f,#4ecdc4);
-      box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 16px 4px rgba(42,157,143,0.5);
-      animation: glowOcean 3s ease-in-out infinite;
-    }
-    @keyframes glowOcean {
-      0%,100% { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 14px 3px rgba(42,157,143,0.4); }
-      50%      { box-shadow: 0 0 0 3px #b2f0eb, 0 0 0 6px #4ecdc4, 0 0 28px 8px rgba(78,205,196,0.65); }
-    }
-
-    /* ── FEUER: flackernder Feuerschein ── */
-    .frame-feuer {
-      background: linear-gradient(135deg,#dc2626,#f97316);
-      animation: glowFeuer 1.4s ease-in-out infinite;
-    }
-    @keyframes glowFeuer {
-      0%   { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
-      33%  { box-shadow: 0 0 0 3px #ffe8d6, 0 0 0 6px #dc2626, 0 0 22px 8px rgba(220,38,38,0.6), 0 0 40px 10px rgba(249,115,22,0.25); }
-      66%  { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 18px 5px rgba(249,115,22,0.55), 0 0 35px 7px rgba(220,38,38,0.2); }
-      100% { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
-    }
-
-    /* ── BLITZ: elektrisches Zucken ── */
-    .frame-blitz {
-      background: linear-gradient(135deg,#ca8a04,#fbbf24);
-      animation: glowBlitz 1.8s ease-in-out infinite;
-    }
-    @keyframes glowBlitz {
-      0%,100% { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 12px 3px rgba(251,191,36,0.4); }
-      20%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 7px #fbbf24, 0 0 30px 10px rgba(251,191,36,0.8), 0 0 50px 15px rgba(202,138,4,0.3); }
-      22%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
-      60%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 6px #fbbf24, 0 0 28px 8px rgba(251,191,36,0.7), 0 0 45px 12px rgba(202,138,4,0.25); }
-      62%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
-    }
-
-    /* ── REGENBOGEN: rotierender Farbwechsel-Glow ── */
-    .frame-regenbogen {
-      background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4);
-      animation: bgRainbow 3s linear infinite, glowRainbow 3s linear infinite;
-    }
-    @keyframes bgRainbow {
-      0%   { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
-      25%  { background: linear-gradient(135deg,#a78bfa,#4ecdc4,#fbbf24); }
-      50%  { background: linear-gradient(135deg,#4ecdc4,#fbbf24,#e8738a); }
-      75%  { background: linear-gradient(135deg,#fbbf24,#e8738a,#a78bfa); }
-      100% { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
-    }
-    @keyframes glowRainbow {
-      0%   { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a,  0 0 20px 6px rgba(232,115,138,0.6); }
-      25%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #a78bfa,  0 0 20px 6px rgba(167,139,250,0.6); }
-      50%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #4ecdc4,  0 0 20px 6px rgba(78,205,196,0.6); }
-      75%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #fbbf24,  0 0 20px 6px rgba(251,191,36,0.6); }
-      100% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a,  0 0 20px 6px rgba(232,115,138,0.6); }
-    }
-
-    /* ── GALAXY: kosmischer Sternen-Glow mit Rotation ── */
-    .frame-galaxy {
-      background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa);
-      animation: glowGalaxy 4s ease-in-out infinite, rotateGalaxy 8s linear infinite;
-    }
-    @keyframes glowGalaxy {
-      0%,100% { box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5), 0 0 32px 8px rgba(124,92,191,0.3); }
-      50%     { box-shadow: 0 0 0 3px #3d2f6a, 0 0 0 7px #c4b5fd, 0 0 28px 10px rgba(196,181,253,0.7), 0 0 50px 16px rgba(124,92,191,0.45); }
-    }
-    @keyframes rotateGalaxy {
-      0%   { background: linear-gradient(0deg,  #1a1030,#7c5cbf,#a78bfa); }
-      25%  { background: linear-gradient(90deg, #1a1030,#7c5cbf,#a78bfa); }
-      50%  { background: linear-gradient(180deg,#1a1030,#7c5cbf,#a78bfa); }
-      75%  { background: linear-gradient(270deg,#1a1030,#7c5cbf,#a78bfa); }
-      100% { background: linear-gradient(360deg,#1a1030,#7c5cbf,#a78bfa); }
-    }
-
+    .frame-sakura     { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a; }
+    .frame-ocean      { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f; background: linear-gradient(135deg,#2a9d8f,#4ecdc4); }
+    .frame-feuer      { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316; background: linear-gradient(135deg,#dc2626,#f97316); }
+    .frame-blitz      { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24; background: linear-gradient(135deg,#ca8a04,#fbbf24); }
+    .frame-regenbogen { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); animation: topbarRainbow 2s linear infinite; }
+    .frame-galaxy     { background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa); box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 12px 2px rgba(167,139,250,0.5); }
     @keyframes topbarRainbow {
       0%   { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(360deg); }
     }
 
     /* ACTIVE BADGE PILL */
+    .visit-other-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; margin-bottom: 4px; background: rgba(255,255,255,0.8); border: 1.5px solid rgba(232,115,138,0.25); border-radius: 50px; padding: 8px 18px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); text-decoration: none; transition: all 0.2s ease; }
+    .visit-other-btn:hover { border-color: var(--rose); color: var(--rose); }
+    .readonly-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,160,97,0.1); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--gold); margin-top: 8px; }
     .badge-pill { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,160,97,0.1); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-top: 10px; }
 
     /* SECTION */
@@ -227,15 +152,26 @@
     .account-msg.error { color: #c85070; }
     .account-divider { border: none; border-top: 1px solid rgba(232,115,138,0.12); margin: 14px 0 10px; }
 
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 340px; margin: 28px auto 32px; width: 100%; }
+    .stat-card { background: rgba(255,255,255,0.8); border: 1.5px solid rgba(232,115,138,0.18); border-radius: 16px; padding: 12px 8px; text-align: center; }
+    .stat-card-icon { font-size: 20px; margin-bottom: 4px; }
+    .stat-card-value { font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--gold, #d4a061); line-height: 1; margin-bottom: 4px; }
+    .stat-card-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; line-height: 1.3; }
+
+    /* COINS IM HEADER */
+    .profile-coins { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.85); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold, #d4a061); margin-top: 10px; box-shadow: 0 2px 10px rgba(212,160,97,0.18); }
+    .profile-coins .coin-num { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; }
+
     /* KOMMENTARE */
     .comments-section { margin-top: 8px; margin-bottom: 32px; }
     .comments-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .comment-item { background: rgba(255,255,255,0.75); border: 1.5px solid rgba(232,115,138,0.18); border-radius: 16px; padding: 12px 14px; position: relative; }
+    .comment-item { background: rgba(255,255,255,0.75); border: 1.5px solid rgba(232,115,138,0.18); border-radius: 16px; padding: 12px 14px; }
     .comment-author { font-size: 11px; font-weight: 700; color: var(--rose); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .comment-date { font-size: 10px; color: var(--text-mid); font-weight: 500; margin-left: auto; }
-    .comment-text { font-size: 13px; color: var(--text-dark); font-weight: 500; line-height: 1.5; word-break: break-word; }
-    .comment-delete { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 14px; cursor: pointer; color: rgba(232,115,138,0.4); transition: color 0.2s ease; padding: 2px 4px; line-height: 1; }
-    .comment-delete:hover { color: var(--rose); }
+    .comment-text { font-size: 13px; color: var(--text-dark); font-weight: 500; line-height: 1.5; word-break: break-word; margin-bottom: 8px; }
+    .comment-delete { display: inline-flex; align-items: center; gap: 4px; background: rgba(220,38,38,0.08); border: 1.5px solid rgba(220,38,38,0.2); border-radius: 50px; padding: 4px 10px; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 700; color: #dc2626; cursor: pointer; transition: all 0.2s ease; }
+    .comment-delete:hover { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); transform: scale(1.04); }
     .comment-input-wrap { display: flex; gap: 8px; align-items: flex-end; }
     .comment-textarea { flex: 1; border: 1.5px solid rgba(232,115,138,0.25); border-radius: 14px; padding: 11px 14px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-dark); background: rgba(255,255,255,0.8); outline: none; resize: none; min-height: 44px; max-height: 120px; transition: border-color 0.2s ease; line-height: 1.4; }
     .comment-textarea:focus { border-color: var(--rose); }
@@ -279,12 +215,37 @@
       <span id="activeBadgeEmoji">🐾</span>
       <span id="activeBadgeName"></span>
     </div>
+    <div class="profile-coins" id="profileCoins" style="display:none;">
+      🪙 <span class="coin-num" id="profileCoinCount">0</span>
+    </div>
+    <div id="readonlyBadge" style="display:none;" class="readonly-badge">👁️ Nur ansehen</div>
+    <br>
+    <a id="visitOtherBtn" class="visit-other-btn" href="#" style="display:none;">👤 <span id="visitOtherLabel">Profil besuchen</span></a>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-icon">💰</div>
+      <div class="stat-card-value" id="statCoinsEarned">–</div>
+      <div class="stat-card-label">Coins verdient</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">🛒</div>
+      <div class="stat-card-value" id="statCoinsSpent">–</div>
+      <div class="stat-card-label">Coins ausgegeben</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">📦</div>
+      <div class="stat-card-value" id="statBoxesOpened">–</div>
+      <div class="stat-card-label">Boxen geöffnet</div>
+    </div>
   </div>
 
   <!-- BADGES -->
   <div class="section">
     <div class="section-label">🏅 Meine Badges</div>
-    <div class="section-hint">Klick auf ein Badge um es auszurüsten ✨</div>
+    <div class="section-hint" id="badgeHint">Klick auf ein Badge um es auszurüsten ✨</div>
     <div class="badge-grid" id="profileBadgeGrid">
       <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
     </div>
@@ -293,14 +254,14 @@
   <!-- RAHMEN -->
   <div class="section">
     <div class="section-label">🖼️ Meine Rahmen</div>
-    <div class="section-hint">Klick auf einen Rahmen um ihn zu aktivieren ✨</div>
+    <div class="section-hint" id="frameHint">Klick auf einen Rahmen um ihn zu aktivieren ✨</div>
     <div class="frame-grid" id="profileFrameGrid">
       <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Rahmen…</div>
     </div>
   </div>
 
   <!-- BOOSTER INVENTAR -->
-  <div class="section">
+  <div class="section" id="boosterSection">
     <div class="section-label">🚀 Booster Inventar</div>
     <div class="section-hint">Aktiviere einen Booster wenn du ihn brauchst ✨</div>
     <div class="booster-list" id="boosterList">
@@ -309,7 +270,7 @@
   </div>
 
   <!-- ACCOUNT (aufklappbar, unscheinbar) -->
-  <div class="account-section">
+  <div class="account-section" id="accountSection">
     <button class="account-toggle" id="accountToggle">
       <span class="account-toggle-icon" id="accountToggleIcon">›</span>
       Account-Einstellungen
@@ -399,6 +360,7 @@
 
   let currentUser    = null;
   let isReadOnly     = false;
+  let loggedInUserName = null;
   let ownedBadges    = [];
   let ownedFrames    = [];
   let equippedBadge  = null;
@@ -629,6 +591,23 @@
   }
 
   async function loadData(key) {
+    // Coins live
+    onValue(ref(db, 'coins/' + key), snap => {
+      const num = Number.isFinite(Number(snap.val())) ? Number(snap.val()) : 0;
+      const el = document.getElementById('profileCoinCount');
+      const wrap = document.getElementById('profileCoins');
+      if (el) el.textContent = num.toLocaleString('de-DE');
+      if (wrap) wrap.style.display = 'inline-flex';
+    });
+    // Stats live
+    onValue(ref(db, 'stats/' + key), snap => {
+      const d = snap.val() || {};
+      const fmt = n => Number.isFinite(Number(n)) ? Number(n).toLocaleString('de-DE') : '0';
+      const e1 = document.getElementById('statCoinsEarned');  if (e1) e1.textContent = fmt(d.coinsEarned);
+      const e2 = document.getElementById('statCoinsSpent');   if (e2) e2.textContent = fmt(d.coinsSpent);
+      const e3 = document.getElementById('statBoxesOpened');  if (e3) e3.textContent = fmt(d.boxesOpened);
+    });
+
     const [badgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
       get(ref(db, `shop/${key}/badges`)),
       get(ref(db, `shop/${key}/frames`)),
@@ -716,10 +695,10 @@
     }
   });
 
+  // Auth guard
 
-  // ---- KOMMENTARE ----
-  let commentsProfileKey = null; // für wen werden Kommentare geladen
-  let loggedInUserName   = null; // wer ist eingeloggt
+  // ── KOMMENTARE ──────────────────────────────────────────────────────────
+  let commentsProfileKey = null;
 
   function formatCommentDate(ts) {
     const d = new Date(ts);
@@ -729,16 +708,13 @@
 
   function renderComments(commentsObj) {
     const list = document.getElementById('commentsList');
+    if (!list) return;
     list.innerHTML = '';
-    if (!commentsObj) {
+    if (!commentsObj || Object.keys(commentsObj).length === 0) {
       list.innerHTML = '<div class="comments-empty">Noch keine Kommentare 🌸</div>';
       return;
     }
     const entries = Object.entries(commentsObj).sort((a, b) => b[1].timestamp - a[1].timestamp);
-    if (entries.length === 0) {
-      list.innerHTML = '<div class="comments-empty">Noch keine Kommentare 🌸</div>';
-      return;
-    }
     entries.forEach(([id, c]) => {
       const el = document.createElement('div');
       el.className = 'comment-item';
@@ -749,11 +725,10 @@
           <span class="comment-date">${formatCommentDate(c.timestamp)}</span>
         </div>
         <div class="comment-text">${c.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-        ${canDelete ? `<button class="comment-delete" data-id="${id}" title="Löschen">✕</button>` : ''}
+        ${canDelete ? `<button class="comment-delete" data-id="${id}">🗑️ Löschen</button>` : ''}
       `;
       list.appendChild(el);
     });
-    // Delete handlers
     list.querySelectorAll('.comment-delete').forEach(btn => {
       btn.addEventListener('click', async () => {
         await remove(ref(db, 'comments/' + commentsProfileKey + '/' + btn.dataset.id));
@@ -763,42 +738,40 @@
 
   function loadComments(profileKey) {
     commentsProfileKey = profileKey;
-    onValue(ref(db, 'comments/' + profileKey), snap => {
-      renderComments(snap.val());
-    });
+    onValue(ref(db, 'comments/' + profileKey), snap => renderComments(snap.val()));
   }
 
   async function sendComment() {
     const ta  = document.getElementById('commentTextarea');
     const btn = document.getElementById('commentSendBtn');
+    if (!ta || !btn) return;
     const text = ta.value.trim();
     if (!text || !loggedInUserName || !commentsProfileKey) return;
     btn.disabled = true;
     try {
       await push(ref(db, 'comments/' + commentsProfileKey), {
-        author: loggedInUserName,
-        text,
-        timestamp: Date.now(),
+        author: loggedInUserName, text, timestamp: Date.now(),
       });
       ta.value = '';
-      document.getElementById('commentCharCount').textContent = '0';
-    } catch(e) {
-      console.error('Kommentar-Fehler:', e);
-    } finally {
-      btn.disabled = false;
-    }
+      const cc = document.getElementById('commentCharCount');
+      if (cc) cc.textContent = '0';
+    } catch(e) { console.error('Kommentar-Fehler:', e); }
+    finally { btn.disabled = false; }
   }
 
-  // Textarea events
-  document.getElementById('commentTextarea').addEventListener('input', function() {
-    document.getElementById('commentCharCount').textContent = this.value.length;
-  });
-  document.getElementById('commentTextarea').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendComment(); }
-  });
-  document.getElementById('commentSendBtn').addEventListener('click', sendComment);
+  const _ta = document.getElementById('commentTextarea');
+  if (_ta) {
+    _ta.addEventListener('input', function() {
+      const cc = document.getElementById('commentCharCount');
+      if (cc) cc.textContent = this.value.length;
+    });
+    _ta.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendComment(); }
+    });
+  }
+  const _sb = document.getElementById('commentSendBtn');
+  if (_sb) _sb.addEventListener('click', sendComment);
 
-  // Auth guard
   onAuthStateChanged(auth, user => {
     document.getElementById('authLoading').style.display = 'none';
     if (!user) {
@@ -812,45 +785,44 @@
     const otherEmoji = otherUser === 'Nele' ? '🌸' : '🐾';
     const myEmoji    = loggedInUserName === 'Andreas' ? '🐾' : '🌸';
 
+    function setTitle(name) {
+      return name + (name.endsWith('s') ? "' Profil" : "s Profil");
+    }
+
     if (visitParam && visitParam.toLowerCase() === otherUser.toLowerCase()) {
-      // Read-only: anderen User ansehen
+      // ---- READ-ONLY: anderen User ansehen ----
       isReadOnly  = true;
       currentUser = otherUser;
-      document.getElementById('profileTitle').textContent    = otherUser + 's Profil';
+      document.getElementById('profileTitle').textContent    = setTitle(otherUser);
       document.getElementById('profileSubtitle').textContent = otherEmoji + ' ' + otherUser;
       document.getElementById('profileAvatar').textContent   = otherUser[0].toUpperCase();
-      const el_ro = document.getElementById('readonlyBadge');     if (el_ro) el_ro.style.display = 'inline-flex';
-      const el_bh = document.getElementById('badgeHint');         if (el_bh) el_bh.style.display = 'none';
-      const el_fh = document.getElementById('frameHint');         if (el_fh) el_fh.style.display = 'none';
-      const el_bs = document.getElementById('boosterSection');    if (el_bs) el_bs.style.display = 'none';
-      const el_as = document.getElementById('accountSection');    if (el_as) el_as.style.display = 'none';
-      const el_ci = document.getElementById('commentInputWrap');  if (el_ci) el_ci.style.display = 'block';
-      const el_cl = document.getElementById('commentsLabel');     if (el_cl) el_cl.textContent = '💬 Kommentare für ' + otherUser;
-      // Visit-back-button
-      const visitBtn = document.getElementById('visitOtherBtn');
-      if (visitBtn) {
-        const el_vl = document.getElementById('visitOtherLabel'); if (el_vl) el_vl.textContent = myEmoji + ' Zurück zu meinem Profil';
-        visitBtn.href = 'profil.html';
-        visitBtn.style.display = 'inline-flex';
-      }
+      // Sections verstecken
+      const hide = ['readonlyBadge','badgeHint','frameHint','boosterSection','accountSection'];
+      hide.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = id === 'readonlyBadge' ? 'inline-flex' : 'none'; });
+      // Zurück-Button
+      const vBtn = document.getElementById('visitOtherBtn');
+      if (vBtn) { vBtn.href = 'profil.html'; vBtn.style.display = 'inline-flex'; }
+      const vLbl = document.getElementById('visitOtherLabel');
+      if (vLbl) vLbl.textContent = myEmoji + ' Zurück zu meinem Profil';
+      // Kommentare: eingeloggter kann kommentieren
+      const cl = document.getElementById('commentsLabel'); if (cl) cl.textContent = '💬 Kommentare für ' + otherUser;
+      const ci = document.getElementById('commentInputWrap'); if (ci) ci.style.display = 'block';
       loadComments(otherUser.toLowerCase());
       loadData(otherUser.toLowerCase());
     } else {
-      // Eigenes Profil
+      // ---- EIGENES PROFIL ----
       isReadOnly  = false;
       currentUser = loggedInUserName;
-      document.getElementById('profileTitle').textContent    = loggedInUserName + 's Profil';
+      document.getElementById('profileTitle').textContent    = setTitle(loggedInUserName);
       document.getElementById('profileSubtitle').textContent = user.email;
       document.getElementById('profileAvatar').textContent   = getUserInitial();
-      // Visit-other-button
-      const visitBtn2 = document.getElementById('visitOtherBtn');
-      if (visitBtn2) {
-        const el_vl2 = document.getElementById('visitOtherLabel'); if (el_vl2) el_vl2.textContent = otherEmoji + ' ' + otherUser + 's Profil besuchen';
-        visitBtn2.href = 'profil.html?user=' + otherUser.toLowerCase();
-        visitBtn2.style.display = 'inline-flex';
-      }
-      const el_cl2 = document.getElementById('commentsLabel');    if (el_cl2) el_cl2.textContent = '💬 Kommentare auf deinem Profil';
-      const el_ci2 = document.getElementById('commentInputWrap'); if (el_ci2) el_ci2.style.display = 'none';
+      // Anderen besuchen Button
+      const vBtn = document.getElementById('visitOtherBtn');
+      if (vBtn) { vBtn.href = 'profil.html?user=' + otherUser.toLowerCase(); vBtn.style.display = 'inline-flex'; }
+      const vLbl = document.getElementById('visitOtherLabel');
+      if (vLbl) vLbl.textContent = otherEmoji + ' ' + otherUser + 's Profil besuchen';
+      // Kommentare: nur lesen
+      const cl2 = document.getElementById('commentsLabel'); if (cl2) cl2.textContent = '💬 Kommentare auf deinem Profil';
       loadComments(loggedInUserName.toLowerCase());
       loadData(loggedInUserName.toLowerCase());
     }

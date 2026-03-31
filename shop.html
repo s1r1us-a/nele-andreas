@@ -200,79 +200,13 @@
   /* RAHMEN-VORSCHAU IM REWARD POPUP */
   .reward-avatar-wrap { margin: 0 auto 16px; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; position: relative; }
   .reward-avatar-wrap::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; z-index: -1; }
-    /* ── SAKURA: sanftes rosa Pulsieren ── */
-  .reward-avatar-wrap.frame-sakura {
-      background: linear-gradient(135deg,#e8738a,#f5a3b5);
-      box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.5);
-      animation: glowSakura 2.5s ease-in-out infinite;
-    }
-  @keyframes glowSakura {
-      0%,100% { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.4); }
-      50%      { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 6px #e8738a, 0 0 24px 6px rgba(232,115,138,0.7); }
-    }
-  .reward-avatar-wrap.frame-ocean {
-      background: linear-gradient(135deg,#2a9d8f,#4ecdc4);
-      box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 16px 4px rgba(42,157,143,0.5);
-      animation: glowOcean 3s ease-in-out infinite;
-    }
-  @keyframes glowOcean {
-      0%,100% { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 14px 3px rgba(42,157,143,0.4); }
-      50%      { box-shadow: 0 0 0 3px #b2f0eb, 0 0 0 6px #4ecdc4, 0 0 28px 8px rgba(78,205,196,0.65); }
-    }
-  .reward-avatar-wrap.frame-feuer {
-      background: linear-gradient(135deg,#dc2626,#f97316);
-      animation: glowFeuer 1.4s ease-in-out infinite;
-    }
-  @keyframes glowFeuer {
-      0%   { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
-      33%  { box-shadow: 0 0 0 3px #ffe8d6, 0 0 0 6px #dc2626, 0 0 22px 8px rgba(220,38,38,0.6), 0 0 40px 10px rgba(249,115,22,0.25); }
-      66%  { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 18px 5px rgba(249,115,22,0.55), 0 0 35px 7px rgba(220,38,38,0.2); }
-      100% { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
-    }
-  .reward-avatar-wrap.frame-blitz {
-      background: linear-gradient(135deg,#ca8a04,#fbbf24);
-      animation: glowBlitz 1.8s ease-in-out infinite;
-    }
-  @keyframes glowBlitz {
-      0%,100% { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 12px 3px rgba(251,191,36,0.4); }
-      20%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 7px #fbbf24, 0 0 30px 10px rgba(251,191,36,0.8), 0 0 50px 15px rgba(202,138,4,0.3); }
-      22%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
-      60%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 6px #fbbf24, 0 0 28px 8px rgba(251,191,36,0.7), 0 0 45px 12px rgba(202,138,4,0.25); }
-      62%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
-    }
-  .reward-avatar-wrap.frame-regenbogen {
-      background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4);
-      animation: bgRainbow 3s linear infinite, glowRainbow 3s linear infinite;
-    }
-  @keyframes bgRainbow {
-      0%   { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
-      25%  { background: linear-gradient(135deg,#a78bfa,#4ecdc4,#fbbf24); }
-      50%  { background: linear-gradient(135deg,#4ecdc4,#fbbf24,#e8738a); }
-      75%  { background: linear-gradient(135deg,#fbbf24,#e8738a,#a78bfa); }
-      100% { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
-    }
-  @keyframes glowRainbow {
-      0%   { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a, 0 0 20px 6px rgba(232,115,138,0.6); }
-      25%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #a78bfa, 0 0 20px 6px rgba(167,139,250,0.6); }
-      50%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #4ecdc4, 0 0 20px 6px rgba(78,205,196,0.6); }
-      75%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #fbbf24, 0 0 20px 6px rgba(251,191,36,0.6); }
-      100% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a, 0 0 20px 6px rgba(232,115,138,0.6); }
-    }
-  .reward-avatar-wrap.frame-galaxy {
-      background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa);
-      animation: glowGalaxy 4s ease-in-out infinite, rotateGalaxy 8s linear infinite;
-    }
-  @keyframes glowGalaxy {
-      0%,100% { box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5), 0 0 32px 8px rgba(124,92,191,0.3); }
-      50%     { box-shadow: 0 0 0 3px #3d2f6a, 0 0 0 7px #c4b5fd, 0 0 28px 10px rgba(196,181,253,0.7), 0 0 50px 16px rgba(124,92,191,0.45); }
-    }
-  @keyframes rotateGalaxy {
-      0%   { background: linear-gradient(0deg,  #1a1030,#7c5cbf,#a78bfa); }
-      25%  { background: linear-gradient(90deg, #1a1030,#7c5cbf,#a78bfa); }
-      50%  { background: linear-gradient(180deg,#1a1030,#7c5cbf,#a78bfa); }
-      75%  { background: linear-gradient(270deg,#1a1030,#7c5cbf,#a78bfa); }
-      100% { background: linear-gradient(360deg,#1a1030,#7c5cbf,#a78bfa); }
-    }
+  .reward-avatar-wrap.frame-sakura    { background: linear-gradient(135deg, #e8738a, #f5a3b5); box-shadow: 0 0 0 4px #fde8ed, 0 0 0 6px #e8738a; }
+  .reward-avatar-wrap.frame-ocean     { background: linear-gradient(135deg, #2a9d8f, #4ecdc4); box-shadow: 0 0 0 4px #e0f7f5, 0 0 0 6px #2a9d8f; }
+  .reward-avatar-wrap.frame-feuer     { background: linear-gradient(135deg, #dc2626, #f97316); box-shadow: 0 0 0 4px #fff1e6, 0 0 0 6px #f97316; }
+  .reward-avatar-wrap.frame-blitz     { background: linear-gradient(135deg, #ca8a04, #fbbf24); box-shadow: 0 0 0 4px #fef9c3, 0 0 0 6px #fbbf24; }
+  .reward-avatar-wrap.frame-regenbogen{ background: linear-gradient(135deg, #e8738a, #a78bfa, #4ecdc4); box-shadow: 0 0 0 3px #fff, 0 0 0 6px transparent; animation: rainbowGlow 2s linear infinite; }
+  .reward-avatar-wrap.frame-galaxy    { background: linear-gradient(135deg, #1a1030, #7c5cbf, #a78bfa); box-shadow: 0 0 0 4px #2a1f4a, 0 0 0 7px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5); }
+  @keyframes rainbowGlow { 0%{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8738a,0 0 16px 2px #e8738a} 33%{box-shadow:0 0 0 3px #fff,0 0 0 6px #a78bfa,0 0 16px 2px #a78bfa} 66%{box-shadow:0 0 0 3px #fff,0 0 0 6px #4ecdc4,0 0 16px 2px #4ecdc4} 100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8738a,0 0 16px 2px #e8738a} }
 
   @media (max-width: 600px) {
     .top-bar { padding: 8px 12px; gap: 4px; flex-wrap: nowrap; }
@@ -383,24 +317,22 @@
       <div class="lootbox-desc">Enthält Coins, exklusive Badges oder seltene Profilrahmen 👀</div>
       <div class="lootbox-odds">
         <div class="lootbox-odds-title">Mögliche Gewinne</div>
-        <div class="lootbox-odds-row"><span>100 🪙</span><span>33%</span></div>
-        <div class="lootbox-odds-row"><span>300 🪙</span><span>20%</span></div>
-        <div class="lootbox-odds-row"><span>500 🪙</span><span>10%</span></div>
-        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>5%</span></div>
+        <div class="lootbox-odds-row"><span>50 🪙</span><span>33%</span></div>
+        <div class="lootbox-odds-row"><span>200 🪙</span><span>23%</span></div>
+        <div class="lootbox-odds-row"><span>500 🪙</span><span>14%</span></div>
+        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>7%</span></div>
         <div class="lootbox-odds-row"><span>5.000 🪙</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>7%</span></div>
         <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>4%</span></div>
         <div class="lootbox-odds-row"><span>👑 Badge (Legendär)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>6%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>4%</span></div>
-        <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>6%</span></div>
-        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>4%</span></div>
-        <div class="lootbox-odds-row" style="border-top:1px solid rgba(212,160,97,0.2);margin-top:6px;padding-top:6px;"><span>⏳ Cooldown</span><span>5 Min.</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>1%</span></div>
+        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
       </div>
-      <div class="lootbox-price">🪙 300 Coins pro Box</div>
+      <div class="lootbox-price">🪙 500 Coins pro Box</div>
       <button class="btn-open-box" id="openBoxBtn">📦 Box öffnen</button>
-      <div id="cooldownTimer" style="display:none;margin-top:10px;font-size:12px;font-weight:700;color:var(--text-mid);text-align:center;letter-spacing:0.5px;">⏳ Nächste Box in <span id="cooldownCountdown"></span></div>
     </div>
   </div>
 
@@ -411,7 +343,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, runTransaction, onValue, set, get, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const app = initializeApp({
@@ -445,7 +377,7 @@
       name: 'Ocean Breeze',
       emoji: '🌊',
       desc: 'Kühles Türkis & tiefes Blau',
-      price: 5000,
+      price: 1500,
       previewBar: 'rgba(42,157,143,0.7)',
       vars: { rose:'#2a9d8f','rose-light':'#4ecdc4','rose-pale':'#e0f7f5',cream:'#f0fafa',gold:'#264653',warm:'#e8f8f7','text-dark':'#1a3a3a','text-mid':'#2a7a72' },
       ui: {}
@@ -455,7 +387,7 @@
       name: 'Forest',
       emoji: '🌿',
       desc: 'Erdiges Grün & warme Brauntöne',
-      price: 5000,
+      price: 1500,
       previewBar: 'rgba(74,124,89,0.7)',
       vars: { rose:'#4a7c59','rose-light':'#7db890','rose-pale':'#e8f5ec',cream:'#f4faf5',gold:'#6b4c2a',warm:'#ebf5ee','text-dark':'#1e3a26','text-mid':'#3a6b4a' },
       ui: {}
@@ -465,7 +397,7 @@
       name: 'Midnight',
       emoji: '🌙',
       desc: 'Mystisches Dunkel & Violett',
-      price: 10000,
+      price: 3000,
       dark: true,
       previewBg: 'linear-gradient(135deg, #2a1f4a 0%, #7c5cbf 50%, #a78bfa 100%)',
       previewBar: 'rgba(124,92,191,0.8)',
@@ -499,7 +431,7 @@
       name: 'Golden Hour',
       emoji: '✨',
       desc: 'Warmes Gold & Bernstein',
-      price: 18000,
+      price: 5000,
       dark: false,
       previewBg: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #d97706 100%)',
       previewBar: 'rgba(217,119,6,0.7)',
@@ -511,7 +443,7 @@
       name: 'Candy',
       emoji: '🍬',
       desc: 'Knalliges Pink & Lila',
-      price: 18000,
+      price: 5000,
       dark: false,
       previewBg: 'linear-gradient(135deg, #fce7f3 0%, #f9a8d4 50%, #ec4899 100%)',
       previewBar: 'rgba(236,72,153,0.7)',
@@ -684,6 +616,7 @@
     if (currentCoins < t.price) { showToast('❌ Nicht genug Coins!'); return; }
     // Coins abziehen
     await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - t.price);
+    await updateStats(0, t.price, 0);
     // Zu owned hinzufügen
     ownedThemes.push(themeId);
     await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
@@ -743,6 +676,8 @@
       overlay.style.display = 'none';
       topBar.style.display = 'flex';
       logoutBtn.textContent = currentUser + ' ausloggen';
+      document.getElementById('mainPage').removeAttribute('style');
+
       // Erst Shop-Daten laden, dann Coins live hören → immer aktuell rendern
       const shopSnap = await get(ref(db, `shop/${userKey}`));
       const shopData = shopSnap.val() || {};
@@ -750,8 +685,6 @@
       activeTheme = shopData.activeTheme || 'sakura';
       applyTheme(activeTheme);
       await loadBadges();
-      await loadBoxState();
-      document.getElementById('mainPage').removeAttribute('style');
 
       onValue(ref(db, `coins/${userKey}`), snap => {
         const raw = snap.val();
@@ -801,76 +734,23 @@
     { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
-  const BOX_PRICES = [300, 450, 650, 900, 1200]; // skalierend, letzter Wert = Cap
-  let boxesOpenedToday = 0;
-  let lastBoxDate = null; // 'YYYY-MM-DD' string
-
-  function getTodayStr() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-
-  function getCurrentBoxPrice() {
-    return BOX_PRICES[Math.min(boxesOpenedToday, BOX_PRICES.length - 1)];
-  }
-
-  function updateBoxPriceDisplay() {
-    const price = getCurrentBoxPrice();
-    const priceEl = document.querySelector('.lootbox-price');
-    if (priceEl) priceEl.textContent = '🪙 ' + price.toLocaleString('de-DE') + ' Coins pro Box';
-    const btn = document.getElementById('openBoxBtn');
-    if (!btn) return;
-    // Nächster Preis anzeigen wenn nicht letzter
-    const nextIdx = Math.min(boxesOpenedToday + 1, BOX_PRICES.length - 1);
-    const nextPrice = BOX_PRICES[nextIdx];
-    if (boxesOpenedToday < BOX_PRICES.length - 1) {
-      btn.title = 'Nächste Box kostet ' + nextPrice.toLocaleString('de-DE') + ' 🪙';
-    } else {
-      btn.title = 'Maximaler Preis erreicht';
-    }
-  }
-
-  async function loadBoxState() {
-    if (!userKey) return;
-    try {
-      const snap = await get(ref(db, 'lootbox/' + userKey));
-      const data = snap.val() || {};
-      const today = getTodayStr();
-      if (data.date === today) {
-        boxesOpenedToday = data.count || 0;
-      } else {
-        boxesOpenedToday = 0;
-        await set(ref(db, 'lootbox/' + userKey), { date: today, count: 0 });
-      }
-    } catch(e) {
-      console.warn('loadBoxState error:', e);
-      boxesOpenedToday = 0;
-    }
-    updateBoxPriceDisplay();
-  }
-
-  async function saveBoxState() {
-    const today = getTodayStr();
-    boxesOpenedToday++;
-    await set(ref(db, 'lootbox/' + userKey), { date: today, count: boxesOpenedToday });
-    updateBoxPriceDisplay();
-  }
+  const BOX_PRICE = 500;
   let ownedBadges = [];
   let ownedFrames = [];
 
   function rollLootbox() {
     const r = Math.random() * 100;
-    if (r < 33)  return { type: 'coins', amount: 100 };
-    if (r < 53)  return { type: 'coins', amount: 300 };
-    if (r < 63)  return { type: 'coins', amount: 500 };
-    if (r < 68)  return { type: 'coins', amount: 1500 };
-    if (r < 70)  return { type: 'coins', amount: 5000 };
-    if (r < 77)  return { type: 'badge', rarity: 'common' };
-    if (r < 81)  return { type: 'badge', rarity: 'rare' };
-    if (r < 83)  return { type: 'badge', rarity: 'legendary' };
-    if (r < 89)  return { type: 'frame', rarity: 'common' };
-    if (r < 93)  return { type: 'frame', rarity: 'rare' };
-    if (r < 95)  return { type: 'frame', rarity: 'legendary' };
+    if (r < 33)  return { type: 'coins', amount: 50 };
+    if (r < 56)  return { type: 'coins', amount: 200 };
+    if (r < 70)  return { type: 'coins', amount: 500 };
+    if (r < 77)  return { type: 'coins', amount: 1500 };
+    if (r < 79)  return { type: 'coins', amount: 5000 };
+    if (r < 86)  return { type: 'badge', rarity: 'common' };
+    if (r < 90)  return { type: 'badge', rarity: 'rare' };
+    if (r < 92)  return { type: 'badge', rarity: 'legendary' };
+    if (r < 95)  return { type: 'frame', rarity: 'common' };
+    if (r < 97)  return { type: 'frame', rarity: 'rare' };
+    if (r < 98)  return { type: 'frame', rarity: 'legendary' };
     if (r < 99)  return { type: 'booster', boosterId: 'coins_booster' };
     return               { type: 'booster', boosterId: 'moments_booster' };
   }
@@ -964,36 +844,12 @@
 
   let boxOpening = false;
   let lastBoxTime = 0;
-  const BOX_COOLDOWN = 5 * 60 * 1000; // 5 Minuten
-  let cooldownInterval = null;
-
-  function startCooldownTimer() {
-    const btn = document.getElementById('openBoxBtn');
-    const timerEl = document.getElementById('cooldownTimer');
-    const countdown = document.getElementById('cooldownCountdown');
-    btn.disabled = true;
-    timerEl.style.display = 'block';
-    if (cooldownInterval) clearInterval(cooldownInterval);
-    cooldownInterval = setInterval(() => {
-      const remaining = BOX_COOLDOWN - (Date.now() - lastBoxTime);
-      if (remaining <= 0) {
-        clearInterval(cooldownInterval);
-        cooldownInterval = null;
-        btn.disabled = false;
-        timerEl.style.display = 'none';
-        return;
-      }
-      const m = Math.floor(remaining / 60000);
-      const s = Math.floor((remaining % 60000) / 1000);
-      countdown.textContent = m + ':' + String(s).padStart(2, '0');
-    }, 1000);
-  }
+  const BOX_COOLDOWN = 1500; // ms zwischen zwei Box-Öffnungen
 
   async function openBox() {
     const now = Date.now();
     if (boxOpening) return;
-    if (now - lastBoxTime < BOX_COOLDOWN) { showToast('⏳ Noch Cooldown aktiv!'); return; }
-    const BOX_PRICE = getCurrentBoxPrice();
+    if (now - lastBoxTime < BOX_COOLDOWN) { showToast('⏳ Kurz warten…'); return; }
     if (!userKey || currentCoins < BOX_PRICE) { showToast('❌ Nicht genug Coins!'); return; }
     boxOpening = true;
     lastBoxTime = now;
@@ -1063,6 +919,10 @@
       currentCoins = finalBalance;
       await set(coinRef, finalBalance);
 
+      // Stats tracken
+      const earnedCoins = result.type === 'coins' ? result.amount : 0;
+      await updateStats(earnedCoins, BOX_PRICE, 1);
+
       icon.classList.remove('shake');
       icon.classList.add('burst');
       await new Promise(r => setTimeout(r, 300));
@@ -1071,8 +931,6 @@
 
       console.log('Lootbox result:', result, 'isDuplicate:', isDuplicate);
       showReward(result, isDuplicate);
-      startCooldownTimer();
-      await saveBoxState();
     } catch (err) {
       console.error('Lootbox-Fehler Details:', err.name, err.message, err.stack);
       showToast('❌ Fehler: ' + err.message);

@@ -342,10 +342,8 @@
 
 <!-- Top Bar -->
 <div class="top-bar" id="topBar">
-  <div style="display:flex; align-items:center; gap:6px;">
-    <span class="initials-avatar" id="topBarAvatar" title="Profil öffnen">?</span>
-    <a id="visitOtherProfileBtn" href="#" class="initials-avatar" title="Profil besuchen" style="display:none; text-decoration:none; width:32px; height:32px; font-size:16px; cursor:pointer;">?</a>
-  </div>
+  <a href="profil.html" class="initials-avatar" id="topBarAvatar" title="Mein Profil" style="text-decoration:none;">?</a>
+  <a id="visitOtherProfileBtn" href="#" class="initials-avatar" title="Profil besuchen" style="display:none; text-decoration:none; width:32px; height:32px; font-size:16px; cursor:pointer;">?</a>
   <div id="activeBadgePill" style="display:none;" class="active-badge-pill"><span class="badge-emoji" id="activeBadgeEmoji">🐾</span><span id="activeBadgeName"></span></div>
   <div class="coin-display" id="coinDisplay" style="display:none;"><span class="coin-icon">🪙</span><span class="coin-count" id="coinCount">0</span></div>
   <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
@@ -511,9 +509,7 @@
   const loginError  = document.getElementById('loginError');
 
   // Profile → eigene Seite
-  topBarAvatar.addEventListener('click', () => {
-    window.location.href = 'profil.html';
-  });
+  // topBarAvatar navigiert via href direkt
 
 
 
@@ -572,7 +568,9 @@
       const otherKey  = otherUser.toLowerCase();
       const visitBtn  = document.getElementById('visitOtherProfileBtn') || document.getElementById('otherUserAvatar');
       visitBtn.textContent = otherUser[0].toUpperCase();
-      visitBtn.href = 'profil.html?user=' + otherKey;
+      visitBtn.setAttribute('href', 'profil.html?user=' + otherKey);
+      visitBtn.setAttribute('data-target', 'profil.html?user=' + otherKey);
+      visitBtn.onclick = function() { window.location.href = this.getAttribute('data-target'); return false; };
       visitBtn.title = otherUser + 's Profil besuchen';
       visitBtn.style.display = 'inline-flex';
       // Rahmen des anderen aus Firebase laden
@@ -981,6 +979,7 @@
     const profAvatar = document.getElementById('profileAvatar');
     if (topAvatar)  { topAvatar.textContent  = initial; applyAvatarFrame(topAvatar,  userEquippedFrame); }
     if (profAvatar) { profAvatar.textContent = initial; applyAvatarFrame(profAvatar, userEquippedFrame); }
+    // visitOtherProfileBtn href NIEMALS überschreiben – wird einmalig beim Login gesetzt
   }
 
   function updateTopBarBadge() {
