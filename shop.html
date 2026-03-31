@@ -677,8 +677,6 @@
       overlay.style.display = 'none';
       topBar.style.display = 'flex';
       logoutBtn.textContent = currentUser + ' ausloggen';
-      document.getElementById('mainPage').removeAttribute('style');
-
       // Erst Shop-Daten laden, dann Coins live hören → immer aktuell rendern
       const shopSnap = await get(ref(db, `shop/${userKey}`));
       const shopData = shopSnap.val() || {};
@@ -687,6 +685,7 @@
       applyTheme(activeTheme);
       await loadBadges();
       await loadBoxState();
+      document.getElementById('mainPage').removeAttribute('style');
 
       onValue(ref(db, `coins/${userKey}`), snap => {
         const raw = snap.val();
@@ -754,6 +753,7 @@
     const priceEl = document.querySelector('.lootbox-price');
     if (priceEl) priceEl.textContent = '🪙 ' + price.toLocaleString('de-DE') + ' Coins pro Box';
     const btn = document.getElementById('openBoxBtn');
+    if (!btn) return;
     // Nächster Preis anzeigen wenn nicht letzter
     const nextIdx = Math.min(boxesOpenedToday + 1, BOX_PRICES.length - 1);
     const nextPrice = BOX_PRICES[nextIdx];
@@ -766,15 +766,19 @@
 
   async function loadBoxState() {
     if (!userKey) return;
-    const snap = await get(ref(db, 'lootbox/' + userKey));
-    const data = snap.val() || {};
-    const today = getTodayStr();
-    if (data.date === today) {
-      boxesOpenedToday = data.count || 0;
-    } else {
-      // Neuer Tag – Reset
+    try {
+      const snap = await get(ref(db, 'lootbox/' + userKey));
+      const data = snap.val() || {};
+      const today = getTodayStr();
+      if (data.date === today) {
+        boxesOpenedToday = data.count || 0;
+      } else {
+        boxesOpenedToday = 0;
+        await set(ref(db, 'lootbox/' + userKey), { date: today, count: 0 });
+      }
+    } catch(e) {
+      console.warn('loadBoxState error:', e);
       boxesOpenedToday = 0;
-      await set(ref(db, 'lootbox/' + userKey), { date: today, count: 0 });
     }
     updateBoxPriceDisplay();
   }
