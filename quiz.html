@@ -305,6 +305,72 @@
   }
 </script>
 
+<script type="module">
+  // Theme loading for quiz page
+  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  const _app2 = getApps().length > 0 ? getApps()[0] : initializeApp({
+    apiKey:"AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",authDomain:"nele-und-andreas.firebaseapp.com",
+    databaseURL:"https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"nele-und-andreas",storageBucket:"nele-und-andreas.firebasestorage.app",
+    messagingSenderId:"694973604970",appId:"1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const _db2 = getDatabase(_app2);
+  const THEME_GRADIENTS = {
+    sakura:'radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,163,181,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%)',
+    ocean:'radial-gradient(ellipse at 20% 20%, rgba(42,157,143,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.15) 0%, transparent 50%), linear-gradient(160deg, #f0fafa 0%, #e0f7f5 40%, #e8f8f7 70%, #f0fdf9 100%)',
+    forest:'radial-gradient(ellipse at 20% 20%, rgba(74,124,89,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(125,184,144,0.15) 0%, transparent 50%), linear-gradient(160deg, #f4faf5 0%, #e8f5ec 40%, #ebf5ee 70%, #f0faf2 100%)',
+    midnight:'radial-gradient(ellipse at 20% 20%, rgba(124,92,191,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.2) 0%, transparent 50%), linear-gradient(160deg, #1a1030 0%, #2a1f4a 100%)',
+    golden:'radial-gradient(ellipse at 20% 20%, rgba(217,119,6,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,191,36,0.15) 0%, transparent 50%), linear-gradient(160deg, #fffbeb 0%, #fef3c7 40%, #fef9e8 70%, #fffdf0 100%)',
+    candy:'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)'
+  };
+  const THEME_VARS = {
+    sakura:{rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565'},
+    ocean:{rose:'#2a9d8f','rose-light':'#4ecdc4','rose-pale':'#e0f7f5',cream:'#f0fafa',gold:'#264653',warm:'#e8f8f7','text-dark':'#1a3a3a','text-mid':'#2a7a72'},
+    forest:{rose:'#4a7c59','rose-light':'#7db890','rose-pale':'#e8f5ec',cream:'#f4faf5',gold:'#6b4c2a',warm:'#ebf5ee','text-dark':'#1e3a26','text-mid':'#3a6b4a'},
+    midnight:{rose:'#a78bfa','rose-light':'#c4b5fd','rose-pale':'#3d2f6a',cream:'#1a1030',gold:'#e2b96f',warm:'#2a1f4a','text-dark':'#f0ecff','text-mid':'#c4b5fd'},
+    golden:{rose:'#d97706','rose-light':'#fbbf24','rose-pale':'#fef3c7',cream:'#fffbeb',gold:'#92400e',warm:'#fef9e8','text-dark':'#3d1a00','text-mid':'#92580e'},
+    candy:{rose:'#ec4899','rose-light':'#f9a8d4','rose-pale':'#fce7f3',cream:'#fff0f7',gold:'#7c3aed',warm:'#fdf4fb','text-dark':'#4a0030','text-mid':'#9d174d'}
+  };
+  const DARK_UI_Q = {
+    midnight: {
+      'ui-card-bg':'rgba(42,31,74,0.85)','ui-card-border':'rgba(167,139,250,0.25)',
+      'ui-topbar-bg':'rgba(20,12,45,0.97)','ui-topbar-border':'rgba(167,139,250,0.2)',
+      'ui-btn-bg':'rgba(42,31,74,0.9)','ui-btn-border':'rgba(167,139,250,0.3)',
+      'ui-coin-bg':'rgba(42,31,74,0.9)','ui-modal-bg':'#1e1540',
+      'ui-modal-overlay':'rgba(10,6,25,0.88)','ui-modal-border':'rgba(167,139,250,0.3)',
+      'ui-active-badge-bg':'rgba(42,31,74,0.85)','ui-input-bg':'#2a1f4a',
+      'ui-input-color':'#f0ecff','ui-toast-bg':'#3d2f6a',
+    }
+  };
+  const DEFAULT_UI_Q = {
+    'ui-card-bg':'rgba(255,255,255,0.8)','ui-card-border':'rgba(232,115,138,0.18)',
+    'ui-topbar-bg':'rgba(255,248,240,0.95)','ui-topbar-border':'rgba(232,115,138,0.2)',
+    'ui-btn-bg':'rgba(255,255,255,0.9)','ui-btn-border':'rgba(232,115,138,0.25)',
+    'ui-coin-bg':'rgba(255,255,255,0.9)','ui-modal-bg':'#fff',
+    'ui-modal-overlay':'rgba(253,232,237,0.92)','ui-modal-border':'rgba(232,115,138,0.3)',
+    'ui-active-badge-bg':'rgba(255,255,255,0.75)','ui-input-bg':'var(--cream)',
+    'ui-input-color':'var(--text-dark)','ui-toast-bg':'var(--text-dark)',
+  };
+  function applyThemeOnPage(themeId) {
+    const vars = THEME_VARS[themeId]; if (!vars) return;
+    const root = document.documentElement;
+    Object.entries(vars).forEach(([k,v]) => root.style.setProperty(`--${k}`,v));
+    Object.entries(DEFAULT_UI_Q).forEach(([k,v]) => root.style.setProperty(`--${k}`,v));
+    if (DARK_UI_Q[themeId]) Object.entries(DARK_UI_Q[themeId]).forEach(([k,v]) => root.style.setProperty(`--${k}`,v));
+    const bg = document.getElementById('bgGradient');
+    if (bg) bg.style.background = THEME_GRADIENTS[themeId] || THEME_GRADIENTS.sakura;
+    document.body.style.background = DARK_UI_Q[themeId] ? vars.cream : '';
+  }
+  const _userKey = (window.currentUser || '').toLowerCase();
+  if (_userKey) {
+    get(ref(_db2, `shop/${_userKey}/activeTheme`)).then(snap => {
+      const t = snap.val();
+      if (t) applyThemeOnPage(t);
+    }).catch(() => {});
+  }
+</script>
+
 <script type="module" id="quizScript">
   import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";

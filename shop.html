@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop 🛍️ – Nele & Andreas</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8738a;
+    --rose-light: #f5a3b5;
+    --rose-pale: #fde8ed;
+    --cream: #fff8f0;
+    --gold: #d4a061;
+    --warm: #f9e4d4;
+    --text-dark: #5a2d3a;
+    --text-mid: #8b5565;
+
+    /* UI surface variables – überschrieben bei dunklen Themes */
+    --ui-card-bg: rgba(255,255,255,0.8);
+    --ui-card-border: rgba(232,115,138,0.18);
+    --ui-card-hover-shadow: rgba(232,115,138,0.14);
+    --ui-topbar-bg: rgba(255,248,240,0.95);
+    --ui-topbar-border: rgba(232,115,138,0.2);
+    --ui-btn-bg: rgba(255,255,255,0.9);
+    --ui-btn-border: rgba(232,115,138,0.25);
+    --ui-coin-bg: rgba(255,255,255,0.9);
+    --ui-modal-bg: #fff;
+    --ui-modal-overlay: rgba(253,232,237,0.92);
+    --ui-modal-border: rgba(232,115,138,0.3);
+    --ui-active-badge-bg: rgba(255,255,255,0.75);
+    --ui-input-bg: var(--cream);
+    --ui-input-color: var(--text-dark);
+    --ui-preview-btn-border: rgba(232,115,138,0.3);
+    --ui-disabled-btn: #ccc;
+    --ui-owned-badge-bg: rgba(34,197,94,0.12);
+    --ui-owned-badge-border: rgba(34,197,94,0.3);
+    --ui-owned-badge-color: #16a34a;
+    --ui-toast-bg: var(--text-dark);
+    --ui-confirm-no-border: rgba(232,115,138,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sans-serif; overflow-x: hidden; transition: background 0.6s ease; }
+
+  .bg-gradient {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(245,163,181,0.15) 0%, transparent 50%),
+      linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%);
+    z-index: 0;
+    transition: background 0.6s ease;
+  }
+
+  /* TOP BAR */
+  .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 99999; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 10px 16px; background: var(--ui-topbar-bg); border-bottom: 1px solid var(--ui-topbar-border); box-shadow: 0 2px 12px rgba(232,115,138,0.1); backdrop-filter: blur(8px); transition: background 0.4s ease, border-color 0.4s ease; }
+  .top-bar-btn { background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; text-decoration: none; display: inline-block; }
+  .top-bar-btn:hover { color: var(--rose); border-color: var(--rose); background: var(--ui-btn-bg); }
+  .coin-display { display: flex; align-items: center; gap: 6px; background: var(--ui-coin-bg); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: var(--gold); transition: background 0.4s ease; }
+  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 18px; }
+
+  /* AUTH */
+  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
+  .auth-spinner { width:36px; height:36px; border:3px solid rgba(232,115,138,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .modal-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: var(--ui-modal-overlay); }
+  .modal-card { background: var(--ui-modal-bg); border: 1.5px solid var(--ui-modal-border); border-radius: 28px; padding: 40px 36px 36px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2); }
+  .modal-emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+  .modal-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%, var(--rose-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .modal-subtitle { font-size: 13px; color: var(--text-mid); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px; font-weight: 500; }
+  .login-field { width: 100%; border: 1.5px solid var(--ui-modal-border); border-radius: 14px; padding: 13px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 500; color: var(--ui-input-color); background: var(--ui-input-bg); outline: none; margin-bottom: 12px; transition: border-color 0.2s ease; box-sizing: border-box; }
+  .login-field:focus { border-color: var(--rose); }
+  .login-btn { width: 100%; border: none; border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; margin-top: 4px; }
+  .login-btn:hover { transform: scale(1.03) translateY(-2px); }
+  .login-error { font-size: 12px; color: #c85070; margin-top: 10px; min-height: 18px; font-weight: 600; }
+
+  /* PAGE */
+  .page { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 80px 20px 60px; }
+
+  .page-header { text-align: center; margin-bottom: 8px; }
+  .page-title { font-family: 'Dancing Script', cursive; font-size: clamp(42px, 10vw, 72px); font-weight: 700; background: linear-gradient(135deg, var(--gold) 0%, #c87830 40%, var(--gold) 80%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; filter: drop-shadow(0 2px 8px rgba(212,160,97,0.25)); }
+  .page-subtitle { font-size: 13px; color: var(--text-mid); letter-spacing: 2px; text-transform: uppercase; font-weight: 500; margin-top: 8px; }
+
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 28px; background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 9px 20px; font-size: 13px; font-weight: 600; color: var(--text-mid); text-decoration: none; transition: all 0.2s ease; }
+  .back-btn:hover { color: var(--rose); border-color: var(--rose); }
+
+  /* ACTIVE THEME BADGE */
+  .active-theme-info { background: var(--ui-active-badge-bg); backdrop-filter: blur(10px); border: 1.5px solid rgba(212,160,97,0.25); border-radius: 20px; padding: 12px 20px; margin-bottom: 32px; font-size: 13px; color: var(--text-mid); font-weight: 500; display: flex; align-items: center; gap: 8px; transition: background 0.4s ease; }
+  .active-theme-info strong { color: var(--gold); font-weight: 700; }
+
+  /* THEMES GRID */
+  .themes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 900px; width: 100%; }
+
+  .theme-card { background: var(--ui-card-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--ui-card-border); border-radius: 24px; padding: 24px; box-shadow: 0 6px 30px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s ease, border-color 0.4s ease; }
+  .theme-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px var(--ui-card-hover-shadow); }
+  .theme-card.active-card { border-color: var(--gold); box-shadow: 0 6px 30px rgba(212,160,97,0.2); }
+
+  .theme-preview { height: 80px; border-radius: 14px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .theme-preview-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.9); }
+
+  .theme-name { font-family: 'Dancing Script', cursive; font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+  .theme-desc { font-size: 12px; color: var(--text-mid); font-weight: 500; margin-bottom: 16px; min-height: 16px; }
+  .theme-price { font-size: 13px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 4px; margin-bottom: 14px; }
+
+  .theme-actions { display: flex; gap: 8px; }
+  .btn-preview { flex: 1; background: transparent; border: 1.5px solid var(--ui-preview-btn-border); border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
+  .btn-preview:hover { border-color: var(--rose); color: var(--rose); }
+  .btn-buy { flex: 1; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 12px rgba(212,160,97,0.35); }
+  .btn-buy:hover { transform: scale(1.03); box-shadow: 0 5px 18px rgba(212,160,97,0.5); }
+  .btn-buy:disabled { background: var(--ui-disabled-btn); box-shadow: none; cursor: default; transform: none; }
+  .btn-activate { flex: 1; background: linear-gradient(135deg, var(--rose), #c85070); border: none; border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 12px rgba(232,115,138,0.35); }
+  .btn-activate:hover { transform: scale(1.03); }
+  .btn-activate.is-active { background: linear-gradient(135deg, #22c55e, #16a34a); }
+
+  .owned-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-owned-badge-bg); border: 1.5px solid var(--ui-owned-badge-border); border-radius: 50px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: var(--ui-owned-badge-color); margin-bottom: 10px; }
+
+  /* CONFIRM MODAL */
+  .confirm-overlay { position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center; background: var(--ui-modal-overlay); }
+  .confirm-overlay.open { display: flex; }
+  .confirm-card { background: var(--ui-modal-bg); border: 1.5px solid var(--ui-modal-border); border-radius: 28px; padding: 36px 32px 32px; max-width: 320px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2); }
+  .confirm-emoji { font-size: 44px; margin-bottom: 12px; display: block; }
+  .confirm-title { font-family: 'Dancing Script', cursive; font-size: 28px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
+  .confirm-text { font-size: 14px; color: var(--text-mid); font-weight: 500; margin-bottom: 24px; line-height: 1.6; }
+  .confirm-price { font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 24px; }
+  .confirm-buttons { display: flex; gap: 10px; }
+  .confirm-yes { flex: 1; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 16px rgba(212,160,97,0.4); transition: transform 0.2s ease; }
+  .confirm-yes:hover { transform: scale(1.03); }
+  .confirm-no { flex: 1; background: transparent; border: 1.5px solid var(--ui-confirm-no-border); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
+  .confirm-no:hover { border-color: var(--rose); color: var(--rose); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ui-toast-bg); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  .footer { margin-top: 50px; text-align: center; }
+  .footer-text { font-family: 'Dancing Script', cursive; font-size: 20px; color: var(--text-mid); font-weight: 600; }
+
+  /* SECTION DIVIDER */
+  .shop-section-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; color: var(--text-dark); text-align: center; margin: 48px 0 6px; }
+  .shop-section-sub { font-size: 12px; color: var(--text-mid); text-align: center; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; margin-bottom: 24px; }
+
+  /* LOOTBOX */
+  .lootbox-area { max-width: 900px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .lootbox-card { background: var(--ui-card-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--ui-card-border); border-radius: 24px; padding: 28px 24px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 6px 30px rgba(0,0,0,0.08); }
+  .lootbox-emoji-wrap { position: relative; display: inline-block; margin-bottom: 12px; }
+  .lootbox-icon { font-size: 72px; display: block; cursor: pointer; transition: transform 0.15s ease; filter: drop-shadow(0 4px 16px rgba(212,160,97,0.3)); }
+  .lootbox-icon:hover { transform: scale(1.08); }
+  .lootbox-icon.shake {
+    animation: lootShake 0.5s cubic-bezier(.36,.07,.19,.97) forwards;
+  }
+  .lootbox-icon.burst { animation: lootBurst 0.3s ease forwards; }
+  @keyframes lootShake {
+    0%,100%{transform:rotate(0deg) scale(1)}
+    15%{transform:rotate(-8deg) scale(1.1)}
+    30%{transform:rotate(8deg) scale(1.15)}
+    45%{transform:rotate(-6deg) scale(1.1)}
+    60%{transform:rotate(6deg) scale(1.08)}
+    75%{transform:rotate(-3deg) scale(1.05)}
+    90%{transform:rotate(3deg) scale(1.02)}
+  }
+  @keyframes lootBurst { 0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(0) rotate(20deg);opacity:0} }
+  .lootbox-name { font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+  .lootbox-desc { font-size: 12px; color: var(--text-mid); font-weight: 500; margin-bottom: 16px; }
+  .lootbox-odds { background: rgba(212,160,97,0.08); border: 1px solid rgba(212,160,97,0.2); border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; text-align: left; }
+  .lootbox-odds-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 700; margin-bottom: 8px; }
+  .lootbox-odds-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-mid); font-weight: 500; padding: 2px 0; }
+  .lootbox-odds-row span:last-child { font-weight: 700; color: var(--gold); }
+  .lootbox-price { font-size: 15px; font-weight: 700; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-open-box { width: 100%; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(212,160,97,0.4); }
+  .btn-open-box:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(212,160,97,0.5); }
+  .btn-open-box:disabled { background: var(--ui-disabled-btn); box-shadow: none; cursor: default; transform: none; }
+
+  /* REWARD POPUP */
+  .reward-overlay { position: fixed; inset: 0; z-index: 999999; display: none; align-items: center; justify-content: center; }
+  .reward-overlay.open { display: flex; }
+  .reward-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+  .reward-card { position: relative; z-index: 1; background: var(--ui-modal-bg); border: 2px solid var(--gold); border-radius: 32px; padding: 44px 36px 36px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 20px 80px rgba(212,160,97,0.4); animation: rewardPop 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+  @keyframes rewardPop { 0%{transform:scale(0.5) rotate(-5deg);opacity:0} 70%{transform:scale(1.05) rotate(1deg)} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+  .reward-emoji { font-size: 64px; display: block; margin-bottom: 12px; animation: rewardBounce 0.6s ease 0.3s both; }
+  @keyframes rewardBounce { 0%{transform:translateY(-20px);opacity:0} 60%{transform:translateY(6px)} 100%{transform:translateY(0);opacity:1} }
+  .reward-type { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+  .reward-type.coins { color: var(--gold); }
+  .reward-type.badge-common { color: #8b8b8b; }
+  .reward-type.badge-rare { color: #6c8ebf; }
+  .reward-type.badge-legendary { color: #c87830; }
+  .reward-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+  .reward-sub { font-size: 13px; color: var(--text-mid); font-weight: 500; margin-bottom: 28px; line-height: 1.5; }
+  .reward-close { width: 100%; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 16px rgba(212,160,97,0.4); transition: transform 0.2s ease; }
+  .reward-close:hover { transform: scale(1.03); }
+
+  /* KONFETTI */
+  .konfetti-piece { position: fixed; pointer-events: none; z-index: 9999998; border-radius: 3px; animation: konfettiFall linear forwards; }
+  @keyframes konfettiFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+
+  /* REWARD TYPE RAHMEN */
+  .reward-type.frame-common    { color: #8b8b8b; }
+  .reward-type.frame-rare      { color: #6c8ebf; }
+  .reward-type.frame-legendary { color: #c87830; }
+
+  /* RAHMEN-VORSCHAU IM REWARD POPUP */
+  .reward-avatar-wrap { margin: 0 auto 16px; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; position: relative; }
+  .reward-avatar-wrap::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; z-index: -1; }
+  .reward-avatar-wrap.frame-sakura    { background: linear-gradient(135deg, #e8738a, #f5a3b5); box-shadow: 0 0 0 4px #fde8ed, 0 0 0 6px #e8738a; }
+  .reward-avatar-wrap.frame-ocean     { background: linear-gradient(135deg, #2a9d8f, #4ecdc4); box-shadow: 0 0 0 4px #e0f7f5, 0 0 0 6px #2a9d8f; }
+  .reward-avatar-wrap.frame-feuer     { background: linear-gradient(135deg, #dc2626, #f97316); box-shadow: 0 0 0 4px #fff1e6, 0 0 0 6px #f97316; }
+  .reward-avatar-wrap.frame-blitz     { background: linear-gradient(135deg, #ca8a04, #fbbf24); box-shadow: 0 0 0 4px #fef9c3, 0 0 0 6px #fbbf24; }
+  .reward-avatar-wrap.frame-regenbogen{ background: linear-gradient(135deg, #e8738a, #a78bfa, #4ecdc4); box-shadow: 0 0 0 3px #fff, 0 0 0 6px transparent; animation: rainbowGlow 2s linear infinite; }
+  .reward-avatar-wrap.frame-galaxy    { background: linear-gradient(135deg, #1a1030, #7c5cbf, #a78bfa); box-shadow: 0 0 0 4px #2a1f4a, 0 0 0 7px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5); }
+  @keyframes rainbowGlow { 0%{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8738a,0 0 16px 2px #e8738a} 33%{box-shadow:0 0 0 3px #fff,0 0 0 6px #a78bfa,0 0 16px 2px #a78bfa} 66%{box-shadow:0 0 0 3px #fff,0 0 0 6px #4ecdc4,0 0 16px 2px #4ecdc4} 100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8738a,0 0 16px 2px #e8738a} }
+
+  @media (max-width: 600px) {
+    .top-bar { padding: 8px 12px; gap: 4px; flex-wrap: nowrap; }
+    .top-bar-btn { padding: 6px 10px; font-size: 11px; }
+    .coin-display { padding: 5px 10px; font-size: 11px; }
+    .coin-display .coin-count { font-size: 16px; }
+    .page { padding: 70px 12px 50px; }
+    .page-title { font-size: 48px; }
+    .page-subtitle { font-size: 11px; letter-spacing: 1.5px; }
+    .active-theme-info { font-size: 12px; padding: 10px 14px; margin-bottom: 20px; }
+    .themes-grid { grid-template-columns: 1fr; gap: 14px; }
+    .theme-card { padding: 18px; border-radius: 20px; }
+    .theme-preview { height: 70px; border-radius: 12px; }
+    .theme-name { font-size: 22px; }
+    .theme-actions { gap: 6px; }
+    .btn-preview, .btn-buy, .btn-activate { font-size: 11px; padding: 9px 6px; }
+    .confirm-card { padding: 28px 20px 24px; border-radius: 22px; }
+    .confirm-title { font-size: 24px; }
+    .confirm-text { font-size: 13px; }
+    .toast { font-size: 13px; padding: 10px 18px; bottom: 20px; max-width: 90vw; white-space: normal; text-align: center; }
+  }
+  @media (max-width: 380px) {
+    .top-bar-btn { padding: 5px 8px; font-size: 10px; }
+    .page-title { font-size: 40px; }
+    .theme-actions { flex-direction: column; }
+    .btn-preview, .btn-buy, .btn-activate { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card">
+    <span class="modal-emoji">🛍️</span>
+    <div class="modal-title">Shop</div>
+    <div class="modal-subtitle">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-card">
+    <span class="confirm-emoji" id="confirmEmoji">🛒</span>
+    <div class="confirm-title">Wirklich kaufen?</div>
+    <div class="confirm-text" id="confirmText">Möchtest du dieses Theme kaufen?</div>
+    <div class="confirm-price" id="confirmPrice">0 🪙</div>
+    <div class="confirm-buttons">
+      <button class="confirm-no" id="confirmNo">Abbrechen</button>
+      <button class="confirm-yes" id="confirmYes">Kaufen ✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reward Popup -->
+<div class="reward-overlay" id="rewardOverlay">
+  <div class="reward-backdrop" id="rewardBackdrop"></div>
+  <div class="reward-card" id="rewardCard">
+    <span class="reward-emoji" id="rewardEmoji">🎉</span>
+    <div class="reward-type" id="rewardType">Coins</div>
+    <div class="reward-title" id="rewardTitle">+1.000 🪙</div>
+    <div class="reward-sub" id="rewardSub">Nicht schlecht!</div>
+    <button class="reward-close" id="rewardCloseBtn">Nice! ✨</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Top Bar -->
+<div class="top-bar" id="topBar" style="display:none;">
+  <a href="index.html" class="top-bar-btn">← Zurück</a>
+  <div class="coin-display"><span>🪙</span><span class="coin-count" id="coinCount">0</span></div>
+  <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
+</div>
+
+<div class="bg-gradient" id="bgGradient"></div>
+
+<div class="page" id="mainPage" style="visibility:hidden; opacity:0; position:absolute; pointer-events:none;">
+  <div class="page-header">
+    <h1 class="page-title">🛍️ Shop</h1>
+    <p class="page-subtitle">Themes kaufen & aktivieren</p>
+  </div>
+
+  <div class="active-theme-info" id="activeThemeInfo">
+    🎨 Aktives Theme: <strong id="activeThemeName">Sakura 🌸</strong>
+  </div>
+
+  <div class="themes-grid" id="themesGrid">
+    <!-- Themes werden per JS gerendert -->
+  </div>
+
+  <!-- LOOTBOX SEKTION -->
+  <div class="shop-section-title">📦 Lootboxen</div>
+  <div class="shop-section-sub">Glück ist auch eine Strategie</div>
+
+  <div class="lootbox-area" id="lootboxArea">
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" id="lootboxIcon">📦</span>
+      </div>
+      <div class="lootbox-name">Mysteriöse Box</div>
+      <div class="lootbox-desc">Enthält Coins, exklusive Badges oder seltene Profilrahmen 👀</div>
+      <div class="lootbox-odds">
+        <div class="lootbox-odds-title">Mögliche Gewinne</div>
+        <div class="lootbox-odds-row"><span>50 🪙</span><span>33%</span></div>
+        <div class="lootbox-odds-row"><span>200 🪙</span><span>23%</span></div>
+        <div class="lootbox-odds-row"><span>500 🪙</span><span>14%</span></div>
+        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>7%</span></div>
+        <div class="lootbox-odds-row"><span>5.000 🪙</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>7%</span></div>
+        <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>4%</span></div>
+        <div class="lootbox-odds-row"><span>👑 Badge (Legendär)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>1%</span></div>
+        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
+      </div>
+      <div class="lootbox-price">🪙 500 Coins pro Box</div>
+      <button class="btn-open-box" id="openBoxBtn">📦 Box öffnen</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ---- THEMES DEFINITION ----
+  const THEMES = [
+    {
+      id: 'sakura',
+      name: 'Sakura',
+      emoji: '🌸',
+      desc: 'Das klassische Rosa – gratis!',
+      price: 0,
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #fde8ed 0%, #f5a3b5 50%, #e8738a 100%)',
+      previewBar: 'rgba(232,115,138,0.7)',
+      vars: { rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565' },
+      ui: {}
+    },
+    {
+      id: 'ocean',
+      name: 'Ocean Breeze',
+      emoji: '🌊',
+      desc: 'Kühles Türkis & tiefes Blau',
+      price: 1500,
+      previewBar: 'rgba(42,157,143,0.7)',
+      vars: { rose:'#2a9d8f','rose-light':'#4ecdc4','rose-pale':'#e0f7f5',cream:'#f0fafa',gold:'#264653',warm:'#e8f8f7','text-dark':'#1a3a3a','text-mid':'#2a7a72' },
+      ui: {}
+    },
+    {
+      id: 'forest',
+      name: 'Forest',
+      emoji: '🌿',
+      desc: 'Erdiges Grün & warme Brauntöne',
+      price: 1500,
+      previewBar: 'rgba(74,124,89,0.7)',
+      vars: { rose:'#4a7c59','rose-light':'#7db890','rose-pale':'#e8f5ec',cream:'#f4faf5',gold:'#6b4c2a',warm:'#ebf5ee','text-dark':'#1e3a26','text-mid':'#3a6b4a' },
+      ui: {}
+    },
+    {
+      id: 'midnight',
+      name: 'Midnight',
+      emoji: '🌙',
+      desc: 'Mystisches Dunkel & Violett',
+      price: 3000,
+      dark: true,
+      previewBg: 'linear-gradient(135deg, #2a1f4a 0%, #7c5cbf 50%, #a78bfa 100%)',
+      previewBar: 'rgba(124,92,191,0.8)',
+      vars: { rose:'#a78bfa','rose-light':'#c4b5fd','rose-pale':'#3d2f6a',cream:'#1a1030',gold:'#e2b96f',warm:'#2a1f4a','text-dark':'#f0ecff','text-mid':'#c4b5fd' },
+      ui: {
+        'ui-card-bg':           'rgba(42,31,74,0.85)',
+        'ui-card-border':       'rgba(167,139,250,0.25)',
+        'ui-card-hover-shadow': 'rgba(167,139,250,0.2)',
+        'ui-topbar-bg':         'rgba(20,12,45,0.97)',
+        'ui-topbar-border':     'rgba(167,139,250,0.2)',
+        'ui-btn-bg':            'rgba(42,31,74,0.9)',
+        'ui-btn-border':        'rgba(167,139,250,0.3)',
+        'ui-coin-bg':           'rgba(42,31,74,0.9)',
+        'ui-modal-bg':          '#1e1540',
+        'ui-modal-overlay':     'rgba(10,6,25,0.88)',
+        'ui-modal-border':      'rgba(167,139,250,0.3)',
+        'ui-active-badge-bg':   'rgba(42,31,74,0.85)',
+        'ui-input-bg':          '#2a1f4a',
+        'ui-input-color':       '#f0ecff',
+        'ui-preview-btn-border':'rgba(167,139,250,0.3)',
+        'ui-disabled-btn':      '#3a3060',
+        'ui-owned-badge-bg':    'rgba(34,197,94,0.15)',
+        'ui-owned-badge-border':'rgba(34,197,94,0.4)',
+        'ui-owned-badge-color': '#4ade80',
+        'ui-toast-bg':          '#3d2f6a',
+        'ui-confirm-no-border': 'rgba(167,139,250,0.3)',
+      }
+    },
+    {
+      id: 'golden',
+      name: 'Golden Hour',
+      emoji: '✨',
+      desc: 'Warmes Gold & Bernstein',
+      price: 5000,
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #d97706 100%)',
+      previewBar: 'rgba(217,119,6,0.7)',
+      vars: { rose:'#d97706','rose-light':'#fbbf24','rose-pale':'#fef3c7',cream:'#fffbeb',gold:'#92400e',warm:'#fef9e8','text-dark':'#3d1a00','text-mid':'#92580e' },
+      ui: {}
+    },
+    {
+      id: 'candy',
+      name: 'Candy',
+      emoji: '🍬',
+      desc: 'Knalliges Pink & Lila',
+      price: 5000,
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #fce7f3 0%, #f9a8d4 50%, #ec4899 100%)',
+      previewBar: 'rgba(236,72,153,0.7)',
+      vars: { rose:'#ec4899','rose-light':'#f9a8d4','rose-pale':'#fce7f3',cream:'#fff0f7',gold:'#7c3aed',warm:'#fdf4fb','text-dark':'#4a0030','text-mid':'#9d174d' },
+      ui: {}
+    }
+  ];
+
+  // ---- STATE ----
+  let currentUser = null;
+  let userKey = null;
+  let currentCoins = 0;
+  let ownedThemes = ['sakura'];
+  let activeTheme = 'sakura';
+  let pendingBuy = null;
+  let previewTimeout = null;
+
+  // ---- UTILS ----
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  const THEME_GRADIENTS = {
+    sakura:  'radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,163,181,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%)',
+    ocean:   'radial-gradient(ellipse at 20% 20%, rgba(42,157,143,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.15) 0%, transparent 50%), linear-gradient(160deg, #f0fafa 0%, #e0f7f5 40%, #e8f8f7 70%, #f0fdf9 100%)',
+    forest:  'radial-gradient(ellipse at 20% 20%, rgba(74,124,89,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(125,184,144,0.15) 0%, transparent 50%), linear-gradient(160deg, #f4faf5 0%, #e8f5ec 40%, #ebf5ee 70%, #f0faf2 100%)',
+    midnight:'radial-gradient(ellipse at 20% 20%, rgba(124,92,191,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.2) 0%, transparent 50%), linear-gradient(160deg, #1a1030 0%, #2a1f4a 100%)',
+    golden:  'radial-gradient(ellipse at 20% 20%, rgba(217,119,6,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,191,36,0.15) 0%, transparent 50%), linear-gradient(160deg, #fffbeb 0%, #fef3c7 40%, #fef9e8 70%, #fffdf0 100%)',
+    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)'
+  };
+
+  // Default light UI surface vars
+  const DEFAULT_UI = {
+    'ui-card-bg':           'rgba(255,255,255,0.8)',
+    'ui-card-border':       'rgba(232,115,138,0.18)',
+    'ui-card-hover-shadow': 'rgba(232,115,138,0.14)',
+    'ui-topbar-bg':         'rgba(255,248,240,0.95)',
+    'ui-topbar-border':     'rgba(232,115,138,0.2)',
+    'ui-btn-bg':            'rgba(255,255,255,0.9)',
+    'ui-btn-border':        'rgba(232,115,138,0.25)',
+    'ui-coin-bg':           'rgba(255,255,255,0.9)',
+    'ui-modal-bg':          '#fff',
+    'ui-modal-overlay':     'rgba(253,232,237,0.92)',
+    'ui-modal-border':      'rgba(232,115,138,0.3)',
+    'ui-active-badge-bg':   'rgba(255,255,255,0.75)',
+    'ui-input-bg':          'var(--cream)',
+    'ui-input-color':       'var(--text-dark)',
+    'ui-preview-btn-border':'rgba(232,115,138,0.3)',
+    'ui-disabled-btn':      '#ccc',
+    'ui-owned-badge-bg':    'rgba(34,197,94,0.12)',
+    'ui-owned-badge-border':'rgba(34,197,94,0.3)',
+    'ui-owned-badge-color': '#16a34a',
+    'ui-toast-bg':          'var(--text-dark)',
+    'ui-confirm-no-border': 'rgba(232,115,138,0.3)',
+  };
+
+  function applyTheme(themeId) {
+    const t = THEMES.find(x => x.id === themeId);
+    if (!t) return;
+    const root = document.documentElement;
+
+    // Theme-Farben setzen
+    Object.entries(t.vars).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
+
+    // UI Surface vars: erst defaults, dann theme-spezifische überschreiben
+    Object.entries(DEFAULT_UI).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
+    if (t.ui) {
+      Object.entries(t.ui).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
+    }
+
+    // Hintergrund
+    const bg = document.getElementById('bgGradient');
+    const gradient = THEME_GRADIENTS[themeId] || THEME_GRADIENTS.sakura;
+    bg.style.background = gradient;
+
+    if (t.dark) {
+      document.body.style.background = t.vars.cream;
+    } else {
+      document.body.style.background = '';
+    }
+  }
+
+  function renderThemes() {
+    const grid = document.getElementById('themesGrid');
+    grid.innerHTML = '';
+    THEMES.forEach(t => {
+      const isOwned = ownedThemes.includes(t.id);
+      const isActive = activeTheme === t.id;
+      const card = document.createElement('div');
+      card.className = 'theme-card' + (isActive ? ' active-card' : '');
+      card.innerHTML = `
+        <div class="theme-preview" style="background:${t.previewBg};">
+          <div class="theme-preview-bar" style="background:${t.previewBar};">${t.emoji} ${t.name}</div>
+        </div>
+        <div class="theme-name">${t.emoji} ${t.name}</div>
+        <div class="theme-desc">${t.desc}</div>
+        ${isOwned ? '<div class="owned-badge">✓ Gekauft</div>' : ''}
+        <div class="theme-price">${t.price === 0 ? '🎁 Kostenlos' : `🪙 ${t.price} Coins`}</div>
+        <div class="theme-actions">
+          <button class="btn-preview" data-id="${t.id}">👁️ Vorschau</button>
+          ${isOwned
+            ? `<button class="btn-activate ${isActive ? 'is-active' : ''}" data-id="${t.id}">${isActive ? '✓ Aktiv' : '🎨 Aktivieren'}</button>`
+            : t.price === 0
+              ? `<button class="btn-activate" data-id="${t.id}">🎨 Aktivieren</button>`
+              : `<button class="btn-buy" data-id="${t.id}" ${currentCoins < t.price ? 'disabled title="Zu wenig Coins"' : ''}>Kaufen 🛒</button>`
+          }
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Update active theme name
+    const active = THEMES.find(x => x.id === activeTheme);
+    document.getElementById('activeThemeName').textContent = active ? `${active.emoji} ${active.name}` : 'Sakura 🌸';
+
+    // Events
+    grid.querySelectorAll('.btn-preview').forEach(btn => {
+      btn.addEventListener('click', () => handlePreview(btn.dataset.id));
+    });
+    grid.querySelectorAll('.btn-buy').forEach(btn => {
+      if (!btn.disabled) btn.addEventListener('click', () => handleBuyClick(btn.dataset.id));
+    });
+    grid.querySelectorAll('.btn-activate').forEach(btn => {
+      btn.addEventListener('click', () => handleActivate(btn.dataset.id));
+    });
+  }
+
+  function handlePreview(themeId) {
+    if (previewTimeout) clearTimeout(previewTimeout);
+    applyTheme(themeId);
+    showToast('⏳ Vorschau für 5 Sekunden…');
+    previewTimeout = setTimeout(() => {
+      applyTheme(activeTheme);
+      showToast('🔄 Zurück zu deinem Theme');
+    }, 5000);
+  }
+
+  function handleBuyClick(themeId) {
+    const t = THEMES.find(x => x.id === themeId);
+    if (!t) return;
+    pendingBuy = themeId;
+    document.getElementById('confirmEmoji').textContent = t.emoji;
+    document.getElementById('confirmText').textContent = `Möchtest du das Theme „${t.name}" kaufen?`;
+    document.getElementById('confirmPrice').textContent = `${t.price} 🪙`;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+
+  async function handleActivate(themeId) {
+    if (!userKey) return;
+    // Kostenloses Theme oder bereits besessen: direkt aktivieren
+    activeTheme = themeId;
+    await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
+    // Zur owned list hinzufügen falls noch nicht drin
+    if (!ownedThemes.includes(themeId)) {
+      ownedThemes.push(themeId);
+      await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
+    }
+    applyTheme(themeId);
+    showToast(`✨ Theme aktiviert!`);
+    renderThemes();
+  }
+
+  async function executeBuy() {
+    const themeId = pendingBuy;
+    const t = THEMES.find(x => x.id === themeId);
+    if (!t || !userKey) return;
+    if (currentCoins < t.price) { showToast('❌ Nicht genug Coins!'); return; }
+    // Coins abziehen
+    await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - t.price);
+    // Zu owned hinzufügen
+    ownedThemes.push(themeId);
+    await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
+    // Automatisch aktivieren
+    activeTheme = themeId;
+    await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
+    applyTheme(themeId);
+    showToast(`🎉 „${t.name}" gekauft & aktiviert!`);
+    renderThemes();
+  }
+
+  // Confirm modal events
+  document.getElementById('confirmYes').addEventListener('click', async () => {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    await executeBuy();
+    pendingBuy = null;
+  });
+  document.getElementById('confirmNo').addEventListener('click', () => {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    pendingBuy = null;
+  });
+
+  // ---- AUTH ----
+  const overlay = document.getElementById('modalOverlay');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const topBar = document.getElementById('topBar');
+
+  function displayName(email) {
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de') return 'Nele';
+    return email.split('@')[0];
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPassword').value;
+    document.getElementById('loginError').textContent = '';
+    loginBtn.textContent = '…';
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch {
+      loginBtn.textContent = 'Einloggen 🌸';
+      document.getElementById('loginError').textContent = 'E-Mail oder Passwort falsch 🐾';
+    }
+  });
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      currentUser = displayName(user.email);
+      userKey = currentUser.toLowerCase();
+      document.getElementById('authLoading').style.display = 'none';
+      overlay.style.display = 'none';
+      topBar.style.display = 'flex';
+      logoutBtn.textContent = currentUser + ' ausloggen';
+      document.getElementById('mainPage').removeAttribute('style');
+
+      // Erst Shop-Daten laden, dann Coins live hören → immer aktuell rendern
+      const shopSnap = await get(ref(db, `shop/${userKey}`));
+      const shopData = shopSnap.val() || {};
+      ownedThemes = shopData.owned || ['sakura'];
+      activeTheme = shopData.activeTheme || 'sakura';
+      applyTheme(activeTheme);
+      await loadBadges();
+
+      onValue(ref(db, `coins/${userKey}`), snap => {
+        const raw = snap.val();
+        const val = raw === null || raw === undefined ? 0 : Number(raw);
+        if (Number.isFinite(val)) {
+          currentCoins = val;
+          document.getElementById('coinCount').textContent = val;
+          renderThemes();
+        } else {
+          // NaN in DB – sofort reparieren
+          console.warn('NaN in coins DB erkannt, setze auf 0');
+          set(ref(db, `coins/${userKey}`), 0);
+        }
+      });
+
+    } else {
+      currentUser = null;
+      userKey = null;
+      document.getElementById('authLoading').style.display = 'none';
+      overlay.style.display = 'flex';
+      topBar.style.display = 'none';
+      document.getElementById('mainPage').style.cssText = 'visibility:hidden;opacity:0;position:absolute;pointer-events:none;';
+    }
+  });
+  // ---- LOOTBOX ----
+  const BADGES = [
+    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'common',    rarityLabel: 'Gewöhnlich' },
+    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'common',    rarityLabel: 'Gewöhnlich' },
+    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'common',    rarityLabel: 'Gewöhnlich' },
+    { id: 'gamerin',      emoji: '🎮', name: 'Gamerin',          rarity: 'common',    rarityLabel: 'Gewöhnlich' },
+    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'rare',      rarityLabel: 'Selten' },
+    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'rare',      rarityLabel: 'Selten' },
+    { id: 'feuerfuchs',   emoji: '🔥', name: 'Feuerfuchs',       rarity: 'rare',      rarityLabel: 'Selten' },
+    { id: 'diamant',      emoji: '💎', name: 'Diamant',           rarity: 'rare',      rarityLabel: 'Selten' },
+    { id: 'klickqueen',   emoji: '👑', name: 'Klick-Queen',      rarity: 'legendary', rarityLabel: 'Legendär' },
+    { id: 'sternen',      emoji: '🌟', name: 'Sternensammlerin', rarity: 'legendary', rarityLabel: 'Legendär' },
+    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'legendary', rarityLabel: 'Legendär' },
+    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'legendary', rarityLabel: 'Legendär' },
+  ];
+
+  const FRAMES = [
+    { id: 'sakura',      name: 'Sakura',      emoji: '🌸', rarity: 'common',    rarityLabel: 'Gewöhnlich', cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
+    { id: 'ocean',       name: 'Ozean',       emoji: '🌊', rarity: 'common',    rarityLabel: 'Gewöhnlich', cssClass: 'frame-ocean',      gradient: 'linear-gradient(135deg,#2a9d8f,#4ecdc4)' },
+    { id: 'feuer',       name: 'Feuer',       emoji: '🔥', rarity: 'rare',      rarityLabel: 'Selten',     cssClass: 'frame-feuer',      gradient: 'linear-gradient(135deg,#dc2626,#f97316)' },
+    { id: 'blitz',       name: 'Blitz',       emoji: '⚡', rarity: 'rare',      rarityLabel: 'Selten',     cssClass: 'frame-blitz',      gradient: 'linear-gradient(135deg,#ca8a04,#fbbf24)' },
+    { id: 'regenbogen',  name: 'Regenbogen',  emoji: '🌈', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-regenbogen', gradient: 'linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4)' },
+    { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
+  ];
+
+  const BOX_PRICE = 500;
+  let ownedBadges = [];
+  let ownedFrames = [];
+
+  function rollLootbox() {
+    const r = Math.random() * 100;
+    if (r < 33)  return { type: 'coins', amount: 50 };
+    if (r < 56)  return { type: 'coins', amount: 200 };
+    if (r < 70)  return { type: 'coins', amount: 500 };
+    if (r < 77)  return { type: 'coins', amount: 1500 };
+    if (r < 79)  return { type: 'coins', amount: 5000 };
+    if (r < 86)  return { type: 'badge', rarity: 'common' };
+    if (r < 90)  return { type: 'badge', rarity: 'rare' };
+    if (r < 92)  return { type: 'badge', rarity: 'legendary' };
+    if (r < 95)  return { type: 'frame', rarity: 'common' };
+    if (r < 97)  return { type: 'frame', rarity: 'rare' };
+    if (r < 98)  return { type: 'frame', rarity: 'legendary' };
+    if (r < 99)  return { type: 'booster', boosterId: 'coins_booster' };
+    return               { type: 'booster', boosterId: 'moments_booster' };
+  }
+
+  function pickFromPool(pool, ownedList) {
+    const available = pool.filter(x => !ownedList.includes(x.id));
+    if (available.length === 0) return null;
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  function spawnKonfetti() {
+    const colors = ['#e8738a','#f5a3b5','#d4a061','#a78bfa','#4ecdc4','#fbbf24','#ec4899','#22c55e'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'konfetti-piece';
+      const size = 6 + Math.random() * 10;
+      el.style.cssText = `width:${size}px;height:${size*(0.4+Math.random()*0.6)}px;left:${Math.random()*100}vw;top:${-20-Math.random()*40}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;transform:rotate(${Math.random()*360}deg);border-radius:${Math.random()>0.5?'50%':'3px'};`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+  }
+
+  function getUserInitial() {
+    return (currentUser || '?')[0].toUpperCase();
+  }
+
+  function showReward(result, isDuplicate) {
+    const overlay = document.getElementById('rewardOverlay');
+    const card     = document.getElementById('rewardCard');
+    const rewardEmoji = document.getElementById('rewardEmoji');
+    const rewardType  = document.getElementById('rewardType');
+    const rewardTitle = document.getElementById('rewardTitle');
+    const rewardSub   = document.getElementById('rewardSub');
+
+    // Clear old avatar if present
+    const oldAvatar = card.querySelector('.reward-avatar-wrap');
+    if (oldAvatar) oldAvatar.remove();
+
+    rewardEmoji.style.display = 'block';
+
+    if (result.type === 'coins') {
+      rewardEmoji.textContent = result.amount >= 15000 ? '💰' : result.amount >= 5000 ? '🤑' : '🪙';
+      rewardType.className = 'reward-type coins';
+      rewardType.textContent = isDuplicate ? 'Trostpreis!' : 'Coins gewonnen!';
+      rewardTitle.textContent = `+${result.amount.toLocaleString('de-DE')} 🪙`;
+      rewardSub.textContent = result.amount >= 5000 ? 'MEGA-JACKPOT! 🎉' :
+                              result.amount >= 1500 ? 'Fetter Gewinn! 😍' :
+                              result.amount >= 500  ? 'Break-even! 👌' :
+                              result.amount >= 200  ? 'Solider Gewinn 💪' : 'Trostpreis – nächstes Mal! 🤞';
+    } else if (result.type === 'badge' && result.item) {
+      const b = result.item;
+      rewardEmoji.textContent = b.emoji;
+      rewardType.className = `reward-type badge-${b.rarity}`;
+      rewardType.textContent = `${b.rarityLabel} Badge`;
+      rewardTitle.textContent = b.name;
+      rewardSub.textContent = isDuplicate
+        ? 'Schon gehabt – du bekommst stattdessen 100 🪙'
+        : 'Neuer Badge! Im Profil ausrüsten 🎨';
+    } else if (result.type === 'booster') {
+      const isCoin = result.boosterId === 'coins_booster';
+      rewardEmoji.textContent = isCoin ? '⚡' : '💫';
+      rewardType.className = 'reward-type coins';
+      rewardType.textContent = 'Booster gewonnen!';
+      rewardTitle.textContent = isCoin ? '⚡ Coin-Booster' : '💫 Momenten-Booster';
+      rewardSub.textContent = isCoin
+        ? 'Doppelte Coins für 10 Min.!\nIm Profil → Inventar aktivieren 🚀'
+        : 'Doppelte Momente für 3 Min.!\nIm Profil → Inventar aktivieren 🚀';
+    } else if (result.type === 'frame' && result.item) {
+      const f = result.item;
+      rewardEmoji.style.display = 'none';
+      const avatarEl = document.createElement('div');
+      avatarEl.className = `reward-avatar-wrap ${f.cssClass}`;
+      avatarEl.textContent = getUserInitial();
+      rewardType.parentNode.insertBefore(avatarEl, rewardType);
+      rewardType.className = `reward-type frame-${f.rarity}`;
+      rewardType.textContent = `${f.rarityLabel} Profilrahmen`;
+      rewardTitle.textContent = `${f.emoji} ${f.name}`;
+      rewardSub.textContent = isDuplicate
+        ? 'Schon gehabt – du bekommst stattdessen 100 🪙'
+        : 'Neuer Rahmen! Im Profil ausrüsten ✨';
+    }
+
+    // Animation neu triggern ohne cloneNode
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = '';
+
+    overlay.classList.add('open');
+    spawnKonfetti();
+  }
+
+  let boxOpening = false;
+  let lastBoxTime = 0;
+  const BOX_COOLDOWN = 1500; // ms zwischen zwei Box-Öffnungen
+
+  async function openBox() {
+    const now = Date.now();
+    if (boxOpening) return;
+    if (now - lastBoxTime < BOX_COOLDOWN) { showToast('⏳ Kurz warten…'); return; }
+    if (!userKey || currentCoins < BOX_PRICE) { showToast('❌ Nicht genug Coins!'); return; }
+    boxOpening = true;
+    lastBoxTime = now;
+
+    const btn  = document.getElementById('openBoxBtn');
+    const icon = document.getElementById('lootboxIcon');
+    btn.disabled = true;
+
+    try {
+      icon.classList.remove('shake', 'burst');
+      void icon.offsetWidth;
+      icon.classList.add('shake');
+      await new Promise(r => setTimeout(r, 600));
+
+      const roll = rollLootbox();
+      let result = { type: roll.type };
+      if (roll.type === 'coins') result.amount = roll.amount;
+      let isDuplicate = false;
+
+      if (roll.type === 'booster') {
+        result.boosterId = roll.boosterId;
+        const invRef = ref(db, `boosters/${userKey}/inventory/${roll.boosterId}`);
+        const invSnap = await get(invRef);
+        const current = invSnap.val() || 0;
+        await set(invRef, current + 1);
+      } else if (roll.type === 'badge') {
+        const pool = BADGES.filter(b => b.rarity === roll.rarity);
+        const item = pickFromPool(pool, ownedBadges);
+        if (item) {
+          result.item = item;
+          ownedBadges.push(item.id);
+          await set(ref(db, `shop/${userKey}/badges`), ownedBadges);
+        } else {
+          result = { type: 'coins', amount: 100 };
+          isDuplicate = true;
+        }
+      } else if (roll.type === 'frame') {
+        const pool = FRAMES.filter(f => f.rarity === roll.rarity);
+        const item = pickFromPool(pool, ownedFrames);
+        if (item) {
+          result.item = item;
+          ownedFrames.push(item.id);
+          await set(ref(db, `shop/${userKey}/frames`), ownedFrames);
+        } else {
+          result = { type: 'coins', amount: 100 };
+          isDuplicate = true;
+        }
+      }
+
+      // Coins abziehen – mit absolutem NaN-Schutz
+      await new Promise(r => setTimeout(r, 200));
+      const coinRef = ref(db, `coins/${userKey}`);
+      const freshSnap = await get(coinRef);
+      const freshVal = freshSnap.val();
+      let freshCoins = Number(freshVal);
+      // Wenn freshCoins NaN ist, alle möglichen Fallbacks versuchen
+      if (!Number.isFinite(freshCoins)) freshCoins = currentCoins;
+      if (!Number.isFinite(freshCoins)) freshCoins = 0;
+      const deduct = BOX_PRICE;
+      const reward = result.type === 'coins' ? result.amount : 0;
+      const finalBalance = freshCoins - deduct + reward;
+      // Absoluter NaN-Schutz: niemals NaN in DB schreiben
+      if (!Number.isFinite(finalBalance)) {
+        console.error('finalBalance NaN! freshVal=', freshVal, 'freshCoins=', freshCoins, 'currentCoins=', currentCoins, 'deduct=', deduct, 'reward=', reward, 'result=', JSON.stringify(result));
+        throw new Error('Coin-Berechnung fehlgeschlagen, bitte nochmal versuchen');
+      }
+      currentCoins = finalBalance;
+      await set(coinRef, finalBalance);
+
+      icon.classList.remove('shake');
+      icon.classList.add('burst');
+      await new Promise(r => setTimeout(r, 300));
+      icon.classList.remove('burst');
+      icon.textContent = '📦';
+
+      console.log('Lootbox result:', result, 'isDuplicate:', isDuplicate);
+      showReward(result, isDuplicate);
+    } catch (err) {
+      console.error('Lootbox-Fehler Details:', err.name, err.message, err.stack);
+      showToast('❌ Fehler: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      boxOpening = false;
+    }
+  }
+
+  document.getElementById('openBoxBtn').addEventListener('click', openBox);
+  document.getElementById('rewardCloseBtn').addEventListener('click', () => {
+    document.getElementById('rewardOverlay').classList.remove('open');
+  });
+
+  async function loadBadges() {
+    if (!userKey) return;
+    const [bSnap, fSnap] = await Promise.all([
+      get(ref(db, `shop/${userKey}/badges`)),
+      get(ref(db, `shop/${userKey}/frames`)),
+    ]);
+    ownedBadges = bSnap.val() || [];
+    ownedFrames = fSnap.val() || [];
+  }
+
+</script>

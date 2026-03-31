@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Mein Profil 🐾</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rose: #e8738a; --rose-light: #f5a3b5; --rose-pale: #fde8ed;
+      --cream: #fff8f0; --gold: #d4a061; --warm: #f9e4d4;
+      --text-dark: #5a2d3a; --text-mid: #8b5565;
+      --ui-card-bg: rgba(255,255,255,0.8);
+      --ui-card-border: rgba(232,115,138,0.18);
+      --ui-topbar-bg: rgba(255,248,240,0.95);
+      --ui-topbar-border: rgba(232,115,138,0.2);
+      --ui-modal-bg: #fff;
+      --ui-input-bg: var(--cream);
+      --ui-input-color: var(--text-dark);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; font-family: 'Quicksand', sans-serif; background: var(--cream); }
+
+    /* AUTH LOADING */
+    .auth-loading { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: var(--cream); }
+    .auth-spinner { width: 36px; height: 36px; border: 3px solid rgba(232,115,138,0.2); border-top-color: var(--rose); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* PAGE */
+    .page { max-width: 440px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* BACK BUTTON */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border);
+      border-radius: 50px; padding: 9px 18px;
+      font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600;
+      color: var(--text-mid); cursor: pointer; text-decoration: none;
+      transition: all 0.2s ease; margin-bottom: 24px; display: inline-flex;
+    }
+    .back-btn:hover { border-color: var(--rose); color: var(--rose); transform: translateX(-3px); }
+
+    /* PROFILE HEADER */
+    .profile-header { text-align: center; margin-bottom: 28px; }
+    .profile-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-top: 14px; margin-bottom: 4px; }
+    .profile-subtitle { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; }
+
+    /* AVATAR */
+    .initials-avatar { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); margin: 0 auto; transition: box-shadow 0.3s ease; }
+    .frame-sakura     { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a; }
+    .frame-ocean      { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f; background: linear-gradient(135deg,#2a9d8f,#4ecdc4); }
+    .frame-feuer      { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316; background: linear-gradient(135deg,#dc2626,#f97316); }
+    .frame-blitz      { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24; background: linear-gradient(135deg,#ca8a04,#fbbf24); }
+    .frame-regenbogen { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); animation: topbarRainbow 2s linear infinite; }
+    .frame-galaxy     { background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa); box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 12px 2px rgba(167,139,250,0.5); }
+    @keyframes topbarRainbow {
+      0%   { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    /* ACTIVE BADGE PILL */
+    .badge-pill { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,160,97,0.1); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-top: 10px; }
+
+    /* SECTION */
+    .section { background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border); border-radius: 22px; padding: 20px; margin-bottom: 16px; }
+    .section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 12px; }
+    .section-hint { font-size: 11px; color: var(--text-mid); font-weight: 500; margin-bottom: 10px; }
+
+    /* BADGE GRID */
+    .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .badge-item { border-radius: 14px; padding: 8px 4px; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s ease; position: relative; }
+    .badge-item.owned { background: rgba(255,255,255,0.7); border-color: rgba(232,115,138,0.2); }
+    .badge-item.owned:hover { border-color: var(--rose); transform: translateY(-2px); }
+    .badge-item.owned.equipped { border-color: var(--gold); background: rgba(212,160,97,0.1); box-shadow: 0 2px 10px rgba(212,160,97,0.2); }
+    .badge-item.locked { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); opacity: 0.45; cursor: default; }
+    .badge-item-emoji { font-size: 24px; display: block; margin-bottom: 2px; }
+    .badge-item.locked .badge-item-emoji { filter: grayscale(1); font-size: 20px; }
+    .badge-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
+    .badge-item.locked .badge-item-name { color: #bbb; }
+    .badge-rarity-dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; }
+    .badge-rarity-dot.common { background: #a0a0a0; }
+    .badge-rarity-dot.rare { background: #6c8ebf; }
+    .badge-rarity-dot.legendary { background: #c87830; }
+    .badge-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; }
+
+    /* FRAME GRID */
+    .frame-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .frame-item { border-radius: 16px; padding: 10px 6px; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s ease; position: relative; }
+    .frame-item.owned { background: rgba(255,255,255,0.7); border-color: rgba(232,115,138,0.2); }
+    .frame-item.owned:hover { border-color: var(--rose); transform: translateY(-2px); }
+    .frame-item.owned.equipped { border-color: var(--gold); background: rgba(212,160,97,0.1); box-shadow: 0 2px 10px rgba(212,160,97,0.2); }
+    .frame-item.locked { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); opacity: 0.45; cursor: default; }
+    .frame-preview-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; color: white; margin: 0 auto 5px; }
+    .frame-item.locked .frame-preview-avatar { background: #ccc !important; }
+    .frame-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
+    .frame-item.locked .frame-item-name { color: #bbb; }
+    .frame-rarity-dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; }
+    .frame-rarity-dot.common { background: #a0a0a0; }
+    .frame-rarity-dot.rare { background: #6c8ebf; }
+    .frame-rarity-dot.legendary { background: #c87830; }
+    .frame-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; }
+
+    /* BOOSTER INVENTAR */
+    .booster-list { display: flex; flex-direction: column; gap: 10px; }
+    .booster-item { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.7); border: 1.5px solid rgba(212,160,97,0.2); border-radius: 16px; padding: 14px 16px; }
+    .booster-emoji { font-size: 32px; flex-shrink: 0; }
+    .booster-info { flex: 1; }
+    .booster-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+    .booster-desc { font-size: 11px; color: var(--text-mid); font-weight: 500; }
+    .booster-count { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; color: var(--gold); margin-right: 10px; flex-shrink: 0; }
+    .booster-activate-btn { background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 8px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 10px rgba(212,160,97,0.35); flex-shrink: 0; }
+    .booster-activate-btn:hover { transform: scale(1.05); }
+    .booster-activate-btn:disabled { background: #ccc; box-shadow: none; cursor: default; transform: none; }
+    .booster-active-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(34,197,94,0.12); border: 1.5px solid rgba(34,197,94,0.3); border-radius: 50px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #16a34a; flex-shrink: 0; }
+    .booster-empty { font-size: 12px; color: var(--text-mid); text-align: center; padding: 16px 0; font-weight: 500; }
+
+    /* BOOSTER CONFIRM MODAL */
+    .booster-confirm-overlay { position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center; background: rgba(253,232,237,0.92); backdrop-filter: blur(4px); }
+    .booster-confirm-overlay.open { display: flex; }
+    .booster-confirm-card { background: var(--ui-modal-bg, #fff); border: 1.5px solid rgba(212,160,97,0.4); border-radius: 28px; padding: 36px 28px 28px; max-width: 320px; width: 90%; text-align: center; box-shadow: 0 16px 60px rgba(212,160,97,0.25); }
+    .booster-confirm-emoji { font-size: 52px; display: block; margin-bottom: 10px; }
+    .booster-confirm-title { font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
+    .booster-confirm-text { font-size: 13px; color: var(--text-mid); font-weight: 500; margin-bottom: 20px; line-height: 1.6; }
+    .booster-confirm-warn { font-size: 12px; color: #c85070; font-weight: 600; margin-bottom: 20px; }
+    .booster-confirm-btns { display: flex; gap: 10px; }
+    .booster-confirm-yes { flex: 1; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 14px rgba(212,160,97,0.4); transition: transform 0.2s ease; }
+    .booster-confirm-yes:hover { transform: scale(1.03); }
+    .booster-confirm-no { flex: 1; background: transparent; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
+    .booster-confirm-no:hover { border-color: var(--rose); color: var(--rose); }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-dark); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .account-section { margin-top: 8px; margin-bottom: 32px; }
+    .account-toggle { display: flex; align-items: center; gap: 6px; background: none; border: none; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-mid); cursor: pointer; opacity: 0.55; padding: 8px 4px; transition: opacity 0.2s ease; }
+    .account-toggle:hover { opacity: 0.8; }
+    .account-toggle-icon { font-size: 10px; transition: transform 0.2s ease; }
+    .account-toggle-icon.open { transform: rotate(90deg); }
+    .account-content { display: none; background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border); border-radius: 18px; padding: 16px; margin-top: 4px; opacity: 0.85; }
+    .account-content.visible { display: block; }
+    .account-sub-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 8px; margin-top: 12px; opacity: 0.7; }
+    .account-sub-label:first-child { margin-top: 0; }
+    .account-field { width: 100%; border: 1.5px solid rgba(232,115,138,0.2); border-radius: 12px; padding: 10px 14px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 500; color: var(--ui-input-color); background: var(--ui-input-bg); outline: none; margin-bottom: 8px; transition: border-color 0.2s ease; }
+    .account-field:focus { border-color: var(--rose); }
+    .account-btn { width: 100%; border: none; border-radius: 50px; padding: 12px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: white; transition: transform 0.2s ease; opacity: 0.85; }
+    .account-btn:hover { transform: scale(1.02); opacity: 1; }
+    .account-msg { font-size: 11px; min-height: 16px; font-weight: 600; margin-top: 6px; }
+    .account-msg.success { color: #22a35a; }
+    .account-msg.error { color: #c85070; }
+    .account-divider { border: none; border-top: 1px solid rgba(232,115,138,0.12); margin: 14px 0 10px; }
+  </style>
+</head>
+<body>
+
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
+
+<!-- Booster Bestätigungs-Modal -->
+<div class="booster-confirm-overlay" id="boosterConfirmOverlay">
+  <div class="booster-confirm-card">
+    <span class="booster-confirm-emoji" id="boosterConfirmEmoji">⚡</span>
+    <div class="booster-confirm-title" id="boosterConfirmTitle">Booster aktivieren?</div>
+    <div class="booster-confirm-text" id="boosterConfirmText"></div>
+    <div class="booster-confirm-warn">⚠️ Der Timer startet sofort und läuft auch wenn du die Seite verlässt!</div>
+    <div class="booster-confirm-btns">
+      <button class="booster-confirm-no" id="boosterConfirmNo">Abbrechen</button>
+      <button class="booster-confirm-yes" id="boosterConfirmYes">Jetzt aktivieren 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="page" id="profilePage" style="display:none;">
+
+  <a href="index.html" class="back-btn">← Zurück</a>
+
+  <div class="profile-header">
+    <div class="initials-avatar" id="profileAvatar">?</div>
+    <div class="profile-title" id="profileTitle">Mein Profil</div>
+    <div class="profile-subtitle" id="profileSubtitle"></div>
+    <div id="activeBadgePill" style="display:none;" class="badge-pill">
+      <span id="activeBadgeEmoji">🐾</span>
+      <span id="activeBadgeName"></span>
+    </div>
+  </div>
+
+  <!-- BADGES -->
+  <div class="section">
+    <div class="section-label">🏅 Meine Badges</div>
+    <div class="section-hint">Klick auf ein Badge um es auszurüsten ✨</div>
+    <div class="badge-grid" id="profileBadgeGrid">
+      <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
+    </div>
+  </div>
+
+  <!-- RAHMEN -->
+  <div class="section">
+    <div class="section-label">🖼️ Meine Rahmen</div>
+    <div class="section-hint">Klick auf einen Rahmen um ihn zu aktivieren ✨</div>
+    <div class="frame-grid" id="profileFrameGrid">
+      <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Rahmen…</div>
+    </div>
+  </div>
+
+  <!-- BOOSTER INVENTAR -->
+  <div class="section">
+    <div class="section-label">🚀 Booster Inventar</div>
+    <div class="section-hint">Aktiviere einen Booster wenn du ihn brauchst ✨</div>
+    <div class="booster-list" id="boosterList">
+      <div class="booster-empty">Lade Booster…</div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT (aufklappbar, unscheinbar) -->
+  <div class="account-section">
+    <button class="account-toggle" id="accountToggle">
+      <span class="account-toggle-icon" id="accountToggleIcon">›</span>
+      Account-Einstellungen
+    </button>
+    <div class="account-content" id="accountContent">
+      <div class="account-sub-label">E-Mail ändern</div>
+      <input class="account-field" type="email" id="profileEmail" placeholder="Neue E-Mail-Adresse">
+      <input class="account-field" type="password" id="profileEmailPw" placeholder="Aktuelles Passwort bestätigen">
+      <button class="account-btn" id="saveEmailBtn">E-Mail speichern</button>
+      <div class="account-msg" id="emailMsg"></div>
+
+      <hr class="account-divider">
+
+      <div class="account-sub-label">Passwort ändern</div>
+      <input class="account-field" type="password" id="profilePwCurrent" placeholder="Aktuelles Passwort">
+      <input class="account-field" type="password" id="profilePwNew" placeholder="Neues Passwort">
+      <input class="account-field" type="password" id="profilePwConfirm" placeholder="Neues Passwort bestätigen">
+      <button class="account-btn" id="savePwBtn">Passwort speichern</button>
+      <div class="account-msg" id="pwMsg"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, get, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  function displayName(email) {
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
+    return email.split('@')[0];
+  }
+
+  const ALL_BADGES = [
+    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'common' },
+    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'common' },
+    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'common' },
+    { id: 'gamerin',      emoji: '🎮', name: 'Gamerin',          rarity: 'common' },
+    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'rare' },
+    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'rare' },
+    { id: 'feuerfuchs',   emoji: '🔥', name: 'Feuerfuchs',       rarity: 'rare' },
+    { id: 'diamant',      emoji: '💎', name: 'Diamant',           rarity: 'rare' },
+    { id: 'klickqueen',   emoji: '👑', name: 'Klick-Queen',      rarity: 'legendary' },
+    { id: 'sternen',      emoji: '🌟', name: 'Sternensammlerin', rarity: 'legendary' },
+    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'legendary' },
+    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'legendary' },
+  ];
+  const ALL_FRAMES = [
+    { id: 'sakura',     name: 'Sakura',     emoji: '🌸', rarity: 'common',    cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
+    { id: 'ocean',      name: 'Ozean',      emoji: '🌊', rarity: 'common',    cssClass: 'frame-ocean',      gradient: 'linear-gradient(135deg,#2a9d8f,#4ecdc4)' },
+    { id: 'feuer',      name: 'Feuer',      emoji: '🔥', rarity: 'rare',      cssClass: 'frame-feuer',      gradient: 'linear-gradient(135deg,#dc2626,#f97316)' },
+    { id: 'blitz',      name: 'Blitz',      emoji: '⚡', rarity: 'rare',      cssClass: 'frame-blitz',      gradient: 'linear-gradient(135deg,#ca8a04,#fbbf24)' },
+    { id: 'regenbogen', name: 'Regenbogen', emoji: '🌈', rarity: 'legendary', cssClass: 'frame-regenbogen', gradient: 'linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4)' },
+    { id: 'galaxy',     name: 'Galaxy',     emoji: '🔮', rarity: 'legendary', cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
+  ];
+
+  let currentUser    = null;
+  let ownedBadges    = [];
+  let ownedFrames    = [];
+  let equippedBadge  = null;
+  let equippedFrame  = null;
+  let boosterInventory = { coins_booster: 0, moments_booster: 0 };
+  let activeBoosterCoin    = null; // { activatedAt, durationMs }
+  let activeBoosterMoments = null;
+  let pendingBoosterId     = null;
+  let boosterCountdownInterval = null;
+
+  const BOOSTER_DEFS = {
+    coins_booster:   { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten', durationMs: 10 * 60 * 1000 },
+    moments_booster: { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten', durationMs: 3 * 60 * 1000 },
+  };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function formatCountdown(ms) {
+    if (ms <= 0) return '00:00';
+    const totalSec = Math.ceil(ms / 1000);
+    const min = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const sec = (totalSec % 60).toString().padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+
+  function isBoosterActive(boosterData) {
+    if (!boosterData || !boosterData.activatedAt) return false;
+    return Date.now() < boosterData.activatedAt + boosterData.durationMs;
+  }
+
+  function renderBoosters() {
+    const list = document.getElementById('boosterList');
+    list.innerHTML = '';
+    const coinActive    = isBoosterActive(activeBoosterCoin);
+    const momentActive  = isBoosterActive(activeBoosterMoments);
+    const hasCoin       = boosterInventory.coins_booster > 0;
+    const hasMoments    = boosterInventory.moments_booster > 0;
+
+    if (!hasCoin && !hasMoments && !coinActive && !momentActive) {
+      list.innerHTML = '<div class="booster-empty">Noch keine Booster im Inventar 📦<br><span style="font-size:10px;opacity:0.7">Aus Lootboxen im Shop erhältlich</span></div>';
+      return;
+    }
+
+    Object.entries(BOOSTER_DEFS).forEach(([id, def]) => {
+      const count  = boosterInventory[id] || 0;
+      const active = id === 'coins_booster' ? coinActive : momentActive;
+      const activeData = id === 'coins_booster' ? activeBoosterCoin : activeBoosterMoments;
+
+      if (count === 0 && !active) return;
+
+      const el = document.createElement('div');
+      el.className = 'booster-item';
+
+      let rightSide = '';
+      if (active && activeData) {
+        const remaining = (activeData.activatedAt + activeData.durationMs) - Date.now();
+        rightSide = `<div class="booster-active-badge" id="boosterTimer_${id}">✓ Aktiv ${formatCountdown(remaining)}</div>`;
+      } else if (count > 0) {
+        rightSide = `
+          <span class="booster-count">×${count}</span>
+          <button class="booster-activate-btn" data-id="${id}">Aktivieren</button>
+        `;
+      }
+
+      el.innerHTML = `
+        <div class="booster-emoji">${def.emoji}</div>
+        <div class="booster-info">
+          <div class="booster-name">${def.name}</div>
+          <div class="booster-desc">${def.desc}</div>
+        </div>
+        ${rightSide}
+      `;
+      list.appendChild(el);
+    });
+
+    // Event listeners
+    list.querySelectorAll('.booster-activate-btn').forEach(btn => {
+      btn.addEventListener('click', () => openBoosterConfirm(btn.dataset.id));
+    });
+
+    // Countdown interval neu starten
+    if (boosterCountdownInterval) clearInterval(boosterCountdownInterval);
+    if (coinActive || momentActive) {
+      boosterCountdownInterval = setInterval(() => {
+        ['coins_booster', 'moments_booster'].forEach(id => {
+          const el = document.getElementById(`boosterTimer_${id}`);
+          if (!el) return;
+          const data = id === 'coins_booster' ? activeBoosterCoin : activeBoosterMoments;
+          if (!data) return;
+          const remaining = (data.activatedAt + data.durationMs) - Date.now();
+          if (remaining <= 0) {
+            clearInterval(boosterCountdownInterval);
+            renderBoosters();
+          } else {
+            el.textContent = `✓ Aktiv ${formatCountdown(remaining)}`;
+          }
+        });
+      }, 1000);
+    }
+  }
+
+  function openBoosterConfirm(boosterId) {
+    const def = BOOSTER_DEFS[boosterId];
+    if (!def) return;
+    pendingBoosterId = boosterId;
+    document.getElementById('boosterConfirmEmoji').textContent  = def.emoji;
+    document.getElementById('boosterConfirmTitle').textContent  = `${def.name} aktivieren?`;
+    document.getElementById('boosterConfirmText').textContent   = def.desc + '.';
+    document.getElementById('boosterConfirmOverlay').classList.add('open');
+  }
+
+  async function activateBooster(boosterId) {
+    if (!currentUser) return;
+    const key  = currentUser.toLowerCase();
+    const def  = BOOSTER_DEFS[boosterId];
+    const count = boosterInventory[boosterId] || 0;
+    if (count <= 0) { showToast('❌ Kein Booster im Inventar!'); return; }
+
+    const activeKey = boosterId === 'coins_booster' ? 'active_coins' : 'active_moments';
+    const activatedAt = Date.now();
+
+    // Inventar um 1 verringern
+    await set(ref(db, `boosters/${key}/inventory/${boosterId}`), count - 1);
+    // Aktiven Booster setzen
+    await set(ref(db, `boosters/${key}/${activeKey}`), { activatedAt, durationMs: def.durationMs });
+
+    showToast(`🚀 ${def.name} aktiviert! Viel Spaß!`);
+  }
+
+  document.getElementById('boosterConfirmYes').addEventListener('click', async () => {
+    document.getElementById('boosterConfirmOverlay').classList.remove('open');
+    if (pendingBoosterId) {
+      await activateBooster(pendingBoosterId);
+      pendingBoosterId = null;
+    }
+  });
+  document.getElementById('boosterConfirmNo').addEventListener('click', () => {
+    document.getElementById('boosterConfirmOverlay').classList.remove('open');
+    pendingBoosterId = null;
+  });
+
+  function getUserInitial() { return (currentUser || '?')[0].toUpperCase(); }
+
+  function applyAvatarFrame(el, frameId) {
+    ALL_FRAMES.forEach(f => el.classList.remove(f.cssClass));
+    if (frameId) {
+      const f = ALL_FRAMES.find(x => x.id === frameId);
+      if (f) { el.classList.add(f.cssClass); el.style.background = f.gradient; }
+    } else {
+      el.style.background = '';
+    }
+  }
+
+  function updateAvatarDisplay() {
+    const av = document.getElementById('profileAvatar');
+    av.textContent = getUserInitial();
+    applyAvatarFrame(av, equippedFrame);
+  }
+
+  function updateBadgePill() {
+    const pill  = document.getElementById('activeBadgePill');
+    const emoji = document.getElementById('activeBadgeEmoji');
+    const name  = document.getElementById('activeBadgeName');
+    if (!equippedBadge) { pill.style.display = 'none'; return; }
+    const b = ALL_BADGES.find(x => x.id === equippedBadge);
+    if (!b) { pill.style.display = 'none'; return; }
+    emoji.textContent = b.emoji;
+    name.textContent  = b.name;
+    pill.style.display = 'inline-flex';
+  }
+
+  function renderBadges() {
+    const grid = document.getElementById('profileBadgeGrid');
+    grid.innerHTML = '';
+    ALL_BADGES.forEach(b => {
+      const isOwned    = ownedBadges.includes(b.id);
+      const isEquipped = equippedBadge === b.id;
+      const el = document.createElement('div');
+      el.className = `badge-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+      el.innerHTML = `
+        ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
+        <span class="badge-item-emoji">${isOwned ? b.emoji : '❓'}</span>
+        <div class="badge-item-name">${isOwned ? b.name : '???'}</div>
+        <div class="badge-rarity-dot ${b.rarity}"></div>`;
+      if (isOwned) el.addEventListener('click', () => equipBadge(b.id));
+      grid.appendChild(el);
+    });
+  }
+
+  function renderFrames() {
+    const grid = document.getElementById('profileFrameGrid');
+    grid.innerHTML = '';
+    ALL_FRAMES.forEach(f => {
+      const isOwned    = ownedFrames.includes(f.id);
+      const isEquipped = equippedFrame === f.id;
+      const el = document.createElement('div');
+      el.className = `frame-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+      const avatarStyle = isOwned ? `style="background:${f.gradient}"` : 'style="background:#ccc"';
+      el.innerHTML = `
+        ${isEquipped ? '<span class="frame-equipped-star">⭐</span>' : ''}
+        <div class="frame-preview-avatar ${isOwned ? f.cssClass : ''}" ${avatarStyle}>${getUserInitial()}</div>
+        <div class="frame-item-name">${isOwned ? f.emoji + ' ' + f.name : '???'}</div>
+        <div class="frame-rarity-dot ${f.rarity}"></div>`;
+      if (isOwned) el.addEventListener('click', () => equipFrame(f.id));
+      grid.appendChild(el);
+    });
+  }
+
+  async function equipBadge(badgeId) {
+    const key = currentUser.toLowerCase();
+    equippedBadge = equippedBadge === badgeId ? null : badgeId;
+    await set(ref(db, `shop/${key}/equippedBadge`), equippedBadge);
+    renderBadges();
+    updateBadgePill();
+  }
+
+  async function equipFrame(frameId) {
+    const key = currentUser.toLowerCase();
+    equippedFrame = equippedFrame === frameId ? null : frameId;
+    await set(ref(db, `shop/${key}/equippedFrame`), equippedFrame);
+    renderFrames();
+    updateAvatarDisplay();
+  }
+
+  async function loadData(key) {
+    const [badgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
+      get(ref(db, `shop/${key}/badges`)),
+      get(ref(db, `shop/${key}/frames`)),
+      get(ref(db, `shop/${key}/equippedBadge`)),
+      get(ref(db, `shop/${key}/equippedFrame`)),
+    ]);
+    ownedBadges   = badgesSnap.val()    || [];
+    ownedFrames   = framesSnap.val()    || [];
+    equippedBadge = equippedBSnap.val() || null;
+    equippedFrame = equippedFSnap.val() || null;
+    renderBadges();
+    renderFrames();
+    updateBadgePill();
+    updateAvatarDisplay();
+
+    // Booster live hören
+    onValue(ref(db, `boosters/${key}/inventory`), snap => {
+      const data = snap.val() || {};
+      boosterInventory = {
+        coins_booster:   data.coins_booster   || 0,
+        moments_booster: data.moments_booster || 0,
+      };
+      renderBoosters();
+    });
+    onValue(ref(db, `boosters/${key}/active_coins`), snap => {
+      activeBoosterCoin = snap.val() || null;
+      renderBoosters();
+    });
+    onValue(ref(db, `boosters/${key}/active_moments`), snap => {
+      activeBoosterMoments = snap.val() || null;
+      renderBoosters();
+    });
+  }
+
+  // Account toggle
+  document.getElementById('accountToggle').addEventListener('click', () => {
+    const content = document.getElementById('accountContent');
+    const icon    = document.getElementById('accountToggleIcon');
+    const isOpen  = content.classList.contains('visible');
+    content.classList.toggle('visible', !isOpen);
+    icon.classList.toggle('open', !isOpen);
+  });
+
+  // Save email
+  document.getElementById('saveEmailBtn').addEventListener('click', async () => {
+    const newEmail = document.getElementById('profileEmail').value.trim();
+    const pw       = document.getElementById('profileEmailPw').value;
+    const msg      = document.getElementById('emailMsg');
+    msg.className  = 'account-msg';
+    if (!newEmail || !pw) { msg.classList.add('error'); msg.textContent = 'Bitte alle Felder ausfüllen.'; return; }
+    try {
+      const cred = EmailAuthProvider.credential(auth.currentUser.email, pw);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+      msg.classList.add('success'); msg.textContent = 'Bestätigungsmail gesendet ✓';
+      document.getElementById('profileEmail').value = '';
+      document.getElementById('profileEmailPw').value = '';
+    } catch(e) {
+      msg.classList.add('error');
+      msg.textContent = e.code === 'auth/wrong-password' ? 'Falsches Passwort.' : 'Fehler: ' + e.message;
+    }
+  });
+
+  // Save password
+  document.getElementById('savePwBtn').addEventListener('click', async () => {
+    const current = document.getElementById('profilePwCurrent').value;
+    const newPw   = document.getElementById('profilePwNew').value;
+    const confirm = document.getElementById('profilePwConfirm').value;
+    const msg     = document.getElementById('pwMsg');
+    msg.className = 'account-msg';
+    if (!current || !newPw || !confirm) { msg.classList.add('error'); msg.textContent = 'Bitte alle Felder ausfüllen.'; return; }
+    if (newPw !== confirm) { msg.classList.add('error'); msg.textContent = 'Passwörter stimmen nicht überein.'; return; }
+    if (newPw.length < 6)  { msg.classList.add('error'); msg.textContent = 'Mind. 6 Zeichen.'; return; }
+    try {
+      const cred = EmailAuthProvider.credential(auth.currentUser.email, current);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      await updatePassword(auth.currentUser, newPw);
+      msg.classList.add('success'); msg.textContent = 'Passwort geändert ✓';
+      document.getElementById('profilePwCurrent').value = '';
+      document.getElementById('profilePwNew').value = '';
+      document.getElementById('profilePwConfirm').value = '';
+    } catch(e) {
+      msg.classList.add('error');
+      msg.textContent = e.code === 'auth/wrong-password' ? 'Aktuelles Passwort falsch.' : 'Fehler: ' + e.message;
+    }
+  });
+
+  // Auth guard
+  onAuthStateChanged(auth, user => {
+    document.getElementById('authLoading').style.display = 'none';
+    if (!user) {
+      // Nicht eingeloggt → zurück zur Startseite
+      window.location.href = 'index.html';
+      return;
+    }
+    currentUser = displayName(user.email);
+    document.getElementById('profileTitle').textContent = currentUser + 's Profil';
+    document.getElementById('profileSubtitle').textContent = user.email;
+    document.getElementById('profileAvatar').textContent = getUserInitial();
+    document.getElementById('profilePage').style.display = 'block';
+    loadData(currentUser.toLowerCase());
+  });
+</script>
+</body>
+</html>

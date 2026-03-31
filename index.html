@@ -70,6 +70,22 @@
   .click-heart { position: fixed; pointer-events: none; font-size: 28px; z-index: 999; animation: floatUp 1.5s ease-out forwards; }
   @keyframes floatUp { 0% { transform: translateY(0) scale(0); opacity: 1; } 30% { transform: translateY(-30px) scale(1.2); opacity: 1; } 100% { transform: translateY(-120px) scale(0.5); opacity: 0; } }
 
+  .click-coin { position: fixed; pointer-events: none; font-size: 32px; z-index: 1000; filter: drop-shadow(0 0 8px rgba(212,160,97,0.9)) drop-shadow(0 0 16px rgba(212,160,97,0.5)); animation: coinFloat 2s ease-out forwards; }
+  @keyframes coinFloat {
+    0%   { transform: translateY(0) scale(0.3) rotate(-10deg); opacity: 0; }
+    15%  { transform: translateY(-20px) scale(1.3) rotate(5deg); opacity: 1; }
+    30%  { transform: translateY(-40px) scale(1.1) rotate(-3deg); opacity: 1; }
+    70%  { transform: translateY(-90px) scale(1.0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-140px) scale(0.8) rotate(5deg); opacity: 0; }
+  }
+  .coin-reward-text { position: fixed; pointer-events: none; font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--gold); z-index: 1001; text-shadow: 0 0 12px rgba(212,160,97,0.8), 0 2px 4px rgba(0,0,0,0.2); animation: coinTextFloat 2s ease-out forwards; white-space: nowrap; }
+  @keyframes coinTextFloat {
+    0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+    20%  { transform: translateY(-15px) scale(1.15); opacity: 1; }
+    60%  { transform: translateY(-50px) scale(1.0); opacity: 1; }
+    100% { transform: translateY(-90px) scale(0.9); opacity: 0; }
+  }
+
   .quote-card { margin-top: 40px; background: rgba(255,255,255,0.75); backdrop-filter: blur(20px); border: 1px solid rgba(232,115,138,0.2); border-radius: 24px; padding: 28px 36px; max-width: 420px; text-align: center; box-shadow: 0 8px 40px rgba(232,115,138,0.12); position: relative; overflow: hidden; }
   .quote-card::before { content: '"'; position: absolute; top: -20px; left: 20px; font-family: 'Dancing Script', cursive; font-size: 120px; color: rgba(232,115,138,0.08); line-height: 1; pointer-events: none; }
   .quote-text { font-family: 'Dancing Script', cursive; font-size: 22px; color: var(--text-dark); line-height: 1.6; font-weight: 600; position: relative; }
@@ -104,6 +120,20 @@
   .stats-today-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 12px; }
 
 
+
+  /* COIN DISPLAY */
+  .coin-display { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 8px 18px; box-shadow: 0 3px 14px rgba(212,160,97,0.18); font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); letter-spacing: 0.5px; transition: transform 0.2s ease; }
+  .coin-display:hover { transform: scale(1.03); }
+  .coin-display .coin-icon { font-size: 18px; }
+  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; }
+  .coin-bump { animation: countBump 0.4s cubic-bezier(0.22,1,0.36,1); }
+
+  /* BOOSTER BANNER */
+  .booster-banner { display: none; flex-direction: column; gap: 6px; max-width: 420px; width: 100%; margin-bottom: 8px; }
+  .booster-banner-item { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1.5px solid rgba(212,160,97,0.4); border-radius: 50px; padding: 8px 18px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: var(--gold); box-shadow: 0 3px 14px rgba(212,160,97,0.18); animation: boosterPulse 2s ease-in-out infinite; }
+  @keyframes boosterPulse { 0%,100%{box-shadow:0 3px 14px rgba(212,160,97,0.18)} 50%{box-shadow:0 4px 20px rgba(212,160,97,0.4)} }
+  .booster-banner-emoji { font-size: 18px; }
+  .booster-banner-timer { margin-left: auto; font-family: 'Dancing Script', cursive; font-size: 18px; }
 
   .footer { margin-top: 50px; text-align: center; }
   .footer-text { font-family: 'Dancing Script', cursive; font-size: 20px; color: var(--text-mid); font-weight: 600; }
@@ -141,6 +171,56 @@
   .profile-msg.error { color: #c85070; }
   .profile-close { margin-top: 20px; width: 100%; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 50px; padding: 12px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); background: transparent; cursor: pointer; transition: all 0.2s ease; }
   .profile-close:hover { border-color: var(--rose); color: var(--rose); }
+
+  /* BADGES IM PROFIL */
+  .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  .badge-item { border-radius: 14px; padding: 8px 4px; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s ease; position: relative; }
+  .badge-item.owned { background: rgba(255,255,255,0.7); border-color: rgba(232,115,138,0.2); }
+  .badge-item.owned:hover { border-color: var(--rose); transform: translateY(-2px); }
+  .badge-item.owned.equipped { border-color: var(--gold); background: rgba(212,160,97,0.1); box-shadow: 0 2px 10px rgba(212,160,97,0.2); }
+  .badge-item.locked { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); opacity: 0.45; cursor: default; }
+  .badge-item-emoji { font-size: 24px; display: block; margin-bottom: 2px; }
+  .badge-item.locked .badge-item-emoji { filter: grayscale(1); font-size: 20px; }
+  .badge-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
+  .badge-item.locked .badge-item-name { color: #bbb; }
+  .badge-rarity-dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; }
+  .badge-rarity-dot.common { background: #a0a0a0; }
+  .badge-rarity-dot.rare { background: #6c8ebf; }
+  .badge-rarity-dot.legendary { background: #c87830; }
+  .badge-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; }
+
+  /* AKTIVES BADGE IN TOP-BAR */
+  .active-badge-pill { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.9); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: var(--text-mid); transition: all 0.3s ease; }
+  .active-badge-pill .badge-emoji { font-size: 16px; }
+
+  /* INITIALS AVATAR */
+  .initials-avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); flex-shrink: 0; transition: box-shadow 0.3s ease; cursor: pointer; }
+  .initials-avatar.large { width: 72px; height: 72px; font-size: 32px; margin: 0 auto 16px; display: flex; }
+
+  /* RAHMEN-STYLES */
+  .initials-avatar.frame-sakura     { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a; }
+  .initials-avatar.frame-ocean      { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f; background: linear-gradient(135deg,#2a9d8f,#4ecdc4); }
+  .initials-avatar.frame-feuer      { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316; background: linear-gradient(135deg,#dc2626,#f97316); }
+  .initials-avatar.frame-blitz      { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24; background: linear-gradient(135deg,#ca8a04,#fbbf24); }
+  .initials-avatar.frame-regenbogen { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); animation: topbarRainbow 2s linear infinite; }
+  .initials-avatar.frame-galaxy     { background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa); box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 12px 2px rgba(167,139,250,0.5); }
+  @keyframes topbarRainbow { 0%{box-shadow:0 0 0 3px #fff,0 0 0 5px #e8738a} 33%{box-shadow:0 0 0 3px #fff,0 0 0 5px #a78bfa} 66%{box-shadow:0 0 0 3px #fff,0 0 0 5px #4ecdc4} 100%{box-shadow:0 0 0 3px #fff,0 0 0 5px #e8738a} }
+
+  /* RAHMEN-GRID IM PROFIL */
+  .frame-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+  .frame-item { border-radius: 16px; padding: 12px 8px; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s ease; position: relative; }
+  .frame-item.owned { background: rgba(255,255,255,0.7); border-color: rgba(232,115,138,0.2); }
+  .frame-item.owned:hover { border-color: var(--rose); transform: translateY(-2px); }
+  .frame-item.owned.equipped { border-color: var(--gold); background: rgba(212,160,97,0.1); box-shadow: 0 2px 10px rgba(212,160,97,0.2); }
+  .frame-item.locked { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); opacity: 0.4; cursor: default; }
+  .frame-preview-avatar { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 700; color: white; }
+  .frame-item-name { font-size: 10px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
+  .frame-item.locked .frame-item-name { color: #bbb; }
+  .frame-rarity-dot { width: 5px; height: 5px; border-radius: 50%; margin: 4px auto 0; }
+  .frame-rarity-dot.common { background: #a0a0a0; }
+  .frame-rarity-dot.rare { background: #6c8ebf; }
+  .frame-rarity-dot.legendary { background: #c87830; }
+  .frame-equipped-star { position: absolute; top: 3px; right: 5px; font-size: 9px; }
 
   @media (max-width: 480px) {
     .page { padding: 60px 16px 50px; }
@@ -196,7 +276,9 @@
 
 <!-- Top Bar -->
 <div class="top-bar" id="topBar">
-  <button class="top-bar-btn" id="profileBtn">⚙️ Profil</button>
+  <span class="initials-avatar" id="topBarAvatar" title="Profil öffnen">?</span>
+  <div id="activeBadgePill" style="display:none;" class="active-badge-pill"><span class="badge-emoji" id="activeBadgeEmoji">🐾</span><span id="activeBadgeName"></span></div>
+  <div class="coin-display" id="coinDisplay" style="display:none;"><span class="coin-icon">🪙</span><span class="coin-count" id="coinCount">0</span></div>
   <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
 </div>
 
@@ -219,28 +301,7 @@
 </div>
 
 
-<!-- Profil Overlay -->
-<div class="profile-overlay" id="profileOverlay">
-  <div class="profile-card">
-    <div class="profile-title">Mein Profil</div>
-    <div class="profile-user" id="profileUserLabel"></div>
 
-    <div class="profile-section-label">E-Mail ändern</div>
-    <input class="login-field" type="email" id="profileEmail" placeholder="Neue E-Mail-Adresse">
-    <input class="login-field" type="password" id="profileEmailPw" placeholder="Aktuelles Passwort bestätigen">
-    <button class="login-btn" id="saveEmailBtn">E-Mail speichern</button>
-    <div class="profile-msg" id="emailMsg"></div>
-
-    <div class="profile-section-label">Passwort ändern</div>
-    <input class="login-field" type="password" id="profilePwCurrent" placeholder="Aktuelles Passwort">
-    <input class="login-field" type="password" id="profilePwNew" placeholder="Neues Passwort">
-    <input class="login-field" type="password" id="profilePwConfirm" placeholder="Neues Passwort bestätigen">
-    <button class="login-btn" id="savePwBtn">Passwort speichern</button>
-    <div class="profile-msg" id="pwMsg"></div>
-
-    <button class="profile-close" id="profileCloseBtn">Schließen</button>
-  </div>
-</div>
 
 <div class="page page-hidden" id="mainPage">
   <div class="header">
@@ -305,6 +366,12 @@
     <a href="quiz.html" id="quizBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
     <div id="quizNewBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #f59e0b, #d97706); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(245,158,11,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap;">✨ Neu!</div>
   </div>
+  <div class="booster-banner" id="boosterBanner">
+    <!-- Wird per JS befüllt -->
+  </div>
+  <div class="shop-btn-wrap">
+    <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--gold); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(212,160,97,0.15);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
+  </div>
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
     <div class="footer-hearts">🌸 · 🌸</div>
@@ -353,8 +420,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
     authDomain: "nele-und-andreas.firebaseapp.com",
@@ -372,67 +438,15 @@
   const loginBtn    = document.getElementById('loginBtn');
   const logoutBtn   = document.getElementById('logoutBtn');
   const topBar      = document.getElementById('topBar');
-  const profileBtn  = document.getElementById('profileBtn');
-  const profileOverlay   = document.getElementById('profileOverlay');
-  const profileCloseBtn  = document.getElementById('profileCloseBtn');
+  const topBarAvatar     = document.getElementById('topBarAvatar');
   const loginError  = document.getElementById('loginError');
 
-  // Profile overlay open/close
-  profileBtn.addEventListener('click', () => {
-    document.getElementById('profileUserLabel').textContent = window.currentUser || '';
-    document.getElementById('profileEmail').value = auth.currentUser?.email || '';
-    document.getElementById('profileEmailPw').value = '';
-    document.getElementById('profilePwCurrent').value = '';
-    document.getElementById('profilePwNew').value = '';
-    document.getElementById('profilePwConfirm').value = '';
-    document.getElementById('emailMsg').textContent = '';
-    document.getElementById('pwMsg').textContent = '';
-    profileOverlay.classList.add('open');
-  });
-  profileCloseBtn.addEventListener('click', () => profileOverlay.classList.remove('open'));
-  profileOverlay.addEventListener('click', e => { if (e.target === profileOverlay) profileOverlay.classList.remove('open'); });
-
-  // Save email
-  document.getElementById('saveEmailBtn').addEventListener('click', async () => {
-    const newEmail = document.getElementById('profileEmail').value.trim();
-    const pw       = document.getElementById('profileEmailPw').value;
-    const msg      = document.getElementById('emailMsg');
-    msg.className  = 'profile-msg';
-    if (!newEmail || !pw) { msg.classList.add('error'); msg.textContent = 'Bitte alle Felder ausfüllen.'; return; }
-    try {
-      const cred = EmailAuthProvider.credential(auth.currentUser.email, pw);
-      await reauthenticateWithCredential(auth.currentUser, cred);
-      await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
-      msg.classList.add('success'); msg.textContent = 'Bestätigungsmail gesendet – bitte Link in der neuen E-Mail klicken ✓';
-    } catch(e) {
-      msg.classList.add('error');
-      msg.textContent = e.code === 'auth/wrong-password' ? 'Falsches Passwort.' : 'Fehler: ' + e.message;
-    }
+  // Profile → eigene Seite
+  topBarAvatar.addEventListener('click', () => {
+    window.location.href = 'profil.html';
   });
 
-  // Save password
-  document.getElementById('savePwBtn').addEventListener('click', async () => {
-    const current  = document.getElementById('profilePwCurrent').value;
-    const newPw    = document.getElementById('profilePwNew').value;
-    const confirm  = document.getElementById('profilePwConfirm').value;
-    const msg      = document.getElementById('pwMsg');
-    msg.className  = 'profile-msg';
-    if (!current || !newPw || !confirm) { msg.classList.add('error'); msg.textContent = 'Bitte alle Felder ausfüllen.'; return; }
-    if (newPw !== confirm) { msg.classList.add('error'); msg.textContent = 'Passwörter stimmen nicht überein.'; return; }
-    if (newPw.length < 6)  { msg.classList.add('error'); msg.textContent = 'Passwort muss mind. 6 Zeichen haben.'; return; }
-    try {
-      const cred = EmailAuthProvider.credential(auth.currentUser.email, current);
-      await reauthenticateWithCredential(auth.currentUser, cred);
-      await updatePassword(auth.currentUser, newPw);
-      msg.classList.add('success'); msg.textContent = 'Passwort erfolgreich geändert ✓';
-      document.getElementById('profilePwCurrent').value = '';
-      document.getElementById('profilePwNew').value = '';
-      document.getElementById('profilePwConfirm').value = '';
-    } catch(e) {
-      msg.classList.add('error');
-      msg.textContent = e.code === 'auth/wrong-password' ? 'Aktuelles Passwort falsch.' : 'Fehler: ' + e.message;
-    }
-  });
+
 
   // Map email → display name
   function displayName(email) {
@@ -484,18 +498,50 @@
       overlay.style.display = 'none';
       topBar.style.display = 'flex';
       logoutBtn.textContent = window.currentUser + ' ausloggen';
+      // Avatar initial setzen
+      const av = document.getElementById('topBarAvatar');
+      if (av) av.textContent = window.currentUser[0].toUpperCase();
+      document.getElementById('coinDisplay').style.display = 'flex';
       // Reveal page content
       document.getElementById('mainPage').classList.remove('page-hidden');
       document.getElementById('bgGradient').classList.remove('page-hidden');
       document.getElementById('petals').classList.remove('page-hidden');
       window.dispatchEvent(new Event('quizUserSet'));
+      // Load coins
+      const userKey = window.currentUser.toLowerCase();
+      const coinRef = ref(db, `coins/${userKey}`);
+      onValue(coinRef, snap => {
+        const coins = snap.val() || 0;
+        const el = document.getElementById('coinCount');
+        el.textContent = coins;
+        el.classList.remove('coin-bump');
+        void el.offsetWidth;
+        el.classList.add('coin-bump');
+      });
+      // Load active theme
+      get(ref(db, `shop/${userKey}/activeTheme`)).then(snap => {
+        const theme = snap.val();
+        if (theme) applyTheme(theme);
+      });
+      // Load badges
+      loadUserBadges();
+
+      // Booster live hören
+      const boosterKey = userKey;
+      onValue(ref(db, `boosters/${boosterKey}/active_coins`), snap => {
+        activeBoosterCoin = snap.val() || null;
+        updateBoosterBanner();
+      });
+      onValue(ref(db, `boosters/${boosterKey}/active_moments`), snap => {
+        activeBoosterMoments = snap.val() || null;
+        updateBoosterBanner();
+      });
     } else {
       window.currentUser = null;
       document.getElementById('authLoading').style.display='none';
       overlay.style.display = 'flex';
       overlay.style.opacity = '1';
       topBar.style.display = 'none';
-      profileOverlay.classList.remove('open');
       loginBtn.textContent = 'Einloggen 🌸';
       // Hide page content
       document.getElementById('mainPage').classList.add('page-hidden');
@@ -593,15 +639,133 @@
   onValue(andreasRefToday, s => { sAT = s.val()||0; updateTodayStats(); });
   onValue(neleRefToday,    s => { sNT = s.val()||0; updateTodayStats(); });
 
+  // ---- BOOSTER STATE ----
+  let activeBoosterCoin    = null;
+  let activeBoosterMoments = null;
+  let boosterBannerInterval = null;
+
+  function isBoosterActive(data) {
+    if (!data || !data.activatedAt) return false;
+    return Date.now() < data.activatedAt + data.durationMs;
+  }
+
+  function formatCountdown(ms) {
+    if (ms <= 0) return '00:00';
+    const totalSec = Math.ceil(ms / 1000);
+    const min = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const sec = (totalSec % 60).toString().padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+
+  function updateBoosterBanner() {
+    const banner = document.getElementById('boosterBanner');
+    const coinActive    = isBoosterActive(activeBoosterCoin);
+    const momentActive  = isBoosterActive(activeBoosterMoments);
+
+    if (!coinActive && !momentActive) {
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+      if (boosterBannerInterval) { clearInterval(boosterBannerInterval); boosterBannerInterval = null; }
+      return;
+    }
+
+    banner.style.display = 'flex';
+    banner.innerHTML = '';
+
+    if (coinActive) {
+      const remaining = (activeBoosterCoin.activatedAt + activeBoosterCoin.durationMs) - Date.now();
+      const el = document.createElement('div');
+      el.className = 'booster-banner-item';
+      el.innerHTML = `<span class="booster-banner-emoji">⚡</span><span>Coin-Booster aktiv – ×2 Coins!</span><span class="booster-banner-timer" id="bannerTimerCoin">${formatCountdown(remaining)}</span>`;
+      banner.appendChild(el);
+    }
+    if (momentActive) {
+      const remaining = (activeBoosterMoments.activatedAt + activeBoosterMoments.durationMs) - Date.now();
+      const el = document.createElement('div');
+      el.className = 'booster-banner-item';
+      el.innerHTML = `<span class="booster-banner-emoji">💫</span><span>Momenten-Booster aktiv – ×2 Momente!</span><span class="booster-banner-timer" id="bannerTimerMoments">${formatCountdown(remaining)}</span>`;
+      banner.appendChild(el);
+    }
+
+    if (!boosterBannerInterval) {
+      boosterBannerInterval = setInterval(() => {
+        const cEl = document.getElementById('bannerTimerCoin');
+        const mEl = document.getElementById('bannerTimerMoments');
+        if (cEl && activeBoosterCoin) {
+          const r = (activeBoosterCoin.activatedAt + activeBoosterCoin.durationMs) - Date.now();
+          if (r <= 0) { updateBoosterBanner(); return; }
+          cEl.textContent = formatCountdown(r);
+        }
+        if (mEl && activeBoosterMoments) {
+          const r = (activeBoosterMoments.activatedAt + activeBoosterMoments.durationMs) - Date.now();
+          if (r <= 0) { updateBoosterBanner(); return; }
+          mEl.textContent = formatCountdown(r);
+        }
+      }, 1000);
+    }
+  }
+
+  let sessionClickCount = 0;
+
+  function spawnCoin(x, y, amount = 1) {
+    // Button-Mitte als Ursprung berechnen
+    const btn = document.getElementById('heartBtn');
+    const rect = btn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    // "+1 🪙" Text in der Mitte
+    const txt = document.createElement('div');
+    txt.className = 'coin-reward-text';
+    txt.textContent = `+${amount} 🪙`;
+    txt.style.left = (cx - 30) + 'px';
+    txt.style.top  = (cy - 10) + 'px';
+    document.body.appendChild(txt);
+    setTimeout(() => txt.remove(), 2000);
+
+    // 4 Coins mit leichtem Versatz
+    const offsets = [
+      { x: -28, y: 0,  delay: 0 },
+      { x:  28, y: 0,  delay: 80 },
+      { x: -10, y: -8, delay: 40 },
+      { x:  10, y: -8, delay: 120 },
+    ];
+    offsets.forEach(o => {
+      setTimeout(() => {
+        const c = document.createElement('div');
+        c.className = 'click-coin';
+        c.textContent = '🪙';
+        c.style.left = (cx + o.x - 16) + 'px';
+        c.style.top  = (cy + o.y - 16) + 'px';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 2000);
+      }, o.delay);
+    });
+  }
+
   document.getElementById('heartBtn').addEventListener('click', e => {
     const user = window.currentUser;
     if (!user) { alert('Bitte erst oben auswählen wer du bist 🐾'); return; }
-    runTransaction(momentsRef, c => (c||0)+1);
-    runTransaction(user === 'Andreas' ? andreasRef : neleRef, c => (c||0)+1);
-    runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
+
+    const momentBoost = isBoosterActive(activeBoosterMoments) ? 2 : 1;
+    for (let i = 0; i < momentBoost; i++) {
+      runTransaction(momentsRef, c => (c||0)+1);
+      runTransaction(user === 'Andreas' ? andreasRef : neleRef, c => (c||0)+1);
+      runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
+    }
+
+    // Coin alle 10 Klicks
+    sessionClickCount++;
+    if (sessionClickCount % 10 === 0) {
+      const userKey = user.toLowerCase();
+      const coinAmount = isBoosterActive(activeBoosterCoin) ? 2 : 1;
+      runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+coinAmount)
+        .catch(err => console.error('Coin-Fehler:', err));
+      spawnCoin(e.clientX, e.clientY, coinAmount);
+    }
+
     const now = Date.now();
     set(lastClickRef, { name: user, time: now });
-    // Log individual click for stats
     const clickDate = getGermanDate(now);
     set(ref(db, `moments/clicks/${clickDate}/${now}_${user.toLowerCase()}`), { user, time: now });
     heartCount.classList.remove('bump');
@@ -609,9 +773,221 @@
     heartCount.classList.add('bump');
     spawnHeart(e.clientX, e.clientY);
   });
+
+  // Theme anwenden
+  const THEME_GRADIENTS = {
+    sakura:  'radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,163,181,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%)',
+    ocean:   'radial-gradient(ellipse at 20% 20%, rgba(42,157,143,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.15) 0%, transparent 50%), linear-gradient(160deg, #f0fafa 0%, #e0f7f5 40%, #e8f8f7 70%, #f0fdf9 100%)',
+    forest:  'radial-gradient(ellipse at 20% 20%, rgba(74,124,89,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(125,184,144,0.15) 0%, transparent 50%), linear-gradient(160deg, #f4faf5 0%, #e8f5ec 40%, #ebf5ee 70%, #f0faf2 100%)',
+    midnight:'radial-gradient(ellipse at 20% 20%, rgba(124,92,191,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.2) 0%, transparent 50%), linear-gradient(160deg, #1a1030 0%, #2a1f4a 100%)',
+    golden:  'radial-gradient(ellipse at 20% 20%, rgba(217,119,6,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,191,36,0.15) 0%, transparent 50%), linear-gradient(160deg, #fffbeb 0%, #fef3c7 40%, #fef9e8 70%, #fffdf0 100%)',
+    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)'
+  };
+  const THEME_VARS = {
+    sakura:  { rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565' },
+    ocean:   { rose:'#2a9d8f','rose-light':'#4ecdc4','rose-pale':'#e0f7f5',cream:'#f0fafa',gold:'#264653',warm:'#e8f8f7','text-dark':'#1a3a3a','text-mid':'#2a7a72' },
+    forest:  { rose:'#4a7c59','rose-light':'#7db890','rose-pale':'#e8f5ec',cream:'#f4faf5',gold:'#6b4c2a',warm:'#ebf5ee','text-dark':'#1e3a26','text-mid':'#3a6b4a' },
+    midnight:{ rose:'#a78bfa','rose-light':'#c4b5fd','rose-pale':'#3d2f6a',cream:'#1a1030',gold:'#e2b96f',warm:'#2a1f4a','text-dark':'#f0ecff','text-mid':'#c4b5fd' },
+    golden:  { rose:'#d97706','rose-light':'#fbbf24','rose-pale':'#fef3c7',cream:'#fffbeb',gold:'#92400e',warm:'#fef9e8','text-dark':'#3d1a00','text-mid':'#92580e' },
+    candy:   { rose:'#ec4899','rose-light':'#f9a8d4','rose-pale':'#fce7f3',cream:'#fff0f7',gold:'#7c3aed',warm:'#fdf4fb','text-dark':'#4a0030','text-mid':'#9d174d' }
+  };
+  const DARK_THEMES = {
+    midnight: {
+      'ui-card-bg':           'rgba(42,31,74,0.85)',
+      'ui-card-border':       'rgba(167,139,250,0.25)',
+      'ui-topbar-bg':         'rgba(20,12,45,0.97)',
+      'ui-topbar-border':     'rgba(167,139,250,0.2)',
+      'ui-btn-bg':            'rgba(42,31,74,0.9)',
+      'ui-btn-border':        'rgba(167,139,250,0.3)',
+      'ui-coin-bg':           'rgba(42,31,74,0.9)',
+      'ui-modal-bg':          '#1e1540',
+      'ui-modal-overlay':     'rgba(10,6,25,0.88)',
+      'ui-modal-border':      'rgba(167,139,250,0.3)',
+      'ui-active-badge-bg':   'rgba(42,31,74,0.85)',
+      'ui-input-bg':          '#2a1f4a',
+      'ui-input-color':       '#f0ecff',
+      'ui-quote-card-bg':     'rgba(42,31,74,0.75)',
+      'ui-quote-card-border': 'rgba(167,139,250,0.2)',
+      'ui-toast-bg':          '#3d2f6a',
+    }
+  };
+  const DEFAULT_UI = {
+    'ui-card-bg':           'rgba(255,255,255,0.8)',
+    'ui-card-border':       'rgba(232,115,138,0.18)',
+    'ui-topbar-bg':         'rgba(255,248,240,0.95)',
+    'ui-topbar-border':     'rgba(232,115,138,0.2)',
+    'ui-btn-bg':            'rgba(255,255,255,0.9)',
+    'ui-btn-border':        'rgba(232,115,138,0.25)',
+    'ui-coin-bg':           'rgba(255,255,255,0.9)',
+    'ui-modal-bg':          '#fff',
+    'ui-modal-overlay':     'rgba(253,232,237,0.92)',
+    'ui-modal-border':      'rgba(232,115,138,0.3)',
+    'ui-active-badge-bg':   'rgba(255,255,255,0.75)',
+    'ui-input-bg':          'var(--cream)',
+    'ui-input-color':       'var(--text-dark)',
+    'ui-quote-card-bg':     'rgba(255,255,255,0.75)',
+    'ui-quote-card-border': 'rgba(232,115,138,0.2)',
+    'ui-toast-bg':          'var(--text-dark)',
+  };
+  window.applyTheme = function(themeId) {
+    const vars = THEME_VARS[themeId];
+    if (!vars) return;
+    const root = document.documentElement;
+    Object.entries(vars).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
+    Object.entries(DEFAULT_UI).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
+    if (DARK_THEMES[themeId]) {
+      Object.entries(DARK_THEMES[themeId]).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
+    }
+    const bg = document.getElementById('bgGradient');
+    const gradient = THEME_GRADIENTS[themeId] || THEME_GRADIENTS.sakura;
+    bg.style.background = gradient;
+    if (DARK_THEMES[themeId]) {
+      document.body.style.background = vars.cream;
+    } else {
+      document.body.style.background = '';
+    }
+  };
+  // ---- BADGE + RAHMEN SYSTEM ----
+  const ALL_BADGES = [
+    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'common' },
+    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'common' },
+    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'common' },
+    { id: 'gamerin',      emoji: '🎮', name: 'Gamerin',          rarity: 'common' },
+    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'rare' },
+    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'rare' },
+    { id: 'feuerfuchs',   emoji: '🔥', name: 'Feuerfuchs',       rarity: 'rare' },
+    { id: 'diamant',      emoji: '💎', name: 'Diamant',           rarity: 'rare' },
+    { id: 'klickqueen',   emoji: '👑', name: 'Klick-Queen',      rarity: 'legendary' },
+    { id: 'sternen',      emoji: '🌟', name: 'Sternensammlerin', rarity: 'legendary' },
+    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'legendary' },
+    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'legendary' },
+  ];
+
+  const ALL_FRAMES = [
+    { id: 'sakura',     name: 'Sakura',     emoji: '🌸', rarity: 'common',    cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
+    { id: 'ocean',      name: 'Ozean',      emoji: '🌊', rarity: 'common',    cssClass: 'frame-ocean',      gradient: 'linear-gradient(135deg,#2a9d8f,#4ecdc4)' },
+    { id: 'feuer',      name: 'Feuer',      emoji: '🔥', rarity: 'rare',      cssClass: 'frame-feuer',      gradient: 'linear-gradient(135deg,#dc2626,#f97316)' },
+    { id: 'blitz',      name: 'Blitz',      emoji: '⚡', rarity: 'rare',      cssClass: 'frame-blitz',      gradient: 'linear-gradient(135deg,#ca8a04,#fbbf24)' },
+    { id: 'regenbogen', name: 'Regenbogen', emoji: '🌈', rarity: 'legendary', cssClass: 'frame-regenbogen', gradient: 'linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4)' },
+    { id: 'galaxy',     name: 'Galaxy',     emoji: '🔮', rarity: 'legendary', cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
+  ];
+
+  let userOwnedBadges  = [];
+  let userOwnedFrames  = [];
+  let userEquippedBadge = null;
+  let userEquippedFrame = null;
+
+  function getUserInitial() { return (window.currentUser || '?')[0].toUpperCase(); }
+
+  function applyAvatarFrame(el, frameId) {
+    // Remove all frame classes
+    ALL_FRAMES.forEach(f => el.classList.remove(f.cssClass));
+    if (frameId) {
+      const f = ALL_FRAMES.find(x => x.id === frameId);
+      if (f) {
+        el.classList.add(f.cssClass);
+        el.style.background = f.gradient;
+      }
+    } else {
+      el.style.background = '';
+    }
+  }
+
+  function updateAvatars() {
+    const initial = getUserInitial();
+    const topAvatar  = document.getElementById('topBarAvatar');
+    const profAvatar = document.getElementById('profileAvatar');
+    if (topAvatar)  { topAvatar.textContent  = initial; applyAvatarFrame(topAvatar,  userEquippedFrame); }
+    if (profAvatar) { profAvatar.textContent = initial; applyAvatarFrame(profAvatar, userEquippedFrame); }
+  }
+
+  function updateTopBarBadge() {
+    const pill  = document.getElementById('activeBadgePill');
+    const emoji = document.getElementById('activeBadgeEmoji');
+    const name  = document.getElementById('activeBadgeName');
+    if (!userEquippedBadge) { pill.style.display = 'none'; return; }
+    const b = ALL_BADGES.find(x => x.id === userEquippedBadge);
+    if (!b) { pill.style.display = 'none'; return; }
+    emoji.textContent = b.emoji;
+    name.textContent  = b.name;
+    pill.style.display = 'inline-flex';
+  }
+
+  function renderProfileBadges() {
+    const grid = document.getElementById('profileBadgeGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    ALL_BADGES.forEach(b => {
+      const isOwned    = userOwnedBadges.includes(b.id);
+      const isEquipped = userEquippedBadge === b.id;
+      const el = document.createElement('div');
+      el.className = `badge-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+      el.innerHTML = `
+        ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
+        <span class="badge-item-emoji">${isOwned ? b.emoji : '❓'}</span>
+        <div class="badge-item-name">${isOwned ? b.name : '???'}</div>
+        <div class="badge-rarity-dot ${b.rarity}"></div>`;
+      if (isOwned) el.addEventListener('click', () => equipBadge(b.id));
+      grid.appendChild(el);
+    });
+  }
+
+  function renderProfileFrames() {
+    const grid = document.getElementById('profileFrameGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    ALL_FRAMES.forEach(f => {
+      const isOwned    = userOwnedFrames.includes(f.id);
+      const isEquipped = userEquippedFrame === f.id;
+      const el = document.createElement('div');
+      el.className = `frame-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+      const avatarStyle = isOwned ? `style="background:${f.gradient}"` : 'style="background:#ccc"';
+      el.innerHTML = `
+        ${isEquipped ? '<span class="frame-equipped-star">⭐</span>' : ''}
+        <div class="frame-preview-avatar ${isOwned ? f.cssClass : ''}" ${avatarStyle}>${getUserInitial()}</div>
+        <div class="frame-item-name">${isOwned ? f.emoji + ' ' + f.name : '???'}</div>
+        <div class="frame-rarity-dot ${f.rarity}"></div>`;
+      if (isOwned) el.addEventListener('click', () => equipFrame(f.id));
+      grid.appendChild(el);
+    });
+  }
+
+  async function equipBadge(badgeId) {
+    if (!window.currentUser) return;
+    const key = window.currentUser.toLowerCase();
+    // Toggle off if already equipped
+    userEquippedBadge = userEquippedBadge === badgeId ? null : badgeId;
+    await set(ref(db, `shop/${key}/equippedBadge`), userEquippedBadge);
+    renderProfileBadges();
+    updateTopBarBadge();
+  }
+
+  async function equipFrame(frameId) {
+    if (!window.currentUser) return;
+    const key = window.currentUser.toLowerCase();
+    userEquippedFrame = userEquippedFrame === frameId ? null : frameId;
+    await set(ref(db, `shop/${key}/equippedFrame`), userEquippedFrame);
+    renderProfileFrames();
+    updateAvatars();
+  }
+
+  async function loadUserBadges() {
+    if (!window.currentUser) return;
+    const key = window.currentUser.toLowerCase();
+    const [badgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
+      get(ref(db, `shop/${key}/badges`)),
+      get(ref(db, `shop/${key}/frames`)),
+      get(ref(db, `shop/${key}/equippedBadge`)),
+      get(ref(db, `shop/${key}/equippedFrame`)),
+    ]);
+    userOwnedBadges   = badgesSnap.val()   || [];
+    userOwnedFrames   = framesSnap.val()   || [];
+    userEquippedBadge = equippedBSnap.val() || null;
+    userEquippedFrame = equippedFSnap.val() || null;
+    renderProfileBadges();
+    renderProfileFrames();
+    updateTopBarBadge();
+    updateAvatars();
+  }
+
 </script>
-
-
-
-</body>
-</html>
