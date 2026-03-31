@@ -47,12 +47,90 @@
 
     /* AVATAR */
     .initials-avatar { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); margin: 0 auto; transition: box-shadow 0.3s ease; }
-    .frame-sakura     { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a; }
-    .frame-ocean      { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f; background: linear-gradient(135deg,#2a9d8f,#4ecdc4); }
-    .frame-feuer      { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316; background: linear-gradient(135deg,#dc2626,#f97316); }
-    .frame-blitz      { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24; background: linear-gradient(135deg,#ca8a04,#fbbf24); }
-    .frame-regenbogen { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); animation: topbarRainbow 2s linear infinite; }
-    .frame-galaxy     { background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa); box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 12px 2px rgba(167,139,250,0.5); }
+    /* ── SAKURA: sanftes rosa Pulsieren ── */
+    .frame-sakura {
+      background: linear-gradient(135deg,#e8738a,#f5a3b5);
+      box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.5);
+      animation: glowSakura 2.5s ease-in-out infinite;
+    }
+    @keyframes glowSakura {
+      0%,100% { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.4); }
+      50%      { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 6px #e8738a, 0 0 24px 6px rgba(232,115,138,0.7); }
+    }
+
+    /* ── OZEAN: türkiser Wellen-Glow ── */
+    .frame-ocean {
+      background: linear-gradient(135deg,#2a9d8f,#4ecdc4);
+      box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 16px 4px rgba(42,157,143,0.5);
+      animation: glowOcean 3s ease-in-out infinite;
+    }
+    @keyframes glowOcean {
+      0%,100% { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 14px 3px rgba(42,157,143,0.4); }
+      50%      { box-shadow: 0 0 0 3px #b2f0eb, 0 0 0 6px #4ecdc4, 0 0 28px 8px rgba(78,205,196,0.65); }
+    }
+
+    /* ── FEUER: flackernder Feuerschein ── */
+    .frame-feuer {
+      background: linear-gradient(135deg,#dc2626,#f97316);
+      animation: glowFeuer 1.4s ease-in-out infinite;
+    }
+    @keyframes glowFeuer {
+      0%   { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
+      33%  { box-shadow: 0 0 0 3px #ffe8d6, 0 0 0 6px #dc2626, 0 0 22px 8px rgba(220,38,38,0.6), 0 0 40px 10px rgba(249,115,22,0.25); }
+      66%  { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 18px 5px rgba(249,115,22,0.55), 0 0 35px 7px rgba(220,38,38,0.2); }
+      100% { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
+    }
+
+    /* ── BLITZ: elektrisches Zucken ── */
+    .frame-blitz {
+      background: linear-gradient(135deg,#ca8a04,#fbbf24);
+      animation: glowBlitz 1.8s ease-in-out infinite;
+    }
+    @keyframes glowBlitz {
+      0%,100% { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 12px 3px rgba(251,191,36,0.4); }
+      20%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 7px #fbbf24, 0 0 30px 10px rgba(251,191,36,0.8), 0 0 50px 15px rgba(202,138,4,0.3); }
+      22%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
+      60%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 6px #fbbf24, 0 0 28px 8px rgba(251,191,36,0.7), 0 0 45px 12px rgba(202,138,4,0.25); }
+      62%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
+    }
+
+    /* ── REGENBOGEN: rotierender Farbwechsel-Glow ── */
+    .frame-regenbogen {
+      background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4);
+      animation: bgRainbow 3s linear infinite, glowRainbow 3s linear infinite;
+    }
+    @keyframes bgRainbow {
+      0%   { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
+      25%  { background: linear-gradient(135deg,#a78bfa,#4ecdc4,#fbbf24); }
+      50%  { background: linear-gradient(135deg,#4ecdc4,#fbbf24,#e8738a); }
+      75%  { background: linear-gradient(135deg,#fbbf24,#e8738a,#a78bfa); }
+      100% { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
+    }
+    @keyframes glowRainbow {
+      0%   { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a,  0 0 20px 6px rgba(232,115,138,0.6); }
+      25%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #a78bfa,  0 0 20px 6px rgba(167,139,250,0.6); }
+      50%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #4ecdc4,  0 0 20px 6px rgba(78,205,196,0.6); }
+      75%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #fbbf24,  0 0 20px 6px rgba(251,191,36,0.6); }
+      100% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a,  0 0 20px 6px rgba(232,115,138,0.6); }
+    }
+
+    /* ── GALAXY: kosmischer Sternen-Glow mit Rotation ── */
+    .frame-galaxy {
+      background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa);
+      animation: glowGalaxy 4s ease-in-out infinite, rotateGalaxy 8s linear infinite;
+    }
+    @keyframes glowGalaxy {
+      0%,100% { box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5), 0 0 32px 8px rgba(124,92,191,0.3); }
+      50%     { box-shadow: 0 0 0 3px #3d2f6a, 0 0 0 7px #c4b5fd, 0 0 28px 10px rgba(196,181,253,0.7), 0 0 50px 16px rgba(124,92,191,0.45); }
+    }
+    @keyframes rotateGalaxy {
+      0%   { background: linear-gradient(0deg,  #1a1030,#7c5cbf,#a78bfa); }
+      25%  { background: linear-gradient(90deg, #1a1030,#7c5cbf,#a78bfa); }
+      50%  { background: linear-gradient(180deg,#1a1030,#7c5cbf,#a78bfa); }
+      75%  { background: linear-gradient(270deg,#1a1030,#7c5cbf,#a78bfa); }
+      100% { background: linear-gradient(360deg,#1a1030,#7c5cbf,#a78bfa); }
+    }
+
     @keyframes topbarRainbow {
       0%   { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(360deg); }
@@ -148,6 +226,24 @@
     .account-msg.success { color: #22a35a; }
     .account-msg.error { color: #c85070; }
     .account-divider { border: none; border-top: 1px solid rgba(232,115,138,0.12); margin: 14px 0 10px; }
+
+    /* KOMMENTARE */
+    .comments-section { margin-top: 8px; margin-bottom: 32px; }
+    .comments-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .comment-item { background: rgba(255,255,255,0.75); border: 1.5px solid rgba(232,115,138,0.18); border-radius: 16px; padding: 12px 14px; position: relative; }
+    .comment-author { font-size: 11px; font-weight: 700; color: var(--rose); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .comment-date { font-size: 10px; color: var(--text-mid); font-weight: 500; margin-left: auto; }
+    .comment-text { font-size: 13px; color: var(--text-dark); font-weight: 500; line-height: 1.5; word-break: break-word; }
+    .comment-delete { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 14px; cursor: pointer; color: rgba(232,115,138,0.4); transition: color 0.2s ease; padding: 2px 4px; line-height: 1; }
+    .comment-delete:hover { color: var(--rose); }
+    .comment-input-wrap { display: flex; gap: 8px; align-items: flex-end; }
+    .comment-textarea { flex: 1; border: 1.5px solid rgba(232,115,138,0.25); border-radius: 14px; padding: 11px 14px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-dark); background: rgba(255,255,255,0.8); outline: none; resize: none; min-height: 44px; max-height: 120px; transition: border-color 0.2s ease; line-height: 1.4; }
+    .comment-textarea:focus { border-color: var(--rose); }
+    .comment-send-btn { background: linear-gradient(135deg, var(--rose), #c85070); border: none; border-radius: 50px; padding: 11px 18px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 10px rgba(232,115,138,0.35); white-space: nowrap; flex-shrink: 0; }
+    .comment-send-btn:hover { transform: scale(1.03); }
+    .comment-send-btn:disabled { background: #ccc; box-shadow: none; cursor: default; transform: none; }
+    .comments-empty { font-size: 12px; color: var(--text-mid); text-align: center; padding: 12px 0; font-weight: 500; }
+    .comment-char-count { font-size: 10px; color: var(--text-mid); text-align: right; margin-top: 4px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -236,11 +332,28 @@
     </div>
   </div>
 
+  <!-- KOMMENTARE -->
+  <div class="comments-section" id="commentsSection">
+    <div class="section">
+      <div class="section-label" id="commentsLabel">💬 Kommentare</div>
+      <div class="comments-list" id="commentsList">
+        <div class="comments-empty">Lade Kommentare…</div>
+      </div>
+      <div id="commentInputWrap" style="display:none;">
+        <div class="comment-input-wrap">
+          <textarea class="comment-textarea" id="commentTextarea" placeholder="Schreib etwas…" maxlength="300" rows="2"></textarea>
+          <button class="comment-send-btn" id="commentSendBtn">Senden 💌</button>
+        </div>
+        <div class="comment-char-count"><span id="commentCharCount">0</span>/300</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, get, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const app = initializeApp({
@@ -285,6 +398,7 @@
   ];
 
   let currentUser    = null;
+  let isReadOnly     = false;
   let ownedBadges    = [];
   let ownedFrames    = [];
   let equippedBadge  = null;
@@ -474,7 +588,7 @@
         <span class="badge-item-emoji">${isOwned ? b.emoji : '❓'}</span>
         <div class="badge-item-name">${isOwned ? b.name : '???'}</div>
         <div class="badge-rarity-dot ${b.rarity}"></div>`;
-      if (isOwned) el.addEventListener('click', () => equipBadge(b.id));
+      if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
       grid.appendChild(el);
     });
   }
@@ -493,7 +607,7 @@
         <div class="frame-preview-avatar ${isOwned ? f.cssClass : ''}" ${avatarStyle}>${getUserInitial()}</div>
         <div class="frame-item-name">${isOwned ? f.emoji + ' ' + f.name : '???'}</div>
         <div class="frame-rarity-dot ${f.rarity}"></div>`;
-      if (isOwned) el.addEventListener('click', () => equipFrame(f.id));
+      if (isOwned && !isReadOnly) el.addEventListener('click', () => equipFrame(f.id));
       grid.appendChild(el);
     });
   }
@@ -602,20 +716,145 @@
     }
   });
 
+
+  // ---- KOMMENTARE ----
+  let commentsProfileKey = null; // für wen werden Kommentare geladen
+  let loggedInUserName   = null; // wer ist eingeloggt
+
+  function formatCommentDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit' })
+      + ' ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function renderComments(commentsObj) {
+    const list = document.getElementById('commentsList');
+    list.innerHTML = '';
+    if (!commentsObj) {
+      list.innerHTML = '<div class="comments-empty">Noch keine Kommentare 🌸</div>';
+      return;
+    }
+    const entries = Object.entries(commentsObj).sort((a, b) => b[1].timestamp - a[1].timestamp);
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="comments-empty">Noch keine Kommentare 🌸</div>';
+      return;
+    }
+    entries.forEach(([id, c]) => {
+      const el = document.createElement('div');
+      el.className = 'comment-item';
+      const canDelete = c.author === loggedInUserName;
+      el.innerHTML = `
+        <div class="comment-author">
+          ${c.author === 'Andreas' ? '🐾' : '🌸'} ${c.author}
+          <span class="comment-date">${formatCommentDate(c.timestamp)}</span>
+        </div>
+        <div class="comment-text">${c.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        ${canDelete ? `<button class="comment-delete" data-id="${id}" title="Löschen">✕</button>` : ''}
+      `;
+      list.appendChild(el);
+    });
+    // Delete handlers
+    list.querySelectorAll('.comment-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await remove(ref(db, 'comments/' + commentsProfileKey + '/' + btn.dataset.id));
+      });
+    });
+  }
+
+  function loadComments(profileKey) {
+    commentsProfileKey = profileKey;
+    onValue(ref(db, 'comments/' + profileKey), snap => {
+      renderComments(snap.val());
+    });
+  }
+
+  async function sendComment() {
+    const ta  = document.getElementById('commentTextarea');
+    const btn = document.getElementById('commentSendBtn');
+    const text = ta.value.trim();
+    if (!text || !loggedInUserName || !commentsProfileKey) return;
+    btn.disabled = true;
+    try {
+      await push(ref(db, 'comments/' + commentsProfileKey), {
+        author: loggedInUserName,
+        text,
+        timestamp: Date.now(),
+      });
+      ta.value = '';
+      document.getElementById('commentCharCount').textContent = '0';
+    } catch(e) {
+      console.error('Kommentar-Fehler:', e);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Textarea events
+  document.getElementById('commentTextarea').addEventListener('input', function() {
+    document.getElementById('commentCharCount').textContent = this.value.length;
+  });
+  document.getElementById('commentTextarea').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendComment(); }
+  });
+  document.getElementById('commentSendBtn').addEventListener('click', sendComment);
+
   // Auth guard
   onAuthStateChanged(auth, user => {
     document.getElementById('authLoading').style.display = 'none';
     if (!user) {
-      // Nicht eingeloggt → zurück zur Startseite
       window.location.href = 'index.html';
       return;
     }
-    currentUser = displayName(user.email);
-    document.getElementById('profileTitle').textContent = currentUser + 's Profil';
-    document.getElementById('profileSubtitle').textContent = user.email;
-    document.getElementById('profileAvatar').textContent = getUserInitial();
+    loggedInUserName = displayName(user.email);
+    const params     = new URLSearchParams(window.location.search);
+    const visitParam = params.get('user');
+    const otherUser  = loggedInUserName === 'Andreas' ? 'Nele' : 'Andreas';
+    const otherEmoji = otherUser === 'Nele' ? '🌸' : '🐾';
+    const myEmoji    = loggedInUserName === 'Andreas' ? '🐾' : '🌸';
+
+    if (visitParam && visitParam.toLowerCase() === otherUser.toLowerCase()) {
+      // Read-only: anderen User ansehen
+      isReadOnly  = true;
+      currentUser = otherUser;
+      document.getElementById('profileTitle').textContent    = otherUser + 's Profil';
+      document.getElementById('profileSubtitle').textContent = otherEmoji + ' ' + otherUser;
+      document.getElementById('profileAvatar').textContent   = otherUser[0].toUpperCase();
+      const el_ro = document.getElementById('readonlyBadge');     if (el_ro) el_ro.style.display = 'inline-flex';
+      const el_bh = document.getElementById('badgeHint');         if (el_bh) el_bh.style.display = 'none';
+      const el_fh = document.getElementById('frameHint');         if (el_fh) el_fh.style.display = 'none';
+      const el_bs = document.getElementById('boosterSection');    if (el_bs) el_bs.style.display = 'none';
+      const el_as = document.getElementById('accountSection');    if (el_as) el_as.style.display = 'none';
+      const el_ci = document.getElementById('commentInputWrap');  if (el_ci) el_ci.style.display = 'block';
+      const el_cl = document.getElementById('commentsLabel');     if (el_cl) el_cl.textContent = '💬 Kommentare für ' + otherUser;
+      // Visit-back-button
+      const visitBtn = document.getElementById('visitOtherBtn');
+      if (visitBtn) {
+        const el_vl = document.getElementById('visitOtherLabel'); if (el_vl) el_vl.textContent = myEmoji + ' Zurück zu meinem Profil';
+        visitBtn.href = 'profil.html';
+        visitBtn.style.display = 'inline-flex';
+      }
+      loadComments(otherUser.toLowerCase());
+      loadData(otherUser.toLowerCase());
+    } else {
+      // Eigenes Profil
+      isReadOnly  = false;
+      currentUser = loggedInUserName;
+      document.getElementById('profileTitle').textContent    = loggedInUserName + 's Profil';
+      document.getElementById('profileSubtitle').textContent = user.email;
+      document.getElementById('profileAvatar').textContent   = getUserInitial();
+      // Visit-other-button
+      const visitBtn2 = document.getElementById('visitOtherBtn');
+      if (visitBtn2) {
+        const el_vl2 = document.getElementById('visitOtherLabel'); if (el_vl2) el_vl2.textContent = otherEmoji + ' ' + otherUser + 's Profil besuchen';
+        visitBtn2.href = 'profil.html?user=' + otherUser.toLowerCase();
+        visitBtn2.style.display = 'inline-flex';
+      }
+      const el_cl2 = document.getElementById('commentsLabel');    if (el_cl2) el_cl2.textContent = '💬 Kommentare auf deinem Profil';
+      const el_ci2 = document.getElementById('commentInputWrap'); if (el_ci2) el_ci2.style.display = 'none';
+      loadComments(loggedInUserName.toLowerCase());
+      loadData(loggedInUserName.toLowerCase());
+    }
     document.getElementById('profilePage').style.display = 'block';
-    loadData(currentUser.toLowerCase());
   });
 </script>
 </body>

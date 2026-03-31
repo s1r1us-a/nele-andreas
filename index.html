@@ -198,13 +198,79 @@
   .initials-avatar.large { width: 72px; height: 72px; font-size: 32px; margin: 0 auto 16px; display: flex; }
 
   /* RAHMEN-STYLES */
-  .initials-avatar.frame-sakura     { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a; }
-  .initials-avatar.frame-ocean      { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f; background: linear-gradient(135deg,#2a9d8f,#4ecdc4); }
-  .initials-avatar.frame-feuer      { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316; background: linear-gradient(135deg,#dc2626,#f97316); }
-  .initials-avatar.frame-blitz      { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24; background: linear-gradient(135deg,#ca8a04,#fbbf24); }
-  .initials-avatar.frame-regenbogen { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); animation: topbarRainbow 2s linear infinite; }
-  .initials-avatar.frame-galaxy     { background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa); box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 12px 2px rgba(167,139,250,0.5); }
-  @keyframes topbarRainbow { 0%{box-shadow:0 0 0 3px #fff,0 0 0 5px #e8738a} 33%{box-shadow:0 0 0 3px #fff,0 0 0 5px #a78bfa} 66%{box-shadow:0 0 0 3px #fff,0 0 0 5px #4ecdc4} 100%{box-shadow:0 0 0 3px #fff,0 0 0 5px #e8738a} }
+    /* ── SAKURA: sanftes rosa Pulsieren ── */
+  .initials-avatar.frame-sakura {
+      background: linear-gradient(135deg,#e8738a,#f5a3b5);
+      box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.5);
+      animation: glowSakura 2.5s ease-in-out infinite;
+    }
+  @keyframes glowSakura {
+      0%,100% { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 5px #e8738a, 0 0 14px 3px rgba(232,115,138,0.4); }
+      50%      { box-shadow: 0 0 0 3px #fde8ed, 0 0 0 6px #e8738a, 0 0 24px 6px rgba(232,115,138,0.7); }
+    }
+  .initials-avatar.frame-ocean {
+      background: linear-gradient(135deg,#2a9d8f,#4ecdc4);
+      box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 16px 4px rgba(42,157,143,0.5);
+      animation: glowOcean 3s ease-in-out infinite;
+    }
+  @keyframes glowOcean {
+      0%,100% { box-shadow: 0 0 0 3px #e0f7f5, 0 0 0 5px #2a9d8f, 0 0 14px 3px rgba(42,157,143,0.4); }
+      50%      { box-shadow: 0 0 0 3px #b2f0eb, 0 0 0 6px #4ecdc4, 0 0 28px 8px rgba(78,205,196,0.65); }
+    }
+  .initials-avatar.frame-feuer {
+      background: linear-gradient(135deg,#dc2626,#f97316);
+      animation: glowFeuer 1.4s ease-in-out infinite;
+    }
+  @keyframes glowFeuer {
+      0%   { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
+      33%  { box-shadow: 0 0 0 3px #ffe8d6, 0 0 0 6px #dc2626, 0 0 22px 8px rgba(220,38,38,0.6), 0 0 40px 10px rgba(249,115,22,0.25); }
+      66%  { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 18px 5px rgba(249,115,22,0.55), 0 0 35px 7px rgba(220,38,38,0.2); }
+      100% { box-shadow: 0 0 0 3px #fff1e6, 0 0 0 5px #f97316, 0 0 14px 4px rgba(249,115,22,0.5), 0 0 30px 6px rgba(220,38,38,0.3); }
+    }
+  .initials-avatar.frame-blitz {
+      background: linear-gradient(135deg,#ca8a04,#fbbf24);
+      animation: glowBlitz 1.8s ease-in-out infinite;
+    }
+  @keyframes glowBlitz {
+      0%,100% { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 12px 3px rgba(251,191,36,0.4); }
+      20%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 7px #fbbf24, 0 0 30px 10px rgba(251,191,36,0.8), 0 0 50px 15px rgba(202,138,4,0.3); }
+      22%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
+      60%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 6px #fbbf24, 0 0 28px 8px rgba(251,191,36,0.7), 0 0 45px 12px rgba(202,138,4,0.25); }
+      62%     { box-shadow: 0 0 0 3px #fef9c3, 0 0 0 5px #fbbf24, 0 0 10px 2px rgba(251,191,36,0.3); }
+    }
+  .initials-avatar.frame-regenbogen {
+      background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4);
+      animation: bgRainbow 3s linear infinite, glowRainbow 3s linear infinite;
+    }
+  @keyframes bgRainbow {
+      0%   { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
+      25%  { background: linear-gradient(135deg,#a78bfa,#4ecdc4,#fbbf24); }
+      50%  { background: linear-gradient(135deg,#4ecdc4,#fbbf24,#e8738a); }
+      75%  { background: linear-gradient(135deg,#fbbf24,#e8738a,#a78bfa); }
+      100% { background: linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4); }
+    }
+  @keyframes glowRainbow {
+      0%   { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a, 0 0 20px 6px rgba(232,115,138,0.6); }
+      25%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #a78bfa, 0 0 20px 6px rgba(167,139,250,0.6); }
+      50%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #4ecdc4, 0 0 20px 6px rgba(78,205,196,0.6); }
+      75%  { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #fbbf24, 0 0 20px 6px rgba(251,191,36,0.6); }
+      100% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #e8738a, 0 0 20px 6px rgba(232,115,138,0.6); }
+    }
+  .initials-avatar.frame-galaxy {
+      background: linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa);
+      animation: glowGalaxy 4s ease-in-out infinite, rotateGalaxy 8s linear infinite;
+    }
+  @keyframes glowGalaxy {
+      0%,100% { box-shadow: 0 0 0 3px #2a1f4a, 0 0 0 6px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5), 0 0 32px 8px rgba(124,92,191,0.3); }
+      50%     { box-shadow: 0 0 0 3px #3d2f6a, 0 0 0 7px #c4b5fd, 0 0 28px 10px rgba(196,181,253,0.7), 0 0 50px 16px rgba(124,92,191,0.45); }
+    }
+  @keyframes rotateGalaxy {
+      0%   { background: linear-gradient(0deg,  #1a1030,#7c5cbf,#a78bfa); }
+      25%  { background: linear-gradient(90deg, #1a1030,#7c5cbf,#a78bfa); }
+      50%  { background: linear-gradient(180deg,#1a1030,#7c5cbf,#a78bfa); }
+      75%  { background: linear-gradient(270deg,#1a1030,#7c5cbf,#a78bfa); }
+      100% { background: linear-gradient(360deg,#1a1030,#7c5cbf,#a78bfa); }
+    }
 
   /* RAHMEN-GRID IM PROFIL */
   .frame-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
@@ -276,7 +342,10 @@
 
 <!-- Top Bar -->
 <div class="top-bar" id="topBar">
-  <span class="initials-avatar" id="topBarAvatar" title="Profil öffnen">?</span>
+  <div style="display:flex; align-items:center; gap:6px;">
+    <span class="initials-avatar" id="topBarAvatar" title="Profil öffnen">?</span>
+    <a id="visitOtherProfileBtn" href="#" class="initials-avatar" title="Profil besuchen" style="display:none; text-decoration:none; width:32px; height:32px; font-size:16px; cursor:pointer;">?</a>
+  </div>
   <div id="activeBadgePill" style="display:none;" class="active-badge-pill"><span class="badge-emoji" id="activeBadgeEmoji">🐾</span><span id="activeBadgeName"></span></div>
   <div class="coin-display" id="coinDisplay" style="display:none;"><span class="coin-icon">🪙</span><span class="coin-count" id="coinCount">0</span></div>
   <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
@@ -498,6 +567,19 @@
       overlay.style.display = 'none';
       topBar.style.display = 'flex';
       logoutBtn.textContent = window.currentUser + ' ausloggen';
+      // Anderen Profil-Avatar befüllen
+      const otherUser = window.currentUser === 'Andreas' ? 'Nele' : 'Andreas';
+      const otherKey  = otherUser.toLowerCase();
+      const visitBtn  = document.getElementById('visitOtherProfileBtn') || document.getElementById('otherUserAvatar');
+      visitBtn.textContent = otherUser[0].toUpperCase();
+      visitBtn.href = 'profil.html?user=' + otherKey;
+      visitBtn.title = otherUser + 's Profil besuchen';
+      visitBtn.style.display = 'inline-flex';
+      // Rahmen des anderen aus Firebase laden
+      get(ref(db, 'shop/' + otherKey + '/equippedFrame')).then(snap => {
+        const frameId = snap.val();
+        if (frameId) applyAvatarFrame(visitBtn, frameId);
+      }).catch(() => {});
       // Avatar initial setzen
       const av = document.getElementById('topBarAvatar');
       if (av) av.textContent = window.currentUser[0].toUpperCase();
@@ -988,6 +1070,14 @@
     renderProfileFrames();
     updateTopBarBadge();
     updateAvatars();
+    // Rahmen des anderen live aktuell halten
+    const otherKey2 = (window.currentUser === 'Andreas' ? 'nele' : 'andreas');
+    const otherAvatar = document.getElementById('visitOtherProfileBtn') || document.getElementById('otherUserAvatar');
+    if (otherAvatar) {
+      get(ref(db, 'shop/' + otherKey2 + '/equippedFrame')).then(snap => {
+        applyAvatarFrame(otherAvatar, snap.val() || null);
+      }).catch(() => {});
+    }
   }
 
 </script>
