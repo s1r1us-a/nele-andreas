@@ -129,7 +129,7 @@
   .coin-bump { animation: countBump 0.4s cubic-bezier(0.22,1,0.36,1); }
 
   /* BOOSTER BANNER */
-  .booster-banner { display: none; flex-direction: column; gap: 6px; max-width: 420px; width: 100%; margin-bottom: 8px; }
+  .booster-banner { display: none; flex-direction: column; gap: 6px; max-width: 420px; width: 100%; margin-top: 16px; margin-bottom: 0; }
   .booster-banner-item { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1.5px solid rgba(212,160,97,0.4); border-radius: 50px; padding: 8px 18px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: var(--gold); box-shadow: 0 3px 14px rgba(212,160,97,0.18); animation: boosterPulse 2s ease-in-out infinite; }
   @keyframes boosterPulse { 0%,100%{box-shadow:0 3px 14px rgba(212,160,97,0.18)} 50%{box-shadow:0 4px 20px rgba(212,160,97,0.4)} }
   .booster-banner-emoji { font-size: 18px; }
@@ -369,8 +369,8 @@
   <div class="booster-banner" id="boosterBanner">
     <!-- Wird per JS befüllt -->
   </div>
-  <div class="shop-btn-wrap">
-    <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--gold); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(212,160,97,0.15);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
+  <div class="shop-btn-wrap" style="margin-top: 16px; max-width: 420px; width: 100%;">
+    <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #c87830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(212,160,97,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
   </div>
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>

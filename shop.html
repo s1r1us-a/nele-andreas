@@ -317,21 +317,20 @@
       <div class="lootbox-desc">Enthält Coins, exklusive Badges oder seltene Profilrahmen 👀</div>
       <div class="lootbox-odds">
         <div class="lootbox-odds-title">Mögliche Gewinne</div>
-        <div class="lootbox-odds-row"><span>50 🪙</span><span>33%</span></div>
-        <div class="lootbox-odds-row"><span>200 🪙</span><span>23%</span></div>
-        <div class="lootbox-odds-row"><span>500 🪙</span><span>14%</span></div>
-        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>7%</span></div>
+        <div class="lootbox-odds-row"><span>200 🪙</span><span>33%</span></div>
+        <div class="lootbox-odds-row"><span>500 🪙</span><span>20%</span></div>
+        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>10%</span></div>
         <div class="lootbox-odds-row"><span>5.000 🪙</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>7%</span></div>
         <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>4%</span></div>
         <div class="lootbox-odds-row"><span>👑 Badge (Legendär)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>1%</span></div>
-        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>6%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>4%</span></div>
+        <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>6%</span></div>
+        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>4%</span></div>
       </div>
-      <div class="lootbox-price">🪙 500 Coins pro Box</div>
+      <div class="lootbox-price">🪙 200 Coins pro Box</div>
       <button class="btn-open-box" id="openBoxBtn">📦 Box öffnen</button>
     </div>
   </div>
@@ -733,24 +732,23 @@
     { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
-  const BOX_PRICE = 500;
+  const BOX_PRICE = 200;
   let ownedBadges = [];
   let ownedFrames = [];
 
   function rollLootbox() {
     const r = Math.random() * 100;
-    if (r < 33)  return { type: 'coins', amount: 50 };
-    if (r < 56)  return { type: 'coins', amount: 200 };
-    if (r < 70)  return { type: 'coins', amount: 500 };
-    if (r < 77)  return { type: 'coins', amount: 1500 };
-    if (r < 79)  return { type: 'coins', amount: 5000 };
-    if (r < 86)  return { type: 'badge', rarity: 'common' };
-    if (r < 90)  return { type: 'badge', rarity: 'rare' };
-    if (r < 92)  return { type: 'badge', rarity: 'legendary' };
-    if (r < 95)  return { type: 'frame', rarity: 'common' };
-    if (r < 97)  return { type: 'frame', rarity: 'rare' };
-    if (r < 98)  return { type: 'frame', rarity: 'legendary' };
-    if (r < 99)  return { type: 'booster', boosterId: 'coins_booster' };
+    if (r < 33)  return { type: 'coins', amount: 200 };
+    if (r < 53)  return { type: 'coins', amount: 500 };
+    if (r < 63)  return { type: 'coins', amount: 1500 };
+    if (r < 65)  return { type: 'coins', amount: 5000 };
+    if (r < 72)  return { type: 'badge', rarity: 'common' };
+    if (r < 76)  return { type: 'badge', rarity: 'rare' };
+    if (r < 78)  return { type: 'badge', rarity: 'legendary' };
+    if (r < 84)  return { type: 'frame', rarity: 'common' };
+    if (r < 88)  return { type: 'frame', rarity: 'rare' };
+    if (r < 90)  return { type: 'frame', rarity: 'legendary' };
+    if (r < 96)  return { type: 'booster', boosterId: 'coins_booster' };
     return               { type: 'booster', boosterId: 'moments_booster' };
   }
 
