@@ -602,7 +602,7 @@
 
   onValue(momentsRef, s => {
     const c = s.val() || 0;
-    heartCount.textContent = c + ' ' + emojis[c % emojis.length];
+    heartCount.textContent = c.toLocaleString('de-DE') + ' ' + emojis[c % emojis.length];
   });
 
   onValue(lastClickRef, s => {
@@ -612,15 +612,15 @@
 
   function updateStats() {
     const t = sA + sN;
-    cntA.textContent = sA; cntN.textContent = sN;
+    cntA.textContent = sA.toLocaleString('de-DE'); cntN.textContent = sN.toLocaleString('de-DE');
     if (t === 0) { barAndreas.style.width='50%'; barNele.style.width='50%'; verdict.textContent='–'; pctA.textContent=''; pctN.textContent=''; return; }
     const pA = Math.round(sA/t*100), pN = Math.round(sN/t*100);
     barAndreas.style.width = Math.max(6, pA) + '%';
     barNele.style.width    = Math.max(6, pN) + '%';
     pctA.textContent = ' · ' + pA + '%';
     pctN.textContent = ' · ' + pN + '%';
-    if (sA > sN)      verdict.textContent = 'Andreas führt mit ' + (sA-sN) + ' Momenten 🐾';
-    else if (sN > sA) verdict.textContent = 'Nele führt mit ' + (sN-sA) + ' Momenten 🌸';
+    if (sA > sN)      verdict.textContent = 'Andreas führt mit ' + (sA-sN).toLocaleString('de-DE') + ' Momenten 🐾';
+    else if (sN > sA) verdict.textContent = 'Nele führt mit ' + (sN-sA).toLocaleString('de-DE') + ' Momenten 🌸';
     else              verdict.textContent = 'Gleichstand! 🤝';
   }
 
@@ -629,8 +629,8 @@
 
   function updateTodayStats() {
     const t = sAT + sNT;
-    cntAToday.textContent = sAT;
-    cntNToday.textContent = sNT;
+    cntAToday.textContent = sAT.toLocaleString('de-DE');
+    cntNToday.textContent = sNT.toLocaleString('de-DE');
     if (t === 0) { barAndreasToday.style.width='50%'; barNeleToday.style.width='50%'; return; }
     barAndreasToday.style.width = Math.max(6, Math.round(sAT/t*100)) + '%';
     barNeleToday.style.width    = Math.max(6, Math.round(sNT/t*100)) + '%';
