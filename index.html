@@ -130,6 +130,18 @@
 
   /* BOOSTER BANNER */
   .booster-banner { display: none; flex-direction: column; gap: 6px; max-width: 420px; width: 100%; margin-top: 16px; margin-bottom: 0; }
+
+  /* GAME INVITE BANNER */
+  .game-invite-banner { display: none; max-width: 420px; width: 100%; margin-top: 16px; }
+  .game-invite-inner { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(124,92,191,0.1)); border: 2px solid rgba(167,139,250,0.5); border-radius: 20px; padding: 14px 18px; text-decoration: none; transition: all 0.2s ease; animation: inviteBannerPulse 2s ease-in-out infinite; }
+  .game-invite-inner:hover { transform: scale(1.02); border-color: rgba(167,139,250,0.8); }
+  @keyframes inviteBannerPulse { 0%,100%{box-shadow:0 4px 16px rgba(167,139,250,0.2)} 50%{box-shadow:0 4px 24px rgba(167,139,250,0.45)} }
+  .game-invite-emoji { font-size: 28px; flex-shrink: 0; animation: swordWiggle 1s ease-in-out infinite; }
+  @keyframes swordWiggle { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(10deg)} }
+  .game-invite-text { flex: 1; }
+  .game-invite-title { font-size: 13px; font-weight: 700; color: #5b21b6; letter-spacing: 0.3px; }
+  .game-invite-sub { font-size: 11px; color: var(--text-mid); font-weight: 500; margin-top: 2px; }
+  .game-invite-bet { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
   .booster-banner-item { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1.5px solid rgba(212,160,97,0.4); border-radius: 50px; padding: 8px 18px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: var(--gold); box-shadow: 0 3px 14px rgba(212,160,97,0.18); animation: boosterPulse 2s ease-in-out infinite; }
   @keyframes boosterPulse { 0%,100%{box-shadow:0 3px 14px rgba(212,160,97,0.18)} 50%{box-shadow:0 4px 20px rgba(212,160,97,0.4)} }
   .booster-banner-emoji { font-size: 18px; }
@@ -436,6 +448,19 @@
   <div class="booster-banner" id="boosterBanner">
     <!-- Wird per JS befüllt -->
   </div>
+  <div class="game-invite-banner" id="gameInviteBanner">
+    <a href="game.html" class="game-invite-inner">
+      <span class="game-invite-emoji">⚔️</span>
+      <div class="game-invite-text">
+        <div class="game-invite-title" id="gameInviteTitle">fordert dich heraus!</div>
+        <div class="game-invite-sub">Tippe um die Herausforderung anzunehmen</div>
+      </div>
+      <div class="game-invite-bet" id="gameInviteBet"></div>
+    </a>
+  </div>
+  <div style="margin-top: 16px; max-width: 420px; width: 100%;">
+    <a href="game.html" style="display: block; width: 100%; background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(167,139,250,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🔴 Vier Gewinnt</a>
+  </div>
   <div class="shop-btn-wrap" style="margin-top: 16px; max-width: 420px; width: 100%;">
     <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #c87830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(212,160,97,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
   </div>
@@ -605,6 +630,19 @@
       });
       // Load badges
       loadUserBadges();
+
+      // Game-Invite live lauschen
+      onValue(ref(db, 'game/andreas_vs_nele'), snap => {
+        const game = snap.val();
+        const banner = document.getElementById('gameInviteBanner');
+        if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
+          document.getElementById('gameInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
+          document.getElementById('gameInviteBet').textContent = game.bet.toLocaleString('de-DE') + ' 🪙';
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      });
 
       // Booster live hören
       const boosterKey = userKey;

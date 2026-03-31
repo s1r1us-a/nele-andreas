@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vier Gewinnt 🎮 – Nele & Andreas</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8738a;
+    --rose-light: #f5a3b5;
+    --rose-pale: #fde8ed;
+    --cream: #fff8f0;
+    --gold: #d4a061;
+    --text-dark: #5a2d3a;
+    --text-mid: #8b5565;
+    --andreas-color: #e8738a;
+    --nele-color: #a78bfa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sans-serif; overflow-x: hidden; }
+
+  .bg-gradient {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.12) 0%, transparent 50%),
+      linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #f5f0ff 70%, #fff8e8 100%);
+  }
+
+  /* AUTH LOADING */
+  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
+  .auth-spinner { width:36px; height:36px; border:3px solid rgba(232,115,138,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* LOGIN */
+  .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(253,232,237,0.92); backdrop-filter:blur(4px); }
+  .modal-card { background:#fff; border:1.5px solid rgba(232,115,138,0.3); border-radius:28px; padding:40px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 16px 60px rgba(232,115,138,0.2); }
+  .modal-emoji { font-size:40px; margin-bottom:12px; display:block; }
+  .modal-title { font-family:'Dancing Script',cursive; font-size:32px; font-weight:700; background:linear-gradient(135deg,var(--rose) 0%,#c85070 60%,var(--rose-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
+  .modal-subtitle { font-size:13px; color:var(--text-mid); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:24px; font-weight:500; }
+  .login-field { width:100%; border:1.5px solid rgba(232,115,138,0.3); border-radius:14px; padding:13px 16px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:500; color:var(--text-dark); background:var(--cream); outline:none; margin-bottom:12px; transition:border-color 0.2s; box-sizing:border-box; }
+  .login-field:focus { border-color:var(--rose); }
+  .login-btn { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,var(--rose) 0%,#c85070 100%); color:white; box-shadow:0 4px 20px rgba(232,115,138,0.4); transition:transform 0.2s; margin-top:4px; }
+  .login-btn:hover { transform:scale(1.03) translateY(-2px); }
+  .login-error { font-size:12px; color:#c85070; margin-top:10px; min-height:18px; font-weight:600; }
+
+  /* TOP BAR */
+  .top-bar { position:fixed; top:0; left:0; right:0; z-index:9999; display:none; align-items:center; justify-content:space-between; padding:10px 16px; background:rgba(255,248,240,0.95); border-bottom:1px solid rgba(232,115,138,0.2); box-shadow:0 2px 12px rgba(232,115,138,0.1); backdrop-filter:blur(8px); gap:8px; }
+  .top-bar-btn { background:rgba(255,255,255,0.9); border:1.5px solid rgba(232,115,138,0.25); border-radius:50px; padding:7px 16px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:600; color:var(--text-mid); cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-block; }
+  .top-bar-btn:hover { color:var(--rose); border-color:var(--rose); }
+  .coin-display { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.9); border:1.5px solid rgba(212,160,97,0.35); border-radius:50px; padding:6px 14px; font-size:12px; font-weight:700; color:var(--gold); }
+  .coin-display .coin-num { font-family:'Dancing Script',cursive; font-size:18px; }
+
+  /* PAGE */
+  .page { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:80px 20px 60px; }
+
+  .page-title { font-family:'Dancing Script',cursive; font-size:clamp(36px,8vw,60px); font-weight:700; background:linear-gradient(135deg,var(--rose) 0%,#a78bfa 60%,var(--rose-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; margin-bottom:6px; }
+  .page-subtitle { font-size:12px; color:var(--text-mid); letter-spacing:2px; text-transform:uppercase; font-weight:500; text-align:center; margin-bottom:32px; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--text-dark); color:#fff; border-radius:50px; padding:12px 24px; font-size:14px; font-weight:600; z-index:999999; transition:transform 0.4s cubic-bezier(0.22,1,0.36,1),opacity 0.4s; opacity:0; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+  /* ── LOBBY ── */
+  .lobby-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:1.5px solid rgba(232,115,138,0.2); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 8px 40px rgba(232,115,138,0.12); text-align:center; }
+  .lobby-title { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--text-dark); margin-bottom:6px; }
+  .lobby-sub { font-size:12px; color:var(--text-mid); font-weight:500; margin-bottom:24px; letter-spacing:0.5px; }
+  .bet-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); font-weight:700; margin-bottom:8px; }
+  .bet-input { width:100%; border:1.5px solid rgba(232,115,138,0.3); border-radius:14px; padding:13px 16px; font-family:'Dancing Script',cursive; font-size:24px; font-weight:700; color:var(--gold); background:var(--cream); outline:none; text-align:center; margin-bottom:6px; transition:border-color 0.2s; }
+  .bet-input:focus { border-color:var(--rose); }
+  .bet-hint { font-size:11px; color:var(--text-mid); margin-bottom:20px; font-weight:500; }
+  .btn-primary { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,var(--rose),#c85070); box-shadow:0 4px 20px rgba(232,115,138,0.4); transition:all 0.2s; }
+  .btn-primary:hover { transform:scale(1.03) translateY(-2px); }
+  .btn-primary:disabled { background:#ccc; box-shadow:none; cursor:default; transform:none; }
+  .btn-secondary { width:100%; border:1.5px solid rgba(232,115,138,0.3); border-radius:50px; padding:14px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all 0.2s; margin-top:10px; }
+  .btn-secondary:hover { border-color:var(--rose); color:var(--rose); }
+
+  /* INVITE CARD */
+  .invite-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:2px solid rgba(232,115,138,0.3); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 8px 40px rgba(232,115,138,0.15); text-align:center; animation:invitePulse 2s ease-in-out infinite; }
+  @keyframes invitePulse { 0%,100%{box-shadow:0 8px 40px rgba(232,115,138,0.15)} 50%{box-shadow:0 8px 50px rgba(232,115,138,0.3)} }
+  .invite-emoji { font-size:56px; margin-bottom:12px; display:block; animation:inviteBounce 1s ease-in-out infinite; }
+  @keyframes inviteBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .invite-title { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text-dark); margin-bottom:8px; }
+  .invite-bet { font-size:24px; font-weight:700; color:var(--gold); font-family:'Dancing Script',cursive; margin-bottom:6px; }
+  .invite-sub { font-size:12px; color:var(--text-mid); margin-bottom:24px; font-weight:500; }
+  .btn-accept { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 4px 20px rgba(34,197,94,0.4); transition:all 0.2s; }
+  .btn-accept:hover { transform:scale(1.03); }
+  .btn-decline { width:100%; border:1.5px solid rgba(232,115,138,0.3); border-radius:50px; padding:13px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all 0.2s; margin-top:10px; }
+  .btn-decline:hover { border-color:var(--rose); color:var(--rose); }
+
+  /* WAITING */
+  .waiting-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:1.5px solid rgba(212,160,97,0.25); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; text-align:center; }
+  .waiting-dots span { display:inline-block; width:8px; height:8px; background:var(--rose); border-radius:50%; margin:0 3px; animation:dotBounce 1.2s ease-in-out infinite; }
+  .waiting-dots span:nth-child(2) { animation-delay:0.2s; }
+  .waiting-dots span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes dotBounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-10px)} }
+
+  /* ── GAME BOARD ── */
+  .game-wrapper { max-width:480px; width:100%; }
+  .game-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; }
+  .player-info { flex:1; background:rgba(255,255,255,0.8); border-radius:20px; padding:12px 14px; text-align:center; border:2px solid transparent; transition:all 0.3s; }
+  .player-info.active { border-color:var(--andreas-color); box-shadow:0 4px 16px rgba(232,115,138,0.25); }
+  .player-info.active.nele-active { border-color:var(--nele-color); box-shadow:0 4px 16px rgba(167,139,250,0.25); }
+  .player-name { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-mid); margin-bottom:3px; }
+  .player-chip { width:20px; height:20px; border-radius:50%; margin:0 auto; }
+  .chip-andreas { background:radial-gradient(circle at 35% 35%, #f5a3b5, #c85070); box-shadow:0 2px 6px rgba(232,115,138,0.5); }
+  .chip-nele { background:radial-gradient(circle at 35% 35%, #c4b5fd, #7c3aed); box-shadow:0 2px 6px rgba(167,139,250,0.5); }
+  .player-turn-label { font-size:10px; color:var(--text-mid); font-weight:600; margin-top:4px; min-height:14px; }
+
+  .pot-display { text-align:center; }
+  .pot-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); font-weight:700; }
+  .pot-amount { font-family:'Dancing Script',cursive; font-size:22px; font-weight:700; color:var(--gold); }
+
+  /* BOARD */
+  .board-container { background:linear-gradient(135deg,#e8738a,#a78bfa); border-radius:20px; padding:10px; box-shadow:0 8px 32px rgba(167,139,250,0.3), 0 4px 16px rgba(232,115,138,0.2); }
+  .board-cols { display:flex; gap:6px; margin-bottom:8px; }
+  .col-btn { flex:1; background:rgba(255,255,255,0.25); border:none; border-radius:8px; padding:6px 0; cursor:pointer; font-size:14px; transition:all 0.2s; color:white; font-weight:700; }
+  .col-btn:hover { background:rgba(255,255,255,0.45); transform:translateY(-2px); }
+  .col-btn:disabled { cursor:default; opacity:0.4; transform:none; }
+  .board-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cell { aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,0.25); transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); position:relative; overflow:hidden; }
+  .cell.andreas { background:radial-gradient(circle at 35% 35%, #f5a3b5, #c85070); box-shadow:inset 0 -3px 6px rgba(0,0,0,0.15), 0 0 0 2px rgba(255,255,255,0.3); }
+  .cell.nele { background:radial-gradient(circle at 35% 35%, #c4b5fd, #7c3aed); box-shadow:inset 0 -3px 6px rgba(0,0,0,0.15), 0 0 0 2px rgba(255,255,255,0.3); }
+  .cell.win { animation:winPulse 0.6s ease-in-out infinite alternate; }
+  @keyframes winPulse { 0%{transform:scale(1);filter:brightness(1)} 100%{transform:scale(1.12);filter:brightness(1.3)} }
+  .cell.drop { animation:dropIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes dropIn { 0%{transform:scale(0) translateY(-20px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
+
+  /* RESULT OVERLAY */
+  .result-overlay { position:fixed; inset:0; z-index:99999; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); }
+  .result-overlay.open { display:flex; }
+  .result-card { background:#fff; border-radius:32px; padding:44px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 20px 80px rgba(0,0,0,0.2); animation:resultPop 0.5s cubic-bezier(0.22,1,0.36,1); }
+  @keyframes resultPop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+  .result-emoji { font-size:72px; display:block; margin-bottom:12px; }
+  .result-title { font-family:'Dancing Script',cursive; font-size:36px; font-weight:700; color:var(--text-dark); margin-bottom:8px; }
+  .result-sub { font-size:14px; color:var(--text-mid); font-weight:500; margin-bottom:8px; line-height:1.6; }
+  .result-coins { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--gold); margin-bottom:28px; }
+  .btn-play-again { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,var(--rose),#c85070); box-shadow:0 4px 20px rgba(232,115,138,0.4); transition:transform 0.2s; }
+  .btn-play-again:hover { transform:scale(1.03); }
+
+  /* KONFETTI */
+  .konfetti-piece { position:fixed; pointer-events:none; z-index:9999998; border-radius:3px; animation:konfettiFall linear forwards; }
+  @keyframes konfettiFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+
+  @media (max-width:480px) {
+    .page { padding:70px 12px 50px; }
+    .board-container { padding:8px; }
+    .board-grid { gap:4px; }
+    .board-cols { gap:4px; }
+    .game-header { gap:8px; }
+    .player-info { padding:10px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:flex;">
+  <div class="modal-card">
+    <span class="modal-emoji">🎮</span>
+    <div class="modal-title">Vier Gewinnt</div>
+    <div class="modal-subtitle">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="top-bar" id="topBar">
+  <a href="index.html" class="top-bar-btn">← Zurück</a>
+  <div class="coin-display">🪙 <span class="coin-num" id="coinCount">0</span></div>
+  <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
+</div>
+
+<div class="bg-gradient"></div>
+
+<div class="page" id="mainPage" style="display:none;">
+  <h1 class="page-title">🔴 Vier Gewinnt 🟣</h1>
+  <p class="page-subtitle">Setzt Coins – wer gewinnt, bekommt alles</p>
+
+  <!-- LOBBY -->
+  <div id="lobbySection" style="width:100%;max-width:400px;">
+
+    <!-- Spiel erstellen -->
+    <div class="lobby-card" id="createCard">
+      <div class="lobby-title">Neues Spiel 🎯</div>
+      <div class="lobby-sub">Setze deinen Einsatz und fordere den anderen heraus</div>
+      <div class="bet-label">Dein Einsatz</div>
+      <input class="bet-input" type="number" id="betInput" placeholder="500" min="50" step="50">
+      <div class="bet-hint" id="betHint">Mindestens 50 🪙</div>
+      <button class="btn-primary" id="createGameBtn">Spiel erstellen ⚔️</button>
+    </div>
+
+    <!-- Warten auf anderen -->
+    <div class="waiting-card" id="waitingCard" style="display:none;">
+      <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+      <div class="lobby-title">Warten auf <span id="waitingForName"></span>…</div>
+      <div class="lobby-sub" style="margin:12px 0 20px;">Einsatz: <strong id="waitingBetDisplay" style="color:var(--gold);font-family:'Dancing Script',cursive;font-size:20px;"></strong> 🪙</div>
+      <div class="waiting-dots"><span></span><span></span><span></span></div>
+      <button class="btn-secondary" id="cancelGameBtn" style="margin-top:20px;">Spiel abbrechen</button>
+    </div>
+
+    <!-- Einladung annehmen -->
+    <div class="invite-card" id="inviteCard" style="display:none;">
+      <span class="invite-emoji">⚔️</span>
+      <div class="invite-title"><span id="inviterName"></span> fordert dich heraus!</div>
+      <div class="invite-bet" id="inviteBetDisplay"></div>
+      <div class="invite-sub">🪙 Coins werden sofort abgezogen<br>Der Gewinner bekommt alles!</div>
+      <button class="btn-accept" id="acceptBtn">Annehmen ✅</button>
+      <button class="btn-decline" id="declineBtn">Ablehnen ❌</button>
+    </div>
+
+  </div>
+
+  <!-- SPIELFELD -->
+  <div id="gameSection" style="display:none;" class="game-wrapper">
+    <div class="game-header">
+      <div class="player-info" id="playerInfoAndreas">
+        <div class="player-chip chip-andreas" style="margin-bottom:4px;"></div>
+        <div class="player-name">Andreas</div>
+        <div class="player-turn-label" id="turnLabelAndreas"></div>
+      </div>
+      <div class="pot-display">
+        <div class="pot-label">Pot</div>
+        <div class="pot-amount" id="potDisplay">0 🪙</div>
+      </div>
+      <div class="player-info" id="playerInfoNele">
+        <div class="player-chip chip-nele" style="margin-bottom:4px;"></div>
+        <div class="player-name">Nele</div>
+        <div class="player-turn-label" id="turnLabelNele"></div>
+      </div>
+    </div>
+
+    <div class="board-container">
+      <div class="board-cols" id="boardCols">
+        <!-- Spalten-Buttons werden per JS erstellt -->
+      </div>
+      <div class="board-grid" id="boardGrid">
+        <!-- Zellen werden per JS erstellt -->
+      </div>
+    </div>
+
+    <button class="btn-secondary" id="surrenderBtn" style="margin-top:16px;">🏳️ Aufgeben</button>
+  </div>
+</div>
+
+<!-- ERGEBNIS -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <span class="result-emoji" id="resultEmoji">🏆</span>
+    <div class="result-title" id="resultTitle">Gewonnen!</div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-coins" id="resultCoins"></div>
+    <button class="btn-play-again" id="playAgainBtn">Nochmal spielen 🎮</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  const GAME_REF = 'game/andreas_vs_nele';
+  const ROWS = 6, COLS = 7;
+
+  let currentUser = null;
+  let currentCoins = 0;
+  let gameState = null;
+  let gameListener = null;
+
+  function displayName(email) {
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
+    return email.split('@')[0];
+  }
+
+  function otherPlayer(name) { return name === 'Andreas' ? 'Nele' : 'Andreas'; }
+
+  function showToast(msg, dur = 3000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+  }
+
+  // ── BOARD RENDERING ──────────────────────────────────────────────────────
+  function initBoardDOM() {
+    const colsEl = document.getElementById('boardCols');
+    const gridEl = document.getElementById('boardGrid');
+    colsEl.innerHTML = '';
+    gridEl.innerHTML = '';
+
+    for (let c = 0; c < COLS; c++) {
+      const btn = document.createElement('button');
+      btn.className = 'col-btn';
+      btn.textContent = '▼';
+      btn.dataset.col = c;
+      btn.addEventListener('click', () => dropPiece(c));
+      colsEl.appendChild(btn);
+    }
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.id = `cell-${r}-${c}`;
+        gridEl.appendChild(cell);
+      }
+    }
+  }
+
+  function renderBoard(board, winCells = []) {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cell = document.getElementById(`cell-${r}-${c}`);
+        if (!cell) continue;
+        const val = board[r][c];
+        cell.className = 'cell' + (val === 1 ? ' andreas' : val === 2 ? ' nele' : '');
+        if (winCells.some(([wr, wc]) => wr === r && wc === c)) {
+          cell.classList.add('win');
+        }
+      }
+    }
+  }
+
+  function updateTurnUI(state) {
+    const isMyTurn = state.currentTurn === currentUser;
+    const colBtns = document.querySelectorAll('.col-btn');
+    colBtns.forEach(b => b.disabled = !isMyTurn || state.status !== 'running');
+
+    const aiEl = document.getElementById('playerInfoAndreas');
+    const niEl = document.getElementById('playerInfoNele');
+    const tlA  = document.getElementById('turnLabelAndreas');
+    const tlN  = document.getElementById('turnLabelNele');
+
+    aiEl.className = 'player-info' + (state.currentTurn === 'Andreas' ? ' active' : '');
+    niEl.className = 'player-info' + (state.currentTurn === 'Nele' ? ' active nele-active' : '');
+    tlA.textContent = state.currentTurn === 'Andreas' ? '🎯 Am Zug' : '';
+    tlN.textContent = state.currentTurn === 'Nele'    ? '🎯 Am Zug' : '';
+
+    document.getElementById('potDisplay').textContent = (state.bet * 2).toLocaleString('de-DE') + ' 🪙';
+  }
+
+  // ── VIER GEWINNT LOGIC ───────────────────────────────────────────────────
+  function checkWin(board, player) {
+    const p = player === 'Andreas' ? 1 : 2;
+    // Horizontal
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c <= COLS - 4; c++)
+        if ([0,1,2,3].every(i => board[r][c+i] === p))
+          return [[r,c],[r,c+1],[r,c+2],[r,c+3]];
+    // Vertikal
+    for (let r = 0; r <= ROWS - 4; r++)
+      for (let c = 0; c < COLS; c++)
+        if ([0,1,2,3].every(i => board[r+i][c] === p))
+          return [[r,c],[r+1,c],[r+2,c],[r+3,c]];
+    // Diagonal ↘
+    for (let r = 0; r <= ROWS - 4; r++)
+      for (let c = 0; c <= COLS - 4; c++)
+        if ([0,1,2,3].every(i => board[r+i][c+i] === p))
+          return [[r,c],[r+1,c+1],[r+2,c+2],[r+3,c+3]];
+    // Diagonal ↙
+    for (let r = 0; r <= ROWS - 4; r++)
+      for (let c = 3; c < COLS; c++)
+        if ([0,1,2,3].every(i => board[r+i][c-i] === p))
+          return [[r,c],[r+1,c-1],[r+2,c-2],[r+3,c-3]];
+    return null;
+  }
+
+  function isDraw(board) {
+    return board[0].every(cell => cell !== 0);
+  }
+
+  async function dropPiece(col) {
+    if (!gameState || gameState.status !== 'running') return;
+    if (gameState.currentTurn !== currentUser) return;
+
+    const board = gameState.board.map(r => [...r]);
+    // Unterste freie Zeile in der Spalte finden
+    let row = -1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (board[r][col] === 0) { row = r; break; }
+    }
+    if (row === -1) { showToast('Diese Spalte ist voll!'); return; }
+
+    const playerNum = currentUser === 'Andreas' ? 1 : 2;
+    board[row][col] = playerNum;
+
+    // Drop-Animation
+    const cell = document.getElementById(`cell-${row}-${col}`);
+    if (cell) {
+      cell.className = `cell ${currentUser.toLowerCase()} drop`;
+      setTimeout(() => cell.classList.remove('drop'), 400);
+    }
+
+    const winCells = checkWin(board, currentUser);
+    const draw = !winCells && isDraw(board);
+
+    const updates = {
+      board,
+      currentTurn: otherPlayer(currentUser),
+      lastMove: { player: currentUser, row, col, time: Date.now() },
+    };
+
+    if (winCells) {
+      updates.status  = 'finished';
+      updates.winner  = currentUser;
+      updates.winCells = winCells;
+    } else if (draw) {
+      updates.status = 'draw';
+      updates.winner = 'draw';
+    }
+
+    await set(ref(db, GAME_REF), { ...gameState, ...updates });
+
+    if (winCells || draw) {
+      await finishGame(winCells ? currentUser : 'draw', gameState.bet);
+    }
+  }
+
+  // ── COINS ────────────────────────────────────────────────────────────────
+  async function finishGame(winner, bet) {
+    const andreasRef = ref(db, 'coins/andreas');
+    const neleRef    = ref(db, 'coins/nele');
+
+    if (winner === 'draw') {
+      // Beide bekommen ihren Einsatz zurück
+      await runTransaction(andreasRef, c => (c||0) + bet);
+      await runTransaction(neleRef,    c => (c||0) + bet);
+    } else {
+      // Gewinner bekommt den vollen Pot
+      const winnerRef = ref(db, `coins/${winner.toLowerCase()}`);
+      await runTransaction(winnerRef, c => (c||0) + bet * 2);
+    }
+    // Stats updaten
+    try {
+      const loser = winner === 'draw' ? null : otherPlayer(winner);
+      if (winner !== 'draw') {
+        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/coinsEarned`), c => (c||0) + bet * 2);
+        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/coinsSpent`),  c => (c||0) + bet);
+        await runTransaction(ref(db, `stats/${loser.toLowerCase()}/coinsSpent`),   c => (c||0) + bet);
+      }
+    } catch(e) { console.warn('stats error', e); }
+  }
+
+  // ── GAME STATE HANDLER ───────────────────────────────────────────────────
+  function handleGameState(state) {
+    gameState = state;
+    if (!state) {
+      showLobby('create');
+      return;
+    }
+
+    if (state.status === 'waiting') {
+      if (state.createdBy === currentUser) {
+        showLobby('waiting', state);
+      } else {
+        showLobby('invite', state);
+      }
+      return;
+    }
+
+    if (state.status === 'running') {
+      showGame(state);
+      return;
+    }
+
+    if (state.status === 'finished' || state.status === 'draw') {
+      showGame(state);
+      showResult(state);
+      return;
+    }
+  }
+
+  // ── UI SECTIONS ──────────────────────────────────────────────────────────
+  function showLobby(mode, state = null) {
+    document.getElementById('lobbySection').style.display = 'block';
+    document.getElementById('gameSection').style.display  = 'none';
+    document.getElementById('createCard').style.display   = mode === 'create'  ? 'block' : 'none';
+    document.getElementById('waitingCard').style.display  = mode === 'waiting' ? 'block' : 'none';
+    document.getElementById('inviteCard').style.display   = mode === 'invite'  ? 'block' : 'none';
+
+    if (mode === 'waiting' && state) {
+      document.getElementById('waitingForName').textContent  = otherPlayer(currentUser);
+      document.getElementById('waitingBetDisplay').textContent = state.bet.toLocaleString('de-DE');
+    }
+    if (mode === 'invite' && state) {
+      document.getElementById('inviterName').textContent    = state.createdBy;
+      document.getElementById('inviteBetDisplay').textContent = state.bet.toLocaleString('de-DE') + ' 🪙 Einsatz';
+    }
+    if (mode === 'create') {
+      document.getElementById('betHint').textContent = `Mindestens 50 🪙 · Du hast ${currentCoins.toLocaleString('de-DE')} 🪙`;
+    }
+  }
+
+  function showGame(state) {
+    document.getElementById('lobbySection').style.display = 'none';
+    document.getElementById('gameSection').style.display  = 'block';
+    initBoardDOM();
+    renderBoard(state.board, state.winCells || []);
+    updateTurnUI(state);
+    document.getElementById('surrenderBtn').style.display = state.status === 'running' ? 'block' : 'none';
+  }
+
+  function showResult(state) {
+    const overlay = document.getElementById('resultOverlay');
+    const isWinner = state.winner === currentUser;
+    const isDraw   = state.winner === 'draw';
+
+    document.getElementById('resultEmoji').textContent = isDraw ? '🤝' : isWinner ? '🏆' : '💔';
+    document.getElementById('resultTitle').textContent = isDraw ? 'Unentschieden!' : isWinner ? 'Gewonnen! 🎉' : 'Verloren…';
+    document.getElementById('resultSub').textContent   = isDraw
+      ? 'Ihr bekommt beide euren Einsatz zurück.'
+      : isWinner
+        ? `Du hast gegen ${otherPlayer(currentUser)} gewonnen!`
+        : `${state.winner} hat gewonnen.`;
+    document.getElementById('resultCoins').textContent = isDraw
+      ? `+${state.bet.toLocaleString('de-DE')} 🪙 zurück`
+      : isWinner
+        ? `+${(state.bet * 2).toLocaleString('de-DE')} 🪙`
+        : `-${state.bet.toLocaleString('de-DE')} 🪙`;
+
+    overlay.classList.add('open');
+    if (isWinner && !isDraw) spawnKonfetti();
+  }
+
+  function spawnKonfetti() {
+    const colors = ['#e8738a','#f5a3b5','#d4a061','#a78bfa','#4ecdc4','#fbbf24'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'konfetti-piece';
+      const size = 6 + Math.random() * 10;
+      el.style.cssText = `width:${size}px;height:${size*(0.4+Math.random()*0.6)}px;left:${Math.random()*100}vw;top:${-20-Math.random()*40}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;transform:rotate(${Math.random()*360}deg);border-radius:${Math.random()>0.5?'50%':'3px'};`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+  }
+
+  // ── ACTIONS ──────────────────────────────────────────────────────────────
+  async function createGame() {
+    const betVal = parseInt(document.getElementById('betInput').value);
+    if (!betVal || betVal < 50) { showToast('Mindestens 50 🪙!'); return; }
+    if (betVal > currentCoins)  { showToast('Nicht genug Coins! 😅'); return; }
+
+    // Prüfen ob bereits ein Spiel existiert (Race condition Schutz)
+    const existing = await get(ref(db, GAME_REF));
+    if (existing.val()) {
+      showToast('Es läuft bereits ein Spiel! ⚔️');
+      return;
+    }
+
+    // Coins sofort abziehen
+    await runTransaction(ref(db, `coins/${currentUser.toLowerCase()}`), c => (c||0) - betVal);
+
+    await set(ref(db, GAME_REF), {
+      status: 'waiting',
+      createdBy: currentUser,
+      bet: betVal,
+      board: Array(ROWS).fill(null).map(() => Array(COLS).fill(0)),
+      currentTurn: currentUser,
+      winner: null,
+      winCells: null,
+      createdAt: Date.now(),
+    });
+  }
+
+  async function cancelGame() {
+    if (!gameState) return;
+    // Coins zurückgeben
+    await runTransaction(ref(db, `coins/${currentUser.toLowerCase()}`), c => (c||0) + gameState.bet);
+    await remove(ref(db, GAME_REF));
+  }
+
+  async function acceptGame() {
+    if (!gameState) return;
+    const bet = gameState.bet;
+    if (bet > currentCoins) { showToast('Nicht genug Coins! 😅'); return; }
+
+    // Coins abziehen
+    await runTransaction(ref(db, `coins/${currentUser.toLowerCase()}`), c => (c||0) - bet);
+
+    await set(ref(db, GAME_REF), {
+      ...gameState,
+      status: 'running',
+      currentTurn: gameState.createdBy, // Ersteller fängt an
+    });
+  }
+
+  async function declineGame() {
+    if (!gameState) return;
+    // Coins an Ersteller zurück
+    await runTransaction(ref(db, `coins/${gameState.createdBy.toLowerCase()}`), c => (c||0) + gameState.bet);
+    await remove(ref(db, GAME_REF));
+    showToast('Herausforderung abgelehnt.');
+  }
+
+  async function surrender() {
+    if (!gameState || gameState.status !== 'running') return;
+    const winner = otherPlayer(currentUser);
+    await set(ref(db, GAME_REF), { ...gameState, status: 'finished', winner });
+    await finishGame(winner, gameState.bet);
+    showToast('Du hast aufgegeben.');
+  }
+
+  async function playAgain() {
+    document.getElementById('resultOverlay').classList.remove('open');
+    await remove(ref(db, GAME_REF));
+  }
+
+  // ── EVENT LISTENERS ──────────────────────────────────────────────────────
+  document.getElementById('createGameBtn').addEventListener('click', createGame);
+  document.getElementById('cancelGameBtn').addEventListener('click', cancelGame);
+  document.getElementById('acceptBtn').addEventListener('click', acceptGame);
+  document.getElementById('declineBtn').addEventListener('click', declineGame);
+  document.getElementById('surrenderBtn').addEventListener('click', surrender);
+  document.getElementById('playAgainBtn').addEventListener('click', playAgain);
+  document.getElementById('betInput').addEventListener('input', function() {
+    const val = parseInt(this.value) || 0;
+    const hint = document.getElementById('betHint');
+    if (val > currentCoins) hint.style.color = '#dc2626';
+    else hint.style.color = 'var(--text-mid)';
+  });
+
+  // ── AUTH ─────────────────────────────────────────────────────────────────
+  const loginBtn  = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPassword').value;
+    document.getElementById('loginError').textContent = '';
+    loginBtn.textContent = '…';
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch {
+      loginBtn.textContent = 'Einloggen 🌸';
+      document.getElementById('loginError').textContent = 'E-Mail oder Passwort falsch 🐾';
+    }
+  });
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, user => {
+    document.getElementById('authLoading').style.display = 'none';
+    if (!user) {
+      document.getElementById('modalOverlay').style.display = 'flex';
+      document.getElementById('topBar').style.display = 'none';
+      document.getElementById('mainPage').style.display = 'none';
+      return;
+    }
+    currentUser = displayName(user.email);
+    document.getElementById('modalOverlay').style.display = 'none';
+    document.getElementById('topBar').style.display = 'flex';
+    document.getElementById('mainPage').style.display = 'flex';
+    logoutBtn.textContent = currentUser + ' ausloggen';
+
+    // Coins live
+    onValue(ref(db, `coins/${currentUser.toLowerCase()}`), snap => {
+      const val = Number(snap.val()) || 0;
+      currentCoins = val;
+      document.getElementById('coinCount').textContent = val.toLocaleString('de-DE');
+      document.getElementById('betHint').textContent = `Mindestens 50 🪙 · Du hast ${val.toLocaleString('de-DE')} 🪙`;
+    });
+
+    // Game live
+    if (gameListener) gameListener();
+    gameListener = onValue(ref(db, GAME_REF), snap => {
+      handleGameState(snap.val());
+    });
+  });
+</script>
+</body>
+</html>
