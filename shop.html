@@ -619,7 +619,7 @@
     if (currentCoins < t.price) { showToast('❌ Nicht genug Coins!'); return; }
     // Coins abziehen
     await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - t.price);
-    await updateStats(0, t.price, 0);
+    try { await updateStats(0, t.price, 0); } catch(e) { console.warn('Stats:', e.message); }
     // Zu owned hinzufügen
     ownedThemes.push(themeId);
     await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
@@ -790,6 +790,18 @@
       if (remaining <= 0) { clearInterval(cooldownInterval); cooldownInterval = null; }
       updateLootboxUI();
     }, 1000);
+  }
+
+  async function updateStats(coinsEarned, coinsSpent, boxesOpened) {
+    if (!userKey) return;
+    const statsRef = ref(db, 'stats/' + userKey);
+    const snap = await get(statsRef);
+    const d = snap.val() || {};
+    await set(statsRef, {
+      coinsEarned:  (d.coinsEarned  || 0) + coinsEarned,
+      coinsSpent:   (d.coinsSpent   || 0) + coinsSpent,
+      boxesOpened:  (d.boxesOpened  || 0) + boxesOpened,
+    });
   }
 
   async function loadBoxState() {
@@ -1008,9 +1020,13 @@
       await saveBoxState();
       startCooldownTicker();
 
-      // Stats tracken
-      const earnedCoins = result.type === 'coins' ? result.amount : 0;
-      await updateStats(earnedCoins, price, 1);
+      // Stats tracken (Fehler hier darf Popup nicht blockieren)
+      try {
+        const earnedCoins = result.type === 'coins' ? result.amount : 0;
+        await updateStats(earnedCoins, price, 1);
+      } catch (statsErr) {
+        console.warn('Stats-Update fehlgeschlagen:', statsErr.message);
+      }
 
       icon.classList.remove('shake');
       icon.classList.add('burst');
