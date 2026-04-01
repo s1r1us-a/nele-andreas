@@ -315,6 +315,7 @@
       </div>
       <div class="lootbox-name">Mysteriöse Box</div>
       <div class="lootbox-desc">Enthält Coins, exklusive Badges oder seltene Profilrahmen 👀</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">⏳ 5 Minuten Cooldown zwischen Käufen · Preis steigt täglich mit jedem Kauf</div>
       <div class="lootbox-odds">
         <div class="lootbox-odds-title">Mögliche Gewinne</div>
         <div class="lootbox-odds-row"><span>50 🪙</span><span>33%</span></div>
@@ -331,7 +332,9 @@
         <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
         <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
       </div>
-      <div class="lootbox-price">🪙 500 Coins pro Box</div>
+      <div class="lootbox-price" id="lootboxPrice">🪙 300 Coins</div>
+      <div class="lootbox-price-info" id="lootboxPriceInfo" style="font-size:11px;color:var(--text-mid);font-weight:500;margin-top:-10px;margin-bottom:16px;display:none;">Preis steigt pro Kauf um 100 🪙 · Reset um Mitternacht</div>
+      <div class="lootbox-cooldown" id="lootboxCooldown" style="font-size:13px;color:var(--text-mid);font-weight:600;margin-bottom:12px;min-height:20px;"></div>
       <button class="btn-open-box" id="openBoxBtn">📦 Box öffnen</button>
     </div>
   </div>
@@ -685,6 +688,7 @@
       activeTheme = shopData.activeTheme || 'sakura';
       applyTheme(activeTheme);
       await loadBadges();
+      await loadBoxState();
 
       onValue(ref(db, `coins/${userKey}`), snap => {
         const raw = snap.val();
@@ -693,6 +697,7 @@
           currentCoins = val;
           document.getElementById('coinCount').textContent = val;
           renderThemes();
+          updateLootboxUI();
         } else {
           // NaN in DB – sofort reparieren
           console.warn('NaN in coins DB erkannt, setze auf 0');
@@ -734,9 +739,82 @@
     { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
-  const BOX_PRICE = 500;
+  const BOX_BASE_PRICE = 300;
+  const BOX_PRICE_INCREMENT = 100;
+  const BOX_COOLDOWN_MS = 5 * 60 * 1000; // 5 Minuten
+
   let ownedBadges = [];
   let ownedFrames = [];
+  let boxesToday = 0;
+  let lastBoxPurchase = 0;
+  let cooldownInterval = null;
+
+  function getBoxPrice() {
+    return BOX_BASE_PRICE + boxesToday * BOX_PRICE_INCREMENT;
+  }
+
+  function getTodayDateStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function updateLootboxUI() {
+    const price = getBoxPrice();
+    const priceEl = document.getElementById('lootboxPrice');
+    const infoEl  = document.getElementById('lootboxPriceInfo');
+    const cdEl    = document.getElementById('lootboxCooldown');
+    const btn     = document.getElementById('openBoxBtn');
+    if (!priceEl) return;
+
+    priceEl.textContent = '\u{1FA99} ' + price + ' Coins';
+    infoEl.style.display = boxesToday > 0 ? 'block' : 'none';
+
+    const remaining = BOX_COOLDOWN_MS - (Date.now() - lastBoxPurchase);
+    if (remaining > 0) {
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      cdEl.textContent = '\u23F3 Cooldown: noch ' + mins + ':' + String(secs).padStart(2,'0') + ' Min.';
+      btn.disabled = true;
+      btn.textContent = '\u23F3 Warten\u2026';
+    } else {
+      cdEl.textContent = '';
+      btn.disabled = currentCoins < price;
+      btn.textContent = '\u{1F4E6} Box \u00F6ffnen';
+    }
+  }
+
+  function startCooldownTicker() {
+    if (cooldownInterval) clearInterval(cooldownInterval);
+    cooldownInterval = setInterval(() => {
+      const remaining = BOX_COOLDOWN_MS - (Date.now() - lastBoxPurchase);
+      if (remaining <= 0) { clearInterval(cooldownInterval); cooldownInterval = null; }
+      updateLootboxUI();
+    }, 1000);
+  }
+
+  async function loadBoxState() {
+    if (!userKey) return;
+    const snap = await get(ref(db, 'shop/' + userKey + '/lootbox'));
+    const data = snap.val() || {};
+    const today = getTodayDateStr();
+    if (data.boxDate === today) {
+      boxesToday      = data.boxesToday      || 0;
+      lastBoxPurchase = data.lastBoxPurchase || 0;
+    } else {
+      boxesToday      = 0;
+      lastBoxPurchase = 0;
+    }
+    updateLootboxUI();
+    if (Date.now() - lastBoxPurchase < BOX_COOLDOWN_MS) startCooldownTicker();
+  }
+
+  async function saveBoxState() {
+    await set(ref(db, 'shop/' + userKey + '/lootbox'), {
+      boxDate:         getTodayDateStr(),
+      boxesToday:      boxesToday,
+      lastBoxPurchase: lastBoxPurchase,
+    });
+  }
 
   function rollLootbox() {
     const r = Math.random() * 100;
@@ -843,16 +921,21 @@
   }
 
   let boxOpening = false;
-  let lastBoxTime = 0;
-  const BOX_COOLDOWN = 1500; // ms zwischen zwei Box-Öffnungen
 
   async function openBox() {
-    const now = Date.now();
     if (boxOpening) return;
-    if (now - lastBoxTime < BOX_COOLDOWN) { showToast('⏳ Kurz warten…'); return; }
-    if (!userKey || currentCoins < BOX_PRICE) { showToast('❌ Nicht genug Coins!'); return; }
+    const price = getBoxPrice();
+
+    // 5-Minuten-Cooldown prüfen
+    const remaining = BOX_COOLDOWN_MS - (Date.now() - lastBoxPurchase);
+    if (remaining > 0) {
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      showToast('⏳ Cooldown noch ' + mins + ':' + String(secs).padStart(2,'0') + ' Min.');
+      return;
+    }
+    if (!userKey || currentCoins < price) { showToast('❌ Nicht genug Coins!'); return; }
     boxOpening = true;
-    lastBoxTime = now;
 
     const btn  = document.getElementById('openBoxBtn');
     const icon = document.getElementById('lootboxIcon');
@@ -908,7 +991,7 @@
       // Wenn freshCoins NaN ist, alle möglichen Fallbacks versuchen
       if (!Number.isFinite(freshCoins)) freshCoins = currentCoins;
       if (!Number.isFinite(freshCoins)) freshCoins = 0;
-      const deduct = BOX_PRICE;
+      const deduct = price;
       const reward = result.type === 'coins' ? result.amount : 0;
       const finalBalance = freshCoins - deduct + reward;
       // Absoluter NaN-Schutz: niemals NaN in DB schreiben
@@ -919,9 +1002,15 @@
       currentCoins = finalBalance;
       await set(coinRef, finalBalance);
 
+      // Lootbox-State aktualisieren
+      lastBoxPurchase = Date.now();
+      boxesToday += 1;
+      await saveBoxState();
+      startCooldownTicker();
+
       // Stats tracken
       const earnedCoins = result.type === 'coins' ? result.amount : 0;
-      await updateStats(earnedCoins, BOX_PRICE, 1);
+      await updateStats(earnedCoins, price, 1);
 
       icon.classList.remove('shake');
       icon.classList.add('burst');
