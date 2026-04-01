@@ -153,11 +153,30 @@
     .account-divider { border: none; border-top: 1px solid rgba(232,115,138,0.12); margin: 14px 0 10px; }
 
     /* STATS */
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 340px; margin: 28px auto 32px; width: 100%; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 340px; margin: 28px auto 16px; width: 100%; }
     .stat-card { background: rgba(255,255,255,0.8); border: 1.5px solid rgba(232,115,138,0.18); border-radius: 16px; padding: 12px 8px; text-align: center; }
     .stat-card-icon { font-size: 20px; margin-bottom: 4px; }
     .stat-card-value { font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--gold, #d4a061); line-height: 1; margin-bottom: 4px; }
     .stat-card-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; line-height: 1.3; }
+
+    /* VIER GEWINNT STATS */
+    .vg-section { max-width: 340px; margin: 0 auto 32px; width: 100%; }
+    .vg-section-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .vg-section-title::before, .vg-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(232,115,138,0.2); }
+    .vg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .vg-card { background: rgba(255,255,255,0.8); border: 1.5px solid rgba(232,115,138,0.18); border-radius: 16px; padding: 12px 8px; text-align: center; }
+    .vg-card.win  { border-color: rgba(34,197,94,0.3);  background: rgba(34,197,94,0.05); }
+    .vg-card.lose { border-color: rgba(200,80,112,0.25); background: rgba(200,80,112,0.04); }
+    .vg-card.pot-win  { border-color: rgba(212,160,97,0.35); background: rgba(212,160,97,0.06); }
+    .vg-card.pot-lose { border-color: rgba(124,58,237,0.2);  background: rgba(124,58,237,0.04); }
+    .vg-card-icon  { font-size: 18px; margin-bottom: 3px; }
+    .vg-card-value { font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--gold); line-height: 1; margin-bottom: 2px; }
+    .vg-card.win  .vg-card-value { color: #16a34a; }
+    .vg-card.lose .vg-card-value { color: #c85070; }
+    .vg-card.pot-win  .vg-card-value { color: var(--gold); }
+    .vg-card.pot-lose .vg-card-value { color: #7c3aed; }
+    .vg-card-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; line-height: 1.3; }
+    .vg-card-pct { font-size: 10px; color: var(--text-mid); font-weight: 600; margin-top: 2px; opacity: 0.7; }
 
     /* COINS IM HEADER */
     .profile-coins { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.85); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold, #d4a061); margin-top: 10px; box-shadow: 0 2px 10px rgba(212,160,97,0.18); }
@@ -239,6 +258,35 @@
       <div class="stat-card-icon">📦</div>
       <div class="stat-card-value" id="statBoxesOpened">–</div>
       <div class="stat-card-label">Boxen geöffnet</div>
+    </div>
+  </div>
+
+  <!-- VIER GEWINNT STATS -->
+  <div class="vg-section">
+    <div class="vg-section-title">🔴 Vier Gewinnt 🟣</div>
+    <div class="vg-grid">
+      <div class="vg-card win">
+        <div class="vg-card-icon">🏆</div>
+        <div class="vg-card-value" id="vgWon">–</div>
+        <div class="vg-card-label">Gewonnen</div>
+        <div class="vg-card-pct" id="vgWonPct"></div>
+      </div>
+      <div class="vg-card lose">
+        <div class="vg-card-icon">💔</div>
+        <div class="vg-card-value" id="vgLost">–</div>
+        <div class="vg-card-label">Verloren</div>
+        <div class="vg-card-pct" id="vgLostPct"></div>
+      </div>
+      <div class="vg-card pot-win">
+        <div class="vg-card-icon">📈</div>
+        <div class="vg-card-value" id="vgPotWon">–</div>
+        <div class="vg-card-label">Pot gewonnen 🪙</div>
+      </div>
+      <div class="vg-card pot-lose">
+        <div class="vg-card-icon">📉</div>
+        <div class="vg-card-value" id="vgPotLost">–</div>
+        <div class="vg-card-label">Pot verloren 🪙</div>
+      </div>
     </div>
   </div>
 
@@ -606,6 +654,28 @@
       const e1 = document.getElementById('statCoinsEarned');  if (e1) e1.textContent = fmt(d.coinsEarned);
       const e2 = document.getElementById('statCoinsSpent');   if (e2) e2.textContent = fmt(d.coinsSpent);
       const e3 = document.getElementById('statBoxesOpened');  if (e3) e3.textContent = fmt(d.boxesOpened);
+
+      // Vier Gewinnt Stats
+      const vg   = (d.vierGewinnt) || {};
+      const won  = Number(vg.gamesWon)  || 0;
+      const lost = Number(vg.gamesLost) || 0;
+      const total = won + lost;
+      const pctWon  = total > 0 ? Math.round(won  / total * 100) : null;
+      const pctLost = total > 0 ? Math.round(lost / total * 100) : null;
+
+      const vgWon     = document.getElementById('vgWon');
+      const vgLost    = document.getElementById('vgLost');
+      const vgWonPct  = document.getElementById('vgWonPct');
+      const vgLostPct = document.getElementById('vgLostPct');
+      const vgPotWon  = document.getElementById('vgPotWon');
+      const vgPotLost = document.getElementById('vgPotLost');
+
+      if (vgWon)     vgWon.textContent     = won.toLocaleString('de-DE');
+      if (vgLost)    vgLost.textContent    = lost.toLocaleString('de-DE');
+      if (vgWonPct)  vgWonPct.textContent  = pctWon  !== null ? pctWon  + ' %' : '';
+      if (vgLostPct) vgLostPct.textContent = pctLost !== null ? pctLost + ' %' : '';
+      if (vgPotWon)  vgPotWon.textContent  = fmt(vg.potWon);
+      if (vgPotLost) vgPotLost.textContent = fmt(vg.potLost);
     });
 
     const [badgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([

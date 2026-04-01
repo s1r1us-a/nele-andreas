@@ -455,6 +455,10 @@
         await runTransaction(ref(db, `stats/${winner.toLowerCase()}/coinsEarned`), c => (c||0) + bet * 2);
         await runTransaction(ref(db, `stats/${winner.toLowerCase()}/coinsSpent`),  c => (c||0) + bet);
         await runTransaction(ref(db, `stats/${loser.toLowerCase()}/coinsSpent`),   c => (c||0) + bet);
+        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/vierGewinnt/gamesWon`),  c => (c||0) + 1);
+        await runTransaction(ref(db, `stats/${loser.toLowerCase()}/vierGewinnt/gamesLost`),  c => (c||0) + 1);
+        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/vierGewinnt/potWon`),    c => (c||0) + bet);
+        await runTransaction(ref(db, `stats/${loser.toLowerCase()}/vierGewinnt/potLost`),    c => (c||0) + bet);
       }
     } catch(e) { console.warn('stats error', e); }
   }
