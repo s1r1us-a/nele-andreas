@@ -29,6 +29,42 @@
   .auth-spinner { width:36px; height:36px; border:3px solid rgba(232,115,138,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin 0.7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
+  /* DATA LOADING OVERLAY */
+  .data-loading {
+    position:fixed; inset:0; z-index:9998; display:none;
+    align-items:center; justify-content:center;
+    background:var(--cream); flex-direction:column; gap:20px;
+    transition:opacity 0.4s ease;
+  }
+  .data-loading.active { display:flex; }
+  .data-loading.fade-out { opacity:0; pointer-events:none; }
+  .dl-icon { font-size:40px; animation:dlbounce 1.6s ease-in-out infinite; }
+  @keyframes dlbounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .dl-title {
+    font-family:'Dancing Script',cursive; font-size:26px; font-weight:700;
+    color:var(--rose); text-align:center;
+  }
+  .dl-status {
+    font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-mid); font-weight:600; text-align:center; min-height:18px;
+    transition:opacity 0.3s;
+  }
+  .dl-bar-wrap {
+    width:220px; height:8px; background:rgba(232,115,138,0.15);
+    border-radius:50px; overflow:hidden;
+  }
+  .dl-bar {
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--rose-light), var(--rose));
+    border-radius:50px;
+    transition:width 0.5s cubic-bezier(0.22,1,0.36,1);
+    box-shadow:0 0 8px rgba(232,115,138,0.4);
+  }
+  .dl-hint {
+    font-size:11px; color:var(--text-mid); font-weight:500;
+    opacity:0.7; text-align:center;
+  }
+
   /* LOGIN */
   .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(253,232,237,0.92); }
   .modal-card { background:#fff; border:1.5px solid rgba(232,115,138,0.3); border-radius:28px; padding:40px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 16px 60px rgba(232,115,138,0.2); max-height:90vh; overflow-y:auto; }
@@ -147,6 +183,14 @@
 
 <div class="bg page-hidden" id="bgGradient"></div>
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
+
+<div class="data-loading" id="dataLoading">
+  <div class="dl-icon">📊</div>
+  <div class="dl-title">Lade Statistiken…</div>
+  <div class="dl-bar-wrap"><div class="dl-bar" id="dlBar"></div></div>
+  <div class="dl-status" id="dlStatus">Verbinde mit Datenbank…</div>
+  <div class="dl-hint">Einen Moment bitte 🌸</div>
+</div>
 
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-card">
@@ -362,10 +406,25 @@
     return all.filter(d => d >= cut);
   }
 
+  function setLoadProgress(pct, text) {
+    document.getElementById('dlBar').style.width = pct + '%';
+    document.getElementById('dlStatus').textContent = text;
+  }
+
   async function loadData() {
-    const [cs, ds] = await Promise.all([get(ref(db,'moments/clicks')), get(ref(db,'moments/daily'))]);
+    const loader = document.getElementById('dataLoading');
+    loader.classList.add('active');
+    setLoadProgress(10, 'Verbinde mit Datenbank…');
+
     allData = {};
 
+    setLoadProgress(25, 'Lade Klick-Verlauf…');
+    const [cs, ds] = await Promise.all([
+      get(ref(db,'moments/clicks')),
+      get(ref(db,'moments/daily'))
+    ]);
+
+    setLoadProgress(60, 'Verarbeite Klick-Daten…');
     if (cs.exists()) {
       cs.forEach(daySnap => {
         const date = daySnap.key;
@@ -380,6 +439,8 @@
         });
       });
     }
+
+    setLoadProgress(80, 'Lade Tageszusammenfassungen…');
     if (ds.exists()) {
       ds.forEach(daySnap => {
         const date = daySnap.key, val = daySnap.val();
@@ -387,6 +448,13 @@
         if (!allData[date]) allData[date] = { a:val.andreas||0, n:val.nele||0, clicks:[] };
       });
     }
+
+    setLoadProgress(100, 'Alles geladen ✨');
+    await new Promise(r => setTimeout(r, 400));
+
+    loader.classList.add('fade-out');
+    setTimeout(() => { loader.classList.remove('active','fade-out'); }, 400);
+
     renderAll(filteredDates());
   }
 
