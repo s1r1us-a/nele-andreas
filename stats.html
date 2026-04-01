@@ -155,8 +155,13 @@
 
   /* TABLE */
   .month-group { margin-bottom:18px; }
-  .month-header { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); font-weight:700; padding:8px 6px 6px; border-bottom:1.5px solid rgba(232,115,138,0.2); margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; }
+  .month-header { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); font-weight:700; padding:8px 6px 6px; border-bottom:1.5px solid rgba(232,115,138,0.2); margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none; border-radius:8px; transition:background 0.15s; }
+  .month-header:hover { background:rgba(232,115,138,0.07); }
   .month-summary { font-size:10px; font-weight:600; }
+  .month-arrow { font-size:10px; color:var(--rose-light); transition:transform 0.25s cubic-bezier(0.22,1,0.36,1); flex-shrink:0; margin-left:6px; }
+  .month-body { overflow:hidden; transition:max-height 0.35s cubic-bezier(0.22,1,0.36,1); }
+  .month-group.collapsed .month-body { max-height:0 !important; }
+  .month-group.collapsed .month-arrow { transform:rotate(-90deg); }
   .dtable { width:100%; border-collapse:collapse; }
   .dtable th { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-mid); font-weight:600; padding:8px 6px; text-align:left; border-bottom:1px solid rgba(232,115,138,0.15); }
   .dtable td { font-size:13px; padding:9px 6px; border-bottom:1px solid rgba(232,115,138,0.06); color:var(--text-dark); font-weight:500; }
@@ -740,19 +745,25 @@
       byMonth[mo].push(d);
     });
 
+    const sortedMonths = Object.keys(byMonth).sort().reverse();
+
     let html = '<div style="overflow-x:auto">';
-    Object.keys(byMonth).sort().reverse().forEach(mo => {
+    sortedMonths.forEach((mo, idx) => {
       const days = byMonth[mo];
       const moTotalA = days.reduce((s,d)=>s+allData[d].a,0);
       const moTotalN = days.reduce((s,d)=>s+allData[d].n,0);
       const moLabel = new Date(mo+'-01').toLocaleDateString('de-DE',{month:'long',year:'numeric'});
-      html+=`<div class="month-group">
-        <div class="month-header">
-          <span>${moLabel}</span>
+      const collapsed = idx > 0 ? 'collapsed' : '';
+      const bodyHeight = days.length * 44 + 48; // approx height for transition
+      html+=`<div class="month-group ${collapsed}" id="mg-${mo}">
+        <div class="month-header" onclick="toggleMonth('${mo}')">
+          <span style="flex:1">${moLabel}</span>
           <span class="month-summary" style="color:var(--rose)">🐾 ${moTotalA}</span>
-          <span class="month-summary" style="color:var(--nele)">🌸 ${moTotalN}</span>
+          <span class="month-summary" style="color:var(--nele);margin-left:10px">🌸 ${moTotalN}</span>
+          <span class="month-arrow">▼</span>
         </div>
-        <table class="dtable"><thead><tr><th>Tag</th><th>🐾</th><th>🌸</th><th>Führung</th></tr></thead><tbody>`;
+        <div class="month-body" style="max-height:${bodyHeight}px">
+          <table class="dtable"><thead><tr><th>Tag</th><th>🐾</th><th>🌸</th><th>Führung</th></tr></thead><tbody>`;
       days.forEach(d=>{
         const a=allData[d].a,n=allData[d].n;
         const label=new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
@@ -762,11 +773,26 @@
         else if(a>0){w='🤝';rowClass='win-tie';}
         html+=`<tr class="${rowClass}"><td>${label}</td><td class="tda">${a}</td><td class="tdn">${n}</td><td>${w}</td></tr>`;
       });
-      html+='</tbody></table></div>';
+      html+='</tbody></table></div></div>';
     });
     html+='</div>';
     document.getElementById('tableWrap').innerHTML=html;
   }
+
+  window.toggleMonth = function(mo) {
+    const group = document.getElementById('mg-'+mo);
+    if (!group) return;
+    const body = group.querySelector('.month-body');
+    if (group.classList.contains('collapsed')) {
+      // expand: set explicit height then let CSS handle it
+      const table = body.querySelector('table');
+      const rows = table ? table.querySelectorAll('tr').length : 0;
+      body.style.maxHeight = (rows * 44 + 48) + 'px';
+      group.classList.remove('collapsed');
+    } else {
+      group.classList.add('collapsed');
+    }
+  };
 </script>
 </body>
 </html>
