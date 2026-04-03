@@ -416,41 +416,26 @@
     document.getElementById('dlStatus').textContent = text;
   }
 
+  let clicksLoaded = false;
+  let clicksLoading = false;
+
   async function loadData() {
     const loader = document.getElementById('dataLoading');
     loader.classList.add('active');
     setLoadProgress(10, 'Verbinde mit Datenbank…');
 
     allData = {};
+    clicksLoaded = false;
 
-    setLoadProgress(25, 'Lade Klick-Verlauf…');
-    const [cs, ds] = await Promise.all([
-      get(ref(db,'moments/clicks')),
-      get(ref(db,'moments/daily'))
-    ]);
+    setLoadProgress(40, 'Lade Tagesdaten…');
+    const ds = await get(ref(db,'moments/daily'));
 
-    setLoadProgress(60, 'Verarbeite Klick-Daten…');
-    if (cs.exists()) {
-      cs.forEach(daySnap => {
-        const date = daySnap.key;
-        if (!allData[date]) allData[date] = { a:0, n:0, clicks:[] };
-        daySnap.forEach(c => {
-          const v = c.val();
-          if (!v||!v.user||!v.time) return;
-          const u = v.user.toLowerCase();
-          if (u==='andreas') allData[date].a++;
-          else if (u==='nele') allData[date].n++;
-          allData[date].clicks.push({ user:v.user, time:v.time });
-        });
-      });
-    }
-
-    setLoadProgress(80, 'Lade Tageszusammenfassungen…');
+    setLoadProgress(80, 'Verarbeite Daten…');
     if (ds.exists()) {
       ds.forEach(daySnap => {
         const date = daySnap.key, val = daySnap.val();
         if (!val) return;
-        if (!allData[date]) allData[date] = { a:val.andreas||0, n:val.nele||0, clicks:[] };
+        allData[date] = { a:val.andreas||0, n:val.nele||0, clicks:[] };
       });
     }
 
@@ -461,6 +446,35 @@
     setTimeout(() => { loader.classList.remove('active','fade-out'); }, 400);
 
     renderAll(filteredDates());
+  }
+
+  async function loadClicksIfNeeded() {
+    if (clicksLoaded || clicksLoading) return;
+    clicksLoading = true;
+
+    document.getElementById('hourWrap').innerHTML =
+      '<div class="nodata" id="hourLoadingHint">⏳ Lade Uhrzeitdaten…</div>';
+
+    try {
+      const cs = await get(ref(db,'moments/clicks'));
+      if (cs.exists()) {
+        cs.forEach(daySnap => {
+          const date = daySnap.key;
+          if (!allData[date]) allData[date] = { a:0, n:0, clicks:[] };
+          daySnap.forEach(c => {
+            const v = c.val();
+            if (!v||!v.user||!v.time) return;
+            allData[date].clicks.push({ user:v.user, time:v.time });
+          });
+        });
+      }
+      clicksLoaded = true;
+      renderHour(filteredDates());
+    } catch(e) {
+      document.getElementById('hourWrap').innerHTML =
+        '<div class="nodata">Fehler beim Laden der Uhrzeitdaten 🌸</div>';
+    }
+    clicksLoading = false;
   }
 
   // Animated counter
@@ -591,10 +605,12 @@
       if(v.a>v.n)wA++; else if(v.n>v.a)wN++;
       const mo=d.slice(0,7);
       moA[mo]=(moA[mo]||0)+v.a; moN[mo]=(moN[mo]||0)+v.n;
-      v.clicks.forEach(c=>{
-        const h=getGermanHour(c.time);
-        if(c.user.toLowerCase()==='andreas')hrA[h]++;else hrN[h]++;
-      });
+      if (clicksLoaded) {
+        v.clicks.forEach(c=>{
+          const h=getGermanHour(c.time);
+          if(c.user.toLowerCase()==='andreas')hrA[h]++;else hrN[h]++;
+        });
+      }
     });
 
     const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'–';
@@ -605,8 +621,8 @@
 
     const phA=hrA.indexOf(Math.max(...hrA)),phN=hrN.indexOf(Math.max(...hrN));
     const hasH=hrA.some(v=>v>0)||hrN.some(v=>v>0);
-    document.getElementById('peakHA').textContent=hasH&&hrA[phA]>0?`🐾 ${phA}:00 Uhr`:'🐾 –';
-    document.getElementById('peakHN').textContent=hasH&&hrN[phN]>0?`🌸 ${phN}:00 Uhr`:'🌸 –';
+    document.getElementById('peakHA').textContent=clicksLoaded?(hasH&&hrA[phA]>0?`🐾 ${phA}:00 Uhr`:'🐾 –'):'🐾 lädt…';
+    document.getElementById('peakHN').textContent=clicksLoaded?(hasH&&hrN[phN]>0?`🌸 ${phN}:00 Uhr`:'🌸 –'):'🌸 lädt…';
 
     const bestMA=Object.keys(moA).sort((a,b)=>moA[b]-moA[a])[0];
     const bestMN=Object.keys(moN).sort((a,b)=>moN[b]-moN[a])[0];
@@ -630,6 +646,7 @@
       const wd=new Date(d+'T12:00:00').getDay();
       wdA[wd]+=v.a; wdN[wd]+=v.n;
       v.clicks.forEach(c=>{
+        if (!clicksLoaded) return;
         const h=getGermanHour(c.time);
         if(c.user.toLowerCase()==='andreas')hrA[h]++;else hrN[h]++;
       });
@@ -708,6 +725,18 @@
   }
 
   function renderHour(dates) {
+    if (!clicksLoaded) {
+      const wrap = document.getElementById('hourWrap');
+      wrap.innerHTML = '<div class="nodata" style="cursor:pointer" onclick="window._loadHour()">Uhrzeit-Statistik antippen zum Laden ⏰</div>';
+      window._loadHour = () => loadClicksIfNeeded();
+      if (!window._hourObserver) {
+        window._hourObserver = new IntersectionObserver(entries => {
+          if (entries[0].isIntersecting) { loadClicksIfNeeded(); window._hourObserver.disconnect(); }
+        }, { threshold: 0.2 });
+        window._hourObserver.observe(wrap);
+      }
+      return;
+    }
     const hA=new Array(24).fill(0),hN=new Array(24).fill(0);
     let hasC=false;
     dates.forEach(d=>allData[d].clicks.forEach(c=>{
