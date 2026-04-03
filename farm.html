@@ -600,10 +600,11 @@
           unlockedBeds = data.unlockedBeds || 1;
           beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
 
-          // NEU: Autostart für den Bienenstock
+          // NEU: Autostart für den Bienenstock mit sofortiger Speicherung!
           if (beehive.level > 0 && !beehive.isProducing && !beehive.rewardReady) {
               beehive.isProducing = true;
               beehive.fedAt = Date.now();
+              saveFarmData(); // <--- Hier speichert er es fest ab!
           }
 
           if (data.beds) {
