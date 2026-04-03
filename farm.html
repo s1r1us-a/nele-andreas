@@ -15,20 +15,32 @@
       --sky-top: #b8e4f7; --sky-bottom: #daf0fb;
       --grass-top: #7ec850; --grass-mid: #5ba830;
       --earth: #c8975a; --brown: #8e5a32;
+      /* Baum-Farben */
+      --tree-crown-top: #5faa35;
+      --tree-crown-mid: #4a8c28;
+      --tree-crown-bot: #3a7020;
+      --tree-trunk: #6b4226;
+      --tree-shadow: rgba(0,0,0,0.13);
     }
 
     /* Tag/Nacht & Dämmerung Variablen */
     body.sunset-mode {
       --sky-top: #ff7eb3; --sky-bottom: #ff758c;
       --grass-top: #8aab56; --grass-mid: #68853b;
+      --tree-crown-top: #7a5535; --tree-crown-mid: #5e3e22; --tree-crown-bot: #452c14;
+      --tree-trunk: #3a2010; --tree-shadow: rgba(0,0,0,0.18);
     }
     body.sunrise-mode {
       --sky-top: #a18cd1; --sky-bottom: #fbc2eb;
       --grass-top: #83c26b; --grass-mid: #5a9443;
+      --tree-crown-top: #72aa58; --tree-crown-mid: #5a9244; --tree-crown-bot: #447830;
+      --tree-trunk: #5a3a1e; --tree-shadow: rgba(0,0,0,0.10);
     }
     body.night-mode {
       --sky-top: #1e1b4b; --sky-bottom: #312e81;
       --grass-top: #166534; --grass-mid: #14532d;
+      --tree-crown-top: #122a0c; --tree-crown-mid: #0c1e08; --tree-crown-bot: #081204;
+      --tree-trunk: #1a0e06; --tree-shadow: rgba(0,0,0,0.25);
     }
 
     /* Lange Schatten für Sonnenaufgang und -untergang */
@@ -90,13 +102,93 @@
     @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.3); } }
 
     /* PARALLAX HÜGEL (Tiefe) */
-    .hills-layer { position: absolute; top: 22%; left: 0; right: 0; height: 15%; z-index: 2; pointer-events: none; opacity: 0.8; transition: opacity 2s ease; }
-    .hill { position: absolute; bottom: 0; background: #92c468; border-radius: 50% 50% 0 0; transition: background 2s ease; }
-    
-    /* Farbanpassungen der Hügel je nach Tageszeit */
-    .sunset-mode .hill { background: #825b6a; }
-    .sunrise-mode .hill { background: #6b8ea1; }
-    .night-mode .hill { background: #133a23; opacity: 0.5; }
+    .hills-layer { position: absolute; top: 22%; left: 0; right: 0; height: 15%; z-index: 2; pointer-events: none; opacity: 0.9; transition: opacity 2s ease; }
+    .hill { position: absolute; bottom: 0; border-radius: 50% 50% 0 0; transition: background 2s ease; overflow: visible; }
+
+    /* Hügel-Gradient + Noise-Textur */
+    .hill::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Oberkante-Highlight (leichter Glanzstreifen) */
+    .hill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 18%;
+      background: rgba(255,255,255,0.18);
+      border-radius: 50%;
+      filter: blur(6px);
+      z-index: 2;
+    }
+
+    /* Hinterer Hügel (links) – leicht bläulich, Atmosphärenperspektive */
+    .hill-back-left {
+      left: -10%; width: 40%; height: 100%;
+      background: linear-gradient(180deg, #8db8d8 0%, #6a99b8 60%, #4f7a96 100%);
+      opacity: 0.55;
+      filter: blur(1px);
+    }
+    /* Mittlerer Hügel (etwas heller, mehr Tiefe) */
+    .hill-mid {
+      left: 20%; width: 35%; height: 75%;
+      background: linear-gradient(180deg, #a0cc7a 0%, #7ab55a 55%, #5e9640 100%);
+      opacity: 0.75;
+    }
+    /* Vorderer großer Hügel rechts */
+    .hill-front-right {
+      left: 45%; width: 50%; height: 120%;
+      background: linear-gradient(180deg, #b2d97a 0%, #88c255 50%, #6aaa3a 100%);
+      box-shadow: inset 0 -8px 20px rgba(0,0,0,0.12);
+    }
+    /* Kleiner Hügel ganz rechts */
+    .hill-small-right {
+      left: 75%; width: 35%; height: 85%;
+      background: linear-gradient(180deg, #a8d272 0%, #7dba4e 55%, #5f9c35 100%);
+      opacity: 0.85;
+    }
+
+    /* Bäumchen auf den Hügeln – SVG-basiert */
+    .hill-tree {
+      position: absolute;
+      pointer-events: none;
+      z-index: 3;
+      transform: translateX(-50%);
+      transition: filter 2s ease;
+    }
+    .hill-tree svg {
+      display: block;
+      overflow: visible;
+      transition: all 2s ease;
+    }
+    /* Tageszeit: night zusätzlicher Dunkel-Filter */
+    .night-mode .hill-tree { filter: brightness(0.45) saturate(0.5); }
+    .sunset-mode .hill-tree { filter: sepia(0.35) saturate(0.8) hue-rotate(-10deg); }
+    .sunrise-mode .hill-tree { filter: saturate(0.9) brightness(0.95); }
+
+    /* Tageszeit-Anpassungen */
+    .sunset-mode .hill-back-left  { background: linear-gradient(180deg, #a07080 0%, #7a5060 60%, #5a3545 100%); }
+    .sunset-mode .hill-mid        { background: linear-gradient(180deg, #9a7060 0%, #7a5040 55%, #5a3520 100%); }
+    .sunset-mode .hill-front-right{ background: linear-gradient(180deg, #b08060 0%, #8a6040 50%, #6a4020 100%); }
+    .sunset-mode .hill-small-right { background: linear-gradient(180deg, #a07858 0%, #7a5838 55%, #5a3818 100%); }
+
+    .sunrise-mode .hill-back-left  { background: linear-gradient(180deg, #8090b0 0%, #607090 60%, #405070 100%); }
+    .sunrise-mode .hill-mid        { background: linear-gradient(180deg, #90b890 0%, #70986e 55%, #507850 100%); }
+    .sunrise-mode .hill-front-right{ background: linear-gradient(180deg, #a8c880 0%, #88a860 50%, #688840 100%); }
+    .sunrise-mode .hill-small-right { background: linear-gradient(180deg, #a0c078 0%, #80a058 55%, #608038 100%); }
+
+    .night-mode .hill-back-left  { background: linear-gradient(180deg, #1a2535 0%, #111820 60%, #0a1015 100%); opacity: 0.4; }
+    .night-mode .hill-mid        { background: linear-gradient(180deg, #162212 0%, #0f1a0c 55%, #080e06 100%); opacity: 0.6; }
+    .night-mode .hill-front-right{ background: linear-gradient(180deg, #1a2e14 0%, #122210 50%, #0a160a 100%); }
+    .night-mode .hill-small-right { background: linear-gradient(180deg, #182a12 0%, #10200e 55%, #080e06 100%); opacity: 0.7; }
 
     .cloud-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 10; }
     .cloud { position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); animation: drift linear infinite; transition: all 2s ease; }
@@ -451,10 +543,141 @@
   <div id="firefly-container"></div>
 
   <div class="hills-layer">
-    <div class="hill" style="left: -10%; width: 40%; height: 100%;"></div>
-    <div class="hill" style="left: 20%; width: 35%; height: 75%; background: var(--grass-mid);"></div>
-    <div class="hill" style="left: 45%; width: 50%; height: 120%;"></div>
-    <div class="hill" style="left: 75%; width: 35%; height: 85%;"></div>
+    <div class="hill hill-back-left"></div>
+
+    <!-- MITTLERER HÜGEL: Nadelbäume -->
+    <div class="hill hill-mid">
+      <!-- Nadelbaum klein: viewBox 0 0 16 26, Stamm y=18..26, Krone Basis y=18 -->
+      <div class="hill-tree" style="left:22%; bottom:56%;">
+        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <!-- Krone: 3 Dreiecke, alle Basis bei y=18 -->
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:44%; bottom:67%;">
+        <svg width="20" height="32" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
+          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
+          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:66%; bottom:56%;">
+        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- VORDERER GROSSER HÜGEL: Mix aus Nadel- und Laubbäumen -->
+    <div class="hill hill-front-right">
+
+      <!-- Laubbaum groß: runde Krone aus 3 überlappenden Kreisen -->
+      <div class="hill-tree" style="left:13%; bottom:66%;">
+        <svg width="28" height="34" viewBox="0 0 28 34" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="14" cy="33.5" rx="6" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="12" y="24" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <!-- Krone: 3 Kreise überlappend, unterste Kante bei y=24 -->
+          <circle cx="9"  cy="18" r="9" fill="var(--tree-crown-bot)"/>
+          <circle cx="19" cy="18" r="9" fill="var(--tree-crown-bot)"/>
+          <circle cx="14" cy="13" r="10" fill="var(--tree-crown-mid)"/>
+          <!-- Highlight -->
+          <circle cx="11" cy="10" r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+
+      <!-- Nadelbaum mittel -->
+      <div class="hill-tree" style="left:26%; bottom:81%;">
+        <svg width="20" height="32" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
+          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
+          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+
+      <!-- Laubbaum klein -->
+      <div class="hill-tree" style="left:38%; bottom:89%;">
+        <svg width="22" height="27" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="11" cy="26.5" rx="5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="9.5" y="19" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <circle cx="7"  cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="15" cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="11" cy="10" r="8" fill="var(--tree-crown-mid)"/>
+          <circle cx="9"  cy="8"  r="4" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+
+      <!-- Nadelbaum groß tall -->
+      <div class="hill-tree" style="left:51%; bottom:91%;">
+        <svg width="24" height="40" viewBox="0 0 24 40" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="12" cy="39.5" rx="6" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="10" y="28" width="4" height="11.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <polygon points="12,6 22,28 2,28" fill="var(--tree-crown-bot)"/>
+          <polygon points="12,4 20,22 4,22" fill="var(--tree-crown-mid)"/>
+          <polygon points="12,1 18,15 6,15" fill="var(--tree-crown-top)"/>
+          <polygon points="12,0 17,10 7,10" fill="var(--tree-crown-top)" opacity="0.8"/>
+        </svg>
+      </div>
+
+      <!-- Laubbaum mittel -->
+      <div class="hill-tree" style="left:64%; bottom:83%;">
+        <svg width="26" height="32" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="13" cy="31.5" rx="5.5" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="11" y="22" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <circle cx="8"  cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="18" cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="13" cy="12" r="9" fill="var(--tree-crown-mid)"/>
+          <circle cx="10" cy="9"  r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+
+      <!-- Nadelbaum klein -->
+      <div class="hill-tree" style="left:77%; bottom:71%;">
+        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KLEINER HÜGEL RECHTS: Mix -->
+    <div class="hill hill-small-right">
+      <!-- Laubbaum -->
+      <div class="hill-tree" style="left:28%; bottom:61%;">
+        <svg width="22" height="27" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="11" cy="26.5" rx="5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="9.5" y="19" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <circle cx="7"  cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="15" cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="11" cy="10" r="8" fill="var(--tree-crown-mid)"/>
+          <circle cx="9"  cy="8"  r="4" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+      <!-- Nadelbaum -->
+      <div class="hill-tree" style="left:55%; bottom:71%;">
+        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+    </div>
   </div>
   
   <div class="bakery-building" id="bakeryBuilding" onclick="openBakery()">
@@ -529,7 +752,6 @@
     <div class="shop-tabs">
       <button class="shop-tab active" id="tabSeeds" onclick="renderShop('seeds')">🌱 Samen</button>
       <button class="shop-tab" id="tabAnimals" onclick="renderShop('animals')">🐾 Tiere</button>
-      <button class="shop-tab" id="tabFields" onclick="renderShop('fields')">🗺️ Felder</button>
     </div>
     <div class="item-list" id="shopList"></div>
   </div>
@@ -698,7 +920,7 @@
     honeycake:  { id: 'honeycake',  name: 'Honigkuchen',      icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } }
   };
 
-  const bedPrices = [0, 500, 2500, 10000, 50000];
+  const bedPrices = [0, 500, 2500, 10000, 50000, 100000];
   const ANIMAL_PRODUCTION_TIME = 3600;
 
   // ── FARM STATE ──
@@ -719,7 +941,7 @@
   };
 
   let oven = { slots: Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
-  let beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+  let beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = []; 
 
   async function saveFarmData() {
@@ -1015,7 +1237,7 @@
 
     const bedsContainer = document.getElementById('bedsContainer');
     const currentBeds = bedsContainer.querySelectorAll('.bed').length;
-    const expectedBeds = unlockedBeds < 5 ? unlockedBeds + 1 : 5;
+    const expectedBeds = unlockedBeds < 6 ? unlockedBeds + 1 : 6;
     
     if (currentBeds !== expectedBeds || bedsContainer.innerHTML === '') {
       let bedsHtml = '';
@@ -1024,9 +1246,13 @@
         for(let s = 0; s < 4; s++) { bedsHtml += `<div class="bed-slot" id="slot-${b}-${s}" onclick="window.handleSlotClick(${b}, ${s})"></div>`; }
         bedsHtml += `</div>`;
       }
-      if(unlockedBeds < 5) {
-          bedsHtml += `<div class="bed" style="opacity:0.5; border-color: rgba(0,0,0,0.2); cursor:pointer;" onclick="openShopToFields()">
-              <div style="grid-column: 1 / span 2; grid-row: 1 / span 2; display:flex; align-items:center; justify-content:center; color: var(--text-dark); font-size:24px;">🔒</div>
+      if(unlockedBeds < 6) {
+          const nextCost = bedPrices[unlockedBeds];
+          bedsHtml += `<div class="bed" style="opacity:0.55; border-color: rgba(0,0,0,0.2); cursor:pointer;" onclick="window.buyBed()">
+              <div style="grid-column: 1 / span 2; grid-row: 1 / span 2; display:flex; flex-direction:column; align-items:center; justify-content:center; color: var(--text-dark); gap:2px;">
+                <span style="font-size:20px;">🔒</span>
+                <span style="font-size:8px; font-weight:700; color:var(--gold); white-space:nowrap;">${nextCost >= 1000 ? (nextCost/1000)+'k' : nextCost} 🪙</span>
+              </div>
           </div>`;
       }
       bedsContainer.innerHTML = bedsHtml;
@@ -1117,7 +1343,7 @@
 
   window.showSpecificModal = function(modalId) { document.getElementById('modalOverlay').classList.add('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); document.getElementById(modalId).classList.add('active'); }
   window.closeAllModals = function() { document.getElementById('modalOverlay').classList.remove('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); selectedAnimalId = null; currentTargetSlot = null; currentStatusSlot = null; }
-  window.openShopToFields = function() { if(isVisitMode) return; window.renderShop('fields'); window.showSpecificModal('modalShop'); }
+  window.openShopToFields = function() { if(isVisitMode) return; window.renderShop('seeds'); window.showSpecificModal('modalShop'); }
 
   // ── BACKHAUS LOGIK MIT 3 SLOTS ──
   window.openBakery = function() { if(isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; } window.renderBakery('recipes'); window.showSpecificModal('modalBakery'); }
@@ -1222,7 +1448,7 @@
   window.openShop = function() { window.renderShop('seeds'); window.showSpecificModal('modalShop'); }
 
   window.renderShop = function(tabType) {
-    document.getElementById('tabSeeds').classList.remove('active'); document.getElementById('tabAnimals').classList.remove('active'); document.getElementById('tabFields').classList.remove('active');
+    document.getElementById('tabSeeds').classList.remove('active'); document.getElementById('tabAnimals').classList.remove('active');
     const list = document.getElementById('shopList'); list.innerHTML = '';
     
     if (tabType === 'seeds') {
@@ -1258,14 +1484,6 @@
       itemsToRender.sort((a, b) => a.price - b.price);
       itemsToRender.forEach(item => { list.innerHTML += item.html; });
 
-    } else if (tabType === 'fields') {
-      document.getElementById('tabFields').classList.add('active');
-      if (unlockedBeds < 5) {
-          const cost = bedPrices[unlockedBeds];
-          list.innerHTML = `<div class="item-row"><div class="item-info"><span class="item-icon">🗺️</span><div><div class="item-name">Neues Feld (Nr. ${unlockedBeds + 1})</div><div class="item-price">${cost} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBed()">Kaufen</button></div>`;
-      } else {
-          list.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-mid);">Du hast bereits alle Farm-Felder gekauft! 🏆</div>`;
-      }
     }
   }
 
@@ -1791,9 +2009,9 @@
       
       if (data.beds) {
         beds = data.beds;
-        while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        while (beds.length < 6) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       } else {
-        beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       }
       
       const rawAnimals = data.animals;
@@ -1845,9 +2063,9 @@
 
       if (data.beds) {
         beds = data.beds;
-        while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        while (beds.length < 6) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       } else {
-        beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       }
       const rawAnimals = data.animals;
       if (!rawAnimals || rawAnimals === 0) animals = [];
