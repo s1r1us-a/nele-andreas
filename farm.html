@@ -1168,12 +1168,12 @@
     // Beim Start direkt 3–5 Glühwürmchen spawnen
     const startCount = 3 + Math.floor(Math.random() * 3);
     for (let i = 0; i < startCount; i++) spawnFirefly();
-    // Alle 2 Minuten ein neues, max 10
+    // Alle 10 Minuten ein neues, max 10
     window._fireflyInterval = setInterval(() => {
       if (!document.body.classList.contains('night-mode')) return;
       const c = document.getElementById('firefly-container');
       if (c && c.children.length < 10) spawnFirefly();
-    }, 120000);
+    }, 600000);
   }
 
   function spawnFirefly() {
