@@ -338,8 +338,9 @@
   let currentUser = null;
   let userKey = null;
   let currentCoins = 0;
-  let isVisitMode = false;   // true wenn man die Farm des anderen besucht
-  let ownUserKey = null;     // immer der eigene Key, auch im Besuchsmodus
+  let isVisitMode = false;
+  let ownUserKey = null;
+  function farmName(name) { return name === 'Andreas' ? "Andreas' Farm" : name + "s Farm"; }
 
   // ── GAME DATA & ITEMS (BALANCED) ──
   const shopItems = {
@@ -430,7 +431,7 @@
       // Personalisierten Farm-Titel setzen
       const farmTitle = document.getElementById('farmTitle');
       if (farmTitle) {
-        const possessive = currentUser.endsWith('s') ? currentUser + '\' Farm' : currentUser + 's Farm';
+        const possessive = farmName(currentUser);
         farmTitle.textContent = possessive;
       }
 
@@ -481,7 +482,7 @@
 
       // Besuchs-Button einblenden
       const otherName = currentUser === 'Andreas' ? 'Nele' : 'Andreas';
-      const otherPossessive = otherName.endsWith('s') ? otherName + "' Farm" : otherName + 's Farm';
+      const otherPossessive = farmName(otherName);
       document.getElementById('visitBtnLabel').textContent = otherPossessive;
       document.getElementById('btnVisit').style.display = 'flex';
 
@@ -811,7 +812,7 @@
     document.getElementById('topbarCoins').style.display = 'none';
 
     // Titel und Banner
-    const possessive = otherUser.endsWith('s') ? otherUser + '' Farm' : otherUser + 's Farm';
+    const possessive = farmName(otherUser);
     document.getElementById('farmTitle').textContent = possessive;
     document.getElementById('visitBannerText').textContent = '👀 Du besuchst ' + possessive;
     document.getElementById('visitBanner').classList.add('show');
@@ -855,7 +856,7 @@
     document.getElementById('visitBanner').classList.remove('show');
 
     // Eigenen Titel wiederherstellen
-    const possessive = currentUser.endsWith('s') ? currentUser + '' Farm' : currentUser + 's Farm';
+    const possessive = farmName(currentUser);
     document.getElementById('farmTitle').textContent = possessive;
 
     // Eigene Farm-Daten neu laden
