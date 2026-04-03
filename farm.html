@@ -166,6 +166,28 @@
     .sell-confirm-btns button:active { transform: scale(0.96); }
     .sell-confirm-yes { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 14px rgba(34,197,94,0.35); }
     .sell-confirm-no { background: #f1f5f9; color: var(--text-mid); }
+
+    /* ── SELL QUANTITY SHEET ── */
+    .sell-qty-overlay { position: fixed; inset: 0; z-index: 590; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); display: none; align-items: flex-end; justify-content: center; padding: 16px; }
+    .sell-qty-overlay.show { display: flex; }
+    .sell-qty-sheet { background: #fff; border-radius: 22px 22px 16px 16px; padding: 22px 20px 20px; width: 100%; max-width: 400px; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    .sell-qty-icon { font-size: 36px; text-align: center; margin-bottom: 6px; }
+    .sell-qty-title { font-family: 'Dancing Script', cursive; font-size: 22px; color: var(--text-dark); text-align: center; margin-bottom: 4px; }
+    .sell-qty-stock { font-size: 13px; color: var(--text-mid); text-align: center; font-weight: 500; margin-bottom: 16px; }
+    .sell-qty-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px; }
+    .sell-qty-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--ui-card-border); background: #fde8ed; color: var(--rose); font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+    .sell-qty-btn:active { transform: scale(0.9); }
+    .sell-qty-input { width: 70px; text-align: center; font-family: 'Quicksand', sans-serif; font-size: 22px; font-weight: 700; color: var(--text-dark); border: 2px solid var(--ui-card-border); border-radius: 12px; padding: 6px 8px; outline: none; }
+    .sell-qty-input:focus { border-color: var(--rose); }
+    .sell-qty-total { font-family: 'Dancing Script', cursive; font-size: 24px; color: var(--gold); font-weight: 700; text-align: center; margin-bottom: 16px; }
+    .sell-qty-btns { display: flex; gap: 10px; flex-direction: column; }
+    .sell-qty-btns-row { display: flex; gap: 10px; }
+    .sell-qty-btns-row button { flex: 1; border: none; border-radius: 14px; padding: 13px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.15s; }
+    .sell-qty-btns-row button:active { transform: scale(0.96); }
+    .sell-qty-all { width: 100%; border: none; border-radius: 14px; padding: 13px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose), #c85070); color: white; box-shadow: 0 4px 14px rgba(232,115,138,0.35); transition: transform 0.15s; margin-bottom: 0; }
+    .sell-qty-all:active { transform: scale(0.96); }
+    .sell-qty-yes { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 14px rgba(34,197,94,0.35); }
+    .sell-qty-no { background: #f1f5f9; color: var(--text-mid); }
   </style>
 </head>
 <body>
@@ -176,7 +198,29 @@
   <span id="offlineText">Keine Verbindung – Änderungen werden nicht gespeichert</span>
 </div>
 
-<!-- SELL CONFIRM SHEET -->
+<!-- SELL QUANTITY SHEET -->
+<div class="sell-qty-overlay" id="sellQtyOverlay" onclick="window.closeSellQty()">
+  <div class="sell-qty-sheet" onclick="event.stopPropagation()">
+    <div class="sell-qty-icon" id="sellQtyIcon">🥕</div>
+    <div class="sell-qty-title" id="sellQtyTitle">Wie viele verkaufen?</div>
+    <div class="sell-qty-stock" id="sellQtyStock">Auf Lager: 0</div>
+    <div class="sell-qty-controls">
+      <button class="sell-qty-btn" onclick="window.sellQtyChange(-1)">−</button>
+      <input class="sell-qty-input" type="number" id="sellQtyInput" min="1" value="1" oninput="window.sellQtyUpdate()">
+      <button class="sell-qty-btn" onclick="window.sellQtyChange(1)">+</button>
+    </div>
+    <div class="sell-qty-total" id="sellQtyTotal">+0 🪙</div>
+    <div class="sell-qty-btns">
+      <button class="sell-qty-all" id="sellQtyAllBtn" onclick="window.sellQtySelectAll()">Alle verkaufen 🛒</button>
+      <div class="sell-qty-btns-row">
+        <button class="sell-qty-no" onclick="window.closeSellQty()">Abbrechen</button>
+        <button class="sell-qty-yes" onclick="window.sellQtyConfirm()">Verkaufen ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div class="sell-confirm-overlay" id="sellConfirmOverlay" onclick="window.closeSellConfirm()">
   <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
     <div class="sell-confirm-icon" id="sellConfirmIcon">🥕</div>
@@ -679,7 +723,7 @@
   let pendingSell = null;
 
   window.sellItem = function(category, itemId, price) {
-    // Icon & Name für den Dialog ermitteln
+    // Icon & Name ermitteln
     let icon = '🛒', name = itemId;
     if (category === 'bakery') { icon = bakeryRecipes[itemId].icon; name = bakeryRecipes[itemId].name; }
     else if (category === 'crops') { icon = shopItems[itemId].icon; name = shopItems[itemId].name; }
@@ -688,31 +732,70 @@
     else if (itemId === 'milk') { icon = '🥛'; name = 'Milch'; }
     else if (itemId === 'fertilizer') { icon = '🪴'; name = 'Dünger'; }
 
-    pendingSell = { category, itemId, price };
-    document.getElementById('sellConfirmIcon').textContent = icon;
-    document.getElementById('sellConfirmSub').textContent = name + ' verkaufen';
-    document.getElementById('sellConfirmPrice').textContent = '+' + price + ' 🪙';
-    document.getElementById('sellConfirmYesBtn').onclick = window.confirmSell;
-    document.getElementById('sellConfirmOverlay').classList.add('show');
+    const stock = inventory[category][itemId] || 0;
+    pendingSell = { category, itemId, price, stock };
+
+    // Mengen-Sheet befüllen
+    document.getElementById('sellQtyIcon').textContent = icon;
+    document.getElementById('sellQtyTitle').textContent = name + ' verkaufen';
+    document.getElementById('sellQtyStock').textContent = 'Auf Lager: ' + stock;
+    document.getElementById('sellQtyAllBtn').textContent = 'Alle verkaufen (' + stock + 'x) 🛒';
+    const input = document.getElementById('sellQtyInput');
+    input.value = 1; input.max = stock;
+    window.sellQtyUpdate();
+    document.getElementById('sellQtyOverlay').classList.add('show');
   }
 
-  window.confirmSell = async function() {
+  window.sellQtyUpdate = function() {
     if (!pendingSell) return;
+    const input = document.getElementById('sellQtyInput');
+    let val = parseInt(input.value) || 1;
+    if (val < 1) val = 1;
+    if (val > pendingSell.stock) val = pendingSell.stock;
+    input.value = val;
+    document.getElementById('sellQtyTotal').textContent = '+' + (val * pendingSell.price) + ' 🪙';
+  }
+
+  window.sellQtyChange = function(delta) {
+    const input = document.getElementById('sellQtyInput');
+    input.value = (parseInt(input.value) || 1) + delta;
+    window.sellQtyUpdate();
+  }
+
+  window.sellQtySelectAll = function() {
+    if (!pendingSell) return;
+    document.getElementById('sellQtyInput').value = pendingSell.stock;
+    window.sellQtyUpdate();
+  }
+
+  window.sellQtyConfirm = async function() {
+    if (!pendingSell) return;
+    const input = document.getElementById('sellQtyInput');
+    let amount = parseInt(input.value) || 1;
+    if (amount < 1) amount = 1;
+    if (amount > pendingSell.stock) amount = pendingSell.stock;
     const { category, itemId, price } = pendingSell;
+    const total = amount * price;
     pendingSell = null;
-    window.closeSellConfirm();
-    if (inventory[category][itemId] > 0) {
-      inventory[category][itemId]--;
-      await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + price);
-      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + price).catch(err => console.error('Stats-Fehler:', err));
+    window.closeSellQty();
+    if (inventory[category][itemId] >= amount) {
+      inventory[category][itemId] -= amount;
+      await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
+      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
       await saveFarmData();
-      window.showToast(`Verkauft! (+${price} 🪙)`);
+      window.showToast(`${amount}x verkauft! (+${total} 🪙)`);
       window.openSell();
     }
   }
 
-  window.closeSellConfirm = function() {
+  window.closeSellQty = function() {
     pendingSell = null;
+    document.getElementById('sellQtyOverlay').classList.remove('show');
+  }
+
+  // Legacy confirm (nicht mehr verwendet, aber zur Sicherheit behalten)
+  window.confirmSell = async function() {}
+  window.closeSellConfirm = function() {
     document.getElementById('sellConfirmOverlay').classList.remove('show');
   }
 
