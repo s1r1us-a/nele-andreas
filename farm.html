@@ -190,22 +190,41 @@
     .night-mode .hill-front-right{ background: linear-gradient(180deg, #1a2e14 0%, #122210 50%, #0a160a 100%); }
     .night-mode .hill-small-right { background: linear-gradient(180deg, #182a12 0%, #10200e 55%, #080e06 100%); opacity: 0.7; }
 
+    /* ── SVG WOLKEN ── */
     .cloud-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 10; }
-    .cloud { position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); animation: drift linear infinite; transition: all 2s ease; }
-    .cloud::before, .cloud::after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50%; transition: all 2s ease; }
-    .cloud-1 { width: 80px; height: 26px; top: 15%; left: -100px; animation-duration: 45s; }
-    .cloud-1::before { width: 40px; height: 40px; top: -20px; left: 15px; }
-    .cloud-1::after { width: 28px; height: 28px; top: -12px; right: 10px; }
-    .cloud-2 { width: 60px; height: 20px; top: 25%; left: -100px; animation-duration: 35s; animation-delay: -15s; opacity: 0.6; }
-    .cloud-2::before { width: 30px; height: 30px; top: -15px; left: 10px; }
-    .cloud-2::after { width: 20px; height: 20px; top: -10px; right: 10px; }
-    .cloud-3 { width: 90px; height: 30px; top: 8%; left: -120px; animation-duration: 55s; animation-delay: -5s; opacity: 0.7; }
-    .cloud-3::before { width: 45px; height: 45px; top: -22px; left: 15px; }
-    .cloud-3::after { width: 30px; height: 30px; top: -12px; right: 12px; }
-    .cloud-4 { width: 50px; height: 18px; top: 20%; left: -80px; animation-duration: 30s; animation-delay: -20s; opacity: 0.5; }
-    .cloud-4::before { width: 25px; height: 25px; top: -12px; left: 8px; }
-    .cloud-4::after { width: 18px; height: 18px; top: -8px; right: 8px; }
-    @keyframes drift { from { transform: translateX(-10vw); } to { transform: translateX(110vw); } }
+    .svg-cloud { position: absolute; animation: drift linear infinite; transition: opacity 2s ease; }
+    .svg-cloud svg { display: block; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.08)); }
+    .night-mode .svg-cloud { opacity: 0.2; filter: brightness(0.55); }
+    @keyframes drift { from { transform: translateX(-200px); } to { transform: translateX(110vw); } }
+
+    /* ── BLUMEN ── */
+    .flower { position: absolute; pointer-events: none; z-index: 13; animation: flowerSway 3.5s ease-in-out infinite; transform-origin: bottom center; }
+    @keyframes flowerSway { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+    .night-mode .flower { filter: brightness(0.45) saturate(0.3); }
+    .sunset-mode .flower { filter: sepia(0.3) saturate(0.85); }
+
+    /* ── SCHMETTERLINGE ── */
+
+    /* ── REGEN ── */
+    .rain-container { position: absolute; inset: 0; pointer-events: none; z-index: 8; overflow: hidden; opacity: 0; transition: opacity 2s ease; }
+    .rain-container.active { opacity: 1; }
+    .raindrop { position: absolute; width: 1.5px; border-radius: 2px; background: linear-gradient(180deg, transparent, rgba(180,210,255,0.75)); animation: rainFall linear infinite; }
+    @keyframes rainFall { from { transform: translateY(-60px) rotate(10deg); } to { transform: translateY(100vh) rotate(10deg); } }
+
+    /* ── VÖGEL ── */
+    .bird-flock { position: absolute; pointer-events: none; z-index: 9; }
+    .bird { position: absolute; }
+    .bird svg { animation: wingBeat 0.55s ease-in-out infinite alternate; transform-origin: center; }
+    @keyframes wingBeat { 0% { transform: scaleY(1); } 100% { transform: scaleY(-0.35); } }
+    .night-mode .bird-flock { opacity: 0.25; }
+
+
+    /* ── PERMANENTER SCHORNSTEIN-RAUCH ── */
+    .bakery-chimney::before { content: ''; position: absolute; top: -16px; left: 2px; width: 9px; height: 9px; background: rgba(200,200,200,0.5); border-radius: 50%; animation: chimneyPuff 3.2s ease-out infinite; pointer-events: none; }
+    .bakery-chimney::after  { content: ''; position: absolute; top: -22px; left: 4px; width: 7px; height: 7px; background: rgba(200,200,200,0.35); border-radius: 50%; animation: chimneyPuff 3.2s ease-out 1.6s infinite; pointer-events: none; }
+    @keyframes chimneyPuff { 0% { transform: translateY(0) scale(0.5); opacity: 0.7; } 100% { transform: translateY(-26px) scale(2.5); opacity: 0; } }
+    .is-baking .bakery-chimney::before { background: rgba(140,140,140,0.8); animation-duration: 1.6s; }
+    .is-baking .bakery-chimney::after  { background: rgba(140,140,140,0.6); animation-duration: 1.6s; }
 
     /* Verschönerte Sonne (Tag) */
     .sun { 
@@ -326,9 +345,6 @@
     .is-idle .rabbit { animation: breathe 2s infinite ease-in-out; transform-origin: bottom center; }
     @keyframes breathe { 0%, 100% { transform: scaleY(1) scaleX(1); } 50% { transform: scaleY(0.96) scaleX(1.02); } }
 
-    .zzz { position: absolute; top: -20px; right: -15px; font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 900; color: #a78bfa; animation: zzzFloat 2.5s infinite linear; opacity: 0; pointer-events: none; }
-    .zzz:nth-child(2) { animation-delay: 1.2s; font-size: 12px; right: -5px; }
-    @keyframes zzzFloat { 0% { transform: translate(0, 0) scale(0.5) rotate(-10deg); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(20px, -40px) scale(1.5) rotate(10deg); opacity: 0; } }
 
     .reward-bubble { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid var(--rose-light); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: bubbleBounce 1.5s infinite ease-in-out; pointer-events: none; z-index: 60; }
     .reward-bubble::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #fff transparent transparent transparent; z-index: 11; }
@@ -530,36 +546,85 @@
 <div id="farmWorld" class="farm-world">
   <div class="sky">
     <div class="stars-container" id="starsContainer"></div>
+
+    <!-- SVG WOLKEN -->
     <div class="cloud-container">
-      <div class="cloud cloud-1"></div>
-      <div class="cloud cloud-2"></div>
-      <div class="cloud cloud-3"></div>
-      <div class="cloud cloud-4"></div>
+      <!-- Wolke 1: groß, langsam -->
+      <div class="svg-cloud" style="top:8%; animation-duration:52s; animation-delay:-8s; opacity:0.92;">
+        <svg width="110" height="52" viewBox="0 0 110 52" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="55" cy="42" rx="52" ry="14" fill="rgba(255,255,255,0.85)"/>
+          <ellipse cx="35" cy="32" rx="28" ry="22" fill="rgba(255,255,255,0.9)"/>
+          <ellipse cx="65" cy="28" rx="32" ry="26" fill="rgba(255,255,255,0.95)"/>
+          <ellipse cx="88" cy="36" rx="20" ry="16" fill="rgba(255,255,255,0.88)"/>
+          <ellipse cx="55" cy="44" rx="52" ry="10" fill="rgba(230,240,255,0.6)"/>
+        </svg>
+      </div>
+      <!-- Wolke 2: klein, schneller -->
+      <div class="svg-cloud" style="top:20%; animation-duration:36s; animation-delay:-20s; opacity:0.7;">
+        <svg width="72" height="36" viewBox="0 0 72 36" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="36" cy="28" rx="34" ry="10" fill="rgba(255,255,255,0.8)"/>
+          <ellipse cx="24" cy="22" rx="18" ry="15" fill="rgba(255,255,255,0.88)"/>
+          <ellipse cx="44" cy="18" rx="22" ry="18" fill="rgba(255,255,255,0.92)"/>
+          <ellipse cx="36" cy="30" rx="34" ry="7" fill="rgba(220,235,255,0.5)"/>
+        </svg>
+      </div>
+      <!-- Wolke 3: mittel -->
+      <div class="svg-cloud" style="top:5%; animation-duration:62s; animation-delay:-3s; opacity:0.8;">
+        <svg width="130" height="58" viewBox="0 0 130 58" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="65" cy="48" rx="62" ry="13" fill="rgba(255,255,255,0.8)"/>
+          <ellipse cx="38" cy="36" rx="32" ry="26" fill="rgba(255,255,255,0.88)"/>
+          <ellipse cx="72" cy="30" rx="38" ry="30" fill="rgba(255,255,255,0.94)"/>
+          <ellipse cx="105" cy="40" rx="24" ry="19" fill="rgba(255,255,255,0.85)"/>
+          <ellipse cx="65" cy="50" rx="62" ry="9" fill="rgba(210,230,255,0.55)"/>
+        </svg>
+      </div>
+      <!-- Wolke 4: winzig -->
+      <div class="svg-cloud" style="top:22%; animation-duration:28s; animation-delay:-12s; opacity:0.55;">
+        <svg width="55" height="28" viewBox="0 0 55 28" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="27" cy="22" rx="26" ry="8" fill="rgba(255,255,255,0.78)"/>
+          <ellipse cx="18" cy="17" rx="14" ry="12" fill="rgba(255,255,255,0.85)"/>
+          <ellipse cx="34" cy="14" rx="17" ry="14" fill="rgba(255,255,255,0.9)"/>
+        </svg>
+      </div>
     </div>
+
     <div class="sun"></div>
     <div class="moon"></div>
   </div>
-  
+
+  <!-- REGEN -->
+  <div class="rain-container" id="rainContainer"></div>
+
   <div id="firefly-container"></div>
 
   <div class="hills-layer">
     <div class="hill hill-back-left"></div>
 
-    <!-- MITTLERER HÜGEL: Nadelbäume -->
+    <!-- MITTLERER HÜGEL: Nadelbäume, über gesamte Fläche verteilt -->
     <div class="hill hill-mid">
-      <!-- Nadelbaum klein: viewBox 0 0 16 26, Stamm y=18..26, Krone Basis y=18 -->
-      <div class="hill-tree" style="left:22%; bottom:56%;">
-        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+      <!-- unten links -->
+      <div class="hill-tree" style="left:12%; bottom:20%;">
+        <svg width="11" height="18" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
           <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
-          <!-- Krone: 3 Dreiecke, alle Basis bei y=18 -->
           <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
           <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
           <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
         </svg>
       </div>
-      <div class="hill-tree" style="left:44%; bottom:67%;">
-        <svg width="20" height="32" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+      <!-- mitte unten -->
+      <div class="hill-tree" style="left:35%; bottom:32%;">
+        <svg width="13" height="21" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <!-- mitte oben -->
+      <div class="hill-tree" style="left:50%; bottom:58%;">
+        <svg width="15" height="24" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
           <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
           <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
@@ -567,8 +632,19 @@
           <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
         </svg>
       </div>
-      <div class="hill-tree" style="left:66%; bottom:56%;">
-        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+      <!-- rechts unten -->
+      <div class="hill-tree" style="left:72%; bottom:25%;">
+        <svg width="11" height="18" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <!-- rechts oben -->
+      <div class="hill-tree" style="left:82%; bottom:48%;">
+        <svg width="13" height="21" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
           <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
           <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
@@ -578,37 +654,21 @@
       </div>
     </div>
 
-    <!-- VORDERER GROSSER HÜGEL: Mix aus Nadel- und Laubbäumen -->
+    <!-- VORDERER GROSSER HÜGEL: Mix, gleichmäßig über die gesamte Fläche -->
     <div class="hill hill-front-right">
 
-      <!-- Laubbaum groß: runde Krone aus 3 überlappenden Kreisen -->
-      <div class="hill-tree" style="left:13%; bottom:66%;">
-        <svg width="28" height="34" viewBox="0 0 28 34" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="14" cy="33.5" rx="6" ry="2" fill="var(--tree-shadow)"/>
-          <rect x="12" y="24" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
-          <!-- Krone: 3 Kreise überlappend, unterste Kante bei y=24 -->
-          <circle cx="9"  cy="18" r="9" fill="var(--tree-crown-bot)"/>
-          <circle cx="19" cy="18" r="9" fill="var(--tree-crown-bot)"/>
-          <circle cx="14" cy="13" r="10" fill="var(--tree-crown-mid)"/>
-          <!-- Highlight -->
-          <circle cx="11" cy="10" r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+      <!-- Reihe unten (bottom 15-30%): klein, wirken weit weg -->
+      <div class="hill-tree" style="left:8%; bottom:18%;">
+        <svg width="12" height="20" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
         </svg>
       </div>
-
-      <!-- Nadelbaum mittel -->
-      <div class="hill-tree" style="left:26%; bottom:81%;">
-        <svg width="20" height="32" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
-          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
-          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
-          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
-          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
-        </svg>
-      </div>
-
-      <!-- Laubbaum klein -->
-      <div class="hill-tree" style="left:38%; bottom:89%;">
-        <svg width="22" height="27" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
+      <div class="hill-tree" style="left:22%; bottom:22%;">
+        <svg width="14" height="18" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="11" cy="26.5" rx="5" ry="1.8" fill="var(--tree-shadow)"/>
           <rect x="9.5" y="19" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
           <circle cx="7"  cy="14" r="7" fill="var(--tree-crown-bot)"/>
@@ -617,22 +677,76 @@
           <circle cx="9"  cy="8"  r="4" fill="var(--tree-crown-top)" opacity="0.7"/>
         </svg>
       </div>
-
-      <!-- Nadelbaum groß tall -->
-      <div class="hill-tree" style="left:51%; bottom:91%;">
-        <svg width="24" height="40" viewBox="0 0 24 40" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="12" cy="39.5" rx="6" ry="2" fill="var(--tree-shadow)"/>
-          <rect x="10" y="28" width="4" height="11.5" rx="1.5" fill="var(--tree-trunk)"/>
-          <polygon points="12,6 22,28 2,28" fill="var(--tree-crown-bot)"/>
-          <polygon points="12,4 20,22 4,22" fill="var(--tree-crown-mid)"/>
-          <polygon points="12,1 18,15 6,15" fill="var(--tree-crown-top)"/>
-          <polygon points="12,0 17,10 7,10" fill="var(--tree-crown-top)" opacity="0.8"/>
+      <div class="hill-tree" style="left:40%; bottom:17%;">
+        <svg width="12" height="20" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:58%; bottom:20%;">
+        <svg width="14" height="18" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="11" cy="26.5" rx="5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="9.5" y="19" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <circle cx="7"  cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="15" cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="11" cy="10" r="8" fill="var(--tree-crown-mid)"/>
+          <circle cx="9"  cy="8"  r="4" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:76%; bottom:16%;">
+        <svg width="12" height="20" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
+          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
+          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
+          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
         </svg>
       </div>
 
-      <!-- Laubbaum mittel -->
-      <div class="hill-tree" style="left:64%; bottom:83%;">
-        <svg width="26" height="32" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+      <!-- Reihe mitte (bottom 40-55%): mittelgroß -->
+      <div class="hill-tree" style="left:14%; bottom:45%;">
+        <svg width="18" height="23" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="13" cy="31.5" rx="5.5" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="11" y="22" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <circle cx="8"  cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="18" cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="13" cy="12" r="9" fill="var(--tree-crown-mid)"/>
+          <circle cx="10" cy="9"  r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:31%; bottom:50%;">
+        <svg width="16" height="26" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
+          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
+          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:49%; bottom:48%;">
+        <svg width="18" height="23" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="13" cy="31.5" rx="5.5" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="11" y="22" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <circle cx="8"  cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="18" cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="13" cy="12" r="9" fill="var(--tree-crown-mid)"/>
+          <circle cx="10" cy="9"  r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:66%; bottom:44%;">
+        <svg width="16" height="26" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
+          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
+          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:84%; bottom:40%;">
+        <svg width="18" height="23" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="13" cy="31.5" rx="5.5" ry="2" fill="var(--tree-shadow)"/>
           <rect x="11" y="22" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
           <circle cx="8"  cy="17" r="8" fill="var(--tree-crown-bot)"/>
@@ -642,9 +756,53 @@
         </svg>
       </div>
 
-      <!-- Nadelbaum klein -->
-      <div class="hill-tree" style="left:77%; bottom:71%;">
-        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
+      <!-- Reihe oben (bottom 70-92%): groß, am Kamm -->
+      <div class="hill-tree" style="left:20%; bottom:72%;">
+        <svg width="20" height="27" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="13" cy="31.5" rx="5.5" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="11" y="22" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <circle cx="8"  cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="18" cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="13" cy="12" r="9" fill="var(--tree-crown-mid)"/>
+          <circle cx="10" cy="9"  r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:36%; bottom:82%;">
+        <svg width="18" height="30" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
+          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
+          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:53%; bottom:88%;">
+        <svg width="20" height="33" viewBox="0 0 24 40" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="12" cy="39.5" rx="6" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="10" y="28" width="4" height="11.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <polygon points="12,6 22,28 2,28" fill="var(--tree-crown-bot)"/>
+          <polygon points="12,4 20,22 4,22" fill="var(--tree-crown-mid)"/>
+          <polygon points="12,1 18,15 6,15" fill="var(--tree-crown-top)"/>
+          <polygon points="12,0 17,10 7,10" fill="var(--tree-crown-top)" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:70%; bottom:78%;">
+        <svg width="20" height="27" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="13" cy="31.5" rx="5.5" ry="2" fill="var(--tree-shadow)"/>
+          <rect x="11" y="22" width="4" height="9.5" rx="1.5" fill="var(--tree-trunk)"/>
+          <circle cx="8"  cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="18" cy="17" r="8" fill="var(--tree-crown-bot)"/>
+          <circle cx="13" cy="12" r="9" fill="var(--tree-crown-mid)"/>
+          <circle cx="10" cy="9"  r="5" fill="var(--tree-crown-top)" opacity="0.7"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KLEINER HÜGEL RECHTS -->
+    <div class="hill hill-small-right">
+      <!-- unten -->
+      <div class="hill-tree" style="left:18%; bottom:20%;">
+        <svg width="11" height="18" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
           <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
           <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
@@ -652,13 +810,8 @@
           <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
         </svg>
       </div>
-    </div>
-
-    <!-- KLEINER HÜGEL RECHTS: Mix -->
-    <div class="hill hill-small-right">
-      <!-- Laubbaum -->
-      <div class="hill-tree" style="left:28%; bottom:61%;">
-        <svg width="22" height="27" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
+      <div class="hill-tree" style="left:55%; bottom:22%;">
+        <svg width="12" height="16" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="11" cy="26.5" rx="5" ry="1.8" fill="var(--tree-shadow)"/>
           <rect x="9.5" y="19" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
           <circle cx="7"  cy="14" r="7" fill="var(--tree-crown-bot)"/>
@@ -667,14 +820,24 @@
           <circle cx="9"  cy="8"  r="4" fill="var(--tree-crown-top)" opacity="0.7"/>
         </svg>
       </div>
-      <!-- Nadelbaum -->
-      <div class="hill-tree" style="left:55%; bottom:71%;">
-        <svg width="16" height="26" viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="8" cy="25.5" rx="4.5" ry="1.5" fill="var(--tree-shadow)"/>
-          <rect x="6.5" y="18" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
-          <polygon points="8,4 15,18 1,18" fill="var(--tree-crown-bot)"/>
-          <polygon points="8,2 14,14 2,14" fill="var(--tree-crown-mid)"/>
-          <polygon points="8,0 13,10 3,10" fill="var(--tree-crown-top)"/>
+      <!-- oben -->
+      <div class="hill-tree" style="left:33%; bottom:58%;">
+        <svg width="14" height="23" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="31.5" rx="5.5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="8" y="22" width="4" height="9.5" rx="1" fill="var(--tree-trunk)"/>
+          <polygon points="10,5 19,22 1,22" fill="var(--tree-crown-bot)"/>
+          <polygon points="10,3 17,17 3,17" fill="var(--tree-crown-mid)"/>
+          <polygon points="10,0 16,12 4,12" fill="var(--tree-crown-top)"/>
+        </svg>
+      </div>
+      <div class="hill-tree" style="left:72%; bottom:62%;">
+        <svg width="14" height="18" viewBox="0 0 22 27" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="11" cy="26.5" rx="5" ry="1.8" fill="var(--tree-shadow)"/>
+          <rect x="9.5" y="19" width="3" height="7.5" rx="1" fill="var(--tree-trunk)"/>
+          <circle cx="7"  cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="15" cy="14" r="7" fill="var(--tree-crown-bot)"/>
+          <circle cx="11" cy="10" r="8" fill="var(--tree-crown-mid)"/>
+          <circle cx="9"  cy="8"  r="4" fill="var(--tree-crown-top)" opacity="0.7"/>
         </svg>
       </div>
     </div>
@@ -708,6 +871,61 @@
 
   <div class="beds-container" id="bedsContainer"></div>
   <div id="animalSpace"></div>
+
+  <!-- BLUMEN -->
+  <div class="flower" style="top:41%; left:10%; animation-delay:0s;">
+    <svg width="14" height="18" viewBox="0 0 14 18" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="8" width="2" height="10" rx="1" fill="#5a9e30"/>
+      <circle cx="7" cy="5" r="3" fill="#fbbf24"/>
+      <ellipse cx="3" cy="4" rx="3" ry="2" fill="#f472b6" transform="rotate(-30 3 4)"/>
+      <ellipse cx="11" cy="4" rx="3" ry="2" fill="#f472b6" transform="rotate(30 11 4)"/>
+      <ellipse cx="7" cy="1" rx="2" ry="3" fill="#f472b6"/>
+      <ellipse cx="7" cy="9" rx="2" ry="3" fill="#f9a8d4"/>
+    </svg>
+  </div>
+  <div class="flower" style="top:42%; left:13%; animation-delay:-1.2s;">
+    <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="7" width="2" height="9" rx="1" fill="#4a8c25"/>
+      <circle cx="6" cy="4.5" r="2.5" fill="#fde047"/>
+      <ellipse cx="2" cy="3.5" rx="2.5" ry="1.8" fill="#fb923c" transform="rotate(-25 2 3.5)"/>
+      <ellipse cx="10" cy="3.5" rx="2.5" ry="1.8" fill="#fb923c" transform="rotate(25 10 3.5)"/>
+      <ellipse cx="6" cy="1"   rx="1.8" ry="2.5" fill="#fdba74"/>
+      <ellipse cx="6" cy="8"   rx="1.8" ry="2.5" fill="#fdba74"/>
+    </svg>
+  </div>
+  <div class="flower" style="top:39%; left:82%; animation-delay:-0.5s;">
+    <svg width="14" height="18" viewBox="0 0 14 18" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="8" width="2" height="10" rx="1" fill="#5a9e30"/>
+      <circle cx="7" cy="5" r="3" fill="#fbbf24"/>
+      <ellipse cx="3"  cy="4" rx="3" ry="2" fill="#a78bfa" transform="rotate(-30 3 4)"/>
+      <ellipse cx="11" cy="4" rx="3" ry="2" fill="#a78bfa" transform="rotate(30 11 4)"/>
+      <ellipse cx="7"  cy="1" rx="2" ry="3" fill="#a78bfa"/>
+      <ellipse cx="7"  cy="9" rx="2" ry="3" fill="#c4b5fd"/>
+    </svg>
+  </div>
+  <div class="flower" style="top:40%; left:86%; animation-delay:-2s;">
+    <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="7" width="2" height="9" rx="1" fill="#4a8c25"/>
+      <circle cx="6" cy="4.5" r="2.5" fill="#fde047"/>
+      <ellipse cx="2"  cy="3.5" rx="2.5" ry="1.8" fill="#f472b6" transform="rotate(-25 2 3.5)"/>
+      <ellipse cx="10" cy="3.5" rx="2.5" ry="1.8" fill="#f472b6" transform="rotate(25 10 3.5)"/>
+      <ellipse cx="6"  cy="1"   rx="1.8" ry="2.5" fill="#f9a8d4"/>
+      <ellipse cx="6"  cy="8"   rx="1.8" ry="2.5" fill="#f9a8d4"/>
+    </svg>
+  </div>
+  <div class="flower" style="top:62%; left:6%; animation-delay:-1s;">
+    <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="7" width="2" height="9" rx="1" fill="#4a8c25"/>
+      <circle cx="6" cy="4.5" r="2.5" fill="#fde047"/>
+      <ellipse cx="2"  cy="3.5" rx="2.5" ry="1.8" fill="#86efac" transform="rotate(-25 2 3.5)"/>
+      <ellipse cx="10" cy="3.5" rx="2.5" ry="1.8" fill="#86efac" transform="rotate(25 10 3.5)"/>
+      <ellipse cx="6"  cy="1"   rx="1.8" ry="2.5" fill="#4ade80"/>
+      <ellipse cx="6"  cy="8"   rx="1.8" ry="2.5" fill="#bbf7d0"/>
+    </svg>
+  </div>
+
+  <!-- VOGEL-CONTAINER -->
+  <div id="birdContainer"></div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()">
@@ -1192,17 +1410,14 @@
     const hiveEl = document.getElementById('beehiveBuilding');
     if (beehive.level > 0) {
         hiveEl.style.display = 'block';
-        let zzzHtml = '';
         let rewardHtml = '';
         
         if (beehive.rewardReady) {
             rewardHtml = '<div class="reward-bubble" style="top:-25px;">🍯</div>';
-        } else if (beehive.isProducing) {
-            zzzHtml = '<div class="zzz" style="top:-10px; right:-10px;">Z</div><div class="zzz" style="top:0px; right:0px;">z</div>';
         }
         
         if (!hiveEl.hasAttribute('data-rendered-level') || hiveEl.getAttribute('data-is-producing') !== String(beehive.isProducing) || hiveEl.getAttribute('data-reward-ready') !== String(beehive.rewardReady)) {
-            hiveEl.innerHTML = getBeehiveSVG() + zzzHtml + rewardHtml;
+            hiveEl.innerHTML = getBeehiveSVG() + rewardHtml;
             hiveEl.setAttribute('data-rendered-level', beehive.level);
             hiveEl.setAttribute('data-is-producing', String(beehive.isProducing));
             hiveEl.setAttribute('data-reward-ready', String(beehive.rewardReady));
@@ -1273,7 +1488,6 @@
     const space = document.getElementById('animalSpace');
     let el = document.getElementById('animal-' + a.id);
     
-    let zzzHtml = '';
     let rewardHtml = '';
     
     if (a.rewardReady) {
@@ -1284,8 +1498,6 @@
         if(a.species === 'cat') rewardIcon = '💎';
         if(a.species === 'sheep') rewardIcon = '🧶';
         rewardHtml = `<div class="reward-bubble">${rewardIcon}</div>`;
-    } else if (a.isProducing) {
-        zzzHtml = '<div class="zzz">Z</div><div class="zzz">z</div>';
     }
 
     if (!el) { 
@@ -1293,7 +1505,7 @@
       el.id = 'animal-' + a.id; 
       el.className = 'animal-wrapper'; 
       el.onclick = () => window.openAnimalStats(a.id); 
-      el.innerHTML = getAnimalSVG(a.species) + zzzHtml + rewardHtml; 
+      el.innerHTML = getAnimalSVG(a.species) + rewardHtml; 
       space.appendChild(el); 
     } else {
       const currentProducing = el.getAttribute('data-producing') === 'true';
@@ -1301,7 +1513,7 @@
       
       if (currentProducing !== a.isProducing || currentReady !== a.rewardReady) {
           const existingHeart = el.querySelector('.feed-heart');
-          el.innerHTML = getAnimalSVG(a.species) + zzzHtml + rewardHtml;
+          el.innerHTML = getAnimalSVG(a.species) + rewardHtml;
           if (existingHeart) el.appendChild(existingHeart);
       }
     }
@@ -2167,6 +2379,90 @@
   window.addEventListener('offline', updateOnlineStatus);
   window.addEventListener('online',  updateOnlineStatus);
   if (!navigator.onLine) updateOnlineStatus();
+
+  // ── VOGELSCHWARM: zieht alle 25-60 Sek. durch ──
+  function spawnBirdFlock() {
+    if (document.body.classList.contains('night-mode')) {
+      scheduleBirds(); return;
+    }
+    const container = document.getElementById('birdContainer');
+    if (!container) { scheduleBirds(); return; }
+
+    const flock = document.createElement('div');
+    flock.className = 'bird-flock';
+    const topPct = 5 + Math.random() * 18;
+    flock.style.top = topPct + '%';
+    flock.style.left = '-120px';
+    flock.style.zIndex = 9;
+    flock.style.position = 'absolute';
+
+    const count = 3 + Math.floor(Math.random() * 4);
+    const birdSVG = `<svg width="18" height="10" viewBox="0 0 18 10" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 6 Q4.5 1 9 5 Q13.5 1 17 6" fill="none" stroke="#3a2a1a" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>`;
+
+    for (let i = 0; i < count; i++) {
+      const bird = document.createElement('div');
+      bird.className = 'bird';
+      bird.style.position = 'absolute';
+      bird.style.left = (i * 22 + Math.random() * 10) + 'px';
+      bird.style.top  = (Math.random() * 20 - 10) + 'px';
+      bird.style.animationDelay = (i * 0.08) + 's';
+      bird.innerHTML = birdSVG;
+      flock.appendChild(bird);
+    }
+
+    const duration = 18000 + Math.random() * 12000;
+    flock.style.transition = `transform ${duration}ms linear`;
+    container.appendChild(flock);
+
+    requestAnimationFrame(() => {
+      flock.style.transform = `translateX(${window.innerWidth + 200}px)`;
+    });
+
+    setTimeout(() => { flock.remove(); }, duration + 500);
+    scheduleBirds();
+  }
+
+  function scheduleBirds() {
+    const delay = 25000 + Math.random() * 40000;
+    setTimeout(spawnBirdFlock, delay);
+  }
+  setTimeout(spawnBirdFlock, 8000 + Math.random() * 15000);
+
+  // ── REGEN: zufällig alle 3-8 Min. für 1-2 Min. ──
+  let rainActive = false;
+  function startRain() {
+    if (rainActive) return;
+    rainActive = true;
+    const container = document.getElementById('rainContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    for (let i = 0; i < 80; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'raindrop';
+      drop.style.left   = Math.random() * 110 + '%';
+      drop.style.height = (10 + Math.random() * 14) + 'px';
+      drop.style.animationDuration  = (0.6 + Math.random() * 0.5) + 's';
+      drop.style.animationDelay     = (Math.random() * 1.5) + 's';
+      drop.style.opacity = 0.5 + Math.random() * 0.5;
+      container.appendChild(drop);
+    }
+    container.classList.add('active');
+    const rainDuration = 60000 + Math.random() * 60000;
+    setTimeout(stopRain, rainDuration);
+  }
+  function stopRain() {
+    rainActive = false;
+    const container = document.getElementById('rainContainer');
+    if (container) container.classList.remove('active');
+    scheduleRain();
+  }
+  function scheduleRain() {
+    const delay = 180000 + Math.random() * 300000;
+    setTimeout(startRain, delay);
+  }
+  scheduleRain();
 </script>
 </body>
 </html>
