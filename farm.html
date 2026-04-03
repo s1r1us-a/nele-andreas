@@ -479,45 +479,60 @@
         farmTitle.textContent = possessive;
       }
 
-      // Load Farm Data from DB
-      const farmSnap = await get(ref(db, `farm/${userKey}`));
-      if (farmSnap.exists()) {
-        const data = farmSnap.val();
-        
-        inventory.seeds = { ...inventory.seeds, ...(data.inventory?.seeds || {}) };
-        inventory.crops = { ...inventory.crops, ...(data.inventory?.crops || {}) };
-        inventory.items = { ...inventory.items, ...(data.inventory?.items || {}) };
-        inventory.bakery = { ...inventory.bakery, ...(data.inventory?.bakery || {}) };
-        
-        unlockedBeds = data.unlockedBeds || 1;
-        
-        if (data.beds) {
-            beds = data.beds;
-            // Falls alte Savegames weniger als 5 Beete hatten, füllen wir das Array auf
-            while(beds.length < 5) {
-                beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
-            }
-        }
-        
-        // Firebase speichert Arrays manchmal als Objekte {0:{...}, 1:{...}} – immer in echtes Array konvertieren
-        const rawAnimals = data.animals;
-        if (!rawAnimals || rawAnimals === 0) {
-          animals = [];
-        } else if (Array.isArray(rawAnimals)) {
-          animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
-        } else {
-          animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
-        }
-        oven = data.oven || oven;
-        
-        // Globale Variable für die Konsole aktualisieren
-        window.animals = animals;
-      } else {
-        await saveFarmData();
-      }
-
       ownUserKey = userKey;
-      initScene();
+
+      // ── LIVE FARM SYNC ──
+      // Flag: verhindert dass ein eingehender Remote-Sync eine laufende eigene Speicherung überschreibt
+      let isSaving = false;
+      const _origSaveFarmData = saveFarmData;
+      saveFarmData = async function() {
+        if (!userKey || isVisitMode) return;
+        isSaving = true;
+        await _origSaveFarmData();
+        // Kurze Pause damit der eigene onValue-Callback den eigenen Write ignoriert
+        setTimeout(() => { isSaving = false; }, 1500);
+      };
+      window.saveFarmData = saveFarmData;
+
+      let farmFirstLoad = true;
+      onValue(ref(db, `farm/${userKey}`), (snap) => {
+        // Im Besuchsmodus eigene Farm nicht überschreiben
+        if (isVisitMode) return;
+        // Während wir selbst speichern, Remote-Update ignorieren (verhindert Flackern)
+        if (isSaving) return;
+
+        if (snap.exists()) {
+          const data = snap.val();
+
+          inventory.seeds  = { carrot: 0, lettuce: 0, wheat: 0,  ...(data.inventory?.seeds  || {}) };
+          inventory.crops  = { carrot: 0, lettuce: 0, wheat: 0,  ...(data.inventory?.crops  || {}) };
+          inventory.items  = { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) };
+          inventory.bakery = { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) };
+
+          unlockedBeds = data.unlockedBeds || 1;
+
+          if (data.beds) {
+            beds = data.beds;
+            while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+          }
+
+          const rawAnimals = data.animals;
+          if (!rawAnimals || rawAnimals === 0) {
+            animals = [];
+          } else if (Array.isArray(rawAnimals)) {
+            animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
+          } else {
+            animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
+          }
+          oven = data.oven || { state: 'empty', item: null, startedAt: 0 };
+          window.animals = animals;
+        } else {
+          if (farmFirstLoad) saveFarmData();
+        }
+
+        farmFirstLoad = false;
+        initScene();
+      });
 
       onValue(ref(db, `coins/${userKey}`), snap => {
         currentCoins = Number(snap.val()) || 0;
