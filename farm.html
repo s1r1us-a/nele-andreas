@@ -52,7 +52,7 @@
     .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); }
     .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; }
 
-    /* ── BACKHAUS (BAKERY) - Jetzt mittig ── */
+    /* ── BACKHAUS (BAKERY) ── */
     .bakery-building { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; cursor: pointer; z-index: 40; transition: transform 0.2s; touch-action: manipulation; }
     .bakery-building:active { transform: translateX(-50%) scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)); }
     .bakery-roof { width: 0; height: 0; border-left: 35px solid transparent; border-right: 35px solid transparent; border-bottom: 35px solid #d45d5d; border-radius: 4px; }
@@ -192,13 +192,11 @@
 </head>
 <body>
 
-<!-- OFFLINE BANNER -->
 <div class="offline-banner" id="offlineBanner">
   <div class="offline-dot" id="offlineDot"></div>
   <span id="offlineText">Keine Verbindung – Änderungen werden nicht gespeichert</span>
 </div>
 
-<!-- SELL QUANTITY SHEET -->
 <div class="sell-qty-overlay" id="sellQtyOverlay" onclick="window.closeSellQty()">
   <div class="sell-qty-sheet" onclick="event.stopPropagation()">
     <div class="sell-qty-icon" id="sellQtyIcon">🥕</div>
@@ -384,6 +382,7 @@
   let currentCoins = 0;
   let isVisitMode = false;
   let ownUserKey = null;
+  let visitUnsubscribe = null;
   function farmName(name) { return name === 'Andreas' ? "Andreas' Farm" : name + "s Farm"; }
 
   // ── GAME DATA & ITEMS (BALANCED) ──
@@ -432,7 +431,6 @@
 
   // Wir bereiten im Hintergrund 5 Beete vor
   let beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
-
   let animals = []; 
 
   // ── FIREBASE SYNC ──
@@ -441,8 +439,6 @@
     const data = { inventory, beds, animals, oven, unlockedBeds };
     await set(ref(db, `farm/${userKey}`), data);
   }
-
-  // Für die Entwickler-Konsole zugänglich machen, falls mal ein Tier gelöscht werden soll
   window.saveFarmData = saveFarmData;
 
   // ── AUTHENTICATION ──
@@ -471,44 +467,22 @@
       if (user.email.toLowerCase() === 'raederich@outlook.com') currentUser = 'Andreas';
       if (user.email.toLowerCase() === 'nele.busse@web.de') currentUser = 'Nele';
       userKey = currentUser.toLowerCase();
-
-      // Personalisierten Farm-Titel setzen
-      const farmTitle = document.getElementById('farmTitle');
-      if (farmTitle) {
-        const possessive = farmName(currentUser);
-        farmTitle.textContent = possessive;
-      }
-
       ownUserKey = userKey;
 
-      // ── LIVE FARM SYNC ──
-      // Flag: verhindert dass ein eingehender Remote-Sync eine laufende eigene Speicherung überschreibt
-      let isSaving = false;
-      const _origSaveFarmData = saveFarmData;
-      saveFarmData = async function() {
-        if (!userKey || isVisitMode) return;
-        isSaving = true;
-        await _origSaveFarmData();
-        // Kurze Pause damit der eigene onValue-Callback den eigenen Write ignoriert
-        setTimeout(() => { isSaving = false; }, 1500);
-      };
-      window.saveFarmData = saveFarmData;
+      const farmTitle = document.getElementById('farmTitle');
+      if (farmTitle) farmTitle.textContent = farmName(currentUser);
 
+      // ── LIVE FARM SYNC (Flackerfrei!) ──
       let farmFirstLoad = true;
       onValue(ref(db, `farm/${userKey}`), (snap) => {
-        // Im Besuchsmodus eigene Farm nicht überschreiben
-        if (isVisitMode) return;
-        // Während wir selbst speichern, Remote-Update ignorieren (verhindert Flackern)
-        if (isSaving) return;
+        if (isVisitMode) return; // Wenn wir zu Besuch sind, ignorieren wir kurz unsere eigenen Updates
 
         if (snap.exists()) {
           const data = snap.val();
-
           inventory.seeds  = { carrot: 0, lettuce: 0, wheat: 0,  ...(data.inventory?.seeds  || {}) };
           inventory.crops  = { carrot: 0, lettuce: 0, wheat: 0,  ...(data.inventory?.crops  || {}) };
           inventory.items  = { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) };
           inventory.bakery = { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) };
-
           unlockedBeds = data.unlockedBeds || 1;
 
           if (data.beds) {
@@ -517,21 +491,17 @@
           }
 
           const rawAnimals = data.animals;
-          if (!rawAnimals || rawAnimals === 0) {
-            animals = [];
-          } else if (Array.isArray(rawAnimals)) {
-            animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
-          } else {
-            animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
-          }
+          if (!rawAnimals || rawAnimals === 0) { animals = []; } 
+          else if (Array.isArray(rawAnimals)) { animals = rawAnimals.filter(a => a !== null && typeof a === 'object'); } 
+          else { animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object'); }
+          
           oven = data.oven || { state: 'empty', item: null, startedAt: 0 };
           window.animals = animals;
         } else {
           if (farmFirstLoad) saveFarmData();
         }
-
         farmFirstLoad = false;
-        initScene();
+        updateFarmDOM(); // Ruft unsere intelligente, flackerfreie Zeichenfunktion auf
       });
 
       onValue(ref(db, `coins/${userKey}`), snap => {
@@ -539,24 +509,19 @@
         document.getElementById('globalCoins').textContent = currentCoins.toLocaleString('de-DE');
       });
 
-      // Besuchs-Button einblenden
       const otherName = currentUser === 'Andreas' ? 'Nele' : 'Andreas';
-      const otherPossessive = farmName(otherName);
-      document.getElementById('visitBtnLabel').textContent = otherPossessive;
+      document.getElementById('visitBtnLabel').textContent = farmName(otherName);
       document.getElementById('btnVisit').style.display = 'flex';
 
     } else {
-      // Nicht eingeloggt → kurz warten ob Firebase doch noch einen User liefert, dann redirect
-      setTimeout(() => {
-        if (!currentUser) window.location.href = 'index.html';
-      }, 2000);
+      setTimeout(() => { if (!currentUser) window.location.href = 'index.html'; }, 2000);
       document.getElementById('authLoading').style.display = 'none';
       document.getElementById('authOverlay').style.display = 'flex';
     }
   });
 
 
-  // ── SVG TEMPLATES (GEKÜRZT FÜR ÜBERSICHT) ──
+  // ── SVG TEMPLATES ──
   function getAnimalSVG(species) {
     const shadow = `<div class="rabbit-shadow"></div>`;
     if(species === 'chicken') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><line x1="20" y1="52" x2="20" y2="60" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><line x1="28" y1="52" x2="28" y2="60" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="40" rx="15" ry="16" fill="#fffdfa"/><path d="M 9 40 Q 4 32 10 28 Q 7 38 11 43" fill="#fffdfa" /><circle cx="34" cy="28" r="9" fill="#fffdfa"/><circle cx="33" cy="18" r="3" fill="#e84a5f"/><circle cx="37" cy="19" r="4" fill="#e84a5f"/><polygon points="41,27 48,29 41,31" fill="#fbbf24"/><circle cx="36" cy="25" r="1.8" fill="#4a2030"/><ellipse cx="20" cy="42" rx="8" ry="6" fill="#f0e8e0" transform="rotate(-10 20 42)"/></svg>${shadow}`; } 
@@ -565,43 +530,58 @@
     else { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><g class="tail"><circle cx="42" cy="44" r="6" fill="#f0ece6"/></g><ellipse cx="24" cy="44" rx="16" ry="14" class="rabbit-body"/><g class="ear-left"><ellipse cx="14" cy="16" rx="5" ry="13" class="rabbit-body"/></g><g class="ear-right"><ellipse cx="26" cy="14" rx="5" ry="13" class="rabbit-body"/></g><circle cx="20" cy="34" r="12" class="rabbit-body"/><circle cx="15" cy="31" r="2.2" class="rabbit-eye"/><circle cx="25" cy="31" r="2.2" class="rabbit-eye"/><ellipse cx="20" cy="36" rx="2" ry="1.4" class="rabbit-nose"/></svg>${shadow}`; }
   }
 
-  function initScene() {
+  // ── INTELLIGENTES DOM-UPDATE (Kein Flackern mehr!) ──
+  function updateFarmDOM() {
     const fence = document.getElementById('fenceContainer');
-    let fenceStr = '';
-    for (let i = 0; i < window.innerWidth; i += 40) { fenceStr += `<div style="position:relative; width:40px; height:20px; display:flex; align-items:flex-end; flex-shrink:0;"><div class="fence-post" style="position:absolute; left:0; bottom:0;"></div><div style="position:absolute; left:3px; right:0; bottom:12px; height:3px; background:#d4956a; border-radius:2px;"></div><div style="position:absolute; left:3px; right:0; bottom:4px; height:3px; background:#d4956a; border-radius:2px;"></div></div>`; }
-    fence.innerHTML = fenceStr;
+    if (fence.innerHTML === '') {
+      let fenceStr = '';
+      for (let i = 0; i < window.innerWidth; i += 40) { fenceStr += `<div style="position:relative; width:40px; height:20px; display:flex; align-items:flex-end; flex-shrink:0;"><div class="fence-post" style="position:absolute; left:0; bottom:0;"></div><div style="position:absolute; left:3px; right:0; bottom:12px; height:3px; background:#d4956a; border-radius:2px;"></div><div style="position:absolute; left:3px; right:0; bottom:4px; height:3px; background:#d4956a; border-radius:2px;"></div></div>`; }
+      fence.innerHTML = fenceStr;
+    }
 
     const bedsContainer = document.getElementById('bedsContainer');
-    let bedsHtml = '';
+    const currentBeds = bedsContainer.querySelectorAll('.bed').length;
+    const expectedBeds = unlockedBeds < 5 ? unlockedBeds + 1 : 5;
     
-    // Aktive Beete rendern
-    for(let b = 0; b < unlockedBeds; b++) {
-      bedsHtml += `<div class="bed">`;
-      for(let s = 0; s < 4; s++) { bedsHtml += `<div class="bed-slot" id="slot-${b}-${s}" onclick="window.handleSlotClick(${b}, ${s})"></div>`; }
-      bedsHtml += `</div>`;
+    // Grid nur komplett neu bauen, wenn Felder fehlen
+    if (currentBeds !== expectedBeds || bedsContainer.innerHTML === '') {
+      let bedsHtml = '';
+      for(let b = 0; b < unlockedBeds; b++) {
+        bedsHtml += `<div class="bed">`;
+        for(let s = 0; s < 4; s++) { bedsHtml += `<div class="bed-slot" id="slot-${b}-${s}" onclick="window.handleSlotClick(${b}, ${s})"></div>`; }
+        bedsHtml += `</div>`;
+      }
+      if(unlockedBeds < 5) {
+          bedsHtml += `<div class="bed" style="opacity:0.5; border-color: rgba(0,0,0,0.2); cursor:pointer;" onclick="openShopToFields()">
+              <div style="grid-column: 1 / span 2; grid-row: 1 / span 2; display:flex; align-items:center; justify-content:center; color: var(--text-dark); font-size:24px;">🔒</div>
+          </div>`;
+      }
+      bedsContainer.innerHTML = bedsHtml;
     }
-    
-    // Ghost-Beet anzeigen für das nächste freischaltbare Feld
-    if(unlockedBeds < 5) {
-        bedsHtml += `<div class="bed" style="opacity:0.5; border-color: rgba(0,0,0,0.2); cursor:pointer;" onclick="openShopToFields()">
-            <div style="grid-column: 1 / span 2; grid-row: 1 / span 2; display:flex; align-items:center; justify-content:center; color: var(--text-dark); font-size:24px;">🔒</div>
-        </div>`;
-    }
-
-    bedsContainer.innerHTML = bedsHtml;
     
     updateBedsVisuals(); 
 
+    // Tiere updaten, ohne die laufende Animation zu zerstören
     const space = document.getElementById('animalSpace');
-    space.innerHTML = '';
+    const existingAnimals = Array.from(space.children);
+    existingAnimals.forEach(el => {
+      const id = parseInt(el.id.replace('animal-', ''));
+      if (!animals.find(a => a.id === id)) { space.removeChild(el); }
+    });
     animals.forEach(a => renderAnimalDOM(a));
   }
 
   function renderAnimalDOM(a) {
     const space = document.getElementById('animalSpace');
     let el = document.getElementById('animal-' + a.id);
-    if (!el) { el = document.createElement('div'); el.id = 'animal-' + a.id; el.className = 'animal-wrapper'; el.onclick = () => window.openAnimalStats(a.id); space.appendChild(el); }
-    el.innerHTML = getAnimalSVG(a.species);
+    if (!el) { 
+      el = document.createElement('div'); 
+      el.id = 'animal-' + a.id; 
+      el.className = 'animal-wrapper'; 
+      el.onclick = () => window.openAnimalStats(a.id); 
+      el.innerHTML = getAnimalSVG(a.species); // Nur einmalig beim Erstellen einfügen
+      space.appendChild(el); 
+    }
     updateAnimalPos(a);
   }
 
@@ -692,7 +672,7 @@
           runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
           unlockedBeds++;
           await saveFarmData();
-          initScene();
+          updateFarmDOM();
           window.renderShop('fields');
           window.showToast('Neues Feld freigeschaltet! 🗺️');
       } else {
@@ -739,7 +719,6 @@
   let pendingSell = null;
 
   window.sellItem = function(category, itemId, price) {
-    // Icon & Name ermitteln
     let icon = '🛒', name = itemId;
     if (category === 'bakery') { icon = bakeryRecipes[itemId].icon; name = bakeryRecipes[itemId].name; }
     else if (category === 'crops') { icon = shopItems[itemId].icon; name = shopItems[itemId].name; }
@@ -751,7 +730,6 @@
     const stock = inventory[category][itemId] || 0;
     pendingSell = { category, itemId, price, stock };
 
-    // Mengen-Sheet befüllen
     document.getElementById('sellQtyIcon').textContent = icon;
     document.getElementById('sellQtyTitle').textContent = name + ' verkaufen';
     document.getElementById('sellQtyStock').textContent = 'Auf Lager: ' + stock;
@@ -804,16 +782,9 @@
     }
   }
 
-  window.closeSellQty = function() {
-    pendingSell = null;
-    document.getElementById('sellQtyOverlay').classList.remove('show');
-  }
-
-  // Legacy confirm (nicht mehr verwendet, aber zur Sicherheit behalten)
+  window.closeSellQty = function() { pendingSell = null; document.getElementById('sellQtyOverlay').classList.remove('show'); }
   window.confirmSell = async function() {}
-  window.closeSellConfirm = function() {
-    document.getElementById('sellConfirmOverlay').classList.remove('show');
-  }
+  window.closeSellConfirm = function() { document.getElementById('sellConfirmOverlay').classList.remove('show'); }
 
   window.openInventory = function() {
     const container = document.getElementById('inventoryContent'); container.innerHTML = '';
@@ -830,12 +801,26 @@
     for(let b=0; b<unlockedBeds; b++) {
       for(let s=0; s<4; s++) {
         const slot = beds[b][s]; const domSlot = document.getElementById(`slot-${b}-${s}`); if(!domSlot) continue;
-        if (slot.state === 'empty') { domSlot.innerHTML = ''; } 
-        else if (slot.state === 'ready') { domSlot.innerHTML = `<div class="plant-anim">${shopItems[slot.item].icon}</div>`; } 
-        else if (slot.state === 'growing') {
-          const itemDef = shopItems[slot.item]; const elapsedSec = Math.floor((now - slot.plantedAt) / 1000);
-          if (elapsedSec >= itemDef.growTime) { slot.state = 'ready'; domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`; } 
-          else { const percent = Math.min(100, ((elapsedSec / itemDef.growTime) * 100)); domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: ${percent}%"></div></div>`; }
+        
+        const currentState = domSlot.getAttribute('data-state');
+        const currentItem = domSlot.getAttribute('data-item');
+        
+        if (currentState !== slot.state || currentItem !== String(slot.item)) {
+            if (slot.state === 'empty') { 
+                domSlot.innerHTML = ''; 
+            } else if (slot.state === 'ready') { 
+                domSlot.innerHTML = `<div class="plant-anim">${shopItems[slot.item].icon}</div>`; 
+            } else if (slot.state === 'growing') {
+                const itemDef = shopItems[slot.item]; const elapsedSec = Math.floor((now - slot.plantedAt) / 1000);
+                if (elapsedSec >= itemDef.growTime) { 
+                    slot.state = 'ready'; domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`; 
+                } else { 
+                    const percent = Math.min(100, ((elapsedSec / itemDef.growTime) * 100)); 
+                    domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: ${percent}%"></div></div>`; 
+                }
+            }
+            domSlot.setAttribute('data-state', slot.state);
+            domSlot.setAttribute('data-item', String(slot.item));
         }
       }
     }
@@ -851,8 +836,13 @@
         if (slot.state === 'growing') {
           const itemDef = shopItems[slot.item]; const elapsedSec = Math.floor((now - slot.plantedAt) / 1000); const remainingSec = itemDef.growTime - elapsedSec; const domSlot = document.getElementById(`slot-${b}-${s}`);
           if(!domSlot) continue;
-          if (remainingSec <= 0) { slot.state = 'ready'; domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`; if(currentStatusSlot && currentStatusSlot.b === b && currentStatusSlot.s === s) { window.closeAllModals(); } } 
-          else {
+          if (remainingSec <= 0) { 
+              slot.state = 'ready'; 
+              domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`; 
+              domSlot.setAttribute('data-state', 'ready');
+              domSlot.setAttribute('data-item', slot.item);
+              if(currentStatusSlot && currentStatusSlot.b === b && currentStatusSlot.s === s) { window.closeAllModals(); } 
+          } else {
             const percent = Math.min(100, ((elapsedSec / itemDef.growTime) * 100));
             let barEl = domSlot.querySelector('.growth-bar'); if(!barEl) { domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: ${percent}%"></div></div>`; } else { barEl.style.width = percent + '%'; }
             if(currentStatusSlot && currentStatusSlot.b === b && currentStatusSlot.s === s) { let m = Math.floor(remainingSec / 60); let sec = remainingSec % 60; document.getElementById('statusPlantTimer').textContent = `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`; }
@@ -878,8 +868,8 @@
 
   // ── FELD & PFLANZEN AKTIONEN ──
   window.handleSlotClick = async function(bedIndex, slotIndex) { 
-    if(isVisitMode) return; // Besuchsmodus – kein Eingriff erlaubt
-    if(bedIndex >= unlockedBeds) return; // Sicherheitshalber
+    if(isVisitMode) return; 
+    if(bedIndex >= unlockedBeds) return; 
     const slot = beds[bedIndex][slotIndex];
     if (slot.state === 'empty') { currentTargetSlot = { b: bedIndex, s: slotIndex }; window.openFieldSeedMenu(); } 
     else if (slot.state === 'growing') { window.openPlantStatus(bedIndex, slotIndex); } 
@@ -896,7 +886,8 @@
   window.feedAnimal = async function(foodType, isItem = false) { const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return; const invCategory = isItem ? inventory.items : inventory.crops; if (invCategory[foodType] > 0) { invCategory[foodType]--; a.isProducing = true; a.fedAt = Date.now(); a.rewardReady = false; await saveFarmData(); window.openAnimalStats(a.id); window.showToast(`🍎 ${a.name} wurde gefüttert!`); } }
   window.collectAnimalReward = async function() { const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return; a.isProducing = false; a.rewardReady = false; if(a.species === 'rabbit') { inventory.items.fertilizer++; window.showToast(`🪴 Dünger erhalten!`); } else if (a.species === 'chicken') { inventory.items.egg++; window.showToast(`🥚 Ei erhalten!`); } else if (a.species === 'cow') { inventory.items.milk++; window.showToast(`🥛 Milch erhalten!`); } else if (a.species === 'cat') { inventory.items.diamond++; window.showToast(`💎 Diamant erhalten!`); } await saveFarmData(); window.openAnimalStats(a.id); }
   window.updateName = async function(newName) { if (!selectedAnimalId || isVisitMode) return; animals.find(anim => anim.id === selectedAnimalId).name = newName; if(newName.trim()) { window.showToast('Name gespeichert!'); await saveFarmData(); } }
-  // ── BESUCHSMODUS ──
+  
+  // ── BESUCHSMODUS (Jetzt auch Live!) ──
   window.visitOtherFarm = async function() {
     if (isVisitMode) return;
     isVisitMode = true;
@@ -910,41 +901,47 @@
     document.getElementById('btnVisit').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
 
-    // Titel und Banner
-    const possessive = farmName(otherUser);
-    document.getElementById('farmTitle').textContent = possessive;
-    document.getElementById('visitBannerText').textContent = '👀 Du besuchst ' + possessive;
+    document.getElementById('farmTitle').textContent = farmName(otherUser);
+    document.getElementById('visitBannerText').textContent = '👀 Du besuchst ' + farmName(otherUser);
     document.getElementById('visitBanner').classList.add('show');
 
-    // Farm-Daten des anderen laden
-    const snap = await get(ref(db, `farm/${otherKey}`));
-    const data = snap.val() || {};
+    // Live-Listener für die andere Farm starten
+    visitUnsubscribe = onValue(ref(db, `farm/${otherKey}`), (snap) => {
+      if (!isVisitMode) return;
+      const data = snap.val() || {};
 
-    inventory = {
-      seeds:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.seeds  || {}) },
-      crops:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.crops  || {}) },
-      items:  { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) },
-      bakery: { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) }
-    };
-    unlockedBeds = data.unlockedBeds || 1;
-    if (data.beds) {
-      beds = data.beds;
-      while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
-    } else {
-      beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
-    }
-    const rawAnimals = data.animals;
-    if (!rawAnimals || rawAnimals === 0) animals = [];
-    else if (Array.isArray(rawAnimals)) animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
-    else animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
-    oven = data.oven || { state: 'empty', item: null, startedAt: 0 };
-
-    initScene();
+      inventory = {
+        seeds:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.seeds  || {}) },
+        crops:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.crops  || {}) },
+        items:  { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) },
+        bakery: { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) }
+      };
+      unlockedBeds = data.unlockedBeds || 1;
+      
+      if (data.beds) {
+        beds = data.beds;
+        while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+      } else {
+        beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+      }
+      
+      const rawAnimals = data.animals;
+      if (!rawAnimals || rawAnimals === 0) animals = [];
+      else if (Array.isArray(rawAnimals)) animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
+      else animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
+      
+      oven = data.oven || { state: 'empty', item: null, startedAt: 0 };
+      
+      updateFarmDOM();
+    });
   }
 
   window.leaveVisitMode = function() {
     if (!isVisitMode) return;
     isVisitMode = false;
+
+    // Listener vom Besuch abbrechen
+    if (visitUnsubscribe) { visitUnsubscribe(); visitUnsubscribe = null; }
 
     // Topbar zurücksetzen
     document.getElementById('btnShop').style.display = '';
@@ -954,11 +951,10 @@
     document.getElementById('topbarCoins').style.display = '';
     document.getElementById('visitBanner').classList.remove('show');
 
-    // Eigenen Titel wiederherstellen
-    const possessive = farmName(currentUser);
-    document.getElementById('farmTitle').textContent = possessive;
+    document.getElementById('farmTitle').textContent = farmName(currentUser);
 
-    // Eigene Farm-Daten neu laden
+    // Eigene Farm-Daten neu laden, damit wir sofort wieder unser Layout haben.
+    // Danach übernimmt unser normaler Live-Listener automatisch wieder.
     get(ref(db, `farm/${ownUserKey}`)).then(snap => {
       const data = snap.val() || {};
       inventory = {
@@ -979,7 +975,7 @@
       else if (Array.isArray(rawAnimals)) animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
       else animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
       oven = data.oven || { state: 'empty', item: null, startedAt: 0 };
-      initScene();
+      updateFarmDOM();
     });
   }
 
@@ -997,7 +993,12 @@
     }); 
   }, 3000);
 
-  window.addEventListener('resize', () => { if(currentUser) initScene(); });
+  window.addEventListener('resize', () => { 
+      if(currentUser) {
+          document.getElementById('fenceContainer').innerHTML = '';
+          updateFarmDOM(); 
+      }
+  });
 
   // ── OFFLINE ERKENNUNG ──
   function updateOnlineStatus() {
@@ -1019,7 +1020,6 @@
   }
   window.addEventListener('offline', updateOnlineStatus);
   window.addEventListener('online',  updateOnlineStatus);
-  // Beim Start prüfen falls bereits offline
   if (!navigator.onLine) updateOnlineStatus();
 </script>
 </body>
