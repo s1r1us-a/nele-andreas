@@ -17,8 +17,18 @@
       --earth: #c8975a; --brown: #8e5a32;
     }
 
+    /* Tag/Nacht Modus Variablen */
+    body.night-mode {
+      --sky-top: #1e1b4b; --sky-bottom: #312e81;
+      --grass-top: #166534; --grass-mid: #14532d;
+    }
+    .night-mode .cloud { opacity: 0.3; filter: brightness(0.7) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+    .night-mode .cloud::before, .night-mode .cloud::after { filter: brightness(0.7); }
+    .night-mode .fence-post, .night-mode .bakery-base, .night-mode .bakery-roof, .night-mode .bed { filter: brightness(0.75); }
+    .night-mode .animal-wrapper { filter: brightness(0.85); }
+
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    html, body { height: 100%; font-family: 'Quicksand', sans-serif; background: var(--cream); overflow: hidden; display: flex; flex-direction: column; }
+    html, body { height: 100%; font-family: 'Quicksand', sans-serif; background: var(--cream); overflow: hidden; display: flex; flex-direction: column; transition: background-color 2s ease; }
 
     /* ── AUTH & LOADING ── */
     .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
@@ -45,25 +55,62 @@
     .topbar-btn:active { transform: scale(0.95); }
     .topbar-coins { display: flex; align-items: center; gap: 4px; background: rgba(212,160,97,0.12); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 10px; font-size: 13px; font-weight: 700; color: var(--gold); white-space: nowrap; }
 
-    /* ── FARM WORLD ── */
+    /* ── FARM WORLD & ATMOSPHERE ── */
     .farm-world { flex: 1; position: relative; width: 100%; overflow: hidden; display: none; }
-    .sky { position: absolute; top: 0; left: 0; right: 0; height: 35%; background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%); }
-    .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); }
-    .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); }
-    .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; }
+    .sky { position: absolute; top: 0; left: 0; right: 0; height: 35%; background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%); transition: background 2s ease; z-index: 0; }
+    
+    .cloud-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 10; }
+    .cloud { position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); animation: drift linear infinite; transition: all 2s ease; }
+    .cloud::before, .cloud::after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50%; transition: all 2s ease; }
+    .cloud-1 { width: 80px; height: 26px; top: 15%; left: -100px; animation-duration: 45s; }
+    .cloud-1::before { width: 40px; height: 40px; top: -20px; left: 15px; }
+    .cloud-1::after { width: 28px; height: 28px; top: -12px; right: 10px; }
+    .cloud-2 { width: 60px; height: 20px; top: 25%; left: -100px; animation-duration: 35s; animation-delay: -15s; opacity: 0.6; }
+    .cloud-2::before { width: 30px; height: 30px; top: -15px; left: 10px; }
+    .cloud-2::after { width: 20px; height: 20px; top: -10px; right: 10px; }
+    @keyframes drift { from { transform: translateX(-10vw); } to { transform: translateX(110vw); } }
 
-    /* ── BACKHAUS (BAKERY) ── */
+    /* Sonne (Tag) */
+    .sun { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #fbbf24, #f59e0b); right: 15%; top: 12%; z-index: 5; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: sunPulse 6s infinite ease-in-out; transition: opacity 2s ease, transform 2s ease, top 2s ease; }
+    @keyframes sunPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); } }
+    
+    /* Mond (Nacht) */
+    .moon { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: #fefce8; right: 20%; top: 40%; z-index: 5; box-shadow: 0 0 15px rgba(254, 252, 232, 0.4); opacity: 0; transition: opacity 2s ease, transform 2s ease, top 2s ease; }
+    /* Krater */
+    .moon::before { content: ''; position: absolute; top: 8px; left: 6px; width: 6px; height: 6px; background: #f1f1f1; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.05); }
+    .moon::after { content: ''; position: absolute; top: 16px; left: 18px; width: 9px; height: 9px; background: #f1f1f1; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.05); }
+
+    /* Nachtmodus Umschaltung für Sonne/Mond */
+    .night-mode .sun { opacity: 0; transform: translateY(15px); top: 30%; pointer-events: none; }
+    .night-mode .moon { opacity: 1; transform: translateY(-15px); top: 12%; animation: moonBreathe 5s infinite ease-in-out; }
+    @keyframes moonBreathe { 0%, 100% { box-shadow: 0 0 15px rgba(254, 252, 232, 0.4); } 50% { box-shadow: 0 0 22px rgba(254, 252, 232, 0.7); } }
+
+    /* Interaktive Büsche */
+    .bush { position: absolute; background: var(--grass-mid); border-radius: 50px 50px 20px 20px; box-shadow: inset -5px -5px 12px rgba(0,0,0,0.15), 0 4px 0 rgba(0,0,0,0.05); z-index: 30; transition: transform 0.2s; cursor: pointer; }
+    .bush:active { transform: scale(0.9) skewX(-5deg); }
+    .bush-1 { width: 70px; height: 40px; top: 31%; left: 10%; }
+    .bush-2 { width: 90px; height: 50px; top: 30%; right: 5%; }
+    .bush-3 { width: 50px; height: 30px; top: 33%; left: 70%; opacity: 0.8; }
+
+    .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
+    .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); z-index: 15; }
+    .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; transition: filter 2s ease; }
+
+    /* ── BACKHAUS & BIENENSTOCK ── */
     .bakery-building { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; cursor: pointer; z-index: 40; transition: transform 0.2s; touch-action: manipulation; }
     .bakery-building:active { transform: translateX(-50%) scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)); }
-    .bakery-roof { width: 0; height: 0; border-left: 35px solid transparent; border-right: 35px solid transparent; border-bottom: 35px solid #d45d5d; border-radius: 4px; }
-    .bakery-base { width: 60px; height: 35px; background: #e8d0b3; margin: 0 auto; position: relative; border-radius: 0 0 6px 6px; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.1); }
+    .bakery-roof { width: 0; height: 0; border-left: 35px solid transparent; border-right: 35px solid transparent; border-bottom: 35px solid #d45d5d; border-radius: 4px; transition: filter 2s ease; }
+    .bakery-base { width: 60px; height: 35px; background: #e8d0b3; margin: 0 auto; position: relative; border-radius: 0 0 6px 6px; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.1); transition: filter 2s ease; }
     .bakery-door { position: absolute; bottom: 0; left: 10px; width: 16px; height: 22px; background: #8e5a32; border-radius: 8px 8px 0 0; }
     .bakery-window { position: absolute; top: 8px; right: 10px; width: 14px; height: 14px; background: #b8e4f7; border: 2px solid #8e5a32; border-radius: 50%; }
     .bakery-sign { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-size: 16px; background: #fff; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
+    .beehive-building { position: absolute; top: 25%; left: 20%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s; touch-action: manipulation; }
+    .beehive-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)); }
+
     /* ── FARMING BEDS ── */
     .beds-container { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 55; max-width: 200px; }
-    .bed { width: 50px; height: 50px; background: var(--brown); border: 2px dashed #6b4020; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 2px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); transition: all 0.3s; }
+    .bed { width: 50px; height: 50px; background: var(--brown); border: 2px dashed #6b4020; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 2px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); transition: all 0.3s, filter 2s ease; }
     .bed-slot { background: rgba(0,0,0,0.15); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; touch-action: manipulation; transition: background 0.2s; position: relative; }
     .bed-slot:active { background: rgba(0,0,0,0.25); }
     .plant-anim { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -71,17 +118,39 @@
     .growth-bar-wrap { position: absolute; bottom: 3px; left: 10%; width: 80%; height: 4px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.2); pointer-events: none; }
     .growth-bar { height: 100%; background: linear-gradient(90deg, #7ec850, #9be860); width: 0%; border-radius: 4px; transition: width 1s linear; }
 
-    /* ── ANIMAL CONTAINER ── */
-    .animal-wrapper { position: absolute; transform-origin: bottom center; transition: left 2s ease-in-out, top 2s ease-in-out; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    /* ── ANIMAL CONTAINER, ANIMATIONS & REWARD BUBBLE ── */
+    .animal-wrapper { position: absolute; transform-origin: bottom center; transition: left 2s ease-in-out, top 2s ease-in-out, filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; }
     .animal-wrapper:active { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
     .rabbit { width: 40px; height: auto; position: relative; }
-    .is-walking .rabbit { animation: bounceWalk 0.4s infinite alternate; }
     .facing-left .rabbit { transform: scaleX(-1); }
+    
+    .is-walking .rabbit { animation: bounceWalk 0.4s infinite alternate; }
     @keyframes bounceWalk { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
+
+    .is-idle .rabbit { animation: breathe 2s infinite ease-in-out; transform-origin: bottom center; }
+    @keyframes breathe { 0%, 100% { transform: scaleY(1) scaleX(1); } 50% { transform: scaleY(0.96) scaleX(1.02); } }
+
+    .zzz { position: absolute; top: -20px; right: -15px; font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 900; color: #a78bfa; animation: zzzFloat 2.5s infinite linear; opacity: 0; pointer-events: none; }
+    .zzz:nth-child(2) { animation-delay: 1.2s; font-size: 12px; right: -5px; }
+    @keyframes zzzFloat { 0% { transform: translate(0, 0) scale(0.5) rotate(-10deg); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(20px, -40px) scale(1.5) rotate(10deg); opacity: 0; } }
+
+    /* Ernte-Blase */
+    .reward-bubble { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid var(--rose-light); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: bubbleBounce 1.5s infinite ease-in-out; pointer-events: none; z-index: 60; }
+    .reward-bubble::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #fff transparent transparent transparent; z-index: 11; }
+    .reward-bubble::before { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid; border-color: var(--rose-light) transparent transparent transparent; z-index: 9; }
+    @keyframes bubbleBounce { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -6px); } }
+
+    /* Fütter-Herz (Feedback) */
+    .feed-heart { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 24px; pointer-events: none; animation: floatHeart 1.5s ease-out forwards; z-index: 70; }
+    @keyframes floatHeart { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); } 50% { transform: translate(-50%, -20px) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1); } }
+
+    /* Dynamischer Schatten */
+    .rabbit-shadow { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 26px; height: 6px; background: rgba(0,0,0,0.15); border-radius: 50%; transition: transform 0.2s; }
+    .is-walking .rabbit-shadow { animation: shadowPulse 0.4s infinite alternate; }
+    @keyframes shadowPulse { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(0.6); } }
 
     /* SVG Styles */
     .rabbit-body { fill: #f5f0eb; } .rabbit-belly { fill: #ede5de; } .rabbit-ear-inner { fill: #f0b8c8; } .rabbit-eye { fill: #4a2030; } .rabbit-nose { fill: #e87090; }
-    .rabbit-shadow { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 26px; height: 6px; background: rgba(0,0,0,0.15); border-radius: 50%; }
     .ear-left { transform-origin: 50% 100%; animation: earWiggle 1.8s ease-in-out infinite; } .ear-right { transform-origin: 50% 100%; animation: earWiggle 1.8s ease-in-out infinite 0.3s; }
     @keyframes earWiggle { 0%, 80%, 100% { transform: rotate(0deg); } 85% { transform: rotate(-8deg); } 92% { transform: rotate(5deg); } }
     .tail { animation: tailBob 1.1s ease-in-out infinite; transform-origin: center; } @keyframes tailBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
@@ -135,6 +204,9 @@
     .toast { position: fixed; top: max(60px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--text-dark); color: white; padding: 8px 16px; border-radius: 50px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; pointer-events: none; transition: all 0.3s ease; white-space: nowrap; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    .floating-num { position: fixed; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 22px; pointer-events: none; z-index: 10000; animation: floatUp 1.2s ease-out forwards; text-shadow: 0 2px 8px rgba(0,0,0,0.2); left: 50%; top: 30%; transform: translateX(-50%); }
+    @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); } 20% { transform: translate(-50%, -10px) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -50px) scale(1); } }
+
     @media (max-width: 400px) { .topbar-btn span { display: none; } .topbar-text { font-size: 16px; } }
 
     /* ── VISIT MODE BANNER ── */
@@ -145,14 +217,14 @@
     .topbar-btn.visit-btn { background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.15)); border-color: rgba(167,139,250,0.5); color: #7c3aed; }
 
     /* ── OFFLINE BANNER ── */
-    .offline-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9998; background: #1e293b; color: white; text-align: center; padding: 12px 16px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; display: none; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 -4px 16px rgba(0,0,0,0.25); }
+    .offline-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9998; background: #1e293b; color: white; text-align: center; padding: 12px 16px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; display: none; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 -4px 166px rgba(0,0,0,0.25); }
     .offline-banner.show { display: flex; }
     .offline-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex-shrink: 0; animation: offlinePulse 1.5s ease-in-out infinite; }
     @keyframes offlinePulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .online-banner { background: #14532d !important; }
     .online-dot { background: #22c55e !important; animation: none !important; }
 
-    /* ── SELL CONFIRM DIALOG ── */
+    /* ── SELL CONFIRM DIALOGS ── */
     .sell-confirm-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); display: none; align-items: flex-end; justify-content: center; padding: 16px; }
     .sell-confirm-overlay.show { display: flex; }
     .sell-confirm-sheet { background: #fff; border-radius: 22px 22px 16px 16px; padding: 22px 20px 20px; width: 100%; max-width: 400px; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); }
@@ -167,7 +239,6 @@
     .sell-confirm-yes { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 14px rgba(34,197,94,0.35); }
     .sell-confirm-no { background: #f1f5f9; color: var(--text-mid); }
 
-    /* ── SELL QUANTITY SHEET ── */
     .sell-qty-overlay { position: fixed; inset: 0; z-index: 590; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); display: none; align-items: flex-end; justify-content: center; padding: 16px; }
     .sell-qty-overlay.show { display: flex; }
     .sell-qty-sheet { background: #fff; border-radius: 22px 22px 16px 16px; padding: 22px 20px 20px; width: 100%; max-width: 400px; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); }
@@ -218,7 +289,6 @@
   </div>
 </div>
 
-
 <div class="sell-confirm-overlay" id="sellConfirmOverlay" onclick="window.closeSellConfirm()">
   <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
     <div class="sell-confirm-icon" id="sellConfirmIcon">🥕</div>
@@ -266,7 +336,14 @@
 </div>
 
 <div id="farmWorld" class="farm-world">
-  <div class="sky"></div>
+  <div class="sky">
+    <div class="cloud-container">
+      <div class="cloud cloud-1"></div>
+      <div class="cloud cloud-2"></div>
+    </div>
+    <div class="sun"></div>
+    <div class="moon"></div>
+  </div>
   
   <div class="bakery-building" onclick="openBakery()">
     <div class="bakery-sign">🥖</div>
@@ -276,6 +353,12 @@
       <div class="bakery-window"></div>
     </div>
   </div>
+
+  <div class="beehive-building" id="beehiveBuilding" style="display: none;" onclick="window.openBeehive()"></div>
+
+  <div class="bush bush-1"></div>
+  <div class="bush bush-2"></div>
+  <div class="bush bush-3"></div>
 
   <div class="fence" id="fenceContainer"></div><div class="ground-area"></div>
   <div class="beds-container" id="bedsContainer"></div>
@@ -304,6 +387,18 @@
       </div>
     </div>
     <div id="modalAnimalAction"></div>
+  </div>
+
+  <div class="modal-card" id="modalBeehive" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="animal-card-header">
+      <div class="animal-avatar" style="font-size: 28px;">🐝</div>
+      <div class="animal-info">
+        <div class="animal-name" style="font-family:'Dancing Script',cursive; font-size:24px; font-weight:700; color:var(--text-dark); border:none; background:none; padding:0;">Bienenstock</div>
+        <div class="animal-species" id="beehiveLevelText">Level 1</div>
+      </div>
+    </div>
+    <div id="modalBeehiveAction"></div>
   </div>
 
   <div class="modal-card" id="modalShop" onclick="event.stopPropagation()">
@@ -385,30 +480,57 @@
   let visitUnsubscribe = null;
   function farmName(name) { return name === 'Andreas' ? "Andreas' Farm" : name + "s Farm"; }
 
-  // ── GAME DATA & ITEMS (BALANCED) ──
+  // Tag-/Nacht Modus Check
+  function checkDayNight() {
+    const hour = new Date().getHours();
+    if (hour >= 19 || hour <= 6) {
+      document.body.classList.add('night-mode');
+    } else {
+      document.body.classList.remove('night-mode');
+    }
+  }
+  checkDayNight();
+  setInterval(checkDayNight, 60000);
+
+  window.showFloatingNumber = function(text, color) {
+    const el = document.createElement('div');
+    el.className = 'floating-num';
+    el.style.color = color;
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+
+  // ── NEUE ITEMS (BALANCED) ──
   const shopItems = {
-    carrot:  { id: 'carrot',  name: 'Karotte', icon: '🥕', price: 8,  sellPrice: 22,  growTime: 600 },
-    lettuce: { id: 'lettuce', name: 'Salat',   icon: '🥬', price: 20, sellPrice: 75,  growTime: 1800 },
-    wheat:   { id: 'wheat',   name: 'Weizen',  icon: '🌾', price: 40, sellPrice: 130, growTime: 3600 }
+    radish:  { id: 'radish',  name: 'Radieschen', icon: '🧅', price: 5,  sellPrice: 15,  growTime: 300 },
+    carrot:  { id: 'carrot',  name: 'Karotte',    icon: '🥕', price: 10, sellPrice: 28,  growTime: 600 },
+    lettuce: { id: 'lettuce', name: 'Salat',      icon: '🥬', price: 20, sellPrice: 75,  growTime: 1800 },
+    oats:    { id: 'oats',    name: 'Hafer',      icon: '🌿', price: 30, sellPrice: 110, growTime: 2700 },
+    wheat:   { id: 'wheat',   name: 'Weizen',     icon: '🌾', price: 40, sellPrice: 140, growTime: 3600 },
+    blueberry:{ id: 'blueberry',name:'Blaubeere', icon: '🫐', price: 60, sellPrice: 240, growTime: 7200 }
   };
 
   const animalItems = {
     rabbit:  { id: 'rabbit',  name: 'Hase',  icon: '🐰', price: 120 },
     chicken: { id: 'chicken', name: 'Huhn',  icon: '🐔', price: 1800 },
     cow:     { id: 'cow',     name: 'Kuh',   icon: '🐮', price: 3000 },
+    sheep:   { id: 'sheep',   name: 'Schaf', icon: '🐑', price: 4500 },
     cat:     { id: 'cat',     name: 'Katze', icon: '🐱', price: 6000 }
   };
 
+  // ── NEUE REZEPTE (WIRTSCHAFTLICH SINNVOLL) ──
   const bakeryRecipes = {
-    bread: { id: 'bread', name: 'Rustikales Brot', icon: '🍞', time: 120, sellPrice: 340, 
-             req: { crops: { wheat: 2 } } },
-    carrotcake: { id: 'carrotcake', name: 'Karottenkuchen', icon: '🥧', time: 300, sellPrice: 280, 
-                  req: { crops: { carrot: 2, wheat: 1 } } },
-    cake: { id: 'cake', name: 'Premium Torte', icon: '🍰', time: 600, sellPrice: 1200, 
-            req: { crops: { wheat: 1 }, items: { egg: 1, milk: 1 } } }
+    salad:      { id: 'salad',      name: 'Radieschen-Salat', icon: '🥗', time: 600,  sellPrice: 200, req: { crops: { radish: 2, lettuce: 1 } } },
+    bread:      { id: 'bread',      name: 'Rustikales Brot',  icon: '🍞', time: 900,  sellPrice: 420, req: { crops: { wheat: 2 } } },
+    oatmilk:    { id: 'oatmilk',    name: 'Hafermilch',       icon: '🥛', time: 900,  sellPrice: 350, req: { crops: { oats: 2 } } },
+    carrotcake: { id: 'carrotcake', name: 'Karottenkuchen',   icon: '🥧', time: 1200, sellPrice: 380, req: { crops: { carrot: 2, wheat: 1 } } },
+    bluemuffin: { id: 'bluemuffin', name: 'Blue Muffin',      icon: '🧁', time: 1800, sellPrice: 900, req: { crops: { blueberry: 2, wheat: 1 } } },
+    cake:       { id: 'cake',       name: 'Premium Torte',    icon: '🍰', time: 2700, sellPrice: 1100, req: { crops: { wheat: 1 }, items: { egg: 1, milk: 1 } } },
+    honeycake:  { id: 'honeycake',  name: 'Honigkuchen',      icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } }
   };
 
-  const bedPrices = [0, 500, 2500, 10000, 50000]; // Preise für Feld 1 bis 5
+  const bedPrices = [0, 500, 2500, 10000, 50000];
   const ANIMAL_PRODUCTION_TIME = 3600;
 
   // ── FARM STATE ──
@@ -419,41 +541,34 @@
   window.currentStatusSlot = null;
 
   let unlockedBeds = 1;
+  let beehive = { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
 
   let inventory = {
-    seeds: { carrot: 0, lettuce: 0, wheat: 0 },
-    crops: { carrot: 0, lettuce: 0, wheat: 0 },
-    items: { fertilizer: 0, egg: 0, milk: 0, diamond: 0 },
-    bakery: { bread: 0, carrotcake: 0, cake: 0 }
+    seeds: { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0 },
+    crops: { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0 },
+    items: { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0 },
+    bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0 }
   };
 
   let oven = { state: 'empty', item: null, startedAt: 0 };
-
-  // Wir bereiten im Hintergrund 5 Beete vor
   let beds = Array(5).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = []; 
 
-  // ── FIREBASE SYNC ──
   async function saveFarmData() {
-    if (!userKey || isVisitMode) return; // Im Besuchsmodus niemals fremde Daten überschreiben
-    const data = { inventory, beds, animals, oven, unlockedBeds };
+    if (!userKey || isVisitMode) return;
+    const data = { inventory, beds, animals, oven, unlockedBeds, beehive };
     await set(ref(db, `farm/${userKey}`), data);
   }
   window.saveFarmData = saveFarmData;
 
-  // ── AUTHENTICATION ──
   const loginBtn = document.getElementById('loginBtn');
   loginBtn.addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value.trim();
     const pw    = document.getElementById('loginPassword').value;
     document.getElementById('loginError').textContent = '';
     loginBtn.textContent = '…';
-    try {
-      await signInWithEmailAndPassword(auth, email, pw);
-    } catch {
-      loginBtn.textContent = 'Einloggen 🌸';
-      document.getElementById('loginError').textContent = 'E-Mail oder Passwort falsch 🐾';
-    }
+    try { await signInWithEmailAndPassword(auth, email, pw); } 
+    catch { loginBtn.textContent = 'Einloggen 🌸'; document.getElementById('loginError').textContent = 'E-Mail oder Passwort falsch 🐾'; }
   });
 
   onAuthStateChanged(auth, async user => {
@@ -472,18 +587,18 @@
       const farmTitle = document.getElementById('farmTitle');
       if (farmTitle) farmTitle.textContent = farmName(currentUser);
 
-      // ── LIVE FARM SYNC (Flackerfrei!) ──
       let farmFirstLoad = true;
       onValue(ref(db, `farm/${userKey}`), (snap) => {
-        if (isVisitMode) return; // Wenn wir zu Besuch sind, ignorieren wir kurz unsere eigenen Updates
+        if (isVisitMode) return;
 
         if (snap.exists()) {
           const data = snap.val();
-          inventory.seeds  = { carrot: 0, lettuce: 0, wheat: 0,  ...(data.inventory?.seeds  || {}) };
-          inventory.crops  = { carrot: 0, lettuce: 0, wheat: 0,  ...(data.inventory?.crops  || {}) };
-          inventory.items  = { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) };
-          inventory.bakery = { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) };
+          inventory.seeds  = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0,  ...(data.inventory?.seeds  || {}) };
+          inventory.crops  = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0,  ...(data.inventory?.crops  || {}) };
+          inventory.items  = { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, ...(data.inventory?.items || {}) };
+          inventory.bakery = { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) };
           unlockedBeds = data.unlockedBeds || 1;
+          beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
 
           if (data.beds) {
             beds = data.beds;
@@ -501,7 +616,7 @@
           if (farmFirstLoad) saveFarmData();
         }
         farmFirstLoad = false;
-        updateFarmDOM(); // Ruft unsere intelligente, flackerfreie Zeichenfunktion auf
+        updateFarmDOM();
       });
 
       onValue(ref(db, `coins/${userKey}`), snap => {
@@ -527,10 +642,44 @@
     if(species === 'chicken') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><line x1="20" y1="52" x2="20" y2="60" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><line x1="28" y1="52" x2="28" y2="60" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="40" rx="15" ry="16" fill="#fffdfa"/><path d="M 9 40 Q 4 32 10 28 Q 7 38 11 43" fill="#fffdfa" /><circle cx="34" cy="28" r="9" fill="#fffdfa"/><circle cx="33" cy="18" r="3" fill="#e84a5f"/><circle cx="37" cy="19" r="4" fill="#e84a5f"/><polygon points="41,27 48,29 41,31" fill="#fbbf24"/><circle cx="36" cy="25" r="1.8" fill="#4a2030"/><ellipse cx="20" cy="42" rx="8" ry="6" fill="#f0e8e0" transform="rotate(-10 20 42)"/></svg>${shadow}`; } 
     else if (species === 'cat') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><path d="M 12 48 Q 2 48 4 34 Q 6 25 10 30" fill="none" stroke="#e28743" stroke-width="4.5" stroke-linecap="round" class="tail"/><ellipse cx="24" cy="46" rx="14" ry="11" fill="#e28743"/><circle cx="30" cy="32" r="11" fill="#e28743"/><polygon points="21,25 24,16 28,23" fill="#e28743"/><polygon points="39,25 36,16 32,23" fill="#e28743"/><circle cx="26" cy="30" r="1.8" fill="#4a2030"/><circle cx="35" cy="30" r="1.8" fill="#4a2030"/><polygon points="30,33 32,33 31,35" fill="#e87090"/></svg>${shadow}`; } 
     else if (species === 'cow') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><path d="M 38 42 Q 45 44 44 50" fill="none" stroke="#4a2030" stroke-width="2" class="tail"/><ellipse cx="24" cy="44" rx="16" ry="14" fill="#fffdfa"/><path d="M 14 36 Q 20 32 24 38 Q 20 46 12 42 Z" fill="#1a1a1a"/><path d="M 20 56 Q 24 60 28 56 Z" fill="#f0b8c8"/><path d="M 12 55 L 12 60 L 16 60 L 16 55 Z" fill="#fffdfa"/><circle cx="20" cy="30" r="12" fill="#fffdfa"/><path d="M 10 26 Q 16 20 22 28 Q 18 35 10 32 Z" fill="#1a1a1a"/><path d="M 12 20 Q 10 14 14 16" fill="none" stroke="#e0cfa4" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="20" cy="37" rx="9" ry="6" fill="#f0b8c8"/><circle cx="15" cy="28" r="1.8" fill="#4a2030"/><circle cx="25" cy="28" r="1.8" fill="#4a2030"/></svg>${shadow}`; } 
+    else if (species === 'sheep') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><ellipse cx="26" cy="40" rx="18" ry="14" fill="#fffdfa" stroke="#e0e0e0" stroke-width="2"/><ellipse cx="14" cy="30" rx="10" ry="10" fill="#2d3748"/><rect x="16" y="52" width="4" height="8" fill="#2d3748"/><rect x="32" y="52" width="4" height="8" fill="#2d3748"/><circle cx="10" cy="28" r="1.5" fill="#ffffff"/><circle cx="16" cy="28" r="1.5" fill="#ffffff"/></svg>${shadow}`; }
     else { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><g class="tail"><circle cx="42" cy="44" r="6" fill="#f0ece6"/></g><ellipse cx="24" cy="44" rx="16" ry="14" class="rabbit-body"/><g class="ear-left"><ellipse cx="14" cy="16" rx="5" ry="13" class="rabbit-body"/></g><g class="ear-right"><ellipse cx="26" cy="14" rx="5" ry="13" class="rabbit-body"/></g><circle cx="20" cy="34" r="12" class="rabbit-body"/><circle cx="15" cy="31" r="2.2" class="rabbit-eye"/><circle cx="25" cy="31" r="2.2" class="rabbit-eye"/><ellipse cx="20" cy="36" rx="2" ry="1.4" class="rabbit-nose"/></svg>${shadow}`; }
   }
 
-  // ── INTELLIGENTES DOM-UPDATE (Kein Flackern mehr!) ──
+  function getBeehiveSVG() {
+    return `
+    <div style="position:relative; width:100%; height:100%;">
+      <svg viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
+        <path d="M 14 56 L 38 56 L 40 60 L 12 60 Z" fill="#d4a061"/>
+        <path d="M 16 50 L 36 50 L 38 56 L 14 56 Z" fill="#c8975a"/>
+        <path d="M 18 44 L 34 44 L 36 50 L 16 50 Z" fill="#d4a061"/>
+        <path d="M 20 38 L 32 38 L 34 44 L 18 44 Z" fill="#c8975a"/>
+        <path d="M 22 34 L 30 34 L 32 38 L 20 38 Z" fill="#d4a061"/>
+        <circle cx="26" cy="50" r="4" fill="#4a2030"/>
+        
+        <g class="ear-left">
+          <ellipse cx="12" cy="28" rx="5" ry="4" fill="#fbbf24"/>
+          <path d="M 8 26 L 16 26 M 7 28 L 17 28 M 8 30 L 16 30" stroke="#4a2030" stroke-width="1.5"/>
+          <ellipse cx="10" cy="24" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(-30 10 24)"/>
+          <ellipse cx="14" cy="24" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(30 14 24)"/>
+        </g>
+        <g class="ear-right">
+          <ellipse cx="40" cy="30" rx="5" ry="4" fill="#fbbf24"/>
+          <path d="M 36 28 L 44 28 M 35 30 L 45 30 M 36 32 L 44 32" stroke="#4a2030" stroke-width="1.5"/>
+          <ellipse cx="38" cy="26" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(-30 38 26)"/>
+          <ellipse cx="42" cy="26" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(30 42 26)"/>
+        </g>
+        <g class="tail">
+          <ellipse cx="26" cy="16" rx="5" ry="4" fill="#fbbf24"/>
+          <path d="M 22 14 L 30 14 M 21 16 L 31 16 M 22 18 L 30 18" stroke="#4a2030" stroke-width="1.5"/>
+          <ellipse cx="24" cy="12" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(-30 24 12)"/>
+          <ellipse cx="28" cy="12" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(30 28 12)"/>
+        </g>
+      </svg>
+      <div class="rabbit-shadow" style="bottom:-5px;"></div>
+    </div>`;
+  }
+
   function updateFarmDOM() {
     const fence = document.getElementById('fenceContainer');
     if (fence.innerHTML === '') {
@@ -539,11 +688,32 @@
       fence.innerHTML = fenceStr;
     }
 
+    const hiveEl = document.getElementById('beehiveBuilding');
+    if (beehive.level > 0) {
+        hiveEl.style.display = 'block';
+        let zzzHtml = '';
+        let rewardHtml = '';
+        
+        if (beehive.rewardReady) {
+            rewardHtml = '<div class="reward-bubble" style="top:-25px;">🍯</div>';
+        } else if (beehive.isProducing) {
+            zzzHtml = '<div class="zzz" style="top:-10px; right:-10px;">Z</div><div class="zzz" style="top:0px; right:0px;">z</div>';
+        }
+        
+        if (!hiveEl.hasAttribute('data-rendered-level') || hiveEl.getAttribute('data-is-producing') !== String(beehive.isProducing) || hiveEl.getAttribute('data-reward-ready') !== String(beehive.rewardReady)) {
+            hiveEl.innerHTML = getBeehiveSVG() + zzzHtml + rewardHtml;
+            hiveEl.setAttribute('data-rendered-level', beehive.level);
+            hiveEl.setAttribute('data-is-producing', String(beehive.isProducing));
+            hiveEl.setAttribute('data-reward-ready', String(beehive.rewardReady));
+        }
+    } else {
+        hiveEl.style.display = 'none';
+    }
+
     const bedsContainer = document.getElementById('bedsContainer');
     const currentBeds = bedsContainer.querySelectorAll('.bed').length;
     const expectedBeds = unlockedBeds < 5 ? unlockedBeds + 1 : 5;
     
-    // Grid nur komplett neu bauen, wenn Felder fehlen
     if (currentBeds !== expectedBeds || bedsContainer.innerHTML === '') {
       let bedsHtml = '';
       for(let b = 0; b < unlockedBeds; b++) {
@@ -561,7 +731,6 @@
     
     updateBedsVisuals(); 
 
-    // Tiere updaten, ohne die laufende Animation zu zerstören
     const space = document.getElementById('animalSpace');
     const existingAnimals = Array.from(space.children);
     existingAnimals.forEach(el => {
@@ -574,33 +743,73 @@
   function renderAnimalDOM(a) {
     const space = document.getElementById('animalSpace');
     let el = document.getElementById('animal-' + a.id);
+    
+    let zzzHtml = '';
+    let rewardHtml = '';
+    
+    if (a.rewardReady) {
+        let rewardIcon = '🎁';
+        if(a.species === 'rabbit') rewardIcon = '🪴';
+        if(a.species === 'chicken') rewardIcon = '🥚';
+        if(a.species === 'cow') rewardIcon = '🥛';
+        if(a.species === 'cat') rewardIcon = '💎';
+        if(a.species === 'sheep') rewardIcon = '🧶';
+        rewardHtml = `<div class="reward-bubble">${rewardIcon}</div>`;
+    } else if (a.isProducing) {
+        zzzHtml = '<div class="zzz">Z</div><div class="zzz">z</div>';
+    }
+
     if (!el) { 
       el = document.createElement('div'); 
       el.id = 'animal-' + a.id; 
       el.className = 'animal-wrapper'; 
       el.onclick = () => window.openAnimalStats(a.id); 
-      el.innerHTML = getAnimalSVG(a.species); // Nur einmalig beim Erstellen einfügen
+      el.innerHTML = getAnimalSVG(a.species) + zzzHtml + rewardHtml; 
       space.appendChild(el); 
+    } else {
+      const currentProducing = el.getAttribute('data-producing') === 'true';
+      const currentReady = el.getAttribute('data-ready') === 'true';
+      
+      if (currentProducing !== a.isProducing || currentReady !== a.rewardReady) {
+          // Herz-Animation beibehalten wenn sie existiert
+          const existingHeart = el.querySelector('.feed-heart');
+          el.innerHTML = getAnimalSVG(a.species) + zzzHtml + rewardHtml;
+          if (existingHeart) el.appendChild(existingHeart);
+      }
     }
+    el.setAttribute('data-producing', String(a.isProducing));
+    el.setAttribute('data-ready', String(a.rewardReady));
+    
     updateAnimalPos(a);
   }
 
   function updateAnimalPos(a) {
     const el = document.getElementById('animal-' + a.id); if (!el) return;
-    let sizeMod = 1.0; if (a.species === 'cow') sizeMod = 1.6; else if (a.species === 'chicken' || a.species === 'cat') sizeMod = 0.85;
+    let sizeMod = 1.0; 
+    if (a.species === 'cow') sizeMod = 1.6; 
+    else if (a.species === 'sheep') sizeMod = 1.2;
+    else if (a.species === 'chicken' || a.species === 'cat') sizeMod = 0.85;
+
     const scale = (0.5 + ((a.y - 35) / 60) * 0.7) * sizeMod; 
     el.style.left = a.x + '%'; el.style.top = a.y + '%';
     el.style.transform = `scale(${scale})`; el.style.zIndex = Math.floor(a.y);
-    a.isWalking ? el.classList.add('is-walking') : el.classList.remove('is-walking');
+    
+    if (a.isWalking) {
+      el.classList.add('is-walking');
+      el.classList.remove('is-idle');
+    } else {
+      el.classList.remove('is-walking');
+      el.classList.add('is-idle');
+    }
+    
     a.facingLeft ? el.classList.add('facing-left') : el.classList.remove('facing-left');
   }
 
-  // ── MODAL MANAGEMENT ──
   window.showSpecificModal = function(modalId) { document.getElementById('modalOverlay').classList.add('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); document.getElementById(modalId).classList.add('active'); }
   window.closeAllModals = function() { document.getElementById('modalOverlay').classList.remove('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); selectedAnimalId = null; currentTargetSlot = null; currentStatusSlot = null; }
   window.openShopToFields = function() { if(isVisitMode) return; window.renderShop('fields'); window.showSpecificModal('modalShop'); }
 
-  // ── BACKHAUS LOGIK ──
+  // ── BACKHAUS LOGIK MIT PFLANZLICHER ALTERNATIVE ──
   window.openBakery = function() { if(isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; } window.renderBakery('recipes'); window.showSpecificModal('modalBakery'); }
 
   window.renderBakery = function(tabType) {
@@ -613,15 +822,33 @@
             let canBake = true; let reqHtml = '';
             for (let cat in r.req) {
                 for (let item in r.req[cat]) {
-                    const needed = r.req[cat][item]; const have = inventory[cat][item] || 0; if (have < needed) canBake = false;
-                    let itemName = cat === 'crops' ? shopItems[item].name : (item === 'egg' ? 'Ei' : (item === 'milk' ? 'Milch' : item));
-                    let color = have >= needed ? 'var(--grass-mid)' : 'var(--rose)';
+                    let needed = r.req[cat][item]; 
+                    let have = inventory[cat][item] || 0; 
+
+                    let itemName = item;
+                    if(cat === 'crops') itemName = shopItems[item].name;
+                    else if(cat === 'bakery') itemName = bakeryRecipes[item].name;
+                    else if(item === 'egg') itemName = 'Ei';
+                    else if(item === 'milk') itemName = 'Kuhmilch';
+                    else if(item === 'honey') itemName = 'Honig';
+
+                    let usedHave = have;
+                    if (item === 'milk' && have < needed) {
+                        let oatHave = inventory.bakery.oatmilk || 0;
+                        if (oatHave >= needed) {
+                            usedHave = oatHave;
+                            itemName = 'Hafermilch';
+                        }
+                    }
+
+                    if (usedHave < needed) canBake = false;
+                    let color = usedHave >= needed ? 'var(--grass-mid)' : 'var(--rose)';
                     reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName}</span>`;
                 }
             }
             let btnState = canBake && oven.state === 'empty' ? '' : 'disabled';
             let btnText = oven.state !== 'empty' ? 'Ofen besetzt' : 'Backen';
-            content.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button></div>`;
+            content.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button></div>`;
         });
     } else {
         document.getElementById('tabOven').classList.add('active');
@@ -633,7 +860,15 @@
 
   window.startBaking = async function(recipeId) {
       if (oven.state !== 'empty') return; const r = bakeryRecipes[recipeId];
-      for (let cat in r.req) { for (let item in r.req[cat]) { inventory[cat][item] -= r.req[cat][item]; } }
+      for (let cat in r.req) { 
+          for (let item in r.req[cat]) { 
+              if (item === 'milk' && inventory.items.milk < r.req[cat][item]) {
+                  inventory.bakery.oatmilk -= r.req[cat][item];
+              } else {
+                  inventory[cat][item] -= r.req[cat][item]; 
+              }
+          } 
+      }
       oven.state = 'baking'; oven.item = recipeId; oven.startedAt = Date.now(); await saveFarmData(); window.renderBakery('oven'); window.showToast('Backofen gestartet! 🔥');
   }
 
@@ -650,10 +885,37 @@
     
     if (tabType === 'seeds') {
       document.getElementById('tabSeeds').classList.add('active');
-      Object.values(shopItems).forEach(item => { list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${item.price} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
+      Object.values(shopItems).forEach(item => { list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${item.price} 🪙 | ⏱️ ${Math.round(item.growTime/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
     } else if (tabType === 'animals') {
       document.getElementById('tabAnimals').classList.add('active');
-      Object.values(animalItems).forEach(item => { list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}</div><div class="item-price">${item.price} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'animal')">Kaufen</button></div>`; });
+      
+      let itemsToRender = [];
+      let beehivePrice = 0;
+      let beehiveHtml = '';
+      
+      if (beehive.level === 0) {
+        beehivePrice = 800;
+        beehiveHtml = `<div class="item-row"><div class="item-info"><span class="item-icon">🐝</span><div><div class="item-name">Bienenstock</div><div class="item-price">800 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBeehive()">Kaufen</button></div>`;
+      } else if (beehive.level < 5) {
+        beehivePrice = beehive.level * 1500;
+        beehiveHtml = `<div class="item-row"><div class="item-info"><span class="item-icon">🐝</span><div><div class="item-name">Bienenstock (Lv. ${beehive.level} ➔ ${beehive.level+1})</div><div class="item-price">${beehivePrice} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.upgradeBeehive(${beehivePrice})">Upgraden</button></div>`;
+      } else {
+        beehivePrice = 999999;
+        beehiveHtml = `<div style="text-align:center; padding: 10px; color: var(--text-mid); font-weight: bold; margin-bottom: 8px;">🐝 Bienenstock (Max. Level 5)</div>`;
+      }
+      
+      itemsToRender.push({ price: beehivePrice, html: beehiveHtml });
+
+      Object.values(animalItems).forEach(item => { 
+        itemsToRender.push({ 
+          price: item.price, 
+          html: `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}</div><div class="item-price">${item.price} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'animal')">Kaufen</button></div>` 
+        }); 
+      });
+
+      itemsToRender.sort((a, b) => a.price - b.price);
+      itemsToRender.forEach(item => { list.innerHTML += item.html; });
+
     } else if (tabType === 'fields') {
       document.getElementById('tabFields').classList.add('active');
       if (unlockedBeds < 5) {
@@ -662,6 +924,35 @@
       } else {
           list.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-mid);">Du hast bereits alle Farm-Felder gekauft! 🏆</div>`;
       }
+    }
+  }
+
+  window.buyBeehive = async function() {
+    if (currentCoins >= 800) {
+        await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - 800);
+        runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + 800).catch(err => console.error('Stats-Fehler:', err));
+        beehive.level = 1;
+        await saveFarmData();
+        updateFarmDOM();
+        window.renderShop('animals');
+        window.showFloatingNumber("-800 🪙", "#ef4444");
+    } else {
+        window.showToast('Nicht genug Münzen!');
+    }
+  }
+
+  window.upgradeBeehive = async function(cost) {
+    if (currentCoins >= cost) {
+        await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+        runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
+        beehive.level++;
+        await saveFarmData();
+        updateFarmDOM();
+        window.renderShop('animals');
+        window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
+        window.showToast(`Bienenstock Level ${beehive.level}! 🎉`);
+    } else {
+        window.showToast('Nicht genug Münzen!');
     }
   }
 
@@ -674,7 +965,7 @@
           await saveFarmData();
           updateFarmDOM();
           window.renderShop('fields');
-          window.showToast('Neues Feld freigeschaltet! 🗺️');
+          window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
       } else {
           window.showToast('Nicht genug Münzen! 🪙');
       }
@@ -689,14 +980,14 @@
 
   window.processBuy = async function(amount) { 
     const cost = itemToBuy.price * amount;
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showToast(`${amount}x ${itemToBuy.name}samen gekauft!`); window.showSpecificModal('modalShop'); } 
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); } 
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
   window.processBuyAnimal = async function() { 
     const cost = itemToBuy.price; const nameInput = document.getElementById('newAnimalName').value.trim();
     if(!nameInput) { window.showToast('Bitte gib einen Namen ein! 📝'); return; }
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); let newAnimal = { id: Date.now(), name: nameInput, species: itemToBuy.id, x: 10 + Math.random() * 80, y: 80 + Math.random() * 10, isWalking: false, facingLeft: false, isProducing: false, fedAt: 0, rewardReady: false }; animals.push(newAnimal); renderAnimalDOM(newAnimal); await saveFarmData(); window.closeAllModals(); window.showToast(`${itemToBuy.icon} ${nameInput} ist eingezogen!`); } 
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); let newAnimal = { id: Date.now(), name: nameInput, species: itemToBuy.id, x: 10 + Math.random() * 80, y: 80 + Math.random() * 10, isWalking: false, facingLeft: false, isProducing: false, fedAt: 0, rewardReady: false }; animals.push(newAnimal); renderAnimalDOM(newAnimal); await saveFarmData(); window.closeAllModals(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); } 
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
@@ -705,17 +996,17 @@
     Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
     Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
     
-    // Balanced Sell Prices
+    if (inventory.items.honey > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 150)">Verkaufen (150 🪙)</button></div>`; }
+    if (inventory.items.wool > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><div><span class="item-name">Wolle</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.wool}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'wool', 600)">Verkaufen (600 🪙)</button></div>`; }
     if (inventory.items.egg > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><div><span class="item-name">Ei</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.egg}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'egg', 200)">Verkaufen (200 🪙)</button></div>`; }
     if (inventory.items.diamond > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (1100 🪙)</button></div>`; }
     if (inventory.items.milk > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Milch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (300 🪙)</button></div>`; }
-
     if (inventory.items.fertilizer > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (60 🪙)</button></div>`; }
+    
     if (!hasItems) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast nichts zu verkaufen.<br>Ernte Pflanzen oder sammle Items!</div>`;
     window.showSpecificModal('modalSell');
   }
 
-  // Bestätigungs-State
   let pendingSell = null;
 
   window.sellItem = function(category, itemId, price) {
@@ -725,6 +1016,8 @@
     else if (itemId === 'egg') { icon = '🥚'; name = 'Ei'; }
     else if (itemId === 'diamond') { icon = '💎'; name = 'Diamant'; }
     else if (itemId === 'milk') { icon = '🥛'; name = 'Milch'; }
+    else if (itemId === 'honey') { icon = '🍯'; name = 'Honig'; }
+    else if (itemId === 'wool') { icon = '🧶'; name = 'Wolle'; }
     else if (itemId === 'fertilizer') { icon = '🪴'; name = 'Dünger'; }
 
     const stock = inventory[category][itemId] || 0;
@@ -777,7 +1070,7 @@
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
       runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
       await saveFarmData();
-      window.showToast(`${amount}x verkauft! (+${total} 🪙)`);
+      window.showFloatingNumber("+" + total + " 🪙", "#22c55e");
       window.openSell();
     }
   }
@@ -790,7 +1083,14 @@
     const container = document.getElementById('inventoryContent'); container.innerHTML = '';
     let seedsHtml = '<div class="section-title">🌱 Samen</div><div class="item-list">'; let hasSeeds = false; Object.keys(inventory.seeds).forEach(key => { if (inventory.seeds[key] > 0) { hasSeeds = true; const item = shopItems[key]; seedsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}samen</span></div><div class="item-count">${inventory.seeds[key]}x</div></div>`; } }); if(!hasSeeds) seedsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Samen vorhanden.</div>`; seedsHtml += '</div>';
     let cropsHtml = '<div class="section-title">🧺 Ernte (Im Lager)</div><div class="item-list">'; let hasCrops = false; Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasCrops = true; const item = shopItems[key]; cropsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.crops[key]}x</div></div>`; } }); if(!hasCrops) cropsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Ernte vorhanden.</div>`; cropsHtml += '</div>';
-    let itemsHtml = '<div class="section-title">🎒 Tierprodukte & Items</div><div class="item-list">'; let hasSpecial = false; if (inventory.items.fertilizer > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><span class="item-name">Dünger</span></div><div class="item-count">${inventory.items.fertilizer}x</div></div>`; } if (inventory.items.egg > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><span class="item-name">Ei</span></div><div class="item-count">${inventory.items.egg}x</div></div>`; } if (inventory.items.milk > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><span class="item-name">Milch</span></div><div class="item-count">${inventory.items.milk}x</div></div>`; } if (inventory.items.diamond > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><span class="item-name">Diamant</span></div><div class="item-count">${inventory.items.diamond}x</div></div>`; } if(!hasSpecial) itemsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Items vorhanden.</div>`; itemsHtml += '</div>';
+    let itemsHtml = '<div class="section-title">🎒 Tierprodukte & Items</div><div class="item-list">'; let hasSpecial = false; 
+    if (inventory.items.fertilizer > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><span class="item-name">Dünger</span></div><div class="item-count">${inventory.items.fertilizer}x</div></div>`; } 
+    if (inventory.items.honey > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><span class="item-name">Honig</span></div><div class="item-count">${inventory.items.honey}x</div></div>`; } 
+    if (inventory.items.egg > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><span class="item-name">Ei</span></div><div class="item-count">${inventory.items.egg}x</div></div>`; } 
+    if (inventory.items.milk > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><span class="item-name">Kuhmilch</span></div><div class="item-count">${inventory.items.milk}x</div></div>`; } 
+    if (inventory.items.wool > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><span class="item-name">Wolle</span></div><div class="item-count">${inventory.items.wool}x</div></div>`; } 
+    if (inventory.items.diamond > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><span class="item-name">Diamant</span></div><div class="item-count">${inventory.items.diamond}x</div></div>`; } 
+    if(!hasSpecial) itemsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Items vorhanden.</div>`; itemsHtml += '</div>';
     let bakeryHtml = '<div class="section-title">🍩 Backwaren</div><div class="item-list">'; let hasBakery = false; Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasBakery = true; const item = bakeryRecipes[key]; bakeryHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.bakery[key]}x</div></div>`; } }); if(!hasBakery) bakeryHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Backwaren vorhanden.</div>`; bakeryHtml += '</div>';
     container.innerHTML = seedsHtml + cropsHtml + itemsHtml + bakeryHtml; window.showSpecificModal('modalInventory');
   }
@@ -857,10 +1157,30 @@
         else { const pBar = document.getElementById('ovenProgressBar'); if (pBar) { const percent = Math.min(100, ((elapsedSec / r.time) * 100)); pBar.style.width = percent + '%'; const rem = r.time - elapsedSec; let m = Math.floor(rem / 60); let sec = rem % 60; document.getElementById('ovenTimer').textContent = `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`; } }
     }
 
+    if (beehive.isProducing && !beehive.rewardReady) {
+        const elapsedSec = Math.floor((now - beehive.fedAt) / 1000);
+        if (elapsedSec >= ANIMAL_PRODUCTION_TIME) {
+            beehive.rewardReady = true;
+            updateFarmDOM();
+            if (document.getElementById('modalBeehive').classList.contains('active')) { window.openBeehive(); }
+        } else {
+            if (document.getElementById('modalBeehive').classList.contains('active')) {
+                const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; 
+                const m = Math.floor(rem / 60); const s = rem % 60; 
+                const timerEl = document.getElementById('beehiveTimerDisplay'); 
+                if (timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; 
+            }
+        }
+    }
+
     animals.forEach(a => {
         if(a.isProducing && !a.rewardReady) {
             const elapsedSec = Math.floor((now - a.fedAt) / 1000);
-            if(elapsedSec >= ANIMAL_PRODUCTION_TIME) { a.rewardReady = true; if(selectedAnimalId === a.id) window.openAnimalStats(a.id); } 
+            if(elapsedSec >= ANIMAL_PRODUCTION_TIME) { 
+                a.rewardReady = true; 
+                updateFarmDOM(); 
+                if(selectedAnimalId === a.id) window.openAnimalStats(a.id); 
+            } 
             else { if(selectedAnimalId === a.id) { const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; const m = Math.floor(rem / 60); const s = rem % 60; const timerEl = document.getElementById('animalTimerDisplay'); if(timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; } }
         }
     });
@@ -881,20 +1201,152 @@
   window.openFieldSeedMenu = function() { const list = document.getElementById('fieldSeedList'); list.innerHTML = ''; let hasSeeds = false; Object.keys(inventory.seeds).forEach(key => { if (inventory.seeds[key] > 0) { hasSeeds = true; const item = shopItems[key]; list.innerHTML += `<div class="item-row" style="cursor:pointer" onclick="window.plantSeed('${key}')"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min</span></div></div><button class="btn-generic btn-buy">Pflanzen (${inventory.seeds[key]}x)</button></div>`; } }); if (!hasSeeds) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast keine Samen.<br>Kaufe welche im Shop!</div>`; window.showSpecificModal('modalField'); }
   window.plantSeed = async function(itemId) { if (inventory.seeds[itemId] > 0 && currentTargetSlot) { const b = currentTargetSlot.b; const s = currentTargetSlot.s; inventory.seeds[itemId]--; beds[b][s] = { state: 'growing', item: itemId, plantedAt: Date.now() }; document.getElementById(`slot-${b}-${s}`).innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: 0%"></div></div>`; await saveFarmData(); window.closeAllModals(); window.showToast(`Samen gepflanzt! 🌱`); } }
 
+  // ── BIENENSTOCK LOGIK ──
+  window.openBeehive = function() {
+    document.getElementById('beehiveLevelText').textContent = `Level ${beehive.level} (Produziert ${beehive.level}x Honig)`;
+    const actionContainer = document.getElementById('modalBeehiveAction');
+    
+    if (isVisitMode) { 
+        actionContainer.innerHTML = `<div style="text-align:center; padding: 12px; background: rgba(124,58,237,0.06); border-radius: 14px; margin-top: 10px; font-size: 13px; color: #7c3aed; font-weight: 600;">👀 Nur ansehen</div>`; 
+        window.showSpecificModal('modalBeehive'); 
+        return; 
+    }
+    
+    if (beehive.rewardReady) {
+        actionContainer.innerHTML = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectBeehive()">🍯 Belohnung abholen (${beehive.level}x Honig)</button>`;
+    } else if (beehive.isProducing) {
+        const elapsedSec = Math.floor((Date.now() - beehive.fedAt) / 1000); 
+        const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); 
+        const m = Math.floor(rem / 60); const s = rem % 60; 
+        const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; 
+        actionContainer.innerHTML = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Bienen sammeln Nektar...</div><div id="beehiveTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; 
+    } else {
+        const count = inventory.crops.radish || 0;
+        const btnState = count > 0 ? '' : 'disabled';
+        actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedBeehive()" ${btnState}>🧅 Radieschen verfüttern (${count}x im Inventar)</button>`;
+    }
+    window.showSpecificModal('modalBeehive');
+  }
+
+  window.feedBeehive = async function() {
+    if (inventory.crops.radish > 0) {
+        inventory.crops.radish--;
+        beehive.isProducing = true;
+        beehive.fedAt = Date.now();
+        beehive.rewardReady = false;
+        await saveFarmData();
+        window.openBeehive();
+        window.showToast('🐝 Bienen fliegen los!');
+        updateFarmDOM();
+    }
+  }
+
+  window.collectBeehive = async function() {
+    beehive.isProducing = false;
+    beehive.rewardReady = false;
+    inventory.items.honey += beehive.level;
+    await saveFarmData();
+    window.openBeehive();
+    window.showToast(`🍯 ${beehive.level}x Honig erhalten!`);
+    updateFarmDOM();
+  }
+
+
   // ── ANIMAL LOGIC ──
-  window.openAnimalStats = function(id) { selectedAnimalId = id; const a = animals.find(anim => anim.id === id); document.getElementById('modalAnimalIcon').textContent = animalItems[a.species].icon; document.getElementById('modalName').value = a.name; document.getElementById('modalName').readOnly = isVisitMode; document.getElementById('modalName').style.pointerEvents = isVisitMode ? 'none' : ''; document.getElementById('modalName').style.userSelect = isVisitMode ? 'none' : ''; document.getElementById('modalName').style.cursor = isVisitMode ? 'default' : ''; document.getElementById('modalSpeciesText').innerHTML = `${animalItems[a.species].icon} ${animalItems[a.species].name}`; const actionContainer = document.getElementById('modalAnimalAction'); if (isVisitMode) { actionContainer.innerHTML = `<div style="text-align:center; padding: 12px; background: rgba(124,58,237,0.06); border-radius: 14px; margin-top: 10px; font-size: 13px; color: #7c3aed; font-weight: 600;">👀 Nur ansehen</div>`; window.showSpecificModal('modalAnimal'); return; } if (a.rewardReady) { let rewardIcon = '🎁'; if(a.species === 'rabbit') rewardIcon = '🪴'; if(a.species === 'chicken') rewardIcon = '🥚'; if(a.species === 'cow') rewardIcon = '🥛'; if(a.species === 'cat') rewardIcon = '💎'; actionContainer.innerHTML = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`; } else if (a.isProducing) { const elapsedSec = Math.floor((Date.now() - a.fedAt) / 1000); const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); const m = Math.floor(rem / 60); const s = rem % 60; const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; actionContainer.innerHTML = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; } else { let foodNeed = ''; if(a.species === 'rabbit') foodNeed = 'carrot'; if(a.species === 'chicken') foodNeed = 'wheat'; if(a.species === 'cow') foodNeed = 'wheat'; if(a.species === 'cat') foodNeed = 'milk'; if(foodNeed === 'milk') { const count = inventory.items.milk || 0; const btnState = count > 0 ? '' : 'disabled'; actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedAnimal('milk', true)" ${btnState}>🥛 Milch füttern (${count}x im Inventar)</button>`; } else { const foodName = shopItems[foodNeed].name; const foodIcon = shopItems[foodNeed].icon; const count = inventory.crops[foodNeed] || 0; const btnState = count > 0 ? '' : 'disabled'; actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedAnimal('${foodNeed}', false)" ${btnState}>${foodIcon} ${foodName} füttern (${count}x im Inventar)</button>`; } } window.showSpecificModal('modalAnimal'); }
-  window.feedAnimal = async function(foodType, isItem = false) { const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return; const invCategory = isItem ? inventory.items : inventory.crops; if (invCategory[foodType] > 0) { invCategory[foodType]--; a.isProducing = true; a.fedAt = Date.now(); a.rewardReady = false; await saveFarmData(); window.openAnimalStats(a.id); window.showToast(`🍎 ${a.name} wurde gefüttert!`); } }
-  window.collectAnimalReward = async function() { const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return; a.isProducing = false; a.rewardReady = false; if(a.species === 'rabbit') { inventory.items.fertilizer++; window.showToast(`🪴 Dünger erhalten!`); } else if (a.species === 'chicken') { inventory.items.egg++; window.showToast(`🥚 Ei erhalten!`); } else if (a.species === 'cow') { inventory.items.milk++; window.showToast(`🥛 Milch erhalten!`); } else if (a.species === 'cat') { inventory.items.diamond++; window.showToast(`💎 Diamant erhalten!`); } await saveFarmData(); window.openAnimalStats(a.id); }
+  window.openAnimalStats = function(id) { 
+    selectedAnimalId = id; const a = animals.find(anim => anim.id === id); 
+    document.getElementById('modalAnimalIcon').textContent = animalItems[a.species].icon; 
+    document.getElementById('modalName').value = a.name; 
+    document.getElementById('modalName').readOnly = isVisitMode; 
+    document.getElementById('modalName').style.pointerEvents = isVisitMode ? 'none' : ''; 
+    document.getElementById('modalName').style.userSelect = isVisitMode ? 'none' : ''; 
+    document.getElementById('modalName').style.cursor = isVisitMode ? 'default' : ''; 
+    document.getElementById('modalSpeciesText').innerHTML = `${animalItems[a.species].icon} ${animalItems[a.species].name}`; 
+    const actionContainer = document.getElementById('modalAnimalAction'); 
+    
+    if (isVisitMode) { actionContainer.innerHTML = `<div style="text-align:center; padding: 12px; background: rgba(124,58,237,0.06); border-radius: 14px; margin-top: 10px; font-size: 13px; color: #7c3aed; font-weight: 600;">👀 Nur ansehen</div>`; window.showSpecificModal('modalAnimal'); return; } 
+    
+    if (a.rewardReady) { 
+        let rewardIcon = '🎁'; 
+        if(a.species === 'rabbit') rewardIcon = '🪴'; 
+        if(a.species === 'chicken') rewardIcon = '🥚'; 
+        if(a.species === 'cow') rewardIcon = '🥛'; 
+        if(a.species === 'cat') rewardIcon = '💎'; 
+        if(a.species === 'sheep') rewardIcon = '🧶';
+        actionContainer.innerHTML = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`; 
+    } else if (a.isProducing) { 
+        const elapsedSec = Math.floor((Date.now() - a.fedAt) / 1000); 
+        const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); 
+        const m = Math.floor(rem / 60); const s = rem % 60; 
+        const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; 
+        actionContainer.innerHTML = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; 
+    } else { 
+        let foodNeed = ''; 
+        if(a.species === 'rabbit') foodNeed = 'carrot'; 
+        if(a.species === 'chicken') foodNeed = 'wheat'; 
+        if(a.species === 'cow') foodNeed = 'wheat'; 
+        if(a.species === 'cat') foodNeed = 'milk'; 
+        if(a.species === 'sheep') foodNeed = 'wheat';
+
+        if(foodNeed === 'milk') { 
+            const count = inventory.items.milk || 0; 
+            const btnState = count > 0 ? '' : 'disabled'; 
+            actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedAnimal('milk', true)" ${btnState}>🥛 Kuhmilch füttern (${count}x im Inventar)</button>`; 
+        } else { 
+            const foodName = shopItems[foodNeed].name; 
+            const foodIcon = shopItems[foodNeed].icon; 
+            const count = inventory.crops[foodNeed] || 0; 
+            const btnState = count > 0 ? '' : 'disabled'; 
+            actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedAnimal('${foodNeed}', false)" ${btnState}>${foodIcon} ${foodName} füttern (${count}x im Inventar)</button>`; 
+        } 
+    } 
+    window.showSpecificModal('modalAnimal'); 
+  }
+
+  window.feedAnimal = async function(foodType, isItem = false) { 
+      const a = animals.find(anim => anim.id === selectedAnimalId); 
+      if (!a) return; 
+      const invCategory = isItem ? inventory.items : inventory.crops; 
+      if (invCategory[foodType] > 0) { 
+          invCategory[foodType]--; 
+          a.isProducing = true; 
+          a.fedAt = Date.now(); 
+          a.rewardReady = false; 
+          await saveFarmData(); 
+          window.openAnimalStats(a.id); 
+          window.showToast(`🍎 ${a.name} wurde gefüttert!`); 
+          
+          // Herz-Animation
+          const el = document.getElementById('animal-' + a.id);
+          if (el) {
+              const heart = document.createElement('div');
+              heart.className = 'feed-heart';
+              heart.textContent = '❤️';
+              el.appendChild(heart);
+              setTimeout(() => heart.remove(), 1500);
+          }
+      } 
+  }
+  
+  window.collectAnimalReward = async function() { 
+      const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return; 
+      a.isProducing = false; a.rewardReady = false; 
+      if(a.species === 'rabbit') { inventory.items.fertilizer++; window.showToast(`🪴 Dünger erhalten!`); } 
+      else if (a.species === 'chicken') { inventory.items.egg++; window.showToast(`🥚 Ei erhalten!`); } 
+      else if (a.species === 'cow') { inventory.items.milk++; window.showToast(`🥛 Milch erhalten!`); } 
+      else if (a.species === 'cat') { inventory.items.diamond++; window.showToast(`💎 Diamant erhalten!`); } 
+      else if (a.species === 'sheep') { inventory.items.wool++; window.showToast(`🧶 Wolle erhalten!`); }
+      await saveFarmData(); updateFarmDOM(); window.openAnimalStats(a.id); 
+  }
   window.updateName = async function(newName) { if (!selectedAnimalId || isVisitMode) return; animals.find(anim => anim.id === selectedAnimalId).name = newName; if(newName.trim()) { window.showToast('Name gespeichert!'); await saveFarmData(); } }
   
-  // ── BESUCHSMODUS (Jetzt auch Live!) ──
+  // ── BESUCHSMODUS ──
   window.visitOtherFarm = async function() {
     if (isVisitMode) return;
     isVisitMode = true;
     const otherUser = currentUser === 'Andreas' ? 'Nele' : 'Andreas';
     const otherKey  = otherUser.toLowerCase();
 
-    // Topbar umschalten
     document.getElementById('btnShop').style.display = 'none';
     document.getElementById('btnInventory').style.display = 'none';
     document.getElementById('btnSell').style.display = 'none';
@@ -905,18 +1357,18 @@
     document.getElementById('visitBannerText').textContent = '👀 Du besuchst ' + farmName(otherUser);
     document.getElementById('visitBanner').classList.add('show');
 
-    // Live-Listener für die andere Farm starten
     visitUnsubscribe = onValue(ref(db, `farm/${otherKey}`), (snap) => {
       if (!isVisitMode) return;
       const data = snap.val() || {};
 
       inventory = {
-        seeds:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.seeds  || {}) },
-        crops:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.crops  || {}) },
-        items:  { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) },
-        bakery: { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) }
+        seeds:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds  || {}) },
+        crops:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops  || {}) },
+        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, ...(data.inventory?.items || {}) },
+        bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
+      beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
       
       if (data.beds) {
         beds = data.beds;
@@ -940,10 +1392,8 @@
     if (!isVisitMode) return;
     isVisitMode = false;
 
-    // Listener vom Besuch abbrechen
     if (visitUnsubscribe) { visitUnsubscribe(); visitUnsubscribe = null; }
 
-    // Topbar zurücksetzen
     document.getElementById('btnShop').style.display = '';
     document.getElementById('btnInventory').style.display = '';
     document.getElementById('btnSell').style.display = '';
@@ -953,17 +1403,17 @@
 
     document.getElementById('farmTitle').textContent = farmName(currentUser);
 
-    // Eigene Farm-Daten neu laden, damit wir sofort wieder unser Layout haben.
-    // Danach übernimmt unser normaler Live-Listener automatisch wieder.
     get(ref(db, `farm/${ownUserKey}`)).then(snap => {
       const data = snap.val() || {};
       inventory = {
-        seeds:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.seeds  || {}) },
-        crops:  { carrot: 0, lettuce: 0, wheat: 0, ...(data.inventory?.crops  || {}) },
-        items:  { fertilizer: 0, egg: 0, milk: 0, diamond: 0, ...(data.inventory?.items || {}) },
-        bakery: { bread: 0, carrotcake: 0, cake: 0, ...(data.inventory?.bakery || {}) }
+        seeds:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds  || {}) },
+        crops:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops  || {}) },
+        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, ...(data.inventory?.items || {}) },
+        bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
+      beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
+
       if (data.beds) {
         beds = data.beds;
         while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
@@ -981,14 +1431,54 @@
 
   window.showToast = function(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 
-  // ZUFALLS-BEWEGUNG MIT SPERRZONE
+  // ZUFALLS-BEWEGUNG MIT KOLLISIONSSCHUTZ
   setInterval(() => { 
     if (!currentUser) return; 
     animals.forEach(a => { 
       if (Math.random() < 0.4) { 
-        let oldX = a.x; let newX, newY; let validMove = false; let tries = 0;
-        while (!validMove && tries < 5) { newX = a.x + (Math.random() - 0.5) * 25; newY = a.y + (Math.random() - 0.5) * 20; newX = Math.max(5, Math.min(95, newX)); newY = Math.max(40, Math.min(95, newY)); let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); if (!inBeet) { validMove = true; } tries++; }
-        if (validMove) { a.x = newX; a.y = newY; a.facingLeft = (a.x < oldX); a.isWalking = true; updateAnimalPos(a); setTimeout(() => { a.isWalking = false; updateAnimalPos(a); }, 2000); }
+        let oldX = a.x; 
+        let newX, newY; 
+        let validMove = false; 
+        let tries = 0;
+        
+        while (!validMove && tries < 5) { 
+          newX = a.x + (Math.random() - 0.5) * 25; 
+          newY = a.y + (Math.random() - 0.5) * 20; 
+          
+          // Bildschirmränder
+          newX = Math.max(5, Math.min(95, newX)); 
+          newY = Math.max(40, Math.min(95, newY)); 
+          
+          // Beete umgehen
+          let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); 
+          
+          // Kollision mit anderen Tieren prüfen
+          let collision = false;
+          animals.forEach(other => {
+            if (a.id !== other.id) {
+              let dx = newX - other.x;
+              let dy = newY - other.y;
+              let distance = Math.sqrt(dx * dx + dy * dy);
+              if (distance < 10) { 
+                collision = true;
+              }
+            }
+          });
+
+          if (!inBeet && !collision) { 
+            validMove = true; 
+          } 
+          tries++; 
+        }
+        
+        if (validMove) { 
+          a.x = newX; 
+          a.y = newY; 
+          a.facingLeft = (a.x < oldX); 
+          a.isWalking = true; 
+          updateAnimalPos(a); 
+          setTimeout(() => { a.isWalking = false; updateAnimalPos(a); }, 2000); 
+        }
       } 
     }); 
   }, 3000);
