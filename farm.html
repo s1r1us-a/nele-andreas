@@ -1213,7 +1213,7 @@
           oven.slots[index] = { state: 'empty', item: null, startedAt: 0 }; 
           await saveFarmData(); 
           updateFarmDOM();
-          window.renderBakery('recipes'); 
+          window.renderBakery('oven'); 
           window.showToast('Backware abgeholt! 🧑‍🍳'); 
       }
   }
@@ -1889,6 +1889,7 @@
           newY = Math.max(40, Math.min(95, newY)); 
           
           let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); 
+          let inBakery = (newX > 38 && newX < 62 && newY > 22 && newY < 45);
           
           let collision = false;
           animals.forEach(other => {
@@ -1902,7 +1903,7 @@
             }
           });
 
-          if (!inBeet && !collision) { 
+          if (!inBeet && !inBakery && !collision) { 
             validMove = true; 
           } 
           tries++; 
