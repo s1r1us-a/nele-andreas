@@ -17,11 +17,33 @@
       --earth: #c8975a; --brown: #8e5a32;
     }
 
-    /* Tag/Nacht Modus Variablen */
+    /* Tag/Nacht & Dämmerung Variablen */
+    body.sunset-mode {
+      --sky-top: #ff7eb3; --sky-bottom: #ff758c;
+      --grass-top: #8aab56; --grass-mid: #68853b;
+    }
+    body.sunrise-mode {
+      --sky-top: #a18cd1; --sky-bottom: #fbc2eb;
+      --grass-top: #83c26b; --grass-mid: #5a9443;
+    }
     body.night-mode {
       --sky-top: #1e1b4b; --sky-bottom: #312e81;
       --grass-top: #166534; --grass-mid: #14532d;
     }
+
+    /* Lange Schatten für Sonnenaufgang und -untergang */
+    body.sunset-mode .rabbit-shadow, body.sunrise-mode .rabbit-shadow {
+      transform: translateX(-10%) scaleX(1.8) scaleY(0.7) skewX(-20deg);
+      opacity: 0.1;
+      background: rgba(0,0,0,0.3);
+    }
+    body.sunset-mode .bakery-building, body.sunrise-mode .bakery-building {
+      filter: drop-shadow(-12px 6px 4px rgba(0,0,0,0.15));
+    }
+    body.sunset-mode .beehive-building, body.sunrise-mode .beehive-building {
+      filter: drop-shadow(-10px 5px 4px rgba(0,0,0,0.15));
+    }
+
     .night-mode .cloud { opacity: 0.3; filter: brightness(0.7) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
     .night-mode .cloud::before, .night-mode .cloud::after { filter: brightness(0.7); }
     .night-mode .fence-post, .night-mode .bakery-base, .night-mode .bakery-roof, .night-mode .bed { filter: brightness(0.75); }
@@ -66,6 +88,15 @@
     .night-mode .stars-container { opacity: 1; }
     .star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255,255,255,0.8); animation: twinkle 3s infinite alternate ease-in-out; }
     @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.3); } }
+
+    /* PARALLAX HÜGEL (Tiefe) */
+    .hills-layer { position: absolute; top: 22%; left: 0; right: 0; height: 15%; z-index: 2; pointer-events: none; opacity: 0.8; transition: opacity 2s ease; }
+    .hill { position: absolute; bottom: 0; background: #92c468; border-radius: 50% 50% 0 0; transition: background 2s ease; }
+    
+    /* Farbanpassungen der Hügel je nach Tageszeit */
+    .sunset-mode .hill { background: #825b6a; }
+    .sunrise-mode .hill { background: #6b8ea1; }
+    .night-mode .hill { background: #133a23; opacity: 0.5; }
 
     .cloud-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 10; }
     .cloud { position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); animation: drift linear infinite; transition: all 2s ease; }
@@ -121,6 +152,12 @@
     .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
     .ground-area::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1; }
     
+    /* Animierter Teich */
+    .pond { position: absolute; bottom: 8%; right: -5%; width: 160px; height: 60px; background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom)); border-radius: 50%; z-index: 11; overflow: hidden; box-shadow: inset 0 3px 12px rgba(0,0,0,0.3), 0 2px 0 rgba(255,255,255,0.2); transition: background 2s ease; border: 3px solid rgba(0,0,0,0.1); }
+    .pond::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255,255,255,0.2) 7px, rgba(255,255,255,0.2) 8px); animation: ripple 4s infinite linear; opacity: 0.5; }
+    .night-mode .pond { background: linear-gradient(180deg, #1e1b4b, #312e81); background-image: radial-gradient(white 1px, transparent 1px); background-size: 25px 25px; background-position: 0 0, 12px 12px; }
+    @keyframes ripple { 0% { transform: translateY(0); } 100% { transform: translateY(14px); } }
+
     /* Wackelndes Gras */
     .grass-tuft { position: absolute; width: 15px; height: 15px; pointer-events: none; z-index: 12; animation: windSway 3s ease-in-out infinite; transform-origin: bottom center; }
     .grass-tuft::before, .grass-tuft::after { content: ''; position: absolute; bottom: 0; width: 4px; height: 12px; background: #7ec850; border-radius: 10px; }
@@ -132,7 +169,7 @@
     .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; transition: filter 2s ease; }
 
     /* ── BACKHAUS UPGRADE ── */
-    .bakery-building { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .bakery-building { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .bakery-building:active { transform: translateX(-50%) scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     
     /* Dach mit Kante */
@@ -164,7 +201,7 @@
       100% { transform: translateY(-45px) scale(1.5) rotate(-90deg); opacity: 0; } 
     }
 
-    .beehive-building { position: absolute; top: 31%; left: 25%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .beehive-building { position: absolute; top: 31%; left: 25%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .beehive-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
 
     /* ── FARMING BEDS ── */
@@ -205,7 +242,7 @@
     .feed-heart { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 24px; pointer-events: none; animation: floatHeart 1.5s ease-out forwards; z-index: 70; }
     @keyframes floatHeart { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); } 50% { transform: translate(-50%, -20px) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1); } }
 
-    .rabbit-shadow { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 26px; height: 6px; background: rgba(0,0,0,0.15); border-radius: 50%; transition: transform 0.2s; }
+    .rabbit-shadow { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 26px; height: 6px; background: rgba(0,0,0,0.15); border-radius: 50%; transition: transform 2s ease, opacity 2s ease; }
     .is-walking .rabbit-shadow { animation: shadowPulse 0.4s infinite alternate; }
     @keyframes shadowPulse { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(0.6); } }
 
@@ -408,6 +445,13 @@
   </div>
   
   <div id="firefly-container"></div>
+
+  <div class="hills-layer">
+    <div class="hill" style="left: -10%; width: 40%; height: 100%;"></div>
+    <div class="hill" style="left: 20%; width: 35%; height: 75%; background: var(--grass-mid);"></div>
+    <div class="hill" style="left: 45%; width: 50%; height: 120%;"></div>
+    <div class="hill" style="left: 75%; width: 35%; height: 85%;"></div>
+  </div>
   
   <div class="bakery-building" id="bakeryBuilding" onclick="openBakery()">
     <div class="bakery-chimney"></div>
@@ -425,7 +469,8 @@
   <div class="bush bush-2"></div>
   <div class="bush bush-3"></div>
 
-  <div class="fence" id="fenceContainer"></div><div class="ground-area"></div>
+  <div class="fence" id="fenceContainer"></div>
+  <div class="ground-area"></div>
   
   <div class="grass-tuft" style="top: 42%; left: 15%;"><div class="grass-tuft-center"></div></div>
   <div class="grass-tuft" style="top: 48%; left: 85%; animation-delay: -1s;"><div class="grass-tuft-center"></div></div>
@@ -433,6 +478,8 @@
   <div class="grass-tuft" style="top: 55%; left: 75%; animation-delay: -0.5s;"><div class="grass-tuft-center"></div></div>
   <div class="grass-tuft" style="top: 75%; left: 85%; animation-delay: -1.5s;"><div class="grass-tuft-center"></div></div>
   <div class="grass-tuft" style="top: 80%; left: 20%; animation-delay: -0.8s;"><div class="grass-tuft-center"></div></div>
+
+  <div class="pond"></div>
 
   <div class="beds-container" id="bedsContainer"></div>
   <div id="animalSpace"></div>
@@ -569,15 +616,25 @@
   }
   initStars();
 
-  // Tag-/Nacht Modus Check
+  // Tag-/Nacht Modus Check inkl. Golden Hour
   function checkDayNight() {
     const hour = new Date().getHours();
-    let isNight = (hour >= 19 || hour <= 6);
-    if (isNight) {
+    
+    // Zuerst alle Modi entfernen
+    document.body.classList.remove('night-mode', 'sunset-mode', 'sunrise-mode');
+    
+    let isNight = false;
+    
+    // Zeiten definieren
+    if (hour >= 20 || hour < 6) {
       document.body.classList.add('night-mode');
-    } else {
-      document.body.classList.remove('night-mode');
+      isNight = true;
+    } else if (hour >= 18 && hour < 20) {
+      document.body.classList.add('sunset-mode');
+    } else if (hour >= 6 && hour < 8) {
+      document.body.classList.add('sunrise-mode');
     }
+    
     manageFireflies(isNight);
   }
   
@@ -730,7 +787,6 @@
               if (dataOven.slots) {
                   oven = dataOven;
               } else {
-                  // Migration von altem Ofen auf 3 Slots
                   let oldSlot = dataOven.state !== 'empty' && dataOven.state ? dataOven : { state: 'empty', item: null, startedAt: 0 };
                   oven = { slots: [oldSlot, { state: 'empty', item: null, startedAt: 0 }, { state: 'empty', item: null, startedAt: 0 }] };
               }
@@ -931,7 +987,7 @@
         hiveEl.style.display = 'none';
     }
 
-    // Backhaus Updates (Rauch & Abhol-Blase)
+    // Backhaus Updates
     const bakeryEl = document.getElementById('bakeryBuilding');
     let isBaking = false;
     let isReady = false;
@@ -1024,7 +1080,6 @@
     el.setAttribute('data-producing', String(a.isProducing));
     el.setAttribute('data-ready', String(a.rewardReady));
     
-    // Farb-Filter für unterschiedliche Tier-Töne anwenden
     const svgEl = el.querySelector('svg');
     if (svgEl) {
         let h = a.hue || 0;
@@ -1129,7 +1184,7 @@
 
   window.startBaking = async function(recipeId) {
       const freeIndex = oven.slots.findIndex(s => s.state === 'empty');
-      if (freeIndex === -1) return; // Ofen voll
+      if (freeIndex === -1) return;
 
       const r = bakeryRecipes[recipeId];
       for (let cat in r.req) { 
@@ -1604,9 +1659,9 @@
   }
 
   window.collectBeehive = async function() {
-    beehive.isProducing = true; // NEU: Direkt wieder starten
+    beehive.isProducing = true;
     beehive.rewardReady = false;
-    beehive.fedAt = Date.now(); // NEU: Timer zurücksetzen
+    beehive.fedAt = Date.now();
     inventory.items.honey += beehive.level;
     await saveFarmData();
     window.openBeehive();
