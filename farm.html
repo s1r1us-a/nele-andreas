@@ -309,7 +309,77 @@
     }
 
     /* Glühwürmchen CSS */
-    .firefly { position: absolute; width: 4px; height: 4px; background: #eab308; border-radius: 50%; box-shadow: 0 0 8px 3px rgba(234, 179, 8, 0.6); opacity: 0; pointer-events: none; z-index: 45; animation: floatFirefly infinite ease-in-out; }
+    .firefly {
+      position: absolute;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: auto;
+      z-index: 45;
+      cursor: pointer;
+      touch-action: manipulation;
+      animation: floatFirefly infinite ease-in-out;
+      transition: transform 0.15s ease;
+    }
+    /* Kern */
+    .firefly::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: var(--ff-color, #d4f542);
+      box-shadow:
+        0 0 4px 2px var(--ff-color, #d4f542),
+        0 0 10px 4px var(--ff-glow, rgba(180,240,60,0.5));
+      animation: fireflyBlink var(--ff-blink-dur, 2.5s) var(--ff-blink-delay, 0s) infinite ease-in-out;
+    }
+    /* Halo */
+    .firefly::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--ff-glow, rgba(180,240,60,0.3)) 0%, transparent 70%);
+      animation: fireflyBlink var(--ff-blink-dur, 2.5s) var(--ff-blink-delay, 0s) infinite ease-in-out;
+      pointer-events: none;
+    }
+    /* Realistisches Blinken: lange dunkel, kurz hell */
+    @keyframes fireflyBlink {
+      0%, 60%  { opacity: 0.05; }
+      70%, 85% { opacity: 1; }
+      100%     { opacity: 0.05; }
+    }
+    /* Leuchtspur */
+    .firefly-trail {
+      position: absolute;
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 44;
+      animation: trailFade 0.6s ease-out forwards;
+    }
+    @keyframes trailFade {
+      0%   { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.2); }
+    }
+    /* Hover */
+    .firefly:hover::before, .firefly:hover::after { opacity: 1 !important; animation-play-state: paused; }
+    .firefly:hover { transform: scale(1.6); }
+    /* Fang-Partikel */
+    .ff-spark {
+      position: absolute;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 46;
+      animation: sparkFly var(--spark-dur, 0.5s) ease-out forwards;
+    }
+    @keyframes sparkFly {
+      0%   { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--spark-x,10px), var(--spark-y,-15px)) scale(0.2); }
+    }
     @keyframes floatFirefly { 0%, 100% { transform: translate(0, 0); opacity: 0; } 20%, 80% { opacity: 1; } 50% { transform: translate(20px, -30px); } }
 
     .bush { position: absolute; background: var(--grass-mid); border-radius: 50px 50px 20px 20px; box-shadow: inset -5px -5px 12px rgba(0,0,0,0.15), 0 4px 0 rgba(0,0,0,0.05); z-index: 30; transition: transform 0.2s; cursor: pointer; filter: drop-shadow(0 6px 4px rgba(0,0,0,0.15)); }
@@ -1090,20 +1160,122 @@
   }
   
   function manageFireflies(isNight) {
-    let container = document.getElementById('firefly-container');
+    const container = document.getElementById('firefly-container');
     if (!container) return;
     container.innerHTML = '';
-    if (isNight) {
-      for (let i = 0; i < 15; i++) {
-        let ff = document.createElement('div');
-        ff.className = 'firefly';
-        ff.style.left = Math.random() * 100 + '%';
-        ff.style.top = (40 + Math.random() * 50) + '%';
-        ff.style.animationDelay = (Math.random() * 5) + 's';
-        ff.style.animationDuration = (5 + Math.random() * 4) + 's';
-        container.appendChild(ff);
-      }
+    clearInterval(window._fireflyInterval);
+    if (!isNight) return;
+    // Beim Start direkt 3–5 Glühwürmchen spawnen
+    const startCount = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < startCount; i++) spawnFirefly();
+    // Alle 2 Minuten ein neues, max 10
+    window._fireflyInterval = setInterval(() => {
+      if (!document.body.classList.contains('night-mode')) return;
+      const c = document.getElementById('firefly-container');
+      if (c && c.children.length < 10) spawnFirefly();
+    }, 120000);
+  }
+
+  function spawnFirefly() {
+    const container = document.getElementById('firefly-container');
+    if (!container || container.children.length >= 10) return;
+
+    // Farbvarianten: gelbgrün, warmgelb, kaltgrün
+    const colorVariants = [
+      { color: '#c8f028', glow: 'rgba(180,230,30,0.45)'  },  // gelbgrün (häufig)
+      { color: '#c8f028', glow: 'rgba(180,230,30,0.45)'  },
+      { color: '#e8f520', glow: 'rgba(210,240,20,0.45)'  },  // gelb
+      { color: '#78f070', glow: 'rgba(100,230,80,0.45)'  },  // kaltgrün
+      { color: '#f0d840', glow: 'rgba(230,200,40,0.45)'  },  // warmgelb
+    ];
+    const variant = colorVariants[Math.floor(Math.random() * colorVariants.length)];
+    const size = 4 + Math.random() * 5; // 4–9px Größe
+
+    const ff = document.createElement('div');
+    ff.className = 'firefly';
+    ff.style.setProperty('--ff-color', variant.color);
+    ff.style.setProperty('--ff-glow',  variant.glow);
+    ff.style.setProperty('--ff-blink-dur',   (1.8 + Math.random() * 2.5).toFixed(2) + 's');
+    ff.style.setProperty('--ff-blink-delay', (Math.random() * 3).toFixed(2) + 's');
+    ff.style.width  = size + 'px';
+    ff.style.height = size + 'px';
+
+    // Startposition
+    let x = 5 + Math.random() * 88;
+    let y = 42 + Math.random() * 46;
+    ff.style.left = x + '%';
+    ff.style.top  = y + '%';
+
+    // Flugmuster: zufällig zwischen linear, S-Kurve, Kreis
+    const pattern = Math.random();
+    const dur = 5 + Math.random() * 5;
+    ff.style.animationDuration = dur + 's';
+    ff.style.animationDelay   = (Math.random() * 3) + 's';
+
+    // Leuchtspur erzeugen während des Flugs
+    let trailInterval = null;
+    const startTrail = () => {
+      trailInterval = setInterval(() => {
+        if (!ff.parentNode) { clearInterval(trailInterval); return; }
+        const rect = ff.getBoundingClientRect();
+        const containerRect = document.getElementById('firefly-container').getBoundingClientRect();
+        const trail = document.createElement('div');
+        trail.className = 'firefly-trail';
+        trail.style.left = (rect.left - containerRect.left + rect.width / 2 - 1.5) + 'px';
+        trail.style.top  = (rect.top  - containerRect.top  + rect.height / 2 - 1.5) + 'px';
+        trail.style.background = variant.color;
+        trail.style.boxShadow = `0 0 4px 2px ${variant.glow}`;
+        document.getElementById('firefly-container').appendChild(trail);
+        setTimeout(() => trail.remove(), 600);
+      }, 120);
+    };
+    setTimeout(startTrail, (parseFloat(ff.style.animationDelay) * 1000));
+
+    // Klick / Touch
+    ff.addEventListener('click', () => catchFirefly(ff, variant.color, trailInterval));
+    ff.addEventListener('touchend', (e) => { e.preventDefault(); catchFirefly(ff, variant.color, trailInterval); });
+
+    container.appendChild(ff);
+  }
+
+  async function catchFirefly(ff, color, trailInterval) {
+    if (!currentUser || ff.dataset.caught) return;
+    ff.dataset.caught = '1';
+    ff.style.pointerEvents = 'none';
+    clearInterval(trailInterval);
+
+    // Fang-Partikel
+    const container = document.getElementById('firefly-container');
+    const rect = ff.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const cx = rect.left - cRect.left + rect.width / 2;
+    const cy = rect.top  - cRect.top  + rect.height / 2;
+    for (let i = 0; i < 6; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'ff-spark';
+      const angle = (i / 6) * Math.PI * 2;
+      const dist  = 12 + Math.random() * 14;
+      spark.style.left = cx + 'px';
+      spark.style.top  = cy + 'px';
+      spark.style.background = color || '#c8f028';
+      spark.style.boxShadow  = `0 0 4px 2px ${color || '#c8f028'}`;
+      spark.style.setProperty('--spark-x', (Math.cos(angle) * dist).toFixed(1) + 'px');
+      spark.style.setProperty('--spark-y', (Math.sin(angle) * dist).toFixed(1) + 'px');
+      spark.style.setProperty('--spark-dur', (0.4 + Math.random() * 0.25).toFixed(2) + 's');
+      container.appendChild(spark);
+      setTimeout(() => spark.remove(), 700);
     }
+
+    // Glühwürmchen aufblinken und verschwinden
+    ff.style.transition = 'transform 0.15s, opacity 0.35s';
+    ff.style.transform  = 'scale(2.5)';
+    setTimeout(() => { ff.style.opacity = '0'; }, 100);
+    setTimeout(() => ff.remove(), 450);
+
+    inventory.items.firefly = (inventory.items.firefly || 0) + 1;
+    await saveFarmData();
+    window.showToast('Glühwürmchen gefangen! 🫙');
+    window.showFloatingNumber('+1 🫙', '#c8f028');
   }
 
   checkDayNight();
@@ -1163,7 +1335,7 @@
   let inventory = {
     seeds: { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0 },
     crops: { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0 },
-    items: { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0 },
+    items: { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0 },
     bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0 }
   };
 
@@ -1212,7 +1384,7 @@
           const data = snap.val();
           inventory.seeds  = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0,  ...(data.inventory?.seeds  || {}) };
           inventory.crops  = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0,  ...(data.inventory?.crops  || {}) };
-          inventory.items  = { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, ...(data.inventory?.items || {}) };
+          inventory.items  = { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items || {}) };
           inventory.bakery = { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) };
           unlockedBeds = data.unlockedBeds || 1;
           beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
@@ -1814,6 +1986,7 @@
     if (inventory.items.diamond > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (1100 🪙)</button></div>`; }
     if (inventory.items.milk > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Milch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (300 🪙)</button></div>`; }
     if (inventory.items.fertilizer > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (60 🪙)</button></div>`; }
+    if (inventory.items.firefly > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><div><span class="item-name">Glühwürmchen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.firefly}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'firefly', 10)">Verkaufen (10 🪙)</button></div>`; }
     
     if (!hasItems) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast nichts zu verkaufen.<br>Ernte Pflanzen oder sammle Items!</div>`;
     window.showSpecificModal('modalSell');
@@ -1831,6 +2004,7 @@
     else if (itemId === 'honey') { icon = '🍯'; name = 'Honig'; }
     else if (itemId === 'wool') { icon = '🧶'; name = 'Wolle'; }
     else if (itemId === 'fertilizer') { icon = '🪴'; name = 'Dünger'; }
+    else if (itemId === 'firefly') { icon = '🫙'; name = 'Glühwürmchen'; }
 
     const stock = inventory[category][itemId] || 0;
     pendingSell = { category, itemId, price, stock };
@@ -1902,6 +2076,7 @@
     if (inventory.items.milk > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><span class="item-name">Kuhmilch</span></div><div class="item-count">${inventory.items.milk}x</div></div>`; } 
     if (inventory.items.wool > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><span class="item-name">Wolle</span></div><div class="item-count">${inventory.items.wool}x</div></div>`; } 
     if (inventory.items.diamond > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><span class="item-name">Diamant</span></div><div class="item-count">${inventory.items.diamond}x</div></div>`; } 
+    if ((inventory.items.firefly || 0) > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><span class="item-name">Glühwürmchen</span></div><div class="item-count">${inventory.items.firefly}x</div></div>`; }
     if(!hasSpecial) itemsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Items vorhanden.</div>`; itemsHtml += '</div>';
     let bakeryHtml = '<div class="section-title">🍩 Backwaren</div><div class="item-list">'; let hasBakery = false; Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasBakery = true; const item = bakeryRecipes[key]; bakeryHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.bakery[key]}x</div></div>`; } }); if(!hasBakery) bakeryHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Backwaren vorhanden.</div>`; bakeryHtml += '</div>';
     container.innerHTML = seedsHtml + cropsHtml + itemsHtml + bakeryHtml; window.showSpecificModal('modalInventory');
@@ -2222,7 +2397,7 @@
       inventory = {
         seeds:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds  || {}) },
         crops:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops  || {}) },
-        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, ...(data.inventory?.items || {}) },
+        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items || {}) },
         bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
@@ -2276,7 +2451,7 @@
       inventory = {
         seeds:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds  || {}) },
         crops:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops  || {}) },
-        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, ...(data.inventory?.items || {}) },
+        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items || {}) },
         bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
