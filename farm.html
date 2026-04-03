@@ -61,6 +61,12 @@
     .farm-world { flex: 1; position: relative; width: 100%; overflow: hidden; display: none; }
     .sky { position: absolute; top: 0; left: 0; right: 0; height: 35%; background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%); transition: background 2s ease; z-index: 0; }
     
+    /* Sterne in der Nacht */
+    .stars-container { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity 2s ease; pointer-events: none; }
+    .night-mode .stars-container { opacity: 1; }
+    .star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255,255,255,0.8); animation: twinkle 3s infinite alternate ease-in-out; }
+    @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.3); } }
+
     .cloud-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 10; }
     .cloud { position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); animation: drift linear infinite; transition: all 2s ease; }
     .cloud::before, .cloud::after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.8); border-radius: 50%; transition: all 2s ease; }
@@ -78,13 +84,22 @@
     .cloud-4::after { width: 18px; height: 18px; top: -8px; right: 8px; }
     @keyframes drift { from { transform: translateX(-10vw); } to { transform: translateX(110vw); } }
 
-    /* Sonne (Tag) */
-    .sun { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #fbbf24, #f59e0b); right: 15%; top: 12%; z-index: 5; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: sunPulse 6s infinite ease-in-out; transition: opacity 2s ease, transform 2s ease, top 2s ease; }
-    @keyframes sunPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); } }
+    /* Verschönerte Sonne (Tag) */
+    .sun { 
+      position: absolute; width: 56px; height: 56px; border-radius: 50%; 
+      background: radial-gradient(circle at 30% 30%, #fffcea 0%, #fbbf24 40%, #f59e0b 100%); 
+      right: 15%; top: 12%; z-index: 5; 
+      box-shadow: 0 0 30px 10px rgba(251, 191, 36, 0.5), 0 0 60px 20px rgba(245, 158, 11, 0.3); 
+      animation: sunPulse 6s infinite alternate ease-in-out; 
+      transition: opacity 2s ease, transform 2s ease, top 2s ease; 
+    }
+    @keyframes sunPulse { 
+      0% { transform: scale(1); box-shadow: 0 0 30px 10px rgba(251, 191, 36, 0.5), 0 0 60px 20px rgba(245, 158, 11, 0.3); } 
+      100% { transform: scale(1.05); box-shadow: 0 0 40px 15px rgba(251, 191, 36, 0.6), 0 0 80px 25px rgba(245, 158, 11, 0.4); } 
+    }
     
     /* Mond (Nacht) */
     .moon { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: #fefce8; right: 20%; top: 40%; z-index: 5; box-shadow: 0 0 15px rgba(254, 252, 232, 0.4); opacity: 0; transition: opacity 2s ease, transform 2s ease, top 2s ease; }
-    /* Krater */
     .moon::before { content: ''; position: absolute; top: 8px; left: 6px; width: 6px; height: 6px; background: #f1f1f1; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.05); }
     .moon::after { content: ''; position: absolute; top: 16px; left: 18px; width: 9px; height: 9px; background: #f1f1f1; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.05); }
 
@@ -116,31 +131,37 @@
     .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); z-index: 15; }
     .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; transition: filter 2s ease; }
 
-    /* ── BACKHAUS & BIENENSTOCK ── */
-    .bakery-building { position: absolute; top: 29%; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    /* ── BACKHAUS UPGRADE ── */
+    .bakery-building { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .bakery-building:active { transform: translateX(-50%) scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
-    .bakery-roof { width: 0; height: 0; border-left: 35px solid transparent; border-right: 35px solid transparent; border-bottom: 35px solid #d45d5d; border-radius: 4px; transition: filter 2s ease; position: relative; z-index: 2; }
-    .bakery-base { width: 60px; height: 35px; background: #e8d0b3; margin: 0 auto; position: relative; border-radius: 0 0 6px 6px; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.1); transition: filter 2s ease; z-index: 3; }
-    .bakery-door { position: absolute; bottom: 0; left: 10px; width: 16px; height: 22px; background: #8e5a32; border-radius: 8px 8px 0 0; }
-    .bakery-window { position: absolute; top: 8px; right: 10px; width: 14px; height: 14px; background: #b8e4f7; border: 2px solid #8e5a32; border-radius: 50%; }
     
-    /* Kamin Fix - jetzt richtig positioniert! */
+    /* Dach mit Kante */
+    .bakery-roof { width: 0; height: 0; border-left: 38px solid transparent; border-right: 38px solid transparent; border-bottom: 40px solid #d45d5d; border-radius: 4px; transition: filter 2s ease; position: relative; z-index: 2; }
+    .bakery-roof::after { content: ''; position: absolute; top: 40px; left: -38px; width: 76px; height: 6px; background: #b54a4a; border-radius: 4px; }
+    
+    /* Basis mit Ziegel-Muster */
+    .bakery-base { width: 64px; height: 40px; background: #e8d0b3; margin: 0 auto; position: relative; border-radius: 0 0 6px 6px; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.1); transition: filter 2s ease; z-index: 3; background-image: linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 16px 8px; }
+    
+    /* Tür mit Rahmen und Knauf */
+    .bakery-door { position: absolute; bottom: 0; left: 12px; width: 18px; height: 26px; background: #8e5a32; border-radius: 9px 9px 0 0; border: 2px solid #5c3a21; border-bottom: none; }
+    .bakery-door::after { content: ''; position: absolute; top: 12px; right: 2px; width: 4px; height: 4px; background: #fbbf24; border-radius: 50%; }
+    
+    /* Fensterkreuz und Licht */
+    .bakery-window { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; background: #b8e4f7; border: 2px solid #5c3a21; border-radius: 4px; box-shadow: inset 0 0 8px rgba(251, 191, 36, 0.6); }
+    .bakery-window::before { content: ''; position: absolute; top: 0; bottom: 0; left: 5px; width: 2px; background: #5c3a21; }
+    .bakery-window::after { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: #5c3a21; }
+    
+    /* Bäckerei-Schild */
+    .bakery-sign { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 12px; background: #d4a061; border: 2px solid #8e5a32; border-radius: 3px; z-index: 4; display: flex; align-items: center; justify-content: center; font-size: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .bakery-sign::after { content: '🥖'; }
+    
+    /* Kamin & Rauch */
     .bakery-chimney { position: absolute; top: 6px; right: 14px; width: 14px; height: 35px; background: #704224; border-radius: 3px; box-shadow: inset -3px 0 0 rgba(0,0,0,0.2); z-index: 1; }
     .is-baking .bakery-chimney::after { content: '💨'; position: absolute; top: -22px; left: -2px; font-size: 16px; pointer-events: none; animation: floatSmoke 2.2s infinite ease-out; display: block; }
-    
-/* Rauch-Animation OHNE Drehung während des Aufsteigens */
     @keyframes floatSmoke { 
-      0% { 
-        transform: translateY(0) scale(0.5) rotate(-90deg); 
-        opacity: 0; 
-      } 
-      20% { 
-        opacity: 0.7; 
-      } 
-      100% { 
-        transform: translateY(-45px) scale(1.5) rotate(-90deg); 
-        opacity: 0; 
-      } 
+      0% { transform: translateY(0) scale(0.5) rotate(-90deg); opacity: 0; } 
+      20% { opacity: 0.7; } 
+      100% { transform: translateY(-45px) scale(1.5) rotate(-90deg); opacity: 0; } 
     }
 
     .beehive-building { position: absolute; top: 31%; left: 25%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -375,6 +396,7 @@
 
 <div id="farmWorld" class="farm-world">
   <div class="sky">
+    <div class="stars-container" id="starsContainer"></div>
     <div class="cloud-container">
       <div class="cloud cloud-1"></div>
       <div class="cloud cloud-2"></div>
@@ -391,6 +413,7 @@
     <div class="bakery-chimney"></div>
     <div class="bakery-roof"></div>
     <div class="bakery-base">
+      <div class="bakery-sign"></div>
       <div class="bakery-door"></div>
       <div class="bakery-window"></div>
     </div>
@@ -529,6 +552,22 @@
   let ownUserKey = null;
   let visitUnsubscribe = null;
   function farmName(name) { return name === 'Andreas' ? "Andreas' Farm" : name + "s Farm"; }
+
+  // Sterne generieren
+  function initStars() {
+    const container = document.getElementById('starsContainer');
+    if (!container) return;
+    for(let i = 0; i < 50; i++) {
+      let star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = (Math.random() * 3) + 's';
+      star.style.animationDuration = (2 + Math.random() * 3) + 's';
+      container.appendChild(star);
+    }
+  }
+  initStars();
 
   // Tag-/Nacht Modus Check
   function checkDayNight() {
@@ -731,10 +770,101 @@
         <radialGradient id="gradRabbit" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f5f0eb"/></radialGradient>
         <radialGradient id="gradCow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eaeaea"/></radialGradient>
       </defs>`;
-    if(species === 'chicken') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><line x1="20" y1="52" x2="20" y2="60" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><line x1="28" y1="52" x2="28" y2="60" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="40" rx="15" ry="16" fill="#fffdfa"/><path d="M 9 40 Q 4 32 10 28 Q 7 38 11 43" fill="#fffdfa" /><circle cx="34" cy="28" r="9" fill="#fffdfa"/><circle cx="33" cy="18" r="3" fill="#e84a5f"/><circle cx="37" cy="19" r="4" fill="#e84a5f"/><polygon points="41,27 48,29 41,31" fill="#fbbf24"/><circle cx="36" cy="25" r="1.8" fill="#4a2030"/><ellipse cx="20" cy="42" rx="8" ry="6" fill="#f0e8e0" transform="rotate(-10 20 42)"/></svg>${shadow}`; } 
-    else if (species === 'cat') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><path d="M 12 48 Q 2 48 4 34 Q 6 25 10 30" fill="none" stroke="#e28743" stroke-width="4.5" stroke-linecap="round" class="tail"/><ellipse cx="24" cy="46" rx="14" ry="11" fill="#e28743"/><circle cx="30" cy="32" r="11" fill="#e28743"/><polygon points="21,25 24,16 28,23" fill="#e28743"/><polygon points="39,25 36,16 32,23" fill="#e28743"/><circle cx="26" cy="30" r="1.8" fill="#4a2030"/><circle cx="35" cy="30" r="1.8" fill="#4a2030"/><polygon points="30,33 32,33 31,35" fill="#e87090"/></svg>${shadow}`; } 
-else if (species === 'cow') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">${defs}<g class="tail"><path d="M 38 42 Q 44 44 42 50" fill="none" stroke="#1a1a1a" stroke-width="2"/><circle cx="42" cy="50" r="2.5" fill="#1a1a1a"/></g><rect x="14" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="14" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="30" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="30" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><ellipse cx="24" cy="44" rx="16" ry="14" fill="url(#gradCow)"/><path d="M 10 40 Q 14 32 20 40 Q 18 48 10 45 Z" fill="#1a1a1a"/><path d="M 28 38 Q 36 34 38 42 Q 32 48 26 44 Z" fill="#1a1a1a"/><rect x="18" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="18" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="26" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="26" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><g class="ear-left"><ellipse cx="10" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(-20 10 22)"/><ellipse cx="10" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(-20 10 22)"/></g><g class="ear-right"><ellipse cx="30" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(20 30 22)"/><ellipse cx="30" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(20 30 22)"/></g><path d="M 14 18 Q 12 10 16 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><path d="M 26 18 Q 28 10 24 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="20" cy="26" rx="11" ry="10" fill="url(#gradCow)"/><path d="M 12 22 Q 16 16 22 20 Q 20 28 14 26 Z" fill="#1a1a1a"/><ellipse cx="20" cy="32" rx="9" ry="6.5" fill="#f0b8c8"/><circle cx="16" cy="31" r="1.2" fill="#d86a88"/><circle cx="24" cy="31" r="1.2" fill="#d86a88"/><circle cx="15" cy="24" r="1.8" fill="#1a1a1a"/><circle cx="25" cy="24" r="1.8" fill="#1a1a1a"/></svg>${shadow}`; }    else if (species === 'sheep') { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><ellipse cx="26" cy="40" rx="18" ry="14" fill="#fffdfa" stroke="#e0e0e0" stroke-width="2"/><ellipse cx="14" cy="30" rx="10" ry="10" fill="#2d3748"/><rect x="16" y="52" width="4" height="8" fill="#2d3748"/><rect x="32" y="52" width="4" height="8" fill="#2d3748"/><circle cx="10" cy="28" r="1.5" fill="#ffffff"/><circle cx="16" cy="28" r="1.5" fill="#ffffff"/></svg>${shadow}`; }
-    else { return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">${defs}<g class="tail"><circle cx="42" cy="44" r="6" fill="#f0ece6"/></g><ellipse cx="24" cy="44" rx="16" ry="14" class="rabbit-body"/><g class="ear-left"><ellipse cx="14" cy="16" rx="5" ry="13" class="rabbit-body"/></g><g class="ear-right"><ellipse cx="26" cy="14" rx="5" ry="13" class="rabbit-body"/></g><circle cx="20" cy="34" r="12" class="rabbit-body"/><circle cx="15" cy="31" r="2.2" class="rabbit-eye"/><circle cx="25" cy="31" r="2.2" class="rabbit-eye"/><ellipse cx="20" cy="36" rx="2" ry="1.4" class="rabbit-nose"/></svg>${shadow}`; }
+    
+    if (species === 'chicken') { 
+        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+          <g class="tail"><path d="M 12 36 Q 6 32 8 26 Q 14 30 14 36 Z" fill="#fffdfa" stroke="#e0d6cc" stroke-width="1"/></g>
+          <line x1="20" y1="48" x2="20" y2="58" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+          <line x1="20" y1="58" x2="16" y2="60" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+          <line x1="30" y1="48" x2="30" y2="58" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+          <line x1="30" y1="58" x2="34" y2="60" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+          <ellipse cx="25" cy="40" rx="16" ry="14" fill="#fffdfa" stroke="#f5f0eb" stroke-width="1"/>
+          <path d="M 18 38 Q 24 46 32 38" fill="none" stroke="#e0d6cc" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="34" cy="28" r="10" fill="#fffdfa"/>
+          <path d="M 32 18 Q 35 12 38 18 Q 41 14 42 20 Z" fill="#e84a5f"/>
+          <circle cx="38" cy="34" r="3" fill="#e84a5f"/>
+          <polygon points="42,26 48,28 42,30" fill="#fbbf24"/>
+          <circle cx="36" cy="24" r="2" fill="#1a1a1a"/>
+        </svg>${shadow}`; 
+    } 
+    else if (species === 'cat') { 
+        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+          <g class="tail"><path d="M 16 46 Q 4 48 8 34 Q 12 24 16 28" fill="none" stroke="#e28743" stroke-width="4.5" stroke-linecap="round"/></g>
+          <ellipse cx="18" cy="52" rx="6" ry="5" fill="#c47030"/>
+          <ellipse cx="26" cy="44" rx="13" ry="16" fill="#e28743"/>
+          <ellipse cx="28" cy="42" rx="8" ry="12" fill="#fffdfa"/>
+          <rect x="22" y="48" width="4" height="12" rx="2" fill="#e28743"/>
+          <rect x="30" y="48" width="4" height="12" rx="2" fill="#e28743"/>
+          <ellipse cx="24" cy="59" rx="3" ry="2" fill="#fffdfa"/>
+          <ellipse cx="32" cy="59" rx="3" ry="2" fill="#fffdfa"/>
+          <g class="ear-left"><polygon points="18,24 16,14 24,20" fill="#e28743"/><polygon points="19,23 17,16 23,20" fill="#f0b8c8"/></g>
+          <g class="ear-right"><polygon points="34,24 36,14 28,20" fill="#e28743"/><polygon points="33,23 35,16 29,20" fill="#f0b8c8"/></g>
+          <circle cx="26" cy="26" r="11" fill="#e28743"/>
+          <ellipse cx="26" cy="28" rx="7" ry="5" fill="#fffdfa"/>
+          <circle cx="22" cy="25" r="1.8" fill="#1a1a1a"/>
+          <circle cx="30" cy="25" r="1.8" fill="#1a1a1a"/>
+          <polygon points="25,28 27,28 26,30" fill="#e87090"/>
+          <line x1="12" y1="26" x2="18" y2="27" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="29" x2="18" y2="28" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="40" y1="26" x2="34" y2="27" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="40" y1="29" x2="34" y2="28" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>${shadow}`; 
+    } 
+    else if (species === 'cow') { 
+        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">${defs}<g class="tail"><path d="M 38 42 Q 44 44 42 50" fill="none" stroke="#1a1a1a" stroke-width="2"/><circle cx="42" cy="50" r="2.5" fill="#1a1a1a"/></g><rect x="14" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="14" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="30" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="30" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><ellipse cx="24" cy="44" rx="16" ry="14" fill="url(#gradCow)"/><path d="M 10 40 Q 14 32 20 40 Q 18 48 10 45 Z" fill="#1a1a1a"/><path d="M 28 38 Q 36 34 38 42 Q 32 48 26 44 Z" fill="#1a1a1a"/><rect x="18" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="18" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="26" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="26" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><g class="ear-left"><ellipse cx="10" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(-20 10 22)"/><ellipse cx="10" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(-20 10 22)"/></g><g class="ear-right"><ellipse cx="30" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(20 30 22)"/><ellipse cx="30" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(20 30 22)"/></g><path d="M 14 18 Q 12 10 16 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><path d="M 26 18 Q 28 10 24 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="20" cy="26" rx="11" ry="10" fill="url(#gradCow)"/><path d="M 12 22 Q 16 16 22 20 Q 20 28 14 26 Z" fill="#1a1a1a"/><ellipse cx="20" cy="32" rx="9" ry="6.5" fill="#f0b8c8"/><circle cx="16" cy="31" r="1.2" fill="#d86a88"/><circle cx="24" cy="31" r="1.2" fill="#d86a88"/><circle cx="15" cy="24" r="1.8" fill="#1a1a1a"/><circle cx="25" cy="24" r="1.8" fill="#1a1a1a"/></svg>${shadow}`; 
+    } 
+    else if (species === 'sheep') { 
+        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+          <rect x="16" y="46" width="4" height="12" rx="1" fill="#2d3748"/>
+          <rect x="32" y="46" width="4" height="12" rx="1" fill="#2d3748"/>
+          <circle cx="20" cy="38" r="10" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
+          <circle cx="32" cy="38" r="10" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
+          <circle cx="26" cy="34" r="12" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
+          <circle cx="16" cy="44" r="8" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
+          <circle cx="36" cy="44" r="8" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
+          <circle cx="26" cy="46" r="10" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
+          <ellipse cx="14" cy="30" rx="9" ry="10" fill="#2d3748"/>
+          <ellipse cx="6" cy="30" rx="4" ry="2" fill="#2d3748" transform="rotate(-15 6 30)"/>
+          <ellipse cx="22" cy="30" rx="4" ry="2" fill="#2d3748" transform="rotate(15 22 30)"/>
+          <circle cx="10" cy="28" r="1.5" fill="#ffffff"/>
+          <circle cx="16" cy="28" r="1.5" fill="#ffffff"/>
+          <circle cx="10" cy="22" r="4" fill="#fffdfa"/>
+          <circle cx="14" cy="20" r="5" fill="#fffdfa"/>
+          <circle cx="18" cy="22" r="4" fill="#fffdfa"/>
+        </svg>${shadow}`; 
+    }
+    else { 
+      return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+        ${defs}
+        <g class="tail"><circle cx="44" cy="42" r="6" fill="#f0ece6"/></g>
+        
+        <ellipse cx="34" cy="52" rx="7" ry="5" class="rabbit-body"/>
+        <path d="M 28 42 Q 36 48 34 52" fill="none" stroke="#e0d6cc" stroke-width="2" stroke-linecap="round"/>
+        
+        <ellipse cx="16" cy="54" rx="3.5" ry="6" class="rabbit-body" transform="rotate(-15 16 54)"/>
+        <ellipse cx="24" cy="54" rx="3.5" ry="6" class="rabbit-body" transform="rotate(-15 24 54)"/>
+        
+        <ellipse cx="14" cy="58" rx="4" ry="2.5" class="rabbit-body"/>
+        <ellipse cx="22" cy="58" rx="4" ry="2.5" class="rabbit-body"/>
+        
+        <ellipse cx="24" cy="42" rx="16" ry="14" class="rabbit-body"/>
+        
+        <g class="ear-left">
+          <ellipse cx="14" cy="14" rx="4.5" ry="14" class="rabbit-body"/>
+          <ellipse cx="14" cy="14" rx="2" ry="10" class="rabbit-ear-inner" fill="#f0b8c8"/>
+        </g>
+        <g class="ear-right">
+          <ellipse cx="26" cy="12" rx="4.5" ry="14" class="rabbit-body"/>
+          <ellipse cx="26" cy="12" rx="2" ry="10" class="rabbit-ear-inner" fill="#f0b8c8"/>
+        </g>
+        
+        <circle cx="20" cy="32" r="12" class="rabbit-body"/>
+        
+        <circle cx="15" cy="29" r="2" class="rabbit-eye"/>
+        <circle cx="25" cy="29" r="2" class="rabbit-eye"/>
+        <ellipse cx="20" cy="34" rx="2.5" ry="1.5" class="rabbit-nose"/>
+      </svg>${shadow}`; 
+    }
   }
 
   function getBeehiveSVG() {
@@ -893,6 +1023,15 @@ else if (species === 'cow') { return `<svg class="rabbit" viewBox="0 0 52 64" xm
     }
     el.setAttribute('data-producing', String(a.isProducing));
     el.setAttribute('data-ready', String(a.rewardReady));
+    
+    // Farb-Filter für unterschiedliche Tier-Töne anwenden
+    const svgEl = el.querySelector('svg');
+    if (svgEl) {
+        let h = a.hue || 0;
+        let s = a.sat || 1;
+        let b = a.bri || 1;
+        svgEl.style.filter = `hue-rotate(${h}deg) saturate(${s}) brightness(${b})`;
+    }
     
     updateAnimalPos(a);
   }
@@ -1136,7 +1275,35 @@ else if (species === 'cow') { return `<svg class="rabbit" viewBox="0 0 52 64" xm
   window.processBuyAnimal = async function() { 
     const cost = itemToBuy.price; const nameInput = document.getElementById('newAnimalName').value.trim();
     if(!nameInput) { window.showToast('Bitte gib einen Namen ein! 📝'); return; }
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); let newAnimal = { id: Date.now(), name: nameInput, species: itemToBuy.id, x: 10 + Math.random() * 80, y: 80 + Math.random() * 10, isWalking: false, facingLeft: false, isProducing: false, fedAt: 0, rewardReady: false }; animals.push(newAnimal); renderAnimalDOM(newAnimal); await saveFarmData(); window.closeAllModals(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); } 
+    if (currentCoins >= cost) { 
+        await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); 
+        runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); 
+        
+        let h = Math.floor(Math.random() * 40) - 20; 
+        let s = (85 + Math.random() * 30) / 100;     
+        let b = (90 + Math.random() * 20) / 100;     
+
+        let newAnimal = { 
+            id: Date.now(), 
+            name: nameInput, 
+            species: itemToBuy.id, 
+            x: 10 + Math.random() * 80, 
+            y: 80 + Math.random() * 10, 
+            isWalking: false, 
+            facingLeft: false, 
+            isProducing: false, 
+            fedAt: 0, 
+            rewardReady: false,
+            hue: h,
+            sat: s,
+            bri: b
+        }; 
+        animals.push(newAnimal); 
+        renderAnimalDOM(newAnimal); 
+        await saveFarmData(); 
+        window.closeAllModals(); 
+        window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); 
+    } 
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
