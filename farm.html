@@ -128,11 +128,19 @@
     .bakery-chimney { position: absolute; top: 6px; right: 14px; width: 14px; height: 35px; background: #704224; border-radius: 3px; box-shadow: inset -3px 0 0 rgba(0,0,0,0.2); z-index: 1; }
     .is-baking .bakery-chimney::after { content: '💨'; position: absolute; top: -22px; left: -2px; font-size: 16px; pointer-events: none; animation: floatSmoke 2.2s infinite ease-out; display: block; }
     
-    /* Rauch-Animation mit exakt 45 Grad Drehung nach links */
+/* Rauch-Animation OHNE Drehung während des Aufsteigens */
     @keyframes floatSmoke { 
-      0% { transform: translateY(0) scale(0.5) rotate(-45deg); opacity: 0; } 
-      20% { opacity: 0.7; } 
-      100% { transform: translateY(-45px) scale(1.5) rotate(-45deg); opacity: 0; } 
+      0% { 
+        transform: translateY(0) scale(0.5) rotate(-90deg); 
+        opacity: 0; 
+      } 
+      20% { 
+        opacity: 0.7; 
+      } 
+      100% { 
+        transform: translateY(-45px) scale(1.5) rotate(-90deg); 
+        opacity: 0; 
+      } 
     }
 
     .beehive-building { position: absolute; top: 31%; left: 25%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
