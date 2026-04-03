@@ -96,10 +96,43 @@
     .sky { position: absolute; top: 0; left: 0; right: 0; height: 35%; background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%); transition: background 2s ease; z-index: 0; }
     
     /* Sterne in der Nacht */
-    .stars-container { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity 2s ease; pointer-events: none; }
+    .stars-container { position: absolute; top: 0; left: 0; right: 0; height: 60%; z-index: 1; opacity: 0; transition: opacity 2s ease; pointer-events: none; overflow: hidden; }
     .night-mode .stars-container { opacity: 1; }
-    .star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255,255,255,0.8); animation: twinkle 3s infinite alternate ease-in-out; }
-    @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.3); } }
+
+    /* Sterngrößen */
+    .star { position: absolute; border-radius: 50%; animation: twinkle var(--twinkle-dur, 3s) var(--twinkle-delay, 0s) infinite alternate ease-in-out; }
+    .star-sm  { width: 1.5px; height: 1.5px; background: rgba(255,255,255,0.7); box-shadow: 0 0 3px 1px rgba(255,255,255,0.4); }
+    .star-md  { width: 2.5px; height: 2.5px; background: #fff; box-shadow: 0 0 6px 2px rgba(255,255,255,0.6), 0 0 12px 4px rgba(200,220,255,0.3); }
+    .star-lg  { width: 3.5px; height: 3.5px; background: #fff; box-shadow: 0 0 8px 3px rgba(255,255,255,0.8), 0 0 18px 6px rgba(180,210,255,0.4), 0 0 30px 10px rgba(160,190,255,0.15); }
+
+    @keyframes twinkle {
+      0%   { opacity: 0.15; transform: scale(0.7); }
+      50%  { opacity: 0.8; }
+      100% { opacity: 1; transform: scale(1.4); }
+    }
+
+    /* Mondschein-Ring */
+    .moon-glow { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity 2s ease; z-index: 4; }
+    .night-mode .moon-glow { opacity: 1; }
+
+    /* Sternschnuppe */
+    .shooting-star {
+      position: absolute;
+      height: 1.5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 60%, white 100%);
+      pointer-events: none;
+      z-index: 6;
+      opacity: 0;
+      animation: shoot var(--shoot-dur, 0.9s) ease-out forwards;
+      transform-origin: right center;
+    }
+    @keyframes shoot {
+      0%   { opacity: 0; transform: translateX(0) scaleX(0.1); }
+      10%  { opacity: 1; }
+      80%  { opacity: 0.7; }
+      100% { opacity: 0; transform: translateX(calc(-1 * var(--shoot-dist, 220px))) scaleX(1); }
+    }
 
     /* PARALLAX HÜGEL (Tiefe) */
     .hills-layer { position: absolute; top: 22%; left: 0; right: 0; height: 15%; z-index: 2; pointer-events: none; opacity: 0.9; transition: opacity 2s ease; }
@@ -258,6 +291,22 @@
     .night-mode .sun { opacity: 0; transform: translateY(15px); top: 30%; pointer-events: none; }
     .night-mode .moon { opacity: 1; transform: translateY(-15px); top: 12%; animation: moonBreathe 5s infinite ease-in-out; }
     @keyframes moonBreathe { 0%, 100% { box-shadow: 0 0 15px rgba(254, 252, 232, 0.4); } 50% { box-shadow: 0 0 22px rgba(254, 252, 232, 0.7); } }
+
+    /* Mondschein-Glow-Ring */
+    #moonGlow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(254,252,232,0.12) 0%, rgba(220,235,255,0.06) 35%, transparent 70%);
+      animation: moonGlowPulse 5s infinite ease-in-out;
+      pointer-events: none;
+    }
+    @keyframes moonGlowPulse {
+      0%, 100% { transform: translate(-50%,-50%) scale(1);    opacity: 0.7; }
+      50%       { transform: translate(-50%,-50%) scale(1.1); opacity: 1;   }
+    }
 
     /* Glühwürmchen CSS */
     .firefly { position: absolute; width: 4px; height: 4px; background: #eab308; border-radius: 50%; box-shadow: 0 0 8px 3px rgba(234, 179, 8, 0.6); opacity: 0; pointer-events: none; z-index: 45; animation: floatFirefly infinite ease-in-out; }
@@ -589,7 +638,9 @@
     </div>
 
     <div class="sun"></div>
-    <div class="moon"></div>
+    <div class="moon" id="moon">
+      <div class="moon-glow" id="moonGlow"></div>
+    </div>
   </div>
 
   <!-- REGEN -->
@@ -947,21 +998,74 @@
   let visitUnsubscribe = null;
   function farmName(name) { return name === 'Andreas' ? "Andreas' Farm" : name + "s Farm"; }
 
-  // Sterne generieren
+  // Sterne generieren (3 Größenklassen, individuelle Twinkle-Timings, nur im Himmelbereich)
   function initStars() {
     const container = document.getElementById('starsContainer');
     if (!container) return;
-    for(let i = 0; i < 50; i++) {
-      let star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = Math.random() * 100 + '%';
-      star.style.top = Math.random() * 100 + '%';
-      star.style.animationDelay = (Math.random() * 3) + 's';
-      star.style.animationDuration = (2 + Math.random() * 3) + 's';
-      container.appendChild(star);
-    }
+    container.innerHTML = '';
+
+    // Stern-Klassen: [className, Anzahl, max-top%]
+    // Hügel beginnen bei top:22% der Gesamtseite = ~63% der Sky-Höhe (35%).
+    // Sterne also max bis 55% der Sky-Höhe, damit auch der Glow nicht rausblinkt.
+    const starDefs = [
+      { cls: 'star star-sm', count: 55, maxTop: 55 },
+      { cls: 'star star-md', count: 22, maxTop: 50 },
+      { cls: 'star star-lg', count:  8, maxTop: 42 },
+    ];
+
+    starDefs.forEach(({ cls, count, maxTop }) => {
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.className = cls;
+        star.style.left = (Math.random() * 100) + '%';
+        star.style.top  = (Math.random() * maxTop) + '%';
+        // Jeder Stern hat eigene Twinkle-Dauer (2–5s) und Delay (0–4s)
+        star.style.setProperty('--twinkle-dur',   (2 + Math.random() * 3).toFixed(2) + 's');
+        star.style.setProperty('--twinkle-delay', (Math.random() * 4).toFixed(2) + 's');
+        container.appendChild(star);
+      }
+    });
   }
   initStars();
+
+  // Sternschnuppenschauer
+  function spawnOneStar(container) {
+    const el = document.createElement('div');
+    el.className = 'shooting-star';
+    const length = 100 + Math.random() * 180;
+    const angle  = 18  + Math.random() * 28;
+    const dur    = 0.6 + Math.random() * 0.6;
+    el.style.left  = (20 + Math.random() * 75) + '%';
+    el.style.top   = (3  + Math.random() * 48) + '%';
+    el.style.width = length + 'px';
+    el.style.transform = `rotate(${angle}deg)`;
+    el.style.setProperty('--shoot-dur',  dur + 's');
+    el.style.setProperty('--shoot-dist', length + 'px');
+    container.appendChild(el);
+    setTimeout(() => el.remove(), dur * 1000 + 200);
+  }
+
+  function spawnShower() {
+    if (!document.body.classList.contains('night-mode')) {
+      scheduleShower(); return;
+    }
+    const container = document.getElementById('starsContainer');
+    if (!container) { scheduleShower(); return; }
+
+    // 3–7 Sternschnuppen mit je 150–600ms Abstand
+    const count = 3 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => spawnOneStar(container), i * (150 + Math.random() * 450));
+    }
+    scheduleShower();
+  }
+
+  function scheduleShower() {
+    // Nächster Schauer in 8–20 Sekunden
+    setTimeout(spawnShower, 8000 + Math.random() * 12000);
+  }
+  // Erster Schauer nach 6–12 Sekunden
+  setTimeout(spawnShower, 6000 + Math.random() * 6000);
 
   // Tag-/Nacht Modus Check inkl. Golden Hour
   function checkDayNight() {
