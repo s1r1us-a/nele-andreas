@@ -26,6 +26,8 @@
     .night-mode .cloud::before, .night-mode .cloud::after { filter: brightness(0.7); }
     .night-mode .fence-post, .night-mode .bakery-base, .night-mode .bakery-roof, .night-mode .bed { filter: brightness(0.75); }
     .night-mode .animal-wrapper { filter: brightness(0.85); }
+    .night-mode .grass-tuft::before, .night-mode .grass-tuft::after { background: #166534; }
+    .night-mode .grass-tuft-center { background: #15803d; }
 
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     html, body { height: 100%; font-family: 'Quicksand', sans-serif; background: var(--cream); overflow: hidden; display: flex; flex-direction: column; transition: background-color 2s ease; }
@@ -68,6 +70,12 @@
     .cloud-2 { width: 60px; height: 20px; top: 25%; left: -100px; animation-duration: 35s; animation-delay: -15s; opacity: 0.6; }
     .cloud-2::before { width: 30px; height: 30px; top: -15px; left: 10px; }
     .cloud-2::after { width: 20px; height: 20px; top: -10px; right: 10px; }
+    .cloud-3 { width: 90px; height: 30px; top: 8%; left: -120px; animation-duration: 55s; animation-delay: -5s; opacity: 0.7; }
+    .cloud-3::before { width: 45px; height: 45px; top: -22px; left: 15px; }
+    .cloud-3::after { width: 30px; height: 30px; top: -12px; right: 12px; }
+    .cloud-4 { width: 50px; height: 18px; top: 20%; left: -80px; animation-duration: 30s; animation-delay: -20s; opacity: 0.5; }
+    .cloud-4::before { width: 25px; height: 25px; top: -12px; left: 8px; }
+    .cloud-4::after { width: 18px; height: 18px; top: -8px; right: 8px; }
     @keyframes drift { from { transform: translateX(-10vw); } to { transform: translateX(110vw); } }
 
     /* Sonne (Tag) */
@@ -98,21 +106,34 @@
     .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
     .ground-area::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1; }
     
+    /* Wackelndes Gras */
+    .grass-tuft { position: absolute; width: 15px; height: 15px; pointer-events: none; z-index: 12; animation: windSway 3s ease-in-out infinite; transform-origin: bottom center; }
+    .grass-tuft::before, .grass-tuft::after { content: ''; position: absolute; bottom: 0; width: 4px; height: 12px; background: #7ec850; border-radius: 10px; }
+    .grass-tuft::before { left: 2px; transform: rotate(-15deg); height: 10px; }
+    .grass-tuft::after { right: 2px; transform: rotate(15deg); }
+    .grass-tuft-center { position: absolute; bottom: 0; left: 5px; width: 5px; height: 15px; background: #9be860; border-radius: 10px; }
+
     .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); z-index: 15; }
     .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; transition: filter 2s ease; }
 
     /* ── BACKHAUS & BIENENSTOCK ── */
     .bakery-building { position: absolute; top: 29%; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .bakery-building:active { transform: translateX(-50%) scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
-    .bakery-roof { width: 0; height: 0; border-left: 35px solid transparent; border-right: 35px solid transparent; border-bottom: 35px solid #d45d5d; border-radius: 4px; transition: filter 2s ease; }
-    .bakery-base { width: 60px; height: 35px; background: #e8d0b3; margin: 0 auto; position: relative; border-radius: 0 0 6px 6px; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.1); transition: filter 2s ease; }
+    .bakery-roof { width: 0; height: 0; border-left: 35px solid transparent; border-right: 35px solid transparent; border-bottom: 35px solid #d45d5d; border-radius: 4px; transition: filter 2s ease; position: relative; z-index: 2; }
+    .bakery-base { width: 60px; height: 35px; background: #e8d0b3; margin: 0 auto; position: relative; border-radius: 0 0 6px 6px; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.1); transition: filter 2s ease; z-index: 3; }
     .bakery-door { position: absolute; bottom: 0; left: 10px; width: 16px; height: 22px; background: #8e5a32; border-radius: 8px 8px 0 0; }
     .bakery-window { position: absolute; top: 8px; right: 10px; width: 14px; height: 14px; background: #b8e4f7; border: 2px solid #8e5a32; border-radius: 50%; }
     
-    /* Kamin Fix! */
-    .bakery-chimney { position: absolute; top: 12px; right: 16px; width: 14px; height: 24px; background: #8e5a32; border-radius: 2px; box-shadow: inset -2px 0 0 rgba(0,0,0,0.2); z-index: -1; }
-    .is-baking .bakery-chimney::after { content: '💨'; position: absolute; top: -20px; left: -4px; font-size: 14px; pointer-events: none; animation: floatSmoke 2s infinite ease-out; }
-    @keyframes floatSmoke { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(-20px) scale(1.5) rotate(10deg); opacity: 0; } }
+    /* Kamin Fix - jetzt richtig positioniert! */
+    .bakery-chimney { position: absolute; top: 6px; right: 14px; width: 14px; height: 35px; background: #704224; border-radius: 3px; box-shadow: inset -3px 0 0 rgba(0,0,0,0.2); z-index: 1; }
+    .is-baking .bakery-chimney::after { content: '💨'; position: absolute; top: -22px; left: -2px; font-size: 16px; pointer-events: none; animation: floatSmoke 2.2s infinite ease-out; display: block; }
+    
+    /* Rauch-Animation mit exakt 45 Grad Drehung nach links */
+    @keyframes floatSmoke { 
+      0% { transform: translateY(0) scale(0.5) rotate(-45deg); opacity: 0; } 
+      20% { opacity: 0.7; } 
+      100% { transform: translateY(-45px) scale(1.5) rotate(-45deg); opacity: 0; } 
+    }
 
     .beehive-building { position: absolute; top: 31%; left: 25%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .beehive-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -349,6 +370,8 @@
     <div class="cloud-container">
       <div class="cloud cloud-1"></div>
       <div class="cloud cloud-2"></div>
+      <div class="cloud cloud-3"></div>
+      <div class="cloud cloud-4"></div>
     </div>
     <div class="sun"></div>
     <div class="moon"></div>
@@ -372,6 +395,14 @@
   <div class="bush bush-3"></div>
 
   <div class="fence" id="fenceContainer"></div><div class="ground-area"></div>
+  
+  <div class="grass-tuft" style="top: 42%; left: 15%;"><div class="grass-tuft-center"></div></div>
+  <div class="grass-tuft" style="top: 48%; left: 85%; animation-delay: -1s;"><div class="grass-tuft-center"></div></div>
+  <div class="grass-tuft" style="top: 65%; left: 8%; animation-delay: -2s;"><div class="grass-tuft-center"></div></div>
+  <div class="grass-tuft" style="top: 55%; left: 75%; animation-delay: -0.5s;"><div class="grass-tuft-center"></div></div>
+  <div class="grass-tuft" style="top: 75%; left: 85%; animation-delay: -1.5s;"><div class="grass-tuft-center"></div></div>
+  <div class="grass-tuft" style="top: 80%; left: 20%; animation-delay: -0.8s;"><div class="grass-tuft-center"></div></div>
+
   <div class="beds-container" id="bedsContainer"></div>
   <div id="animalSpace"></div>
 </div>
