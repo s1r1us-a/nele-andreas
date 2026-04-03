@@ -481,12 +481,17 @@
 
       // Besuchs-Button einblenden
       const otherName = currentUser === 'Andreas' ? 'Nele' : 'Andreas';
-      document.getElementById('visitBtnLabel').textContent = otherName + 's Farm';
+      const otherPossessive = otherName.endsWith('s') ? otherName + "' Farm" : otherName + 's Farm';
+      document.getElementById('visitBtnLabel').textContent = otherPossessive;
       document.getElementById('btnVisit').style.display = 'flex';
 
     } else {
-      // Nicht eingeloggt → zurück zur Hauptseite
-      window.location.href = 'index.html';
+      // Nicht eingeloggt → kurz warten ob Firebase doch noch einen User liefert, dann redirect
+      setTimeout(() => {
+        if (!currentUser) window.location.href = 'index.html';
+      }, 2000);
+      document.getElementById('authLoading').style.display = 'none';
+      document.getElementById('authOverlay').style.display = 'flex';
     }
   });
 
