@@ -674,6 +674,7 @@
       const cost = bedPrices[unlockedBeds];
       if (currentCoins >= cost) {
           await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+          runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
           unlockedBeds++;
           await saveFarmData();
           initScene();
@@ -693,14 +694,14 @@
 
   window.processBuy = async function(amount) { 
     const cost = itemToBuy.price * amount;
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showToast(`${amount}x ${itemToBuy.name}samen gekauft!`); window.showSpecificModal('modalShop'); } 
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showToast(`${amount}x ${itemToBuy.name}samen gekauft!`); window.showSpecificModal('modalShop'); } 
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
   window.processBuyAnimal = async function() { 
     const cost = itemToBuy.price; const nameInput = document.getElementById('newAnimalName').value.trim();
     if(!nameInput) { window.showToast('Bitte gib einen Namen ein! 📝'); return; }
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); let newAnimal = { id: Date.now(), name: nameInput, species: itemToBuy.id, x: 10 + Math.random() * 80, y: 80 + Math.random() * 10, isWalking: false, facingLeft: false, isProducing: false, fedAt: 0, rewardReady: false }; animals.push(newAnimal); renderAnimalDOM(newAnimal); await saveFarmData(); window.closeAllModals(); window.showToast(`${itemToBuy.icon} ${nameInput} ist eingezogen!`); } 
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); let newAnimal = { id: Date.now(), name: nameInput, species: itemToBuy.id, x: 10 + Math.random() * 80, y: 80 + Math.random() * 10, isWalking: false, facingLeft: false, isProducing: false, fedAt: 0, rewardReady: false }; animals.push(newAnimal); renderAnimalDOM(newAnimal); await saveFarmData(); window.closeAllModals(); window.showToast(`${itemToBuy.icon} ${nameInput} ist eingezogen!`); } 
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
