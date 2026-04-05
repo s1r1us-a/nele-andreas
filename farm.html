@@ -2726,9 +2726,14 @@
     Object.keys(accessorySVGs).forEach(itemId => {
       const isEquipped = equippedItem === itemId;
       const inInventory = inventory.accessories && inventory.accessories[itemId] > 0;
+      
       if (inInventory || isEquipped) {
         const activeClass = isEquipped ? 'equipped' : '';
-        gridHtml += `<div class="wardrobe-item ${activeClass}" onclick="window.equipAccessory(${animalId}, '${itemId}')">${accessoryEmojis[itemId] || '✨'}</div>`;
+        const count = inventory.accessories[itemId] || 0;
+        const badge = count > 0 ? `<div style="position:absolute;top:2px;right:4px;font-size:10px;font-weight:800;color:#7c3aed;line-height:1;">${count}</div>` : '';
+        gridHtml += `<div class="wardrobe-item ${activeClass}" onclick="window.equipAccessory(${animalId}, '${itemId}')" style="position:relative;">
+          ${accessoryEmojis[itemId] || '✨'}${badge}
+        </div>`;
       }
     });
 
