@@ -438,6 +438,19 @@
     .beehive-building { position: absolute; top: 31%; left: 25%; width: 50px; height: 60px; cursor: pointer; z-index: 38; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .beehive-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
 
+    /* ── WEBEREI (Fachwerkhaus) ── */
+    .weaving-building { position: absolute; top: 25%; left: 62%; width: 86px; height: 105px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .weaving-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .weaving-building svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .night-mode .weaving-building { filter: brightness(0.7) drop-shadow(0 8px 6px rgba(0,0,0,0.25)); }
+    .sunset-mode .weaving-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .weaving-smoke { opacity: 0; pointer-events: none; }
+    .is-weaving .weaving-smoke { opacity: 1; }
+    .weaving-smoke circle { animation: weavePuff 3s ease-out infinite; }
+    .weaving-smoke circle:nth-child(2) { animation-delay: 1s; }
+    .weaving-smoke circle:nth-child(3) { animation-delay: 2s; }
+    @keyframes weavePuff { 0% { transform: translateY(0) scale(0.4); opacity: 0.6; } 100% { transform: translateY(-22px) scale(2); opacity: 0; } }
+
     /* ── FARMING BEDS ── */
     .beds-container { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 55; max-width: 200px; }
     .bed { width: 50px; height: 50px; background: var(--brown); border: 2px dashed #6b4020; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 2px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); transition: all 0.3s, filter 2s ease; }
@@ -586,6 +599,47 @@
     .sell-qty-all:active { transform: scale(0.96); }
     .sell-qty-yes { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 14px rgba(34,197,94,0.35); }
     .sell-qty-no { background: #f1f5f9; color: var(--text-mid); }
+
+    /* ── GARDEROBE GRID ── */
+    .wardrobe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+      padding: 4px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .wardrobe-item {
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.8);
+      border: 2px solid var(--ui-card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.2s, background 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .wardrobe-item.equipped {
+      border-color: var(--rose);
+      background: #fde8ed;
+      box-shadow: inset 0 0 8px rgba(232,115,138,0.2);
+    }
+
+    .wardrobe-item:active {
+      transform: scale(0.9);
+    }
+
+    .btn-wardrobe {
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      color: white;
+      box-shadow: 0 4px 14px rgba(168,85,247,0.3);
+    }
   </style>
 </head>
 <body>
@@ -881,6 +935,60 @@
 
   <div class="beehive-building" id="beehiveBuilding" style="display: none;" onclick="window.openBeehive()"></div>
 
+  <div class="weaving-building" id="weavingBuilding" onclick="window.openWeaving()">
+    <svg viewBox="0 0 90 110" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+      <g class="weaving-smoke">
+        <circle cx="73" cy="18" r="4" fill="rgba(180,170,200,0.6)"/>
+        <circle cx="71" cy="12" r="3.5" fill="rgba(180,170,200,0.5)"/>
+        <circle cx="75" cy="6" r="3" fill="rgba(180,170,200,0.4)"/>
+      </g>
+      
+      <rect x="67" y="20" width="12" height="24" rx="1.5" fill="#7a6255"/>
+      <rect x="65" y="18" width="16" height="5" rx="1.5" fill="#5c483e"/>
+
+      <rect x="10" y="48" width="70" height="60" rx="3" fill="#fdf6e3"/>
+      
+      <rect x="8" y="104" width="74" height="5" fill="#6b4c3a"/> <rect x="10" y="74" width="70" height="4" fill="#6b4c3a"/> <rect x="8" y="48" width="74" height="5" fill="#6b4c3a"/> <rect x="10" y="48" width="5" height="60" fill="#6b4c3a"/> <rect x="35" y="48" width="4" height="60" fill="#6b4c3a"/> <rect x="55" y="48" width="4" height="60" fill="#6b4c3a"/> <rect x="75" y="48" width="5" height="60" fill="#6b4c3a"/> <line x1="15" y1="74" x2="35" y2="53" stroke="#6b4c3a" stroke-width="3"/>
+      <line x1="75" y1="74" x2="59" y2="53" stroke="#6b4c3a" stroke-width="3"/>
+      <line x1="15" y1="104" x2="35" y2="78" stroke="#6b4c3a" stroke-width="3"/>
+      <line x1="75" y1="104" x2="59" y2="78" stroke="#6b4c3a" stroke-width="3"/>
+
+      <path d="M 2 50 L 45 8 L 88 50 Z" fill="#5a4a7a"/>
+      <path d="M 2 50 L 45 8 L 88 50" fill="none" stroke="#4a3a6a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 2 54 L 45 12 L 88 54" fill="none" stroke="#7c6fa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      
+      <path d="M 35 30 L 45 20 L 55 30 Z" fill="#4a3a6a"/>
+      <rect x="40" y="30" width="10" height="12" fill="#fdf6e3"/>
+      <circle cx="45" cy="35" r="3" fill="#b8e4f7" stroke="#523624" stroke-width="1.5"/>
+
+      <path d="M 40 74 C 40 66, 50 66, 50 74 L 50 104 L 40 104 Z" fill="#8c6246" stroke="#523624" stroke-width="2"/>
+      <line x1="45" y1="68" x2="45" y2="104" stroke="#523624" stroke-width="1.5"/>
+      <circle cx="43" cy="90" r="1.5" fill="#f59e0b"/>
+      <circle cx="47" cy="90" r="1.5" fill="#f59e0b"/>
+
+      <rect x="18" y="80" width="14" height="16" rx="3" fill="#b8e4f7" stroke="#523624" stroke-width="2.5"/>
+      <line x1="25" y1="80" x2="25" y2="96" stroke="#523624" stroke-width="1.5"/>
+      <line x1="18" y1="88" x2="32" y2="88" stroke="#523624" stroke-width="1.5"/>
+
+      <line x1="61" y1="80" x2="73" y2="80" stroke="#6b4c3a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 62 80 Q 63 94 64 96 Q 66 92 65 80" fill="#3b82f6"/>
+      <path d="M 66 80 Q 67 92 68 94 Q 70 90 69 80" fill="#10b981"/>
+      <path d="M 70 80 Q 71 88 72 90 Q 73 86 72 80" fill="#f59e0b"/>
+
+      <line x1="45" y1="52" x2="45" y2="58" stroke="#333" stroke-width="1.5"/>
+      <rect x="33" y="58" width="24" height="14" rx="2" fill="#eadeca" stroke="#6b4c3a" stroke-width="2"/>
+      <rect x="43" y="60" width="4" height="10" fill="#d1d5db"/>
+      <rect x="42" y="62" width="6" height="6" fill="#a855f7"/>
+      <rect x="41" y="59" width="8" height="2" fill="#9ca3af"/>
+      <rect x="41" y="69" width="8" height="2" fill="#9ca3af"/>
+
+      <path d="M 14 100 L 26 100 L 24 108 L 16 108 Z" fill="#92400e"/>
+      <circle cx="17" cy="99" r="3.5" fill="#ef4444"/>
+      <circle cx="23" cy="98" r="4" fill="#a855f7"/>
+      <circle cx="20" cy="101" r="3" fill="#fcd34d"/>
+    </svg>
+  </div>
+
   <div class="bush bush-1"></div>
   <div class="bush bush-2"></div>
   <div class="bush bush-3"></div>
@@ -966,10 +1074,20 @@
     <div class="item-list" id="bakeryContent"></div>
   </div>
 
+  <div class="modal-card" id="modalWeaving" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="modal-title">Weberei 🧵</div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" id="tabWeavingRecipes" onclick="window.renderWeaving('recipes')">📜 Rezepte</button>
+      <button class="shop-tab" id="tabWeavingLooms" onclick="window.renderWeaving('looms')">🪡 Meine Webstühle</button>
+    </div>
+    <div class="item-list" id="weavingContent"></div>
+  </div>
+
   <div class="modal-card" id="modalAnimal" onclick="event.stopPropagation()">
     <button class="close-btn" onclick="closeAllModals()">✕</button>
     <div class="animal-card-header">
-      <div class="animal-avatar" id="modalAnimalIcon">🐰</div>
+      <div class="animal-avatar" id="modalAnimalIcon" style="overflow:visible;"></div>
       <div class="animal-info">
         <input class="animal-name" id="modalName" type="text" onchange="updateName(this.value)" />
         <div class="animal-species" id="modalSpeciesText">🐇 Hase</div>
@@ -1316,6 +1434,14 @@
     honeycake:  { id: 'honeycake',  name: 'Honigkuchen',      icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } }
   };
 
+  const weavingRecipes = {
+    strawhat:       { id: 'strawhat',       name: 'Strohhut',            icon: '👒', time: 600,  sellPrice: 850,  req: { crops: { wheat: 3 } } },
+    porkpie:        { id: 'porkpie',        name: 'Schwarzer Hut',       icon: '🎩', time: 900,  sellPrice: 1700, req: { items: { wool: 2 } } },
+    spectrespecs:   { id: 'spectrespecs',   name: 'Gespensterbrille',    icon: '👓', time: 1800, sellPrice: 2800, req: { items: { wool: 1, diamond: 1 } } },
+    radishearrings: { id: 'radishearrings', name: 'Radieschen-Ohrringe', icon: '🧅', time: 2700, sellPrice: 3800, req: { items: { wool: 1 }, crops: { radish: 2 } } },
+    flowercrown:    { id: 'flowercrown',    name: 'Blumenkranz',         icon: '🌸', time: 3600, sellPrice: 3500, req: { crops: { oats: 2 }, items: { fertilizer: 1 } } }
+  };
+
   const bedPrices = [0, 500, 2500, 10000, 50000, 100000];
   const ANIMAL_PRODUCTION_TIME = 3600;
 
@@ -1328,13 +1454,17 @@
 
   let unlockedBeds = 1;
   let beehive = { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
+  let loom = { slots: Array(2).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
 
   let inventory = {
     seeds: { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0 },
     crops: { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0 },
     items: { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0 },
-    bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0 }
+    bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0 },
+    tailoring: { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0 },
+    accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0 }
   };
+  window.inventory = inventory;
 
   let oven = { slots: Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
   let beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
@@ -1342,7 +1472,7 @@
 
   async function saveFarmData() {
     if (!userKey || isVisitMode) return;
-    const data = { inventory, beds, animals, oven, unlockedBeds, beehive };
+    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive };
     await set(ref(db, `farm/${userKey}`), data);
   }
   window.saveFarmData = saveFarmData;
@@ -1383,6 +1513,8 @@
           inventory.crops  = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0,  ...(data.inventory?.crops  || {}) };
           inventory.items  = { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items || {}) };
           inventory.bakery = { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) };
+          inventory.tailoring = { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0, ...(data.inventory?.tailoring || {}) };
+          inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, ...(data.inventory?.accessories || {}) };
           unlockedBeds = data.unlockedBeds || 1;
           beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
 
@@ -1413,6 +1545,14 @@
           } else {
               oven = { slots: Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
           }
+
+          const dataLoom = data.loom;
+          if (dataLoom && dataLoom.slots) {
+              loom = dataLoom;
+              while (loom.slots.length < 2) loom.slots.push({ state: 'empty', item: null, startedAt: 0 });
+          } else {
+              loom = { slots: Array(2).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
+          }
           window.animals = animals;
         } else {
           if (farmFirstLoad) saveFarmData();
@@ -1439,7 +1579,59 @@
 
 
   // ── SVG TEMPLATES ──
-  function getAnimalSVG(species) {
+
+  const accessorySVGs = {
+    strawhat: `
+      <g class="acc-strawhat">
+        <ellipse cx="0" cy="0" rx="12" ry="4" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+        <path d="M -7 -1 Q 0 -10 7 -1 Z" fill="#fcd34d" stroke="#d97706" stroke-width="1"/>
+        <path d="M -6.5 -2 Q 0 1 6.5 -2" fill="none" stroke="#ef4444" stroke-width="1.5"/>
+      </g>`,
+    porkpie: `
+      <g class="acc-porkpie">
+        <ellipse cx="0" cy="0" rx="13" ry="3" fill="#1a1a1a"/>
+        <path d="M -8 -1 L -7 -9 L 7 -9 L 8 -1 Z" fill="#2d2d2d"/>
+        <path d="M -7.5 -3 Q 0 0 7.5 -3" fill="none" stroke="#000000" stroke-width="1.5"/>
+      </g>`,
+    spectrespecs: `
+      <g class="acc-spectrespecs">
+        <path d="M -13 0 Q -6 -6 0 0 Q 6 -6 13 0 L 11 8 Q 6 11 0 4 Q -6 11 -11 8 Z" fill="#f472b6" stroke="#db2777" stroke-width="1"/>
+        <circle cx="-5" cy="3" r="3" fill="none" stroke="#38bdf8" stroke-width="1"/>
+        <circle cx="-5" cy="3" r="1.5" fill="none" stroke="#38bdf8" stroke-width="0.8"/>
+        <circle cx="5" cy="3" r="3" fill="none" stroke="#f87171" stroke-width="1"/>
+        <circle cx="5" cy="3" r="1.5" fill="none" stroke="#f87171" stroke-width="0.8"/>
+      </g>`,
+    radishearrings: `
+      <g class="acc-radishearrings">
+         <line x1="-9" y1="-6" x2="-13" y2="2" stroke="#9ca3af" stroke-width="0.5"/>
+         <circle cx="-13" cy="4" r="2.5" fill="#e87090"/>
+         <path d="M -13 1.5 L -15 -1 M -13 1.5 L -11 -1" stroke="#4a8c25" stroke-width="0.8" fill="none"/>
+         <line x1="9" y1="-6" x2="13" y2="2" stroke="#9ca3af" stroke-width="0.5"/>
+         <circle cx="13" cy="4" r="2.5" fill="#e87090"/>
+         <path d="M 13 1.5 L 11 -1 M 13 1.5 L 15 -1" stroke="#4a8c25" stroke-width="0.8" fill="none"/>
+      </g>`,
+    flowercrown: `
+      <g class="acc-flowercrown">
+        <ellipse cx="0" cy="0" rx="12" ry="5" fill="none" stroke="#4ade80" stroke-width="2"/>
+        <circle cx="-11" cy="0" r="2" fill="#f472b6"/>
+        <circle cx="-5" cy="4" r="2" fill="#fbbf24"/>
+        <circle cx="5" cy="4" r="2" fill="#c084fc"/>
+        <circle cx="11" cy="0" r="2" fill="#60a5fa"/>
+        <circle cx="0" cy="5" r="2.5" fill="#f43f5e"/>
+      </g>`
+  };
+
+  const accessoryOffsets = {
+    rabbit:  { strawhat: {x:20,y:20,scale:1}, porkpie: {x:20,y:21,scale:0.9}, spectrespecs: {x:20,y:25.5,scale:0.9}, radishearrings: {x:20,y:20.5,scale:0.6}, flowercrown: {x:20,y:22,scale:0.55} },
+    chicken: { strawhat: {x:34,y:18,scale:0.8}, porkpie: {x:34,y:18.5,scale:0.75}, spectrespecs: {x:40,y:21.5,scale:0.5}, radishearrings: {x:34.5,y:20,scale:0.55}, flowercrown: {x:36.5,y:18,scale:0.6} },
+    cow:     { strawhat: {x:21,y:15,scale:1.3}, porkpie: {x:20,y:16.5,scale:1.2}, spectrespecs: {x:20.5,y:20.5,scale:0.75}, radishearrings: {x:19.5,y:8,scale:0.55}, flowercrown: {x:20.5,y:16,scale:0.45} },
+    sheep:   { strawhat: {x:15,y:21,scale:1.35}, porkpie: {x:15,y:24,scale:1.2}, spectrespecs: {x:13.5,y:25,scale:0.65}, radishearrings: {x:13.5,y:27.5,scale:0.8}, flowercrown: {x:14.5,y:19,scale:0.7} },
+    cat:     { strawhat: {x:26,y:16,scale:1.2}, porkpie: {x:26,y:16,scale:1.1}, spectrespecs: {x:26.5,y:22,scale:0.75}, radishearrings: {x:26.5,y:15.5,scale:0.7}, flowercrown: {x:26.5,y:18,scale:0.6} }
+  };
+
+  const accessoryEmojis = { strawhat: '👒', porkpie: '🎩', spectrespecs: '👓', radishearrings: '🧅', flowercrown: '🌸' };
+
+  function getAnimalSVG(species, equipped = null) {
     const shadow = `<div class="rabbit-shadow"></div>`;
     const defs = `
       <defs>
@@ -1447,8 +1639,10 @@
         <radialGradient id="gradCow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eaeaea"/></radialGradient>
       </defs>`;
     
+    let baseSvg = '';
+
     if (species === 'chicken') { 
-        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+        baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
           <g class="tail"><path d="M 12 36 Q 6 32 8 26 Q 14 30 14 36 Z" fill="#fffdfa" stroke="#e0d6cc" stroke-width="1"/></g>
           <line x1="20" y1="48" x2="20" y2="58" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
           <line x1="20" y1="58" x2="16" y2="60" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
@@ -1461,10 +1655,10 @@
           <circle cx="38" cy="34" r="3" fill="#e84a5f"/>
           <polygon points="42,26 48,28 42,30" fill="#fbbf24"/>
           <circle cx="36" cy="24" r="2" fill="#1a1a1a"/>
-        </svg>${shadow}`; 
+        </svg>`; 
     } 
     else if (species === 'cat') { 
-        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+        baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
           <g class="tail"><path d="M 16 46 Q 4 48 8 34 Q 12 24 16 28" fill="none" stroke="#e28743" stroke-width="4.5" stroke-linecap="round"/></g>
           <ellipse cx="18" cy="52" rx="6" ry="5" fill="#c47030"/>
           <ellipse cx="26" cy="44" rx="13" ry="16" fill="#e28743"/>
@@ -1484,13 +1678,13 @@
           <line x1="12" y1="29" x2="18" y2="28" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
           <line x1="40" y1="26" x2="34" y2="27" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
           <line x1="40" y1="29" x2="34" y2="28" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>${shadow}`; 
+        </svg>`; 
     } 
     else if (species === 'cow') { 
-        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">${defs}<g class="tail"><path d="M 38 42 Q 44 44 42 50" fill="none" stroke="#1a1a1a" stroke-width="2"/><circle cx="42" cy="50" r="2.5" fill="#1a1a1a"/></g><rect x="14" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="14" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="30" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="30" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><ellipse cx="24" cy="44" rx="16" ry="14" fill="url(#gradCow)"/><path d="M 10 40 Q 14 32 20 40 Q 18 48 10 45 Z" fill="#1a1a1a"/><path d="M 28 38 Q 36 34 38 42 Q 32 48 26 44 Z" fill="#1a1a1a"/><rect x="18" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="18" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="26" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="26" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><g class="ear-left"><ellipse cx="10" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(-20 10 22)"/><ellipse cx="10" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(-20 10 22)"/></g><g class="ear-right"><ellipse cx="30" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(20 30 22)"/><ellipse cx="30" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(20 30 22)"/></g><path d="M 14 18 Q 12 10 16 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><path d="M 26 18 Q 28 10 24 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="20" cy="26" rx="11" ry="10" fill="url(#gradCow)"/><path d="M 12 22 Q 16 16 22 20 Q 20 28 14 26 Z" fill="#1a1a1a"/><ellipse cx="20" cy="32" rx="9" ry="6.5" fill="#f0b8c8"/><circle cx="16" cy="31" r="1.2" fill="#d86a88"/><circle cx="24" cy="31" r="1.2" fill="#d86a88"/><circle cx="15" cy="24" r="1.8" fill="#1a1a1a"/><circle cx="25" cy="24" r="1.8" fill="#1a1a1a"/></svg>${shadow}`; 
+        baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">${defs}<g class="tail"><path d="M 38 42 Q 44 44 42 50" fill="none" stroke="#1a1a1a" stroke-width="2"/><circle cx="42" cy="50" r="2.5" fill="#1a1a1a"/></g><rect x="14" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="14" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="30" y="50" width="4" height="10" rx="1" fill="#eaeaea"/><rect x="30" y="57" width="4" height="3" rx="1" fill="#1a1a1a"/><ellipse cx="24" cy="44" rx="16" ry="14" fill="url(#gradCow)"/><path d="M 10 40 Q 14 32 20 40 Q 18 48 10 45 Z" fill="#1a1a1a"/><path d="M 28 38 Q 36 34 38 42 Q 32 48 26 44 Z" fill="#1a1a1a"/><rect x="18" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="18" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><rect x="26" y="52" width="4" height="10" rx="1" fill="#ffffff"/><rect x="26" y="59" width="4" height="3" rx="1" fill="#1a1a1a"/><g class="ear-left"><ellipse cx="10" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(-20 10 22)"/><ellipse cx="10" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(-20 10 22)"/></g><g class="ear-right"><ellipse cx="30" cy="22" rx="5" ry="2.5" fill="#1a1a1a" transform="rotate(20 30 22)"/><ellipse cx="30" cy="22" rx="2.5" ry="1" fill="#f0b8c8" transform="rotate(20 30 22)"/></g><path d="M 14 18 Q 12 10 16 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><path d="M 26 18 Q 28 10 24 12" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="20" cy="26" rx="11" ry="10" fill="url(#gradCow)"/><path d="M 12 22 Q 16 16 22 20 Q 20 28 14 26 Z" fill="#1a1a1a"/><ellipse cx="20" cy="32" rx="9" ry="6.5" fill="#f0b8c8"/><circle cx="16" cy="31" r="1.2" fill="#d86a88"/><circle cx="24" cy="31" r="1.2" fill="#d86a88"/><circle cx="15" cy="24" r="1.8" fill="#1a1a1a"/><circle cx="25" cy="24" r="1.8" fill="#1a1a1a"/></svg>`; 
     } 
     else if (species === 'sheep') { 
-        return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+        baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
           <rect x="16" y="46" width="4" height="12" rx="1" fill="#2d3748"/>
           <rect x="32" y="46" width="4" height="12" rx="1" fill="#2d3748"/>
           <circle cx="20" cy="38" r="10" fill="#fffdfa" stroke="#f0ece6" stroke-width="1"/>
@@ -1507,24 +1701,19 @@
           <circle cx="10" cy="22" r="4" fill="#fffdfa"/>
           <circle cx="14" cy="20" r="5" fill="#fffdfa"/>
           <circle cx="18" cy="22" r="4" fill="#fffdfa"/>
-        </svg>${shadow}`; 
+        </svg>`; 
     }
     else { 
-      return `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
+      baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
         ${defs}
         <g class="tail"><circle cx="44" cy="42" r="6" fill="#f0ece6"/></g>
-        
         <ellipse cx="34" cy="52" rx="7" ry="5" class="rabbit-body"/>
         <path d="M 28 42 Q 36 48 34 52" fill="none" stroke="#e0d6cc" stroke-width="2" stroke-linecap="round"/>
-        
         <ellipse cx="16" cy="54" rx="3.5" ry="6" class="rabbit-body" transform="rotate(-15 16 54)"/>
         <ellipse cx="24" cy="54" rx="3.5" ry="6" class="rabbit-body" transform="rotate(-15 24 54)"/>
-        
         <ellipse cx="14" cy="58" rx="4" ry="2.5" class="rabbit-body"/>
         <ellipse cx="22" cy="58" rx="4" ry="2.5" class="rabbit-body"/>
-        
         <ellipse cx="24" cy="42" rx="16" ry="14" class="rabbit-body"/>
-        
         <g class="ear-left">
           <ellipse cx="14" cy="14" rx="4.5" ry="14" class="rabbit-body"/>
           <ellipse cx="14" cy="14" rx="2" ry="10" class="rabbit-ear-inner" fill="#f0b8c8"/>
@@ -1533,16 +1722,28 @@
           <ellipse cx="26" cy="12" rx="4.5" ry="14" class="rabbit-body"/>
           <ellipse cx="26" cy="12" rx="2" ry="10" class="rabbit-ear-inner" fill="#f0b8c8"/>
         </g>
-        
         <circle cx="20" cy="32" r="12" class="rabbit-body"/>
-        
         <circle cx="15" cy="29" r="2" class="rabbit-eye"/>
         <circle cx="25" cy="29" r="2" class="rabbit-eye"/>
         <ellipse cx="20" cy="34" rx="2.5" ry="1.5" class="rabbit-nose"/>
-      </svg>${shadow}`; 
+      </svg>`; 
     }
-  }
 
+    // Accessoire-Overlay
+    let accessoriesHtml = '';
+    if (equipped && typeof equipped === 'object') {
+      Object.values(equipped).forEach(itemId => {
+        if (itemId && accessorySVGs[itemId]) {
+          const offsets = accessoryOffsets[species] || {};
+          const offset = offsets[itemId] || { x: 20, y: 25, scale: 1 };
+          accessoriesHtml += `<g transform="translate(${offset.x}, ${offset.y}) scale(${offset.scale})">${accessorySVGs[itemId]}</g>`;
+        }
+      });
+    }
+    baseSvg = baseSvg.replace('</svg>', `${accessoriesHtml}</svg>`);
+    return baseSvg + shadow;
+  }
+    
   function getBeehiveSVG() {
     return `
     <div style="position:relative; width:100%; height:100%;">
@@ -1628,6 +1829,31 @@
         if (existingBakeryBubble) existingBakeryBubble.remove();
     }
 
+    // Weberei Updates
+    const weavingEl = document.getElementById('weavingBuilding');
+    let isWeaving = false;
+    let isWeavingReady = false;
+    if (loom && loom.slots) {
+        loom.slots.forEach(s => {
+            if (s.state === 'weaving') isWeaving = true;
+            if (s.state === 'ready') isWeavingReady = true;
+        });
+    }
+    if (isWeaving) weavingEl.classList.add('is-weaving');
+    else weavingEl.classList.remove('is-weaving');
+    let existingWeavingBubble = weavingEl.querySelector('.reward-bubble');
+    if (isWeavingReady) {
+        if (!existingWeavingBubble) {
+            const bubble = document.createElement('div');
+            bubble.className = 'reward-bubble';
+            bubble.style.cssText = 'top:-45px; z-index:60;';
+            bubble.textContent = '🧵';
+            weavingEl.appendChild(bubble);
+        }
+    } else {
+        if (existingWeavingBubble) existingWeavingBubble.remove();
+    }
+
     const bedsContainer = document.getElementById('bedsContainer');
     const currentBeds = bedsContainer.querySelectorAll('.bed').length;
     const expectedBeds = unlockedBeds < 6 ? unlockedBeds + 1 : 6;
@@ -1683,20 +1909,23 @@
       el.id = 'animal-' + a.id; 
       el.className = 'animal-wrapper'; 
       el.onclick = () => window.openAnimalStats(a.id); 
-      el.innerHTML = getAnimalSVG(a.species) + rewardHtml; 
+      el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml; 
       space.appendChild(el); 
     } else {
       const currentProducing = el.getAttribute('data-producing') === 'true';
       const currentReady = el.getAttribute('data-ready') === 'true';
+      const currentEquipped = el.getAttribute('data-equipped') || 'null';
+      const newEquipped = (a.equipped && a.equipped.head) ? a.equipped.head : 'null';
       
-      if (currentProducing !== a.isProducing || currentReady !== a.rewardReady) {
+      if (currentProducing !== a.isProducing || currentReady !== a.rewardReady || currentEquipped !== newEquipped) {
           const existingHeart = el.querySelector('.feed-heart');
-          el.innerHTML = getAnimalSVG(a.species) + rewardHtml;
+          el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml;
           if (existingHeart) el.appendChild(existingHeart);
       }
     }
     el.setAttribute('data-producing', String(a.isProducing));
     el.setAttribute('data-ready', String(a.rewardReady));
+    el.setAttribute('data-equipped', (a.equipped && a.equipped.head) ? a.equipped.head : 'null');
     
     const svgEl = el.querySelector('svg');
     if (svgEl) {
@@ -1775,7 +2004,7 @@
 
                     if (usedHave < needed) canBake = false;
                     let color = usedHave >= needed ? 'var(--grass-mid)' : 'var(--rose)';
-                    reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName}</span>`;
+                    reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName} (${usedHave}/${needed} vorhanden)</span>`;
                 }
             }
             let btnState = canBake && freeSlots > 0 ? '' : 'disabled';
@@ -1961,7 +2190,8 @@
             rewardReady: false,
             hue: h,
             sat: s,
-            bri: b
+            bri: b,
+            equipped: { head: null }
         }; 
         animals.push(newAnimal); 
         renderAnimalDOM(newAnimal); 
@@ -1975,6 +2205,7 @@
   window.openSell = function() {
     const list = document.getElementById('sellList'); list.innerHTML = ''; let hasItems = false;
     Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    Object.keys(inventory.tailoring).forEach(key => { if (inventory.tailoring[key] > 0) { hasItems = true; const item = weavingRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.tailoring[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('tailoring', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
     Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
     
     if (inventory.items.honey > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 150)">Verkaufen (150 🪙)</button></div>`; }
@@ -1994,6 +2225,7 @@
   window.sellItem = function(category, itemId, price) {
     let icon = '🛒', name = itemId;
     if (category === 'bakery') { icon = bakeryRecipes[itemId].icon; name = bakeryRecipes[itemId].name; }
+    else if (category === 'tailoring') { icon = weavingRecipes[itemId].icon; name = weavingRecipes[itemId].name; }
     else if (category === 'crops') { icon = shopItems[itemId].icon; name = shopItems[itemId].name; }
     else if (itemId === 'egg') { icon = '🥚'; name = 'Ei'; }
     else if (itemId === 'diamond') { icon = '💎'; name = 'Diamant'; }
@@ -2076,7 +2308,98 @@
     if ((inventory.items.firefly || 0) > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><span class="item-name">Glühwürmchen</span></div><div class="item-count">${inventory.items.firefly}x</div></div>`; }
     if(!hasSpecial) itemsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Items vorhanden.</div>`; itemsHtml += '</div>';
     let bakeryHtml = '<div class="section-title">🍩 Backwaren</div><div class="item-list">'; let hasBakery = false; Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasBakery = true; const item = bakeryRecipes[key]; bakeryHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.bakery[key]}x</div></div>`; } }); if(!hasBakery) bakeryHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Backwaren vorhanden.</div>`; bakeryHtml += '</div>';
-    container.innerHTML = seedsHtml + cropsHtml + itemsHtml + bakeryHtml; window.showSpecificModal('modalInventory');
+    let tailoringHtml = '<div class="section-title">🧵 Textilien</div><div class="item-list">'; let hasTailoring = false; Object.keys(inventory.tailoring).forEach(key => { if (inventory.tailoring[key] > 0) { hasTailoring = true; const item = weavingRecipes[key]; tailoringHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.tailoring[key]}x</div></div>`; } }); if(!hasTailoring) tailoringHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Textilien vorhanden.</div>`; tailoringHtml += '</div>';
+    let accessoriesHtml = '<div class="section-title">👒 Accessoires</div><div class="item-list">'; let hasAccessories = false; if (inventory.accessories) { Object.keys(inventory.accessories).forEach(key => { if (inventory.accessories[key] > 0) { hasAccessories = true; const item = weavingRecipes[key]; accessoriesHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item ? item.icon : '✨'}</span><span class="item-name">${item ? item.name : key}</span></div><div class="item-count">${inventory.accessories[key]}x</div></div>`; } }); } if(!hasAccessories) accessoriesHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Accessoires vorhanden.</div>`; accessoriesHtml += '</div>';
+    container.innerHTML = seedsHtml + cropsHtml + itemsHtml + bakeryHtml + tailoringHtml + accessoriesHtml; window.showSpecificModal('modalInventory');
+  }
+
+  // ── WEBEREI LOGIK MIT 2 SLOTS ──
+  window.openWeaving = function() {
+    if (isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; }
+    window.renderWeaving('recipes');
+    window.showSpecificModal('modalWeaving');
+  }
+
+  window.renderWeaving = function(tabType) {
+    document.getElementById('tabWeavingRecipes').classList.remove('active');
+    document.getElementById('tabWeavingLooms').classList.remove('active');
+    const content = document.getElementById('weavingContent'); content.innerHTML = '';
+
+    const freeSlots = loom.slots.filter(s => s.state === 'empty').length;
+
+    if (tabType === 'recipes') {
+      document.getElementById('tabWeavingRecipes').classList.add('active');
+      let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Webstuhl-Slots: ${freeSlots}/2</div>`;
+      content.innerHTML = headerHtml;
+
+      Object.values(weavingRecipes).forEach(r => {
+        let canWeave = true; let reqHtml = '';
+        for (let cat in r.req) {
+          for (let item in r.req[cat]) {
+            let needed = r.req[cat][item];
+            let have = inventory[cat][item] || 0;
+            let itemName = item;
+            if (cat === 'crops' && shopItems[item]) itemName = shopItems[item].name;
+            else if (item === 'wool') itemName = 'Wolle';
+            else if (item === 'diamond') itemName = 'Diamant';
+            else if (item === 'fertilizer') itemName = 'Dünger';
+            else if (item === 'egg') itemName = 'Ei';
+            else if (item === 'milk') itemName = 'Milch';
+            else if (item === 'honey') itemName = 'Honig';
+            if (have < needed) canWeave = false;
+            let color = have >= needed ? 'var(--grass-mid)' : 'var(--rose)';
+            reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName} (${have}/${needed} vorhanden)</span>`;
+          }
+        }
+        let btnState = canWeave && freeSlots > 0 ? '' : 'disabled';
+        let btnText = freeSlots === 0 ? 'Voll' : 'Weben';
+        content.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button></div>`;
+      });
+    } else {
+      document.getElementById('tabWeavingLooms').classList.add('active');
+      let slotsHtml = '';
+      loom.slots.forEach((slot, index) => {
+        if (slot.state === 'empty') {
+          slotsHtml += `<div style="text-align:center; padding: 15px; color: var(--text-mid); border: 2px dashed var(--ui-card-border); border-radius: 12px; margin-bottom: 10px;">Webstuhl ${index+1}: Leer</div>`;
+        } else if (slot.state === 'ready') {
+          const r = weavingRecipes[slot.item];
+          slotsHtml += `<div style="text-align:center; padding: 15px; border: 2px solid #22c55e; border-radius: 12px; margin-bottom: 10px; background: rgba(34,197,94,0.05);"><div style="font-size:32px; animation: popIn 0.5s;">${r.icon}</div><div style="font-size:14px; font-weight:bold; color:var(--text-dark); margin: 8px 0;">Dein ${r.name} ist fertig!</div><button class="btn-generic" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; width: 100%; padding: 10px;" onclick="window.collectWeaving(${index})">In den Rucksack packen</button></div>`;
+        } else {
+          const r = weavingRecipes[slot.item];
+          slotsHtml += `<div style="text-align:center; padding: 15px; border: 2px solid var(--ui-card-border); border-radius: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.6);"><div style="font-size:32px; animation: pulse 2s infinite;">🪡</div><div style="font-size:14px; font-weight:bold; color:var(--text-dark); margin: 8px 0;">${r.name} wird gewebt...</div><div style="width: 100%; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; margin: 8px 0; overflow:hidden;"><div id="loomProgressBar-${index}" style="height:100%; background:#9f7aea; width:0%; transition: width 1s linear;"></div></div><div id="loomTimer-${index}" style="font-size: 20px; font-weight: bold; color: #7c6fa0; font-variant-numeric: tabular-nums;">00:00</div></div>`;
+        }
+      });
+      content.innerHTML = slotsHtml;
+    }
+  }
+
+  window.startWeaving = async function(recipeId) {
+    const freeIndex = loom.slots.findIndex(s => s.state === 'empty');
+    if (freeIndex === -1) return;
+    const r = weavingRecipes[recipeId];
+    for (let cat in r.req) {
+      for (let item in r.req[cat]) {
+        inventory[cat][item] -= r.req[cat][item];
+      }
+    }
+    loom.slots[freeIndex] = { state: 'weaving', item: recipeId, startedAt: Date.now() };
+    await saveFarmData();
+    window.renderWeaving('looms');
+    updateFarmDOM();
+  }
+
+  window.collectWeaving = async function(index) {
+    const slot = loom.slots[index];
+    if (slot.state !== 'ready') return;
+    const r = weavingRecipes[slot.item];
+    if (!inventory.accessories) inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0 };
+    inventory.accessories[slot.item] = (inventory.accessories[slot.item] || 0) + 1;
+    loom.slots[index] = { state: 'empty', item: null, startedAt: 0 };
+    await saveFarmData();
+    window.showFloatingNumber('+1 ' + r.icon, '#9f7aea');
+    window.showToast(r.name + ' fertig! ' + r.icon);
+    window.renderWeaving('looms');
+    updateFarmDOM();
   }
 
   // ── TIMERS & LOOP ──
@@ -2160,6 +2483,36 @@
             }
         });
         if(bakeryChanged) {
+            updateFarmDOM();
+        }
+    }
+
+    if (loom && loom.slots) {
+        let loomChanged = false;
+        loom.slots.forEach((slot, index) => {
+            if (slot.state === 'weaving') {
+                const r = weavingRecipes[slot.item];
+                const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
+                if (elapsedSec >= r.time) {
+                    slot.state = 'ready';
+                    loomChanged = true;
+                    if (document.getElementById('modalWeaving').classList.contains('active') && document.getElementById('tabWeavingLooms').classList.contains('active')) {
+                        window.renderWeaving('looms');
+                    }
+                } else {
+                    const pBar = document.getElementById(`loomProgressBar-${index}`);
+                    if (pBar) {
+                        const percent = Math.min(100, ((elapsedSec / r.time) * 100));
+                        pBar.style.width = percent + '%';
+                        const rem = r.time - elapsedSec;
+                        let m = Math.floor(rem / 60); let sec = rem % 60;
+                        document.getElementById(`loomTimer-${index}`).textContent = `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
+                    }
+                }
+            }
+        });
+        if (loomChanged) {
+            saveFarmData();
             updateFarmDOM();
         }
     }
@@ -2285,8 +2638,15 @@
 
   // ── ANIMAL LOGIC ──
   window.openAnimalStats = function(id) { 
-    selectedAnimalId = id; const a = animals.find(anim => anim.id === id); 
-    document.getElementById('modalAnimalIcon').textContent = animalItems[a.species].icon; 
+    selectedAnimalId = id; 
+    const a = animals.find(anim => anim.id === id); 
+    
+    // Tier im Modal MIT Ausrüstung rendern
+    const avatarEl = document.getElementById('modalAnimalIcon');
+    avatarEl.innerHTML = getAnimalSVG(a.species, a.equipped);
+    const svgInModal = avatarEl.querySelector('svg');
+    if (svgInModal) { svgInModal.style.width = '100%'; svgInModal.style.height = '100%'; }
+
     document.getElementById('modalName').value = a.name; 
     document.getElementById('modalName').readOnly = isVisitMode; 
     document.getElementById('modalName').style.pointerEvents = isVisitMode ? 'none' : ''; 
@@ -2295,8 +2655,14 @@
     document.getElementById('modalSpeciesText').innerHTML = `${animalItems[a.species].icon} ${animalItems[a.species].name}`; 
     const actionContainer = document.getElementById('modalAnimalAction'); 
     
-    if (isVisitMode) { actionContainer.innerHTML = `<div style="text-align:center; padding: 12px; background: rgba(124,58,237,0.06); border-radius: 14px; margin-top: 10px; font-size: 13px; color: #7c3aed; font-weight: 600;">👀 Nur ansehen</div>`; window.showSpecificModal('modalAnimal'); return; } 
+    if (isVisitMode) { 
+        actionContainer.innerHTML = `<div style="text-align:center; padding: 12px; background: rgba(124,58,237,0.06); border-radius: 14px; margin-top: 10px; font-size: 13px; color: #7c3aed; font-weight: 600;">👀 Nur ansehen</div>`; 
+        window.showSpecificModal('modalAnimal'); 
+        return; 
+    } 
     
+    let mainActionHtml = '';
+
     if (a.rewardReady) { 
         let rewardIcon = '🎁'; 
         if(a.species === 'rabbit') rewardIcon = '🪴'; 
@@ -2304,13 +2670,13 @@
         if(a.species === 'cow') rewardIcon = '🥛'; 
         if(a.species === 'cat') rewardIcon = '💎'; 
         if(a.species === 'sheep') rewardIcon = '🧶';
-        actionContainer.innerHTML = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`; 
+        mainActionHtml = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`; 
     } else if (a.isProducing) { 
         const elapsedSec = Math.floor((Date.now() - a.fedAt) / 1000); 
         const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); 
         const m = Math.floor(rem / 60); const s = rem % 60; 
         const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; 
-        actionContainer.innerHTML = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; 
+        mainActionHtml = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; 
     } else { 
         let foodNeed = ''; 
         if(a.species === 'rabbit') foodNeed = 'carrot'; 
@@ -2322,16 +2688,90 @@
         if(foodNeed === 'milk') { 
             const count = inventory.items.milk || 0; 
             const btnState = count > 0 ? '' : 'disabled'; 
-            actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedAnimal('milk', true)" ${btnState}>🥛 Kuhmilch füttern (${count}x im Inventar)</button>`; 
+            mainActionHtml = `<button class="btn-feed-large" onclick="window.feedAnimal('milk', true)" ${btnState}>🥛 Kuhmilch füttern (${count}x im Inventar)</button>`; 
         } else { 
             const foodName = shopItems[foodNeed].name; 
             const foodIcon = shopItems[foodNeed].icon; 
             const count = inventory.crops[foodNeed] || 0; 
             const btnState = count > 0 ? '' : 'disabled'; 
-            actionContainer.innerHTML = `<button class="btn-feed-large" onclick="window.feedAnimal('${foodNeed}', false)" ${btnState}>${foodIcon} ${foodName} füttern (${count}x im Inventar)</button>`; 
+            mainActionHtml = `<button class="btn-feed-large" onclick="window.feedAnimal('${foodNeed}', false)" ${btnState}>${foodIcon} ${foodName} füttern (${count}x im Inventar)</button>`; 
         } 
     } 
+
+    actionContainer.innerHTML = `
+      <div id="defaultAnimalView">
+        ${mainActionHtml}
+        <button class="btn-feed-large btn-wardrobe" style="margin-top: 15px;" onclick="window.renderWardrobeGrid(${id})">👕 Garderobe öffnen</button>
+      </div>
+      <div id="wardrobeView" style="display:none;"></div>
+    `;
+
     window.showSpecificModal('modalAnimal'); 
+  }
+
+  window.renderWardrobeGrid = function(animalId) {
+    document.getElementById('defaultAnimalView').style.display = 'none';
+    const wardrobeView = document.getElementById('wardrobeView');
+    wardrobeView.style.display = 'block';
+
+    const a = animals.find(anim => anim.id === animalId);
+    const equippedItem = a.equipped ? a.equipped.head : null;
+
+    let gridHtml = `<div style="text-align:center; font-weight:700; color:var(--text-dark); margin-top:10px;">Was soll ${a.name} tragen?</div>`;
+    gridHtml += `<div class="wardrobe-grid">`;
+
+    const noItemClass = !equippedItem ? 'equipped' : '';
+    gridHtml += `<div class="wardrobe-item ${noItemClass}" onclick="window.equipAccessory(${animalId}, null)">❌</div>`;
+
+    Object.keys(accessorySVGs).forEach(itemId => {
+      const isEquipped = equippedItem === itemId;
+      const inInventory = inventory.accessories && inventory.accessories[itemId] > 0;
+      if (inInventory || isEquipped) {
+        const activeClass = isEquipped ? 'equipped' : '';
+        gridHtml += `<div class="wardrobe-item ${activeClass}" onclick="window.equipAccessory(${animalId}, '${itemId}')">${accessoryEmojis[itemId] || '✨'}</div>`;
+      }
+    });
+
+    gridHtml += `</div>`;
+    gridHtml += `<button class="btn-generic btn-cancel" style="width:100%; margin-top:15px; padding:12px;" onclick="window.openAnimalStats(${animalId})">← Zurück</button>`;
+    wardrobeView.innerHTML = gridHtml;
+  }
+
+  window.equipAccessory = async function(animalId, itemId) {
+    const a = animals.find(anim => anim.id === animalId);
+    if (!a) return;
+
+    if (!a.equipped) a.equipped = { head: null };
+    if (!inventory.accessories) inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0 };
+
+    const currentlyEquipped = a.equipped.head;
+    if (currentlyEquipped === itemId) return;
+
+    if (currentlyEquipped) {
+      inventory.accessories[currentlyEquipped] = (inventory.accessories[currentlyEquipped] || 0) + 1;
+    }
+
+    if (itemId) {
+      if (inventory.accessories[itemId] > 0) {
+        inventory.accessories[itemId]--;
+        a.equipped.head = itemId;
+      } else {
+        window.showToast('Item nicht im Inventar!');
+        return;
+      }
+    } else {
+      a.equipped.head = null;
+    }
+
+    await saveFarmData();
+    updateFarmDOM();
+
+    const avatarEl = document.getElementById('modalAnimalIcon');
+    avatarEl.innerHTML = getAnimalSVG(a.species, a.equipped);
+    const svgInModal = avatarEl.querySelector('svg');
+    if (svgInModal) { svgInModal.style.width = '100%'; svgInModal.style.height = '100%'; }
+
+    window.renderWardrobeGrid(animalId);
   }
 
   window.feedAnimal = async function(foodType, isItem = false) { 
@@ -2501,6 +2941,8 @@
           
           let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); 
           let inBakery = (newX > 38 && newX < 62 && newY > 22 && newY < 45);
+          let inWeaving = (newX > 58 && newX < 82 && newY > 20 && newY < 48);
+          let inBeehive = (newX > 18 && newX < 32 && newY > 25 && newY < 40);
           
           let collision = false;
           animals.forEach(other => {
@@ -2514,7 +2956,7 @@
             }
           });
 
-          if (!inBeet && !inBakery && !collision) { 
+          if (!inBeet && !inBakery && !inWeaving && !inBeehive && !collision) { 
             validMove = true; 
           } 
           tries++; 
@@ -2644,6 +3086,83 @@
     setTimeout(startRain, delay);
   }
   scheduleRain();
+
+  // ── ACCESSORY DEBUG TOOL ──
+  window.openAccessoryDebug = function() {
+    if (document.getElementById('accDebugPanel')) return;
+    const species = Object.keys(accessoryOffsets);
+    const items = Object.keys(accessorySVGs);
+    let curSpecies = species[0];
+    let curItem = items[0];
+    function getOffset() { return accessoryOffsets[curSpecies]?.[curItem] || { x: 20, y: 25, scale: 1 }; }
+    const panel = document.createElement('div');
+    panel.id = 'accDebugPanel';
+    panel.style.cssText = 'position:fixed;top:60px;right:16px;z-index:99999;background:white;border:2px solid #e8738a;border-radius:18px;padding:18px;width:280px;font-family:Quicksand,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,0.2);font-size:13px;';
+    function updatePreview() {
+      const x = parseFloat(document.getElementById('dbgX')?.value ?? getOffset().x);
+      const y = parseFloat(document.getElementById('dbgY')?.value ?? getOffset().y);
+      const sc = parseFloat(document.getElementById('dbgScale')?.value ?? getOffset().scale);
+      const preview = document.getElementById('dbgPreview');
+      if (!preview) return;
+      let base = getAnimalSVG(curSpecies, null);
+      base = base.replace('</svg>', '<g transform="translate(' + x + ',' + y + ') scale(' + sc + ')">' + (accessorySVGs[curItem] || '') + '</g></svg>');
+      preview.innerHTML = base;
+      const svg = preview.querySelector('svg');
+      if (svg) { svg.style.width = '80px'; svg.style.height = '80px'; }
+    }
+    function updateSliders() {
+      const x = parseFloat(document.getElementById('dbgX').value);
+      const y = parseFloat(document.getElementById('dbgY').value);
+      const sc = parseFloat(document.getElementById('dbgScale').value);
+      document.getElementById('dbgXVal').textContent = x;
+      document.getElementById('dbgYVal').textContent = y;
+      document.getElementById('dbgSVal').textContent = sc;
+      document.getElementById('dbgOutput').textContent = curSpecies + ' -> ' + curItem + ': {x:' + x + ', y:' + y + ', scale:' + sc + '}';
+      if (!accessoryOffsets[curSpecies]) accessoryOffsets[curSpecies] = {};
+      accessoryOffsets[curSpecies][curItem] = { x, y, scale: sc };
+      updatePreview();
+      updateFarmDOM();
+    }
+    function render() {
+      const o = getOffset();
+      panel.innerHTML = '<div style="font-weight:800;font-size:15px;color:#5a2d3a;margin-bottom:12px;">🎩 Accessoire Debug</div>'
+        + '<label style="font-weight:700;color:#8b5565;">Tier</label><br><select id="dbgSpecies" style="width:100%;padding:6px;border-radius:8px;border:1.5px solid #f5a3b5;font-family:Quicksand;margin:4px 0 10px;">'
+        + species.map(s => '<option value="' + s + '"' + (s===curSpecies?' selected':'') + '>' + s + '</option>').join('') + '</select>'
+        + '<label style="font-weight:700;color:#8b5565;">Item</label><br><select id="dbgItem" style="width:100%;padding:6px;border-radius:8px;border:1.5px solid #f5a3b5;font-family:Quicksand;margin:4px 0 12px;">'
+        + items.map(i => '<option value="' + i + '"' + (i===curItem?' selected':'') + '>' + i + '</option>').join('') + '</select>'
+        + '<div style="background:#fde8ed;border-radius:12px;padding:10px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;height:120px;overflow:hidden;"><div id="dbgPreview" style="width:80px;height:80px;position:relative;flex-shrink:0;"></div></div>'
+        + '<label style="font-weight:700;color:#8b5565;">X: <span id="dbgXVal">' + o.x + '</span></label><input type="range" id="dbgX" min="0" max="52" step="0.5" value="' + o.x + '" style="width:100%;margin-bottom:6px;">'
+        + '<label style="font-weight:700;color:#8b5565;">Y: <span id="dbgYVal">' + o.y + '</span></label><input type="range" id="dbgY" min="0" max="64" step="0.5" value="' + o.y + '" style="width:100%;margin-bottom:6px;">'
+        + '<label style="font-weight:700;color:#8b5565;">Scale: <span id="dbgSVal">' + o.scale + '</span></label><input type="range" id="dbgScale" min="0.3" max="2.5" step="0.05" value="' + o.scale + '" style="width:100%;margin-bottom:12px;">'
+        + '<div id="dbgOutput" style="background:#f8f4ff;border-radius:10px;padding:8px;margin-bottom:10px;font-size:11px;color:#5a2d3a;word-break:break-all;">' + curSpecies + ' -> ' + curItem + ': {x:' + o.x + ', y:' + o.y + ', scale:' + o.scale + '}</div>'
+        + '<button onclick="window._copyAllOffsets()" style="width:100%;padding:8px;border:none;border-radius:10px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:white;font-family:Quicksand;font-weight:700;cursor:pointer;margin-bottom:6px;">📋 Alle Werte kopieren</button>'
+        + '<button onclick="document.getElementById(\'accDebugPanel\').remove()" style="width:100%;padding:8px;border:none;border-radius:10px;background:#e2e8f0;color:#475569;font-family:Quicksand;font-weight:700;cursor:pointer;">✕ Schließen</button>';
+      updatePreview();
+      document.getElementById('dbgSpecies').onchange = e => { curSpecies = e.target.value; render(); };
+      document.getElementById('dbgItem').onchange = e => { curItem = e.target.value; render(); };
+      ['dbgX','dbgY','dbgScale'].forEach(id => { document.getElementById(id).oninput = updateSliders; });
+    }
+    document.body.appendChild(panel);
+    render();
+  };
+
+  window._copyAllOffsets = function() {
+    let out = 'const accessoryOffsets = {\n';
+    Object.keys(accessoryOffsets).forEach(sp => {
+      out += '  ' + sp + ': { ';
+      out += Object.keys(accessoryOffsets[sp]).map(it => {
+        const o = accessoryOffsets[sp][it];
+        return it + ': {x:' + o.x + ',y:' + o.y + ',scale:' + o.scale + '}';
+      }).join(', ');
+      out += ' },\n';
+    });
+    out += '};';
+    navigator.clipboard.writeText(out).then(() => {
+      window.showToast('Werte kopiert! 📋');
+    }).catch(() => {
+      prompt('Manuell kopieren:', out);
+    });
+  };
 </script>
 </body>
 </html>
