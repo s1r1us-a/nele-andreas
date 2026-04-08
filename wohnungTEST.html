@@ -131,6 +131,29 @@
   #joystick-left .joystick-stick { background: radial-gradient(circle, #9de2ff, #38bdf8); box-shadow: 0 0 12px #9de2ff; }
   #joystick-right .joystick-stick { background: radial-gradient(circle, #ff9de2, #d946a8); box-shadow: 0 0 12px #ff9de2; }
   #controls-hint { position: fixed; bottom: 8px; font-size: 5px; color: #666; text-align: center; width: 100%; pointer-events: none; line-height: 1.5; }
+
+  /* Mobile Buttons Styling */
+  .m-btn {
+    background: rgba(124, 58, 237, 0.8);
+    color: white;
+    border: 2px solid #c084fc;
+    border-radius: 50%;
+    width: 45px; height: 45px;
+    font-size: 16px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+  .m-btn:active { background: #9333ea; transform: scale(0.95); }
+  
+  #mobile-ui-actions { display: none; }
+  
+  .mobile-emotes { position: fixed; top: 60px; left: 10px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .mobile-emotes .m-btn { width: 35px; height: 35px; font-size: 12px; }
+  
+  .mobile-interact { position: fixed; bottom: 130px; right: 20px; z-index: 200; }
+  .mobile-build-controls { position: fixed; bottom: 190px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 10px; display: none; }
 </style>
 </head>
 <body>
@@ -308,6 +331,24 @@
 <div class="joystick-zone" id="joystick-right"><div class="joystick-base"><div class="joystick-stick" id="stick-right"></div></div></div>
 <div id="controls-hint">PC: WASD / PFEIL · Kamera folgt Spieler · [1-4] Emotes</div>
 
+<div id="mobile-ui-actions">
+  <div class="mobile-emotes">
+    <button class="m-btn" onclick="triggerEmote('1')">❤️</button>
+    <button class="m-btn" onclick="triggerEmote('2')">❗</button>
+    <button class="m-btn" onclick="triggerEmote('3')">❓</button>
+    <button class="m-btn" onclick="triggerEmote('4')">💤</button>
+  </div>
+  
+  <div class="mobile-interact">
+    <button class="m-btn" id="btn-interact" onclick="handleInteraction()">✋</button>
+  </div>
+</div>
+
+<div id="mobile-build-controls" class="mobile-build-controls">
+  <button class="m-btn" onclick="triggerRotate()" style="background: #0284c7; border-color: #38bdf8;">↻</button>
+  <button class="m-btn" onclick="cancelBuild()" style="background: #e11d48; border-color: #fda4af;">✕</button>
+</div>
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -367,6 +408,12 @@ function selectItem(id) {
   buildRot = 0;
   toggleShop();
   document.getElementById('build-mode-hint').style.display = 'block';
+  
+  // Wenn wir auf dem Handy sind, Baumodus-Buttons einblenden
+  if (isMobile) {
+    document.getElementById('mobile-build-controls').style.display = 'flex';
+  }
+  
   canvas.style.cursor = id === 100 ? 'grab' : 'crosshair';
 }
 
@@ -1352,86 +1399,97 @@ const SPEED = 1.4;
 function isMoving(isP1) { const p=isP1?players.p1:players.p2; return p.dx!==0||p.dy!==0; }
 const keys = {};
 
+// --- NEUE HILFSFUNKTIONEN FÜR MOBILE ---
+
+function triggerEmote(key) {
+  const p = players[activePlayer];
+  const emotes = {'1':'❤️', '2':'❗', '3':'❓', '4':'💤'};
+  p.emote = emotes[key];
+  p.emoteTimer = 120;
+}
+
+function triggerRotate() {
+  if (buildItem === null || buildItem === 100 || buildItem === 0) return;
+  buildRot = (buildRot + 1) % 4;
+  showToast(`↻ Gedreht`);
+}
+
+function cancelBuild() {
+  buildItem = null;
+  document.getElementById('build-mode-hint').style.display = 'none';
+  document.getElementById('mobile-build-controls').style.display = 'none';
+  canvas.style.cursor = 'default';
+}
+
+function handleInteraction() {
+  const p = players[activePlayer];
+  
+  if (p.swimming) {
+    p.swimming = false;
+    stopInteract(p);
+    return;
+  }
+  if (p.sitting || p.lying || p.bathing) { stopInteract(p); return; }
+  if (getActiveWardrobe()) { openWardrobe(); return; }
+  
+  const pool = getNearFurniture(p, POOLS);
+  if (pool) {
+    p.swimming = true;
+    p.x = (pool.tx + 0.5) * TILE;
+    p.y = (pool.ty + 0.5) * TILE;
+    return;
+  }
+
+  const bath = getNearFurniture(p, BATHS);
+  if (bath) {
+    let rootX = bath.tx, rootY = bath.ty;
+    const rot = ROT[bath.ty][bath.tx];
+    if (rot % 2 === 0) { if (rootX>0 && MAP[rootY][rootX-1]===40 && ROT[rootY][rootX-1]===rot) rootX--; }
+    else { if (rootY>0 && MAP[rootY-1][rootX]===40 && ROT[rootY-1][rootX]===rot) rootY--; }
+    
+    const dxSlot = rot % 2 === 0 ? 1 : 0;
+    const dySlot = rot % 2 === 0 ? 0 : 1;
+    const slot1 = { x: (rootX+0.5)*TILE, y: (rootY+0.5)*TILE, faceRight: true };
+    const slot2 = { x: (rootX+dxSlot+0.5)*TILE, y: (rootY+dySlot+0.5)*TILE, faceRight: false };
+    
+    let takeSlot1 = true;
+    const other = p === players.p1 ? players.p2 : players.p1;
+    if (other.bathing && Math.abs(other.x - slot1.x) < 2 && Math.abs(other.y - slot1.y) < 2) takeSlot1 = false;
+    
+    const chosen = takeSlot1 ? slot1 : slot2;
+    p.bathing = true;
+    p.faceRight = chosen.faceRight;
+    p.sitX = chosen.x; p.sitY = chosen.y;
+    p.x = p.sitX; p.y = p.sitY;
+    return;
+  }
+
+  const bed = getNearFurniture(p, BEDS);
+  if (bed) {
+    p.lying = true;
+    p.sitX = (bed.tx + 0.5) * TILE;
+    p.sitY = (bed.ty + 0.5) * TILE;
+    p.x = p.sitX; p.y = p.sitY;
+    p.lieRot = ROT[bed.ty][bed.tx];
+    return;
+  }
+  
+  const sittable = getNearFurniture(p, SITTABLE_ITEMS);
+  if (sittable) {
+    p.sitting = true;
+    p.sitX = (sittable.tx + 0.5) * TILE;
+    p.sitY = (sittable.ty + 0.5) * TILE;
+    p.x = p.sitX; p.y = p.sitY;
+    return;
+  }
+}
+
 window.addEventListener('keydown', e => { 
   keys[e.code]=true; 
-  if (['1','2','3','4'].includes(e.key)) {
-    const p = players[activePlayer];
-    const emotes = {'1':'❤️', '2':'❗', '3':'❓', '4':'💤'};
-    p.emote = emotes[e.key];
-    p.emoteTimer = 120;
-  }
-  if (e.key === 'Escape') {
-    buildItem = null;
-    document.getElementById('build-mode-hint').style.display = 'none';
-    canvas.style.cursor = 'default';
-  }
-  if (e.key === 'r' || e.key === 'R') {
-    if (buildItem === null || buildItem === 100 || buildItem === 0) return;
-    buildRot = (buildRot + 1) % 4;
-    showToast(`↻ Gedreht`);
-  }
-  if (e.key === 'e' || e.key === 'E') {
-    const p = players[activePlayer];
-    
-    if (p.swimming) {
-      p.swimming = false;
-      stopInteract(p);
-      return;
-    }
-    if (p.sitting || p.lying || p.bathing) { stopInteract(p); return; }
-    if (getActiveWardrobe()) { openWardrobe(); return; }
-    
-    const pool = getNearFurniture(p, POOLS);
-    if (pool) {
-      p.swimming = true;
-      p.x = (pool.tx + 0.5) * TILE;
-      p.y = (pool.ty + 0.5) * TILE;
-      return;
-    }
-
-    const bath = getNearFurniture(p, BATHS);
-    if (bath) {
-      let rootX = bath.tx, rootY = bath.ty;
-      const rot = ROT[bath.ty][bath.tx];
-      if (rot % 2 === 0) { if (rootX>0 && MAP[rootY][rootX-1]===40 && ROT[rootY][rootX-1]===rot) rootX--; }
-      else { if (rootY>0 && MAP[rootY-1][rootX]===40 && ROT[rootY-1][rootX]===rot) rootY--; }
-      
-      const dxSlot = rot % 2 === 0 ? 1 : 0;
-      const dySlot = rot % 2 === 0 ? 0 : 1;
-      const slot1 = { x: (rootX+0.5)*TILE, y: (rootY+0.5)*TILE, faceRight: true };
-      const slot2 = { x: (rootX+dxSlot+0.5)*TILE, y: (rootY+dySlot+0.5)*TILE, faceRight: false };
-      
-      let takeSlot1 = true;
-      const other = p === players.p1 ? players.p2 : players.p1;
-      if (other.bathing && Math.abs(other.x - slot1.x) < 2 && Math.abs(other.y - slot1.y) < 2) takeSlot1 = false;
-      
-      const chosen = takeSlot1 ? slot1 : slot2;
-      p.bathing = true;
-      p.faceRight = chosen.faceRight;
-      p.sitX = chosen.x; p.sitY = chosen.y;
-      p.x = p.sitX; p.y = p.sitY;
-      return;
-    }
-
-    const bed = getNearFurniture(p, BEDS);
-    if (bed) {
-      p.lying = true;
-      p.sitX = (bed.tx + 0.5) * TILE;
-      p.sitY = (bed.ty + 0.5) * TILE;
-      p.x = p.sitX; p.y = p.sitY;
-      p.lieRot = ROT[bed.ty][bed.tx];
-      return;
-    }
-    
-    const sittable = getNearFurniture(p, SITTABLE_ITEMS);
-    if (sittable) {
-      p.sitting = true;
-      p.sitX = (sittable.tx + 0.5) * TILE;
-      p.sitY = (sittable.ty + 0.5) * TILE;
-      p.x = p.sitX; p.y = p.sitY;
-      return;
-    }
-  }
+  if (['1','2','3','4'].includes(e.key)) triggerEmote(e.key);
+  if (e.key === 'Escape') cancelBuild();
+  if (e.key === 'r' || e.key === 'R') triggerRotate();
+  if (e.key === 'e' || e.key === 'E') handleInteraction();
 });
 window.addEventListener('keyup', e => { keys[e.code]=false; });
 
@@ -1680,15 +1738,41 @@ canvas.addEventListener('mousedown', e => {
   tryPlace(tx, ty);
 });
 
-canvas.addEventListener('touchend', e=>{
-  if (buildItem===null) return;
-  e.preventDefault();
-  const t=e.changedTouches[0];
-  const rect=canvas.getBoundingClientRect();
-  const tx=Math.floor(((t.clientX-rect.left)/scale+camX)/TILE);
-  const ty=Math.floor(((t.clientY-rect.top)/scale+camY)/TILE);
-  tryPlace(tx, ty);
-},{passive:false});
+let touchTimer;
+let isLongPress = false;
+
+canvas.addEventListener('touchstart', e => {
+  if (buildItem !== null) return; 
+  isLongPress = false;
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const tx = Math.floor(((t.clientX - rect.left) / scale + camX) / TILE);
+  const ty = Math.floor(((t.clientY - rect.top) / scale + camY) / TILE);
+
+  touchTimer = setTimeout(() => {
+    isLongPress = true;
+    tryRemove(tx, ty);
+    navigator.vibrate && navigator.vibrate(50);
+  }, 600);
+}, {passive: false});
+
+canvas.addEventListener('touchmove', e => {
+  clearTimeout(touchTimer);
+}, {passive: false});
+
+canvas.addEventListener('touchend', e => {
+  clearTimeout(touchTimer);
+  if (isLongPress) return;
+
+  if (buildItem !== null) {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    const rect = canvas.getBoundingClientRect();
+    const tx = Math.floor(((t.clientX - rect.left) / scale + camX) / TILE);
+    const ty = Math.floor(((t.clientY - rect.top) / scale + camY) / TILE);
+    tryPlace(tx, ty);
+  }
+}, {passive: false});
 
 function update() {
   let dx1=0,dy1=0,dx2=0,dy2=0;
@@ -1886,13 +1970,19 @@ function render() {
 function loop() { update(); render(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
+let isMobile = false;
+
 function checkDevice() {
-  const touch=window.matchMedia('(hover: none)').matches;
-  document.getElementById('joystick-left').style.display=touch?'block':'none';
-  document.getElementById('joystick-right').style.display=touch?'block':'none';
-  document.getElementById('controls-hint').style.display=touch?'none':'block';
+  isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(hover: none)').matches;
+  
+  document.getElementById('joystick-left').style.display = isMobile ? 'block' : 'none';
+  document.getElementById('joystick-right').style.display = isMobile ? 'block' : 'none';
+  document.getElementById('controls-hint').style.display = isMobile ? 'none' : 'block';
+  
+  document.getElementById('mobile-ui-actions').style.display = isMobile ? 'block' : 'none';
 }
-checkDevice(); window.addEventListener('resize',checkDevice);
+checkDevice(); 
+window.addEventListener('resize', checkDevice);
 
 // ============================================================
 // INTERAKTIONEN (Schrank, Sitzen, Liegen, Baden, Schwimmen)
