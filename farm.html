@@ -2853,10 +2853,12 @@ html, body { height: 100%; font-family: 'Quicksand', sans-serif; background: var
       const data = snap.val() || {};
 
       inventory = {
-        seeds:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds  || {}) },
-        crops:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops  || {}) },
-        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items || {}) },
-        bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) }
+        seeds:      { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds      || {}) },
+        crops:      { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops      || {}) },
+        items:      { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items  || {}) },
+        bakery:     { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) },
+        tailoring:  { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0, ...(data.inventory?.tailoring  || {}) },
+        accessories:{ strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, ...(data.inventory?.accessories || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
       beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
@@ -2907,10 +2909,12 @@ html, body { height: 100%; font-family: 'Quicksand', sans-serif; background: var
     get(ref(db, `farm/${ownUserKey}`)).then(snap => {
       const data = snap.val() || {};
       inventory = {
-        seeds:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds  || {}) },
-        crops:  { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops  || {}) },
-        items:  { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items || {}) },
-        bakery: { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) }
+        seeds:      { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.seeds      || {}) },
+        crops:      { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, ...(data.inventory?.crops      || {}) },
+        items:      { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, ...(data.inventory?.items  || {}) },
+        bakery:     { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, ...(data.inventory?.bakery || {}) },
+        tailoring:  { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0, ...(data.inventory?.tailoring  || {}) },
+        accessories:{ strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, ...(data.inventory?.accessories || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
       beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
