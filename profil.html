@@ -169,8 +169,8 @@
     .account-msg.error { color: #c85070; }
     .account-divider { border: none; border-top: 1px solid rgba(232,115,138,0.12); margin: 14px 0 10px; }
 
-    /* STATS */
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 340px; margin: 28px auto 16px; width: 100%; }
+    /* STATS - angepasstes Grid für 2 Spalten */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 340px; margin: 28px auto 16px; width: 100%; }
     .stat-card { background: var(--ui-quote-card-bg); border: 1.5px solid var(--ui-quote-card-border); border-radius: 16px; padding: 12px 8px; text-align: center; }
     .stat-card-icon { font-size: 20px; margin-bottom: 4px; }
     .stat-card-value { font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--gold, #d4a061); line-height: 1; margin-bottom: 4px; }
@@ -222,7 +222,6 @@
 
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
-<!-- Booster Bestätigungs-Modal -->
 <div class="booster-confirm-overlay" id="boosterConfirmOverlay">
   <div class="booster-confirm-card">
     <span class="booster-confirm-emoji" id="boosterConfirmEmoji">⚡</span>
@@ -236,7 +235,6 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <div class="page" id="profilePage" style="display:none;">
@@ -259,17 +257,11 @@
     <a id="visitOtherBtn" class="visit-other-btn" href="#" style="display:none;">👤 <span id="visitOtherLabel">Profil besuchen</span></a>
   </div>
 
-  <!-- STATS -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-card-icon">💰</div>
       <div class="stat-card-value" id="statCoinsEarned">–</div>
       <div class="stat-card-label">Coins verdient</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-card-icon">🛒</div>
-      <div class="stat-card-value" id="statCoinsSpent">–</div>
-      <div class="stat-card-label">Coins ausgegeben</div>
     </div>
     <div class="stat-card">
       <div class="stat-card-icon">📦</div>
@@ -278,7 +270,6 @@
     </div>
   </div>
 
-  <!-- VIER GEWINNT STATS -->
   <div class="vg-section">
     <div class="vg-section-title">🔴 Vier Gewinnt 🟣</div>
     <div class="vg-grid">
@@ -307,7 +298,6 @@
     </div>
   </div>
 
-  <!-- BADGES -->
   <div class="section">
     <div class="section-label">🏅 Meine Badges</div>
     <div class="section-hint" id="badgeHint">Klick auf ein Badge um es auszurüsten ✨</div>
@@ -316,7 +306,6 @@
     </div>
   </div>
 
-  <!-- RAHMEN -->
   <div class="section">
     <div class="section-label">🖼️ Meine Rahmen</div>
     <div class="section-hint" id="frameHint">Klick auf einen Rahmen um ihn zu aktivieren ✨</div>
@@ -325,7 +314,6 @@
     </div>
   </div>
 
-  <!-- BOOSTER INVENTAR -->
   <div class="section" id="boosterSection">
     <div class="section-label">🚀 Booster Inventar</div>
     <div class="section-hint">Aktiviere einen Booster wenn du ihn brauchst ✨</div>
@@ -334,7 +322,6 @@
     </div>
   </div>
 
-  <!-- ACCOUNT (aufklappbar, unscheinbar) -->
   <div class="account-section" id="accountSection">
     <button class="account-toggle" id="accountToggle">
       <span class="account-toggle-icon" id="accountToggleIcon">›</span>
@@ -358,7 +345,6 @@
     </div>
   </div>
 
-  <!-- KOMMENTARE -->
   <div class="comments-section" id="commentsSection">
     <div class="section">
       <div class="section-label" id="commentsLabel">💬 Kommentare</div>
@@ -671,7 +657,6 @@
       const d = snap.val() || {};
       const fmt = n => Number.isFinite(Number(n)) ? Number(n).toLocaleString('de-DE') : '0';
       const e1 = document.getElementById('statCoinsEarned');  if (e1) e1.textContent = fmt(d.coinsEarned);
-      const e2 = document.getElementById('statCoinsSpent');   if (e2) e2.textContent = fmt(d.coinsSpent);
       const e3 = document.getElementById('statBoxesOpened');  if (e3) e3.textContent = fmt(d.boxesOpened);
 
       // Vier Gewinnt Stats

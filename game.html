@@ -183,10 +183,8 @@
   <h1 class="page-title">🔴 Vier Gewinnt 🟣</h1>
   <p class="page-subtitle">Setzt Coins – wer gewinnt, bekommt alles</p>
 
-  <!-- LOBBY -->
   <div id="lobbySection" style="width:100%;max-width:400px;">
 
-    <!-- Spiel erstellen -->
     <div class="lobby-card" id="createCard">
       <div class="lobby-title">Neues Spiel 🎯</div>
       <div class="lobby-sub">Setze deinen Einsatz und fordere den anderen heraus</div>
@@ -196,7 +194,6 @@
       <button class="btn-primary" id="createGameBtn">Spiel erstellen ⚔️</button>
     </div>
 
-    <!-- Warten auf anderen -->
     <div class="waiting-card" id="waitingCard" style="display:none;">
       <div style="font-size:48px;margin-bottom:16px;">⏳</div>
       <div class="lobby-title">Warten auf <span id="waitingForName"></span>…</div>
@@ -205,7 +202,6 @@
       <button class="btn-secondary" id="cancelGameBtn" style="margin-top:20px;">Spiel abbrechen</button>
     </div>
 
-    <!-- Einladung annehmen -->
     <div class="invite-card" id="inviteCard" style="display:none;">
       <span class="invite-emoji">⚔️</span>
       <div class="invite-title"><span id="inviterName"></span> fordert dich heraus!</div>
@@ -217,7 +213,6 @@
 
   </div>
 
-  <!-- SPIELFELD -->
   <div id="gameSection" style="display:none;" class="game-wrapper">
     <div class="game-header">
       <div class="player-info" id="playerInfoAndreas">
@@ -238,18 +233,15 @@
 
     <div class="board-container">
       <div class="board-cols" id="boardCols">
-        <!-- Spalten-Buttons werden per JS erstellt -->
-      </div>
+        </div>
       <div class="board-grid" id="boardGrid">
-        <!-- Zellen werden per JS erstellt -->
-      </div>
+        </div>
     </div>
 
     <button class="btn-secondary" id="surrenderBtn" style="margin-top:16px;">🏳️ Aufgeben</button>
   </div>
 </div>
 
-<!-- ERGEBNIS -->
 <div class="result-overlay" id="resultOverlay">
   <div class="result-card">
     <span class="result-emoji" id="resultEmoji">🏆</span>
@@ -448,19 +440,28 @@
       const winnerRef = ref(db, `coins/${winner.toLowerCase()}`);
       await runTransaction(winnerRef, c => (c||0) + bet * 2);
     }
-    // Stats updaten
-    try {
-      const loser = winner === 'draw' ? null : otherPlayer(winner);
-      if (winner !== 'draw') {
-        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/coinsEarned`), c => (c||0) + bet * 2);
-        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/coinsSpent`),  c => (c||0) + bet);
-        await runTransaction(ref(db, `stats/${loser.toLowerCase()}/coinsSpent`),   c => (c||0) + bet);
-        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/vierGewinnt/gamesWon`),  c => (c||0) + 1);
-        await runTransaction(ref(db, `stats/${loser.toLowerCase()}/vierGewinnt/gamesLost`),  c => (c||0) + 1);
-        await runTransaction(ref(db, `stats/${winner.toLowerCase()}/vierGewinnt/potWon`),    c => (c||0) + bet);
-        await runTransaction(ref(db, `stats/${loser.toLowerCase()}/vierGewinnt/potLost`),    c => (c||0) + bet);
+    
+    // Stats updaten - Jede Transaktion einzeln absichern!
+    const loser = winner === 'draw' ? null : otherPlayer(winner);
+    if (winner !== 'draw') {
+      const statUpdates = [
+        { path: `stats/${winner.toLowerCase()}/coinsEarned`, fn: c => (c||0) + bet * 2 },
+        { path: `stats/${winner.toLowerCase()}/coinsSpent`,  fn: c => (c||0) + bet },
+        { path: `stats/${loser.toLowerCase()}/coinsSpent`,   fn: c => (c||0) + bet },
+        { path: `stats/${winner.toLowerCase()}/vierGewinnt/gamesWon`,  fn: c => (c||0) + 1 },
+        { path: `stats/${loser.toLowerCase()}/vierGewinnt/gamesLost`,  fn: c => (c||0) + 1 },
+        { path: `stats/${winner.toLowerCase()}/vierGewinnt/potWon`,    fn: c => (c||0) + bet },
+        { path: `stats/${loser.toLowerCase()}/vierGewinnt/potLost`,    fn: c => (c||0) + bet }
+      ];
+
+      for (const u of statUpdates) {
+        try {
+          await runTransaction(ref(db, u.path), u.fn);
+        } catch(e) { 
+          console.warn(`Statistik-Update fehlgeschlagen für ${u.path}:`, e); 
+        }
       }
-    } catch(e) { console.warn('stats error', e); }
+    }
   }
 
   // ── GAME STATE HANDLER ───────────────────────────────────────────────────
