@@ -898,7 +898,7 @@
 
     // Coin alle 10 Klicks
     sessionClickCount++;
-    if (sessionClickCount % 10 === 0) {
+    if (sessionClickCount % 5 === 0) {
       const userKey = user.toLowerCase();
       const coinAmount = isBoosterActive(activeBoosterCoin) ? 2 : 1;
       runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+coinAmount)
