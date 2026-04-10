@@ -642,7 +642,7 @@
       onValue(coinRef, snap => {
         const coins = snap.val() || 0;
         const el = document.getElementById('coinCount');
-        el.textContent = coins;
+        el.textContent = coins.toLocaleString("de-DE");
         el.classList.remove('coin-bump');
         void el.offsetWidth;
         el.classList.add('coin-bump');
