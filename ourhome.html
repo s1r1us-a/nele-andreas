@@ -301,6 +301,57 @@
   .char-btn.andreas:hover { background: rgba(255,157,226,0.2); transform: scale(1.05); box-shadow: 0 0 35px rgba(255,157,226,0.4); }
   .char-btn-wrap { display: flex; flex-direction: column; gap: 14px; }
   .player-badge { cursor: default !important; }
+
+  /* ---- CHAT ---- */
+  #chat-toggle-btn {
+    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 20px;
+    z-index: 210; background: rgba(124,58,237,0.85); border: 2px solid #c084fc;
+    border-radius: 50%; width: 42px; height: 42px; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.5); backdrop-filter: blur(4px); transition: all 0.2s;
+  }
+  #chat-toggle-btn:hover { background: rgba(147,51,234,0.95); transform: scale(1.08); }
+  #chat-toggle-btn.has-unread { animation: chatPulse 1.2s ease-in-out infinite; border-color: #f0abfc; }
+  @keyframes chatPulse { 0%,100%{box-shadow:0 0 8px rgba(240,171,252,0.4)} 50%{box-shadow:0 0 22px rgba(240,171,252,0.9)} }
+  @media (max-width: 768px) {
+    #chat-toggle-btn { bottom: calc(148px + env(safe-area-inset-bottom, 0px)); }
+    #chat-panel { bottom: calc(200px + env(safe-area-inset-bottom, 0px)); width: 240px; }
+  }
+  #chat-panel {
+    position: fixed; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); left: 14px;
+    width: 280px; max-height: 320px; background: rgba(10,4,24,0.96);
+    border: 2px solid #5b21b6; border-radius: 10px; z-index: 209;
+    display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px); font-family: 'Press Start 2P', monospace; overflow: hidden;
+  }
+  #chat-panel.hidden { display: none; }
+  #chat-messages { flex: 1; overflow-y: auto; padding: 10px 10px 6px; display: flex; flex-direction: column; gap: 6px; min-height: 0; max-height: 240px; }
+  #chat-messages::-webkit-scrollbar { width: 4px; }
+  #chat-messages::-webkit-scrollbar-thumb { background: #5b21b6; border-radius: 2px; }
+  .chat-msg { display: flex; flex-direction: column; max-width: 85%; gap: 2px; }
+  .chat-msg.me { align-self: flex-end; align-items: flex-end; }
+  .chat-msg.other { align-self: flex-start; align-items: flex-start; }
+  .chat-bubble { padding: 6px 10px; border-radius: 10px; font-size: 12px; line-height: 1.5; font-family: Arial, sans-serif; word-break: break-word; max-width: 100%; }
+  .chat-msg.me .chat-bubble { background: rgba(124,58,237,0.85); border: 1px solid #7c3aed; border-bottom-right-radius: 2px; color: #e9d5ff; }
+  .chat-msg.other .chat-bubble { border-bottom-left-radius: 2px; color: #e2e8f0; }
+  .chat-msg.other.p1 .chat-bubble { background: rgba(14,116,144,0.8); border: 1px solid #0e7490; }
+  .chat-msg.other.p2 .chat-bubble { background: rgba(157,23,77,0.8); border: 1px solid #9d174d; }
+  .chat-sender { font-size: 9px; font-family: Arial, sans-serif; color: #888; margin: 0 4px 1px; }
+  .chat-msg.me .chat-sender { color: #a78bfa; }
+  .chat-msg.other.p1 .chat-sender { color: #67e8f9; }
+  .chat-msg.other.p2 .chat-sender { color: #f9a8d4; }
+  #chat-input-row { display: flex; gap: 6px; padding: 6px 8px; border-top: 1px solid #2e1065; background: rgba(0,0,0,0.3); }
+  #chat-input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid #4c1d95; border-radius: 6px; color: #e9d5ff; font-family: Arial, sans-serif; font-size: 12px; padding: 6px 8px; outline: none; }
+  #chat-input:focus { border-color: #7c3aed; }
+  #chat-input::placeholder { color: #4a3060; }
+  #chat-send-btn { background: #7c3aed; border: 1px solid #a855f7; color: #fff; border-radius: 6px; padding: 0 10px; cursor: pointer; font-size: 13px; transition: 0.15s; display: flex; align-items: center; }
+  #chat-send-btn:hover { background: #9333ea; }
+  .game-bubble { position: absolute; pointer-events: none; transform: translateX(-50%); max-width: 130px; padding: 5px 9px; border-radius: 8px; font-size: 11px; font-family: Arial, sans-serif; font-weight: bold; line-height: 1.4; word-break: break-word; text-align: center; color: #fff; z-index: 50; }
+  .game-bubble.p1 { background: rgba(14,100,130,0.93); border: 1.5px solid #9de2ff; }
+  .game-bubble.p2 { background: rgba(140,20,80,0.93); border: 1.5px solid #ff9de2; }
+  .game-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; }
+  .game-bubble.p1::after { border-top: 6px solid rgba(14,100,130,0.93); }
+  .game-bubble.p2::after { border-top: 6px solid rgba(140,20,80,0.93); }
 </style>
 </head>
 <body>
@@ -519,7 +570,7 @@
   <button class="close-btn" style="border-color:#2dd4bf;" onclick="toggleInventory()">✕ Schließen</button>
 </div>
 
-<div id="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
+<div id="canvas-wrapper" style="position:relative"><canvas id="gameCanvas"></canvas><div id="bubble-p1" class="game-bubble p1" style="display:none;"></div><div id="bubble-p2" class="game-bubble p2" style="display:none;"></div></div>
 
 <div class="joystick-zone" id="joystick-left"><div class="joystick-base"><div class="joystick-stick" id="stick-left"></div></div></div>
 <div class="joystick-zone" id="joystick-right"><div class="joystick-base"><div class="joystick-stick" id="stick-right"></div></div></div>
@@ -542,12 +593,20 @@
   <button class="m-btn" onclick="cancelBuild()" style="background: #e11d48; border-color: #fda4af;">✕</button>
 </div>
 
+<button id="chat-toggle-btn" onclick="window.toggleChat()" title="Chat">💬</button>
+<div id="chat-panel" class="hidden">
+  <div id="chat-messages"></div>
+  <div id="chat-input-row">
+    <input id="chat-input" type="text" maxlength="80" placeholder="Nachricht…">
+    <button id="chat-send-btn" onclick="window.sendChatMessage()">➤</button>
+  </div>
+</div>
 <script type="module">
 // ============================================================
 // FIREBASE AUTH + REALTIME DB + COINS + LIVE MULTIPLAYER
 // ============================================================
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, runTransaction, get, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, runTransaction, get, onDisconnect, update as fbUpdate } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Dieselbe App-Instanz wie index.html → teilt die Auth-Session
@@ -614,6 +673,7 @@ onAuthStateChanged(_auth, user => {
   _startRoomMapListener();
   _startOutfitListeners();
   _startInventoryListener();
+  _startChatListener();
 
   // --- PRESENCE: online setzen, bei Disconnect automatisch offline ---
   const _onlineRef = ref(_db, `game/ourhome/online/${_myCoinKey}`);
@@ -2607,7 +2667,7 @@ function drawCharacter(px, py, frame, name, isP1) {
     ctx.translate(px, py);
     ctx.rotate(p.lieRot * Math.PI / 2);
     const cx = -5;
-    const cy = -7;
+    const cy = -2;
     
     ctx.fillStyle=color.shoes; ctx.fillRect(cx+1,cy+12,3,2); ctx.fillRect(cx+6,cy+12,3,2);
     ctx.fillStyle=color.pants; ctx.fillRect(cx+1,cy+8,3,4); ctx.fillRect(cx+6,cy+8,3,4);
@@ -3025,10 +3085,16 @@ function handleInteraction() {
   }
 }
 
-window.addEventListener('keydown', e => { 
+window.addEventListener('keydown', e => {
+  if (document.activeElement === document.getElementById('chat-input')) {
+    if (e.key === 'Enter') window.sendChatMessage();
+    if (e.key === 'Escape') window.toggleChat();
+    return;
+  }
   keys[e.code]=true; 
   if (['1','2','3','4'].includes(e.key)) triggerEmote(e.key);
   if (e.key === 'Escape') {
+    if (chatPanelOpen) { window.toggleChat(); return; }
     closeConfirm();
     if (buildItem !== null) cancelBuild();
     else if (buildMode[activePlayer]) {
@@ -3038,8 +3104,21 @@ window.addEventListener('keydown', e => {
   }
   if (e.key === 'r' || e.key === 'R') triggerRotate();
   if (e.key === 'e' || e.key === 'E') handleInteraction();
+  if (e.key === 'Enter') {
+    window.toggleChat();
+    if (chatPanelOpen) setTimeout(() => document.getElementById('chat-input')?.focus(), 50);
+  }
 });
 window.addEventListener('keyup', e => { keys[e.code]=false; });
+
+// Chat-Input: Tastatureingaben nicht ans Spiel durchreichen
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { window.sendChatMessage(); }
+  if (e.key === 'Escape') { window.toggleChat(); }
+  e.stopPropagation();
+});
+document.getElementById('chat-input').addEventListener('keyup',   e => e.stopPropagation());
+document.getElementById('chat-input').addEventListener('blur', () => { for (const k in keys) keys[k]=false; });
 
 let hoverTileX = -1, hoverTileY = -1;
 canvas.addEventListener('mousemove', e => {
@@ -4037,6 +4116,7 @@ function render() {
 }
 
 function loop() {
+  updateChatBubbles();
   update();
   render();
   if (typeof window._sendMyPosition === 'function') window._sendMyPosition();
@@ -4315,6 +4395,117 @@ function closeWardrobe() {
 }
 
 // ---- UI-Funktionen auf window exposen (nötig für onclick-Attribute aus module-Script) ----
+// ---- CHAT SYSTEM ----
+const CHAT_MAX = 30;
+const chatBubbles = { p1: null, p2: null };
+let chatPanelOpen = false;
+let chatUnread = 0;
+
+function _startChatListener() {
+  let initialLoad = true;
+  onValue(ref(_db, 'game/ourhome/chat'), snap => {
+    const data = snap.val();
+    if (!data) { initialLoad = false; return; }
+    const msgs = Object.values(data).sort((a,b) => a.ts - b.ts);
+    _renderChatMessages(msgs);
+    const last = msgs[msgs.length - 1];
+    if (initialLoad) {
+      // Beim ersten Load nur Timestamp merken, keine Bubble zeigen
+      if (last) window._lastChatTs = last.ts;
+      initialLoad = false;
+      return;
+    }
+    if (last && last.ts > (window._lastChatTs || 0)) {
+      window._lastChatTs = last.ts;
+      const playerKey = last.from === 'nele' ? 'p1' : 'p2';
+      chatBubbles[playerKey] = { text: last.text, timer: 300 };
+      if (!chatPanelOpen && last.from !== _myCoinKey) {
+        chatUnread++;
+        const btn = document.getElementById('chat-toggle-btn');
+        if (btn) btn.classList.add('has-unread');
+      }
+    }
+  });
+}
+
+function _renderChatMessages(msgs) {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  container.innerHTML = '';
+  msgs.forEach(msg => {
+    const isMe = msg.from === _myCoinKey;
+    const isP1 = msg.from === 'nele';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chat-msg ' + (isMe ? 'me' : ('other ' + (isP1 ? 'p1' : 'p2')));
+    const sender = document.createElement('div');
+    sender.className = 'chat-sender';
+    sender.textContent = isMe ? 'Du' : (isP1 ? 'NELE' : 'ANDREAS');
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    bubble.textContent = msg.text;
+    wrapper.appendChild(sender);
+    wrapper.appendChild(bubble);
+    container.appendChild(wrapper);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+window.toggleChat = function() {
+  chatPanelOpen = !chatPanelOpen;
+  const panel = document.getElementById('chat-panel');
+  const btn = document.getElementById('chat-toggle-btn');
+  if (chatPanelOpen) {
+    panel.classList.remove('hidden');
+    chatUnread = 0;
+    if (btn) btn.classList.remove('has-unread');
+    setTimeout(() => {
+      const c = document.getElementById('chat-messages');
+      if (c) c.scrollTop = c.scrollHeight;
+      document.getElementById('chat-input')?.focus();
+    }, 50);
+  } else {
+    panel.classList.add('hidden');
+  }
+};
+
+window.sendChatMessage = function() {
+  if (!_firebaseReady || !_myCoinKey) return;
+  const input = document.getElementById('chat-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  input.value = '';
+  const newKey = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  const msgData = { from: _myCoinKey, text, ts: Date.now() };
+  get(ref(_db, 'game/ourhome/chat')).then(snap => {
+    const data = snap.val() || {};
+    const keys2 = Object.keys(data).sort((a,b) => (data[a].ts||0) - (data[b].ts||0));
+    const updates = {};
+    updates['game/ourhome/chat/' + newKey] = msgData;
+    if (keys2.length >= CHAT_MAX) {
+      keys2.slice(0, keys2.length - CHAT_MAX + 1).forEach(k => { updates['game/ourhome/chat/' + k] = null; });
+    }
+    fbUpdate(ref(_db, '/'), updates).catch(() => {});
+  }).catch(() => {});
+};
+
+function updateChatBubbles() {
+  ['p1','p2'].forEach(pk => {
+    const el = document.getElementById('bubble-' + pk);
+    if (!el) return;
+    const bubble = chatBubbles[pk];
+    if (!bubble || bubble.timer <= 0) { el.style.display = 'none'; return; }
+    bubble.timer--;
+    const p = players[pk];
+    if (!p) { el.style.display = 'none'; return; }
+    const px2 = (p.x - camX) * scale;
+    const py2 = (p.y - camY) * scale;
+    el.textContent = bubble.text;
+    el.style.display = 'block';
+    el.style.left = Math.round(px2) + 'px';
+    el.style.top  = Math.round(py2 - 14 * scale - el.offsetHeight) + 'px';
+    el.style.opacity = bubble.timer < 40 ? (bubble.timer / 40).toFixed(2) : '1';
+  });
+}
 window.toggleShop        = toggleShop;
 window.toggleInventory   = toggleInventory;
 window.selectItem        = selectItem;
