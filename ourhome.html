@@ -1982,13 +1982,22 @@ function drawItem(t, tx, ty, rot, isTop, time) {
     const lamp34on = (typeof isLampOn === 'function') ? isLampOn(tx, ty) : true;
     ctx.strokeStyle='#9ca3af'; ctx.lineWidth=0.5;
     ctx.beginPath(); ctx.moveTo(x,y+4); ctx.bezierCurveTo(x+4,y+6,x+8,y+2,x+12,y+5); ctx.bezierCurveTo(x+14,y+6,x+16,y+4,x+TILE,y+5); ctx.stroke();
-    const bulbs=[[2,5,'#ef4444'],[5,4,'#f59e0b'],[8,3,'#4ade80'],[11,5,'#3b82f6'],[14,5,'#e879f9']];
-    bulbs.forEach(([bx,by,c],i)=>{
-      const on = lamp34on && Math.floor(time/400+i)%3!==0;
-      if (on) {
-        ctx.shadowBlur=6; ctx.shadowColor=c; ctx.fillStyle=c;
-        ctx.fillRect(x+bx-1,y+by,2,3); ctx.shadowBlur=0;
-      } else { ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(x+bx-1,y+by,2,3); }
+    // Bulbs: [offsetX, offsetY, hue] — Farbe dreht sich sanft, jede Birne versetzt
+    const bulbDefs=[[2,5,0],[5,4,72],[8,3,144],[11,5,216],[14,5,288]];
+    bulbDefs.forEach(([bx,by,baseHue],i)=>{
+      if (!lamp34on) { ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(x+bx-1,y+by-1,3,4); return; }
+      const hue = (baseHue + time/25) % 360;
+      const brightness = 55 + 20*Math.abs(Math.sin(time/600 + i*1.3)); // sanftes Pulsieren
+      const c = `hsl(${hue},100%,${brightness}%)`;
+      // Glow-Halo
+      ctx.shadowBlur=10; ctx.shadowColor=c;
+      ctx.fillStyle=c;
+      ctx.fillRect(x+bx-1,y+by-1,3,4);
+      // Extra brightness highlight
+      ctx.shadowBlur=18; ctx.shadowColor=c;
+      ctx.fillStyle=`hsl(${hue},100%,85%)`;
+      ctx.fillRect(x+bx,y+by,1,2);
+      ctx.shadowBlur=0;
     });
   }
   else if (t === 35) {
@@ -3934,7 +3943,7 @@ function render() {
 
   // --- LAMPEN-LICHTSCHEIN (ambient) ---
   const LAMP_TILES = new Set([32, 33, 34, 35, 62]);
-  const LAMP_RADIUS = { 32:55, 33:40, 34:38, 35:50, 62:28 };
+  const LAMP_RADIUS = { 32:55, 33:40, 34:52, 35:50, 62:28 };
 
   // Dynamische Lampenfarbe — Neonschild animiert, Lichterkette bunt
   function _lampColor(lampId, tx, ty, time) {
@@ -3946,17 +3955,9 @@ function render() {
       return `hsla(${h},100%,${l}%,`;
     }
     if (lampId === 34) {
-      // Lichterkette: zwischen den 5 Bulb-Farben wechseln basierend auf Position+Zeit
-      const bulbColors = [
-        [239,68,68],   // rot
-        [245,158,11],  // orange
-        [74,222,128],  // grün
-        [59,130,246],  // blau
-        [232,121,249], // pink
-      ];
-      const idx = Math.floor((time / 600 + tx + ty) % bulbColors.length);
-      const [r,g,b] = bulbColors[idx];
-      return `rgba(${r},${g},${b},`;
+      // Lichterkette: Regenbogen-Hue dreht sich langsam, volle Sättigung
+      const h = (time / 30 + tx * 37 + ty * 53) % 360;
+      return `hsla(${h},100%,65%,`;
     }
     if (lampId === 32) return 'rgba(253,230,138,'; // Stehlampe — warm gelb
     if (lampId === 33) return 'rgba(254,249,195,'; // Tischlampe — creme
@@ -3979,6 +3980,7 @@ function render() {
     return isLampOn(tx, ty);
   }
 
+  // --- Normale Lampen (screen blend) ---
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   for (let ty=0; ty<ROWS; ty++) {
@@ -3986,8 +3988,9 @@ function render() {
       if (!_isLampActive(tx, ty)) continue;
       const t = MAP[ty][tx]; const tt = TOP_MAP[ty][tx];
       const lampId = LAMP_TILES.has(t) ? t : (LAMP_TILES.has(tt) ? tt : 0);
-      const lx = tx * TILE + TILE/2 - camX;
-      const ly = ty * TILE + TILE/2 - camY;
+      if (lampId === 34) continue; // Lichterkette separat
+      const lx = tx * TILE + TILE/2;
+      const ly = ty * TILE + TILE/2;
       const r = LAMP_RADIUS[lampId] || 45;
       const pulse = 0.06 * Math.sin(renderTime / 900 + tx + ty);
       const col = _lampColor(lampId, tx, ty, renderTime);
@@ -3997,6 +4000,55 @@ function render() {
       grad.addColorStop(1, col + '0)');
       ctx.fillStyle = grad;
       ctx.fillRect(lx - r, ly - r, r*2, r*2);
+    }
+  }
+  ctx.restore();
+
+  // --- Lichterkette: atmosphärischer Farbwechsel mit 'lighter' blend ---
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let ty=0; ty<ROWS; ty++) {
+    for (let tx=0; tx<COLS; tx++) {
+      if (!_isLampActive(tx, ty)) continue;
+      const t = MAP[ty][tx]; const tt = TOP_MAP[ty][tx];
+      const lampId = LAMP_TILES.has(t) ? t : (LAMP_TILES.has(tt) ? tt : 0);
+      if (lampId !== 34) continue;
+      const lx = tx * TILE + TILE/2;
+      const ly = ty * TILE + TILE/2;
+      const r = LAMP_RADIUS[34] * 1.8;  // größerer Radius im Hellmodus
+      const pulse = 0.08 * Math.sin(renderTime / 900 + tx + ty);
+      const rr = r + r * pulse;
+
+      const h1 = (renderTime / 30 + tx * 37 + ty * 53) % 360;
+      const h2 = (h1 + 120) % 360;
+      const blend = 0.5 + 0.5 * Math.sin(renderTime / 1200);
+
+      const toRgb = h => {
+        const s = 1, l = 0.65;
+        const a = s * Math.min(l, 1-l);
+        const f = n => { const k=(n+h/30)%12; return l - a*Math.max(-1,Math.min(k-3,9-k,1)); };
+        return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)];
+      };
+      const [r1,g1,b1] = toRgb(h1);
+      const [r2,g2,b2] = toRgb(h2);
+
+      // Hellmodus: sanftere Opacity, weicher Abfall
+      const grad1 = ctx.createRadialGradient(lx, ly, 0, lx, ly, rr);
+      grad1.addColorStop(0,   `rgba(${r1},${g1},${b1},${(0.35*blend).toFixed(2)})`);
+      grad1.addColorStop(0.4, `rgba(${r1},${g1},${b1},${(0.18*blend).toFixed(2)})`);
+      grad1.addColorStop(0.75,`rgba(${r1},${g1},${b1},${(0.06*blend).toFixed(2)})`);
+      grad1.addColorStop(1,   `rgba(${r1},${g1},${b1},0)`);
+      ctx.fillStyle = grad1;
+      ctx.fillRect(lx - rr, ly - rr, rr*2, rr*2);
+
+      const inv = 1 - blend;
+      const grad2 = ctx.createRadialGradient(lx, ly, 0, lx, ly, rr);
+      grad2.addColorStop(0,   `rgba(${r2},${g2},${b2},${(0.35*inv).toFixed(2)})`);
+      grad2.addColorStop(0.4, `rgba(${r2},${g2},${b2},${(0.18*inv).toFixed(2)})`);
+      grad2.addColorStop(0.75,`rgba(${r2},${g2},${b2},${(0.06*inv).toFixed(2)})`);
+      grad2.addColorStop(1,   `rgba(${r2},${g2},${b2},0)`);
+      ctx.fillStyle = grad2;
+      ctx.fillRect(lx - rr, ly - rr, rr*2, rr*2);
     }
   }
   ctx.restore();
@@ -4156,6 +4208,7 @@ function render() {
         const lid = LAMP_TILES.has(t2) ? t2 : (LAMP_TILES.has(tt2) ? tt2 : 0);
         const lx = tx2*TILE + TILE/2;
         const ly = ty2*TILE + TILE/2;
+        if (lid === 34) continue;
         const r = (LAMP_RADIUS[lid] || 45) * 2.5;
         const col = _lampColor(lid, tx2, ty2, renderTime);
         const pulse = 1 + 0.04 * Math.sin(renderTime / 800 + tx2 * 1.3 + ty2 * 0.7);
@@ -4166,6 +4219,52 @@ function render() {
         gt.addColorStop(0.5,  col+'0.12)');
         gt.addColorStop(1,    col+'0)');
         ctx.fillStyle = gt;
+        ctx.beginPath(); ctx.rect(zx, zy, zw, zh); ctx.clip();
+        ctx.fillRect(lx-rp, ly-rp, rp*2, rp*2);
+      }
+    }
+    ctx.restore();
+
+    // Schritt 4b: Lichterkette im Dunkelmodus — bunter Glow mit 'lighter'
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let ty2 = z.y; ty2 < z.y+z.h; ty2++) {
+      for (let tx2 = z.x; tx2 < z.x+z.w; tx2++) {
+        if (!_isLampActiveAlways(tx2, ty2)) continue;
+        const t2 = MAP[ty2][tx2]; const tt2 = TOP_MAP[ty2][tx2];
+        const lid = LAMP_TILES.has(t2) ? t2 : (LAMP_TILES.has(tt2) ? tt2 : 0);
+        if (lid !== 34) continue;
+        const lx = tx2*TILE + TILE/2;
+        const ly = ty2*TILE + TILE/2;
+        const r = LAMP_RADIUS[34] * 1.8;  // etwas kleiner als vorher (war 2.5)
+        const pulse = 1 + 0.04 * Math.sin(renderTime / 800 + tx2 * 1.3 + ty2 * 0.7);
+        const rp = r * pulse;
+        const h1 = (renderTime / 30 + tx2 * 37 + ty2 * 53) % 360;
+        const h2 = (h1 + 120) % 360;
+        const blend = 0.5 + 0.5 * Math.sin(renderTime / 1200);
+        const toRgb2 = h => {
+          const s = 1, l = 0.65;
+          const a = s * Math.min(l, 1-l);
+          const f = n => { const k=(n+h/30)%12; return l - a*Math.max(-1,Math.min(k-3,9-k,1)); };
+          return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)];
+        };
+        const [dr1,dg1,db1] = toRgb2(h1);
+        const [dr2,dg2,db2] = toRgb2(h2);
+        const inv = 1 - blend;
+        const gt1 = ctx.createRadialGradient(lx, ly, 0, lx, ly, rp);
+        gt1.addColorStop(0,   `rgba(${dr1},${dg1},${db1},${(0.85*blend).toFixed(2)})`);
+        gt1.addColorStop(0.3, `rgba(${dr1},${dg1},${db1},${(0.55*blend).toFixed(2)})`);
+        gt1.addColorStop(0.65,`rgba(${dr1},${dg1},${db1},${(0.2*blend).toFixed(2)})`);
+        gt1.addColorStop(1,   `rgba(${dr1},${dg1},${db1},0)`);
+        ctx.fillStyle = gt1;
+        ctx.beginPath(); ctx.rect(zx, zy, zw, zh); ctx.clip();
+        ctx.fillRect(lx-rp, ly-rp, rp*2, rp*2);
+        const gt2 = ctx.createRadialGradient(lx, ly, 0, lx, ly, rp);
+        gt2.addColorStop(0,   `rgba(${dr2},${dg2},${db2},${(0.85*inv).toFixed(2)})`);
+        gt2.addColorStop(0.3, `rgba(${dr2},${dg2},${db2},${(0.55*inv).toFixed(2)})`);
+        gt2.addColorStop(0.65,`rgba(${dr2},${dg2},${db2},${(0.2*inv).toFixed(2)})`);
+        gt2.addColorStop(1,   `rgba(${dr2},${dg2},${db2},0)`);
+        ctx.fillStyle = gt2;
         ctx.beginPath(); ctx.rect(zx, zy, zw, zh); ctx.clip();
         ctx.fillRect(lx-rp, ly-rp, rp*2, rp*2);
       }
