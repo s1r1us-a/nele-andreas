@@ -352,30 +352,6 @@
   .game-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; }
   .game-bubble.p1::after { border-top: 6px solid rgba(14,100,130,0.93); }
   .game-bubble.p2::after { border-top: 6px solid rgba(140,20,80,0.93); }
-  /* Tipp-Indikator Bubble */
-  .typing-bubble {
-    position: absolute; pointer-events: none; transform: translateX(-50%);
-    padding: 5px 10px; border-radius: 8px; z-index: 50;
-    display: flex; align-items: center; gap: 3px;
-  }
-  .typing-bubble.p1 { background: rgba(14,100,130,0.93); border: 1.5px solid #9de2ff; }
-  .typing-bubble.p2 { background: rgba(140,20,80,0.93); border: 1.5px solid #ff9de2; }
-  .typing-bubble::after {
-    content: ''; position: absolute; bottom: -6px; left: 50%;
-    transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent;
-  }
-  .typing-bubble.p1::after { border-top: 6px solid rgba(14,100,130,0.93); }
-  .typing-bubble.p2::after { border-top: 6px solid rgba(140,20,80,0.93); }
-  .typing-dot {
-    width: 5px; height: 5px; border-radius: 50%; background: #fff; opacity: 0.4;
-    animation: typingBounce 1.2s ease-in-out infinite;
-  }
-  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typingBounce {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-    30% { transform: translateY(-4px); opacity: 1; }
-  }
 </style>
 </head>
 <body>
@@ -594,7 +570,7 @@
   <button class="close-btn" style="border-color:#2dd4bf;" onclick="toggleInventory()">✕ Schließen</button>
 </div>
 
-<div id="canvas-wrapper" style="position:relative"><canvas id="gameCanvas"></canvas><div id="bubble-p1" class="game-bubble p1" style="display:none;"></div><div id="bubble-p2" class="game-bubble p2" style="display:none;"></div><div id="typing-bubble-p1" class="typing-bubble p1" style="display:none;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><div id="typing-bubble-p2" class="typing-bubble p2" style="display:none;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>
+<div id="canvas-wrapper" style="position:relative"><canvas id="gameCanvas"></canvas><div id="bubble-p1" class="game-bubble p1" style="display:none;"></div><div id="bubble-p2" class="game-bubble p2" style="display:none;"></div></div>
 
 <div class="joystick-zone" id="joystick-left"><div class="joystick-base"><div class="joystick-stick" id="stick-left"></div></div></div>
 <div class="joystick-zone" id="joystick-right"><div class="joystick-base"><div class="joystick-stick" id="stick-right"></div></div></div>
@@ -698,13 +674,6 @@ onAuthStateChanged(_auth, user => {
   _startOutfitListeners();
   _startInventoryListener();
   _startChatListener();
-  _startTypingListener();
-
-  // Typing-Event ans Chat-Input binden
-  document.getElementById('chat-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { window.sendChatMessage(); return; }
-    _sendTyping();
-  });
 
   // --- PRESENCE: online setzen, bei Disconnect automatisch offline ---
   const _onlineRef = ref(_db, `game/ourhome/online/${_myCoinKey}`);
@@ -3965,19 +3934,48 @@ function render() {
 
   // --- LAMPEN-LICHTSCHEIN (ambient) ---
   const LAMP_TILES = new Set([32, 33, 34, 35, 62]);
-  const LAMP_COLORS = {
-    32:'rgba(253,230,138,', 33:'rgba(254,249,195,',
-    34:'rgba(200,200,255,', 35:'rgba(255,100,255,',
-    62:'rgba(255,210,100,'
-  };
-  const LAMP_RADIUS = { 32:55, 33:40, 34:35, 35:45, 62:28 };
+  const LAMP_RADIUS = { 32:55, 33:40, 34:38, 35:50, 62:28 };
 
+  // Dynamische Lampenfarbe — Neonschild animiert, Lichterkette bunt
+  function _lampColor(lampId, tx, ty, time) {
+    if (lampId === 35) {
+      // Neonschild: Farbe dreht sich genau wie das Schild
+      const h = (time / 20) % 360;
+      const s = Math.round(20 + 70 * Math.abs(Math.sin(time / 1200)));
+      const l = Math.round(55 + 10 * Math.abs(Math.sin(time / 900)));
+      return `hsla(${h},100%,${l}%,`;
+    }
+    if (lampId === 34) {
+      // Lichterkette: zwischen den 5 Bulb-Farben wechseln basierend auf Position+Zeit
+      const bulbColors = [
+        [239,68,68],   // rot
+        [245,158,11],  // orange
+        [74,222,128],  // grün
+        [59,130,246],  // blau
+        [232,121,249], // pink
+      ];
+      const idx = Math.floor((time / 600 + tx + ty) % bulbColors.length);
+      const [r,g,b] = bulbColors[idx];
+      return `rgba(${r},${g},${b},`;
+    }
+    if (lampId === 32) return 'rgba(253,230,138,'; // Stehlampe — warm gelb
+    if (lampId === 33) return 'rgba(254,249,195,'; // Tischlampe — creme
+    if (lampId === 62) return 'rgba(255,200,80,';  // Kerzen — orange-warm
+    return 'rgba(253,230,138,';
+  }
   function _isLampActive(tx, ty) {
     const t = MAP[ty][tx]; const tt = TOP_MAP[ty][tx];
     const lampId = LAMP_TILES.has(t) ? t : (LAMP_TILES.has(tt) ? tt : 0);
     if (!lampId) return false;
     const zone = getZoneOwner(tx, ty);
-    if (!roomLights[zone]) return false; // Raumlicht aus → alle Lampen aus
+    if (!roomLights[zone]) return false; // Raumlicht aus → kein ambient glow
+    return isLampOn(tx, ty);
+  }
+  // Lampe leuchtet individuell (für Dunkelheits-Lichtkegel, egal ob Raumlicht an)
+  function _isLampActiveAlways(tx, ty) {
+    const t = MAP[ty][tx]; const tt = TOP_MAP[ty][tx];
+    const lampId = LAMP_TILES.has(t) ? t : (LAMP_TILES.has(tt) ? tt : 0);
+    if (!lampId) return false;
     return isLampOn(tx, ty);
   }
 
@@ -3992,10 +3990,10 @@ function render() {
       const ly = ty * TILE + TILE/2 - camY;
       const r = LAMP_RADIUS[lampId] || 45;
       const pulse = 0.06 * Math.sin(renderTime / 900 + tx + ty);
-      const col = LAMP_COLORS[lampId] || 'rgba(253,230,138,';
+      const col = _lampColor(lampId, tx, ty, renderTime);
       const grad = ctx.createRadialGradient(lx, ly, 0, lx, ly, r + r*pulse);
-      grad.addColorStop(0, col + '0.18)');
-      grad.addColorStop(0.4, col + '0.08)');
+      grad.addColorStop(0, col + '0.22)');
+      grad.addColorStop(0.4, col + '0.10)');
       grad.addColorStop(1, col + '0)');
       ctx.fillStyle = grad;
       ctx.fillRect(lx - r, ly - r, r*2, r*2);
@@ -4109,27 +4107,71 @@ function render() {
     const zx = z.x*TILE, zy = z.y*TILE, zw = z.w*TILE, zh = z.h*TILE;
     ctx.save();
     ctx.beginPath(); ctx.rect(zx, zy, zw, zh); ctx.clip();
-    ctx.fillStyle = 'rgba(0,0,10,0.93)';
-    ctx.fillRect(zx, zy, zw, zh);
+
+    // Schritt 1: Dunkelheit auf separatem offscreen-canvas aufbauen
+    const darkCanvas = document.createElement('canvas');
+    darkCanvas.width = zw; darkCanvas.height = zh;
+    const dctx = darkCanvas.getContext('2d');
+
+    // Dunkle Fläche
+    dctx.fillStyle = 'rgba(0,0,10,0.95)';
+    dctx.fillRect(0, 0, zw, zh);
+
+    // Schritt 2: Lampen schneiden Löcher mit destination-out
+    dctx.globalCompositeOperation = 'destination-out';
     for (let ty2 = z.y; ty2 < z.y+z.h; ty2++) {
       for (let tx2 = z.x; tx2 < z.x+z.w; tx2++) {
-        if (!_isLampActive(tx2, ty2)) continue;
+        if (!_isLampActiveAlways(tx2, ty2)) continue;
+        const t2 = MAP[ty2][tx2]; const tt2 = TOP_MAP[ty2][tx2];
+        const lid = LAMP_TILES.has(t2) ? t2 : (LAMP_TILES.has(tt2) ? tt2 : 0);
+        // Koordinaten relativ zum Zone-Ursprung (darkCanvas beginnt bei 0,0)
+        const lx = (tx2 - z.x) * TILE + TILE/2;
+        const ly = (ty2 - z.y) * TILE + TILE/2;
+        const r = (LAMP_RADIUS[lid] || 45) * 3.5;
+        const pulse = 1 + 0.04 * Math.sin(renderTime / 800 + tx2 * 1.3 + ty2 * 0.7);
+        const rp = r * pulse;
+        const g = dctx.createRadialGradient(lx, ly, 0, lx, ly, rp);
+        g.addColorStop(0,    'rgba(0,0,0,1)');
+        g.addColorStop(0.12, 'rgba(0,0,0,0.98)');
+        g.addColorStop(0.25, 'rgba(0,0,0,0.88)');
+        g.addColorStop(0.45, 'rgba(0,0,0,0.6)');
+        g.addColorStop(0.65, 'rgba(0,0,0,0.25)');
+        g.addColorStop(0.85, 'rgba(0,0,0,0.06)');
+        g.addColorStop(1,    'rgba(0,0,0,0)');
+        dctx.fillStyle = g;
+        dctx.fillRect(lx-rp, ly-rp, rp*2, rp*2);
+      }
+    }
+
+    // Schritt 3: darkCanvas auf Hauptcanvas zeichnen
+    ctx.drawImage(darkCanvas, zx, zy);
+
+    // Schritt 4: warmer Lichtschein-Tint über Lampenbereich (screen blend)
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (let ty2 = z.y; ty2 < z.y+z.h; ty2++) {
+      for (let tx2 = z.x; tx2 < z.x+z.w; tx2++) {
+        if (!_isLampActiveAlways(tx2, ty2)) continue;
         const t2 = MAP[ty2][tx2]; const tt2 = TOP_MAP[ty2][tx2];
         const lid = LAMP_TILES.has(t2) ? t2 : (LAMP_TILES.has(tt2) ? tt2 : 0);
         const lx = tx2*TILE + TILE/2;
         const ly = ty2*TILE + TILE/2;
-        const r = (LAMP_RADIUS[lid] || 45) * 3;
-        const col = LAMP_COLORS[lid] || 'rgba(253,230,138,';
-        const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, r);
-        g.addColorStop(0,   col+'0.95)');
-        g.addColorStop(0.2, col+'0.75)');
-        g.addColorStop(0.5, col+'0.35)');
-        g.addColorStop(0.8, col+'0.08)');
-        g.addColorStop(1,   col+'0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(lx-r, ly-r, r*2, r*2);
+        const r = (LAMP_RADIUS[lid] || 45) * 2.5;
+        const col = _lampColor(lid, tx2, ty2, renderTime);
+        const pulse = 1 + 0.04 * Math.sin(renderTime / 800 + tx2 * 1.3 + ty2 * 0.7);
+        const rp = r * pulse;
+        const gt = ctx.createRadialGradient(lx, ly, 0, lx, ly, rp);
+        gt.addColorStop(0,    col+'0.5)');
+        gt.addColorStop(0.2,  col+'0.32)');
+        gt.addColorStop(0.5,  col+'0.12)');
+        gt.addColorStop(1,    col+'0)');
+        ctx.fillStyle = gt;
+        ctx.beginPath(); ctx.rect(zx, zy, zw, zh); ctx.clip();
+        ctx.fillRect(lx-rp, ly-rp, rp*2, rp*2);
       }
     }
+    ctx.restore();
+
     ctx.restore();
   }
 
@@ -4499,38 +4541,11 @@ window.toggleChat = function() {
   }
 };
 
-// ---- TYPING INDIKATOR ----
-let _typingTimeout = null;
-function _sendTyping() {
-  if (!_firebaseReady || !_myCoinKey) return;
-  set(ref(_db, `game/ourhome/typing/${_myCoinKey}`), { ts: Date.now() }).catch(() => {});
-  clearTimeout(_typingTimeout);
-  _typingTimeout = setTimeout(() => {
-    set(ref(_db, `game/ourhome/typing/${_myCoinKey}`), null).catch(() => {});
-  }, 3000);
-}
-function _clearTyping() {
-  clearTimeout(_typingTimeout);
-  if (_firebaseReady && _myCoinKey)
-    set(ref(_db, `game/ourhome/typing/${_myCoinKey}`), null).catch(() => {});
-}
-
-const opponentTyping = { p1: false, p2: false };
-
-function _startTypingListener() {
-  const oppDbKey = PLAYER_DB_MAP[_opponentKey()];
-  const oppPlayerKey = _opponentKey();
-  onValue(ref(_db, `game/ourhome/typing/${oppDbKey}`), snap => {
-    opponentTyping[oppPlayerKey] = !!snap.val();
-  });
-}
-
 window.sendChatMessage = function() {
   if (!_firebaseReady || !_myCoinKey) return;
   const input = document.getElementById('chat-input');
   const text = (input.value || '').trim();
   if (!text) return;
-  _clearTyping();
   input.value = '';
   const newKey = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
   const msgData = { from: _myCoinKey, text, ts: Date.now() };
@@ -4548,44 +4563,20 @@ window.sendChatMessage = function() {
 
 function updateChatBubbles() {
   ['p1','p2'].forEach(pk => {
-    const msgEl = document.getElementById('bubble-' + pk);
-    const typEl = document.getElementById('typing-bubble-' + pk);
+    const el = document.getElementById('bubble-' + pk);
+    if (!el) return;
+    const bubble = chatBubbles[pk];
+    if (!bubble || bubble.timer <= 0) { el.style.display = 'none'; return; }
+    bubble.timer--;
     const p = players[pk];
-
-    // Normale Chat-Bubble
-    if (msgEl) {
-      const bubble = chatBubbles[pk];
-      if (!bubble || bubble.timer <= 0) {
-        msgEl.style.display = 'none';
-      } else {
-        bubble.timer--;
-        if (p) {
-          const px2 = (p.x - camX) * scale;
-          const py2 = (p.y - camY) * scale;
-          msgEl.textContent = bubble.text;
-          msgEl.style.display = 'block';
-          msgEl.style.left = Math.round(px2) + 'px';
-          msgEl.style.top  = Math.round(py2 - 14 * scale - msgEl.offsetHeight) + 'px';
-          msgEl.style.opacity = bubble.timer < 40 ? (bubble.timer / 40).toFixed(2) : '1';
-        }
-      }
-    }
-
-    // Typing-Bubble — nur für Gegner anzeigen, nicht für sich selbst
-    if (typEl && p) {
-      const isOpp = pk !== _myPlayerKey;
-      const isTyping = opponentTyping[pk];
-      const hasChatBubble = chatBubbles[pk] && chatBubbles[pk].timer > 0;
-      if (isOpp && isTyping && !hasChatBubble) {
-        const px2 = (p.x - camX) * scale;
-        const py2 = (p.y - camY) * scale;
-        typEl.style.display = 'flex';
-        typEl.style.left = Math.round(px2) + 'px';
-        typEl.style.top  = Math.round(py2 - 14 * scale - typEl.offsetHeight) + 'px';
-      } else {
-        typEl.style.display = 'none';
-      }
-    }
+    if (!p) { el.style.display = 'none'; return; }
+    const px2 = (p.x - camX) * scale;
+    const py2 = (p.y - camY) * scale;
+    el.textContent = bubble.text;
+    el.style.display = 'block';
+    el.style.left = Math.round(px2) + 'px';
+    el.style.top  = Math.round(py2 - 14 * scale - el.offsetHeight) + 'px';
+    el.style.opacity = bubble.timer < 40 ? (bubble.timer / 40).toFixed(2) : '1';
   });
 }
 window.toggleShop        = toggleShop;
