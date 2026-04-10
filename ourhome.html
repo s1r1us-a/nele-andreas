@@ -574,9 +574,10 @@ const PLAYER_DB_MAP = { p1: "nele", p2: "andreas" };
 let _myPlayerKey   = null;
 let _myCoinKey     = null;
 let _firebaseReady = false;
+window._lastPosSend = 0;
 let _lastPosSend   = 0;
 let _positionRestored = false;
-const POS_THROTTLE_MS = 100;
+const POS_THROTTLE_MS = 50;
 
 // ---- AUTH ----
 let _authResolved = false;
@@ -607,8 +608,10 @@ onAuthStateChanged(_auth, user => {
   _startOnlineListener();
   _restoreMyPosition();
   _startLockListener();
+  _startKnockListener();
   _startRoomMapListener();
   _startOutfitListeners();
+  _startInventoryListener();
 
   // --- PRESENCE: online setzen, bei Disconnect automatisch offline ---
   const _onlineRef = ref(_db, `game/ourhome/online/${_myCoinKey}`);
@@ -622,7 +625,7 @@ onAuthStateChanged(_auth, user => {
     if (!p) return;
     set(ref(_db, `game/ourhome/positions/${_myCoinKey}`), {
       x: p.x, y: p.y, facing: p.facing, dx: 0, dy: 0, ts: Date.now(),
-      sitting: p.sitting, lying: p.lying, sitX: p.sitX, sitY: p.sitY, lieRot: p.lieRot
+      sitting: p.sitting, lying: p.lying, bathing: p.bathing, sitX: p.sitX, sitY: p.sitY, lieRot: p.lieRot
     }).catch(() => {});
     set(_onlineRef, false).catch(() => {});
   }
@@ -668,15 +671,42 @@ function toggleRoomLock() {
   showToast(newVal ? '🔒 Zimmer abgeschlossen!' : '🔓 Zimmer aufgeschlossen!');
 }
 
+// ---- KLOPF-MECHANIK ----
+let _lastKnockSend = 0;
+
+function _sendKnock(doorOwner) {
+  if (!_myCoinKey || !_firebaseReady) return;
+  const now = Date.now();
+  if (now - _lastKnockSend < 4000) return; // max 1x alle 4s
+  _lastKnockSend = now;
+  const knockRef = ref(_db, `game/ourhome/knock/${doorOwner}`);
+  set(knockRef, { from: _myCoinKey, ts: now }).catch(() => {});
+  // Automatisch nach 3s löschen
+  setTimeout(() => set(knockRef, null).catch(() => {}), 3000);
+  showToast('🚪 Du klopfst an...');
+}
+
+function _startKnockListener() {
+  if (!_myCoinKey) return;
+  onValue(ref(_db, `game/ourhome/knock/${_myCoinKey}`), snap => {
+    const data = snap.val();
+    if (!data) return;
+    // Nur reagieren wenn die andere Person klopft (nicht eigene Echos)
+    if (data.from === _myCoinKey) return;
+    const knocking = data.from === 'nele' ? 'Nele' : 'Andreas';
+    showToast(`🔔 ${knocking} klopft an deine Tür!`);
+  });
+}
+
 // Gibt true zurück wenn Tile (tx,ty) wegen Lock blockiert ist für den aktiven Spieler
 function isDoorLockedFor(tx, ty) {
-  // Neles Tür
+  // Neles Tür — blockiert für alle wenn abgeschlossen (auch für Nele selbst)
   if (tx === DOOR_TILES.nele.tx && ty === DOOR_TILES.nele.ty) {
-    return roomLocks.nele; // blockiert für ALLE wenn locked
+    return !!roomLocks.nele;
   }
-  // Andreas' Tür
+  // Andreas' Tür — blockiert für alle wenn abgeschlossen (auch für Andreas selbst)
   if (tx === DOOR_TILES.andreas.tx && ty === DOOR_TILES.andreas.ty) {
-    return roomLocks.andreas;
+    return !!roomLocks.andreas;
   }
   return false;
 }
@@ -822,11 +852,26 @@ function _startOpponentListener() {
     if (!data) return;
     const opp = players[_opponentKey()];
     if (!opp) return;
-    opp.x      = data.x      ?? opp.x;
-    opp.y      = data.y      ?? opp.y;
+    // Zielposition setzen — Lerp im Game Loop übernimmt die Bewegung
+    opp.targetX = data.x ?? opp.targetX;
+    opp.targetY = data.y ?? opp.targetY;
     opp.facing = data.facing ?? opp.facing;
     opp.dx     = data.dx     ?? 0;
     opp.dy     = data.dy     ?? 0;
+    // Sitz-/Liege-/Bade-Status synchronisieren — hier direkt setzen (Position ist fix)
+    opp.sitting = !!data.sitting;
+    opp.lying   = !!data.lying;
+    opp.bathing = !!data.bathing;
+    opp.sitX    = data.sitX ?? opp.sitX;
+    opp.sitY    = data.sitY ?? opp.sitY;
+    opp.lieRot  = data.lieRot ?? opp.lieRot;
+    if (data.sitting) { opp.x = opp.sitX; opp.y = opp.sitY; opp.targetX = opp.sitX; opp.targetY = opp.sitY; }
+    if (data.lying)   { opp.x = opp.sitX; opp.y = opp.sitY; opp.targetX = opp.sitX; opp.targetY = opp.sitY; }
+    // Emote synchronisieren
+    if (data.emote && data.emoteTs && (Date.now() - data.emoteTs) < 3000) {
+      opp.emote = data.emote;
+      opp.emoteTimer = Math.max(1, Math.round((3000 - (Date.now() - data.emoteTs)) / (1000/60)));
+    }
   });
 }
 
@@ -834,13 +879,15 @@ function _startOpponentListener() {
 window._sendMyPosition = function() {
   if (!_firebaseReady || !_myPlayerKey || !_myCoinKey || !_positionRestored) return;
   const now = Date.now();
-  if (now - _lastPosSend < POS_THROTTLE_MS) return;
+  if (now - window._lastPosSend < POS_THROTTLE_MS) return;
+  window._lastPosSend = now;
   _lastPosSend = now;
   const p = players[_myPlayerKey];
   if (!p) return;
   set(ref(_db, `game/ourhome/positions/${_myCoinKey}`), {
     x: p.x, y: p.y, facing: p.facing, dx: p.dx, dy: p.dy, ts: now,
-    sitting: p.sitting, lying: p.lying, sitX: p.sitX, sitY: p.sitY, lieRot: p.lieRot
+    sitting: p.sitting, lying: p.lying, bathing: p.bathing, sitX: p.sitX, sitY: p.sitY, lieRot: p.lieRot,
+    emote: p.emote || null, emoteTs: p.emoteTimer > 0 ? now : 0
   }).catch(() => {});
 };
 
@@ -857,6 +904,7 @@ function _restoreMyPosition() {
       const p = players[_myPlayerKey];
       p.x      = data.x      ?? p.x;
       p.y      = data.y      ?? p.y;
+      p.targetX = p.x; p.targetY = p.y;
       p.facing = data.facing ?? p.facing;
       p.dx = 0; p.dy = 0;
       if (data.sitting) { p.sitting = true; p.sitX = data.sitX ?? p.x; p.sitY = data.sitY ?? p.y; p.x = p.sitX; p.y = p.sitY; }
@@ -964,7 +1012,9 @@ function showConfirm(text, screenX, screenY, onYes) {
   let py = Math.max(screenY - ph - 10, 54);
   popup.style.left = px + 'px';
   popup.style.top  = py + 'px';
-  document.getElementById('confirm-yes').onclick = () => { closeConfirm(); confirmCallback && confirmCallback(); };
+  document.getElementById('confirm-yes').onclick = () => { const cb = confirmCallback; closeConfirm(); cb && cb(); };
+  // Mousedown im Popup nicht an Canvas durchreichen
+  popup.onmousedown = (ev) => ev.stopPropagation();
 }
 
 function closeConfirm() {
@@ -1040,21 +1090,43 @@ const ITEM_META = {
   201: { emoji:'🟪', name:'Teppich Mittel (Geometrisch)' },
   202: { emoji:'🟦', name:'Teppich Klein (Gestreift)' },
   203: { emoji:'🔵', name:'Teppich Rund Groß' },
-  204: { emoji:'🟤', name:'Teppich Rund Klein' },
+  204: { emoji:'🟣', name:'Teppich Rund Klein' },
   205: { emoji:'🟩', name:'Teppich Groß (Smaragd)' },
   206: { emoji:'⬜', name:'Teppich Mittel (Nordisch)' },
 };
 
 function addToInventory(itemId) {
-  if (!ITEM_META[itemId]) return; // nicht inventarisierbare Items (Wand etc.)
+  if (!ITEM_META[itemId]) return;
   inventory[itemId] = (inventory[itemId] || 0) + 1;
+  _saveInventory();
 }
 
 function takeFromInventory(itemId) {
   if (!inventory[itemId] || inventory[itemId] <= 0) return false;
   inventory[itemId]--;
   if (inventory[itemId] === 0) delete inventory[itemId];
+  _saveInventory();
   return true;
+}
+
+let _invSaveTimeout = null;
+function _saveInventory() {
+  if (typeof _firebaseReady === "undefined" || !_firebaseReady) return;
+  clearTimeout(_invSaveTimeout);
+  _invSaveTimeout = setTimeout(() => {
+    set(ref(_db, "game/ourhome/inventory"), Object.keys(inventory).length ? inventory : null).catch(() => {});
+  }, 300);
+}
+
+function _startInventoryListener() {
+  onValue(ref(_db, "game/ourhome/inventory"), snap => {
+    const data = snap.val();
+    for (const key of Object.keys(inventory)) delete inventory[key];
+    if (!data) return;
+    for (const [k, v] of Object.entries(data)) {
+      if (v > 0) inventory[parseInt(k)] = v;
+    }
+  });
 }
 
 function toggleInventory() {
@@ -1246,15 +1318,20 @@ function switchTab(e, tab) {
   e.target.classList.add('active');
   document.getElementById('section-' + tab).classList.add('active');
 }
+let buildItemPrice = 0;
+let buildItemPaid = false;
+
 function selectItem(id) {
   const price = getItemPrice(id);
-  if (price > 0 && !spendCoins(price)) {
+  if (price > 0 && getCoins() < price) {
     showToast(`Nicht genug Coins! Benötigt: ${price} 🪙`); return;
   }
   buildMode[activePlayer] = true;
   buildItem = id;
   buildRot = 0;
   buildFromInventory = false;
+  buildItemPrice = price;
+  buildItemPaid = false;
   toggleShop();
   if (isMobile) document.getElementById('mobile-build-controls').style.display = 'flex';
   canvas.style.cursor = 'crosshair';
@@ -1337,7 +1414,8 @@ const ROTATABLE_ITEMS = new Set([
   28, 29, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 45, 46, 47, 48, 49,
   50, 51, 52, 53, 55, 56, 61, 62, 63,
   85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 110, 111, 112,
-  95
+  95,
+  200, 201, 202, 203, 204, 205, 206
 ]);
 
 function getItemSize(id) {
@@ -2405,7 +2483,8 @@ function drawCharacter(px, py, frame, name, isP1) {
     ctx.fillStyle=color.skin; ctx.fillRect(cx+3, cy+6, 4, 2);
     ctx.fillStyle=color.skin; ctx.fillRect(cx+2, cy+1, 7, 6);
     ctx.fillStyle=color.hair; ctx.fillRect(cx+2, cy, 7, 2); ctx.fillRect(cx+1,cy+1,2,3);
-    if (isP1) { ctx.fillRect(cx+8,cy+1,2,5); ctx.fillRect(cx+2,cy+6,2,2); }
+    if (p.faceRight) { ctx.fillRect(cx+8,cy+1,2,5); ctx.fillRect(cx+2,cy+6,2,2); }
+    else             { ctx.fillRect(cx+1,cy+1,2,5); ctx.fillRect(cx+7,cy+6,2,2); }
 
     if (p.bathing) {
         if (p.faceRight) {
@@ -2425,7 +2504,8 @@ function drawCharacter(px, py, frame, name, isP1) {
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(p.lieRot * Math.PI / 2);
-    const cx = -5; const cy = -7; 
+    const cx = -5;
+    const cy = -7;
     
     ctx.fillStyle=color.shoes; ctx.fillRect(cx+1,cy+12,3,2); ctx.fillRect(cx+6,cy+12,3,2);
     ctx.fillStyle=color.pants; ctx.fillRect(cx+1,cy+8,3,4); ctx.fillRect(cx+6,cy+8,3,4);
@@ -2689,8 +2769,8 @@ function drawCharacter(px, py, frame, name, isP1) {
 
 
 const players = {
-  p1: { x: 9*TILE, y: 6*TILE, dx:0, dy:0, name:'NELE', frame:0, shirtColor:'#1a1a2e', sitting:false, lying:false, bathing:false, swimming:false, faceRight:false, sitX:0, sitY:0, lieRot:0, emote:null, emoteTimer:0, facing: 'down', online: undefined },
-  p2: { x: 28*TILE, y: 6*TILE, dx:0, dy:0, name:'ANDREAS', frame:0, shirtColor:'#f472b6', sitting:false, lying:false, bathing:false, swimming:false, faceRight:false, sitX:0, sitY:0, lieRot:0, emote:null, emoteTimer:0, facing: 'down', online: undefined },
+  p1: { x: 9*TILE, y: 6*TILE, targetX: 9*TILE, targetY: 6*TILE, dx:0, dy:0, name:'NELE', frame:0, shirtColor:'#1a1a2e', sitting:false, lying:false, bathing:false, swimming:false, faceRight:false, sitX:0, sitY:0, lieRot:0, emote:null, emoteTimer:0, facing: 'down', online: undefined },
+  p2: { x: 28*TILE, y: 6*TILE, targetX: 28*TILE, targetY: 6*TILE, dx:0, dy:0, name:'ANDREAS', frame:0, shirtColor:'#f472b6', sitting:false, lying:false, bathing:false, swimming:false, faceRight:false, sitX:0, sitY:0, lieRot:0, emote:null, emoteTimer:0, facing: 'down', online: undefined },
 };
 
 const pet = {
@@ -2706,6 +2786,9 @@ function triggerEmote(key) {
   const p = players[activePlayer];
   const emotes = {'1':'❤️', '2':'❗', '3':'❓', '4':'💤'};
   p.emote = emotes[key]; p.emoteTimer = 120;
+  // Throttle zurücksetzen und sofort senden damit der andere Spieler es sofort sieht
+  window._lastPosSend = 0;
+  if (typeof window._sendMyPosition === 'function') window._sendMyPosition();
 }
 
 function triggerRotate() {
@@ -2717,7 +2800,12 @@ function cancelBuild() {
   if (buildFromInventory && buildItem !== null) {
     addToInventory(buildItem);
     buildFromInventory = false;
+  } else if (buildItemPaid && buildItemPrice > 0) {
+    // Nur zurückbuchen wenn Coins wirklich abgezogen wurden
+    addCoins(buildItemPrice);
   }
+  buildItemPrice = 0;
+  buildItemPaid = false;
   buildItem = null;
   document.getElementById('mobile-build-controls').style.display = 'none';
   canvas.style.cursor = 'default';
@@ -2749,12 +2837,19 @@ function handleInteraction() {
     
     const dxSlot = rot % 2 === 0 ? 1 : 0;
     const dySlot = rot % 2 === 0 ? 0 : 1;
-    const slot1 = { x: (rootX+0.5)*TILE, y: (rootY+0.5)*TILE, faceRight: true };
-    const slot2 = { x: (rootX+dxSlot+0.5)*TILE, y: (rootY+dySlot+0.5)*TILE, faceRight: false };
+    const slot1 = { x: (rootX+0.5)*TILE, y: (rootY+0.5)*TILE, faceRight: rot === 0 };
+    const slot2 = { x: (rootX+dxSlot+0.5)*TILE, y: (rootY+dySlot+0.5)*TILE, faceRight: rot !== 0 };
     
-    let takeSlot1 = true;
+    // Prüfen ob der andere Spieler bereits in DIESER Badewanne badet (gleicher rootX/rootY)
     const other = p === players.p1 ? players.p2 : players.p1;
-    if (other.bathing && Math.abs(other.x - slot1.x) < 2 && Math.abs(other.y - slot1.y) < 2) takeSlot1 = false;
+    let takeSlot1 = true;
+    if (other.bathing) {
+      const otherRootX = Math.round(other.sitX/TILE - 0.5);
+      const otherRootY = Math.round(other.sitY/TILE - 0.5);
+      // Prüfen ob der andere im slot1 dieser Wanne sitzt
+      const otherInSlot1 = Math.abs(other.sitX - slot1.x) < TILE && Math.abs(other.sitY - slot1.y) < TILE;
+      if (otherInSlot1) takeSlot1 = false;
+    }
     
     const chosen = takeSlot1 ? slot1 : slot2;
     p.bathing = true; p.faceRight = chosen.faceRight;
@@ -2763,8 +2858,36 @@ function handleInteraction() {
 
   const bed = getNearFurniture(p, BEDS);
   if (bed) {
+    const bedId = MAP[bed.ty][bed.tx];
+    const rot = ROT[bed.ty][bed.tx];
+    if (bedId === 24) {
+      // Doppelbett ist 2×2 Tiles. Ursprungs-Tile (top-left) finden.
+      let rootX = bed.tx, rootY = bed.ty;
+      if (rootX > 0 && MAP[rootY][rootX-1] === 24 && ROT[rootY][rootX-1] === rot) rootX--;
+      if (rootY > 0 && MAP[rootY-1][rootX] === 24 && ROT[rootY-1][rootX] === rot) rootY--;
+      // Rot 0/2: Bett waagerecht → Slots links(rootX) und rechts(rootX+1), beide in Zeile rootY
+      // Rot 1/3: Bett senkrecht  → Slots oben(rootY) und unten(rootY+1), beide in Spalte rootX
+      let slot1, slot2;
+      if (rot % 2 === 0) {
+        slot1 = { x: (rootX + 0.5) * TILE,     y: (rootY + 0.5) * TILE };
+        slot2 = { x: (rootX + 1 + 0.5) * TILE, y: (rootY + 0.5) * TILE };
+      } else {
+        slot1 = { x: (rootX + 0.5) * TILE, y: (rootY + 0.5) * TILE };
+        slot2 = { x: (rootX + 0.5) * TILE, y: (rootY + 1 + 0.5) * TILE };
+      }
+      const other = p === players.p1 ? players.p2 : players.p1;
+      let takeSlot1 = true;
+      if (other.lying) {
+        const otherInSlot1 = Math.abs(other.sitX - slot1.x) < TILE && Math.abs(other.sitY - slot1.y) < TILE;
+        if (otherInSlot1) takeSlot1 = false;
+      }
+      const chosen = takeSlot1 ? slot1 : slot2;
+      p.lying = true; p.sitX = chosen.x; p.sitY = chosen.y;
+      p.x = p.sitX; p.y = p.sitY; p.lieRot = rot; return;
+    }
+    // Einzelbett
     p.lying = true; p.sitX = (bed.tx + 0.5) * TILE; p.sitY = (bed.ty + 0.5) * TILE;
-    p.x = p.sitX; p.y = p.sitY; p.lieRot = ROT[bed.ty][bed.tx]; return;
+    p.x = p.sitX; p.y = p.sitY; p.lieRot = rot; return;
   }
   
   const sittable = getNearFurniture(p, SITTABLE_ITEMS);
@@ -2868,10 +2991,16 @@ function _showLockedToast(tx, ty) {
   const now = Date.now();
   if (now - _lastLockedToast < 3000) return;
   _lastLockedToast = now;
-  const isNeleDoor = (tx === 9 && ty === 13);
+  const isNeleDoor = (tx === DOOR_TILES.nele.tx && ty === DOOR_TILES.nele.ty);
+  const doorOwner = isNeleDoor ? 'nele' : 'andreas';
   const name = isNeleDoor ? 'Nele' : 'Andreas';
-  const possessive = isNeleDoor ? `${name}s` : `${name}'`;
-  showToast(`🔒 ${possessive} Zimmer ist abgeschlossen!`);
+  // Nur klopfen wenn jemand anderes die Tür besitzt
+  if (_myCoinKey && _myCoinKey !== doorOwner) {
+    if (typeof _sendKnock === 'function') _sendKnock(doorOwner);
+  } else {
+    const possessive = isNeleDoor ? `${name}s` : `${name}'`;
+    showToast(`🔒 ${possessive} Zimmer ist abgeschlossen!`);
+  }
 }
 
 function isWallTile(tx, ty) {
@@ -2982,6 +3111,7 @@ function _doPickup(tx, ty, item, rot, fromInventory) {
   } else {
     MAP[ty][tx]=getFloorType(tx,ty); ROT[ty][tx]=0; updateBackgroundTile(tx,ty);
   }
+  _scheduleSave(); // Sofort speichern damit der andere Spieler die leere Stelle sieht
   buildFromInventory = false;
   canvas.style.cursor = 'crosshair';
   updateBuildUI();
@@ -3003,6 +3133,7 @@ function _doPickupRug(tx, ty) {
     });
   }
   toClear.forEach(pos=>{RUG_MAP[pos.y][pos.x]=0; RUG_ROT[pos.y][pos.x]=0;});
+  _scheduleSave(); // Sofort speichern damit der andere Spieler die Änderung sieht
   buildItem = rugId;
   buildRot = rugRot;
   buildFromInventory = false;
@@ -3016,6 +3147,13 @@ function tryPlace(tx, ty) {
   if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return;
 
   if (!canPlaceItem(tx, ty, buildItem, buildRot)) { showToast("Hier kann nichts platziert werden! 🚫"); return; }
+
+  // Geld abziehen wenn aus Shop (nicht aus Inventar)
+  if (!buildFromInventory && buildItemPrice > 0) {
+    if (!spendCoins(buildItemPrice)) { showToast(`Nicht genug Coins! Benötigt: ${buildItemPrice} 🪙`); return; }
+    buildItemPaid = true;
+    buildItemPrice = 0;
+  }
 
   const wasFromInventory = buildFromInventory;
   if (buildFromInventory) {
@@ -3152,7 +3290,12 @@ canvas.addEventListener('contextmenu', e => {
 
 canvas.addEventListener('mousedown', e => {
   if (e.button === 2) return;
-  closeConfirm();
+  // Confirm-Popup nur schließen wenn der Klick NICHT im Popup landet
+  const popup = document.getElementById('confirm-popup');
+  if (popup.style.display === 'block') {
+    // Klick ist auf Canvas, also außerhalb des Popups → schließen
+    closeConfirm();
+  }
   if (!buildMode[activePlayer]) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -3263,6 +3406,18 @@ function update() {
     else { players.p2.x=players.p2.sitX; players.p2.y=players.p2.sitY; players.p2.dx=0; players.p2.dy=0; }
   } else { movePlayer(players.p2,dx2,dy2); }
 
+  // Gegner-Interpolation (Lerp) — nur für den nicht-aktiven Spieler
+  const oppKey = activePlayer === 'p1' ? 'p2' : 'p1';
+  const opp = players[oppKey];
+  if (!opp.sitting && !opp.lying && !opp.bathing && !opp.swimming) {
+    const lerpFactor = 0.25;
+    opp.x += (opp.targetX - opp.x) * lerpFactor;
+    opp.y += (opp.targetY - opp.y) * lerpFactor;
+    // Walk-Animation anhand Bewegungs-Delta
+    const moveDist = Math.hypot(opp.targetX - opp.x, opp.targetY - opp.y);
+    if (moveDist > 0.5) opp.frame++;
+  }
+
   if (pet.active) {
     pet.timer--;
     if (pet.timer <= 0) {
@@ -3283,8 +3438,8 @@ function update() {
         pet.dx = (pet.target.x - pet.x) / dist; pet.dy = (pet.target.y - pet.y) / dist;
         const nx = pet.x + pet.dx * pet.speed; const ny = pet.y + pet.dy * pet.speed;
         const psz = 3; 
-        const checkPx = (x,y) => [[Math.floor((x-psz)/TILE),Math.floor(y/TILE)],[Math.floor((x+psz)/TILE),Math.floor(y/TILE)]].some(([tx,ty])=>isSolid(tx,ty,false));
-        const checkPy = (x,y) => [[Math.floor(x/TILE),Math.floor((y-psz)/TILE)],[Math.floor(x/TILE),Math.floor((y+psz)/TILE)]].some(([tx,ty])=>isSolid(tx,ty,false));
+        const checkPx = (x,y) => [[Math.floor((x-psz)/TILE),Math.floor(y/TILE)],[Math.floor((x+psz)/TILE),Math.floor(y/TILE)]].some(([tx,ty])=>isSolid(tx,ty,false)||(typeof isDoorLockedFor==='function'&&isDoorLockedFor(tx,ty)));
+        const checkPy = (x,y) => [[Math.floor(x/TILE),Math.floor((y-psz)/TILE)],[Math.floor(x/TILE),Math.floor((y+psz)/TILE)]].some(([tx,ty])=>isSolid(tx,ty,false)||(typeof isDoorLockedFor==='function'&&isDoorLockedFor(tx,ty)));
         if (!checkPx(nx, pet.y)) pet.x = nx;
         if (!checkPy(pet.x, ny)) pet.y = ny;
         pet.frame++;
@@ -3974,6 +4129,7 @@ window.cancelBuild       = cancelBuild;
 window.switchTab         = switchTab;
 window.closeConfirm      = closeConfirm;
 window.toggleRoomLock    = toggleRoomLock;
+window._sendKnock        = _sendKnock;
 window.switchWardrobeTab = switchWardrobeTab;
 window.openWardrobe      = openWardrobe;
 window.closeWardrobe     = closeWardrobe;
