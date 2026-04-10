@@ -352,6 +352,30 @@
   .game-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; }
   .game-bubble.p1::after { border-top: 6px solid rgba(14,100,130,0.93); }
   .game-bubble.p2::after { border-top: 6px solid rgba(140,20,80,0.93); }
+  /* Tipp-Indikator Bubble */
+  .typing-bubble {
+    position: absolute; pointer-events: none; transform: translateX(-50%);
+    padding: 5px 10px; border-radius: 8px; z-index: 50;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .typing-bubble.p1 { background: rgba(14,100,130,0.93); border: 1.5px solid #9de2ff; }
+  .typing-bubble.p2 { background: rgba(140,20,80,0.93); border: 1.5px solid #ff9de2; }
+  .typing-bubble::after {
+    content: ''; position: absolute; bottom: -6px; left: 50%;
+    transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent;
+  }
+  .typing-bubble.p1::after { border-top: 6px solid rgba(14,100,130,0.93); }
+  .typing-bubble.p2::after { border-top: 6px solid rgba(140,20,80,0.93); }
+  .typing-dot {
+    width: 5px; height: 5px; border-radius: 50%; background: #fff; opacity: 0.4;
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -570,7 +594,7 @@
   <button class="close-btn" style="border-color:#2dd4bf;" onclick="toggleInventory()">✕ Schließen</button>
 </div>
 
-<div id="canvas-wrapper" style="position:relative"><canvas id="gameCanvas"></canvas><div id="bubble-p1" class="game-bubble p1" style="display:none;"></div><div id="bubble-p2" class="game-bubble p2" style="display:none;"></div></div>
+<div id="canvas-wrapper" style="position:relative"><canvas id="gameCanvas"></canvas><div id="bubble-p1" class="game-bubble p1" style="display:none;"></div><div id="bubble-p2" class="game-bubble p2" style="display:none;"></div><div id="typing-bubble-p1" class="typing-bubble p1" style="display:none;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><div id="typing-bubble-p2" class="typing-bubble p2" style="display:none;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>
 
 <div class="joystick-zone" id="joystick-left"><div class="joystick-base"><div class="joystick-stick" id="stick-left"></div></div></div>
 <div class="joystick-zone" id="joystick-right"><div class="joystick-base"><div class="joystick-stick" id="stick-right"></div></div></div>
@@ -674,6 +698,13 @@ onAuthStateChanged(_auth, user => {
   _startOutfitListeners();
   _startInventoryListener();
   _startChatListener();
+  _startTypingListener();
+
+  // Typing-Event ans Chat-Input binden
+  document.getElementById('chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { window.sendChatMessage(); return; }
+    _sendTyping();
+  });
 
   // --- PRESENCE: online setzen, bei Disconnect automatisch offline ---
   const _onlineRef = ref(_db, `game/ourhome/online/${_myCoinKey}`);
@@ -4468,11 +4499,38 @@ window.toggleChat = function() {
   }
 };
 
+// ---- TYPING INDIKATOR ----
+let _typingTimeout = null;
+function _sendTyping() {
+  if (!_firebaseReady || !_myCoinKey) return;
+  set(ref(_db, `game/ourhome/typing/${_myCoinKey}`), { ts: Date.now() }).catch(() => {});
+  clearTimeout(_typingTimeout);
+  _typingTimeout = setTimeout(() => {
+    set(ref(_db, `game/ourhome/typing/${_myCoinKey}`), null).catch(() => {});
+  }, 3000);
+}
+function _clearTyping() {
+  clearTimeout(_typingTimeout);
+  if (_firebaseReady && _myCoinKey)
+    set(ref(_db, `game/ourhome/typing/${_myCoinKey}`), null).catch(() => {});
+}
+
+const opponentTyping = { p1: false, p2: false };
+
+function _startTypingListener() {
+  const oppDbKey = PLAYER_DB_MAP[_opponentKey()];
+  const oppPlayerKey = _opponentKey();
+  onValue(ref(_db, `game/ourhome/typing/${oppDbKey}`), snap => {
+    opponentTyping[oppPlayerKey] = !!snap.val();
+  });
+}
+
 window.sendChatMessage = function() {
   if (!_firebaseReady || !_myCoinKey) return;
   const input = document.getElementById('chat-input');
   const text = (input.value || '').trim();
   if (!text) return;
+  _clearTyping();
   input.value = '';
   const newKey = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
   const msgData = { from: _myCoinKey, text, ts: Date.now() };
@@ -4490,20 +4548,44 @@ window.sendChatMessage = function() {
 
 function updateChatBubbles() {
   ['p1','p2'].forEach(pk => {
-    const el = document.getElementById('bubble-' + pk);
-    if (!el) return;
-    const bubble = chatBubbles[pk];
-    if (!bubble || bubble.timer <= 0) { el.style.display = 'none'; return; }
-    bubble.timer--;
+    const msgEl = document.getElementById('bubble-' + pk);
+    const typEl = document.getElementById('typing-bubble-' + pk);
     const p = players[pk];
-    if (!p) { el.style.display = 'none'; return; }
-    const px2 = (p.x - camX) * scale;
-    const py2 = (p.y - camY) * scale;
-    el.textContent = bubble.text;
-    el.style.display = 'block';
-    el.style.left = Math.round(px2) + 'px';
-    el.style.top  = Math.round(py2 - 14 * scale - el.offsetHeight) + 'px';
-    el.style.opacity = bubble.timer < 40 ? (bubble.timer / 40).toFixed(2) : '1';
+
+    // Normale Chat-Bubble
+    if (msgEl) {
+      const bubble = chatBubbles[pk];
+      if (!bubble || bubble.timer <= 0) {
+        msgEl.style.display = 'none';
+      } else {
+        bubble.timer--;
+        if (p) {
+          const px2 = (p.x - camX) * scale;
+          const py2 = (p.y - camY) * scale;
+          msgEl.textContent = bubble.text;
+          msgEl.style.display = 'block';
+          msgEl.style.left = Math.round(px2) + 'px';
+          msgEl.style.top  = Math.round(py2 - 14 * scale - msgEl.offsetHeight) + 'px';
+          msgEl.style.opacity = bubble.timer < 40 ? (bubble.timer / 40).toFixed(2) : '1';
+        }
+      }
+    }
+
+    // Typing-Bubble — nur für Gegner anzeigen, nicht für sich selbst
+    if (typEl && p) {
+      const isOpp = pk !== _myPlayerKey;
+      const isTyping = opponentTyping[pk];
+      const hasChatBubble = chatBubbles[pk] && chatBubbles[pk].timer > 0;
+      if (isOpp && isTyping && !hasChatBubble) {
+        const px2 = (p.x - camX) * scale;
+        const py2 = (p.y - camY) * scale;
+        typEl.style.display = 'flex';
+        typEl.style.left = Math.round(px2) + 'px';
+        typEl.style.top  = Math.round(py2 - 14 * scale - typEl.offsetHeight) + 'px';
+      } else {
+        typEl.style.display = 'none';
+      }
+    }
   });
 }
 window.toggleShop        = toggleShop;
