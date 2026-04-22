@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Marienkäfer-Abenteuer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #1a3a1a;
+    font-family: 'Nunito', sans-serif;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    height: 100dvh;
+    padding: 8px 8px 0 8px;
+    gap: 6px;
+  }
+
+  #topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  #title {
+    font-family: 'Fredoka One', cursive;
+    color: #a8e063;
+    font-size: clamp(1rem, 5vw, 1.5rem);
+    text-shadow: 0 2px 8px #0008;
+  }
+
+  #hud { display: flex; gap: 8px; align-items: center; }
+
+  .hud-chip {
+    background: #2d5a27cc;
+    border: 1.5px solid #4a7c3f;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-family: 'Fredoka One', cursive;
+    color: #ffe066;
+    font-size: clamp(0.75rem, 3.5vw, 1rem);
+  }
+  .hud-chip .lbl { color: #a8e063; font-size: 0.8em; }
+
+  #canvas-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  #canvas {
+    border-radius: 14px;
+    border: 3px solid #4a7c3f;
+    box-shadow: 0 8px 40px #0006, 0 0 0 4px #2d5a27;
+    display: block;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10;
+    padding: 20px;
+  }
+  #start-overlay   { background: #1a3a1acc; }
+  #gameover-overlay { background: #1a0a0acc; display: none; }
+
+  .overlay h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.4rem, 7vw, 2.2rem);
+    text-shadow: 0 2px 12px #0008;
+  }
+  #start-overlay h2   { color: #a8e063; }
+  #gameover-overlay h2 { color: #ff5555; }
+
+  .overlay p {
+    color: #d4f5a0;
+    font-size: clamp(0.8rem, 3.5vw, 1rem);
+    text-align: center;
+    line-height: 1.65;
+    max-width: 300px;
+  }
+
+  .btn {
+    border: none; border-radius: 50px;
+    padding: 10px 32px;
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1rem, 5vw, 1.3rem);
+    cursor: pointer;
+    box-shadow: 0 4px 18px #0004;
+    transition: transform 0.1s;
+  }
+  .btn:active { transform: scale(0.94); }
+  .btn-green { background: #5cb85c; color: #fff; }
+  .btn-red   { background: #c0392b; color: #fff; }
+
+  /* Controls row */
+  #controls {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 6px 16px 12px;
+    flex-shrink: 0;
+  }
+
+  /* D-Pad */
+  #dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    width: clamp(140px, 38vw, 180px);
+    height: clamp(140px, 38vw, 180px);
+  }
+
+  .dpad-btn {
+    background: #2d5a27cc;
+    border: 2px solid #4a7c3f;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(1.2rem, 5vw, 1.7rem);
+    color: #a8e063;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.08s, transform 0.06s;
+  }
+  .dpad-btn.pressed, .dpad-btn:active {
+    background: #4a7c3f;
+    transform: scale(0.9);
+  }
+  .dpad-empty { background: transparent !important; border-color: transparent !important; pointer-events: none; }
+
+  /* Compass */
+  #compass-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  #compass {
+    border-radius: 50%;
+    display: block;
+  }
+  #compass-label {
+    font-size: clamp(0.6rem, 2.2vw, 0.72rem);
+    color: #8ab87a;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  @keyframes shake {
+    0%   { transform: translate(0,0); }
+    20%  { transform: translate(-6px,2px); }
+    40%  { transform: translate(6px,-2px); }
+    60%  { transform: translate(-4px,2px); }
+    80%  { transform: translate(4px,-1px); }
+    100% { transform: translate(0,0); }
+  }
+  .shake { animation: shake 0.35s ease; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <div id="title">🐞 Marienkäfer</div>
+    <div id="hud">
+      <div class="hud-chip"><span class="lbl">Level </span><span id="level-display">1</span></div>
+      <div class="hud-chip"><span class="lbl">Schritte </span><span id="steps">0</span></div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+
+    <div class="overlay" id="start-overlay">
+      <h2>🐞 Bereit?</h2>
+      <p>Bring den Käfer zum <b>🌸 Blümchen</b>!<br>
+         Denk aus <b>seiner</b> Perspektive:<br>
+         ↑ = vorwärts (wohin er schaut)<br>
+         ← → = drehen &nbsp;·&nbsp; ↓ = rückwärts<br><br>
+         ⚠️ <b>Stein berühren = Game Over!</b></p>
+      <button class="btn btn-green" id="start-btn">Los geht's!</button>
+    </div>
+
+    <div class="overlay" id="gameover-overlay">
+      <div style="font-size:3rem">💥</div>
+      <h2>Game Over!</h2>
+      <p>Der Käfer ist gegen einen Stein gelaufen!<br>
+         Schritte bis zum Crash: <b id="gameover-steps" style="color:#ffe066">0</b></p>
+      <button class="btn btn-red" id="restart-btn">Nochmal!</button>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div id="dpad">
+      <div class="dpad-btn dpad-empty"></div>
+      <div class="dpad-btn" id="btn-forward">↑</div>
+      <div class="dpad-btn dpad-empty"></div>
+      <div class="dpad-btn" id="btn-left">←</div>
+      <div class="dpad-btn dpad-empty" style="font-size:1.3rem">🐞</div>
+      <div class="dpad-btn" id="btn-right">→</div>
+      <div class="dpad-btn dpad-empty"></div>
+      <div class="dpad-btn" id="btn-backward">↓</div>
+      <div class="dpad-btn dpad-empty"></div>
+    </div>
+
+    <div id="compass-area">
+      <canvas id="compass"></canvas>
+      <div id="compass-label">Käfer-Kompass<br>🔴 = Blickrichtung</div>
+    </div>
+  </div>
+
+</div>
+<script>
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
+const cc      = document.getElementById('compass');
+const cctx    = cc.getContext('2d');
+
+const TILE = 40;
+let CW, CH, COLS, ROWS;
+
+function resizeAll() {
+  const wrap = document.getElementById('canvas-wrap');
+  const avW  = Math.min(wrap.clientWidth,  520);
+  const avH  = wrap.clientHeight;
+  const size = Math.floor(Math.min(avW, avH) / TILE) * TILE;
+  canvas.width  = canvas.height  = size;
+  canvas.style.width = canvas.style.height = size + 'px';
+  CW = CH = size;
+  COLS = ROWS = size / TILE;
+
+  const csz = Math.round(Math.min(window.innerWidth * 0.22, 90));
+  cc.width = cc.height = csz;
+}
+
+window.addEventListener('resize', () => { resizeAll(); if (bug) initLevel(level); });
+resizeAll();
+
+// ── State ──
+let bug, goal, obstacles, level = 0, steps = 0, gameRunning = false;
+let redFlash = 0, banner = null;
+let particles = [];
+
+const LEVELS = [
+  { obstacles: 4,  goalDist: 5 },
+  { obstacles: 7,  goalDist: 6 },
+  { obstacles: 10, goalDist: 7 },
+  { obstacles: 14, goalDist: 8 },
+];
+
+function rand(a,b) { return Math.floor(Math.random()*(b-a+1))+a; }
+function mdist(x1,y1,x2,y2) { return Math.abs(x1-x2)+Math.abs(y1-y2); }
+
+function initLevel(lvl) {
+  steps = 0;
+  document.getElementById('steps').textContent = 0;
+  document.getElementById('level-display').textContent = lvl + 1;
+  const cfg = LEVELS[Math.min(lvl, LEVELS.length-1)];
+  bug = { x: Math.floor(COLS/2), y: Math.floor(ROWS/2), angle: 0 };
+  obstacles = new Set();
+  let gx, gy;
+  do { gx = rand(1,COLS-2); gy = rand(1,ROWS-2); }
+  while (mdist(gx,gy,bug.x,bug.y) < cfg.goalDist || (gx===bug.x&&gy===bug.y));
+  goal = {x:gx, y:gy};
+  let att = 0;
+  while (obstacles.size < cfg.obstacles && att++ < 500) {
+    let ox=rand(0,COLS-1), oy=rand(0,ROWS-1);
+    if ((ox===bug.x&&oy===bug.y)||(ox===goal.x&&oy===goal.y)) continue;
+    if (mdist(ox,oy,bug.x,bug.y)<2) continue;
+    obstacles.add(ox+','+oy);
+  }
+}
+
+// ── Draw ──
+function drawGrass() {
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    ctx.fillStyle = (r+c)%2===0 ? '#3d7a35' : '#357030';
+    ctx.fillRect(c*TILE, r*TILE, TILE, TILE);
+  }
+  ctx.strokeStyle='#2d5a2760'; ctx.lineWidth=0.5;
+  for (let r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*TILE);ctx.lineTo(CW,r*TILE);ctx.stroke();}
+  for (let c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*TILE,0);ctx.lineTo(c*TILE,CH);ctx.stroke();}
+}
+
+function drawObstacles() {
+  for (let key of obstacles) {
+    const [ox,oy]=key.split(',').map(Number);
+    const cx=ox*TILE+TILE/2, cy=oy*TILE+TILE/2;
+    ctx.save(); ctx.translate(cx,cy);
+    ctx.fillStyle='#7a7060'; ctx.beginPath(); ctx.ellipse(0,2,TILE*.42,TILE*.32,.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#9a9080'; ctx.beginPath(); ctx.ellipse(-2,-1,TILE*.38,TILE*.28,.2,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawGoal() {
+  const cx=goal.x*TILE+TILE/2, cy=goal.y*TILE+TILE/2;
+  const pulse=0.7+0.3*Math.sin(Date.now()/300);
+  const g=ctx.createRadialGradient(cx,cy,2,cx,cy,TILE*pulse);
+  g.addColorStop(0,'#ffe06666'); g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.fillRect(goal.x*TILE,goal.y*TILE,TILE,TILE);
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.strokeStyle='#5cb85c'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(0,10); ctx.lineTo(0,18); ctx.stroke();
+  ctx.fillStyle='#ff9edb';
+  for(let i=0;i<6;i++){ctx.save();ctx.rotate(i/6*Math.PI*2);ctx.beginPath();ctx.ellipse(0,-9,4,7,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+  ctx.fillStyle='#ffe066'; ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawBug() {
+  const cx=bug.x*TILE+TILE/2, cy=bug.y*TILE+TILE/2;
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(bug.angle);
+  const r=TILE*.36;
+  ctx.fillStyle='#0003'; ctx.beginPath(); ctx.ellipse(2,3,r*.9,r*.6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e03030'; ctx.beginPath(); ctx.ellipse(0,2,r*.85,r,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff666680'; ctx.beginPath(); ctx.ellipse(-3,-4,r*.4,r*.25,-.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a0a0a';
+  [[5,-4,4],[-5,-4,4],[0,4,3.5],[6,3,3],[-6,3,3]].forEach(([sx,sy,sr])=>{ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();});
+  ctx.strokeStyle='#1a0a0a'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,-r*.8); ctx.lineTo(0,r*.9); ctx.stroke();
+  ctx.fillStyle='#111'; ctx.beginPath(); ctx.ellipse(0,-r*.85,r*.55,r*.4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(-4,-r*.92,2.5,0,Math.PI*2); ctx.arc(4,-r*.92,2.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath(); ctx.arc(-4,-r*.92,1.2,0,Math.PI*2); ctx.arc(4,-r*.92,1.2,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#111'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(-3,-r*1.05); ctx.quadraticCurveTo(-8,-r*1.5,-10,-r*1.7);
+  ctx.moveTo(3,-r*1.05);  ctx.quadraticCurveTo(8,-r*1.5,10,-r*1.7);
+  ctx.stroke();
+  ctx.fillStyle='#333';
+  ctx.beginPath(); ctx.arc(-10,-r*1.7,2,0,Math.PI*2); ctx.arc(10,-r*1.7,2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ffe066cc';
+  ctx.beginPath(); ctx.moveTo(0,-r*1.35); ctx.lineTo(-4,-r*1.2); ctx.lineTo(4,-r*1.2); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawCompass() {
+  const sz=cc.width, cx=sz/2, cy=sz/2, rad=sz*.45;
+  cctx.clearRect(0,0,sz,sz);
+  cctx.fillStyle='#1a3a1a'; cctx.beginPath(); cctx.arc(cx,cy,rad,0,Math.PI*2); cctx.fill();
+  cctx.strokeStyle='#4a7c3f'; cctx.lineWidth=2; cctx.stroke();
+  cctx.fillStyle='#8ab87a'; cctx.font=`${Math.round(sz*.12)}px Nunito`;
+  cctx.textAlign='center'; cctx.textBaseline='middle';
+  const d=rad*.72;
+  cctx.fillText('N',cx,cy-d); cctx.fillText('S',cx,cy+d);
+  cctx.fillText('W',cx-d,cy); cctx.fillText('E',cx+d,cy);
+  cctx.save(); cctx.translate(cx,cy); cctx.rotate(bug?bug.angle:0);
+  const al=rad*.62;
+  cctx.fillStyle='#ff5555';
+  cctx.beginPath(); cctx.moveTo(0,-al); cctx.lineTo(-al*.22,al*.22); cctx.lineTo(0,0); cctx.lineTo(al*.22,al*.22); cctx.closePath(); cctx.fill();
+  cctx.fillStyle='#aaa';
+  cctx.beginPath(); cctx.moveTo(0,al); cctx.lineTo(-al*.22,-al*.22); cctx.lineTo(0,0); cctx.lineTo(al*.22,-al*.22); cctx.closePath(); cctx.fill();
+  cctx.restore();
+  cctx.fillStyle='#ffe066'; cctx.beginPath(); cctx.arc(cx,cy,sz*.05,0,Math.PI*2); cctx.fill();
+}
+
+function spawnParticles() {
+  const cx=goal.x*TILE+TILE/2, cy=goal.y*TILE+TILE/2;
+  for(let i=0;i<28;i++){
+    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*3;
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,
+      color:['#ffe066','#ff9edb','#a8e063','#ff5555','#66cfff'][Math.floor(Math.random()*5)],
+      r:3+Math.random()*4});
+  }
+}
+function updateParticles() {
+  particles=particles.filter(p=>p.life>0);
+  for(let p of particles){
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life-=0.025;
+    ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// ── Movement ──
+const TURN=Math.PI/2;
+
+function processMove(dir) {
+  if(!gameRunning) return;
+  if(dir==='left'){
+    bug.angle-=TURN; if(bug.angle<-Math.PI) bug.angle+=Math.PI*2; steps++;
+  } else if(dir==='right'){
+    bug.angle+=TURN; if(bug.angle>Math.PI) bug.angle-=Math.PI*2; steps++;
+  } else {
+    const dx=Math.round(Math.sin(bug.angle));
+    const dy=Math.round(-Math.cos(bug.angle));
+    let nx=bug.x+(dir==='forward'?dx:-dx);
+    let ny=bug.y+(dir==='forward'?dy:-dy);
+    nx=Math.max(0,Math.min(COLS-1,nx));
+    ny=Math.max(0,Math.min(ROWS-1,ny));
+    bug.x=nx; bug.y=ny; steps++;
+    document.getElementById('steps').textContent=steps;
+    if(obstacles.has(nx+','+ny)){ triggerGameOver(); return; }
+  }
+  document.getElementById('steps').textContent=steps;
+  if(bug.x===goal.x&&bug.y===goal.y){
+    spawnParticles(); gameRunning=false;
+    setTimeout(()=>{
+      level=Math.min(level+1,LEVELS.length-1);
+      initLevel(level); gameRunning=true;
+      banner={text:`Level ${level+1}! 🌸`,alpha:1,timer:90};
+    },1800);
+  }
+}
+
+function triggerGameOver() {
+  gameRunning=false; redFlash=1;
+  canvas.classList.add('shake');
+  canvas.addEventListener('animationend',()=>canvas.classList.remove('shake'),{once:true});
+  setTimeout(()=>{
+    document.getElementById('gameover-steps').textContent=steps;
+    document.getElementById('gameover-overlay').style.display='flex';
+  },450);
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e=>{
+  if(!gameRunning) return;
+  const map={'ArrowUp':'forward','ArrowDown':'backward','ArrowLeft':'left','ArrowRight':'right'};
+  if(map[e.key]){ e.preventDefault(); processMove(map[e.key]); }
+});
+
+// ── D-Pad touch ──
+function bindDpad(id, dir) {
+  const el=document.getElementById(id);
+  let held=false, iv=null;
+  function press(e){ e.preventDefault(); if(!gameRunning) return; el.classList.add('pressed'); processMove(dir); held=true; iv=setTimeout(()=>{ if(held) iv=setInterval(()=>{ if(gameRunning) processMove(dir); },160); },320); }
+  function release(e){ e.preventDefault(); el.classList.remove('pressed'); held=false; clearTimeout(iv); clearInterval(iv); }
+  el.addEventListener('touchstart', press, {passive:false});
+  el.addEventListener('touchend',   release, {passive:false});
+  el.addEventListener('touchcancel',release, {passive:false});
+  el.addEventListener('mousedown',  press);
+  el.addEventListener('mouseup',    release);
+  el.addEventListener('mouseleave', release);
+}
+bindDpad('btn-forward',  'forward');
+bindDpad('btn-backward', 'backward');
+bindDpad('btn-left',     'left');
+bindDpad('btn-right',    'right');
+
+// ── Game loop ──
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+  if(!CW||!bug) return;
+  drawGrass(); drawObstacles(); drawGoal(); drawBug(); updateParticles();
+  if(redFlash>0){
+    ctx.fillStyle=`rgba(200,0,0,${redFlash*.45})`;
+    ctx.fillRect(0,0,CW,CH);
+    redFlash-=0.04; if(redFlash<0) redFlash=0;
+  }
+  if(banner){
+    banner.timer--;
+    banner.alpha=banner.timer>60?1:banner.timer/60;
+    ctx.globalAlpha=banner.alpha; ctx.fillStyle='#ffe066';
+    const fs=Math.round(CW*.08);
+    ctx.font=`bold ${fs}px 'Fredoka One',cursive`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#000'; ctx.shadowBlur=12;
+    ctx.fillText(banner.text,CW/2,CH/2);
+    ctx.shadowBlur=0; ctx.globalAlpha=1;
+    if(banner.timer<=0) banner=null;
+  }
+  drawCompass();
+}
+
+document.getElementById('start-btn').addEventListener('click',()=>{
+  document.getElementById('start-overlay').style.display='none';
+  gameRunning=true;
+});
+document.getElementById('restart-btn').addEventListener('click',()=>{
+  document.getElementById('gameover-overlay').style.display='none';
+  level=0; initLevel(0); particles=[]; redFlash=0; gameRunning=true;
+});
+
+initLevel(0);
+gameLoop();
+</script>
+</body>
+</html>
