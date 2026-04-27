@@ -53,7 +53,13 @@
   .controls-hint .ctrl-row { display: flex; justify-content: space-between; align-items: center; }
   .key-cap { display: inline-block; padding: 2px 8px; background: rgba(100,150,255,0.2); border: 1px solid rgba(100,150,255,0.4); border-radius: 5px; font-weight: 800; color: #fff; font-size: 10px; letter-spacing: 1px; min-width: 22px; text-align: center; box-shadow: 0 2px 0 rgba(100,150,255,0.3); }
   
-  .weapon-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; max-height: 38vh; overflow-y: auto; padding-right: 8px; }
+  /* TABS IM MENÜ */
+  .menu-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .menu-tab { flex: 1; padding: 12px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(100,150,255,0.2); border-radius: 10px; color: #aabbff; font-weight: 800; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .menu-tab:hover { background: rgba(100,150,255,0.15); }
+  .menu-tab.active { background: rgba(0,100,255,0.3); border-color: #00bbff; color: #fff; box-shadow: 0 0 15px rgba(0,150,255,0.4); }
+
+  .weapon-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; max-height: 30vh; overflow-y: auto; padding-right: 8px; }
   .weapon-list::-webkit-scrollbar { width: 6px; }
   .weapon-list::-webkit-scrollbar-thumb { background: rgba(100,150,255,0.5); border-radius: 3px; }
   
@@ -62,6 +68,19 @@
   .weapon-card.selected { background: rgba(0,100,255,0.3); border-color: #00bbff; box-shadow: 0 0 15px rgba(0,150,255,0.4); }
   .w-name { font-weight: 800; font-size: 15px; color: #fff; margin-bottom: 3px; }
   .w-stats { font-size: 11px; color: #aabbff; font-weight: 600; opacity: 0.8; letter-spacing: 1px; }
+
+  /* WARDROBE (KLEIDERSCHRANK) */
+  .wardrobe-view { display: none; flex-direction: column; gap: 14px; margin-bottom: 22px; max-height: 30vh; overflow-y: auto; padding-right: 8px; }
+  .wardrobe-view::-webkit-scrollbar { width: 6px; }
+  .wardrobe-view::-webkit-scrollbar-thumb { background: rgba(100,150,255,0.5); border-radius: 3px; }
+  .w-label { font-size: 11px; color: #aabbff; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+  .style-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .style-btn { flex: 1; padding: 10px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .style-btn.active { background: rgba(0,100,255,0.4); border-color: #00bbff; box-shadow: 0 0 10px rgba(0,150,255,0.4); }
+  .color-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .color-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+  .color-btn:hover { transform: scale(1.1); }
+  .color-btn.active { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
   
   #start-btn { width: 100%; padding: 18px; background: linear-gradient(90deg, #0066ff, #00d4ff); border: none; color: #fff; font-weight: 900; font-size: 18px; border-radius: 14px; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; box-shadow: 0 10px 30px rgba(0,100,255,0.4); transition: transform 0.1s; }
   #start-btn:active { transform: scale(0.97); }
@@ -177,9 +196,34 @@
       <div class="ctrl-row"><span>Angriff</span><span class="key-cap">LMB</span></div>
       <div class="ctrl-row"><span>Kristall</span><span class="key-cap">E</span></div>
     </div>
-    <div class="hud-label" style="margin-bottom:10px;">Ausrüstung wählen</div>
-    <div class="weapon-list" id="weapon-list">
+    
+    <div class="menu-tabs">
+      <div class="menu-tab active" id="tab-weapons">Waffen</div>
+      <div class="menu-tab" id="tab-wardrobe">Garderobe</div>
+    </div>
+
+    <div class="weapon-list" id="weapon-list"></div>
+
+    <div class="wardrobe-view" id="wardrobe-view">
+      <div>
+        <div class="w-label">Frisur</div>
+        <div class="style-row" id="hair-style-container">
+          </div>
       </div>
+      <div>
+        <div class="w-label">Haarfarbe</div>
+        <div class="color-row" id="hair-color-container"></div>
+      </div>
+      <div>
+        <div class="w-label">Oberteil</div>
+        <div class="color-row" id="shirt-color-container"></div>
+      </div>
+      <div>
+        <div class="w-label">Hose</div>
+        <div class="color-row" id="pants-color-container"></div>
+      </div>
+    </div>
+
     <button id="start-btn">Start</button>
   </div>
 </div>
@@ -211,14 +255,12 @@ const isMobile = (hasTouch && window.innerWidth < 900) || /iPhone|iPad|iPod|Andr
 if (isMobile) {
   document.getElementById('mobile-controls').classList.add('active');
   document.getElementById('crosshair').classList.add('mobile');
-  // Mobile: Tutorial-Hint mit Touch-Steuerung ersetzen
   document.getElementById('controls-hint').innerHTML = `
     <div class="ctrl-row"><span>Bewegen</span><span class="key-cap">Joystick</span></div>
     <div class="ctrl-row"><span>Umsehen</span><span class="key-cap">Wischen</span></div>
     <div class="ctrl-row"><span>Angriff</span><span class="key-cap">ATK</span></div>
     <div class="ctrl-row"><span>Springen</span><span class="key-cap">JMP</span></div>
     <div class="ctrl-row"><span>Kristall</span><span class="key-cap">USE</span></div>`;
-  // Interact-Prompt auf Mobile: Badge zeigt USE
   document.getElementById('interact-key').textContent = 'USE';
   document.getElementById('interact-key').style.minWidth = '52px';
 }
@@ -318,6 +360,9 @@ const switchCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.8, 0), new THRE
 const switchLight = new THREE.PointLight(0xff0033, 2.5, 15); switchLight.position.y = 2.2; switchGroup.add(switchLight);
 switchGroup.position.set(0, 0, 0); scene.add(switchGroup); obstacles.push({ x: 0, z: 0, radius: 2.0 });
 
+// Menü-Kamera und Podest vor Bäumen schützen
+obstacles.push({ x: 0, z: 10, radius: 7.0 });
+
 const leavesMat = ToonMat(0x2d5c2e);
 for(let i=0; i<30; i++) {
   for(let attempts=0; attempts<20; attempts++) {
@@ -331,6 +376,10 @@ for(let i=0; i<30; i++) {
     }
   }
 }
+
+// Den Menü-Schutz wieder entfernen, damit er im Spiel keine unsichtbare Wand bildet!
+const shieldIndex = obstacles.findIndex(o => o.radius === 7.0 && o.z === 10);
+if (shieldIndex > -1) obstacles.splice(shieldIndex, 1);
 
 const particleGeo = new THREE.BufferGeometry(); const particleCount = 400; const posArray = new Float32Array(particleCount * 3);
 for(let i=0; i<particleCount*3; i++) { posArray[i] = (Math.random() - 0.5) * ROOM_SIZE; }
@@ -346,6 +395,28 @@ dirLight.position.set(40, 30, -20); dirLight.castShadow = true; dirLight.shadow.
 dirLight.shadow.camera.near = 1; dirLight.shadow.camera.far = 120;
 const d = 45; dirLight.shadow.camera.left = -d; dirLight.shadow.camera.right = d; dirLight.shadow.camera.top = d; dirLight.shadow.camera.bottom = -d;
 dirLight.shadow.bias = -0.0005; scene.add(dirLight);
+
+// ============ SAVEGAME & WARDROBE SYSTEM ============
+function loadProgress() {
+  const saved = localStorage.getItem('ikkimel_save');
+  const defaultWardrobe = { shirt: 0x882233, pants: 0x1a2639, hair: 0xffda66, hairStyle: 1 };
+  const defaultData = { money: 0, unlocked: ['w1'], wardrobe: defaultWardrobe };
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    return { ...defaultData, ...parsed, wardrobe: { ...defaultWardrobe, ...(parsed.wardrobe || {}) } };
+  }
+  return defaultData;
+}
+const savedData = loadProgress();
+
+function saveProgress() {
+  const unlocked = WEAPONS.filter(w => !w.locked).map(w => w.id);
+  localStorage.setItem('ikkimel_save', JSON.stringify({ 
+    money: player.money, 
+    unlocked, 
+    wardrobe: playerColors 
+  }));
+}
 
 // ============ ADVANCED PROCEDURAL SKELETON (RIG) ============
 function buildRiggedHumanoid(isEnemy, colors) {
@@ -372,8 +443,15 @@ function buildRiggedHumanoid(isEnemy, colors) {
   if (isEnemy) { eyeL.rotation.z = -0.3; eyeR.rotation.z = 0.3; mouth.scale.set(0.5, 1, 1); }
   head.add(eyeL, eyeR, mouth);
 
-  const hairBase = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.42), matHair); hairBase.position.set(0, 0.24, -0.02); neck.add(hairBase);
-  if (!isEnemy) { const longHair = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.6, 0.15), matHair); longHair.position.set(0, -0.2, -0.2); longHair.castShadow = true; neck.add(longHair); rig.parts.longHair = longHair; }
+  // Frisur Logik
+  if (colors.hairStyle !== 2) { // 2 = Glatze
+    const hairBase = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.42), matHair); 
+    hairBase.position.set(0, 0.24, -0.03); neck.add(hairBase);
+  }
+  if (!isEnemy && colors.hairStyle === 1) { // 1 = Lang
+    const longHair = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.6, 0.15), matHair); 
+    longHair.position.set(0, -0.2, -0.2); longHair.castShadow = true; neck.add(longHair); rig.parts.longHair = longHair; 
+  }
 
   const hipOffset = isEnemy ? 0.16 : 0.14;
   const buildLeg = (x) => {
@@ -392,39 +470,31 @@ function buildRiggedHumanoid(isEnemy, colors) {
   return rig;
 }
 
-// ============ SAVEGAME SYSTEM ============
-function loadProgress() {
-  const saved = localStorage.getItem('ikkimel_save');
-  if (saved) return JSON.parse(saved);
-  // Standard-Werte für neue Spieler (nur Eisenrohr w1 ist frei)
-  return { money: 0, unlocked: ['w1'] }; 
-}
-function saveProgress() {
-  const unlocked = WEAPONS.filter(w => !w.locked).map(w => w.id);
-  localStorage.setItem('ikkimel_save', JSON.stringify({ money: player.money, unlocked }));
-}
-
-const savedData = loadProgress();
-
-// ============ WAFFEN & INVENTAR ============
+// ============ WAFFEN & INVENTAR (Hit-Cap implementiert) ============
 const WEAPONS = [
-  { id: 'w0', name: '⚾ Baseballschläger', damage: 30, range: 2.8, speed: 0.4, cost: 150, locked: !savedData.unlocked.includes('w0') },
-  { id: 'w1', name: '🔧 Eisenrohr', damage: 60, range: 3.0, speed: 0.45, cost: 0, locked: !savedData.unlocked.includes('w1') },
-  { id: 'w2', name: '🪓 Daddys Axe', damage: 110, range: 3.2, speed: 0.5, cost: 350, locked: !savedData.unlocked.includes('w2') },
-  { id: 'w3', name: '⚡ Feminine Energy', damage: 200, range: 3.6, speed: 0.35, cost: 800, locked: !savedData.unlocked.includes('w3') },
-  { id: 'w4', name: '🔨 Scrotum Crusher', damage: 350, range: 4.5, speed: 0.4, cost: 1500, locked: !savedData.unlocked.includes('w4') }
+  { id: 'w0', name: '⚾ Baseballschläger', damage: 30, range: 2.8, speed: 0.4, cost: 150, maxHits: 1, locked: !savedData.unlocked.includes('w0') },
+  { id: 'w1', name: '🔧 Eisenrohr', damage: 60, range: 3.0, speed: 0.45, cost: 0, maxHits: 1, locked: !savedData.unlocked.includes('w1') },
+  { id: 'w2', name: '🪓 Daddys Axe', damage: 110, range: 3.2, speed: 0.5, cost: 350, maxHits: 2, locked: !savedData.unlocked.includes('w2') },
+  { id: 'w3', name: '⚡ Feminine Energy', damage: 200, range: 3.6, speed: 0.35, cost: 800, maxHits: 2, locked: !savedData.unlocked.includes('w3') },
+  { id: 'w4', name: '🔨 Scrotum Crusher', damage: 350, range: 4.5, speed: 0.4, cost: 1500, maxHits: 3, locked: !savedData.unlocked.includes('w4') }
 ];
 
 // ============ PLAYER ============
+const playerColors = { 
+  skin: 0xffd2b3, 
+  shirt: savedData.wardrobe.shirt, 
+  pants: savedData.wardrobe.pants, 
+  hair: savedData.wardrobe.hair, 
+  hairStyle: savedData.wardrobe.hairStyle !== undefined ? savedData.wardrobe.hairStyle : 1 
+};
+
 const player = {
   group: new THREE.Group(), position: new THREE.Vector3(0, 0, 10), velocity: new THREE.Vector3(),
   facing: 0, hp: 100, maxHp: 100, money: savedData.money, attacking: false, attackTime: 0, onGround: true, invuln: 0,
   weaponStats: { ...WEAPONS[1], tier: 1 }, rig: null, weaponGroup: null
 };
 
-const playerColors = { skin: 0xffd2b3, shirt: 0x882233, pants: 0x1a2639, hair: 0xffda66 };
-
-// === SHOWCASE-PODEST (nur im Hauptmenü sichtbar) ===
+// === SHOWCASE-PODEST ===
 const showcasePodium = new THREE.Group();
 const podiumBase = new THREE.Mesh(
   new THREE.CylinderGeometry(2.0, 2.4, 0.5, 16),
@@ -449,22 +519,16 @@ showcasePodium.position.set(0, 0, 10);
 scene.add(showcasePodium);
 
 function initPlayerModel() {
-  if(player.rig) player.group.remove(player.rig.group);
+  if(player.rig) { player.group.remove(player.rig.group); player.rig = null; }
   player.rig = buildRiggedHumanoid(false, playerColors);
   player.group.add(player.rig.group);
-
   player.weaponGroup = buildWeapon(player.weaponStats.tier);
-  
-  // Griff sitzt bei Y=0 der Waffe
   player.weaponGroup.position.set(0, -0.42, 0);
-  // NEU: Rotiert die Waffe nach vorne und leicht nach oben in der Hand
   player.weaponGroup.rotation.set(Math.PI / 2.5, 0, 0);
   player.rig.parts.armR.lower.add(player.weaponGroup);
-  
   document.getElementById('weapon-info').textContent = player.weaponStats.name;
 }
 
-// Pro-Waffen-Modelle. Konvention: Griff sitzt am Pivot (Y=0), Schaft/Klinge ragt nach +Y.
 function buildWeapon(tier) {
   const group = new THREE.Group();
   const woodMat      = new THREE.MeshToonMaterial({ color: 0x6b4423, gradientMap: toonGradient });
@@ -474,7 +538,6 @@ function buildWeapon(tier) {
   const tapeMat      = new THREE.MeshToonMaterial({ color: 0x1a1a1a, gradientMap: toonGradient });
 
   if (tier === 0) {
-    // ⚾ Baseballschläger
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.035, 0.95, 14), woodMat);
     body.position.y = 0.5; body.castShadow = true;
     const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.25, 10), tapeMat);
@@ -486,7 +549,6 @@ function buildWeapon(tier) {
     group.add(body, grip, knob, tip);
   }
   else if (tier === 1) {
-    // 🔧 Eisenrohr
     const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 12), steelMat);
     pipe.position.y = 0.5; pipe.castShadow = true;
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.07, 10), darkSteelMat);
@@ -498,7 +560,6 @@ function buildWeapon(tier) {
     group.add(pipe, cap, nut, grip);
   }
   else if (tier === 2) {
-    // 🪓 Daddys Axe
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 1.05, 10), woodMat);
     handle.position.y = 0.525; handle.castShadow = true;
     const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.25, 10), tapeMat);
@@ -517,7 +578,6 @@ function buildWeapon(tier) {
     group.add(handle, grip, bracket, blade, edge, spike, crown);
   }
   else if (tier === 3) {
-    // ⚡ Feminine Energy
     const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.3, 10), darkSteelMat);
     grip.position.y = 0.15;
     const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.052, 0.012, 6, 16),
@@ -541,7 +601,6 @@ function buildWeapon(tier) {
     group.add(grip, ring1, ring2, pommel, guard, blade, glow, tip, light);
   }
   else if (tier === 4) {
-    // 🔨 Scrotum Crusher
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.78, 10), darkWoodMat);
     handle.position.y = 0.39; handle.castShadow = true;
     const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), tapeMat);
@@ -569,19 +628,33 @@ function buildWeapon(tier) {
 initPlayerModel();
 scene.add(player.group);
 
-// Menü initialisieren & Shop-Logik
+// ============ UI TABS LOGIC ============
+const tabWeapons = document.getElementById('tab-weapons');
+const tabWardrobe = document.getElementById('tab-wardrobe');
+const viewWeapons = document.getElementById('weapon-list');
+const viewWardrobe = document.getElementById('wardrobe-view');
+
+tabWeapons.addEventListener('click', () => {
+  tabWeapons.classList.add('active'); tabWardrobe.classList.remove('active');
+  viewWeapons.style.display = 'flex'; viewWardrobe.style.display = 'none';
+});
+
+tabWardrobe.addEventListener('click', () => {
+  tabWardrobe.classList.add('active'); tabWeapons.classList.remove('active');
+  viewWardrobe.style.display = 'flex'; viewWeapons.style.display = 'none';
+});
+
+// HIER WAR DER FEHLER: Diese Zeilen hatten gefehlt!
 const weaponListEl = document.getElementById('weapon-list');
 const showcaseNameEl = document.getElementById('showcase-name');
-showcaseNameEl.textContent = WEAPONS[1].name;
+showcaseNameEl.textContent = player.weaponStats.name;
 
 function renderWeaponMenu() {
   weaponListEl.innerHTML = ''; 
-  // HUD-Geldanzeige schon im Menü aktualisieren
   document.getElementById('money').textContent = player.money;
 
   WEAPONS.forEach((w, index) => {
     const div = document.createElement('div');
-    
     if (w.locked) {
       div.className = 'weapon-card locked';
       div.style.opacity = '0.6';
@@ -589,27 +662,21 @@ function renderWeaponMenu() {
       
       div.onclick = () => {
         if (player.money >= w.cost) {
-          // Kaufen!
           player.money -= w.cost;
           w.locked = false;
           saveProgress();
-          
-          // Waffe direkt ausrüsten
           player.weaponStats = { ...w, tier: index };
           initPlayerModel();
           showcaseNameEl.textContent = w.name;
-          
-          renderWeaponMenu(); // Menü neu zeichnen
+          renderWeaponMenu(); 
         } else {
-          // Nicht genug Geld: Rotes Aufblinken
           div.style.backgroundColor = 'rgba(255, 50, 50, 0.4)';
           setTimeout(() => div.style.backgroundColor = '', 200);
         }
       };
     } else {
-      // Bereits gekaufte Waffe
       div.className = 'weapon-card' + (player.weaponStats.tier === index ? ' selected' : '');
-      div.innerHTML = `<div class="w-name">${w.name}</div><div class="w-stats">DMG: ${w.damage} | SPD: ${w.speed}</div>`;
+      div.innerHTML = `<div class="w-name">${w.name}</div><div class="w-stats">DMG: ${w.damage} | MAX HITS: ${w.maxHits || 1}</div>`;
       
       div.onclick = () => {
         document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('selected'));
@@ -622,14 +689,145 @@ function renderWeaponMenu() {
     weaponListEl.appendChild(div);
   });
 }
-renderWeaponMenu();
 
-// ============ ENEMIES ============
+function hexToString(hex) { return '#' + hex.toString(16).padStart(6, '0'); }
+
+function renderWardrobeMenu() {
+  const styles = [ { label: 'Kurz', value: 0 }, { label: 'Lang', value: 1 }, { label: 'Glatze', value: 2 } ];
+  const hairColors = [0xffda66, 0xfdf4dc, 0x4a3018, 0x111111, 0xcc4444, 0x66ccff];
+  const shirtColors = [0x882233, 0x1a2639, 0x228844, 0x111111, 0xeeeeee, 0xff8800];
+  const pantsColors = [0x1a2639, 0x111111, 0x555555, 0x8b7c5c, 0x332211, 0xdddddd];
+
+  const createStyleButtons = (containerId, options, targetProp) => {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    options.forEach(opt => {
+      const btn = document.createElement('div');
+      btn.className = 'style-btn' + (playerColors[targetProp] === opt.value ? ' active' : '');
+      btn.textContent = opt.label;
+      btn.onclick = () => { playerColors[targetProp] = opt.value; initPlayerModel(); saveProgress(); renderWardrobeMenu(); };
+      container.appendChild(btn);
+    });
+  };
+
+  const createColorSwatches = (containerId, colors, targetProp) => {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    colors.forEach(color => {
+      const btn = document.createElement('div');
+      btn.className = 'color-btn' + (playerColors[targetProp] === color ? ' active' : '');
+      btn.style.backgroundColor = hexToString(color);
+      btn.onclick = () => { playerColors[targetProp] = color; initPlayerModel(); saveProgress(); renderWardrobeMenu(); };
+      container.appendChild(btn);
+    });
+  };
+
+  createStyleButtons('hair-style-container', styles, 'hairStyle');
+  createColorSwatches('hair-color-container', hairColors, 'hair');
+  createColorSwatches('shirt-color-container', shirtColors, 'shirt');
+  createColorSwatches('pants-color-container', pantsColors, 'pants');
+}
+
+renderWeaponMenu(); renderWardrobeMenu();
+
+// ============ HAZARDS (FEUERBÄLLE & LAVA) ============
+const fireballs = [];
+const lavaPools = [];
+
+function spawnFireball(start, target) {
+  const geom = new THREE.SphereGeometry(0.6, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.copy(start);
+  
+  const light = new THREE.PointLight(0xff3300, 2.5, 12);
+  mesh.add(light);
+  scene.add(mesh);
+
+  // Ziele auf die Brusthöhe des Spielers
+  const trueTarget = new THREE.Vector3(target.x, 1.0, target.z);
+  const dir = new THREE.Vector3().subVectors(trueTarget, start).normalize();
+
+  fireballs.push({ mesh: mesh, dir: dir, speed: 18, life: 3.0 });
+}
+
+function spawnLava(target) {
+  const radius = 4.5;
+  const geom = new THREE.CylinderGeometry(radius, radius, 0.1, 24);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.7 });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(target.x, 0.06, target.z);
+  mesh.scale.set(0.01, 1, 0.01);
+  
+  const light = new THREE.PointLight(0xff2200, 2.0, 15);
+  light.position.y = 1;
+  mesh.add(light);
+  
+  scene.add(mesh);
+  lavaPools.push({ mesh: mesh, radius: radius, life: 6.0, maxLife: 6.0 });
+}
+
+function updateHazards(dt) {
+  for (let i = fireballs.length - 1; i >= 0; i--) {
+    const fb = fireballs[i];
+    fb.life -= dt;
+    fb.mesh.position.addScaledVector(fb.dir, fb.speed * dt);
+    
+    // Hitbox Check mit dem Spieler (Brusthöhe)
+    const pChest = player.position.clone().add(new THREE.Vector3(0, 1, 0));
+    const dist = fb.mesh.position.distanceTo(pChest);
+    
+    if (dist < 1.5 && player.invuln <= 0) {
+        player.hp -= 40 + currentWave * 2;
+        player.invuln = 1.0;
+        flashScreen(); shakeScreen();
+        scene.remove(fb.mesh);
+        fireballs.splice(i, 1);
+        continue;
+    }
+    if (fb.life <= 0) {
+        scene.remove(fb.mesh);
+        fireballs.splice(i, 1);
+    }
+  }
+
+  for (let i = lavaPools.length - 1; i >= 0; i--) {
+    const pool = lavaPools[i];
+    pool.life -= dt;
+    
+    // Animation
+    if (pool.life > pool.maxLife - 0.5) {
+        const scale = 1.0 - ((pool.life - (pool.maxLife - 0.5)) / 0.5);
+        pool.mesh.scale.set(scale, 1, scale);
+    } else if (pool.life < 0.5) {
+        const scale = pool.life / 0.5;
+        pool.mesh.scale.set(scale, 1, scale);
+    } else {
+        pool.mesh.scale.set(1, 1, 1);
+    }
+
+    // Hitbox (Damage over time)
+    const dist = new THREE.Vector3(pool.mesh.position.x, 0, pool.mesh.position.z).distanceTo(new THREE.Vector3(player.position.x, 0, player.position.z));
+    if (dist < pool.radius && player.invuln <= 0 && pool.life < pool.maxLife - 0.5) {
+        player.hp -= 15 + currentWave * 1;
+        player.invuln = 0.4; // Kürzere Invuln für Dot-Schaden
+        flashScreen();
+    }
+
+    if (pool.life <= 0) {
+        scene.remove(pool.mesh);
+        lavaPools.splice(i, 1);
+    }
+  }
+}
+
+// ============ ENEMIES & BOSS ============
 const enemies = [];
+
 class Enemy {
   constructor(level) {
     const hue = (level * 0.15) % 1.0;
-    const colors = { skin: 0x5a6a6a, shirt: new THREE.Color().setHSL(hue, 0.7, 0.3).getHex(), pants: 0x222222, hair: 0x111111 };
+    const colors = { skin: 0x5a6a6a, shirt: new THREE.Color().setHSL(hue, 0.7, 0.3).getHex(), pants: 0x222222, hair: 0x111111, hairStyle: 0 };
     this.rig = buildRiggedHumanoid(true, colors); this.group = this.rig.group;
     this.rig.parts.armL.upper.rotation.x = -1.2; this.rig.parts.armL.lower.rotation.x = -0.3;
     this.rig.parts.armR.upper.rotation.x = -1.2; this.rig.parts.armR.lower.rotation.x = -0.3;
@@ -648,14 +846,10 @@ class Enemy {
     this.position.set(x, 0, z);
     
     this.hp = 40 + level * 20; this.maxHp = this.hp; 
-    this.speed = 2.5 + level * 0.3; // Etwas langsamer für faires Gameplay
+    this.speed = 2.5 + level * 0.3; 
     this.damage = 10 + level * 3;
     
-    // Combat-Logik Timer
-    this.attackCooldown = 0; 
-    this.windupTimer = 0;
-    this.stunTimer = 0;
-    
+    this.attackCooldown = 0; this.windupTimer = 0; this.stunTimer = 0;
     this.alive = true; this.knockback = new THREE.Vector3(); this.animTime = Math.random() * 100;
     this.group.position.copy(this.position); scene.add(this.group);
   }
@@ -684,6 +878,18 @@ class Enemy {
     toPlayer.y = 0; const dist = toPlayer.length(); if (dist > 0.001) toPlayer.normalize();
 
     this.position.add(this.knockback.clone().multiplyScalar(dt)); this.knockback.multiplyScalar(0.85);
+    
+    enemies.forEach(other => {
+      if (other !== this && other.alive && !other.isBoss) {
+        const dx = this.position.x - other.position.x; const dz = this.position.z - other.position.z; const d2 = dx * dx + dz * dz;
+        const minRadius = 1.2; 
+        if (d2 < minRadius * minRadius && d2 > 0.0001) {
+          const d = Math.sqrt(d2); const pushForce = (minRadius - d) * 5.0 * dt;
+          this.position.x += (dx / d) * pushForce; this.position.z += (dz / d) * pushForce;
+        }
+      }
+    });
+
     let moving = false;
 
     if (dist > 1.6 && this.windupTimer <= 0) {
@@ -693,21 +899,15 @@ class Enemy {
         if (d2 < r*r) { const d = Math.sqrt(d2) || 0.001; this.position.x += (dx/d)*(r-d); this.position.z += (dz/d)*(r-d); }
       });
     } else if (dist <= 1.6 && this.attackCooldown <= 0 && this.windupTimer <= 0) {
-      this.windupTimer = 0.4; 
-      this.rig.parts.armR.upper.rotation.x = -2.5; 
+      this.windupTimer = 0.4; this.rig.parts.armR.upper.rotation.x = -2.5; 
     }
 
     if (this.windupTimer > 0) {
         this.windupTimer -= dt;
         if (this.windupTimer <= 0) {
-            this.attackCooldown = 1.5; 
-            this.rig.parts.torso.rotation.x = 0.5; 
-            this.rig.parts.armR.upper.rotation.x = 0; 
+            this.attackCooldown = 1.5; this.rig.parts.torso.rotation.x = 0.5; this.rig.parts.armR.upper.rotation.x = 0; 
             if (dist <= 2.0 && player.invuln <= 0) { 
-                player.hp -= this.damage; 
-                player.invuln = 1.0; 
-                flashScreen();
-                shakeScreen();
+                player.hp -= this.damage; player.invuln = 1.0; flashScreen(); shakeScreen();
             }
         }
     }
@@ -738,7 +938,6 @@ class Enemy {
   takeDamage(amount, dirVec) {
     if (!this.alive) return;
     this.hp -= amount; 
-    
     spawnDamageNumber(this.position, '-' + amount, amount >= 200 ? 'crit' : null);
     
     const tier = player.weaponStats.tier;
@@ -746,20 +945,185 @@ class Enemy {
     else if (tier === 3) spawnHitParticles(this.position, 0x00ffcc, 16, 1.2); 
     else if (tier === 4) spawnHitParticles(this.position, 0xffaa22, 22, 1.4); 
     
-    this.windupTimer = 0; 
-    this.attackCooldown = 0.8; 
-    this.rig.parts.armR.upper.rotation.x = 0; 
-    
-    this.knockback.copy(dirVec).multiplyScalar(15); 
-    this.stunTimer = 0.5; 
+    this.windupTimer = 0; this.attackCooldown = 0.8; this.rig.parts.armR.upper.rotation.x = 0; 
+    this.knockback.copy(dirVec).multiplyScalar(15); this.stunTimer = 0.5; 
     
     this.rig.parts.neck.rotation.x = -0.5; setTimeout(() => { if(this.alive) this.rig.parts.neck.rotation.x = 0; }, 200);
     if (this.hp <= 0) { 
       this.alive = false; this.hpBarGroup.visible = false; 
       const reward = 12 + Math.floor(currentWave * 3);
       player.money += reward; 
-      saveProgress(); // <-- NEU: Geld sofort in den localStorage speichern
+      saveProgress();
       spawnDamageNumber(this.position, '+' + reward + ' 💎', 'kill');
+      enemiesKilledThisWave++;
+      updateHUD(); 
+    }
+  }
+}
+
+// === BOSS KLASSE ===
+class Boss extends Enemy {
+  constructor(level) {
+    super(level);
+    this.isBoss = true;
+    
+    // Alten Rig löschen und neuen, epischen Boss-Rig bauen
+    this.group.remove(this.rig.group);
+    const colors = { skin: 0x330000, shirt: 0x111111, pants: 0x050505, hair: 0xff3300, hairStyle: 1 };
+    this.rig = buildRiggedHumanoid(true, colors);
+    this.group.add(this.rig.group);
+    
+    // RIESIG machen
+    this.group.scale.set(2.8, 2.8, 2.8);
+    this.hpBarGroup.position.y = 2.8;
+
+    // Episches Leuchten
+    const glow = new THREE.PointLight(0xff3300, 3, 15);
+    glow.position.y = 1.5;
+    this.group.add(glow);
+
+    // Boss Stats
+    this.hp = 600 + level * 150; 
+    this.maxHp = this.hp;
+    this.speed = 1.9 + level * 0.05; // Langsamer, aber bedrohlich
+    this.damage = 30 + level * 5;
+    
+    // Fähigkeiten Cooldowns
+    this.fireCooldown = 3.0;
+    this.lavaCooldown = 7.0;
+    this.casting = 0;
+  }
+
+  update(dt) {
+    if (!this.alive) {
+      super.update(dt);
+      return;
+    }
+
+    if (this.stunTimer > 0) {
+        this.stunTimer -= dt;
+        this.position.add(this.knockback.clone().multiplyScalar(dt));
+        this.knockback.multiplyScalar(0.5); // Boss hat Knockback-Resistenz
+        this.group.position.x = this.position.x; this.group.position.z = this.position.z;
+        this.rig.parts.torso.rotation.x = -0.2; 
+        return; 
+    }
+
+    const toPlayer = new THREE.Vector3().subVectors(player.position, this.position);
+    toPlayer.y = 0; const dist = toPlayer.length(); if (dist > 0.001) toPlayer.normalize();
+
+    this.position.add(this.knockback.clone().multiplyScalar(dt)); this.knockback.multiplyScalar(0.5);
+
+    this.fireCooldown -= dt;
+    this.lavaCooldown -= dt;
+
+    let moving = false;
+
+    // Casting Animation
+    if (this.casting > 0) {
+        this.casting -= dt;
+        this.rig.parts.armR.upper.rotation.x = 3.14; // Arme hoch!
+        this.rig.parts.armL.upper.rotation.x = 3.14;
+        this.rig.parts.torso.rotation.x = 0;
+        
+        // Fixiert den Spieler während des Casts
+        const targetAngle = Math.atan2(toPlayer.x, toPlayer.z); let diff = targetAngle - this.group.rotation.y;
+        while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2; 
+        this.group.rotation.y += diff * Math.min(1, dt * 8);
+    } else {
+        // Movement und KI-Entscheidungen
+        if (dist > 3.5 && this.windupTimer <= 0) {
+            
+            if (this.lavaCooldown <= 0 && dist < 20) {
+                this.casting = 1.0;
+                this.lavaCooldown = 9.0;
+                const targetPos = player.position.clone();
+                setTimeout(() => { if (this.alive) spawnLava(targetPos); }, 500);
+                
+            } else if (this.fireCooldown <= 0 && dist > 6) {
+                this.casting = 0.8;
+                this.fireCooldown = 4.0;
+                const targetPos = player.position.clone();
+                // Spawnt den Feuerball auf Brusthöhe des Bosses
+                const startPos = this.position.clone().add(new THREE.Vector3(0, 3.5, 0));
+                setTimeout(() => { if (this.alive) spawnFireball(startPos, targetPos); }, 400);
+                
+            } else {
+                this.position.x += toPlayer.x * this.speed * dt; this.position.z += toPlayer.z * this.speed * dt; moving = true;
+                obstacles.forEach(o => {
+                    const dx = this.position.x - o.x, dz = this.position.z - o.z, d2 = dx*dx + dz*dz, r = o.radius + 1.2; // Größere Hitbox
+                    if (d2 < r*r) { const d = Math.sqrt(d2) || 0.001; this.position.x += (dx/d)*(r-d); this.position.z += (dz/d)*(r-d); }
+                });
+            }
+        } else if (dist <= 3.5 && this.attackCooldown <= 0 && this.windupTimer <= 0) {
+            this.windupTimer = 0.6; 
+            this.rig.parts.armR.upper.rotation.x = -2.5; 
+        }
+
+        // Melee Angriff
+        if (this.windupTimer > 0) {
+            this.windupTimer -= dt;
+            if (this.windupTimer <= 0) {
+                this.attackCooldown = 1.5; 
+                this.rig.parts.torso.rotation.x = 0.8; 
+                this.rig.parts.armR.upper.rotation.x = 0; 
+                if (dist <= 4.0 && player.invuln <= 0) { // Größere Melee Range
+                    player.hp -= this.damage; 
+                    player.invuln = 1.0; 
+                    flashScreen(); shakeScreen();
+                }
+            }
+        }
+
+        // Gehen Animation
+        this.attackCooldown -= dt; this.animTime += dt * this.speed * 1.5;
+        if (moving) {
+            const walkCycle = Math.sin(this.animTime);
+            this.rig.parts.legL.thigh.rotation.x = walkCycle * 0.7; this.rig.parts.legL.calf.rotation.x = Math.max(0, -walkCycle * 0.8);
+            this.rig.parts.legR.thigh.rotation.x = -walkCycle * 0.7; this.rig.parts.legR.calf.rotation.x = Math.max(0, walkCycle * 0.8);
+            this.rig.parts.root.position.y = 1.0 + Math.abs(Math.sin(this.animTime * 2)) * 0.1; this.rig.parts.torso.rotation.z = walkCycle * 0.1;
+        }
+
+        if(this.attackCooldown < 1.0 && this.windupTimer <= 0 && this.stunTimer <= 0) {
+            this.rig.parts.torso.rotation.x = THREE.MathUtils.lerp(this.rig.parts.torso.rotation.x, 0.1, dt * 5);
+            this.rig.parts.armR.upper.rotation.x = THREE.MathUtils.lerp(this.rig.parts.armR.upper.rotation.x, -1.2, dt * 5);
+        }
+
+        const targetAngle = Math.atan2(toPlayer.x, toPlayer.z); let diff = targetAngle - this.group.rotation.y;
+        while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2; this.group.rotation.y += diff * Math.min(1, dt * 8);
+    }
+
+    const lim = ROOM_SIZE/2 - 2;
+    this.position.x = Math.max(-lim, Math.min(lim, this.position.x)); this.position.z = Math.max(-lim, Math.min(lim, this.position.z));
+    this.group.position.x = this.position.x; this.group.position.z = this.position.z;
+    
+    this.hpBarGroup.lookAt(camera.position); this.hpBar.scale.x = Math.max(0.001, this.hp / this.maxHp);
+  }
+
+  takeDamage(amount, dirVec) {
+    if (!this.alive) return;
+    this.hp -= amount; 
+    spawnDamageNumber(this.position, '-' + amount, amount >= 200 ? 'crit' : null);
+    
+    const tier = player.weaponStats.tier;
+    if (tier === 2)      spawnHitParticles(this.position, 0xff6644, 8,  1.0); 
+    else if (tier === 3) spawnHitParticles(this.position, 0x00ffcc, 16, 1.2); 
+    else if (tier === 4) spawnHitParticles(this.position, 0xffaa22, 22, 1.4); 
+    
+    this.knockback.copy(dirVec).multiplyScalar(4); // Boss wird kaum zurückgestoßen!
+    this.stunTimer = 0.2; 
+    this.windupTimer = 0; 
+    
+    this.rig.parts.neck.rotation.x = -0.5; setTimeout(() => { if(this.alive) this.rig.parts.neck.rotation.x = 0; }, 200);
+    
+    if (this.hp <= 0) { 
+      this.alive = false; this.hpBarGroup.visible = false; 
+      
+      // BOSS BELOHNUNG!
+      const reward = 150 + currentWave * 30;
+      player.money += reward; 
+      saveProgress();
+      spawnDamageNumber(this.position, '+' + reward + ' 💎 BOSS KILL', 'kill');
       enemiesKilledThisWave++;
       updateHUD(); 
     }
@@ -778,24 +1142,54 @@ function startWave() {
   enemies.forEach(e => { if (!e.alive) scene.remove(e.group); });
   enemies.length = 0; totalSpawnedThisWave = 0;
   
-  const count = 3 + currentWave * 2;
-  enemiesTotalThisWave = count;
-  enemiesKilledThisWave = 0;
-  for (let i = 0; i < count; i++) { 
-    setTimeout(() => { if (!gameOver && gameStarted) { enemies.push(new Enemy(currentWave)); totalSpawnedThisWave++; } }, i * 600); 
+  // Alte Feuerbälle und Lava aufräumen
+  fireballs.forEach(f => scene.remove(f.mesh)); fireballs.length = 0;
+  lavaPools.forEach(p => scene.remove(p.mesh)); lavaPools.length = 0;
+
+  // BOSS WELLE (Alle 5 Level)
+  if (currentWave % 5 === 0) {
+    enemiesTotalThisWave = 1;
+    enemiesKilledThisWave = 0;
+    setTimeout(() => { 
+      if (!gameOver && gameStarted) { 
+        enemies.push(new Boss(currentWave)); 
+        totalSpawnedThisWave++; 
+      } 
+    }, 1500);
+    showMessage(`BOSS WELLE ${currentWave}`, 3000); 
+    updateHUD();
+  } 
+  // NORMALE WELLE
+  else {
+    const count = 3 + currentWave * 2;
+    enemiesTotalThisWave = count;
+    enemiesKilledThisWave = 0;
+    for (let i = 0; i < count; i++) { 
+      setTimeout(() => { if (!gameOver && gameStarted) { enemies.push(new Enemy(currentWave)); totalSpawnedThisWave++; } }, i * 600); 
+    }
+    showMessage(`WELLE ${currentWave}`, 1500); 
+    updateHUD();
   }
-  showMessage(`WELLE ${currentWave}`, 1500); updateHUD();
 }
 
 function checkWaveComplete() {
   if (!waveActive) return;
-  if (totalSpawnedThisWave < 3 + currentWave * 2) return;
+  
+  // Check ob Boss oder normale Welle
+  const requiredSpawns = (currentWave % 5 === 0) ? 1 : (3 + currentWave * 2);
+  
+  if (totalSpawnedThisWave < requiredSpawns) return;
+  
   if (enemies.filter(e => e.alive).length === 0) {
     waveActive = false; switchActive = true;
     switchCore.material.emissive.setHex(0x00ff66); switchLight.color.setHex(0x00ff66);
-    showMessage(`GESÄUBERT`, 2000);
     
-    // HP-Regeneration: 30% der Max-HP zurück (gedeckelt)
+    if (currentWave % 5 === 0) {
+      showMessage(`BOSS BESIEGT`, 3000);
+    } else {
+      showMessage(`GESÄUBERT`, 2000);
+    }
+    
     if (player.hp < player.maxHp) {
       const heal = Math.min(Math.round(player.maxHp * 0.30), player.maxHp - player.hp);
       if (heal > 0) {
@@ -921,15 +1315,37 @@ if (isMobile) {
   document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 }
 
+// ============ NEUES COMBAT SYSTEM ============
 function performAttack() {
   if (player.attacking) return;
   player.attacking = true; player.attackTime = 0;
   const forward = new THREE.Vector3(Math.sin(player.facing), 0, Math.cos(player.facing));
+  
+  const hitCandidates = [];
+
   enemies.forEach(e => {
     if (!e.alive) return;
-    const toE = new THREE.Vector3().subVectors(e.position, player.position); toE.y = 0; const dist = toE.length();
-    if (dist > player.weaponStats.range || dist < 0.01) return;
-    toE.normalize(); if (forward.dot(toE) > 0.4) e.takeDamage(player.weaponStats.damage, toE);
+    const toE = new THREE.Vector3().subVectors(e.position, player.position); 
+    toE.y = 0; 
+    const dist = toE.length();
+    
+    // Boss hat eine größere Hitbox, wir geben hier etwas mehr Toleranz (+1.0)
+    const hitRange = e.isBoss ? player.weaponStats.range + 1.0 : player.weaponStats.range;
+    
+    if (dist > hitRange || dist < 0.01) return;
+    toE.normalize(); 
+    
+    if (forward.dot(toE) > 0.4) { 
+      hitCandidates.push({ enemy: e, distance: dist, direction: toE });
+    }
+  });
+
+  hitCandidates.sort((a, b) => a.distance - b.distance);
+  const maxHits = player.weaponStats.maxHits || 1;
+  const actualTargets = hitCandidates.slice(0, maxHits);
+
+  actualTargets.forEach(target => {
+    target.enemy.takeDamage(player.weaponStats.damage, target.direction);
   });
 }
 
@@ -1149,7 +1565,11 @@ function update(dt) {
   }
 
   if (player.invuln > 0) player.invuln -= dt;
-  enemies.forEach(e => e.update(dt)); checkWaveComplete();
+  
+  enemies.forEach(e => e.update(dt)); 
+  updateHazards(dt); // NEU: Feuerbälle & Lava updaten
+  
+  checkWaveComplete();
 
   if (!isMobile) {
     const fwd = new THREE.Vector3(Math.sin(cameraYaw + Math.PI), 0, Math.cos(cameraYaw + Math.PI));
@@ -1158,7 +1578,8 @@ function update(dt) {
       if (!e.alive) continue;
       const toE = new THREE.Vector3().subVectors(e.position, player.position); toE.y = 0;
       const d = toE.length();
-      if (d > player.weaponStats.range || d < 0.01) continue;
+      const hitRange = e.isBoss ? player.weaponStats.range + 1.0 : player.weaponStats.range;
+      if (d > hitRange || d < 0.01) continue;
       toE.normalize();
       if (fwd.dot(toE) > 0.4) { inRange = true; break; }
     }
