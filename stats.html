@@ -121,6 +121,26 @@
   .iva { font-size:13px; font-weight:700; color:var(--rose); margin-bottom:2px; }
   .ivn { font-size:13px; font-weight:700; color:var(--nele); }
 
+  /* WIN OVERVIEW */
+  .winbar { display:flex; width:100%; height:14px; border-radius:50px; overflow:hidden; background:rgba(232,115,138,0.08); margin-bottom:14px; box-shadow:inset 0 1px 3px rgba(90,45,58,0.06); }
+  .winbar-seg { height:100%; transition:width 0.8s cubic-bezier(0.22,1,0.36,1); }
+  .winbar-a { background:linear-gradient(90deg,var(--rose-light),var(--rose)); }
+  .winbar-n { background:linear-gradient(90deg,var(--nele-light),var(--nele)); }
+  .winbar-t { background:linear-gradient(90deg,#e0d8c8,var(--gold)); }
+  .winrow { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid rgba(232,115,138,0.08); }
+  .winrow:last-child { border-bottom:none; }
+  .winrow-name { font-size:13px; font-weight:700; flex:1; }
+  .winrow-name-a { color:var(--rose); }
+  .winrow-name-n { color:var(--nele); }
+  .winrow-name-t { color:var(--gold); }
+  .winrow-count { font-family:'Dancing Script',cursive; font-size:24px; font-weight:700; line-height:1; min-width:42px; text-align:right; }
+  .winrow-count-a { color:var(--rose); }
+  .winrow-count-n { color:var(--nele); }
+  .winrow-count-t { color:var(--gold); }
+  .winrow-unit { font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-mid); font-weight:600; min-width:44px; }
+  .winrow-pct { font-size:13px; font-weight:700; color:var(--text-dark); min-width:50px; text-align:right; }
+  .wintotal { text-align:center; font-size:11px; color:var(--text-mid); font-weight:600; margin-top:10px; letter-spacing:0.5px; }
+
   /* SKELETON */
   .skeleton { background:linear-gradient(90deg,rgba(232,115,138,0.08) 25%,rgba(232,115,138,0.16) 50%,rgba(232,115,138,0.08) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:8px; }
   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -253,6 +273,12 @@
   <div class="card">
     <div class="card-title">Streaks</div>
     <div id="streakWrap"></div>
+  </div>
+
+  <!-- Win Overview -->
+  <div class="card">
+    <div class="card-title">Klick-Spiel Sieger</div>
+    <div id="winsWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
   </div>
 
   <!-- Daily Chart -->
@@ -520,6 +546,7 @@
     renderSummary(dates);
     renderInsights(dates);
     renderStreaks(dates);
+    renderWins(dates);
     renderFunFact(dates);
     renderDaily(dates);
     renderWeek(dates);
@@ -605,6 +632,58 @@
         </div>
       </div>`;
     document.getElementById('streakWrap').innerHTML = html;
+  }
+
+  function renderWins(dates) {
+    let wA=0, wN=0, wT=0;
+    dates.forEach(d=>{
+      const v=allData[d];
+      if (v.a===0 && v.n===0) return;
+      if (v.a>v.n) wA++;
+      else if (v.n>v.a) wN++;
+      else wT++;
+    });
+    const total = wA + wN + wT;
+    const wrap = document.getElementById('winsWrap');
+    if (total === 0) {
+      wrap.innerHTML = '<div class="nodata">Noch keine gespielten Tage 🌸</div>';
+      return;
+    }
+    const pct = n => Math.round(n/total*100);
+    const pA = pct(wA), pN = pct(wN), pT = pct(wT);
+    const fmtPct = v => v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+    const exactA = total ? fmtPct(wA/total*100) : '0,0';
+    const exactN = total ? fmtPct(wN/total*100) : '0,0';
+    const exactT = total ? fmtPct(wT/total*100) : '0,0';
+
+    let html = '<div class="winbar">';
+    if (wA>0) html += `<div class="winbar-seg winbar-a" style="width:${wA/total*100}%"></div>`;
+    if (wT>0) html += `<div class="winbar-seg winbar-t" style="width:${wT/total*100}%"></div>`;
+    if (wN>0) html += `<div class="winbar-seg winbar-n" style="width:${wN/total*100}%"></div>`;
+    html += '</div>';
+
+    html += `
+      <div class="winrow">
+        <div class="winrow-name winrow-name-a">🐾 Andreas</div>
+        <div class="winrow-count winrow-count-a">${wA}</div>
+        <div class="winrow-unit">${wA===1?'Tag':'Tage'}</div>
+        <div class="winrow-pct">${exactA}%</div>
+      </div>
+      <div class="winrow">
+        <div class="winrow-name winrow-name-n">🌸 Nele</div>
+        <div class="winrow-count winrow-count-n">${wN}</div>
+        <div class="winrow-unit">${wN===1?'Tag':'Tage'}</div>
+        <div class="winrow-pct">${exactN}%</div>
+      </div>
+      <div class="winrow">
+        <div class="winrow-name winrow-name-t">🤝 Unentschieden</div>
+        <div class="winrow-count winrow-count-t">${wT}</div>
+        <div class="winrow-unit">${wT===1?'Tag':'Tage'}</div>
+        <div class="winrow-pct">${exactT}%</div>
+      </div>
+      <div class="wintotal">Insgesamt ${total} ${total===1?'gespielter Tag':'gespielte Tage'}</div>`;
+
+    wrap.innerHTML = html;
   }
 
   function renderInsights(dates) {
