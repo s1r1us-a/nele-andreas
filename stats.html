@@ -22,6 +22,7 @@
   html[data-theme="aurora"] .bg::after,
   html[data-theme="cosmic"] .bg::after,
   html[data-theme="royal"] .bg::after,
+  html[data-theme="rainbow"] .bg::after,
   html[data-theme="neon"] .bg::after { content:''; position:absolute; inset:0; pointer-events:none; }
   html[data-theme="aurora"] .bg::after { background: radial-gradient(ellipse at 30% 0%, rgba(94,234,212,0.18), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(192,132,252,0.18), transparent 55%); animation: bgAuroraStats 14s ease-in-out infinite alternate; mix-blend-mode: screen; }
   @keyframes bgAuroraStats { 0%{transform:translateX(-6%) translateY(-3%);opacity:0.7} 100%{transform:translateX(6%) translateY(3%);opacity:1} }
@@ -29,10 +30,12 @@
   @keyframes bgCosmicStats { 0%{opacity:0.5} 100%{opacity:1} }
   html[data-theme="royal"] .bg::after { background: linear-gradient(125deg, transparent 45%, rgba(251,191,36,0.08) 50%, transparent 55%); animation: bgRoyalStats 8s linear infinite; }
   @keyframes bgRoyalStats { 0%{transform:translateX(-30%)} 100%{transform:translateX(30%)} }
-  html[data-theme="rainbow"] .bg { animation: bgRainbowStats 18s linear infinite; }
-  @keyframes bgRainbowStats { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
-  html[data-theme="neon"] .bg::after { background: radial-gradient(circle at 20% 30%, rgba(240,171,252,0.12), transparent 45%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.12), transparent 45%); animation: bgNeonStats 3s ease-in-out infinite alternate; }
-  @keyframes bgNeonStats { 0%{opacity:0.5} 100%{opacity:1} }
+  html[data-theme="rainbow"] .bg::after { background: linear-gradient(115deg, rgba(255,20,147,0.16), rgba(255,126,0,0.16), rgba(255,215,0,0.16), rgba(0,230,118,0.16), rgba(0,188,212,0.16), rgba(41,98,255,0.16), rgba(213,0,249,0.16), rgba(255,20,147,0.16)); background-size: 400% 100%; animation: bgRainbowStats 10s linear infinite; mix-blend-mode: screen; }
+  @keyframes bgRainbowStats { 0%{background-position:0% 50%} 100%{background-position:400% 50%} }
+  html[data-theme="neon"] .bg::after { background: radial-gradient(circle at 20% 30%, rgba(240,171,252,0.18), transparent 45%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.18), transparent 45%); animation: bgNeonStats 3s ease-in-out infinite alternate; }
+  @keyframes bgNeonStats { 0%{opacity:0.55} 100%{opacity:1} }
+  html[data-theme="neon"] .bg::before { content:''; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0, transparent 39px, rgba(34,211,238,0.07) 39px, rgba(34,211,238,0.07) 40px), repeating-linear-gradient(0deg, transparent 0, transparent 39px, rgba(240,171,252,0.07) 39px, rgba(240,171,252,0.07) 40px); background-size: 40px 40px, 40px 40px; animation: bgNeonGridStats 6s linear infinite; pointer-events: none; z-index: 0; }
+  @keyframes bgNeonGridStats { 0%{background-position:0 0,0 0} 100%{background-position:40px 40px,-40px -40px} }
 
   /* TOP BAR */
   .top-bar { position:fixed; top:0; left:0; right:0; z-index:99999; display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--ui-topbar-bg); border-bottom:1px solid var(--ui-topbar-border); box-shadow:0 2px 12px rgba(232,115,138,0.08); transition:background 0.4s ease, border-color 0.4s ease; }
@@ -217,6 +220,121 @@
     .scard,.icard { padding:12px 8px; border-radius:14px; }
     .sval { font-size:24px; }
     .ftab { padding:6px 12px; font-size:11px; }
+  }
+
+  /* ============================================ */
+  /*  PREMIUM THEME ENHANCEMENTS – RAINBOW PRISM   */
+  /* ============================================ */
+  @keyframes premiumRainbowFlow {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  @keyframes premiumRainbowBorder {
+    0%   { border-color: rgba(255,20,147,0.55);  box-shadow: 0 8px 32px rgba(255,20,147,0.22); }
+    16%  { border-color: rgba(255,126,0,0.55);   box-shadow: 0 8px 32px rgba(255,126,0,0.22); }
+    33%  { border-color: rgba(255,215,0,0.55);   box-shadow: 0 8px 32px rgba(255,215,0,0.22); }
+    50%  { border-color: rgba(0,230,118,0.55);   box-shadow: 0 8px 32px rgba(0,230,118,0.22); }
+    66%  { border-color: rgba(0,188,212,0.55);   box-shadow: 0 8px 32px rgba(0,188,212,0.22); }
+    83%  { border-color: rgba(41,98,255,0.55);   box-shadow: 0 8px 32px rgba(41,98,255,0.22); }
+    100% { border-color: rgba(213,0,249,0.55);   box-shadow: 0 8px 32px rgba(213,0,249,0.22); }
+  }
+  html[data-theme="rainbow"] .card {
+    animation: premiumRainbowBorder 8s linear infinite;
+  }
+  html[data-theme="rainbow"] .ftab.active {
+    background: linear-gradient(90deg, #ff1493, #ff7e00, #ffd700, #00e676, #00bcd4, #2962ff, #d500f9, #ff1493) !important;
+    background-size: 300% 100% !important;
+    animation: premiumRainbowFlow 5s linear infinite;
+    color: #fff !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 3px 16px rgba(213,0,249,0.4) !important;
+  }
+  html[data-theme="rainbow"] .page-title,
+  html[data-theme="rainbow"] .top-title {
+    background: linear-gradient(90deg, #ff1493, #ff7e00, #ffd700, #00e676, #00bcd4, #2962ff, #d500f9, #ff1493) !important;
+    background-size: 300% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    animation: premiumRainbowFlow 6s linear infinite;
+    filter: drop-shadow(0 2px 10px rgba(213,0,249,0.3));
+  }
+  html[data-theme="rainbow"] .bar-a,
+  html[data-theme="rainbow"] .winbar-a,
+  html[data-theme="rainbow"] .stat-bar-andreas {
+    background: linear-gradient(180deg, #ff1493, #ff7e00, #ffd700) !important;
+  }
+  html[data-theme="rainbow"] .bar-n,
+  html[data-theme="rainbow"] .winbar-n,
+  html[data-theme="rainbow"] .stat-bar-nele {
+    background: linear-gradient(180deg, #00bcd4, #2962ff, #d500f9) !important;
+  }
+  html[data-theme="rainbow"] .winbar-a {
+    background: linear-gradient(90deg, #ff1493, #ff7e00, #ffd700) !important;
+  }
+  html[data-theme="rainbow"] .winbar-n {
+    background: linear-gradient(90deg, #00bcd4, #2962ff, #d500f9) !important;
+  }
+  html[data-theme="rainbow"] .top-bar {
+    border-bottom-color: rgba(213,0,249,0.3);
+    box-shadow: 0 2px 18px rgba(213,0,249,0.15);
+  }
+
+  /* ============================================ */
+  /*  PREMIUM THEME ENHANCEMENTS – NEON CYBERPUNK */
+  /* ============================================ */
+  @keyframes premiumNeonGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(34,211,238,0.45), 0 0 24px rgba(34,211,238,0.2), inset 0 0 8px rgba(240,171,252,0.12); border-color: rgba(34,211,238,0.55); }
+    50%      { box-shadow: 0 0 22px rgba(240,171,252,0.65), 0 0 44px rgba(240,171,252,0.3), inset 0 0 18px rgba(34,211,238,0.25); border-color: rgba(240,171,252,0.75); }
+  }
+  @keyframes premiumNeonBtn {
+    0%, 100% { box-shadow: 0 0 8px rgba(34,211,238,0.55), 0 0 16px rgba(34,211,238,0.28); }
+    50%      { box-shadow: 0 0 18px rgba(240,171,252,0.75), 0 0 36px rgba(240,171,252,0.42); }
+  }
+  @keyframes premiumNeonText {
+    0%, 100% { text-shadow: 0 0 6px rgba(240,171,252,0.7), 0 0 14px rgba(240,171,252,0.4), 0 0 28px rgba(34,211,238,0.3); }
+    50%      { text-shadow: 0 0 10px rgba(34,211,238,0.85), 0 0 22px rgba(34,211,238,0.5), 0 0 40px rgba(240,171,252,0.5); }
+  }
+  html[data-theme="neon"] .card {
+    animation: premiumNeonGlow 3s ease-in-out infinite;
+  }
+  html[data-theme="neon"] .ftab.active {
+    background: linear-gradient(135deg, #1a0a2e, #3a0a4a) !important;
+    border: 1.5px solid rgba(240,171,252,0.65) !important;
+    color: #fae8ff !important;
+    text-shadow: 0 0 6px rgba(240,171,252,0.85), 0 0 12px rgba(34,211,238,0.5);
+    animation: premiumNeonBtn 2s ease-in-out infinite;
+  }
+  html[data-theme="neon"] .page-title,
+  html[data-theme="neon"] .top-title {
+    color: #f0abfc !important;
+    -webkit-text-fill-color: #f0abfc !important;
+    background: none !important;
+    animation: premiumNeonText 2.4s ease-in-out infinite;
+  }
+  html[data-theme="neon"] .bar-a,
+  html[data-theme="neon"] .winbar-a {
+    background: linear-gradient(180deg, #f0abfc, #d500f9) !important;
+    box-shadow: 0 0 8px rgba(213,0,249,0.6);
+  }
+  html[data-theme="neon"] .bar-n,
+  html[data-theme="neon"] .winbar-n {
+    background: linear-gradient(180deg, #22d3ee, #2962ff) !important;
+    box-shadow: 0 0 8px rgba(34,211,238,0.6);
+  }
+  html[data-theme="neon"] .winbar-a {
+    background: linear-gradient(90deg, #f0abfc, #d500f9) !important;
+  }
+  html[data-theme="neon"] .winbar-n {
+    background: linear-gradient(90deg, #22d3ee, #2962ff) !important;
+  }
+  html[data-theme="neon"] .top-bar {
+    box-shadow: 0 2px 18px rgba(34,211,238,0.25), 0 0 30px rgba(240,171,252,0.1);
+  }
+  html[data-theme="neon"] .funfact {
+    border-color: rgba(240,171,252,0.4) !important;
+    box-shadow: 0 0 14px rgba(240,171,252,0.2), inset 0 0 14px rgba(34,211,238,0.1);
   }
 </style>
 </head>
