@@ -126,13 +126,17 @@
   .theme-preview.fx-royal::after { content:'💎'; position:absolute; top:6px; left:8px; font-size:14px; filter: drop-shadow(0 0 6px rgba(251,191,36,0.9)); animation: fxRoyalGem 2s ease-in-out infinite alternate; z-index:3; }
   @keyframes fxRoyalGem { 0%{transform:scale(1) rotate(-6deg)} 100%{transform:scale(1.15) rotate(6deg)} }
 
-  .theme-preview.fx-rainbow { background: linear-gradient(135deg, #ec4899 0%, #f59e0b 25%, #4ecdc4 50%, #8b5cf6 75%, #ec4899 100%) !important; background-size: 300% 300% !important; animation: fxRainbow 6s linear infinite; }
-  @keyframes fxRainbow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  .theme-preview.fx-rainbow { background: linear-gradient(90deg, #ff1493 0%, #ff7e00 14%, #ffd700 28%, #00e676 42%, #00bcd4 56%, #2962ff 70%, #d500f9 84%, #ff1493 100%) !important; background-size: 300% 100% !important; animation: fxRainbow 4s linear infinite; }
+  @keyframes fxRainbow { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+  .theme-preview.fx-rainbow::before { content:''; position:absolute; inset:0; background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.55) 50%, transparent 75%); background-size: 220% 100%; animation: fxRainbowShine 2.8s linear infinite; z-index:2; }
+  @keyframes fxRainbowShine { 0%{background-position:200% 0} 100%{background-position:-220% 0} }
+  .theme-preview.fx-rainbow::after { content:'✨'; position:absolute; top:6px; left:8px; font-size:14px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.95)); animation: fxRainbowSparkle 1.6s ease-in-out infinite alternate; z-index:3; }
+  @keyframes fxRainbowSparkle { 0%{transform:scale(0.8) rotate(-12deg);opacity:0.7} 100%{transform:scale(1.3) rotate(12deg);opacity:1} }
 
-  .theme-preview.fx-neon::before { content:''; position:absolute; inset:0; background: radial-gradient(circle at 30% 40%, rgba(240,171,252,0.55), transparent 45%), radial-gradient(circle at 70% 60%, rgba(34,211,238,0.55), transparent 45%); animation: fxNeon 1.8s ease-in-out infinite alternate; z-index:1; }
-  @keyframes fxNeon { 0%{filter:hue-rotate(0deg) brightness(1)} 100%{filter:hue-rotate(40deg) brightness(1.25)} }
-  .theme-preview.fx-neon::after { content:''; position:absolute; inset:8px; border:1.5px solid rgba(240,171,252,0.6); border-radius:8px; box-shadow: 0 0 12px rgba(34,211,238,0.6), inset 0 0 12px rgba(240,171,252,0.4); z-index:2; animation: fxNeonPulse 1.4s ease-in-out infinite alternate; }
-  @keyframes fxNeonPulse { 0%{box-shadow: 0 0 6px rgba(34,211,238,0.5), inset 0 0 6px rgba(240,171,252,0.3)} 100%{box-shadow: 0 0 18px rgba(34,211,238,0.9), inset 0 0 16px rgba(240,171,252,0.6)} }
+  .theme-preview.fx-neon::before { content:''; position:absolute; inset:0; background: radial-gradient(circle at 30% 40%, rgba(240,171,252,0.6), transparent 45%), radial-gradient(circle at 70% 60%, rgba(34,211,238,0.6), transparent 45%), repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px); animation: fxNeon 1.8s ease-in-out infinite alternate; z-index:1; }
+  @keyframes fxNeon { 0%{filter:hue-rotate(0deg) brightness(1)} 100%{filter:hue-rotate(40deg) brightness(1.3)} }
+  .theme-preview.fx-neon::after { content:''; position:absolute; inset:8px; border:1.5px solid rgba(240,171,252,0.7); border-radius:8px; box-shadow: 0 0 14px rgba(34,211,238,0.7), inset 0 0 14px rgba(240,171,252,0.5); z-index:2; animation: fxNeonPulse 1.4s ease-in-out infinite alternate; }
+  @keyframes fxNeonPulse { 0%{box-shadow: 0 0 8px rgba(34,211,238,0.6), inset 0 0 8px rgba(240,171,252,0.4); border-color: rgba(34,211,238,0.7)} 100%{box-shadow: 0 0 24px rgba(240,171,252,1), inset 0 0 22px rgba(34,211,238,0.7); border-color: rgba(240,171,252,1)} }
 
   .theme-name { font-family: 'Dancing Script', cursive; font-size: 19px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; line-height: 1.1; }
   .theme-desc { font-size: 11px; color: var(--ui-btn-text); font-weight: 500; margin-bottom: 10px; min-height: 28px; line-height: 1.3; }
@@ -162,10 +166,10 @@
   @keyframes bgCosmic { 0%{opacity:0.5} 100%{opacity:1} }
   html[data-theme="royal"] .bg-gradient::after { background: linear-gradient(125deg, transparent 45%, rgba(251,191,36,0.08) 50%, transparent 55%); animation: bgRoyal 8s linear infinite; }
   @keyframes bgRoyal { 0%{transform:translateX(-30%)} 100%{transform:translateX(30%)} }
-  html[data-theme="rainbow"] .bg-gradient { animation: bgRainbow 18s linear infinite; }
-  @keyframes bgRainbow { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
-  html[data-theme="neon"] .bg-gradient::after { background: radial-gradient(circle at 20% 30%, rgba(240,171,252,0.12), transparent 45%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.12), transparent 45%); animation: bgNeon 3s ease-in-out infinite alternate; }
-  @keyframes bgNeon { 0%{opacity:0.5} 100%{opacity:1} }
+  html[data-theme="rainbow"] .bg-gradient::after { background: linear-gradient(115deg, rgba(255,20,147,0.14), rgba(255,126,0,0.14), rgba(255,215,0,0.14), rgba(0,230,118,0.14), rgba(0,188,212,0.14), rgba(41,98,255,0.14), rgba(213,0,249,0.14), rgba(255,20,147,0.14)); background-size: 400% 100%; animation: bgRainbow 10s linear infinite; mix-blend-mode: screen; }
+  @keyframes bgRainbow { 0%{background-position:0% 50%} 100%{background-position:400% 50%} }
+  html[data-theme="neon"] .bg-gradient::after { background: radial-gradient(circle at 20% 30%, rgba(240,171,252,0.18), transparent 45%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.18), transparent 45%); animation: bgNeon 3s ease-in-out infinite alternate; }
+  @keyframes bgNeon { 0%{opacity:0.55} 100%{opacity:1} }
 
   /* CONFIRM MODAL */
   .confirm-overlay { position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center; background: var(--ui-modal-overlay); }
@@ -260,6 +264,174 @@
   .reward-avatar-wrap.frame-regenbogen{ background: linear-gradient(135deg, #e8738a, #a78bfa, #4ecdc4); box-shadow: 0 0 0 3px #fff, 0 0 0 6px transparent; animation: rainbowGlow 2s linear infinite; }
   .reward-avatar-wrap.frame-galaxy    { background: linear-gradient(135deg, #1a1030, #7c5cbf, #a78bfa); box-shadow: 0 0 0 4px #2a1f4a, 0 0 0 7px #a78bfa, 0 0 16px 4px rgba(167,139,250,0.5); }
   @keyframes rainbowGlow { 0%{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8738a,0 0 16px 2px #e8738a} 33%{box-shadow:0 0 0 3px #fff,0 0 0 6px #a78bfa,0 0 16px 2px #a78bfa} 66%{box-shadow:0 0 0 3px #fff,0 0 0 6px #4ecdc4,0 0 16px 2px #4ecdc4} 100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8738a,0 0 16px 2px #e8738a} }
+
+  /* ============================================ */
+  /*  PREMIUM THEME ENHANCEMENTS – RAINBOW PRISM   */
+  /* ============================================ */
+  @keyframes premiumRainbowFlow {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  @keyframes premiumRainbowBorder {
+    0%   { border-color: rgba(255,20,147,0.6);  box-shadow: 0 6px 30px rgba(255,20,147,0.28); }
+    16%  { border-color: rgba(255,126,0,0.6);   box-shadow: 0 6px 30px rgba(255,126,0,0.28); }
+    33%  { border-color: rgba(255,215,0,0.6);   box-shadow: 0 6px 30px rgba(255,215,0,0.28); }
+    50%  { border-color: rgba(0,230,118,0.6);   box-shadow: 0 6px 30px rgba(0,230,118,0.28); }
+    66%  { border-color: rgba(0,188,212,0.6);   box-shadow: 0 6px 30px rgba(0,188,212,0.28); }
+    83%  { border-color: rgba(41,98,255,0.6);   box-shadow: 0 6px 30px rgba(41,98,255,0.28); }
+    100% { border-color: rgba(213,0,249,0.6);   box-shadow: 0 6px 30px rgba(213,0,249,0.28); }
+  }
+  html[data-theme="rainbow"] .bg-gradient {
+    background:
+      radial-gradient(ellipse at 18% 18%, rgba(255,20,147,0.20) 0%, transparent 50%),
+      radial-gradient(ellipse at 82% 22%, rgba(255,215,0,0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 55%, rgba(0,230,118,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 18% 82%, rgba(41,98,255,0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 82% 82%, rgba(213,0,249,0.20) 0%, transparent 50%),
+      linear-gradient(160deg, #fafaff 0%, #fff0f7 30%, #f5f3ff 60%, #f0fbff 100%) !important;
+  }
+  html[data-theme="rainbow"] .theme-card,
+  html[data-theme="rainbow"] .lootbox-card {
+    animation: premiumRainbowBorder 8s linear infinite;
+  }
+  html[data-theme="rainbow"] .btn-buy:not(:disabled),
+  html[data-theme="rainbow"] .btn-activate,
+  html[data-theme="rainbow"] .login-btn,
+  html[data-theme="rainbow"] .confirm-yes,
+  html[data-theme="rainbow"] .reward-close,
+  html[data-theme="rainbow"] .btn-open-box:not(:disabled) {
+    background: linear-gradient(90deg, #ff1493, #ff7e00, #ffd700, #00e676, #00bcd4, #2962ff, #d500f9, #ff1493) !important;
+    background-size: 300% 100% !important;
+    animation: premiumRainbowFlow 5s linear infinite;
+    color: #fff !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(213,0,249,0.4);
+  }
+  html[data-theme="rainbow"] .btn-buy:not(:disabled):hover,
+  html[data-theme="rainbow"] .btn-activate:hover,
+  html[data-theme="rainbow"] .login-btn:hover,
+  html[data-theme="rainbow"] .confirm-yes:hover,
+  html[data-theme="rainbow"] .reward-close:hover,
+  html[data-theme="rainbow"] .btn-open-box:not(:disabled):hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 28px rgba(213,0,249,0.55);
+  }
+  html[data-theme="rainbow"] .btn-activate.is-active {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    animation: none;
+  }
+  html[data-theme="rainbow"] .page-title,
+  html[data-theme="rainbow"] .modal-title,
+  html[data-theme="rainbow"] .lootbox-name,
+  html[data-theme="rainbow"] .reward-title,
+  html[data-theme="rainbow"] .confirm-title {
+    background: linear-gradient(90deg, #ff1493, #ff7e00, #ffd700, #00e676, #00bcd4, #2962ff, #d500f9, #ff1493) !important;
+    background-size: 300% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    animation: premiumRainbowFlow 6s linear infinite;
+    filter: drop-shadow(0 2px 8px rgba(213,0,249,0.25));
+  }
+  html[data-theme="rainbow"] .coin-display {
+    animation: premiumRainbowBorder 8s linear infinite;
+  }
+  html[data-theme="rainbow"] .top-bar {
+    border-bottom-color: rgba(213,0,249,0.3);
+    box-shadow: 0 2px 18px rgba(213,0,249,0.15);
+  }
+  html[data-theme="rainbow"] .premium-tag {
+    background: linear-gradient(90deg, #ff1493, #ff7e00, #ffd700, #00e676, #00bcd4, #2962ff, #d500f9, #ff1493) !important;
+    background-size: 300% 100% !important;
+    animation: premiumRainbowFlow 4s linear infinite;
+  }
+
+  /* ============================================ */
+  /*  PREMIUM THEME ENHANCEMENTS – NEON CYBERPUNK */
+  /* ============================================ */
+  @keyframes premiumNeonGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(34,211,238,0.5), 0 0 24px rgba(34,211,238,0.22), inset 0 0 8px rgba(240,171,252,0.14); border-color: rgba(34,211,238,0.6); }
+    50%      { box-shadow: 0 0 22px rgba(240,171,252,0.7), 0 0 44px rgba(240,171,252,0.32), inset 0 0 18px rgba(34,211,238,0.28); border-color: rgba(240,171,252,0.78); }
+  }
+  @keyframes premiumNeonBtn {
+    0%, 100% { box-shadow: 0 0 8px rgba(34,211,238,0.55), 0 0 16px rgba(34,211,238,0.28); }
+    50%      { box-shadow: 0 0 18px rgba(240,171,252,0.75), 0 0 36px rgba(240,171,252,0.42); }
+  }
+  @keyframes premiumNeonGrid {
+    0%   { background-position: 0 0, 0 0; }
+    100% { background-position: 40px 40px, -40px -40px; }
+  }
+  @keyframes premiumNeonText {
+    0%, 100% { text-shadow: 0 0 6px rgba(240,171,252,0.7), 0 0 14px rgba(240,171,252,0.4), 0 0 28px rgba(34,211,238,0.3); }
+    50%      { text-shadow: 0 0 10px rgba(34,211,238,0.85), 0 0 22px rgba(34,211,238,0.5), 0 0 40px rgba(240,171,252,0.5); }
+  }
+  html[data-theme="neon"] .bg-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0, transparent 39px, rgba(34,211,238,0.07) 39px, rgba(34,211,238,0.07) 40px),
+      repeating-linear-gradient(0deg,  transparent 0, transparent 39px, rgba(240,171,252,0.07) 39px, rgba(240,171,252,0.07) 40px);
+    background-size: 40px 40px, 40px 40px;
+    animation: premiumNeonGrid 6s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  html[data-theme="neon"] .theme-card,
+  html[data-theme="neon"] .lootbox-card {
+    animation: premiumNeonGlow 3s ease-in-out infinite;
+  }
+  html[data-theme="neon"] .btn-buy:not(:disabled),
+  html[data-theme="neon"] .btn-activate,
+  html[data-theme="neon"] .login-btn,
+  html[data-theme="neon"] .confirm-yes,
+  html[data-theme="neon"] .reward-close,
+  html[data-theme="neon"] .btn-open-box:not(:disabled) {
+    background: linear-gradient(135deg, #1a0a2e, #3a0a4a) !important;
+    border: 1.5px solid rgba(240,171,252,0.65) !important;
+    color: #fae8ff !important;
+    text-shadow: 0 0 6px rgba(240,171,252,0.85), 0 0 12px rgba(34,211,238,0.5);
+    animation: premiumNeonBtn 2s ease-in-out infinite;
+  }
+  html[data-theme="neon"] .btn-buy:not(:disabled):hover,
+  html[data-theme="neon"] .btn-activate:hover,
+  html[data-theme="neon"] .login-btn:hover,
+  html[data-theme="neon"] .confirm-yes:hover,
+  html[data-theme="neon"] .reward-close:hover,
+  html[data-theme="neon"] .btn-open-box:not(:disabled):hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #2a0f4a, #4a0f6a) !important;
+    border-color: rgba(34,211,238,0.85) !important;
+  }
+  html[data-theme="neon"] .btn-activate.is-active {
+    background: linear-gradient(135deg, #064e3b, #022c22) !important;
+    border-color: rgba(34,211,238,0.7) !important;
+  }
+  html[data-theme="neon"] .page-title,
+  html[data-theme="neon"] .modal-title,
+  html[data-theme="neon"] .lootbox-name,
+  html[data-theme="neon"] .reward-title,
+  html[data-theme="neon"] .confirm-title {
+    color: #f0abfc !important;
+    -webkit-text-fill-color: #f0abfc !important;
+    background: none !important;
+    animation: premiumNeonText 2.4s ease-in-out infinite;
+  }
+  html[data-theme="neon"] .coin-display {
+    box-shadow: 0 0 12px rgba(34,211,238,0.45);
+    border-color: rgba(34,211,238,0.5) !important;
+  }
+  html[data-theme="neon"] .top-bar {
+    box-shadow: 0 2px 18px rgba(34,211,238,0.25), 0 0 30px rgba(240,171,252,0.1);
+  }
+  html[data-theme="neon"] .premium-tag {
+    background: linear-gradient(135deg, #f0abfc, #22d3ee) !important;
+    box-shadow: 0 2px 10px rgba(240,171,252,0.6);
+    color: #07051a !important;
+  }
+  html[data-theme="neon"] .owned-badge {
+    text-shadow: 0 0 6px rgba(34,211,238,0.7);
+  }
 
   @media (max-width: 600px) {
     .top-bar { padding: 8px 12px; gap: 4px; flex-wrap: nowrap; }
