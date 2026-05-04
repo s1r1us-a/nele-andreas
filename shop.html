@@ -569,6 +569,23 @@
     </div>
   </div>
 
+  <!-- BOOSTER SHOP SEKTION -->
+  <div class="shop-section-title">💫 Booster</div>
+  <div class="shop-section-sub">Direkt kaufen statt erhoffen</div>
+
+  <div class="lootbox-area">
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" style="cursor:default;">💫</span>
+      </div>
+      <div class="lootbox-name">Momenten-Booster</div>
+      <div class="lootbox-desc">Doppelte Momente für 3 Minuten ✨</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
+      <div class="lootbox-price">🪙 10.000 Coins</div>
+      <button class="btn-open-box" id="buyMomentsBoosterBtn">💫 Booster kaufen</button>
+    </div>
+  </div>
+
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
   </div>
@@ -1055,12 +1072,33 @@
   function handleBuyClick(themeId) {
     const t = THEMES.find(x => x.id === themeId);
     if (!t) return;
-    pendingBuy = themeId;
+    pendingBuy = { kind: 'theme', id: themeId, price: t.price };
     document.getElementById('confirmEmoji').textContent = t.emoji;
     document.getElementById('confirmText').textContent = `Möchtest du das Theme „${t.name}" kaufen?`;
-    document.getElementById('confirmPrice').textContent = `${t.price} 🪙`;
+    document.getElementById('confirmPrice').textContent = `${t.price.toLocaleString('de-DE')} 🪙`;
     document.getElementById('confirmOverlay').classList.add('open');
   }
+
+  // ---- BOOSTER SHOP ----
+  const MOMENTS_BOOSTER_PRICE = 10000;
+
+  function renderBoosterShop() {
+    const btn = document.getElementById('buyMomentsBoosterBtn');
+    if (!btn) return;
+    const canAfford = currentCoins >= MOMENTS_BOOSTER_PRICE;
+    btn.disabled = !canAfford;
+    btn.title = canAfford ? '' : 'Zu wenig Coins';
+  }
+
+  function handleBuyMomentsBoosterClick() {
+    pendingBuy = { kind: 'booster', id: 'moments_booster', price: MOMENTS_BOOSTER_PRICE };
+    document.getElementById('confirmEmoji').textContent = '💫';
+    document.getElementById('confirmText').textContent = 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.';
+    document.getElementById('confirmPrice').textContent = `${MOMENTS_BOOSTER_PRICE.toLocaleString('de-DE')} 🪙`;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+
+  document.getElementById('buyMomentsBoosterBtn').addEventListener('click', handleBuyMomentsBoosterClick);
 
   async function handleActivate(themeId) {
     if (!userKey) return;
@@ -1078,9 +1116,22 @@
   }
 
   async function executeBuy() {
-    const themeId = pendingBuy;
+    if (!pendingBuy || !userKey) return;
+
+    if (pendingBuy.kind === 'booster') {
+      const price = pendingBuy.price;
+      if (currentCoins < price) { showToast('❌ Nicht genug Coins!'); return; }
+      await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - price);
+      try { await updateStats(0, price, 0); } catch(e) { console.warn('Stats:', e.message); }
+      const invRef = ref(db, `boosters/${userKey}/inventory/${pendingBuy.id}`);
+      await runTransaction(invRef, n => (n||0) + 1);
+      showToast('💫 Momenten-Booster gekauft! Im Profil aktivieren ✨');
+      return;
+    }
+
+    const themeId = pendingBuy.id;
     const t = THEMES.find(x => x.id === themeId);
-    if (!t || !userKey) return;
+    if (!t) return;
     if (currentCoins < t.price) { showToast('❌ Nicht genug Coins!'); return; }
     // Coins abziehen
     await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - t.price);
@@ -1163,6 +1214,7 @@
           document.getElementById('coinCount').textContent = val;
           renderThemes();
           updateLootboxUI();
+          renderBoosterShop();
         } else {
           // NaN in DB – sofort reparieren
           console.warn('NaN in coins DB erkannt, setze auf 0');
