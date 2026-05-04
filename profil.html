@@ -26,7 +26,27 @@
       --ui-quote-card-border: rgba(232,115,138,0.2);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { min-height: 100vh; font-family: 'Quicksand', sans-serif; background: var(--cream); }
+    html, body { min-height: 100vh; font-family: 'Quicksand', sans-serif; background: var(--cream); transition: background 0.6s ease; }
+
+    /* Animierte Premium-Theme Hintergründe (über body bg, unter Inhalt) */
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0; transition: opacity 0.5s ease; }
+    html[data-theme="aurora"] body::before,
+    html[data-theme="cosmic"] body::before,
+    html[data-theme="royal"] body::before,
+    html[data-theme="rainbow"] body::before,
+    html[data-theme="neon"] body::before { opacity:1; }
+    html[data-theme="aurora"] body::before { background: radial-gradient(ellipse at 30% 0%, rgba(94,234,212,0.22), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(192,132,252,0.22), transparent 55%); animation: bgAuroraProfil 14s ease-in-out infinite alternate; mix-blend-mode: screen; }
+    @keyframes bgAuroraProfil { 0%{transform:translateX(-6%) translateY(-3%)} 100%{transform:translateX(6%) translateY(3%)} }
+    html[data-theme="cosmic"] body::before { background: radial-gradient(2px 2px at 15% 25%, rgba(255,255,255,0.9), transparent 60%), radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.7), transparent 60%), radial-gradient(2px 2px at 60% 40%, rgba(252,211,77,0.85), transparent 60%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.8), transparent 60%), radial-gradient(1.5px 1.5px at 90% 20%, rgba(165,180,252,0.9), transparent 60%); animation: bgCosmicProfil 4s ease-in-out infinite alternate; }
+    @keyframes bgCosmicProfil { 0%{filter:brightness(0.5)} 100%{filter:brightness(1)} }
+    html[data-theme="royal"] body::before { background: linear-gradient(125deg, transparent 45%, rgba(251,191,36,0.1) 50%, transparent 55%); animation: bgRoyalProfil 8s linear infinite; }
+    @keyframes bgRoyalProfil { 0%{transform:translateX(-30%)} 100%{transform:translateX(30%)} }
+    html[data-theme="rainbow"] body::before { background: radial-gradient(ellipse at 25% 25%, rgba(236,72,153,0.18), transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(78,205,196,0.18), transparent 55%); animation: bgRainbowProfil 18s linear infinite; }
+    @keyframes bgRainbowProfil { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+    html[data-theme="neon"] body::before { background: radial-gradient(circle at 20% 30%, rgba(240,171,252,0.18), transparent 45%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.18), transparent 45%); animation: bgNeonProfil 3s ease-in-out infinite alternate; }
+    @keyframes bgNeonProfil { 0%{opacity:0.5} 100%{opacity:1} }
+    /* Inhalt über dem Hintergrund-Layer halten */
+    .page { position: relative; z-index: 1; }
 
     /* AUTH LOADING */
     .auth-loading { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: var(--cream); }
@@ -853,7 +873,15 @@
     forest:  'radial-gradient(ellipse at 20% 20%, rgba(74,124,89,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(125,184,144,0.15) 0%, transparent 50%), linear-gradient(160deg, #f4faf5 0%, #e8f5ec 40%, #ebf5ee 70%, #f0faf2 100%)',
     midnight:'radial-gradient(ellipse at 20% 20%, rgba(124,92,191,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.2) 0%, transparent 50%), linear-gradient(160deg, #1a1030 0%, #2a1f4a 100%)',
     golden:  'radial-gradient(ellipse at 20% 20%, rgba(217,119,6,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,191,36,0.15) 0%, transparent 50%), linear-gradient(160deg, #fffbeb 0%, #fef3c7 40%, #fef9e8 70%, #fffdf0 100%)',
-    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)'
+    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)',
+    sunset:  'radial-gradient(ellipse at 20% 20%, rgba(249,115,22,0.18) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,146,60,0.18) 0%, transparent 50%), linear-gradient(160deg, #fff7ed 0%, #fed7aa 35%, #ffd0b3 60%, #fff0e0 100%)',
+    aurora:  'radial-gradient(ellipse at 15% 20%, rgba(78,205,196,0.32) 0%, transparent 55%), radial-gradient(ellipse at 85% 30%, rgba(192,132,252,0.28) 0%, transparent 55%), radial-gradient(ellipse at 50% 90%, rgba(94,234,212,0.22) 0%, transparent 60%), linear-gradient(160deg, #06141f 0%, #0a2433 50%, #102d3d 100%)',
+    ice:     'radial-gradient(ellipse at 20% 20%, rgba(103,232,249,0.22) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.18) 0%, transparent 50%), linear-gradient(160deg, #f0fbff 0%, #cffafe 40%, #e0f2fe 70%, #f0fbff 100%)',
+    fire:    'radial-gradient(ellipse at 15% 25%, rgba(220,38,38,0.18) 0%, transparent 50%), radial-gradient(ellipse at 85% 70%, rgba(234,88,12,0.22) 0%, transparent 50%), linear-gradient(160deg, #fff5ed 0%, #ffe4ce 30%, #ffd0b3 60%, #fff7ed 100%)',
+    cosmic:  'radial-gradient(ellipse at 25% 25%, rgba(129,140,248,0.32) 0%, transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(167,139,250,0.28) 0%, transparent 55%), radial-gradient(ellipse at 60% 40%, rgba(252,211,77,0.1) 0%, transparent 30%), linear-gradient(160deg, #050214 0%, #0d0828 50%, #1a0f3d 100%)',
+    royal:   'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,158,11,0.18) 0%, transparent 50%), linear-gradient(160deg, #0a0a0a 0%, #1a1610 40%, #14110a 70%, #0a0a0a 100%)',
+    rainbow: 'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.18) 0%, transparent 50%), linear-gradient(160deg, #fafaff 0%, #fff0f7 30%, #f5f3ff 60%, #f0fbff 100%)',
+    neon:    'radial-gradient(ellipse at 20% 20%, rgba(240,171,252,0.32) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(34,211,238,0.32) 0%, transparent 50%), linear-gradient(160deg, #07051a 0%, #0f0a25 50%, #1a0a2e 100%)'
   };
   const _P_THEME_VARS = {
     sakura:  { rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565' },
@@ -861,7 +889,15 @@
     forest:  { rose:'#4a7c59','rose-light':'#7db890','rose-pale':'#e8f5ec',cream:'#f4faf5',gold:'#6b4c2a',warm:'#ebf5ee','text-dark':'#1e3a26','text-mid':'#3a6b4a' },
     midnight:{ rose:'#a78bfa','rose-light':'#c4b5fd','rose-pale':'#3d2f6a',cream:'#1a1030',gold:'#e2b96f',warm:'#2a1f4a','text-dark':'#f0ecff','text-mid':'#c4b5fd' },
     golden:  { rose:'#d97706','rose-light':'#fbbf24','rose-pale':'#fef3c7',cream:'#fffbeb',gold:'#92400e',warm:'#fef9e8','text-dark':'#3d1a00','text-mid':'#92580e' },
-    candy:   { rose:'#ec4899','rose-light':'#f9a8d4','rose-pale':'#fce7f3',cream:'#fff0f7',gold:'#7c3aed',warm:'#fdf4fb','text-dark':'#4a0030','text-mid':'#9d174d' }
+    candy:   { rose:'#ec4899','rose-light':'#f9a8d4','rose-pale':'#fce7f3',cream:'#fff0f7',gold:'#7c3aed',warm:'#fdf4fb','text-dark':'#4a0030','text-mid':'#9d174d' },
+    sunset:  { rose:'#f97316','rose-light':'#fb923c','rose-pale':'#fed7aa',cream:'#fff7ed',gold:'#be3a47',warm:'#fde2c0','text-dark':'#5a1a1a','text-mid':'#a14040' },
+    aurora:  { rose:'#4ecdc4','rose-light':'#5eead4','rose-pale':'#134e4a',cream:'#06141f',gold:'#c084fc',warm:'#0f2a2e','text-dark':'#e0fffb','text-mid':'#99e0d8' },
+    ice:     { rose:'#06b6d4','rose-light':'#67e8f9','rose-pale':'#cffafe',cream:'#f0fbff',gold:'#0891b2',warm:'#e0f2fe','text-dark':'#0c2a3e','text-mid':'#0369a1' },
+    fire:    { rose:'#dc2626','rose-light':'#f87171','rose-pale':'#fee2e2',cream:'#fff5ed',gold:'#ea580c',warm:'#ffd9b3','text-dark':'#4a0a00','text-mid':'#9a3412' },
+    cosmic:  { rose:'#818cf8','rose-light':'#a5b4fc','rose-pale':'#1e1b4b',cream:'#050214',gold:'#fcd34d',warm:'#1e1b4b','text-dark':'#e0e7ff','text-mid':'#a5b4fc' },
+    royal:   { rose:'#fbbf24','rose-light':'#fde68a','rose-pale':'#2a2415',cream:'#0a0a0a',gold:'#f59e0b',warm:'#1c1c14','text-dark':'#fef3c7','text-mid':'#fcd34d' },
+    rainbow: { rose:'#ec4899','rose-light':'#f472b6','rose-pale':'#fdf2f8',cream:'#fafaff',gold:'#8b5cf6',warm:'#f5f3ff','text-dark':'#2e1a4a','text-mid':'#6d28d9' },
+    neon:    { rose:'#f0abfc','rose-light':'#f9a8d4','rose-pale':'#1a0a2e',cream:'#07051a',gold:'#22d3ee',warm:'#1a0a2e','text-dark':'#fae8ff','text-mid':'#f0abfc' }
   };
   const _P_DARK_UI = {
     midnight: {
@@ -880,6 +916,74 @@
       'ui-input-color':       '#f0ecff',
       'ui-quote-card-bg':     'rgba(42,31,74,0.75)',
       'ui-quote-card-border': 'rgba(167,139,250,0.2)',
+    },
+    aurora: {
+      'ui-card-bg':           'rgba(15,42,52,0.85)',
+      'ui-card-border':       'rgba(78,205,196,0.3)',
+      'ui-topbar-bg':         'rgba(6,20,31,0.97)',
+      'ui-topbar-border':     'rgba(78,205,196,0.25)',
+      'ui-btn-bg':            'rgba(15,42,52,0.9)',
+      'ui-btn-border':        'rgba(78,205,196,0.35)',
+      'ui-btn-text':          '#99e0d8',
+      'ui-coin-bg':           'rgba(15,42,52,0.9)',
+      'ui-modal-bg':          '#0a2433',
+      'ui-modal-overlay':     'rgba(3,12,18,0.88)',
+      'ui-modal-border':      'rgba(78,205,196,0.35)',
+      'ui-input-bg':          '#102d3d',
+      'ui-input-color':       '#e0fffb',
+      'ui-quote-card-bg':     'rgba(15,42,52,0.78)',
+      'ui-quote-card-border': 'rgba(78,205,196,0.25)',
+    },
+    cosmic: {
+      'ui-card-bg':           'rgba(30,27,75,0.85)',
+      'ui-card-border':       'rgba(129,140,248,0.3)',
+      'ui-topbar-bg':         'rgba(8,3,29,0.97)',
+      'ui-topbar-border':     'rgba(129,140,248,0.25)',
+      'ui-btn-bg':            'rgba(30,27,75,0.9)',
+      'ui-btn-border':        'rgba(129,140,248,0.35)',
+      'ui-btn-text':          '#a5b4fc',
+      'ui-coin-bg':           'rgba(30,27,75,0.9)',
+      'ui-modal-bg':          '#1a1240',
+      'ui-modal-overlay':     'rgba(2,1,10,0.88)',
+      'ui-modal-border':      'rgba(129,140,248,0.35)',
+      'ui-input-bg':          '#1e1b4b',
+      'ui-input-color':       '#e0e7ff',
+      'ui-quote-card-bg':     'rgba(30,27,75,0.78)',
+      'ui-quote-card-border': 'rgba(129,140,248,0.25)',
+    },
+    royal: {
+      'ui-card-bg':           'rgba(28,28,20,0.88)',
+      'ui-card-border':       'rgba(251,191,36,0.35)',
+      'ui-topbar-bg':         'rgba(10,10,10,0.97)',
+      'ui-topbar-border':     'rgba(251,191,36,0.3)',
+      'ui-btn-bg':            'rgba(28,28,20,0.9)',
+      'ui-btn-border':        'rgba(251,191,36,0.4)',
+      'ui-btn-text':          '#fcd34d',
+      'ui-coin-bg':           'rgba(28,28,20,0.9)',
+      'ui-modal-bg':          '#1a1610',
+      'ui-modal-overlay':     'rgba(0,0,0,0.9)',
+      'ui-modal-border':      'rgba(251,191,36,0.4)',
+      'ui-input-bg':          '#2a2415',
+      'ui-input-color':       '#fef3c7',
+      'ui-quote-card-bg':     'rgba(28,28,20,0.8)',
+      'ui-quote-card-border': 'rgba(251,191,36,0.3)',
+    },
+    neon: {
+      'ui-card-bg':           'rgba(26,10,46,0.85)',
+      'ui-card-border':       'rgba(240,171,252,0.35)',
+      'ui-topbar-bg':         'rgba(7,5,26,0.97)',
+      'ui-topbar-border':     'rgba(240,171,252,0.3)',
+      'ui-btn-bg':            'rgba(26,10,46,0.9)',
+      'ui-btn-border':        'rgba(34,211,238,0.4)',
+      'ui-btn-text':          '#f0abfc',
+      'ui-coin-bg':           'rgba(26,10,46,0.9)',
+      'ui-modal-bg':          '#0f0a25',
+      'ui-modal-overlay':     'rgba(2,1,8,0.92)',
+      'ui-modal-border':      'rgba(240,171,252,0.4)',
+      'ui-input-bg':          '#1a0a2e',
+      'ui-input-color':       '#fae8ff',
+      'ui-quote-card-bg':     'rgba(26,10,46,0.8)',
+      'ui-quote-card-border': 'rgba(240,171,252,0.3)',
     }
   };
   const _P_DEFAULT_UI = {
@@ -908,6 +1012,7 @@
     if (_P_DARK_UI[themeId]) {
       Object.entries(_P_DARK_UI[themeId]).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
     }
+    root.setAttribute('data-theme', themeId);
     const bg = document.getElementById('bgGradient');
     if (bg) bg.style.background = _P_THEME_GRADIENTS[themeId] || _P_THEME_GRADIENTS.sakura;
     document.body.style.background = _P_DARK_UI[themeId] ? vars.cream : '';
