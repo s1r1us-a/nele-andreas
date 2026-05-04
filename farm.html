@@ -2155,15 +2155,62 @@
 
   window.openConfirmBuy = function(itemId, type) { 
     currentBuyType = type;
-    if (type === 'seed') { itemToBuy = shopItems[itemId]; document.getElementById('confirmTitle').textContent = "Einkauf bestätigen"; document.getElementById('confirmText').innerHTML = `Wie oft möchtest du <br><span style="font-size:20px">${itemToBuy.icon}</span> ${itemToBuy.name}samen kaufen?`; document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.processBuy(1)">1x für ${itemToBuy.price} 🪙</button><button class="btn-generic btn-buy" onclick="window.processBuy(5)">5x für ${itemToBuy.price * 5} 🪙</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`; } 
+    if (type === 'seed') {
+      itemToBuy = shopItems[itemId];
+      document.getElementById('confirmTitle').textContent = "Einkauf bestätigen";
+      document.getElementById('confirmText').innerHTML = `
+        <div style="text-align:center; margin-bottom:10px;">
+          <span style="font-size:28px">${itemToBuy.icon}</span><br>
+          <strong style="color:var(--text-dark); font-size:15px;">${itemToBuy.name}samen</strong><br>
+          <span style="font-size:12px; color:var(--text-mid);">${itemToBuy.price} 🪙 pro Stück</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin:10px 0 8px;">
+          <button class="sell-qty-btn" type="button" onclick="window.buyQtyChange(-1)">−</button>
+          <input class="sell-qty-input" type="number" id="buyQtyInput" min="1" value="1" oninput="window.buyQtyUpdate()">
+          <button class="sell-qty-btn" type="button" onclick="window.buyQtyChange(1)">+</button>
+        </div>
+        <div id="buyQtyTotal" style="font-family:'Dancing Script', cursive; font-size:24px; color:var(--gold); font-weight:700; text-align:center;">${itemToBuy.price} 🪙</div>
+      `;
+      document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.buyQtyMax()" style="background: linear-gradient(135deg, #c084fc, #a855f7);">Max kaufen</button><button class="btn-generic btn-buy" onclick="window.processBuyInput()">Kaufen ✓</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`;
+    }
     else { itemToBuy = animalItems[itemId]; document.getElementById('confirmTitle').textContent = "Tier adoptieren 🐾"; document.getElementById('confirmText').innerHTML = `Wie soll dein neues Tier heißen?<br><br><span style="font-size:28px">${itemToBuy.icon}</span><br><br><input type="text" id="newAnimalName" class="name-input" placeholder="Name eingeben..." autocomplete="off">`; document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.processBuyAnimal()">Adoptieren (${itemToBuy.price} 🪙)</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`; setTimeout(() => { const input = document.getElementById('newAnimalName'); if(input) input.focus(); }, 100); }
     window.showSpecificModal('modalConfirm');
   }
 
-  window.processBuy = async function(amount) { 
+  window.processBuy = async function(amount) {
     const cost = itemToBuy.price * amount;
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); } 
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
     else { window.showToast('Nicht genug Münzen! 🪙'); }
+  }
+
+  window.buyQtyChange = function(delta) {
+    const input = document.getElementById('buyQtyInput'); if(!input) return;
+    const val = Math.max(1, (parseInt(input.value, 10) || 1) + delta);
+    input.value = val;
+    window.buyQtyUpdate();
+  }
+  window.buyQtyUpdate = function() {
+    const input = document.getElementById('buyQtyInput'); if(!input || !itemToBuy) return;
+    let val = parseInt(input.value, 10); if (!val || val < 1) val = 1;
+    input.value = val;
+    const total = itemToBuy.price * val;
+    const totalEl = document.getElementById('buyQtyTotal');
+    if (totalEl) {
+      totalEl.textContent = `${total} 🪙`;
+      totalEl.style.color = (currentCoins >= total) ? 'var(--gold)' : '#ef4444';
+    }
+  }
+  window.buyQtyMax = function() {
+    if(!itemToBuy) return;
+    const max = Math.max(1, Math.floor(currentCoins / itemToBuy.price));
+    const input = document.getElementById('buyQtyInput'); if(!input) return;
+    input.value = max;
+    window.buyQtyUpdate();
+  }
+  window.processBuyInput = async function() {
+    const input = document.getElementById('buyQtyInput'); if(!input) return;
+    const val = Math.max(1, parseInt(input.value, 10) || 1);
+    await window.processBuy(val);
   }
 
   window.processBuyAnimal = async function() { 
@@ -2598,8 +2645,65 @@
       } 
   }
 
-  window.openFieldSeedMenu = function() { const list = document.getElementById('fieldSeedList'); list.innerHTML = ''; let hasSeeds = false; Object.keys(inventory.seeds).forEach(key => { if (inventory.seeds[key] > 0) { hasSeeds = true; const item = shopItems[key]; list.innerHTML += `<div class="item-row" style="cursor:pointer" onclick="window.plantSeed('${key}')"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min</span></div></div><button class="btn-generic btn-buy">Pflanzen (${inventory.seeds[key]}x)</button></div>`; } }); if (!hasSeeds) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast keine Samen.<br>Kaufe welche im Shop!</div>`; window.showSpecificModal('modalField'); }
+  window.countEmptySlots = function() {
+    let count = 0;
+    for (let b = 0; b < unlockedBeds; b++) {
+      for (let s = 0; s < 4; s++) {
+        if (beds[b] && beds[b][s] && beds[b][s].state === 'empty') count++;
+      }
+    }
+    return count;
+  }
+  window.openFieldSeedMenu = function() {
+    const list = document.getElementById('fieldSeedList');
+    list.innerHTML = '';
+    let hasSeeds = false;
+    const emptySlots = window.countEmptySlots();
+    Object.keys(inventory.seeds).forEach(key => {
+      if (inventory.seeds[key] > 0) {
+        hasSeeds = true;
+        const item = shopItems[key];
+        const stock = inventory.seeds[key];
+        const canPlantAll = Math.min(stock, emptySlots);
+        const allDisabled = canPlantAll <= 0 ? 'disabled' : '';
+        list.innerHTML += `<div class="item-row"><div class="item-info" style="cursor:pointer;" onclick="window.plantSeed('${key}')"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min · ${stock}x</span></div></div><div style="display:flex; flex-direction:column; gap:6px;"><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px;" onclick="window.plantSeed('${key}')">Pflanzen</button><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.plantAllSeeds('${key}')" ${allDisabled}>Alle (${canPlantAll}x)</button></div></div>`;
+      }
+    });
+    if (!hasSeeds) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast keine Samen.<br>Kaufe welche im Shop!</div>`;
+    window.showSpecificModal('modalField');
+  }
   window.plantSeed = async function(itemId) { if (inventory.seeds[itemId] > 0 && currentTargetSlot) { const b = currentTargetSlot.b; const s = currentTargetSlot.s; inventory.seeds[itemId]--; beds[b][s] = { state: 'growing', item: itemId, plantedAt: Date.now() }; document.getElementById(`slot-${b}-${s}`).innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: 0%"></div></div>`; await saveFarmData(); window.closeAllModals(); window.showToast(`Samen gepflanzt! 🌱`); } }
+  window.plantAllSeeds = async function(itemId) {
+    if (!inventory.seeds[itemId] || inventory.seeds[itemId] <= 0) { window.showToast('Keine Samen vorhanden! 🌱'); return; }
+    let planted = 0;
+    const now = Date.now();
+    const startB = currentTargetSlot ? currentTargetSlot.b : 0;
+    const startS = currentTargetSlot ? currentTargetSlot.s : 0;
+    const tryPlant = (b, s) => {
+      if (b >= unlockedBeds || !beds[b] || !beds[b][s]) return;
+      if (beds[b][s].state !== 'empty') return;
+      if (inventory.seeds[itemId] <= 0) return;
+      inventory.seeds[itemId]--;
+      beds[b][s] = { state: 'growing', item: itemId, plantedAt: now };
+      const domSlot = document.getElementById(`slot-${b}-${s}`);
+      if (domSlot) domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: 0%"></div></div>`;
+      planted++;
+    };
+    tryPlant(startB, startS);
+    for (let b = 0; b < unlockedBeds && inventory.seeds[itemId] > 0; b++) {
+      for (let s = 0; s < 4 && inventory.seeds[itemId] > 0; s++) {
+        if (b === startB && s === startS) continue;
+        tryPlant(b, s);
+      }
+    }
+    if (planted > 0) {
+      await saveFarmData();
+      window.closeAllModals();
+      window.showToast(`${planted}x ${shopItems[itemId].icon} gepflanzt!`);
+    } else {
+      window.showToast('Keine freien Felder! 🌱');
+    }
+  }
 
   // ── BIENENSTOCK LOGIK ──
   window.openBeehive = function() {
