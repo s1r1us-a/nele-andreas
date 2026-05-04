@@ -91,31 +91,81 @@
   .active-theme-info { background: var(--ui-active-badge-bg); backdrop-filter: blur(10px); border: 1.5px solid rgba(212,160,97,0.25); border-radius: 20px; padding: 12px 20px; margin-bottom: 32px; font-size: 13px; color: var(--ui-btn-text); font-weight: 500; display: flex; align-items: center; gap: 8px; transition: background 0.4s ease; }
   .active-theme-info strong { color: var(--gold); font-weight: 700; }
 
-  /* THEMES GRID */
-  .themes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 900px; width: 100%; }
+  /* THEMES GRID – 2 Kacheln nebeneinander */
+  .themes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 720px; width: 100%; }
 
-  .theme-card { background: var(--ui-card-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--ui-card-border); border-radius: 24px; padding: 24px; box-shadow: 0 6px 30px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s ease, border-color 0.4s ease; }
+  .theme-card { background: var(--ui-card-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--ui-card-border); border-radius: 20px; padding: 16px 14px; box-shadow: 0 6px 30px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s ease, border-color 0.4s ease; position: relative; overflow: hidden; }
   .theme-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px var(--ui-card-hover-shadow); }
   .theme-card.active-card { border-color: var(--gold); box-shadow: 0 6px 30px rgba(212,160,97,0.2); }
+  .theme-card.is-premium { border-color: var(--gold); }
+  .premium-tag { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #fbbf24, #b45309); color: #fff; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 50px; box-shadow: 0 2px 8px rgba(180,83,9,0.4); z-index: 2; }
 
-  .theme-preview { height: 80px; border-radius: 14px; margin-bottom: 16px; position: relative; overflow: hidden; }
-  .theme-preview-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.9); }
+  .theme-preview { height: 84px; border-radius: 12px; margin-bottom: 12px; position: relative; overflow: hidden; isolation: isolate; }
+  .theme-preview-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: rgba(255,255,255,0.95); z-index: 3; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .theme-name { font-family: 'Dancing Script', cursive; font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
-  .theme-desc { font-size: 12px; color: var(--ui-btn-text); font-weight: 500; margin-bottom: 16px; min-height: 16px; }
-  .theme-price { font-size: 13px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 4px; margin-bottom: 14px; }
+  /* Animierte Effekte für die Premium-Vorschauen */
+  .theme-preview.fx-sunset::before { content:''; position:absolute; inset:-20%; background: radial-gradient(circle at 70% 100%, rgba(255,237,213,0.55), transparent 55%), radial-gradient(circle at 30% 30%, rgba(220,38,38,0.35), transparent 55%); animation: fxSunset 6s ease-in-out infinite alternate; z-index:1; }
+  @keyframes fxSunset { 0%{transform:translateY(0) scale(1);opacity:0.85} 100%{transform:translateY(-8%) scale(1.1);opacity:1} }
 
-  .theme-actions { display: flex; gap: 8px; }
-  .btn-preview { flex: 1; background: transparent; border: 1.5px solid var(--ui-preview-btn-border); border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; }
+  .theme-preview.fx-aurora::before { content:''; position:absolute; inset:-30%; background: radial-gradient(ellipse at 30% 50%, rgba(94,234,212,0.6), transparent 50%), radial-gradient(ellipse at 70% 30%, rgba(192,132,252,0.55), transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(78,205,196,0.5), transparent 60%); filter: blur(6px); animation: fxAurora 5s ease-in-out infinite alternate; z-index:1; }
+  @keyframes fxAurora { 0%{transform:translate(-8%,-5%) scale(1)} 100%{transform:translate(8%,5%) scale(1.15)} }
+
+  .theme-preview.fx-ice::before { content:''; position:absolute; inset:0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.85) 50%, transparent 70%); animation: fxIce 3s linear infinite; z-index:2; }
+  @keyframes fxIce { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+  .theme-preview.fx-ice::after { content:'❄ ✦ ❄'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; color:rgba(255,255,255,0.85); animation: fxIceTwinkle 2.5s ease-in-out infinite alternate; z-index:1; }
+  @keyframes fxIceTwinkle { 0%{opacity:0.55} 100%{opacity:1} }
+
+  .theme-preview.fx-fire::before { content:''; position:absolute; inset:-20%; background: radial-gradient(circle at 30% 100%, rgba(251,191,36,0.7), transparent 45%), radial-gradient(circle at 70% 80%, rgba(220,38,38,0.6), transparent 50%); filter: blur(4px); animation: fxFire 1.4s ease-in-out infinite alternate; z-index:1; }
+  @keyframes fxFire { 0%{transform:translateY(4%) scale(1)} 50%{transform:translateY(-3%) scale(1.08)} 100%{transform:translateY(2%) scale(1.04)} }
+
+  .theme-preview.fx-cosmic { background-image: radial-gradient(2px 2px at 20% 30%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 70% 60%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 40% 80%, #fff, transparent 60%), radial-gradient(2px 2px at 85% 20%, #fcd34d, transparent 60%), radial-gradient(1.5px 1.5px at 55% 50%, #fff, transparent 60%), linear-gradient(135deg, #050214 0%, #1e1b4b 50%, #4338ca 100%) !important; animation: fxCosmicTwinkle 2.4s ease-in-out infinite alternate; }
+  @keyframes fxCosmicTwinkle { 0%{filter:brightness(0.85)} 100%{filter:brightness(1.25)} }
+
+  .theme-preview.fx-royal::before { content:''; position:absolute; inset:0; background: linear-gradient(120deg, transparent 38%, rgba(255,232,161,0.85) 50%, transparent 62%); animation: fxRoyal 2.8s linear infinite; z-index:2; }
+  @keyframes fxRoyal { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+  .theme-preview.fx-royal::after { content:'💎'; position:absolute; top:6px; left:8px; font-size:14px; filter: drop-shadow(0 0 6px rgba(251,191,36,0.9)); animation: fxRoyalGem 2s ease-in-out infinite alternate; z-index:3; }
+  @keyframes fxRoyalGem { 0%{transform:scale(1) rotate(-6deg)} 100%{transform:scale(1.15) rotate(6deg)} }
+
+  .theme-preview.fx-rainbow { background: linear-gradient(135deg, #ec4899 0%, #f59e0b 25%, #4ecdc4 50%, #8b5cf6 75%, #ec4899 100%) !important; background-size: 300% 300% !important; animation: fxRainbow 6s linear infinite; }
+  @keyframes fxRainbow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+  .theme-preview.fx-neon::before { content:''; position:absolute; inset:0; background: radial-gradient(circle at 30% 40%, rgba(240,171,252,0.55), transparent 45%), radial-gradient(circle at 70% 60%, rgba(34,211,238,0.55), transparent 45%); animation: fxNeon 1.8s ease-in-out infinite alternate; z-index:1; }
+  @keyframes fxNeon { 0%{filter:hue-rotate(0deg) brightness(1)} 100%{filter:hue-rotate(40deg) brightness(1.25)} }
+  .theme-preview.fx-neon::after { content:''; position:absolute; inset:8px; border:1.5px solid rgba(240,171,252,0.6); border-radius:8px; box-shadow: 0 0 12px rgba(34,211,238,0.6), inset 0 0 12px rgba(240,171,252,0.4); z-index:2; animation: fxNeonPulse 1.4s ease-in-out infinite alternate; }
+  @keyframes fxNeonPulse { 0%{box-shadow: 0 0 6px rgba(34,211,238,0.5), inset 0 0 6px rgba(240,171,252,0.3)} 100%{box-shadow: 0 0 18px rgba(34,211,238,0.9), inset 0 0 16px rgba(240,171,252,0.6)} }
+
+  .theme-name { font-family: 'Dancing Script', cursive; font-size: 19px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; line-height: 1.1; }
+  .theme-desc { font-size: 11px; color: var(--ui-btn-text); font-weight: 500; margin-bottom: 10px; min-height: 28px; line-height: 1.3; }
+  .theme-price { font-size: 12px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+
+  .theme-actions { display: flex; flex-direction: column; gap: 6px; }
+  .btn-preview { width: 100%; background: transparent; border: 1.5px solid var(--ui-preview-btn-border); border-radius: 50px; padding: 7px 8px; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; }
   .btn-preview:hover { border-color: var(--rose); color: var(--rose); }
-  .btn-buy { flex: 1; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 12px rgba(212,160,97,0.35); }
+  .btn-buy { width: 100%; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 8px; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 12px rgba(212,160,97,0.35); }
   .btn-buy:hover { transform: scale(1.03); box-shadow: 0 5px 18px rgba(212,160,97,0.5); }
   .btn-buy:disabled { background: var(--ui-disabled-btn); box-shadow: none; cursor: default; transform: none; }
-  .btn-activate { flex: 1; background: linear-gradient(135deg, var(--rose), #c85070); border: none; border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 12px rgba(232,115,138,0.35); }
+  .btn-activate { width: 100%; background: linear-gradient(135deg, var(--rose), #c85070); border: none; border-radius: 50px; padding: 8px; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 12px rgba(232,115,138,0.35); }
   .btn-activate:hover { transform: scale(1.03); }
   .btn-activate.is-active { background: linear-gradient(135deg, #22c55e, #16a34a); }
 
-  .owned-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-owned-badge-bg); border: 1.5px solid var(--ui-owned-badge-border); border-radius: 50px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: var(--ui-owned-badge-color); margin-bottom: 10px; }
+  .owned-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-owned-badge-bg); border: 1.5px solid var(--ui-owned-badge-border); border-radius: 50px; padding: 2px 8px; font-size: 10px; font-weight: 700; color: var(--ui-owned-badge-color); margin-bottom: 8px; }
+
+  /* Animierter Hintergrund für Premium-Themes (auf der ganzen Seite) */
+  html[data-theme="aurora"] .bg-gradient::after,
+  html[data-theme="cosmic"] .bg-gradient::after,
+  html[data-theme="royal"] .bg-gradient::after,
+  html[data-theme="rainbow"] .bg-gradient::after,
+  html[data-theme="neon"] .bg-gradient::after { content:''; position:absolute; inset:0; pointer-events:none; }
+  html[data-theme="aurora"] .bg-gradient::after { background: radial-gradient(ellipse at 30% 0%, rgba(94,234,212,0.18), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(192,132,252,0.18), transparent 55%); animation: bgAurora 14s ease-in-out infinite alternate; mix-blend-mode: screen; }
+  @keyframes bgAurora { 0%{transform:translateX(-6%) translateY(-3%);opacity:0.7} 100%{transform:translateX(6%) translateY(3%);opacity:1} }
+  html[data-theme="cosmic"] .bg-gradient::after { background: radial-gradient(2px 2px at 15% 25%, rgba(255,255,255,0.9), transparent 60%), radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.7), transparent 60%), radial-gradient(2px 2px at 60% 40%, rgba(252,211,77,0.8), transparent 60%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.8), transparent 60%), radial-gradient(1.5px 1.5px at 90% 20%, rgba(165,180,252,0.9), transparent 60%); animation: bgCosmic 4s ease-in-out infinite alternate; }
+  @keyframes bgCosmic { 0%{opacity:0.5} 100%{opacity:1} }
+  html[data-theme="royal"] .bg-gradient::after { background: linear-gradient(125deg, transparent 45%, rgba(251,191,36,0.08) 50%, transparent 55%); animation: bgRoyal 8s linear infinite; }
+  @keyframes bgRoyal { 0%{transform:translateX(-30%)} 100%{transform:translateX(30%)} }
+  html[data-theme="rainbow"] .bg-gradient { animation: bgRainbow 18s linear infinite; }
+  @keyframes bgRainbow { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+  html[data-theme="neon"] .bg-gradient::after { background: radial-gradient(circle at 20% 30%, rgba(240,171,252,0.12), transparent 45%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.12), transparent 45%); animation: bgNeon 3s ease-in-out infinite alternate; }
+  @keyframes bgNeon { 0%{opacity:0.5} 100%{opacity:1} }
 
   /* CONFIRM MODAL */
   .confirm-overlay { position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center; background: var(--ui-modal-overlay); }
@@ -220,12 +270,15 @@
     .page-title { font-size: 48px; }
     .page-subtitle { font-size: 11px; letter-spacing: 1.5px; }
     .active-theme-info { font-size: 12px; padding: 10px 14px; margin-bottom: 20px; }
-    .themes-grid { grid-template-columns: 1fr; gap: 14px; }
-    .theme-card { padding: 18px; border-radius: 20px; }
-    .theme-preview { height: 70px; border-radius: 12px; }
-    .theme-name { font-size: 22px; }
-    .theme-actions { gap: 6px; }
-    .btn-preview, .btn-buy, .btn-activate { font-size: 11px; padding: 9px 6px; }
+    .themes-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .theme-card { padding: 12px 10px; border-radius: 18px; }
+    .theme-preview { height: 70px; border-radius: 10px; margin-bottom: 10px; }
+    .theme-name { font-size: 17px; }
+    .theme-desc { font-size: 10px; min-height: 24px; margin-bottom: 8px; }
+    .theme-price { font-size: 11px; margin-bottom: 8px; }
+    .theme-actions { gap: 5px; }
+    .btn-preview, .btn-buy, .btn-activate { font-size: 10px; padding: 7px 4px; }
+    .premium-tag { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
     .confirm-card { padding: 28px 20px 24px; border-radius: 22px; }
     .confirm-title { font-size: 24px; }
     .confirm-text { font-size: 13px; }
@@ -460,6 +513,219 @@
       previewBar: 'rgba(236,72,153,0.7)',
       vars: { rose:'#ec4899','rose-light':'#f9a8d4','rose-pale':'#fce7f3',cream:'#fff0f7',gold:'#7c3aed',warm:'#fdf4fb','text-dark':'#4a0030','text-mid':'#9d174d' },
       ui: {}
+    },
+    /* ─── PREMIUM THEMES (20.000 – 150.000 🪙) ─────────────────────────── */
+    {
+      id: 'sunset',
+      name: 'Sunset Dream',
+      emoji: '🌅',
+      desc: 'Warmer Sonnenuntergang in Orange & Koralle',
+      price: 20000,
+      premium: true,
+      fx: 'sunset',
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #fed7aa 0%, #fb923c 40%, #f97316 70%, #be3a47 100%)',
+      previewBar: 'rgba(190,58,71,0.8)',
+      vars: { rose:'#f97316','rose-light':'#fb923c','rose-pale':'#fed7aa',cream:'#fff7ed',gold:'#be3a47',warm:'#fde2c0','text-dark':'#5a1a1a','text-mid':'#a14040' },
+      ui: {}
+    },
+    {
+      id: 'aurora',
+      name: 'Aurora',
+      emoji: '🌌',
+      desc: 'Tanzendes Polarlicht – animiert ✨',
+      price: 30000,
+      premium: true,
+      fx: 'aurora',
+      dark: true,
+      previewBg: 'linear-gradient(135deg, #06141f 0%, #134e4a 30%, #4ecdc4 65%, #c084fc 100%)',
+      previewBar: 'rgba(78,205,196,0.85)',
+      vars: { rose:'#4ecdc4','rose-light':'#5eead4','rose-pale':'#134e4a',cream:'#06141f',gold:'#c084fc',warm:'#0f2a2e','text-dark':'#e0fffb','text-mid':'#99e0d8' },
+      ui: {
+        'ui-card-bg':           'rgba(15,42,52,0.85)',
+        'ui-card-border':       'rgba(78,205,196,0.3)',
+        'ui-card-hover-shadow': 'rgba(78,205,196,0.25)',
+        'ui-topbar-bg':         'rgba(6,20,31,0.97)',
+        'ui-topbar-border':     'rgba(78,205,196,0.25)',
+        'ui-btn-bg':            'rgba(15,42,52,0.9)',
+        'ui-btn-border':        'rgba(78,205,196,0.35)',
+        'ui-btn-text':          '#99e0d8',
+        'ui-coin-bg':           'rgba(15,42,52,0.9)',
+        'ui-modal-bg':          '#0a2433',
+        'ui-modal-overlay':     'rgba(3,12,18,0.88)',
+        'ui-modal-border':      'rgba(78,205,196,0.35)',
+        'ui-active-badge-bg':   'rgba(15,42,52,0.85)',
+        'ui-input-bg':          '#102d3d',
+        'ui-input-color':       '#e0fffb',
+        'ui-preview-btn-border':'rgba(78,205,196,0.35)',
+        'ui-disabled-btn':      '#1e3a47',
+        'ui-owned-badge-bg':    'rgba(34,197,94,0.15)',
+        'ui-owned-badge-border':'rgba(34,197,94,0.4)',
+        'ui-owned-badge-color': '#5eead4',
+        'ui-toast-bg':          '#134e4a',
+        'ui-confirm-no-border': 'rgba(78,205,196,0.3)',
+        'ui-lootbox-odds-bg':   'rgba(78,205,196,0.1)',
+        'ui-lootbox-odds-border':'rgba(78,205,196,0.25)',
+      }
+    },
+    {
+      id: 'ice',
+      name: 'Crystal Ice',
+      emoji: '❄️',
+      desc: 'Eiskristalle mit Shimmer-Effekt',
+      price: 45000,
+      premium: true,
+      fx: 'ice',
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #cffafe 0%, #67e8f9 50%, #06b6d4 100%)',
+      previewBar: 'rgba(6,182,212,0.75)',
+      vars: { rose:'#06b6d4','rose-light':'#67e8f9','rose-pale':'#cffafe',cream:'#f0fbff',gold:'#0891b2',warm:'#e0f2fe','text-dark':'#0c2a3e','text-mid':'#0369a1' },
+      ui: {}
+    },
+    {
+      id: 'fire',
+      name: 'Phoenix Fire',
+      emoji: '🔥',
+      desc: 'Lodernde Flammen – flackernd',
+      price: 60000,
+      premium: true,
+      fx: 'fire',
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #fee2e2 0%, #f87171 30%, #ea580c 65%, #dc2626 100%)',
+      previewBar: 'rgba(220,38,38,0.8)',
+      vars: { rose:'#dc2626','rose-light':'#f87171','rose-pale':'#fee2e2',cream:'#fff5ed',gold:'#ea580c',warm:'#ffd9b3','text-dark':'#4a0a00','text-mid':'#9a3412' },
+      ui: {}
+    },
+    {
+      id: 'cosmic',
+      name: 'Cosmic Galaxy',
+      emoji: '🌠',
+      desc: 'Funkelnde Sterne in tiefer Galaxie',
+      price: 80000,
+      premium: true,
+      fx: 'cosmic',
+      dark: true,
+      previewBg: 'linear-gradient(135deg, #050214 0%, #1e1b4b 40%, #4338ca 70%, #818cf8 100%)',
+      previewBar: 'rgba(129,140,248,0.85)',
+      vars: { rose:'#818cf8','rose-light':'#a5b4fc','rose-pale':'#1e1b4b',cream:'#050214',gold:'#fcd34d',warm:'#1e1b4b','text-dark':'#e0e7ff','text-mid':'#a5b4fc' },
+      ui: {
+        'ui-card-bg':           'rgba(30,27,75,0.85)',
+        'ui-card-border':       'rgba(129,140,248,0.3)',
+        'ui-card-hover-shadow': 'rgba(129,140,248,0.25)',
+        'ui-topbar-bg':         'rgba(8,3,29,0.97)',
+        'ui-topbar-border':     'rgba(129,140,248,0.25)',
+        'ui-btn-bg':            'rgba(30,27,75,0.9)',
+        'ui-btn-border':        'rgba(129,140,248,0.35)',
+        'ui-btn-text':          '#a5b4fc',
+        'ui-coin-bg':           'rgba(30,27,75,0.9)',
+        'ui-modal-bg':          '#1a1240',
+        'ui-modal-overlay':     'rgba(2,1,10,0.88)',
+        'ui-modal-border':      'rgba(129,140,248,0.35)',
+        'ui-active-badge-bg':   'rgba(30,27,75,0.85)',
+        'ui-input-bg':          '#1e1b4b',
+        'ui-input-color':       '#e0e7ff',
+        'ui-preview-btn-border':'rgba(129,140,248,0.35)',
+        'ui-disabled-btn':      '#3a3060',
+        'ui-owned-badge-bg':    'rgba(34,197,94,0.15)',
+        'ui-owned-badge-border':'rgba(34,197,94,0.4)',
+        'ui-owned-badge-color': '#86efac',
+        'ui-toast-bg':          '#312e81',
+        'ui-confirm-no-border': 'rgba(129,140,248,0.3)',
+        'ui-lootbox-odds-bg':   'rgba(129,140,248,0.1)',
+        'ui-lootbox-odds-border':'rgba(129,140,248,0.25)',
+      }
+    },
+    {
+      id: 'royal',
+      name: 'Royal Diamond',
+      emoji: '💎',
+      desc: 'Schwarz & Champagner-Gold mit Glanz',
+      price: 100000,
+      premium: true,
+      fx: 'royal',
+      dark: true,
+      previewBg: 'linear-gradient(135deg, #0a0a0a 0%, #2a2415 40%, #f59e0b 80%, #fde68a 100%)',
+      previewBar: 'rgba(251,191,36,0.85)',
+      vars: { rose:'#fbbf24','rose-light':'#fde68a','rose-pale':'#2a2415',cream:'#0a0a0a',gold:'#f59e0b',warm:'#1c1c14','text-dark':'#fef3c7','text-mid':'#fcd34d' },
+      ui: {
+        'ui-card-bg':           'rgba(28,28,20,0.88)',
+        'ui-card-border':       'rgba(251,191,36,0.35)',
+        'ui-card-hover-shadow': 'rgba(251,191,36,0.3)',
+        'ui-topbar-bg':         'rgba(10,10,10,0.97)',
+        'ui-topbar-border':     'rgba(251,191,36,0.3)',
+        'ui-btn-bg':            'rgba(28,28,20,0.9)',
+        'ui-btn-border':        'rgba(251,191,36,0.4)',
+        'ui-btn-text':          '#fcd34d',
+        'ui-coin-bg':           'rgba(28,28,20,0.9)',
+        'ui-modal-bg':          '#1a1610',
+        'ui-modal-overlay':     'rgba(0,0,0,0.9)',
+        'ui-modal-border':      'rgba(251,191,36,0.4)',
+        'ui-active-badge-bg':   'rgba(28,28,20,0.88)',
+        'ui-input-bg':          '#2a2415',
+        'ui-input-color':       '#fef3c7',
+        'ui-preview-btn-border':'rgba(251,191,36,0.4)',
+        'ui-disabled-btn':      '#3a3528',
+        'ui-owned-badge-bg':    'rgba(34,197,94,0.15)',
+        'ui-owned-badge-border':'rgba(34,197,94,0.4)',
+        'ui-owned-badge-color': '#86efac',
+        'ui-toast-bg':          '#3a2f10',
+        'ui-confirm-no-border': 'rgba(251,191,36,0.3)',
+        'ui-lootbox-odds-bg':   'rgba(251,191,36,0.1)',
+        'ui-lootbox-odds-border':'rgba(251,191,36,0.25)',
+      }
+    },
+    {
+      id: 'rainbow',
+      name: 'Rainbow Prism',
+      emoji: '🌈',
+      desc: 'Schimmernde Regenbogen-Animation',
+      price: 125000,
+      premium: true,
+      fx: 'rainbow',
+      dark: false,
+      previewBg: 'linear-gradient(135deg, #ec4899 0%, #f59e0b 25%, #4ecdc4 50%, #8b5cf6 75%, #ec4899 100%)',
+      previewBar: 'rgba(139,92,246,0.8)',
+      vars: { rose:'#ec4899','rose-light':'#f472b6','rose-pale':'#fdf2f8',cream:'#fafaff',gold:'#8b5cf6',warm:'#f5f3ff','text-dark':'#2e1a4a','text-mid':'#6d28d9' },
+      ui: {}
+    },
+    {
+      id: 'neon',
+      name: 'Neon Cyberpunk',
+      emoji: '⚡',
+      desc: 'Glühendes Neon – Pink & Cyan',
+      price: 150000,
+      premium: true,
+      fx: 'neon',
+      dark: true,
+      previewBg: 'linear-gradient(135deg, #07051a 0%, #1a0a2e 30%, #f0abfc 65%, #22d3ee 100%)',
+      previewBar: 'rgba(34,211,238,0.85)',
+      vars: { rose:'#f0abfc','rose-light':'#f9a8d4','rose-pale':'#1a0a2e',cream:'#07051a',gold:'#22d3ee',warm:'#1a0a2e','text-dark':'#fae8ff','text-mid':'#f0abfc' },
+      ui: {
+        'ui-card-bg':           'rgba(26,10,46,0.85)',
+        'ui-card-border':       'rgba(240,171,252,0.35)',
+        'ui-card-hover-shadow': 'rgba(34,211,238,0.3)',
+        'ui-topbar-bg':         'rgba(7,5,26,0.97)',
+        'ui-topbar-border':     'rgba(240,171,252,0.3)',
+        'ui-btn-bg':            'rgba(26,10,46,0.9)',
+        'ui-btn-border':        'rgba(34,211,238,0.4)',
+        'ui-btn-text':          '#f0abfc',
+        'ui-coin-bg':           'rgba(26,10,46,0.9)',
+        'ui-modal-bg':          '#0f0a25',
+        'ui-modal-overlay':     'rgba(2,1,8,0.92)',
+        'ui-modal-border':      'rgba(240,171,252,0.4)',
+        'ui-active-badge-bg':   'rgba(26,10,46,0.85)',
+        'ui-input-bg':          '#1a0a2e',
+        'ui-input-color':       '#fae8ff',
+        'ui-preview-btn-border':'rgba(240,171,252,0.4)',
+        'ui-disabled-btn':      '#3a2050',
+        'ui-owned-badge-bg':    'rgba(34,211,238,0.15)',
+        'ui-owned-badge-border':'rgba(34,211,238,0.4)',
+        'ui-owned-badge-color': '#67e8f9',
+        'ui-toast-bg':          '#3a0a4a',
+        'ui-confirm-no-border': 'rgba(240,171,252,0.3)',
+        'ui-lootbox-odds-bg':   'rgba(240,171,252,0.1)',
+        'ui-lootbox-odds-border':'rgba(240,171,252,0.25)',
+      }
     }
   ];
 
@@ -486,7 +752,15 @@
     forest:  'radial-gradient(ellipse at 20% 20%, rgba(74,124,89,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(125,184,144,0.15) 0%, transparent 50%), linear-gradient(160deg, #f4faf5 0%, #e8f5ec 40%, #ebf5ee 70%, #f0faf2 100%)',
     midnight:'radial-gradient(ellipse at 20% 20%, rgba(124,92,191,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.2) 0%, transparent 50%), linear-gradient(160deg, #1a1030 0%, #2a1f4a 100%)',
     golden:  'radial-gradient(ellipse at 20% 20%, rgba(217,119,6,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,191,36,0.15) 0%, transparent 50%), linear-gradient(160deg, #fffbeb 0%, #fef3c7 40%, #fef9e8 70%, #fffdf0 100%)',
-    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)'
+    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)',
+    sunset:  'radial-gradient(ellipse at 20% 20%, rgba(249,115,22,0.18) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,146,60,0.18) 0%, transparent 50%), linear-gradient(160deg, #fff7ed 0%, #fed7aa 35%, #ffd0b3 60%, #fff0e0 100%)',
+    aurora:  'radial-gradient(ellipse at 15% 20%, rgba(78,205,196,0.32) 0%, transparent 55%), radial-gradient(ellipse at 85% 30%, rgba(192,132,252,0.28) 0%, transparent 55%), radial-gradient(ellipse at 50% 90%, rgba(94,234,212,0.22) 0%, transparent 60%), linear-gradient(160deg, #06141f 0%, #0a2433 50%, #102d3d 100%)',
+    ice:     'radial-gradient(ellipse at 20% 20%, rgba(103,232,249,0.22) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.18) 0%, transparent 50%), linear-gradient(160deg, #f0fbff 0%, #cffafe 40%, #e0f2fe 70%, #f0fbff 100%)',
+    fire:    'radial-gradient(ellipse at 15% 25%, rgba(220,38,38,0.18) 0%, transparent 50%), radial-gradient(ellipse at 85% 70%, rgba(234,88,12,0.22) 0%, transparent 50%), linear-gradient(160deg, #fff5ed 0%, #ffe4ce 30%, #ffd0b3 60%, #fff7ed 100%)',
+    cosmic:  'radial-gradient(ellipse at 25% 25%, rgba(129,140,248,0.32) 0%, transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(167,139,250,0.28) 0%, transparent 55%), radial-gradient(ellipse at 60% 40%, rgba(252,211,77,0.1) 0%, transparent 30%), linear-gradient(160deg, #050214 0%, #0d0828 50%, #1a0f3d 100%)',
+    royal:   'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,158,11,0.18) 0%, transparent 50%), linear-gradient(160deg, #0a0a0a 0%, #1a1610 40%, #14110a 70%, #0a0a0a 100%)',
+    rainbow: 'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.18) 0%, transparent 50%), linear-gradient(160deg, #fafaff 0%, #fff0f7 30%, #f5f3ff 60%, #f0fbff 100%)',
+    neon:    'radial-gradient(ellipse at 20% 20%, rgba(240,171,252,0.32) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(34,211,238,0.32) 0%, transparent 50%), linear-gradient(160deg, #07051a 0%, #0f0a25 50%, #1a0a2e 100%)'
   };
 
   // Default light UI surface vars
@@ -531,6 +805,9 @@
       Object.entries(t.ui).forEach(([k,v]) => root.style.setProperty(`--${k}`, v));
     }
 
+    // Theme-Marker für CSS-Animationen (aurora, cosmic, royal, rainbow, neon)
+    root.setAttribute('data-theme', themeId);
+
     // Hintergrund
     const bg = document.getElementById('bgGradient');
     const gradient = THEME_GRADIENTS[themeId] || THEME_GRADIENTS.sakura;
@@ -550,15 +827,20 @@
       const isOwned = ownedThemes.includes(t.id);
       const isActive = activeTheme === t.id;
       const card = document.createElement('div');
-      card.className = 'theme-card' + (isActive ? ' active-card' : '');
+      card.className = 'theme-card' + (isActive ? ' active-card' : '') + (t.premium ? ' is-premium' : '');
+      const fxClass = t.fx ? ` fx-${t.fx}` : '';
+      const priceLabel = t.price === 0
+        ? '🎁 Kostenlos'
+        : `🪙 ${t.price.toLocaleString('de-DE')}`;
       card.innerHTML = `
-        <div class="theme-preview" style="background:${t.previewBg};">
+        ${t.premium ? '<div class="premium-tag">Premium</div>' : ''}
+        <div class="theme-preview${fxClass}" style="background:${t.previewBg};">
           <div class="theme-preview-bar" style="background:${t.previewBar};">${t.emoji} ${t.name}</div>
         </div>
         <div class="theme-name">${t.emoji} ${t.name}</div>
         <div class="theme-desc">${t.desc}</div>
         ${isOwned ? '<div class="owned-badge">✓ Gekauft</div>' : ''}
-        <div class="theme-price">${t.price === 0 ? '🎁 Kostenlos' : `🪙 ${t.price} Coins`}</div>
+        <div class="theme-price">${priceLabel}</div>
         <div class="theme-actions">
           <button class="btn-preview" data-id="${t.id}">👁️ Vorschau</button>
           ${isOwned
