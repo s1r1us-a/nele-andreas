@@ -614,7 +614,7 @@
   </div>
   <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px; align-items: flex-start;">
     <div class="hud-panel" style="padding: 10px 18px;">
-      <span class="hud-label" style="font-size:14px; opacity:1; letter-spacing: 0;">💎</span>
+      <span class="hud-label" style="font-size:14px; opacity:1; letter-spacing: 0;">🪙</span>
       <span class="hud-value" id="money" style="margin-left:8px; color:#f0d878; font-size: 20px;">0</span>
     </div>
     <div class="hud-panel" style="padding: 10px 18px; display: flex; align-items: center; pointer-events: auto;">
@@ -768,7 +768,7 @@
     <div class="shop-header">
       <div class="weapon-shop-title">🔫 WAFFEN-TERMINAL</div>
       <div style="display:flex;align-items:center;">
-        <div class="weapon-shop-money">💎 <span id="weapon-shop-money-val">0</span></div>
+        <div class="weapon-shop-money">🪙 <span id="weapon-shop-money-val">0</span></div>
         <button class="close-btn" id="close-weapon-shop-btn">×</button>
       </div>
     </div>
@@ -966,7 +966,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, push, onDisconnect, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Firebase-Initialisierung (gleiche App wie index.html)
@@ -989,6 +989,7 @@ const EMAIL_KEY_MAP = { "raederich@outlook.com": "andreas", "nele.busse@web.de":
 let _myKey = null;   // "nele" | "andreas"
 let _oppKey = null;  // der andere
 let _firebaseReady = false;
+let currentCoins = 0;
 let _isHost = false;
 let _lastPosSend = 0;
 let _saveTimer = null;
@@ -1010,6 +1011,16 @@ onAuthStateChanged(_auth, user => {
   _oppKey = _myKey === 'nele' ? 'andreas' : 'nele';
   _firebaseReady = true;
 
+  // Coins live aus Firebase laden (site-weite Währung)
+  onValue(ref(_db, `coins/${_myKey}`), snap => {
+    const raw = snap.val();
+    const val = raw === null || raw === undefined ? 0 : Number(raw);
+    currentCoins = Number.isFinite(val) ? val : 0;
+    if (typeof updateHUD === 'function') updateHUD();
+    if (typeof renderWeaponShop === 'function' && document.getElementById('weapon-shop-screen').classList.contains('show')) renderWeaponShop();
+    if (typeof renderDefenseShop === 'function' && document.getElementById('defense-shop-screen').classList.contains('show')) renderDefenseShop();
+  });
+
   // Spielstand aus Firebase laden (ersetzt localStorage)
   _loadProgressFromFirebase().then(() => {
     // Charakter-Farben initialisieren
@@ -1023,7 +1034,7 @@ onAuthStateChanged(_auth, user => {
     if (subEl) subEl.textContent = _myKey === 'nele' ? 'Überlebende' : 'Überlebender';
     // Online-Anzeige initial befüllen (nur ich bin online)
     _updateOnlineUI();
-    // Diamanten-Anzeige im HUD aktualisieren
+    // Coin-Anzeige im HUD aktualisieren
     if (typeof updateHUD === 'function') updateHUD();
     // Presence + Listeners starten
     _startPresence();
@@ -4864,7 +4875,7 @@ const ACCOUNT_DEFAULTS = {
 };
 
 // savedData wird async befüllt — Defaults damit es vor Auth-Auflösung nicht crasht
-let savedData = { money: 0, unlocked: ['w0'], wardrobe: ACCOUNT_DEFAULTS.nele, weaponSlots: [0, -1, -1], lastPos: null };
+let savedData = { unlocked: ['w0'], wardrobe: ACCOUNT_DEFAULTS.nele, weaponSlots: [0, -1, -1], lastPos: null };
 
 async function _loadProgressFromFirebase() {
   if (!_myKey) return;
@@ -4873,7 +4884,6 @@ async function _loadProgressFromFirebase() {
     const d = snap.val() || {};
     const def = ACCOUNT_DEFAULTS[_myKey];
     savedData = {
-      money:      d.money      ?? 0,
       unlocked:   d.unlocked   ?? ['w0'],
       wardrobe:   { ...def, ...(d.wardrobe || {}) },
       weaponSlots: d.weaponSlots ?? [0, -1, -1],
@@ -4881,7 +4891,6 @@ async function _loadProgressFromFirebase() {
     };
     // Spieler-Objekt live aktualisieren
     if (typeof player !== 'undefined') {
-      player.money = savedData.money;
       player.weaponSlots = savedData.weaponSlots;
       // Aktive Waffe aus Slot 0 laden
       const slot0 = savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0;
@@ -4910,7 +4919,6 @@ function saveProgress() {
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(() => {
     set(ref(_db, `game/zombie/save/${_myKey}`), {
-      money:       player.money,
       unlocked:    WEAPONS.filter(w => !w.locked).map(w => w.id),
       wardrobe:    { shirt: playerColors.shirt, pants: playerColors.pants, hair: playerColors.hair, hairStyle: playerColors.hairStyle, feminine: playerColors.feminine },
       weaponSlots: player.weaponSlots,
@@ -4997,9 +5005,9 @@ function renderDefenseShop() {
   defenseListEl.innerHTML = '';
   DEFENSES.forEach(def => {
     const el = document.createElement('div'); el.className = 'defense-card';
-    el.innerHTML = `<div class="d-info"><div class="d-name">${def.name}</div><div class="d-desc">${def.desc}</div></div><div class="d-buy">💎 ${def.cost}</div>`;
+    el.innerHTML = `<div class="d-info"><div class="d-name">${def.name}</div><div class="d-desc">${def.desc}</div></div><div class="d-buy">🪙 ${def.cost}</div>`;
     el.onclick = () => {
-      if (player.money >= def.cost) { startBuildMode(def); closeShop(); } 
+      if (currentCoins >= def.cost) { startBuildMode(def); closeShop(); }
       else { el.style.backgroundColor = 'rgba(255, 50, 50, 0.4)'; setTimeout(() => el.style.backgroundColor = '', 200); }
     };
     defenseListEl.appendChild(el);
@@ -5020,7 +5028,7 @@ const weaponShopListEl = document.getElementById('weapon-shop-list');
 
 function renderWeaponShop() {
   weaponShopListEl.innerHTML = '';
-  document.getElementById('weapon-shop-money-val').textContent = player.money;
+  document.getElementById('weapon-shop-money-val').textContent = currentCoins.toLocaleString('de-DE');
   WEAPONS.forEach((w, index) => {
     const card = document.createElement('div');
     const isEquipped = player.weaponStats.id === w.id;
@@ -5036,7 +5044,7 @@ function renderWeaponShop() {
     if (isEquipped) {
       action = '';
     } else if (w.locked) {
-      action = `<div class="ws-price">💎 ${w.cost}</div>`;
+      action = `<div class="ws-price">🪙 ${w.cost}</div>`;
     } else {
       action = `<div class="ws-equip">Ausrüsten</div>`;
     }
@@ -5044,12 +5052,14 @@ function renderWeaponShop() {
     card.onclick = () => {
       if (isEquipped) return;
       if (w.locked) {
-        if (player.money >= w.cost) {
-          player.money -= w.cost; w.locked = false;
-          if (w.ranged) ammoState[w.id] = w.magSize;
-          saveProgress();
-          equipWeapon(index);
-          renderWeaponShop();
+        if (currentCoins >= w.cost) {
+          runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) - w.cost).then(() => {
+            w.locked = false;
+            if (w.ranged) ammoState[w.id] = w.magSize;
+            saveProgress();
+            equipWeapon(index);
+            renderWeaponShop();
+          }).catch(() => {});
         } else {
           card.style.backgroundColor = 'rgba(255, 50, 50, 0.4)';
           setTimeout(() => card.style.backgroundColor = '', 200);
@@ -5304,7 +5314,7 @@ function exitBuildMode() {
 
 function attemptPlaceDefense() {
   if (!buildState.active || !buildState.valid) return;
-  player.money -= buildState.item.cost; updateHUD();
+  runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) - buildState.item.cost).catch(() => {}); updateHUD();
   
   const h = buildState.item.type === 'barricade' ? 2 : (buildState.item.type === 'turret' ? 1.5 : 0.2);
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(buildState.item.w, h, buildState.item.d), ToonMat(buildState.item.color));
@@ -5739,7 +5749,7 @@ WEAPONS.forEach(w => { if (w.ranged) ammoState[w.id] = w.magSize; });
 
 // playerColors: wird nach Auth via _applyAccountColors() überschrieben
 const playerColors = { skin: 0xffd2b3, shirt: savedData.wardrobe.shirt, pants: savedData.wardrobe.pants, hair: savedData.wardrobe.hair, hairStyle: savedData.wardrobe.hairStyle !== undefined ? savedData.wardrobe.hairStyle : 1, feminine: true };
-const player = { group: new THREE.Group(), position: new THREE.Vector3(0, 0, 10), velocity: new THREE.Vector3(), facing: 0, hp: 100, maxHp: 100, stamina: 100, maxStamina: 100, staminaRegenDelay: 0, sprintLocked: false, money: savedData.money, attacking: false, attackTime: 0, attackHitDone: false, pendingMeleeHits: [], onGround: true, jumpAnim: 0, landAnim: 0, invuln: 0, weaponStats: { ...WEAPONS[savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0], tier: savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0 }, weaponSlots: savedData.weaponSlots, activeSlot: 0, rig: null, weaponGroup: null, fireCooldown: 0, reloading: false, reloadProgress: 0, mouseHeld: false };
+const player = { group: new THREE.Group(), position: new THREE.Vector3(0, 0, 10), velocity: new THREE.Vector3(), facing: 0, hp: 100, maxHp: 100, stamina: 100, maxStamina: 100, staminaRegenDelay: 0, sprintLocked: false, attacking: false, attackTime: 0, attackHitDone: false, pendingMeleeHits: [], onGround: true, jumpAnim: 0, landAnim: 0, invuln: 0, weaponStats: { ...WEAPONS[savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0], tier: savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0 }, weaponSlots: savedData.weaponSlots, activeSlot: 0, rig: null, weaponGroup: null, fireCooldown: 0, reloading: false, reloadProgress: 0, mouseHeld: false };
 
 // === SHOWCASE PODIUM (Zombie-Style: flach, rot-düster, Schuhe sichtbar) ===
 const showcasePodium = new THREE.Group();
@@ -7054,8 +7064,9 @@ class Enemy {
     }
     if (this.hp <= 0) { 
       this.alive = false; this.hpBarGroup.visible = false; 
-      const reward = 12 + Math.floor(currentWave * 3); player.money += reward; saveProgress(); 
-      spawnDamageNumber(this.position, '+' + reward + ' 💎', 'kill'); 
+      const reward = 12 + Math.floor(currentWave * 3);
+      runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) + reward).catch(() => {});
+      spawnDamageNumber(this.position, '+' + reward + ' 🪙', 'kill'); 
       if (!this.isCaveZombie) enemiesKilledThisWave++; 
       updateHUD(); 
       
@@ -7793,9 +7804,9 @@ class CryptBoss extends Boss {
             if (this.breathing) this._endIceBreath();
             // Bonus-Belohnung
             const bonus = 200 + currentWave * 10;
-            player.money += bonus;
-            spawnDamageNumber(this.position, '+' + bonus + ' 💎 KRYPTA-SIEG!', 'kill');
-            saveProgress(); updateHUD();
+            runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) + bonus).catch(() => {});
+            spawnDamageNumber(this.position, '+' + bonus + ' 🪙 KRYPTA-SIEG!', 'kill');
+            updateHUD();
             showMessage("DER UNTOTE KÖNIG IST GEFALLEN!", 4500);
             // Wave-Counter-Inkrement rückgängig (CryptBoss zählt nicht zu Welle)
             if (typeof enemiesKilledThisWave !== 'undefined') enemiesKilledThisWave--;
@@ -8502,7 +8513,7 @@ function updateHUD() {
   const total = enemiesTotalThisWave || 0; const killed = enemiesKilledThisWave || 0;
   document.getElementById('enemies-killed').textContent = killed; document.getElementById('enemies-total').textContent = total;
   document.getElementById('wave-progress').style.width = (total > 0 ? Math.min(100, (killed / total) * 100) : 0) + '%';
-  document.getElementById('money').textContent = player.money;
+  document.getElementById('money').textContent = currentCoins.toLocaleString('de-DE');
   
   // Inventar-Zähler aktualisieren (Filtert alle Slots, die nicht null sind)
   if (typeof playerInventory !== 'undefined') {
@@ -9134,10 +9145,9 @@ function update(dt) {
 
         if (distToExit < 2.0) {
             aState.phase = 'reached_exit';
-            player.money += 1000;
-            saveProgress();
+            runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) + 1000).catch(() => {});
             updateHUD();
-            showMessage("ASHNIKKO GERETTET! +1000 💎", 4000);
+            showMessage("ASHNIKKO GERETTET! +1000 🪙", 4000);
             
             aRig.parts.legL.thigh.rotation.x = 0; aRig.parts.legL.calf.rotation.x = 0;
             aRig.parts.legR.thigh.rotation.x = 0; aRig.parts.legR.calf.rotation.x = 0;
