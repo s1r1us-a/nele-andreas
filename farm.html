@@ -547,16 +547,12 @@
     .floating-num { position: fixed; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 22px; pointer-events: none; z-index: 10000; animation: floatUp 1.2s ease-out forwards; text-shadow: 0 2px 8px rgba(0,0,0,0.2); left: 50%; top: 30%; transform: translateX(-50%); }
     @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); } 20% { transform: translate(-50%, -10px) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -50px) scale(1); } }
 
-    @media (max-width: 480px) {
-      .topbar { flex-wrap: wrap; padding-bottom: 6px; }
-      .topbar-title { flex: 1; }
+    @media (max-width: 540px) {
+      .topbar { flex-wrap: nowrap; overflow: hidden; }
+      .topbar-title { flex-shrink: 0; }
       .topbar-coins { flex-shrink: 0; }
-      .topbar-center { order: 3; width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 5px; }
-      .topbar-btn span { font-size: 11px; }
-    }
-    @media (max-width: 360px) {
-      .topbar-btn span { display: none; }
-      .topbar-text { font-size: 16px; }
+      .topbar-center { overflow-x: auto; flex-wrap: nowrap; justify-content: flex-start; scrollbar-width: none; -ms-overflow-style: none; }
+      .topbar-center::-webkit-scrollbar { display: none; }
     }
 
     /* ── VISIT MODE BANNER ── */
