@@ -128,8 +128,8 @@
 
   .theme-preview.fx-rainbow { background: linear-gradient(90deg, #ff1493 0%, #ff7e00 14%, #ffd700 28%, #00e676 42%, #00bcd4 56%, #2962ff 70%, #d500f9 84%, #ff1493 100%) !important; background-size: 300% 100% !important; animation: fxRainbow 4s linear infinite; }
   @keyframes fxRainbow { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
-  .theme-preview.fx-rainbow::before { content:''; position:absolute; inset:0; background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.55) 50%, transparent 75%); background-size: 220% 100%; animation: fxRainbowShine 2.8s linear infinite; z-index:2; }
-  @keyframes fxRainbowShine { 0%{background-position:200% 0} 100%{background-position:-220% 0} }
+  .theme-preview.fx-rainbow::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.35), transparent 70%); animation: fxRainbowShine 2.8s ease-in-out infinite alternate; z-index:2; pointer-events:none; }
+  @keyframes fxRainbowShine { 0%{opacity:0.55} 100%{opacity:1} }
   .theme-preview.fx-rainbow::after { content:'✨'; position:absolute; top:6px; left:8px; font-size:14px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.95)); animation: fxRainbowSparkle 1.6s ease-in-out infinite alternate; z-index:3; }
   @keyframes fxRainbowSparkle { 0%{transform:scale(0.8) rotate(-12deg);opacity:0.7} 100%{transform:scale(1.3) rotate(12deg);opacity:1} }
 
