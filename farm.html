@@ -555,6 +555,32 @@
       .topbar-center::-webkit-scrollbar { display: none; }
     }
 
+    /* ── STALL MODAL ── */
+    .stall-filter-tabs { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin-bottom:12px; }
+    .stall-filter-tabs::-webkit-scrollbar { display:none; }
+    .stall-tab { flex-shrink:0; border:1.5px solid var(--ui-card-border); border-radius:50px; padding:5px 12px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; color:var(--text-mid); background:var(--ui-card-bg); cursor:pointer; touch-action:manipulation; }
+    .stall-tab.active { background:var(--rose-pale); border-color:var(--rose); color:var(--rose); }
+    .stall-animal-card { display:flex; align-items:center; gap:10px; padding:10px; border:1.5px solid var(--ui-card-border); border-radius:16px; background:var(--ui-card-bg); margin-bottom:8px; cursor:pointer; touch-action:manipulation; }
+    .stall-animal-card:active { box-shadow:0 0 0 2px var(--rose-light); }
+    .stall-animal-avatar { width:44px; height:44px; flex-shrink:0; overflow:visible; }
+    .stall-animal-avatar svg { width:44px; height:44px; }
+    .stall-animal-info { flex:1; min-width:0; }
+    .stall-animal-name { font-weight:700; font-size:13px; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .stall-animal-species { font-size:11px; color:var(--text-mid); font-weight:600; margin-top:1px; }
+    .stall-animal-status { font-size:11px; font-weight:700; margin-top:3px; }
+    .stall-status-hungry  { color:#ef4444; }
+    .stall-status-ready   { color:#16a34a; }
+    .stall-status-timer   { color:var(--gold); font-variant-numeric:tabular-nums; }
+    .stall-action-btn { flex-shrink:0; border:none; border-radius:10px; padding:7px 11px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; cursor:pointer; touch-action:manipulation; transition:transform 0.15s; }
+    .stall-action-btn:active { transform:scale(0.93); }
+    .stall-action-btn:disabled { opacity:0.38; cursor:not-allowed; transform:none; }
+    .stall-btn-feed    { background:linear-gradient(135deg,#f97316,#fbbf24); color:white; }
+    .stall-btn-collect { background:linear-gradient(135deg,#22c55e,#16a34a); color:white; }
+    .stall-btn-wait    { background:#e2e8f0; color:#94a3b8; }
+    .topbar-btn-wrap { position:relative; }
+    #stallBadge { display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; font-size:10px; font-weight:800; min-width:16px; height:16px; border-radius:50%; align-items:center; justify-content:center; padding:0 3px; z-index:1; }
+    #stallBadge.visible { display:flex; }
+
     /* ── VISIT MODE BANNER ── */
     .visit-banner { display: none; position: sticky; top: 0; z-index: 99; background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white; text-align: center; padding: 10px 16px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; gap: 10px; align-items: center; justify-content: center; box-shadow: 0 2px 12px rgba(124,58,237,0.35); }
     .visit-banner.show { display: flex; }
@@ -713,6 +739,10 @@
     <button class="topbar-btn" id="btnInventory" onclick="openInventory()">🎒 <span>Inventar</span></button>
     <button class="topbar-btn" id="btnSell" onclick="openSell()">💰 <span>Verkauf</span></button>
     <button class="topbar-btn" id="btnHarvestAll" onclick="window.harvestAll()">🌾 <span>Alles ernten</span></button>
+    <div class="topbar-btn-wrap">
+      <button class="topbar-btn" id="btnStall" onclick="window.openStall()">🐾 <span>Stall</span></button>
+      <span id="stallBadge"></span>
+    </div>
     <button class="topbar-btn visit-btn" id="btnVisit" onclick="window.visitOtherFarm()" style="display:none">👀 <span id="visitBtnLabel">Besuchen</span></button>
   </div>
   <div class="topbar-coins" id="topbarCoins"><span id="globalCoins">0</span> 🪙</div>
@@ -1161,6 +1191,13 @@
       <div id="statusPlantTimer" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">00:00</div>
       <div id="statusFertilizerBtnContainer"></div>
     </div>
+  </div>
+
+  <div class="modal-card" id="modalStall" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="modal-title">🐾 Mein Stall</div>
+    <div class="stall-filter-tabs" id="stallFilterTabs"></div>
+    <div id="stallAnimalList"></div>
   </div>
 
 </div>
@@ -1893,6 +1930,13 @@
       if (!animals.find(a => a.id === id)) { space.removeChild(el); }
     });
     animals.forEach(a => renderAnimalDOM(a));
+
+    const readyCount = animals.filter(a => a.rewardReady).length;
+    const badge = document.getElementById('stallBadge');
+    if (badge) {
+      badge.textContent = readyCount;
+      readyCount > 0 ? badge.classList.add('visible') : badge.classList.remove('visible');
+    }
   }
 
   function renderAnimalDOM(a) {
@@ -2595,7 +2639,10 @@
                 updateFarmDOM(); 
                 if(selectedAnimalId === a.id) window.openAnimalStats(a.id); 
             } 
-            else { if(selectedAnimalId === a.id) { const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; const m = Math.floor(rem / 60); const s = rem % 60; const timerEl = document.getElementById('animalTimerDisplay'); if(timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; } }
+            else {
+                if(selectedAnimalId === a.id) { const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; const m = Math.floor(rem / 60); const s = rem % 60; const timerEl = document.getElementById('animalTimerDisplay'); if(timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; }
+                if(document.getElementById('modalStall').classList.contains('active')) { const stallTimerEl = document.getElementById('stall-timer-' + a.id); if(stallTimerEl) { const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); stallTimerEl.textContent = `⏳ ${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`; } }
+            }
         }
     });
   }, 1000);
@@ -2773,6 +2820,12 @@
 
 
   // ── ANIMAL LOGIC ──
+  function getAnimalFood(species) {
+    if (species === 'cat') return { foodType: 'milk', isItem: true };
+    const map = { rabbit: 'carrot', chicken: 'wheat', cow: 'wheat', sheep: 'wheat' };
+    return map[species] ? { foodType: map[species], isItem: false } : null;
+  }
+
   window.openAnimalStats = function(id) { 
     selectedAnimalId = id; 
     const a = animals.find(anim => anim.id === id); 
@@ -2950,6 +3003,77 @@
       await saveFarmData(); updateFarmDOM(); window.openAnimalStats(a.id); 
   }
   window.updateName = async function(newName) { if (!selectedAnimalId || isVisitMode) return; animals.find(anim => anim.id === selectedAnimalId).name = newName; if(newName.trim()) { window.showToast('Name gespeichert!'); await saveFarmData(); } }
+
+  // ── STALL MODAL ──
+  window.openStall = function() {
+    if (isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; }
+    window.renderStall('all');
+    window.showSpecificModal('modalStall');
+  };
+
+  window.renderStall = function(filterSpecies) {
+    filterSpecies = filterSpecies || 'all';
+    const tabsEl = document.getElementById('stallFilterTabs');
+    const listEl = document.getElementById('stallAnimalList');
+
+    const counts = {};
+    animals.forEach(a => { counts[a.species] = (counts[a.species] || 0) + 1; });
+    let tabsHtml = `<button class="stall-tab ${filterSpecies==='all'?'active':''}" data-filter="all" onclick="window.renderStall('all')">Alle (${animals.length})</button>`;
+    ['rabbit','chicken','cow','sheep','cat'].forEach(sp => {
+      if (!counts[sp]) return;
+      tabsHtml += `<button class="stall-tab ${filterSpecies===sp?'active':''}" data-filter="${sp}" onclick="window.renderStall('${sp}')">${animalItems[sp].icon} ${counts[sp]}</button>`;
+    });
+    tabsEl.innerHTML = tabsHtml;
+
+    const filtered = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-mid);padding:24px;font-size:14px;">Keine Tiere vorhanden 🌿</div>';
+      return;
+    }
+    const sorted = [...filtered].sort((a, b) => {
+      if (a.rewardReady !== b.rewardReady) return a.rewardReady ? -1 : 1;
+      if (!a.isProducing !== !b.isProducing) return !a.isProducing ? -1 : 1;
+      return 0;
+    });
+
+    listEl.innerHTML = sorted.map(a => {
+      let statusHtml = '', actionHtml = '';
+      if (a.rewardReady) {
+        const icons = { rabbit:'🪴', chicken:'🥚', cow:'🥛', cat:'💎', sheep:'🧶' };
+        const icon = icons[a.species] || '🎁';
+        statusHtml = `<div class="stall-animal-status stall-status-ready">${icon} Bereit!</div>`;
+        actionHtml = `<button class="stall-action-btn stall-btn-collect" onclick="event.stopPropagation(); window.stallOpenAnimal(${a.id})">Abholen</button>`;
+      } else if (a.isProducing) {
+        const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - Math.floor((Date.now() - a.fedAt) / 1000));
+        const mm = String(Math.floor(rem/60)).padStart(2,'0');
+        const ss = String(rem%60).padStart(2,'0');
+        statusHtml = `<div class="stall-animal-status stall-status-timer" id="stall-timer-${a.id}">⏳ ${mm}:${ss}</div>`;
+        actionHtml = `<button class="stall-action-btn stall-btn-wait" disabled>Verdaut...</button>`;
+      } else {
+        const f = getAnimalFood(a.species);
+        const stock = f ? (f.isItem ? (inventory.items[f.foodType]||0) : (inventory.crops[f.foodType]||0)) : 0;
+        statusHtml = `<div class="stall-animal-status stall-status-hungry">🍽️ Hungrig</div>`;
+        actionHtml = `<button class="stall-action-btn stall-btn-feed" ${stock>0?'':'disabled'} onclick="event.stopPropagation(); window.stallOpenAnimal(${a.id})">Füttern</button>`;
+      }
+      const svgOnly = getAnimalSVG(a.species, a.equipped).replace(/<div class="rabbit-shadow[^"]*"[^>]*><\/div>/g, '');
+      const filterStyle = `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
+      return `
+        <div class="stall-animal-card" onclick="window.stallOpenAnimal(${a.id})">
+          <div class="stall-animal-avatar" style="filter:${filterStyle}">${svgOnly}</div>
+          <div class="stall-animal-info">
+            <div class="stall-animal-name">${a.name}</div>
+            <div class="stall-animal-species">${animalItems[a.species].icon} ${animalItems[a.species].name}</div>
+            ${statusHtml}
+          </div>
+          ${actionHtml}
+        </div>`;
+    }).join('');
+  };
+
+  window.stallOpenAnimal = function(animalId) {
+    window.closeAllModals();
+    setTimeout(() => window.openAnimalStats(animalId), 50);
+  };
   
   // ── BESUCHSMODUS ──
   window.visitOtherFarm = async function() {
@@ -2962,6 +3086,7 @@
     document.getElementById('btnInventory').style.display = 'none';
     document.getElementById('btnSell').style.display = 'none';
     document.getElementById('btnVisit').style.display = 'none';
+    document.getElementById('btnStall').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
 
     document.getElementById('farmTitle').textContent = farmName(otherUser);
@@ -3019,6 +3144,7 @@
     document.getElementById('btnInventory').style.display = '';
     document.getElementById('btnSell').style.display = '';
     document.getElementById('btnVisit').style.display = 'flex';
+    document.getElementById('btnStall').style.display = '';
     document.getElementById('topbarCoins').style.display = '';
     document.getElementById('visitBanner').classList.remove('show');
 
