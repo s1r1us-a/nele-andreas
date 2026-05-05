@@ -798,6 +798,7 @@
     </div>
     <div class="wardrobe-label">Survivor Loadout</div>
     <div class="wardrobe-view" id="wardrobe-view" style="display:flex;">
+      <div><div class="w-label">Körper</div><div class="style-row" id="gender-container"></div></div>
       <div><div class="w-label">Frisur</div><div class="style-row" id="hair-style-container"></div></div>
       <div><div class="w-label">Haarfarbe</div><div class="color-row" id="hair-color-container"></div></div>
       <div><div class="w-label">Oberteil</div><div class="color-row" id="shirt-color-container"></div></div>
@@ -4799,7 +4800,8 @@ function _applyAccountColors() {
   playerColors.pants     = savedData.wardrobe.pants     ?? def.pants;
   playerColors.hair      = savedData.wardrobe.hair      ?? def.hair;
   playerColors.hairStyle = savedData.wardrobe.hairStyle ?? def.hairStyle;
-  playerColors.feminine  = def.feminine;
+  // feminine: gespeicherten Wert nutzen falls vorhanden, sonst Account-Default
+  playerColors.feminine  = savedData.wardrobe.feminine  ?? def.feminine;
 }
 
 function saveProgress() {
@@ -4809,7 +4811,7 @@ function saveProgress() {
     set(ref(_db, `game/zombie/save/${_myKey}`), {
       money:       player.money,
       unlocked:    WEAPONS.filter(w => !w.locked).map(w => w.id),
-      wardrobe:    { shirt: playerColors.shirt, pants: playerColors.pants, hair: playerColors.hair, hairStyle: playerColors.hairStyle },
+      wardrobe:    { shirt: playerColors.shirt, pants: playerColors.pants, hair: playerColors.hair, hairStyle: playerColors.hairStyle, feminine: playerColors.feminine },
       weaponSlots: player.weaponSlots
     }).catch(() => {});
   }, 500);
@@ -6209,10 +6211,30 @@ function _startEnemyListener() {
 const showcaseNameEl = document.getElementById('showcase-name');
 
 function renderWardrobeMenu() {
-  const styles = [ { label: 'Kurz', value: 0 }, { label: 'Lang', value: 1 }, { label: 'Glatze', value: 2 } ]; const hairColors = [0xffda66, 0xfdf4dc, 0x4a3018, 0x111111, 0xcc4444, 0x66ccff]; const shirtColors = [0x882233, 0x1a2639, 0x228844, 0x111111, 0xeeeeee, 0xff8800]; const pantsColors = [0x1a2639, 0x111111, 0x555555, 0x8b7c5c, 0x332211, 0xdddddd];
+  const styles = [ { label: 'Kurz', value: 0 }, { label: 'Lang', value: 1 }, { label: 'Glatze', value: 2 } ];
+  const hairColors   = [0xffda66, 0xfdf4dc, 0x4a3018, 0x111111, 0xcc4444, 0x66ccff];
+  const shirtColors  = [0x882233, 0x1a2639, 0x228844, 0x111111, 0xeeeeee, 0xff8800];
+  const pantsColors  = [0x1a2639, 0x111111, 0x555555, 0x8b7c5c, 0x332211, 0xdddddd];
+
+  // Geschlecht-Toggle
+  const gc = document.getElementById('gender-container');
+  if (gc) {
+    gc.innerHTML = '';
+    [{ label: '♀ Weiblich', value: true }, { label: '♂ Männlich', value: false }].forEach(o => {
+      const btn = document.createElement('div');
+      btn.className = 'style-btn' + (playerColors.feminine === o.value ? ' active' : '');
+      btn.textContent = o.label;
+      btn.onclick = () => { playerColors.feminine = o.value; initPlayerModel(); saveProgress(); renderWardrobeMenu(); };
+      gc.appendChild(btn);
+    });
+  }
+
   const createStyleButtons = (id, options, target) => { const c = document.getElementById(id); c.innerHTML = ''; options.forEach(o => { const btn = document.createElement('div'); btn.className = 'style-btn' + (playerColors[target] === o.value ? ' active' : ''); btn.textContent = o.label; btn.onclick = () => { playerColors[target] = o.value; initPlayerModel(); saveProgress(); renderWardrobeMenu(); }; c.appendChild(btn); }); };
   const createColorSwatches = (id, colors, target) => { const c = document.getElementById(id); c.innerHTML = ''; colors.forEach(col => { const btn = document.createElement('div'); btn.className = 'color-btn' + (playerColors[target] === col ? ' active' : ''); btn.style.backgroundColor = '#' + col.toString(16).padStart(6, '0'); btn.onclick = () => { playerColors[target] = col; initPlayerModel(); saveProgress(); renderWardrobeMenu(); }; c.appendChild(btn); }); };
-  createStyleButtons('hair-style-container', styles, 'hairStyle'); createColorSwatches('hair-color-container', hairColors, 'hair'); createColorSwatches('shirt-color-container', shirtColors, 'shirt'); createColorSwatches('pants-color-container', pantsColors, 'pants');
+  createStyleButtons('hair-style-container', styles, 'hairStyle');
+  createColorSwatches('hair-color-container', hairColors, 'hair');
+  createColorSwatches('shirt-color-container', shirtColors, 'shirt');
+  createColorSwatches('pants-color-container', pantsColors, 'pants');
 }
 renderWardrobeMenu();
 const fireballs = []; const lavaPools = [];
