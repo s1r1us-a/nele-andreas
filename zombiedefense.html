@@ -530,7 +530,8 @@
     pointer-events: none;
     transition: opacity 0.6s ease;
   }
-  #start-screen.hidden { opacity: 0; pointer-events: none; }
+  #start-screen.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+  #start-screen.hidden * { pointer-events: none !important; }
 
   /* === LOGO TOP-CENTER (WoW-Style mit Ornamenten) === */
   #login-logo {
@@ -6609,8 +6610,28 @@ function _sendMyPosition() {
   _lastPosSend = now;
   set(ref(_db, `game/zombie/positions/${_myKey}`), {
     x: player.position.x, y: player.position.y, z: player.position.z,
-    facing: player.facing, hp: player.hp, alive: !gameOver, ts: now
+    facing: player.facing, hp: player.hp, alive: !gameOver, ts: now,
+    appearance: {
+      shirt: playerColors.shirt, pants: playerColors.pants,
+      hair: playerColors.hair, hairStyle: playerColors.hairStyle,
+      skin: playerColors.skin, feminine: !!playerColors.feminine
+    }
   }).catch(() => {});
+}
+
+// Aussehen des Gegner-Spielers neu aufbauen, wenn sich Haar/Kleidung ändert
+function _rebuildOppRig(appearance) {
+  if (!oppState.group) return;
+  if (oppState.rig && oppState.rig.group) {
+    try { oppState.group.remove(oppState.rig.group); } catch(_){}
+  }
+  oppState.rig = buildRiggedHumanoid(false, {
+    skin: appearance.skin || 0xffd2b3,
+    shirt: appearance.shirt, pants: appearance.pants,
+    hair: appearance.hair, hairStyle: appearance.hairStyle
+  }, { feminine: !!appearance.feminine });
+  oppState.group.add(oppState.rig.group);
+  oppState._appearanceKey = JSON.stringify(appearance);
 }
 
 // Auf Gegner-Position hören
@@ -6625,6 +6646,10 @@ function _startOpponentListener() {
     oppState.facing = d.facing ?? 0;
     oppState.hp = d.hp ?? 100;
     oppState.alive = d.alive ?? true;
+    if (d.appearance) {
+      const key = JSON.stringify(d.appearance);
+      if (key !== oppState._appearanceKey) _rebuildOppRig(d.appearance);
+    }
     if (_oppOnline) oppState.group.visible = true;
   });
 }
@@ -6760,32 +6785,18 @@ function _startWaveListener() {
   });
 }
 
-// Interne Wave-Start-Funktion (kein Host-Check, für Sync-Trigger)
+// Interne Wave-Start-Funktion (Non-Host: spawnt nicht selbst, Proxies kommen via _startEnemyListener)
 function _startWaveLocal(waveNum) {
   currentWave = waveNum; waveActive = true; switchActive = false;
   waveGeneration++;
-  const myGen = waveGeneration;
   if(window.terminalScreen) window.terminalScreen.material.color.setHex(0xff0033);
   if(window.terminalLight) window.terminalLight.color.setHex(0xff0033);
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    if ((!enemies[i].isCaveZombie && !enemies[i].isCryptBoss) || !enemies[i].alive) {
-      scene.remove(enemies[i].group); enemies.splice(i, 1);
-    }
-  }
+  // Tote/alte Wave-Enemies werden vom Host-Sync (über fehlende idx) automatisch entfernt.
   totalSpawnedThisWave = 0; enemiesTotalThisWave = 0; enemiesKilledThisWave = 0;
   fireballs.forEach(f => scene.remove(f.mesh)); fireballs.length = 0;
   lavaPools.forEach(p => scene.remove(p.mesh)); lavaPools.length = 0;
-  if (currentWave % 5 === 0) {
-    enemiesTotalThisWave = 1;
-    setTimeout(() => { if (myGen === waveGeneration && !gameOver) { enemies.push(new Boss(currentWave)); totalSpawnedThisWave++; } }, 1500);
-    showMessage(`BOSS WELLE ${currentWave}`, 3000);
-  } else {
-    const count = 8 + currentWave * 5 + Math.floor(currentWave * currentWave * 0.5);
-    enemiesTotalThisWave = count;
-    const spawnDelay = Math.max(120, 380 - currentWave * 15);
-    for (let i = 0; i < count; i++) { setTimeout(() => { if (myGen === waveGeneration && !gameOver) { enemies.push(new Enemy(currentWave)); totalSpawnedThisWave++; } }, i * spawnDelay); }
-    showMessage(`WELLE ${currentWave}`, 1500);
-  }
+  if (currentWave % 5 === 0) showMessage(`BOSS WELLE ${currentWave}`, 3000);
+  else showMessage(`WELLE ${currentWave}`, 1500);
   updateHUD();
 }
 
@@ -6810,13 +6821,30 @@ function _startHitListener() {
     snap.forEach(child => {
       const h = child.val();
       if (!h || Date.now() - h.ts > 3000) return;
-      if (enemies[h.idx] && enemies[h.idx].alive) {
-        enemies[h.idx].hp -= h.dmg;
-        if (enemies[h.idx].hp <= 0) enemies[h.idx].alive = false;
+      const e = enemies[h.idx];
+      if (e && e.alive && !e.isProxy) {
+        // Vor takeDamage Hit-Attribution setzen → Coins gehen an den Schießenden
+        e._pendingHitBy = h.by;
+        e.takeDamage(h.dmg, new THREE.Vector3(), true);
       }
     });
-    // Verarbeitete Hits löschen
     set(ref(_db, 'game/zombie/hits'), null).catch(() => {});
+  });
+}
+
+// Non-Host: Kill-Events vom Host empfangen → Coin-Animation, falls ich der Killer war
+function _startKillListener() {
+  if (!_firebaseReady) return;
+  onValue(ref(_db, 'game/zombie/kills'), snap => {
+    const data = snap.val(); if (!data) return;
+    const now = Date.now();
+    Object.values(data).forEach(k => {
+      if (!k || now - k.ts > 4000) return;
+      if (k.by === _myKey && !_isHost) {
+        spawnDamageNumber(new THREE.Vector3(k.x, 1.5, k.z), '+' + k.reward + ' 🪙', 'kill');
+      }
+    });
+    if (_isHost) set(ref(_db, 'game/zombie/kills'), null).catch(() => {});
   });
 }
 
@@ -6835,18 +6863,136 @@ function _syncEnemiesToFirebase() {
   set(ref(_db, 'game/zombie/enemies'), eData).catch(() => {});
 }
 
-// Non-Host: Gegner aus Firebase lesen und rendern
+// Non-Host: Gegner aus Firebase lesen und als Proxy-Zombies rendern
 const _remoteEnemies = {}; // idx → { x, z, hp, maxHp }
+const _proxyByIdx = {};    // hostIdx → proxy Enemy
 function _startEnemyListener() {
   if (!_firebaseReady) return;
   onValue(ref(_db, 'game/zombie/enemies'), snap => {
     if (_isHost) return;
     const data = snap.val() || {};
-    for (const key in _remoteEnemies) { _remoteEnemies[key].stale = true; }
+    // Eingehende Daten in _remoteEnemies + Proxies spiegeln
+    const seen = new Set();
     for (const idx in data) {
-      _remoteEnemies[idx] = { ...(data[idx] || {}), stale: false };
+      const re = data[idx]; if (!re) continue;
+      seen.add(idx);
+      _remoteEnemies[idx] = { ...re, stale: false };
+      let p = _proxyByIdx[idx];
+      if (!p) {
+        try {
+          p = new Enemy(1, { isProxy: true, spawnPos: new THREE.Vector3(re.x, 0, re.z) });
+          p._hostIdx = idx;
+          p.maxHp = re.maxHp || 100;
+          p.hp = re.hp != null ? re.hp : p.maxHp;
+          _proxyByIdx[idx] = p;
+          enemies.push(p);
+        } catch (err) { console.warn('Proxy-Spawn fehlgeschlagen', err); }
+      } else {
+        p._proxyTarget = p._proxyTarget || new THREE.Vector3();
+        p._proxyTarget.set(re.x, 0, re.z);
+        p.maxHp = re.maxHp || p.maxHp;
+        const newHp = re.hp != null ? re.hp : p.hp;
+        if (newHp <= 0 && p.alive) {
+          p.alive = false; p.hpBarGroup.visible = false;
+        }
+        p.hp = newHp;
+      }
+    }
+    // Proxies entfernen, die nicht mehr im Snapshot sind
+    for (const idx in _proxyByIdx) {
+      if (!seen.has(idx)) {
+        const p = _proxyByIdx[idx];
+        if (p) {
+          p.alive = false;
+          scene.remove(p.group);
+          const i = enemies.indexOf(p);
+          if (i >= 0) enemies.splice(i, 1);
+        }
+        delete _proxyByIdx[idx];
+        delete _remoteEnemies[idx];
+      }
     }
   });
+}
+
+// === FOLLOWER-SYNC (Ashnikko & Hund) ===
+// Wer einen Follower hat (Phase 'following'/'escorting'), schreibt dessen Position;
+// der andere sieht ihn am gemeldeten Ort und kann NICHT damit interagieren.
+let _lastFollowerSync = 0;
+function _syncMyFollowers() {
+  if (!_firebaseReady || !_myKey || !gameStarted) return;
+  const now = Date.now();
+  if (now - _lastFollowerSync < 200) return;
+  _lastFollowerSync = now;
+  const data = {};
+  if (window.companionDog && window.companionDogState &&
+      (window.companionDogState.phase === 'following' || window.companionDogState.phase === 'attacking')) {
+    data.dog = {
+      x: window.companionDog.worldPos.x,
+      z: window.companionDog.worldPos.z,
+      y: window.companionDog.worldPos.y || 0,
+      phase: window.companionDogState.phase,
+      hp: window.companionDog.hp || 0,
+      ts: now
+    };
+  }
+  if (window.npcAshnikko && window.ashnikkoState &&
+      (window.ashnikkoState.phase === 'following' || window.ashnikkoState.phase === 'escorting')) {
+    data.ashnikko = {
+      x: window.npcAshnikko.worldPos.x,
+      z: window.npcAshnikko.worldPos.z,
+      phase: window.ashnikkoState.phase,
+      ts: now
+    };
+  }
+  set(ref(_db, `game/zombie/followers/${_myKey}`), data).catch(() => {});
+}
+
+const _remoteFollowers = {}; // 'dog' | 'ashnikko' → { x, z, phase, ts }
+function _startFollowerListener() {
+  if (!_firebaseReady || !_oppKey) return;
+  onValue(ref(_db, `game/zombie/followers/${_oppKey}`), snap => {
+    const d = snap.val() || {};
+    const now = Date.now();
+    ['dog', 'ashnikko'].forEach(k => {
+      if (d[k] && now - (d[k].ts || 0) < 5000) {
+        _remoteFollowers[k] = d[k];
+      } else {
+        delete _remoteFollowers[k];
+      }
+    });
+    // Wenn der andere den Follower übernommen hat, eigene Phase zurücksetzen
+    if (_remoteFollowers.dog && window.companionDogState &&
+        (window.companionDogState.phase === 'following' || window.companionDogState.phase === 'attacking')) {
+      window.companionDogState.phase = 'sleeping';
+    }
+    if (_remoteFollowers.ashnikko && window.ashnikkoState &&
+        window.ashnikkoState.phase === 'following') {
+      // Andreas/Nele: Andere übernimmt Eskorte → wir bleiben "idle"
+      window.ashnikkoState.phase = 'idle';
+    }
+  });
+}
+
+function _isFollowerOwnedByOther(name) {
+  return !!_remoteFollowers[name];
+}
+
+// Visuelle Position des Followers überschreiben, wenn der andere ihn führt
+function _applyRemoteFollowerPositions() {
+  const rf = _remoteFollowers;
+  if (rf.dog && window.companionDog) {
+    window.companionDog.worldPos.set(rf.dog.x, rf.dog.y || 0, rf.dog.z);
+    if (window.companionDog.group) {
+      window.companionDog.group.position.set(rf.dog.x, rf.dog.y || 0, rf.dog.z);
+    }
+  }
+  if (rf.ashnikko && window.npcAshnikko) {
+    window.npcAshnikko.worldPos.set(rf.ashnikko.x, 0, rf.ashnikko.z);
+    if (window.npcAshnikko.group) {
+      window.npcAshnikko.group.position.set(rf.ashnikko.x, 0, rf.ashnikko.z);
+    }
+  }
 }
 
 // =====================================================================
@@ -7191,9 +7337,13 @@ class Enemy {
     
     this.position = new THREE.Vector3();
     this.isCaveZombie = opts.isCaveZombie || false;
+    this.isProxy = opts.isProxy || false;
     this.hasAggro = !this.isCaveZombie; // Wave-Zombies haben sofort Aggro
 
-    if (this.isCaveZombie && opts.spawnPos) {
+    if (this.isProxy && opts.spawnPos) {
+        this.position.copy(opts.spawnPos);
+        this._proxyTarget = opts.spawnPos.clone();
+    } else if (this.isCaveZombie && opts.spawnPos) {
         this.position.copy(opts.spawnPos);
         this.homePos = opts.spawnPos.clone();
         this.roamAngle = Math.random() * Math.PI * 2;
@@ -7227,10 +7377,45 @@ class Enemy {
     this.group.position.copy(this.position); scene.add(this.group);
   }
   update(dt) {
+    // === MULTIPLAYER: Proxy-Zombies (Non-Host) — keine eigene KI, Position vom Host ===
+    if (this.isProxy) {
+      if (!this.alive) {
+        this.rig.parts.root.rotation.x = THREE.MathUtils.lerp(this.rig.parts.root.rotation.x, -Math.PI / 2, dt * 6);
+        this.rig.parts.root.position.y = THREE.MathUtils.lerp(this.rig.parts.root.position.y, 0.3, dt * 6);
+        return;
+      }
+      // Lerp zur vom Host gemeldeten Position
+      if (this._proxyTarget) {
+        this.position.x = THREE.MathUtils.lerp(this.position.x, this._proxyTarget.x, Math.min(1, dt * 12));
+        this.position.z = THREE.MathUtils.lerp(this.position.z, this._proxyTarget.z, Math.min(1, dt * 12));
+      }
+      this.group.position.x = this.position.x;
+      this.group.position.z = this.position.z;
+      // Schlichte Lauf-Animation
+      this.animTime = (this.animTime || 0) + dt * 4;
+      const swing = Math.sin(this.animTime) * 0.4;
+      if (this.rig.parts.legL.thigh) this.rig.parts.legL.thigh.rotation.x = swing;
+      if (this.rig.parts.legR.thigh) this.rig.parts.legR.thigh.rotation.x = -swing;
+      // HP-Bar
+      this.hpBarGroup.lookAt(camera.position);
+      this.hpBar.scale.x = Math.max(0.001, this.hp / this.maxHp);
+      // Drehung Richtung Bewegung
+      if (this._proxyTarget) {
+        const dx = this._proxyTarget.x - this.position.x, dz = this._proxyTarget.z - this.position.z;
+        if (dx*dx + dz*dz > 0.01) {
+          const targetRot = Math.atan2(dx, dz);
+          let diff = targetRot - this.group.rotation.y;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          this.group.rotation.y += diff * Math.min(1, dt * 6);
+        }
+      }
+      return;
+    }
     if (!this.alive) {
       this.rig.parts.root.rotation.x = THREE.MathUtils.lerp(this.rig.parts.root.rotation.x, -Math.PI / 2, dt * 6); this.rig.parts.root.position.y = THREE.MathUtils.lerp(this.rig.parts.root.position.y, 0.3, dt * 6);
       this.rig.parts.legL.thigh.rotation.x = THREE.MathUtils.lerp(this.rig.parts.legL.thigh.rotation.x, 0, dt * 8); this.rig.parts.legR.thigh.rotation.x = THREE.MathUtils.lerp(this.rig.parts.legR.thigh.rotation.x, 0, dt * 8);
-      return; 
+      return;
     }
     if (this.stunTimer > 0) {
         this.stunTimer -= dt; this.position.add(this.knockback.clone().multiplyScalar(dt)); this.knockback.multiplyScalar(0.85);
@@ -7545,7 +7730,21 @@ class Enemy {
   }
   takeDamage(amount, dirVec, isSilent = false) {
     if (!this.alive) return;
-    this.hp -= amount; 
+    // Proxy (Non-Host): nur an Host melden, kein lokaler Zustand
+    if (this.isProxy) {
+      if (this._hostIdx !== undefined) _reportHit(this._hostIdx, amount);
+      this._myDamageContrib = (this._myDamageContrib || 0) + amount;
+      if (!isSilent) {
+        spawnDamageNumber(this.position, '-' + Math.round(amount), amount >= 200 ? 'crit' : null);
+        spawnHitParticles(this.position, 0xcc1133, 6, 0.7);
+      }
+      return;
+    }
+    // Host: Track wer den Treffer ausgeführt hat (für Coin-Attribution).
+    // _startHitListener setzt _pendingHitBy vor dem Aufruf; lokale Treffer = Host.
+    this._lastHitBy = this._pendingHitBy || _myKey;
+    this._pendingHitBy = null;
+    this.hp -= amount;
     if (!isSilent) {
         spawnDamageNumber(this.position, '-' + Math.round(amount), amount >= 200 ? 'crit' : null);
         const tier = player.weaponStats.tier;
@@ -7596,13 +7795,21 @@ class Enemy {
         // Kurzes Zucken des Kopfes bleibt als Treffer-Feedback für alle
         this.rig.parts.neck.rotation.x = -0.5; setTimeout(() => { if(this.alive) this.rig.parts.neck.rotation.x = 0; }, 200);
     }
-    if (this.hp <= 0) { 
-      this.alive = false; this.hpBarGroup.visible = false; 
-      const reward = 12 + Math.floor(currentWave * 3);
-      runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) + reward).catch(() => {});
-      runTransaction(ref(_db, `stats/${_myKey}/zombieKills`), c => (c || 0) + 1).catch(() => {});
-      spawnDamageNumber(this.position, '+' + reward + ' 🪙', 'kill');
-      if (!this.isCaveZombie) enemiesKilledThisWave++; 
+    if (this.hp <= 0) {
+      this.alive = false; this.hpBarGroup.visible = false;
+      const reward = 5;
+      const killer = this._lastHitBy || _myKey;
+      runTransaction(ref(_db, `coins/${killer}`), c => (c || 0) + reward).catch(() => {});
+      runTransaction(ref(_db, `stats/${killer}/zombieKills`), c => (c || 0) + 1).catch(() => {});
+      if (killer === _myKey) spawnDamageNumber(this.position, '+' + reward + ' 🪙', 'kill');
+      // An Non-Host melden, damit dort die Coin-Animation erscheint
+      if (_firebaseReady) {
+        push(ref(_db, 'game/zombie/kills'), {
+          x: +this.position.x.toFixed(2), z: +this.position.z.toFixed(2),
+          by: killer, reward, ts: Date.now()
+        }).catch(() => {});
+      }
+      if (!this.isCaveZombie) enemiesKilledThisWave++;
       updateHUD(); 
       
       // WoW-Style: Cave Zombies spawnen nach einer Weile neu (5 Minuten)
@@ -8394,6 +8601,8 @@ let playerDying = false, playerDeathTimer = 0;
 let enemiesTotalThisWave = 0, enemiesKilledThisWave = 0;
 
 function startWave() {
+  // Non-Host darf keine Welle starten — Host steuert das Spawning autoritativ.
+  if (_firebaseReady && _oppOnline && !_isHost) { showMessage('Host startet die Welle...', 1500); return; }
   currentWave++; waveActive = true; switchActive = false;
   waveGeneration++;
   _syncWaveToFirebase(); // Wellen-Start zu Firebase senden
@@ -9554,6 +9763,8 @@ function update(dt) {
   _sendMyPosition();
   _updateOppPlayer(dt);
   if (_isHost) { _syncEnemiesToFirebase(); }
+  _syncMyFollowers();
+  _applyRemoteFollowerPositions();
 
   // === Position periodisch speichern (alle 15s) ===
   if (gameStarted && !gameOver) {
@@ -11016,7 +11227,7 @@ function update(dt) {
   const canInteractTarek = nearTarek && gameStarted && !gameOver;
 
   let canInteractAshnikko = false;
-  if (window.npcAshnikko && gameStarted && !gameOver) {
+  if (window.npcAshnikko && gameStarted && !gameOver && !_isFollowerOwnedByOther('ashnikko')) {
       const dist = player.position.distanceTo(window.npcAshnikko.worldPos);
       if (dist < 3.5) {
           // Game Design Fix: Wenn sie dir aktiv folgt, gelten strengere Regeln für den Prompt
@@ -11045,7 +11256,7 @@ function update(dt) {
   // Companion-Hund: anpfeifen / heimschicken
   let canCallDog = false;
   let canDismissDog = false;
-  if (window.companionDog && window.companionDogState && gameStarted && !gameOver) {
+  if (window.companionDog && window.companionDogState && gameStarted && !gameOver && !_isFollowerOwnedByOther('dog')) {
     const distDog = player.position.distanceTo(window.companionDog.worldPos);
     const dogPhase = window.companionDogState.phase;
     if (distDog < 3.5) {
@@ -11714,6 +11925,8 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
       _initOppPlayer();
       _startHitListener();
       _startEnemyListener();
+      _startKillListener();
+      _startFollowerListener();
       window._gameReady = true;
     }
   }, 100);
