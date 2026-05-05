@@ -379,6 +379,11 @@
       <div class="stat-card-value" id="statBoxesOpened">–</div>
       <div class="stat-card-label">Boxen geöffnet</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">🧟</div>
+      <div class="stat-card-value" id="statZombieKills">–</div>
+      <div class="stat-card-label">Zombies getötet</div>
+    </div>
   </div>
 
   <div class="vg-section">
@@ -769,6 +774,7 @@
       const fmt = n => Number.isFinite(Number(n)) ? Number(n).toLocaleString('de-DE') : '0';
       const e1 = document.getElementById('statCoinsEarned');  if (e1) e1.textContent = fmt(d.coinsEarned);
       const e3 = document.getElementById('statBoxesOpened');  if (e3) e3.textContent = fmt(d.boxesOpened);
+      const ez = document.getElementById('statZombieKills');  if (ez) ez.textContent = fmt(d.zombieKills);
 
       // Vier Gewinnt Stats
       const vg   = (d.vierGewinnt) || {};

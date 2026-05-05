@@ -7066,7 +7066,8 @@ class Enemy {
       this.alive = false; this.hpBarGroup.visible = false; 
       const reward = 12 + Math.floor(currentWave * 3);
       runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) + reward).catch(() => {});
-      spawnDamageNumber(this.position, '+' + reward + ' 🪙', 'kill'); 
+      runTransaction(ref(_db, `stats/${_myKey}/zombieKills`), c => (c || 0) + 1).catch(() => {});
+      spawnDamageNumber(this.position, '+' + reward + ' 🪙', 'kill');
       if (!this.isCaveZombie) enemiesKilledThisWave++; 
       updateHUD(); 
       
