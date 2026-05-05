@@ -1892,30 +1892,39 @@ function buildDogRig(opts = {}) {
 }
 
 function spawnCompanionDog() {
-    // Hunde-Bett & Knochen-Spielzeug im Wohnzimmer
+    // Hunde-Körbchen direkt neben dem Sofa (Sofa liegt bei lokal x=5, z=2 → Welt 40,-33)
     const bedGroup = new THREE.Group();
-    const bedBase = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.10, 0.9), ToonMat(0x6a3a8a));
-    bedBase.position.y = 0.05; bedGroup.add(bedBase);
-    const bedRimA = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.18, 0.2), ToonMat(0x4a2a6a));
-    bedRimA.position.set(0, 0.10, -0.4); bedGroup.add(bedRimA);
-    const bedRimB = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.18, 0.2), ToonMat(0x4a2a6a));
-    bedRimB.position.set(0, 0.10,  0.4); bedGroup.add(bedRimB);
+    // Weicher Boden – länglich, parallel zum Sofa (lange Achse = Z)
+    const bedBase = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.12, 1.5), ToonMat(0x6a3a8a));
+    bedBase.position.y = 0.06; bedGroup.add(bedBase);
+    // Vier Polster-Wände, damit das Körbchen rundum sichtbar ist
+    const rimMat = ToonMat(0x4a2a6a);
+    const rimFront = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.30, 0.16), rimMat);
+    rimFront.position.set(0, 0.21, -0.75); bedGroup.add(rimFront);
+    const rimBack  = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.30, 0.16), rimMat);
+    rimBack.position.set(0, 0.21,  0.75); bedGroup.add(rimBack);
+    const rimLeft  = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.30, 1.66), rimMat);
+    rimLeft.position.set(-0.55, 0.21, 0); bedGroup.add(rimLeft);
+    const rimRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.30, 1.66), rimMat);
+    rimRight.position.set( 0.55, 0.21, 0); bedGroup.add(rimRight);
+
+    // Knochenspielzeug an der Stirnseite des Körbchens
     const boneMid = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.05), ToonMat(0xeeeae0));
-    boneMid.position.set(0.45, 0.16, 0.25); bedGroup.add(boneMid);
+    boneMid.position.set(0.20, 0.14, 0.55); bedGroup.add(boneMid);
     const boneL  = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), ToonMat(0xeeeae0));
-    boneL.position.set(0.36, 0.16, 0.25); bedGroup.add(boneL);
+    boneL.position.set(0.11, 0.14, 0.55); bedGroup.add(boneL);
     const boneR  = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), ToonMat(0xeeeae0));
-    boneR.position.set(0.54, 0.16, 0.25); bedGroup.add(boneR);
+    boneR.position.set(0.29, 0.14, 0.55); bedGroup.add(boneR);
 
-    // Namensschild "CHICHINYA" am Bett (kleines Holzschild)
+    // Namensschild "CHICHINYA" außen am Körbchen (kleines Holzschild)
     const sign = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.10, 0.02), ToonMat(0xc8a06a));
-    sign.position.set(-0.45, 0.20, -0.40); bedGroup.add(sign);
+    sign.position.set(-0.20, 0.42, -0.83); bedGroup.add(sign);
 
-    // Welt-Position (im Wohnzimmer des Hauses; House-Mitte = 35, -35)
-    const dogX = 38.0;
-    const dogZ = -32.0;
+    // Welt-Position: direkt neben dem Sofa (House-Mitte = 35, -35; Sofa-Front bei lokal x≈4.1)
+    const dogX = 38.5;
+    const dogZ = -33.0;
     bedGroup.position.set(dogX, 0, dogZ);
-    bedGroup.rotation.y = -0.3;
+    bedGroup.rotation.y = 0;
     scene.add(bedGroup);
 
     const dogRig = buildDogRig({ fur: 0x0e0e10, belly: 0x2a2a2e });
@@ -1929,15 +1938,16 @@ function spawnCompanionDog() {
     tag.position.set(0, -0.02, 0.10);
     dogRig.parts.neck.add(tag);
 
-    dogRig.group.position.set(dogX, 0, dogZ);
-    dogRig.group.rotation.y = Math.PI; // schaut Richtung Eingangstür
+    // Chichinya liegt auf dem Polster im Körbchen (etwas angehoben über Boden des Körbchens)
+    dogRig.group.position.set(dogX, 0.12, dogZ);
+    dogRig.group.rotation.y = 0; // Kopf zeigt zum Knochen-Spielzeug (+Z)
     scene.add(dogRig.group);
 
     window.companionDog = {
         group:    dogRig.group,
         rig:      dogRig,
         worldPos: new THREE.Vector3(dogX, 0, dogZ),
-        bedPos:   new THREE.Vector3(dogX, 0, dogZ),
+        bedPos:   new THREE.Vector3(dogX, 0.12, dogZ),
         hp:       150,
         maxHp:    150,
     };
