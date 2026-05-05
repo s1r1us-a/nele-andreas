@@ -706,6 +706,7 @@
     <button class="topbar-btn" id="btnShop" onclick="openShop()">🏪 <span>Shop</span></button>
     <button class="topbar-btn" id="btnInventory" onclick="openInventory()">🎒 <span>Inventar</span></button>
     <button class="topbar-btn" id="btnSell" onclick="openSell()">💰 <span>Verkauf</span></button>
+    <button class="topbar-btn" id="btnHarvestAll" onclick="window.harvestAll()">🌾 <span>Alles ernten</span></button>
     <button class="topbar-btn visit-btn" id="btnVisit" onclick="window.visitOtherFarm()" style="display:none">👀 <span id="visitBtnLabel">Besuchen</span></button>
   </div>
   <div class="topbar-coins" id="topbarCoins"><span id="globalCoins">0</span> 🪙</div>
@@ -2601,6 +2602,31 @@
     if (slot.state === 'empty') { currentTargetSlot = { b: bedIndex, s: slotIndex }; window.openFieldSeedMenu(); } 
     else if (slot.state === 'growing') { window.openPlantStatus(bedIndex, slotIndex); } 
     else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; inventory.crops[itemId]++; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); }
+  }
+
+  window.harvestAll = async function() {
+    if (isVisitMode) return;
+    let count = 0;
+    for (let b = 0; b < unlockedBeds; b++) {
+      if (!beds[b]) continue;
+      for (let s = 0; s < beds[b].length; s++) {
+        const slot = beds[b][s];
+        if (slot && slot.state === 'ready') {
+          const itemId = slot.item;
+          inventory.crops[itemId] = (inventory.crops[itemId] || 0) + 1;
+          beds[b][s] = { state: 'empty', item: null, plantedAt: 0 };
+          const domSlot = document.getElementById(`slot-${b}-${s}`);
+          if (domSlot) domSlot.innerHTML = '';
+          count++;
+        }
+      }
+    }
+    if (count > 0) {
+      await saveFarmData();
+      window.showToast(`🌾 ${count} Pflanze${count > 1 ? 'n' : ''} geerntet!`);
+    } else {
+      window.showToast('Noch nichts zum Ernten bereit.');
+    }
   }
 
   window.openPlantStatus = function(bedIndex, slotIndex) { 
