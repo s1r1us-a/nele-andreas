@@ -8757,11 +8757,19 @@ function update(dt) {
       }
 
       // === KAMPF: Lunge + Biss ===
-      if (closestEnemy && (closestEnemyDist < 2.4 || dState.phase === 'attacking')) {
+      if (closestEnemy && (closestEnemyDist < 6.0 || dState.phase === 'attacking')) {
         dState.phase = 'attacking';
         const dir = new THREE.Vector3().subVectors(closestEnemy.position, dPos);
         dir.y = 0; if (dir.lengthSq() > 0.001) dir.normalize();
         dGrp.rotation.y = Math.atan2(dir.x, dir.z);
+
+        // Auf den Feind zustürmen, wenn nicht schon in Bissreichweite
+        if (closestEnemyDist > 1.5) {
+          const chaseSpeed = 9.0;
+          dGrp.position.x += dir.x * chaseSpeed * dt;
+          dGrp.position.z += dir.z * chaseSpeed * dt;
+          dGrp.position.y = getGroundHeight(dGrp.position.x, dGrp.position.z, player.position.y);
+        }
 
         // Biss auslösen
         if (dState.attackCooldown <= 0 && closestEnemyDist < 1.7) {
@@ -8801,8 +8809,8 @@ function update(dt) {
         p.earL.rotation.x = -0.4; p.earL.rotation.z =  0.5;
         p.earR.rotation.x = -0.4; p.earR.rotation.z = -0.5;
 
-        // Wenn Ziel weg/tot → zurück in Following
-        if (!closestEnemy.alive || closestEnemyDist > 3.0) {
+        // Wenn Ziel weg/tot oder zu weit → zurück in Following
+        if (!closestEnemy.alive || closestEnemyDist > 8.0) {
           dState.phase = 'following';
           p.earL.rotation.z = 0.25; p.earR.rotation.z = -0.25;
         }
