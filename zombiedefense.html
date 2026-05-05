@@ -1009,6 +1009,7 @@ onAuthStateChanged(_auth, user => {
   }
   _myKey  = EMAIL_KEY_MAP[user.email];
   _oppKey = _myKey === 'nele' ? 'andreas' : 'nele';
+  window.DEV_MODE = _myKey === 'andreas';
   _firebaseReady = true;
 
   // Coins live aus Firebase laden (site-weite Währung)
@@ -7939,8 +7940,8 @@ let cameraYaw = Math.PI, cameraPitch = -0.35;
 const keys = {};
 
 // === DEV MODE TOGGLE ===
-// Setze dies auf false, wenn du das Spiel veröffentlichst!
-window.DEV_MODE = true; 
+// Wird nach dem Login account-abhängig gesetzt (nur Andreas).
+window.DEV_MODE = false;
 
 window.addEventListener('keydown', e => {
     keys[e.code] = true; if(e.code==='Space') e.preventDefault();
