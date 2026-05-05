@@ -1589,7 +1589,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, canvas:
 renderer.setClearColor(0x000000, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false; // Standardmäßig aus (siehe gameSettings.shadows)
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
 window.addEventListener('resize', () => {
