@@ -1770,7 +1770,7 @@ wTermGroup.add(wDesk, wScreen, wKeyb, window.weaponTerminalScreen, window.weapon
 buildWalkableHouse(35, -35);
 
 // ============================================================================
-// COMPANION DOG: kleiner schwarzer Hund "LOKI" wartet im Haus
+// COMPANION DOG: kleiner schwarzer Hund "CHICHINYA" wartet im Haus
 // (Begleiter-Mechanik nach Vorbild von Ashnikko: Folgen, Kampf, Animationen)
 // ============================================================================
 function buildDogRig(opts = {}) {
@@ -1907,7 +1907,7 @@ function spawnCompanionDog() {
     const boneR  = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), ToonMat(0xeeeae0));
     boneR.position.set(0.54, 0.16, 0.25); bedGroup.add(boneR);
 
-    // Namensschild "LOKI" am Bett (kleines Holzschild)
+    // Namensschild "CHICHINYA" am Bett (kleines Holzschild)
     const sign = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.10, 0.02), ToonMat(0xc8a06a));
     sign.position.set(-0.45, 0.20, -0.40); bedGroup.add(sign);
 
@@ -8631,7 +8631,7 @@ function update(dt) {
   }
 
   // ============================================================================
-  // === COMPANION DOG (LOKI) – KI, ANIMATION & KAMPF =========================
+  // === COMPANION DOG (CHICHINYA) – KI, ANIMATION & KAMPF ====================
   // ============================================================================
   if (window.companionDog && window.companionDogState) {
     const dog   = window.companionDog;
@@ -8659,7 +8659,7 @@ function update(dt) {
       if (!dState.greeted) {
         dState.greeted = true;
         if (typeof showMessage === 'function') {
-          showMessage('🐾 Loki freut sich! Drücke E zum Mitnehmen', 3500);
+          showMessage('🐾 Chichinya freut sich! Drücke E zum Mitnehmen', 3500);
         }
       }
     }
@@ -8907,7 +8907,7 @@ function update(dt) {
           if (dog.hp <= 0) {
             // Hund flieht heim, regeneriert in Sicherheit
             if (typeof showMessage === 'function') {
-              showMessage('🐾 Loki ist verletzt – flieht nach Hause!', 3500);
+              showMessage('🐾 Chichinya ist verletzt – flieht nach Hause!', 3500);
             }
             dState.phase = 'sleeping';
             dGrp.position.copy(dog.bedPos);
@@ -9857,10 +9857,10 @@ function update(dt) {
       promptText.textContent = 'Ashnikko ansprechen';
       promptEl.classList.add('show');
   } else if (canCallDog && !buildState.active && !uiBusy) {
-      promptText.textContent = '🐾 Loki mitnehmen';
+      promptText.textContent = '🐾 Chichinya mitnehmen';
       promptEl.classList.add('show');
   } else if (canDismissDog && !buildState.active && !uiBusy) {
-      promptText.textContent = '🐾 Loki bleibt zu Hause';
+      promptText.textContent = '🐾 Chichinya bleibt zu Hause';
       promptEl.classList.add('show');
   } else if (canInteractSilo && !buildState.active && !uiBusy) {
       promptText.textContent = 'Terminal bedienen';
@@ -9902,23 +9902,23 @@ function update(dt) {
       } else if (canInteractAshnikko) {
           openDialogue('Ashnikko');
       } else if (canCallDog) {
-          // Loki anpfeifen → folgt jetzt dem Spieler
+          // Chichinya anpfeifen → folgt jetzt dem Spieler
           window.companionDogState.phase = 'following';
           window.companionDogState.animTime = 0;
           window.companionDogState.attackCooldown = 0.3;
-          if (typeof showMessage === 'function') showMessage('🐾 Loki folgt dir jetzt!', 2500);
+          if (typeof showMessage === 'function') showMessage('🐾 Chichinya folgt dir jetzt!', 2500);
           if (typeof spawnHitParticles === 'function') {
               spawnHitParticles(window.companionDog.worldPos.clone().add(new THREE.Vector3(0, 0.4, 0)), 0xff44aa, 14, 0.8);
           }
       } else if (canDismissDog) {
-          // Loki nach Hause schicken → schläft im Bett
+          // Chichinya nach Hause schicken → schläft im Bett
           window.companionDogState.phase = 'sleeping';
           if (window.companionDog.bedPos) {
               window.companionDog.group.position.copy(window.companionDog.bedPos);
               window.companionDog.group.rotation.y = Math.PI;
           }
           window.companionDog.hp = window.companionDog.maxHp;
-          if (typeof showMessage === 'function') showMessage('🐾 Loki wartet wieder zu Hause.', 2500);
+          if (typeof showMessage === 'function') showMessage('🐾 Chichinya wartet wieder zu Hause.', 2500);
       } else if (canInteractSilo) {
           openKeypad();
       } else if (canInteractSarcophagus) {
