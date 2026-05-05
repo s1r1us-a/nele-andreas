@@ -9,22 +9,209 @@
   body { overflow: hidden; background: #050512; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: white; height: 100vh; height: 100dvh; }
   #game { display: block; touch-action: none; }
 
-  #hud { position: fixed; top: 0; left: 0; right: 0; padding: 16px; pointer-events: none; z-index: 10; }
-  .hud-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  .hud-panel { position: relative; background: linear-gradient(180deg, rgba(18,8,10,0.88) 0%, rgba(10,4,5,0.92) 100%); border: 1px solid rgba(180,30,30,0.4); border-radius: 4px; padding: 14px 18px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 8px 28px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.4); }
-  .hud-panel::before { content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:2px; background: linear-gradient(90deg, transparent 0%, #c41e1e 50%, transparent 100%); box-shadow: 0 0 8px rgba(196,30,30,0.5); }
-  .hp-container { min-width: 220px; max-width: 260px; flex: 1; }
-  .hp-bar-bg { width: 100%; height: 12px; background: rgba(0,0,0,0.7); border-radius: 0; overflow: hidden; margin-top: 6px; border: 1px solid rgba(180,30,30,0.3); }
-  .hp-bar-fill { height: 100%; background: linear-gradient(90deg, #6a0c0c, #c41e1e, #ff3030); transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 12px rgba(196,30,30,0.6); }
-  .stamina-bar-bg { width: 100%; height: 8px; background: rgba(0,0,0,0.7); border-radius: 0; overflow: hidden; margin-top: 6px; border: 1px solid rgba(180,30,30,0.2); }
-  .stamina-bar-fill { height: 100%; background: linear-gradient(90deg, #4a6a3a, #88aa44); transition: width 0.15s linear, background 0.3s, opacity 0.3s; box-shadow: 0 0 8px rgba(136,170,68,0.4); }
-  .stamina-bar-fill.low { background: linear-gradient(90deg, #aa6622, #c44); box-shadow: 0 0 8px rgba(196,30,30,0.5); }
+  #hud { position: fixed; top: 0; left: 0; right: 0; padding: 18px; pointer-events: none; z-index: 10; }
+  /* Im Hauptmenü das gesamte In-Game-HUD ausblenden */
+  body.menu-mode #hud,
+  body.menu-mode #minimap-container,
+  body.menu-mode #weapon-hotbar,
+  body.menu-mode #ammo-display,
+  body.menu-mode #crosshair,
+  body.menu-mode #crosshair-ranged,
+  body.menu-mode .prompt-container { display: none !important; }
+  /* Login-spezifische Elemente nur im Menü zeigen */
+  body:not(.menu-mode) #login-bg,
+  body:not(.menu-mode) #login-realm-bar,
+  body:not(.menu-mode) #login-char-name { display: none !important; }
+  .hud-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .hud-panel {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(28,12,14,0.88) 0%, rgba(10,4,5,0.94) 100%);
+    border: 1px solid rgba(180,30,30,0.5);
+    border-radius: 3px;
+    padding: 14px 20px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 32px rgba(0,0,0,0.75), inset 0 0 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,100,100,0.08);
+  }
+  /* Top-Glow-Border */
+  .hud-panel::before {
+    content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:2px;
+    background: linear-gradient(90deg, transparent 0%, #c41e1e 50%, transparent 100%);
+    box-shadow: 0 0 10px rgba(196,30,30,0.55);
+  }
+  /* Ornamentale Eckpunkte */
+  .hud-panel::after {
+    content:''; position:absolute; top:-3px; left:-3px; width:8px; height:8px;
+    border-top: 1px solid rgba(196,30,30,0.85);
+    border-left: 1px solid rgba(196,30,30,0.85);
+    box-shadow: -1px -1px 6px rgba(196,30,30,0.4);
+  }
+  .hud-panel .hud-corner-tr,
+  .hud-panel .hud-corner-bl,
+  .hud-panel .hud-corner-br {
+    position: absolute; width: 8px; height: 8px;
+    border-color: rgba(196,30,30,0.85);
+    border-style: solid; border-width: 0;
+  }
+  .hud-panel .hud-corner-tr { top:-3px; right:-3px; border-top-width:1px; border-right-width:1px; box-shadow: 1px -1px 6px rgba(196,30,30,0.4); }
+  .hud-panel .hud-corner-bl { bottom:-3px; left:-3px; border-bottom-width:1px; border-left-width:1px; box-shadow: -1px 1px 6px rgba(196,30,30,0.4); }
+  .hud-panel .hud-corner-br { bottom:-3px; right:-3px; border-bottom-width:1px; border-right-width:1px; box-shadow: 1px 1px 6px rgba(196,30,30,0.4); }
+
+  .hp-container { min-width: 240px; max-width: 280px; flex: 1; }
+  .hp-bar-bg {
+    width: 100%; height: 14px;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.65));
+    border-radius: 0; overflow: hidden; margin-top: 7px;
+    border: 1px solid rgba(180,30,30,0.45);
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.85);
+    position: relative;
+  }
+  /* Segmente in der HP-Bar (10x Ticks) */
+  .hp-bar-bg::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), rgba(0,0,0,0.55) calc(10% - 1px), rgba(0,0,0,0.55) 10%);
+  }
+  .hp-bar-fill {
+    height: 100%;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0) 50%, rgba(0,0,0,0.25)),
+      linear-gradient(90deg, #6a0c0c, #c41e1e 60%, #ff3030);
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 14px rgba(196,30,30,0.7), inset 0 1px 0 rgba(255,255,255,0.15);
+    position: relative;
+  }
+  .hp-bar-fill::after {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3) 50%, transparent);
+    transform: translateX(-100%); animation: hpShine 3.5s ease-in-out infinite;
+  }
+  @keyframes hpShine { 0%,60% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+  .stamina-bar-bg {
+    width: 100%; height: 9px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.65));
+    overflow: hidden; margin-top: 6px;
+    border: 1px solid rgba(180,30,30,0.3);
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.85);
+  }
+  .stamina-bar-fill {
+    height: 100%;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #4a6a3a, #88aa44);
+    transition: width 0.15s linear, background 0.3s, opacity 0.3s;
+    box-shadow: 0 0 8px rgba(136,170,68,0.45);
+  }
+  .stamina-bar-fill.low {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #aa6622, #c44);
+    box-shadow: 0 0 8px rgba(196,30,30,0.55);
+  }
   .stamina-bar-fill.locked { opacity: 0.55; animation: staminaPulse 0.7s ease-in-out infinite; }
   @keyframes staminaPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-  .hud-label { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.85; font-weight: 900; color: #c44; font-family: 'Courier New', monospace; }
-  .hud-value { font-size: 24px; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.7); color: #f0e8e8; font-family: 'Impact', 'Arial Black', sans-serif; letter-spacing: 2px; }
-  #wave-info { text-align: right; min-width: 100px; }
-  #weapon-info { margin-top: 8px; font-size: 12px; opacity: 0.9; font-weight: 700; color: #b8a8a8; letter-spacing: 1px; }
+  .hud-label { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.95; font-weight: 900; color: #c44; font-family: 'Courier New', monospace; text-shadow: 0 0 8px rgba(196,30,30,0.4); }
+  .hud-value { font-size: 26px; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.85), 0 0 16px rgba(196,30,30,0.35); color: #f0e8e8; font-family: 'Impact', 'Arial Black', sans-serif; letter-spacing: 2px; }
+  /* Numerischer HP-Wert über der Bar */
+  .hp-numeric { display: flex; justify-content: space-between; align-items: baseline; }
+  .hp-numeric .hp-cur { font-family: 'Impact','Arial Black', sans-serif; font-size: 18px; color: #f0e8e8; letter-spacing: 1px; text-shadow: 0 0 12px rgba(196,30,30,0.5); }
+  .hp-numeric .hp-max { font-family: 'Courier New', monospace; font-size: 11px; color: #8a6a6a; letter-spacing: 2px; }
+  #wave-info { text-align: right; min-width: 130px; }
+  #weapon-info { margin-top: 10px; font-size: 13px; opacity: 0.95; font-weight: 800; color: #d8c8c8; letter-spacing: 2px; text-transform: uppercase; font-family: 'Courier New', monospace; padding: 4px 8px; background: rgba(0,0,0,0.45); border-left: 2px solid rgba(196,30,30,0.6); }
+
+  /* === WEAPON HOTBAR (Bottom-Center, WoW-Style Action Bar) === */
+  #weapon-hotbar {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; z-index: 10; pointer-events: none;
+  }
+  .hb-slot {
+    position: relative;
+    width: 84px; height: 84px;
+    background: linear-gradient(180deg, rgba(28,12,14,0.92) 0%, rgba(8,3,5,0.96) 100%);
+    border: 1px solid rgba(180,30,30,0.5);
+    border-radius: 4px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.85), inset 0 0 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,100,100,0.08);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; pointer-events: auto;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .hb-slot::before {
+    content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:2px;
+    background: linear-gradient(90deg, transparent, rgba(196,30,30,0.7) 50%, transparent);
+    box-shadow: 0 0 8px rgba(196,30,30,0.4);
+  }
+  .hb-slot:hover {
+    border-color: rgba(255,80,80,0.85);
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.9), 0 0 20px rgba(196,30,30,0.4), inset 0 0 20px rgba(0,0,0,0.5);
+  }
+  .hb-slot.active {
+    border-color: #ff3030;
+    background: linear-gradient(180deg, rgba(80,15,18,0.92) 0%, rgba(30,5,8,0.96) 100%);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.9), 0 0 24px rgba(255,48,48,0.65), inset 0 0 20px rgba(196,30,30,0.25);
+    transform: translateY(-2px);
+  }
+  .hb-slot.active::after {
+    content:''; position:absolute; bottom:-3px; left:50%; transform: translateX(-50%);
+    width: 70%; height: 2px;
+    background: linear-gradient(90deg, transparent, #ff3030 50%, transparent);
+    box-shadow: 0 0 12px rgba(255,48,48,1);
+    animation: hbActivePulse 1.6s ease-in-out infinite;
+  }
+  @keyframes hbActivePulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+  .hb-slot.empty { opacity: 0.55; }
+  .hb-slot.empty .hb-icon { color: #555; filter: grayscale(0.7); }
+  .hb-key {
+    position: absolute; top: 4px; left: 4px;
+    background: rgba(0,0,0,0.75);
+    color: #f0e8e8; font-family: 'Courier New', monospace; font-weight: 900;
+    font-size: 10px; letter-spacing: 1px;
+    padding: 2px 6px;
+    border: 1px solid rgba(196,30,30,0.5);
+    border-radius: 2px;
+    text-shadow: 0 0 4px rgba(196,30,30,0.4);
+  }
+  .hb-slot.active .hb-key {
+    border-color: #ff5555; color: #fff;
+    background: linear-gradient(180deg, rgba(120,15,15,0.7), rgba(60,5,5,0.85));
+    box-shadow: 0 0 8px rgba(255,48,48,0.5);
+  }
+  .hb-icon {
+    font-size: 30px; line-height: 1; margin-bottom: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+  }
+  .hb-name {
+    font-size: 8.5px; letter-spacing: 1.5px; color: #b8a8a8;
+    font-family: 'Courier New', monospace; font-weight: 900;
+    text-transform: uppercase;
+    max-width: 76px; text-align: center; line-height: 1.1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: 0 4px;
+  }
+  .hb-slot.active .hb-name { color: #ffe0e0; text-shadow: 0 0 8px rgba(255,80,80,0.6); }
+  .hb-slot.empty .hb-name { color: #555; }
+  /* Munitions-Anzeige in einem Hotbar-Slot (für Schusswaffen) */
+  .hb-ammo {
+    position: absolute; bottom: 3px; right: 4px;
+    font-size: 9px; font-family: 'Courier New', monospace; font-weight: 900;
+    color: #f0d878; letter-spacing: 1px;
+    text-shadow: 0 0 6px rgba(240,216,120,0.6), 0 1px 2px rgba(0,0,0,0.95);
+    padding: 1px 4px;
+    background: rgba(0,0,0,0.65);
+    border-radius: 2px;
+    display: none;
+  }
+  .hb-slot.has-ammo .hb-ammo { display: block; }
+  .hb-slot.has-ammo.low-ammo .hb-ammo { color: #ff5050; text-shadow: 0 0 6px rgba(255,80,80,0.7), 0 1px 2px rgba(0,0,0,0.95); }
+  /* Hint unter der Hotbar */
+  #weapon-hotbar-hint {
+    position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; letter-spacing: 3px; color: #8a6a6a; font-weight: 900;
+    font-family: 'Courier New', monospace; text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 0 0 6px rgba(0,0,0,0.9);
+  }
 
   /* FPS-Counter */
   #fps-display { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); padding: 6px 14px; background: rgba(10,4,5,0.85); border: 1px solid rgba(180,30,30,0.4); border-radius: 2px; font-family: 'Courier New', monospace; font-size: 12px; font-weight: 900; letter-spacing: 2px; color: #f0e8e8; pointer-events: none; z-index: 12; display: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -194,38 +381,96 @@
 
   /* === ZOMBIE START SCREEN === */
   /* ============================================================
-     WoW-STYLE LOGIN SCREEN
+     WoW-STYLE LOGIN SCREEN — Cinematic apocalyptic backdrop
      ============================================================ */
 
-  /* Hintergrund-Div: Zombie-Apokalypse-Welt, mit Loch in der Mitte
-     damit der 3D-Charakter auf dem Canvas durchscheint */
+  /* Canvas hinter den UI-Layern, damit der 3D-Charakter über dem 2D-BG zeigt */
+  #game { position: relative; z-index: 1; }
+
+  /* Hintergrund-Div: vollflächig hinter dem Canvas (z-index 0).
+     Mehrschichtig: Himmel → ferne Stadt → Mid-Fog → Vordergrund → Vignette */
   #login-bg {
-    position: fixed; inset: 0; z-index: 99; pointer-events: none;
-    /* Apokalyptischer Himmel: oben pechschwarz, Horizont lohfarben-rot */
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    /* Apokalyptischer Himmel: tiefes Schwarzpurpur oben, Blutroter Glow am Horizont */
     background:
-      radial-gradient(ellipse 60% 30% at 72% 12%, rgba(255,80,20,0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 20% at 28% 8%,  rgba(180,30,10,0.10) 0%, transparent 55%),
-      radial-gradient(ellipse 100% 45% at 50% 100%, rgba(160,30,0,0.55) 0%, rgba(80,10,0,0.3) 35%, transparent 65%),
-      linear-gradient(180deg, #030108 0%, #0a0210 18%, #140410 40%, #1c0608 65%, #120408 100%);
-    /* Loch in der Mitte — gibt Blick auf den 3D-Charakter frei */
-    -webkit-mask-image: radial-gradient(ellipse 48vw 72vh at 50% 46%, transparent 38%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.85) 68%, black 80%);
-    mask-image:         radial-gradient(ellipse 48vw 72vh at 50% 46%, transparent 38%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.85) 68%, black 80%);
+      radial-gradient(ellipse 70% 35% at 70% 14%, rgba(255,90,30,0.28) 0%, rgba(160,30,10,0.10) 35%, transparent 60%),
+      radial-gradient(ellipse 50% 22% at 24% 10%, rgba(220,40,40,0.16) 0%, transparent 55%),
+      radial-gradient(ellipse 120% 55% at 50% 100%, rgba(180,30,0,0.65) 0%, rgba(80,10,0,0.35) 30%, transparent 60%),
+      radial-gradient(ellipse 40% 20% at 50% 50%, rgba(60,8,8,0.4) 0%, transparent 70%),
+      linear-gradient(180deg, #02000a 0%, #06010f 18%, #100310 40%, #1a0508 65%, #0e0306 100%);
+    overflow: hidden;
   }
-  /* Boden-Nebel am unteren Rand */
+  /* Wolken/Smog-Schicht (oben, langsam treibend) */
+  #login-bg::before {
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 40% 14% at 22% 22%, rgba(40,8,12,0.6), transparent 70%),
+      radial-gradient(ellipse 35% 12% at 78% 18%, rgba(50,10,8,0.55), transparent 70%),
+      radial-gradient(ellipse 60% 16% at 50% 8%, rgba(20,4,6,0.85), transparent 70%);
+    animation: skyDrift 60s linear infinite;
+    opacity: 0.9;
+  }
+  @keyframes skyDrift { 0% { transform: translateX(0); } 100% { transform: translateX(-3%); } }
+  /* Mondscheibe — bedrohlicher roter Mond am Himmel */
   #login-bg::after {
-    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 28%;
-    background: linear-gradient(0deg, rgba(80,5,5,0.55) 0%, rgba(40,3,3,0.25) 50%, transparent 100%);
-    -webkit-mask-image: none; mask-image: none;
+    content:''; position:absolute; top: 8%; right: 14%;
+    width: 140px; height: 140px; border-radius: 50%;
+    background:
+      radial-gradient(circle at 36% 36%, rgba(255,160,120,0.35), rgba(180,40,30,0.6) 40%, rgba(80,10,5,0.85) 70%, rgba(20,2,2,0.95) 100%);
+    box-shadow: 0 0 80px rgba(220,60,30,0.45), 0 0 200px rgba(160,20,10,0.35);
+    filter: blur(0.4px);
   }
 
-  /* Stadtsilhouette (2D-Canvas) */
+  /* Stadtsilhouette (2D-Canvas) — bleibt vorne unten */
   #login-city-canvas {
     position: absolute; bottom: 0; left: 0; right: 0; width: 100%;
-    height: 55%; pointer-events: none; opacity: 0.82;
+    height: 60%; pointer-events: none; opacity: 0.95;
+  }
+
+  /* Bodennebel-Schicht (CSS, animiert) */
+  #login-fog-layer {
+    position: absolute; left: -10%; right: -10%; bottom: -5%;
+    height: 38%; pointer-events: none;
+    background:
+      radial-gradient(ellipse 50% 60% at 30% 90%, rgba(140,30,20,0.22), transparent 70%),
+      radial-gradient(ellipse 45% 55% at 70% 95%, rgba(80,10,10,0.28), transparent 70%),
+      linear-gradient(0deg, rgba(60,5,8,0.7) 0%, rgba(40,3,5,0.35) 45%, transparent 100%);
+    animation: fogDrift 22s ease-in-out infinite alternate;
+    filter: blur(8px);
+  }
+  @keyframes fogDrift { 0% { transform: translateX(-3%) translateY(0); } 100% { transform: translateX(3%) translateY(-1%); } }
+
+  /* Vordergrund-Silhouetten links/rechts (verfallene Bäume / Trümmer) */
+  #login-foreground {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='xMinYMax slice'><g fill='%23030103'><path d='M0,400 L0,180 L8,140 L4,90 L14,80 L10,60 L18,55 L16,30 L24,25 L22,5 L30,8 L34,40 L42,38 L48,55 L42,80 L52,90 L48,120 L60,130 L52,180 L60,210 L48,240 L60,280 L50,320 L60,360 L40,400 Z'/><path d='M14,400 L10,260 L20,250 L18,200 L28,190 L24,150 L32,400 Z' opacity='0.7'/></g></svg>"),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='xMaxYMax slice'><g fill='%23030103'><path d='M400,400 L400,160 L388,130 L394,80 L380,70 L386,40 L376,30 L380,8 L368,12 L364,42 L356,40 L350,60 L356,90 L348,100 L352,140 L340,160 L348,210 L340,240 L352,280 L344,310 L356,350 L370,400 Z'/></g></svg>");
+    background-repeat: no-repeat, no-repeat;
+    background-size: 22% auto, 22% auto;
+    background-position: left bottom, right bottom;
+    opacity: 0.9;
+  }
+
+  /* Vignette + Filmkorn */
+  #login-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 90% at 50% 50%, transparent 50%, rgba(0,0,0,0.55) 90%, rgba(0,0,0,0.85) 100%);
+  }
+  #login-vignette::after {
+    content:''; position:absolute; inset:0; opacity:0.15; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.65'/></svg>");
+  }
+  /* Subtile Scan-Linien für CRT-Apokalypse-Look */
+  #login-scanlines {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 2px, rgba(0,0,0,0.5) 3px);
   }
 
   /* Asche/Partikel */
-  .ash { position: absolute; border-radius: 50%; background: rgba(200,180,160,0.6); pointer-events: none;
+  .ash { position: absolute; border-radius: 50%; background: rgba(220,200,180,0.7); pointer-events: none;
+    box-shadow: 0 0 4px rgba(255,180,120,0.4);
     animation: ashFall linear infinite;
   }
   @keyframes ashFall {
@@ -235,9 +480,22 @@
     100% { transform: translateY(100vh) translateX(var(--ash-drift)) rotate(360deg); opacity: 0; }
   }
 
+  /* Glühende Funken (von unten aufsteigend) */
+  .ember { position: absolute; width: 2px; height: 2px; border-radius: 50%; pointer-events: none;
+    background: rgba(255,140,40,0.95);
+    box-shadow: 0 0 6px rgba(255,140,40,0.85), 0 0 12px rgba(255,80,20,0.6);
+    animation: emberRise linear infinite;
+  }
+  @keyframes emberRise {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(-110vh) translateX(var(--ember-drift)); opacity: 0; }
+  }
+
   /* Blut-Regen (sehr subtil) */
   .blood-drop { position: absolute; width: 1px; border-radius: 1px;
-    background: linear-gradient(180deg, transparent, rgba(160,10,10,0.4));
+    background: linear-gradient(180deg, transparent, rgba(180,15,15,0.55));
     animation: bloodFall linear infinite; pointer-events: none;
   }
   @keyframes bloodFall {
@@ -246,7 +504,23 @@
     100% { transform: translateY(100vh); opacity: 0.3; }
   }
 
-  /* ---- START SCREEN: transparenter UI-Container ---- */
+  /* Distanter Blitz-Flash (einmal alle paar Sekunden) */
+  #login-lightning {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,200,180,0.0) 0%, rgba(180,80,50,0.0) 50%, transparent 100%);
+    animation: lightningFlicker 9s ease-in-out infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes lightningFlicker {
+    0%, 100% { opacity: 0; }
+    62%, 64% { opacity: 0; }
+    63% { opacity: 0.55; background: linear-gradient(180deg, rgba(255,220,200,0.45), rgba(255,120,60,0.15) 60%, transparent); }
+    63.4% { opacity: 0; }
+    63.7% { opacity: 0.4; }
+    64.1% { opacity: 0; }
+  }
+
+  /* ---- START SCREEN: transparenter UI-Container über dem 3D-Charakter ---- */
   #start-screen {
     position: fixed; inset: 0; z-index: 100;
     background: transparent;
@@ -258,22 +532,29 @@
   }
   #start-screen.hidden { opacity: 0; pointer-events: none; }
 
-  /* Logo oben links */
+  /* === LOGO TOP-CENTER (WoW-Style mit Ornamenten) === */
   #login-logo {
-    padding: 32px 40px 0;
-    pointer-events: none;
-    align-self: start;
+    padding: 38px 0 0; pointer-events: none; align-self: start;
+    text-align: center; position: relative;
   }
+  #login-logo::before, #login-logo::after {
+    content: ''; position: absolute; top: 60%; width: 28%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(196,30,30,0.7) 50%, transparent);
+    box-shadow: 0 0 12px rgba(196,30,30,0.5);
+  }
+  #login-logo::before { left: 6%; }
+  #login-logo::after  { right: 6%; }
   .game-title {
-    font-size: 58px; font-weight: 900; color: #f0e8e8;
-    letter-spacing: 10px; font-family: 'Impact', 'Arial Black', sans-serif;
-    text-transform: uppercase; line-height: 1;
+    font-size: clamp(54px, 8vw, 88px); font-weight: 900; color: #f0e8e8;
+    letter-spacing: 12px; font-family: 'Impact', 'Arial Black', sans-serif;
+    text-transform: uppercase; line-height: 1; display: inline-block;
     text-shadow:
       0 0 1px rgba(255,255,255,0.5),
-      3px 0 0 rgba(196,30,30,0.6),
+      3px 0 0 rgba(196,30,30,0.65),
       -2px 0 0 rgba(60,120,180,0.22),
-      0 0 40px rgba(196,30,30,0.4),
-      0 3px 0 rgba(0,0,0,0.95);
+      0 0 50px rgba(196,30,30,0.55),
+      0 4px 0 rgba(0,0,0,0.95),
+      0 8px 30px rgba(0,0,0,0.8);
     animation: titleGlitch 7s steps(1) infinite;
   }
   @keyframes titleGlitch {
@@ -283,85 +564,172 @@
     95% { transform: translate(-1px,0) skewX(0deg); filter: brightness(1); }
   }
   .game-subtitle {
-    font-size: 11px; color: #c44; font-weight: 900; letter-spacing: 6px;
-    text-transform: uppercase; margin-top: 4px;
-    text-shadow: 0 0 16px rgba(196,30,30,0.8);
+    font-size: 13px; color: #c44; font-weight: 900; letter-spacing: 10px;
+    text-transform: uppercase; margin-top: 6px; display: inline-block;
+    text-shadow: 0 0 18px rgba(196,30,30,0.85), 0 2px 4px rgba(0,0,0,0.9);
+    padding: 0 14px;
   }
-  .game-subtitle::before { content: '▸ '; }
-  .game-subtitle::after  { content: ' ◂'; }
+  .game-subtitle::before { content: '◆ '; color: #8a1414; }
+  .game-subtitle::after  { content: ' ◆'; color: #8a1414; }
 
-  /* Charakter-Name schwebt in der Mitte unten */
+  /* Realm/Server-Statuszeile (oben — wie bei WoW) */
+  #login-realm-bar {
+    position: fixed; top: 18px; right: 22px; z-index: 102;
+    display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+    background: linear-gradient(180deg, rgba(18,8,10,0.92) 0%, rgba(8,3,5,0.96) 100%);
+    border: 1px solid rgba(180,30,30,0.45); border-radius: 3px;
+    font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px;
+    color: #b8a8a8; text-transform: uppercase; font-weight: 900;
+    pointer-events: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7), inset 0 0 14px rgba(0,0,0,0.5);
+  }
+  #login-realm-bar::before {
+    content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:2px;
+    background: linear-gradient(90deg, transparent, #c41e1e 50%, transparent);
+    box-shadow: 0 0 10px rgba(196,30,30,0.6);
+  }
+  #login-realm-bar .realm-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #44ff88;
+    box-shadow: 0 0 8px rgba(68,255,136,0.85);
+    animation: realmPulse 2s ease-in-out infinite;
+  }
+  @keyframes realmPulse { 0%,100% { box-shadow: 0 0 6px rgba(68,255,136,0.7); } 50% { box-shadow: 0 0 14px rgba(68,255,136,1); } }
+  #login-realm-bar .realm-name { color: #f0e8e8; }
+  #login-realm-bar .realm-sep { color: rgba(180,30,30,0.6); }
+  #login-realm-bar .realm-status { color: #44ff88; }
+
+  /* === CHARAKTER-NAME (über dem 3D-Charakter, mit Ornamenten) === */
   #login-char-name {
     position: fixed; left: 50%; transform: translateX(-50%);
-    bottom: 28%; z-index: 101; pointer-events: none;
+    bottom: 32%; z-index: 101; pointer-events: none;
     text-align: center; white-space: nowrap;
   }
+  #login-char-name::before, #login-char-name::after {
+    content: ''; position: absolute; top: 18px; width: 80px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(196,30,30,0.7), transparent);
+  }
+  #login-char-name::before { right: calc(100% + 16px); }
+  #login-char-name::after  { left: calc(100% + 16px); }
   #login-char-name .char-name-text {
     font-family: 'Impact', 'Arial Black', sans-serif;
-    font-size: 26px; font-weight: 900; letter-spacing: 6px; color: #f0e8e8;
+    font-size: 28px; font-weight: 900; letter-spacing: 7px; color: #f0e8e8;
     text-transform: uppercase;
-    text-shadow: 0 0 30px rgba(196,30,30,0.9), 0 2px 12px rgba(0,0,0,0.95), 0 0 60px rgba(196,30,30,0.4);
+    text-shadow: 0 0 30px rgba(196,30,30,0.9), 0 2px 12px rgba(0,0,0,0.95), 0 0 70px rgba(196,30,30,0.5);
   }
   #login-char-name .char-name-sub {
-    font-size: 10px; letter-spacing: 4px; color: #c44; font-weight: 900;
-    text-transform: uppercase; display: block; margin-top: 3px;
+    font-size: 11px; letter-spacing: 6px; color: #c44; font-weight: 900;
+    text-transform: uppercase; display: block; margin-top: 4px;
     font-family: 'Courier New', monospace;
-    text-shadow: 0 0 10px rgba(196,30,30,0.7);
+    text-shadow: 0 0 12px rgba(196,30,30,0.8);
   }
+  #login-char-name .char-name-sub::before { content: '— '; opacity: 0.7; }
+  #login-char-name .char-name-sub::after  { content: ' —'; opacity: 0.7; }
 
-  /* Bottom-Bar: Garderobe + Survive */
+  /* === BOTTOM-BAR (WoW-Style: Garderobe + Survive Button) === */
   #login-bottom {
     pointer-events: auto;
-    padding: 0 0 0 0;
+    padding: 0;
     display: flex; flex-direction: column; align-items: stretch;
-  }
-
-  /* Garderobe-Panel am unteren Rand */
-  #login-wardrobe-panel {
-    background: linear-gradient(0deg, rgba(8,3,4,0.97) 0%, rgba(14,5,6,0.93) 100%);
-    border-top: 1px solid rgba(196,30,30,0.35);
-    padding: 18px 36px 14px;
-    display: flex; align-items: flex-start; gap: 32px; flex-wrap: wrap;
     position: relative;
   }
-  #login-wardrobe-panel::before {
-    content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, #8a1414 20%, #c41e1e 50%, #8a1414 80%, transparent);
-    box-shadow: 0 0 16px rgba(196,30,30,0.5);
-  }
-  .login-wd-group { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
-  .login-wd-label {
-    font-size: 9px; letter-spacing: 3px; color: #c44; font-weight: 900;
-    text-transform: uppercase; font-family: 'Courier New', monospace;
+  /* Top-Border-Ornament des Bottom-Panels */
+  #login-bottom::before {
+    content:''; position: absolute; top: -2px; left: 0; right: 0; height: 3px;
+    background:
+      linear-gradient(90deg, transparent, rgba(196,30,30,0.85) 12%, rgba(255,80,80,1) 50%, rgba(196,30,30,0.85) 88%, transparent);
+    box-shadow: 0 0 18px rgba(196,30,30,0.6), 0 0 40px rgba(196,30,30,0.3);
+    pointer-events: none;
   }
 
-  /* Survive-Button */
+  /* Garderobe-Panel (Mehrschicht-Hintergrund mit Stein/Metall-Optik) */
+  #login-wardrobe-panel {
+    background:
+      linear-gradient(180deg, rgba(28,12,14,0.92) 0%, rgba(14,5,6,0.97) 100%);
+    border-top: 1px solid rgba(196,30,30,0.45);
+    padding: 22px 44px 18px; gap: 36px;
+    display: flex; align-items: flex-start; flex-wrap: wrap;
+    position: relative;
+    box-shadow: inset 0 0 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,100,100,0.08);
+  }
+  /* Subtile Schatten-Linien an den Seiten (Säulen-Effekt) */
+  #login-wardrobe-panel::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.45) 0%, transparent 8%, transparent 92%, rgba(0,0,0,0.45) 100%);
+  }
+  .login-wd-group {
+    display: flex; flex-direction: column; gap: 9px; min-width: 0;
+    position: relative; padding: 0 4px;
+  }
+  /* Trennstrich zwischen Wardrobe-Gruppen */
+  .login-wd-group + .login-wd-group::before {
+    content:''; position:absolute; left:-18px; top: 6px; bottom: 6px; width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(196,30,30,0.35) 30%, rgba(196,30,30,0.45) 50%, rgba(196,30,30,0.35) 70%, transparent);
+  }
+  .login-wd-label {
+    font-size: 9px; letter-spacing: 4px; color: #c44; font-weight: 900;
+    text-transform: uppercase; font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(196,30,30,0.5);
+  }
+  .login-wd-label::before { content: '▸ '; opacity: 0.6; }
+
+  /* === SURVIVE-BUTTON (WoW-Style "ENTER WORLD" Button) === */
   #start-btn {
-    width: 100%; padding: 22px; margin: 0;
-    background: linear-gradient(180deg, #8a1414 0%, #5a0808 60%, #3d0505 100%);
-    border: none; border-top: 1px solid rgba(196,30,30,0.5);
-    color: #fff; font-weight: 900; font-size: 22px;
-    cursor: pointer; letter-spacing: 10px; text-transform: uppercase;
+    width: 100%; padding: 24px; margin: 0;
+    background:
+      linear-gradient(180deg,
+        #a01818 0%,
+        #8a1414 30%,
+        #5a0808 65%,
+        #3d0505 100%);
+    border: none;
+    border-top: 1px solid rgba(255,120,120,0.6);
+    border-bottom: 1px solid rgba(0,0,0,0.95);
+    color: #fff; font-weight: 900; font-size: 24px;
+    cursor: pointer; letter-spacing: 14px; text-transform: uppercase;
     font-family: 'Impact', 'Arial Black', sans-serif;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 30px rgba(255,80,80,0.3);
-    box-shadow: inset 0 1px 0 rgba(255,100,100,0.15);
-    transition: background 0.2s, letter-spacing 0.2s;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.95), 0 0 35px rgba(255,80,80,0.45), 0 0 4px rgba(0,0,0,0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255,140,140,0.25),
+      inset 0 -2px 12px rgba(0,0,0,0.5),
+      0 -2px 24px rgba(196,30,30,0.5);
+    transition: background 0.2s, letter-spacing 0.25s, padding 0.2s;
     position: relative; overflow: hidden;
   }
   #start-btn::before {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
     transform: translateX(-100%); animation: btnSweep 4s ease-in-out infinite;
   }
   #start-btn::after {
     content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, #c41e1e 30%, #ff4444 50%, #c41e1e 70%, transparent);
+    background: linear-gradient(90deg, transparent, #c41e1e 25%, #ff5050 50%, #c41e1e 75%, transparent);
     animation: btnGlow 2s ease-in-out infinite;
   }
   @keyframes btnSweep { 0%,40% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
-  @keyframes btnGlow  { 0%,100% { opacity: 0.7; } 50% { opacity: 1; box-shadow: 0 0 12px rgba(196,30,30,0.8); } }
-  #start-btn:hover { background: linear-gradient(180deg, #c41e1e 0%, #8a1414 60%, #5a0808 100%); letter-spacing: 12px; }
+  @keyframes btnGlow  { 0%,100% { opacity: 0.65; } 50% { opacity: 1; box-shadow: 0 -2px 16px rgba(196,30,30,0.85); } }
+  #start-btn:hover {
+    background:
+      linear-gradient(180deg, #d42525 0%, #b01818 30%, #6a0c0c 70%, #4a0606 100%);
+    letter-spacing: 16px;
+  }
   #start-btn:active { transform: scaleY(0.97); }
+  /* Ornamentale Eckpunkte des Buttons (WoW-Stil) */
+  #login-bottom .btn-corners {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 70px; pointer-events: none;
+  }
+  #login-bottom .btn-corners::before,
+  #login-bottom .btn-corners::after {
+    content:''; position:absolute; bottom: 12px; width: 28px; height: 28px;
+    border: 2px solid rgba(196,30,30,0.7); opacity: 0.85;
+    box-shadow: 0 0 12px rgba(196,30,30,0.4);
+  }
+  #login-bottom .btn-corners::before {
+    left: 12px; border-right: none; border-top: none;
+  }
+  #login-bottom .btn-corners::after {
+    right: 12px; border-left: none; border-top: none;
+  }
 
   /* === Restliche UI-Elemente (Wardrobe) === */
   .key-cap { display: inline-block; padding: 2px 8px; background: rgba(120,15,15,0.25); border: 1px solid rgba(180,30,30,0.5); border-radius: 2px;
@@ -411,25 +779,48 @@
   .opt-btn { padding: 6px 12px; background: rgba(0,0,0,0.6); border: 1px solid rgba(180,30,30,0.3); color: #b8a8a8; font-size: 11px; font-weight: 800; cursor: pointer; border-radius: 2px; font-family: 'Courier New', monospace; transition: all 0.1s; }
   .opt-btn.active { background: rgba(180,30,30,0.4); border-color: #c41e1e; color: #fff; box-shadow: inset 0 0 8px rgba(0,0,0,0.5); }
 
-  /* === LOADING SCREEN === */
+  /* === LOADING SCREEN — Cinematic apocalypse intro === */
   #loading-screen { position: fixed; inset: 0; z-index: 1000;
-    background: radial-gradient(ellipse at center, #1a0608 0%, #050203 75%);
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 100%, rgba(160,30,10,0.5), transparent 65%),
+      radial-gradient(ellipse 60% 30% at 50% 0%, rgba(60,8,4,0.65), transparent 70%),
+      radial-gradient(ellipse 80% 80% at 50% 55%, rgba(30,5,8,0.9), #03000a 80%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: opacity 0.6s ease-out;
+    overflow: hidden;
   }
   #loading-screen.hidden { opacity: 0; pointer-events: none; }
+  /* Filmkorn */
   #loading-screen::before { content:''; position:absolute; inset:0;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
-    opacity: 0.12; mix-blend-mode: overlay; pointer-events:none;
+    opacity: 0.14; mix-blend-mode: overlay; pointer-events:none;
   }
+  /* Vignette */
   #loading-screen::after { content:''; position:absolute; inset:0; pointer-events:none;
-    background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 40%, rgba(0,0,0,0.6) 100%);
+    background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 38%, rgba(0,0,0,0.65) 100%);
   }
-  .ld-inner { position: relative; text-align: center; max-width: 560px; padding: 0 24px; z-index: 1; }
-  .ld-title { font-size: clamp(48px, 9vw, 84px); font-weight: 900; letter-spacing: 10px; color: #f0e8e8;
-    font-family: 'Impact', 'Arial Black', sans-serif; text-transform: uppercase; margin-bottom: 4px;
-    text-shadow: 0 0 1px rgba(255,255,255,0.4), 3px 0 0 rgba(180,20,20,0.6), -3px 0 0 rgba(80,150,180,0.3),
-                 0 6px 30px rgba(140,15,15,0.6), 0 2px 0 rgba(0,0,0,0.95);
+  /* Subtile Scan-Linien */
+  .ld-scanlines {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.07; z-index: 1;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 2px, rgba(0,0,0,0.6) 3px);
+  }
+  /* Animierter Horizont-Glow */
+  .ld-horizon {
+    position: absolute; left: -10%; right: -10%; bottom: -10%; height: 50%;
+    background: radial-gradient(ellipse 70% 100% at 50% 100%, rgba(220,60,20,0.35) 0%, rgba(120,15,8,0.15) 35%, transparent 70%);
+    animation: hzPulse 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes hzPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; transform: scale(1.05); } }
+  .ld-inner { position: relative; text-align: center; max-width: 600px; padding: 0 24px; z-index: 2; }
+  .ld-title { font-size: clamp(54px, 10vw, 96px); font-weight: 900; letter-spacing: 14px; color: #f0e8e8;
+    font-family: 'Impact', 'Arial Black', sans-serif; text-transform: uppercase; margin-bottom: 6px;
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.4),
+      3px 0 0 rgba(180,20,20,0.7),
+      -3px 0 0 rgba(80,150,180,0.3),
+      0 8px 40px rgba(180,20,20,0.55),
+      0 4px 0 rgba(0,0,0,0.95);
     animation: ldGlitch 4s steps(1) infinite;
   }
   @keyframes ldGlitch {
@@ -438,29 +829,50 @@
     91% { transform: translate(3px, -2px); opacity: 1; }
     93% { transform: translate(-1px, 0); opacity: 0.95; }
   }
-  .ld-subtitle { font-size: 14px; color: #c44; font-weight: 800; letter-spacing: 8px; text-transform: uppercase;
-    margin-bottom: 50px; text-shadow: 0 0 14px rgba(196,30,30,0.7);
+  .ld-subtitle { font-size: 15px; color: #c44; font-weight: 900; letter-spacing: 10px; text-transform: uppercase;
+    margin-bottom: 60px; text-shadow: 0 0 18px rgba(196,30,30,0.85);
   }
-  .ld-bar-wrap { width: 100%; max-width: 460px; margin: 0 auto; position: relative; }
-  .ld-bar-track { width: 100%; height: 6px; background: rgba(0,0,0,0.7); border: 1px solid rgba(180,30,30,0.35); border-radius: 0;
-    overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+  .ld-subtitle::before { content:'◆ '; opacity: 0.7; }
+  .ld-subtitle::after  { content:' ◆'; opacity: 0.7; }
+  /* Ladebalken-Wrapper mit Ornamenten */
+  .ld-bar-wrap { width: 100%; max-width: 540px; margin: 0 auto; position: relative; padding: 0 30px; }
+  .ld-bar-wrap::before, .ld-bar-wrap::after {
+    content: ''; position: absolute; top: -3px; width: 12px; height: 12px;
+    border: 2px solid rgba(196,30,30,0.85);
+    box-shadow: 0 0 10px rgba(196,30,30,0.5);
+    transform: rotate(45deg);
+  }
+  .ld-bar-wrap::before { left: 12px; }
+  .ld-bar-wrap::after  { right: 12px; }
+  .ld-bar-track { width: 100%; height: 8px; background: rgba(0,0,0,0.85); border: 1px solid rgba(180,30,30,0.45);
+    overflow: hidden; box-shadow: inset 0 0 14px rgba(0,0,0,0.85), 0 0 20px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .ld-bar-track::after {
+    content:''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 50%, transparent);
   }
   .ld-bar-fill { height: 100%; width: 0%;
     background: linear-gradient(90deg, #6a0c0c 0%, #c41e1e 50%, #ff3030 100%);
-    box-shadow: 0 0 14px rgba(255,48,48,0.7); transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 18px rgba(255,48,48,0.85), inset 0 0 8px rgba(255,255,255,0.2);
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
     position: relative;
   }
   .ld-bar-fill::after { content:''; position:absolute; inset:0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
     animation: ldShine 1.4s linear infinite;
   }
   @keyframes ldShine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-  .ld-status { display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
-    font-size: 11px; letter-spacing: 3px; color: #c44; font-weight: 800; text-transform: uppercase;
+  .ld-status { display: flex; justify-content: space-between; align-items: center; margin-top: 16px;
+    font-size: 11px; letter-spacing: 4px; color: #c44; font-weight: 900; text-transform: uppercase;
     font-family: 'Courier New', monospace;
+    padding: 0 14px;
   }
   .ld-status-text { color: #b8a8a8; }
-  .ld-percent { color: #f0e8e8; font-weight: 900; min-width: 40px; text-align: right; }
+  .ld-status-text::before { content:'▸ '; color: #c44; }
+  .ld-percent { color: #f0e8e8; font-weight: 900; min-width: 40px; text-align: right;
+    text-shadow: 0 0 12px rgba(196,30,30,0.6);
+  }
   .ld-flicker { animation: ldFlicker 2.2s steps(1) infinite; }
   @keyframes ldFlicker {
     0%, 95%, 100% { opacity: 1; }
@@ -468,22 +880,46 @@
     97% { opacity: 1; }
     98% { opacity: 0.6; }
   }
-  .ld-warning { margin-top: 32px; font-size: 11px; color: #8a4a4a; letter-spacing: 4px; text-transform: uppercase;
-    font-weight: 700; opacity: 0.75;
+  .ld-tip {
+    margin-top: 38px; font-size: 12px; color: #8a8a8a; letter-spacing: 2px; line-height: 1.7;
+    font-weight: 700; max-width: 480px; margin-left: auto; margin-right: auto;
+    font-family: 'Courier New', monospace;
+  }
+  .ld-tip-label { display: block; font-size: 9px; letter-spacing: 5px; color: #c44;
+    margin-bottom: 6px; font-weight: 900; text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(196,30,30,0.6);
+  }
+  .ld-warning { margin-top: 28px; font-size: 11px; color: #8a4a4a; letter-spacing: 5px; text-transform: uppercase;
+    font-weight: 800; opacity: 0.85;
   }
   .ld-warning::before { content:'⚠ '; color: #c44; }
   .ld-warning::after { content:' ⚠'; color: #c44; }
-  /* Pulsierende Kreise im Hintergrund */
+  /* Pulsierende Kreise im Hintergrund — Sonar-Effekt */
   .ld-pulse { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    width: 100px; height: 100px; border-radius: 50%; border: 2px solid rgba(196,30,30,0.4);
-    animation: ldPulse 2.5s ease-out infinite;
+    width: 100px; height: 100px; border-radius: 50%;
+    border: 2px solid rgba(196,30,30,0.45);
+    box-shadow: 0 0 30px rgba(196,30,30,0.25), inset 0 0 15px rgba(196,30,30,0.15);
+    animation: ldPulse 2.8s ease-out infinite;
   }
-  .ld-pulse:nth-child(2) { animation-delay: 0.8s; }
-  .ld-pulse:nth-child(3) { animation-delay: 1.6s; }
+  .ld-pulse:nth-child(2) { animation-delay: 0.9s; }
+  .ld-pulse:nth-child(3) { animation-delay: 1.8s; }
   @keyframes ldPulse {
-    0% { width: 100px; height: 100px; opacity: 0.7; }
-    100% { width: 700px; height: 700px; opacity: 0; }
+    0% { width: 100px; height: 100px; opacity: 0.85; border-width: 3px; }
+    100% { width: 800px; height: 800px; opacity: 0; border-width: 1px; }
   }
+  /* Rotierender ornamentaler Ring */
+  .ld-rune-ring {
+    position: absolute; top: 50%; left: 50%;
+    width: 280px; height: 280px; border-radius: 50%;
+    border: 1px dashed rgba(196,30,30,0.35);
+    transform: translate(-50%,-50%);
+    animation: ldRuneRot 30s linear infinite;
+    pointer-events: none;
+  }
+  .ld-rune-ring.inner { width: 200px; height: 200px; animation: ldRuneRot 22s linear infinite reverse;
+    border: 1px dotted rgba(196,30,30,0.25);
+  }
+  @keyframes ldRuneRot { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
 
   /* === MINIMAP === */
   #minimap-container { position: fixed; top: 170px; right: 16px; width: 158px; height: 158px; z-index: 11; pointer-events: none; }
@@ -574,10 +1010,14 @@
 .wheel-hint { position: absolute; bottom: -40px; width: 100%; text-align: center; color: #b8a8a8; font-family: 'Courier New', monospace; font-weight: 900; font-size: 14px; letter-spacing: 2px; }
 </style>
 </head>
-<body>
+<body class="menu-mode">
 <canvas id="game"></canvas>
 
 <div id="loading-screen">
+  <div class="ld-horizon"></div>
+  <div class="ld-scanlines"></div>
+  <div class="ld-rune-ring"></div>
+  <div class="ld-rune-ring inner"></div>
   <div class="ld-pulse"></div>
   <div class="ld-pulse"></div>
   <div class="ld-pulse"></div>
@@ -591,6 +1031,10 @@
         <span class="ld-percent" id="ld-percent">0%</span>
       </div>
     </div>
+    <div class="ld-tip">
+      <span class="ld-tip-label">Survival-Tipp</span>
+      <span id="ld-tip-text">Halte Shift gedrückt, um zu sprinten — aber pass auf deine Ausdauer auf.</span>
+    </div>
     <div class="ld-warning">Achtung — Untote in der Nähe</div>
   </div>
 </div>
@@ -598,13 +1042,18 @@
 <div id="hud">
   <div class="hud-row">
     <div class="hud-panel hp-container">
-      <div class="hud-label">HP</div>
+      <span class="hud-corner-tr"></span><span class="hud-corner-bl"></span><span class="hud-corner-br"></span>
+      <div class="hp-numeric">
+        <span class="hud-label">HP</span>
+        <span><span class="hp-cur" id="hp-cur">100</span><span class="hp-max" id="hp-max"> / 100</span></span>
+      </div>
       <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-fill" style="width:100%"></div></div>
       <div class="hud-label" style="margin-top:10px">Ausdauer</div>
       <div class="stamina-bar-bg"><div class="stamina-bar-fill" id="stamina-fill" style="width:100%"></div></div>
       <div id="weapon-info">⚾ Baseballschläger</div>
     </div>
     <div class="hud-panel" id="wave-info">
+      <span class="hud-corner-tr"></span><span class="hud-corner-bl"></span><span class="hud-corner-br"></span>
       <div class="hud-label">Welle</div>
       <div class="hud-value" id="wave-num">1</div>
       <div class="hud-label" style="margin-top:8px">Gegner</div>
@@ -614,14 +1063,17 @@
   </div>
   <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px; align-items: flex-start;">
     <div class="hud-panel" style="padding: 10px 18px;">
+      <span class="hud-corner-tr"></span><span class="hud-corner-bl"></span><span class="hud-corner-br"></span>
       <span class="hud-label" style="font-size:14px; opacity:1; letter-spacing: 0;">🪙</span>
       <span class="hud-value" id="money" style="margin-left:8px; color:#f0d878; font-size: 20px;">0</span>
     </div>
     <div class="hud-panel" style="padding: 10px 18px; display: flex; align-items: center; pointer-events: auto;">
+      <span class="hud-corner-tr"></span><span class="hud-corner-bl"></span><span class="hud-corner-br"></span>
       <span class="hud-label" style="margin-right: 12px;">Inventar <span class="key-badge" style="transform: scale(0.75) translateY(-2px); margin-left: 2px;">I</span></span>
       <span class="hud-value" id="inventory-count" style="font-size: 18px; color: #b8a8a8;">0/20</span>
     </div>
     <div class="hud-panel" style="padding: 10px 18px; display: flex; align-items: center; pointer-events: auto;">
+      <span class="hud-corner-tr"></span><span class="hud-corner-bl"></span><span class="hud-corner-br"></span>
       <span class="hud-label" style="margin-right: 12px;">Trank <span class="key-badge" style="transform: scale(0.75) translateY(-2px); margin-left: 2px;">4</span></span>
       <span class="hud-value" id="potion-count" style="font-size: 18px; color: #50c878;">0</span>
     </div>
@@ -635,6 +1087,29 @@
       <span style="color:#555; margin-left: 10px; font-size:9px; opacity:0.7;"><span class="key-badge" style="transform: scale(0.7) translateY(-1px);">O</span></span>
     </div>
   </div>
+</div>
+
+<!-- === WAFFEN-HOTBAR (Bottom-Center) === -->
+<div id="weapon-hotbar">
+  <div class="hb-slot empty" id="hb-slot-0" data-slot="0">
+    <span class="hb-key">1</span>
+    <div class="hb-icon" id="hb-icon-0">⚾</div>
+    <div class="hb-name" id="hb-name-0">Leer</div>
+    <div class="hb-ammo" id="hb-ammo-0">0/0</div>
+  </div>
+  <div class="hb-slot empty" id="hb-slot-1" data-slot="1">
+    <span class="hb-key">2</span>
+    <div class="hb-icon" id="hb-icon-1">·</div>
+    <div class="hb-name" id="hb-name-1">Leer</div>
+    <div class="hb-ammo" id="hb-ammo-1">0/0</div>
+  </div>
+  <div class="hb-slot empty" id="hb-slot-2" data-slot="2">
+    <span class="hb-key">3</span>
+    <div class="hb-icon" id="hb-icon-2">·</div>
+    <div class="hb-name" id="hb-name-2">Leer</div>
+    <div class="hb-ammo" id="hb-ammo-2">0/0</div>
+  </div>
+  <div id="weapon-hotbar-hint">1 / 2 / 3 — Tab Waffenrad — G Shop</div>
 </div>
 
 <!-- Großes Online-Status-Panel (Taste O) -->
@@ -852,9 +1327,24 @@
   </div>
 </div>
 
-<!-- WoW-style login background (zombie apocalypse atmosphere) -->
+<!-- WoW-style login background (cinematic apocalyptic backdrop) -->
 <div id="login-bg">
   <canvas id="login-city-canvas"></canvas>
+  <div id="login-fog-layer"></div>
+  <div id="login-foreground"></div>
+  <div id="login-lightning"></div>
+  <div id="login-vignette"></div>
+  <div id="login-scanlines"></div>
+</div>
+
+<!-- Realm/Server-Statusleiste (WoW-Style) -->
+<div id="login-realm-bar">
+  <span class="realm-dot"></span>
+  <span>Server</span>
+  <span class="realm-sep">·</span>
+  <span class="realm-name" id="realm-name">IKKIMEL EU</span>
+  <span class="realm-sep">·</span>
+  <span class="realm-status">CONNECTED</span>
 </div>
 
 <!-- Floating character name (centered over 3D character) -->
@@ -864,7 +1354,7 @@
 </div>
 
 <div id="start-screen">
-  <!-- Top-left logo -->
+  <!-- Top-center logo with ornaments -->
   <div id="login-logo">
     <div class="game-title">IKKIMEL</div>
     <div class="game-subtitle">Zombie Defense</div>
@@ -900,7 +1390,8 @@
         <button id="options-btn" style="padding:10px 18px; background:rgba(0,0,0,0.5); border:1px solid rgba(180,30,30,0.4); color:#b8a8a8; font-weight:800; font-size:12px; border-radius:2px; cursor:pointer; letter-spacing:2px; text-transform:uppercase; font-family:'Courier New',monospace; white-space:nowrap;">⚙ Optionen</button>
       </div>
     </div>
-    <button id="start-btn">Survive</button>
+    <button id="start-btn">Enter World</button>
+    <div class="btn-corners"></div>
   </div>
 </div>
 
@@ -1087,12 +1578,15 @@ function addOutline(mesh, thickness = 1.06) {
 }
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0512); 
+scene.background = new THREE.Color(0x0a0512);
 scene.fog = new THREE.Fog(0x0a0512, 25, 130);
+const _sceneDefaultBg = scene.background;
+const _sceneDefaultFog = scene.fog;
 
 let currentCamDist = 6.0;
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 400);
-const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: document.getElementById('game'), powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, canvas: document.getElementById('game'), powerPreference: 'high-performance' });
+renderer.setClearColor(0x000000, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = true;
@@ -5109,6 +5603,7 @@ function equipWeapon(index) {
   
   // Waffenrad UI im Hintergrund updaten, damit die Beschriftungen sofort stimmen
   if (typeof updateWeaponWheelUI === 'function') updateWeaponWheelUI();
+  if (typeof updateWeaponHotbar === 'function') updateWeaponHotbar();
 }
 
 // === WAFFENRAD LOGIK ===
@@ -5144,8 +5639,9 @@ function selectWeaponSlot(slotIndex) {
     
     document.getElementById('crosshair').classList.toggle('active', !w.ranged && gameStarted);
     document.getElementById('crosshair-ranged').classList.toggle('active', w.ranged && gameStarted);
-    
+
     updateWeaponWheelUI();
+    if (typeof updateWeaponHotbar === 'function') updateWeaponHotbar();
     if (window.weaponWheelActive) closeWeaponWheel();
 }
 
@@ -5826,6 +6322,43 @@ showcasePodium.position.set(0, 0, 10);
 scene.add(showcasePodium);
 // Refs für Animation
 showcasePodium.userData = { fogA, fogB, debrisGroup };
+
+// === MENU-MODUS: blendet die 3D-Welt aus, sodass im Hauptmenü nur der Charakter
+// vor dem 2D-Zombie-Hintergrund sichtbar ist (kein Spiel-Render im Hintergrund). ===
+let _menuModeHidden = [];
+let _menuModeActive = false;
+function setMenuMode(active) {
+  if (active === _menuModeActive) return;
+  _menuModeActive = active;
+  // In-Game-UI ein/ausblenden: HUD, Minimap, Hotbar, Crosshair etc.
+  document.body.classList.toggle('menu-mode', active);
+  if (active) {
+    _menuModeHidden = [];
+    scene.traverse(obj => {
+      if (!obj.parent) return;
+      if (obj.parent !== scene) return;
+      if (obj === player.group) return;
+      if (obj === showcasePodium) return;
+      if (obj.isLight) return;
+      if (obj.userData && obj.userData.__keepInMenu) return;
+      if (obj.visible) { _menuModeHidden.push(obj); obj.visible = false; }
+    });
+    scene.background = null;
+    scene.fog = null;
+    if (typeof particles !== 'undefined') particles.visible = false;
+    showcasePodium.visible = true;
+  } else {
+    _menuModeHidden.forEach(o => { if (o) o.visible = true; });
+    _menuModeHidden = [];
+    scene.background = _sceneDefaultBg;
+    scene.fog = _sceneDefaultFog;
+    if (typeof particles !== 'undefined') {
+      const pVis = (typeof gameSettings !== 'undefined') ? (gameSettings.particles === true || gameSettings.particles === 'true') : true;
+      particles.visible = pVis;
+    }
+    showcasePodium.visible = false;
+  }
+}
 
 function initPlayerModel() {
   if(player.rig) { player.group.remove(player.rig.group); player.rig = null; }
@@ -8336,6 +8869,54 @@ function updateTracersAndFlashes(dt) {
   }
 }
 
+// === WAFFEN-HOTBAR aktualisieren (3 Slots, Hotkeys 1/2/3) ===
+function updateWeaponHotbar() {
+  const hotbar = document.getElementById('weapon-hotbar');
+  if (!hotbar) return;
+  // Im Menü oder Game-Over ausblenden
+  hotbar.style.display = (gameStarted && !gameOver) ? 'flex' : 'none';
+  for (let i = 0; i < 3; i++) {
+    const slotEl = document.getElementById('hb-slot-' + i);
+    const iconEl = document.getElementById('hb-icon-' + i);
+    const nameEl = document.getElementById('hb-name-' + i);
+    const ammoEl = document.getElementById('hb-ammo-' + i);
+    if (!slotEl) continue;
+    const wIdx = player.weaponSlots[i];
+    slotEl.classList.toggle('active', i === player.activeSlot && wIdx !== -1);
+    if (wIdx !== -1 && WEAPONS[wIdx]) {
+      const w = WEAPONS[wIdx];
+      slotEl.classList.remove('empty');
+      // Symbol & Name extrahieren (Emoji am Anfang ist das Icon)
+      const m = (w.name || '').match(/^(\S+)\s+(.*)$/);
+      if (m) { iconEl.textContent = m[1]; nameEl.textContent = m[2]; }
+      else { iconEl.textContent = '◆'; nameEl.textContent = w.name; }
+      // Munition für Schusswaffen
+      if (w.ranged) {
+        slotEl.classList.add('has-ammo');
+        const cur = ammoState[w.id];
+        const max = w.magSize;
+        ammoEl.textContent = `${cur}/${max}`;
+        slotEl.classList.toggle('low-ammo', cur <= Math.max(1, Math.floor(max * 0.25)));
+      } else {
+        slotEl.classList.remove('has-ammo', 'low-ammo');
+      }
+    } else {
+      slotEl.classList.add('empty');
+      slotEl.classList.remove('has-ammo', 'low-ammo');
+      iconEl.textContent = '·';
+      nameEl.textContent = 'Leer';
+    }
+  }
+}
+// Klick auf Hotbar-Slot wechselt die Waffe
+document.querySelectorAll('#weapon-hotbar .hb-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    if (!gameStarted || gameOver) return;
+    const idx = parseInt(slot.getAttribute('data-slot'), 10);
+    if (player.weaponSlots[idx] !== -1) selectWeaponSlot(idx);
+  });
+});
+
 // Munition aktualisieren
 function updateAmmoHUD() {
   const display = document.getElementById('ammo-display');
@@ -8358,6 +8939,8 @@ function updateAmmoHUD() {
   } else {
     display.classList.remove('active', 'reloading');
   }
+  // Hotbar-Munition mit aktualisieren
+  updateWeaponHotbar();
 }
 
 function startReload() {
@@ -8511,17 +9094,24 @@ function performAttack() {
 
 function updateHUD() {
   document.getElementById('hp-fill').style.width = Math.max(0, player.hp / player.maxHp * 100) + '%';
+  // Numerischer HP-Wert
+  const hpCurEl = document.getElementById('hp-cur');
+  const hpMaxEl = document.getElementById('hp-max');
+  if (hpCurEl) hpCurEl.textContent = Math.max(0, Math.round(player.hp));
+  if (hpMaxEl) hpMaxEl.textContent = ' / ' + Math.round(player.maxHp);
   document.getElementById('wave-num').textContent = currentWave || 1;
   const total = enemiesTotalThisWave || 0; const killed = enemiesKilledThisWave || 0;
   document.getElementById('enemies-killed').textContent = killed; document.getElementById('enemies-total').textContent = total;
   document.getElementById('wave-progress').style.width = (total > 0 ? Math.min(100, (killed / total) * 100) : 0) + '%';
   document.getElementById('money').textContent = currentCoins.toLocaleString('de-DE');
-  
+
   // Inventar-Zähler aktualisieren (Filtert alle Slots, die nicht null sind)
   if (typeof playerInventory !== 'undefined') {
     const filledSlots = playerInventory.filter(item => item !== null).length;
     document.getElementById('inventory-count').textContent = `${filledSlots}/${playerInventory.length}`;
   }
+  // Hotbar mit aktualisieren
+  if (typeof updateWeaponHotbar === 'function') updateWeaponHotbar();
 }
 
 // ===== MINIMAP =====
@@ -10713,6 +11303,7 @@ document.getElementById('back-to-mainmenu-btn').addEventListener('click', () => 
   const loginCharName = document.getElementById('login-char-name');
   if (loginCharName) loginCharName.style.display = '';
   gameStarted = false;
+  setMenuMode(true);
 });
 
 document.getElementById('back-to-mainmenu-btn').addEventListener('mouseenter', function() {
@@ -10734,6 +11325,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
   if (loginCharName) loginCharName.style.display = 'none';
   document.getElementById('crosshair').classList.toggle('active', !player.weaponStats.ranged);
   document.getElementById('crosshair-ranged').classList.toggle('active', !!player.weaponStats.ranged);
+  setMenuMode(false);
   showcasePodium.visible = false;
   gameStarted = true;
 
@@ -10884,6 +11476,7 @@ function preWarmShaders() {
   const ldFill = document.getElementById('ld-bar-fill');
   const ldPercent = document.getElementById('ld-percent');
   const ldStatus = document.getElementById('ld-status-text');
+  const ldTip = document.getElementById('ld-tip-text');
   if (!ldScreen) return;
   const messages = [
     'Initialisiere Verteidigungssysteme...',
@@ -10894,6 +11487,17 @@ function preWarmShaders() {
     'Synchronisiere Survivor-Daten...',
     'Bereit zum Einsatz...'
   ];
+  const tips = [
+    'Halte Shift gedrückt, um zu sprinten — aber pass auf deine Ausdauer auf.',
+    'Tab öffnet das Waffenrad — wechsel schnell zwischen deinen 3 Waffen.',
+    'Drücke R zum Nachladen, sobald deine Munition zu niedrig ist.',
+    'Im Waffen-Terminal kannst du neue Waffen kaufen und ausrüsten (Taste G).',
+    'Sammle Rosa Votzen Blumen — das Labor synthetisiert daraus Heiltränke.',
+    'Mit Taste 4 verwendest du einen Heiltrank im Notfall.',
+    'Türme & Barrikaden lassen sich am Terminal kaufen und platzieren.',
+    'Das Sniper-Gewehr hat Rechtsklick-Scope — One-Shot bei perfektem Treffer.'
+  ];
+  if (ldTip) ldTip.textContent = tips[Math.floor(Math.random() * tips.length)];
   let progress = 0;
   let msgIdx = 0;
   ldStatus.textContent = messages[0];
@@ -10916,66 +11520,134 @@ updateHUD(); loop();
 
 // ── WoW LOGIN BACKGROUND: Stadtsilhouette + Partikel ──────────────────────────
 function _initLoginBackground() {
-  // 1) Stadtsilhouette auf 2D-Canvas zeichnen
+  // 1) Stadtsilhouette auf 2D-Canvas zeichnen — drei Tiefen-Schichten
   const cityCanvas = document.getElementById('login-city-canvas');
   if (cityCanvas) {
     const resizeCity = () => {
       cityCanvas.width  = window.innerWidth;
-      cityCanvas.height = Math.floor(window.innerHeight * 0.55);
+      cityCanvas.height = Math.floor(window.innerHeight * 0.6);
       const ctx = cityCanvas.getContext('2d');
       const W = cityCanvas.width, H = cityCanvas.height;
       ctx.clearRect(0, 0, W, H);
 
-      // Hintergrund-Wolken-Leuchten (Horizont)
-      const horizonGrad = ctx.createLinearGradient(0, H * 0.4, 0, H);
-      horizonGrad.addColorStop(0,   'rgba(100,15,5,0)');
-      horizonGrad.addColorStop(0.6, 'rgba(90,8,3,0.35)');
-      horizonGrad.addColorStop(1,   'rgba(60,5,2,0.7)');
+      // Hintergrund-Glow: Brennende Stadt am Horizont
+      const horizonGrad = ctx.createLinearGradient(0, H * 0.3, 0, H);
+      horizonGrad.addColorStop(0,   'rgba(120,20,8,0)');
+      horizonGrad.addColorStop(0.45, 'rgba(140,30,12,0.35)');
+      horizonGrad.addColorStop(0.75, 'rgba(80,15,8,0.6)');
+      horizonGrad.addColorStop(1,    'rgba(40,5,3,0.85)');
       ctx.fillStyle = horizonGrad; ctx.fillRect(0, 0, W, H);
 
-      // Zufällige, aber seed-deterministische Gebäude
+      // Zufällige Punkt-Glühflecken (Brände in der Ferne)
       const rng = (seed) => { let s = seed; return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; }; };
-      const rand = rng(42);
+      const fireRand = rng(7);
+      for (let i = 0; i < 12; i++) {
+        const fx = fireRand() * W;
+        const fy = H * (0.55 + fireRand() * 0.15);
+        const fr = 30 + fireRand() * 60;
+        const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr);
+        grad.addColorStop(0,   'rgba(255,150,60,0.5)');
+        grad.addColorStop(0.4, 'rgba(220,80,30,0.25)');
+        grad.addColorStop(1,   'rgba(120,20,10,0)');
+        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(fx, fy, fr, 0, Math.PI*2); ctx.fill();
+      }
+
+      // === SCHICHT 1: Ferne Stadt (klein, blass) ===
+      const rand1 = rng(42);
       let x = 0;
       while (x < W) {
-        const bw = 28 + rand() * 55;
-        const bh = H * (0.25 + rand() * 0.55);
-        const by = H - bh;
-        // Fenster-Leuchten
-        ctx.fillStyle = `rgba(${10 + rand()*15|0},${3 + rand()*5|0},${2 + rand()*3|0},0.95)`;
+        const bw = 18 + rand1() * 36;
+        const bh = H * (0.18 + rand1() * 0.28);
+        const by = H - bh - H * 0.08; // etwas erhöht für Tiefenwirkung
+        ctx.fillStyle = `rgba(${8 + rand1()*8|0},${3 + rand1()*4|0},${4 + rand1()*4|0},0.92)`;
         ctx.fillRect(x, by, bw, bh);
+        // Dachsilhouetten (Antennen, Schornsteine)
+        if (rand1() > 0.55) {
+          ctx.fillRect(x + bw * 0.4, by - 8 - rand1() * 16, 2, 8 + rand1() * 16);
+        }
+        // Wenige flackernde Fenster
+        const rows = Math.floor(bh / 12), cols = Math.floor(bw / 8);
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          if (rand1() > 0.78) {
+            const lit = rand1() > 0.7;
+            ctx.fillStyle = lit ? `rgba(255,170,80,${0.4 + rand1()*0.4})` : `rgba(60,90,140,${0.12 + rand1()*0.15})`;
+            ctx.fillRect(x + 2 + c * 8, by + 4 + r * 12, 3, 5);
+          }
+        }
+        x += bw + 1 + rand1() * 4;
+      }
+
+      // === SCHICHT 2: Mittlere Stadt ===
+      const rand2 = rng(99);
+      x = 0;
+      while (x < W) {
+        const bw = 28 + rand2() * 62;
+        const bh = H * (0.22 + rand2() * 0.42);
+        const by = H - bh;
+        // Hintergrund-Block
+        ctx.fillStyle = `rgba(${5 + rand2()*8|0},${2 + rand2()*3|0},${3 + rand2()*3|0},0.97)`;
+        ctx.fillRect(x, by, bw, bh);
+        // Beschädigte Dachlinie (zerstörte Gebäude)
+        if (rand2() > 0.5) {
+          ctx.fillStyle = 'rgba(0,0,0,0.95)';
+          ctx.beginPath();
+          ctx.moveTo(x, by);
+          ctx.lineTo(x + bw * 0.2, by - 6 + rand2() * 12);
+          ctx.lineTo(x + bw * 0.5, by + rand2() * 8);
+          ctx.lineTo(x + bw * 0.8, by - 4 + rand2() * 10);
+          ctx.lineTo(x + bw, by);
+          ctx.lineTo(x + bw, by + 2);
+          ctx.lineTo(x, by + 2);
+          ctx.closePath(); ctx.fill();
+        }
         // Fenster
         const rows = Math.floor(bh / 14), cols = Math.floor(bw / 10);
         for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-          if (rand() > 0.62) continue; // Die meisten Lichter sind aus (Apokalypse)
-          const lit = rand() > 0.7;
-          ctx.fillStyle = lit ? `rgba(220,180,80,${0.35 + rand()*0.35})` : `rgba(80,120,160,${0.15 + rand()*0.2})`;
+          if (rand2() > 0.62) continue;
+          const lit = rand2() > 0.78;
+          ctx.fillStyle = lit ? `rgba(255,180,80,${0.45 + rand2()*0.35})` : `rgba(60,100,150,${0.12 + rand2()*0.18})`;
           ctx.fillRect(x + 3 + c * 10, by + 6 + r * 14, 5, 7);
+          // Dichte Fenster-Glow für beleuchtete Fenster
+          if (lit && rand2() > 0.6) {
+            const g = ctx.createRadialGradient(x + 5 + c * 10, by + 9 + r * 14, 0, x + 5 + c * 10, by + 9 + r * 14, 12);
+            g.addColorStop(0, 'rgba(255,180,80,0.4)');
+            g.addColorStop(1, 'rgba(255,180,80,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(x + 5 + c * 10 - 12, by + 9 + r * 14 - 12, 24, 24);
+          }
         }
-        // Dach-Details
-        if (rand() > 0.6) {
-          ctx.fillStyle = 'rgba(5,2,2,0.9)';
-          ctx.fillRect(x + bw * 0.35, by - 12 - rand() * 20, 4, 12 + rand() * 20);
+        // Antennen / Schornsteine
+        if (rand2() > 0.6) {
+          ctx.fillStyle = 'rgba(2,1,1,0.95)';
+          ctx.fillRect(x + bw * 0.35, by - 14 - rand2() * 26, 3, 14 + rand2() * 26);
         }
-        x += bw + 2 + rand() * 6;
+        x += bw + 2 + rand2() * 6;
       }
 
-      // Vordergrund: dunklere Gebäude-Silhouette
+      // === SCHICHT 3: Vordergrund — pechschwarze, zerklüftete Silhouette ===
+      const rand3 = rng(123);
       x = 0;
-      const rand2 = rng(99);
+      ctx.fillStyle = 'rgba(0,0,0,0.98)';
+      ctx.beginPath();
+      ctx.moveTo(0, H);
       while (x < W) {
-        const bw = 40 + rand2() * 90;
-        const bh = H * (0.12 + rand2() * 0.3);
-        ctx.fillStyle = `rgba(2,1,1,0.97)`;
-        ctx.fillRect(x, H - bh, bw, bh);
-        x += bw + rand2() * 4;
+        const bw = 50 + rand3() * 110;
+        const bh = H * (0.14 + rand3() * 0.32);
+        ctx.lineTo(x, H - bh);
+        ctx.lineTo(x + bw * 0.15, H - bh + rand3() * 6);
+        ctx.lineTo(x + bw * 0.5, H - bh - 3 + rand3() * 12);
+        ctx.lineTo(x + bw * 0.85, H - bh + rand3() * 8);
+        ctx.lineTo(x + bw, H - bh);
+        x += bw;
       }
+      ctx.lineTo(W, H);
+      ctx.closePath(); ctx.fill();
 
-      // Bodennebel unten
-      const fogGrad = ctx.createLinearGradient(0, H * 0.72, 0, H);
-      fogGrad.addColorStop(0,   'rgba(60,5,3,0)');
-      fogGrad.addColorStop(0.5, 'rgba(50,4,2,0.4)');
-      fogGrad.addColorStop(1,   'rgba(30,2,1,0.8)');
+      // Bodennebel/Dunst unten
+      const fogGrad = ctx.createLinearGradient(0, H * 0.65, 0, H);
+      fogGrad.addColorStop(0,   'rgba(80,15,10,0)');
+      fogGrad.addColorStop(0.5, 'rgba(60,8,8,0.45)');
+      fogGrad.addColorStop(1,   'rgba(30,2,2,0.85)');
       ctx.fillStyle = fogGrad; ctx.fillRect(0, 0, W, H);
     };
     resizeCity();
@@ -10985,7 +11657,7 @@ function _initLoginBackground() {
   // 2) Asche-Partikel
   const loginBg = document.getElementById('login-bg');
   if (!loginBg) return;
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 38; i++) {
     const el = document.createElement('div');
     el.className = 'ash';
     const size = 1.5 + Math.random() * 3.5;
@@ -10994,8 +11666,18 @@ function _initLoginBackground() {
     loginBg.appendChild(el);
   }
 
-  // 3) Blut-Tropfen (sehr subtil)
-  for (let i = 0; i < 14; i++) {
+  // 3) Glühende Funken (von unten aufsteigend wie aus Trümmerfeuer)
+  for (let i = 0; i < 22; i++) {
+    const el = document.createElement('div');
+    el.className = 'ember';
+    const size = 1.5 + Math.random() * 2.5;
+    el.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;bottom:${Math.random()*-5}%;` +
+      `--ember-drift:${(Math.random()-0.5)*80}px;animation-duration:${5+Math.random()*7}s;animation-delay:${Math.random()*-9}s;`;
+    loginBg.appendChild(el);
+  }
+
+  // 4) Blut-Tropfen (sehr subtil)
+  for (let i = 0; i < 12; i++) {
     const el = document.createElement('div');
     el.className = 'blood-drop';
     const h = 20 + Math.random() * 50;
@@ -11010,6 +11692,9 @@ _initLoginBackground();
 // Pre-Compile nach 2 Frames, dann auf Firebase-Auth warten bevor Loading-Screen verschwindet
 requestAnimationFrame(() => requestAnimationFrame(() => {
   preWarmShaders();
+  // Nach dem Pre-Compile: Welt für Hauptmenü ausblenden, damit nur der Charakter
+  // vor dem 2D-Zombie-Hintergrund sichtbar ist.
+  setMenuMode(true);
   // Warte bis Firebase-Auth UND Shader-Compile fertig sind
   const waitForAuth = setInterval(() => {
     if (_authResolved && _firebaseReady) {
