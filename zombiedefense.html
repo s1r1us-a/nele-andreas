@@ -8873,8 +8873,12 @@ function updateTracersAndFlashes(dt) {
 function updateWeaponHotbar() {
   const hotbar = document.getElementById('weapon-hotbar');
   if (!hotbar) return;
+  // TDZ-safe: gameStarted/gameOver werden per `let` weiter unten deklariert; bei
+  // sehr frühem Aufruf (initPlayerModel) sind sie noch nicht initialisiert.
+  let _started = false, _over = false;
+  try { _started = gameStarted; _over = gameOver; } catch (e) { /* noch in TDZ */ }
   // Im Menü oder Game-Over ausblenden
-  hotbar.style.display = (gameStarted && !gameOver) ? 'flex' : 'none';
+  hotbar.style.display = (_started && !_over) ? 'flex' : 'none';
   for (let i = 0; i < 3; i++) {
     const slotEl = document.getElementById('hb-slot-' + i);
     const iconEl = document.getElementById('hb-icon-' + i);
@@ -8911,7 +8915,9 @@ function updateWeaponHotbar() {
 // Klick auf Hotbar-Slot wechselt die Waffe
 document.querySelectorAll('#weapon-hotbar .hb-slot').forEach(slot => {
   slot.addEventListener('click', () => {
-    if (!gameStarted || gameOver) return;
+    let _started = false, _over = false;
+    try { _started = gameStarted; _over = gameOver; } catch (e) { return; }
+    if (!_started || _over) return;
     const idx = parseInt(slot.getAttribute('data-slot'), 10);
     if (player.weaponSlots[idx] !== -1) selectWeaponSlot(idx);
   });
@@ -9093,17 +9099,22 @@ function performAttack() {
 }
 
 function updateHUD() {
+  // TDZ-safe: kann von Firebase-Callbacks früh aufgerufen werden, bevor
+  // currentWave / enemiesTotalThisWave / currentCoins per `let` deklariert sind.
+  let _wave, _total, _killed, _coins;
+  try { _wave = currentWave; _total = enemiesTotalThisWave; _killed = enemiesKilledThisWave; _coins = currentCoins; }
+  catch (e) { return; /* noch in TDZ — wird beim nächsten Tick neu versucht */ }
   document.getElementById('hp-fill').style.width = Math.max(0, player.hp / player.maxHp * 100) + '%';
   // Numerischer HP-Wert
   const hpCurEl = document.getElementById('hp-cur');
   const hpMaxEl = document.getElementById('hp-max');
   if (hpCurEl) hpCurEl.textContent = Math.max(0, Math.round(player.hp));
   if (hpMaxEl) hpMaxEl.textContent = ' / ' + Math.round(player.maxHp);
-  document.getElementById('wave-num').textContent = currentWave || 1;
-  const total = enemiesTotalThisWave || 0; const killed = enemiesKilledThisWave || 0;
+  document.getElementById('wave-num').textContent = _wave || 1;
+  const total = _total || 0; const killed = _killed || 0;
   document.getElementById('enemies-killed').textContent = killed; document.getElementById('enemies-total').textContent = total;
   document.getElementById('wave-progress').style.width = (total > 0 ? Math.min(100, (killed / total) * 100) : 0) + '%';
-  document.getElementById('money').textContent = currentCoins.toLocaleString('de-DE');
+  document.getElementById('money').textContent = (_coins || 0).toLocaleString('de-DE');
 
   // Inventar-Zähler aktualisieren (Filtert alle Slots, die nicht null sind)
   if (typeof playerInventory !== 'undefined') {
