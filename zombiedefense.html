@@ -9812,9 +9812,19 @@ function update(dt) {
   if (window.companionDog && window.companionDogState && gameStarted && !gameOver) {
     const distDog = player.position.distanceTo(window.companionDog.worldPos);
     const dogPhase = window.companionDogState.phase;
-    if (distDog < 3.0) {
+    if (distDog < 3.5) {
       if (dogPhase === 'sleeping' || dogPhase === 'sitting') canCallDog = true;
-      else if (dogPhase === 'following' || dogPhase === 'attacking') canDismissDog = true;
+      else if (dogPhase === 'following' || dogPhase === 'attacking') {
+        // Nur anzeigen, wenn man Chichinya direkt anschaut (wie bei Ashnikko)
+        const camDirDog = new THREE.Vector3();
+        camera.getWorldDirection(camDirDog);
+        camDirDog.y = 0;
+        camDirDog.normalize();
+        const toDog = new THREE.Vector3().subVectors(window.companionDog.worldPos, player.position);
+        toDog.y = 0;
+        toDog.normalize();
+        if (camDirDog.dot(toDog) > 0.8) canDismissDog = true;
+      }
     }
   }
 
