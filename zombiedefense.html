@@ -798,6 +798,68 @@
 
 <script type="module">
 import * as THREE from 'three';
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// Firebase-Initialisierung (gleiche App wie index.html)
+const _fbConfig = {
+  apiKey:            "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+  authDomain:        "nele-und-andreas.firebaseapp.com",
+  databaseURL:       "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "nele-und-andreas",
+  storageBucket:     "nele-und-andreas.firebasestorage.app",
+  messagingSenderId: "694973604970",
+  appId:             "1:694973604970:web:331975714dca0cd32ad613"
+};
+const _fbApp = getApps().length === 0 ? initializeApp(_fbConfig) : getApp();
+const _db   = getDatabase(_fbApp);
+const _auth = getAuth(_fbApp);
+
+// Email → Spieler-Mapping
+const EMAIL_KEY_MAP = { "raederich@outlook.com": "andreas", "nele.busse@web.de": "nele" };
+
+let _myKey = null;   // "nele" | "andreas"
+let _oppKey = null;  // der andere
+let _firebaseReady = false;
+let _isHost = false;
+let _lastPosSend = 0;
+let _saveTimer = null;
+let _enemySyncTimer = 0;
+let _oppOnline = false;
+
+// Gegner-Spieler State (targetPos muss THREE.Vector3 sein — wird nach THREE-Import angelegt)
+const oppState = { facing: 0, hp: 100, alive: true, visible: false, group: null, rig: null, nameLabel: null, targetPos: new THREE.Vector3(5, 0, 10) };
+
+// Auth abwarten bevor Spiel startet
+let _authResolved = false;
+onAuthStateChanged(_auth, user => {
+  _authResolved = true;
+  if (!user || !EMAIL_KEY_MAP[user.email]) {
+    window.location.href = 'index.html';
+    return;
+  }
+  _myKey  = EMAIL_KEY_MAP[user.email];
+  _oppKey = _myKey === 'nele' ? 'andreas' : 'nele';
+  _firebaseReady = true;
+
+  // Spielstand aus Firebase laden (ersetzt localStorage)
+  _loadProgressFromFirebase().then(() => {
+    // Charakter-Farben initialisieren
+    _applyAccountColors();
+    initPlayerModel();
+    renderWardrobeMenu();
+    // Startscreen-Name auf Account setzen
+    const nameEl = document.getElementById('showcase-name');
+    if (nameEl) nameEl.textContent = (_myKey === 'nele' ? '🌸 Nele' : '⚡ Andreas') + ' — Bereit!';
+    // Diamanten-Anzeige im HUD aktualisieren
+    if (typeof updateHUD === 'function') updateHUD();
+    // Presence + Listeners starten
+    _startPresence();
+    _startOpponentListener();
+    _startWaveListener();
+  });
+});
 
 // === Mobile-Block: Spiel läuft nur am PC ===
 const isMobileDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0)
@@ -4624,15 +4686,67 @@ dirLight.shadow.camera.near = 1; dirLight.shadow.camera.far = 120;
 const d = 45; dirLight.shadow.camera.left = -d; dirLight.shadow.camera.right = d; dirLight.shadow.camera.top = d; dirLight.shadow.camera.bottom = -d;
 dirLight.shadow.bias = -0.0005; scene.add(dirLight);
 
-function loadProgress() {
-  const saved = localStorage.getItem('ikkimel_save');
-  const defaultWardrobe = { shirt: 0x882233, pants: 0x1a2639, hair: 0xffda66, hairStyle: 1 };
-  const defaultData = { money: 0, unlocked: ['w0'], wardrobe: defaultWardrobe, weaponSlots: [0, -1, -1] };
-  if (saved) { const parsed = JSON.parse(saved); return { ...defaultData, ...parsed, wardrobe: { ...defaultWardrobe, ...(parsed.wardrobe || {}) }, weaponSlots: parsed.weaponSlots || [0, -1, -1] }; }
-  return defaultData;
+// === Charakter-Standardfarben pro Account ===
+const ACCOUNT_DEFAULTS = {
+  nele:    { shirt: 0xff69b4, pants: 0x9b59b6, hair: 0x8B4513, hairStyle: 2, feminine: true },
+  andreas: { shirt: 0x3498db, pants: 0x2c3e50, hair: 0x4a3728, hairStyle: 1, feminine: false }
+};
+
+// savedData wird async befüllt — Defaults damit es vor Auth-Auflösung nicht crasht
+let savedData = { money: 0, unlocked: ['w0'], wardrobe: ACCOUNT_DEFAULTS.nele, weaponSlots: [0, -1, -1] };
+
+async function _loadProgressFromFirebase() {
+  if (!_myKey) return;
+  try {
+    const snap = await get(ref(_db, `game/zombie/save/${_myKey}`));
+    const d = snap.val() || {};
+    const def = ACCOUNT_DEFAULTS[_myKey];
+    savedData = {
+      money:      d.money      ?? 0,
+      unlocked:   d.unlocked   ?? ['w0'],
+      wardrobe:   { ...def, ...(d.wardrobe || {}) },
+      weaponSlots: d.weaponSlots ?? [0, -1, -1]
+    };
+    // Spieler-Objekt live aktualisieren
+    if (typeof player !== 'undefined') {
+      player.money = savedData.money;
+      player.weaponSlots = savedData.weaponSlots;
+      // Aktive Waffe aus Slot 0 laden
+      const slot0 = savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0;
+      if (WEAPONS[slot0]) {
+        player.weaponStats = { ...WEAPONS[slot0], tier: slot0 };
+      }
+    }
+    // Waffen-Unlock-Status setzen
+    WEAPONS.forEach(w => { w.locked = !savedData.unlocked.includes(w.id); });
+  } catch (e) { /* Firebase-Fehler: Defaults bleiben */ }
 }
-const savedData = loadProgress();
-function saveProgress() { localStorage.setItem('ikkimel_save', JSON.stringify({ money: player.money, unlocked: WEAPONS.filter(w => !w.locked).map(w => w.id), wardrobe: playerColors, weaponSlots: player.weaponSlots })); }
+
+function _applyAccountColors() {
+  if (!_myKey) return;
+  const def = ACCOUNT_DEFAULTS[_myKey];
+  playerColors.shirt     = savedData.wardrobe.shirt     ?? def.shirt;
+  playerColors.pants     = savedData.wardrobe.pants     ?? def.pants;
+  playerColors.hair      = savedData.wardrobe.hair      ?? def.hair;
+  playerColors.hairStyle = savedData.wardrobe.hairStyle ?? def.hairStyle;
+  playerColors.feminine  = def.feminine;
+}
+
+function saveProgress() {
+  if (!_firebaseReady || !_myKey) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    set(ref(_db, `game/zombie/save/${_myKey}`), {
+      money:       player.money,
+      unlocked:    WEAPONS.filter(w => !w.locked).map(w => w.id),
+      wardrobe:    { shirt: playerColors.shirt, pants: playerColors.pants, hair: playerColors.hair, hairStyle: playerColors.hairStyle },
+      weaponSlots: player.weaponSlots
+    }).catch(() => {});
+  }, 500);
+}
+
+// loadProgress bleibt als Dummy damit kein anderer Code bricht
+function loadProgress() { return savedData; }
 
 const DEFENSES = [
   { id: 'b1', name: '🚧 Barrikade', desc: 'Holzwand blockiert Zombies', cost: 100, type: 'barricade', w:3, d:1, hp: 500, color: 0x8b5a2b },
@@ -5449,6 +5563,7 @@ const WEAPONS = [
 const ammoState = {};
 WEAPONS.forEach(w => { if (w.ranged) ammoState[w.id] = w.magSize; });
 
+// playerColors: wird nach Auth via _applyAccountColors() überschrieben
 const playerColors = { skin: 0xffd2b3, shirt: savedData.wardrobe.shirt, pants: savedData.wardrobe.pants, hair: savedData.wardrobe.hair, hairStyle: savedData.wardrobe.hairStyle !== undefined ? savedData.wardrobe.hairStyle : 1, feminine: true };
 const player = { group: new THREE.Group(), position: new THREE.Vector3(0, 0, 10), velocity: new THREE.Vector3(), facing: 0, hp: 100, maxHp: 100, stamina: 100, maxStamina: 100, staminaRegenDelay: 0, sprintLocked: false, money: savedData.money, attacking: false, attackTime: 0, attackHitDone: false, pendingMeleeHits: [], onGround: true, jumpAnim: 0, landAnim: 0, invuln: 0, weaponStats: { ...WEAPONS[savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0], tier: savedData.weaponSlots[0] !== -1 ? savedData.weaponSlots[0] : 0 }, weaponSlots: savedData.weaponSlots, activeSlot: 0, rig: null, weaponGroup: null, fireCooldown: 0, reloading: false, reloadProgress: 0, mouseHeld: false };
 
@@ -5529,7 +5644,7 @@ showcasePodium.userData = { fogA, fogB, debrisGroup };
 
 function initPlayerModel() {
   if(player.rig) { player.group.remove(player.rig.group); player.rig = null; }
-  player.rig = buildRiggedHumanoid(false, playerColors, { feminine: true }); player.group.add(player.rig.group);
+  player.rig = buildRiggedHumanoid(false, playerColors, { feminine: !!playerColors.feminine }); player.group.add(player.rig.group);
   player.weaponGroup = buildWeapon(player.weaponStats.tier);
   if (player.weaponStats.ranged) {
     // Schusswaffen: Griffpunkt exakt in die rechte Hand legen, Lauf zeigt nach vorn
@@ -5730,6 +5845,247 @@ function buildWeapon(tier) {
   return group;
 }
 initPlayerModel(); scene.add(player.group);
+
+// =====================================================================
+// MULTIPLAYER-SYSTEM
+// =====================================================================
+
+// Gegner-Spieler 3D-Gruppe initialisieren
+function _initOppPlayer() {
+  if (oppState.group) { scene.remove(oppState.group); }
+  const oppColors = ACCOUNT_DEFAULTS[_oppKey] || ACCOUNT_DEFAULTS.nele;
+  oppState.rig = buildRiggedHumanoid(false, { skin: 0xffd2b3, ...oppColors }, { feminine: oppColors.feminine });
+  oppState.group = new THREE.Group();
+  oppState.group.add(oppState.rig.group);
+  oppState.targetPos = new THREE.Vector3(5, 0, 10);
+  oppState.group.visible = false;
+  oppState.group.position.set(5, 0, 10);
+  scene.add(oppState.group);
+
+  // Name-Label als Sprite über dem Kopf
+  const canvas2d = document.createElement('canvas');
+  canvas2d.width = 256; canvas2d.height = 64;
+  const ctx2d = canvas2d.getContext('2d');
+  ctx2d.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx2d.roundRect(4, 8, 248, 48, 10);
+  ctx2d.fill();
+  ctx2d.font = 'bold 28px Arial';
+  ctx2d.fillStyle = '#ffffff';
+  ctx2d.textAlign = 'center';
+  ctx2d.fillText(_oppKey === 'nele' ? 'Nele 🌸' : 'Andreas ⚡', 128, 42);
+  const tex = new THREE.CanvasTexture(canvas2d);
+  const labelMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 0.45),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide })
+  );
+  labelMesh.position.set(0, 2.5, 0);
+  oppState.group.add(labelMesh);
+  oppState.nameLabel = labelMesh;
+}
+
+// Meine Position zu Firebase senden (50ms throttle)
+function _sendMyPosition() {
+  if (!_firebaseReady || !_myKey || !gameStarted) return;
+  const now = Date.now();
+  if (now - _lastPosSend < 50) return;
+  _lastPosSend = now;
+  set(ref(_db, `game/zombie/positions/${_myKey}`), {
+    x: player.position.x, y: player.position.y, z: player.position.z,
+    facing: player.facing, hp: player.hp, alive: !gameOver, ts: now
+  }).catch(() => {});
+}
+
+// Auf Gegner-Position hören
+function _startOpponentListener() {
+  if (!_firebaseReady || !_oppKey) return;
+  onValue(ref(_db, `game/zombie/positions/${_oppKey}`), snap => {
+    const d = snap.val();
+    if (!d || !oppState.group) return;
+    // Veraltete Daten ignorieren (>8s)
+    if (Date.now() - d.ts > 8000) { oppState.group.visible = false; return; }
+    oppState.targetPos.set(d.x ?? 0, d.y ?? 0, d.z ?? 0);
+    oppState.facing = d.facing ?? 0;
+    oppState.hp = d.hp ?? 100;
+    oppState.alive = d.alive ?? true;
+    if (_oppOnline) oppState.group.visible = true;
+  });
+}
+
+// Gegner-Charakter interpoliert zur Zielposition
+function _updateOppPlayer(dt) {
+  if (!oppState.group || !oppState.group.visible) return;
+  const lerpSpeed = Math.min(1, dt * 14);
+  oppState.group.position.lerp(oppState.targetPos, lerpSpeed);
+  oppState.group.rotation.y = THREE.MathUtils.lerp(oppState.group.rotation.y, -oppState.facing + Math.PI, lerpSpeed * 0.7);
+  if (oppState.rig) {
+    // Einfache Lauf-Animation für den Gegner-Charakter
+    const dist = oppState.group.position.distanceTo(oppState.targetPos);
+    const moving = dist > 0.05;
+    const walkCycle = globalTime * (moving ? 6 : 0);
+    const parts = oppState.rig.parts;
+    if (parts.legL) {
+      if (parts.legL.thigh) parts.legL.thigh.rotation.x = Math.sin(walkCycle) * (moving ? 0.5 : 0);
+      if (parts.legL.calf)  parts.legL.calf.rotation.x  = Math.abs(Math.sin(walkCycle)) * (moving ? 0.4 : 0);
+    }
+    if (parts.legR) {
+      if (parts.legR.thigh) parts.legR.thigh.rotation.x = -Math.sin(walkCycle) * (moving ? 0.5 : 0);
+      if (parts.legR.calf)  parts.legR.calf.rotation.x  = Math.abs(Math.sin(walkCycle + Math.PI)) * (moving ? 0.4 : 0);
+    }
+    if (parts.armL && parts.armL.upper) parts.armL.upper.rotation.x = -Math.sin(walkCycle) * (moving ? 0.35 : 0.1);
+    if (parts.armR && parts.armR.upper) parts.armR.upper.rotation.x = Math.sin(walkCycle) * (moving ? 0.35 : 0.1);
+    if (parts.root) parts.root.position.y = 0.85 + (moving ? Math.abs(Math.sin(walkCycle * 0.5)) * 0.04 : 0);
+    // Name-Label immer zur Kamera drehen (Billboard)
+    if (oppState.nameLabel) {
+      oppState.nameLabel.lookAt(camera.position);
+    }
+  }
+}
+
+// Online-Präsenz
+function _startPresence() {
+  if (!_firebaseReady || !_myKey) return;
+  const onlineRef = ref(_db, `game/zombie/online/${_myKey}`);
+  set(onlineRef, { at: Date.now() }).catch(() => {});
+  onDisconnect(onlineRef).remove().catch(() => {});
+
+  // Host bestimmen: wer als erstes online war
+  onValue(ref(_db, 'game/zombie/online'), snap => {
+    const data = snap.val() || {};
+    const myAt  = data[_myKey]?.at  ?? Infinity;
+    const oppAt = data[_oppKey]?.at ?? Infinity;
+    _isHost = myAt <= oppAt;
+    _oppOnline = !!(data[_oppKey]?.at);
+    if (_oppOnline && oppState.group) {
+      if (!oppState.rig) _initOppPlayer();
+      oppState.group.visible = true;
+    } else if (oppState.group) {
+      oppState.group.visible = false;
+    }
+  });
+
+  // Beim Verlassen der Seite aufräumen
+  window.addEventListener('beforeunload', () => {
+    set(ref(_db, `game/zombie/online/${_myKey}`), null).catch(() => {});
+    set(ref(_db, `game/zombie/positions/${_myKey}`), null).catch(() => {});
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      set(ref(_db, `game/zombie/online/${_myKey}`), null).catch(() => {});
+    } else {
+      set(ref(_db, `game/zombie/online/${_myKey}`), { at: Date.now() }).catch(() => {});
+    }
+  });
+}
+
+// Wellen-Sync: Host schreibt beim Wellen-Start, Non-Host startet lokal nach
+let _lastReceivedWave = 0;
+function _startWaveListener() {
+  if (!_firebaseReady) return;
+  onValue(ref(_db, 'game/zombie/session'), snap => {
+    const d = snap.val();
+    if (!d || d.host === _myKey) return; // eigene Schreibvorgänge ignorieren
+    // Neue Welle erkannt → lokal starten
+    if (d.wave > _lastReceivedWave && d.waveActive) {
+      _lastReceivedWave = d.wave;
+      if (!waveActive && gameStarted && !gameOver) {
+        _startWaveLocal(d.wave);
+      }
+    }
+  });
+}
+
+// Interne Wave-Start-Funktion (kein Host-Check, für Sync-Trigger)
+function _startWaveLocal(waveNum) {
+  currentWave = waveNum; waveActive = true; switchActive = false;
+  waveGeneration++;
+  const myGen = waveGeneration;
+  if(window.terminalScreen) window.terminalScreen.material.color.setHex(0xff0033);
+  if(window.terminalLight) window.terminalLight.color.setHex(0xff0033);
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    if ((!enemies[i].isCaveZombie && !enemies[i].isCryptBoss) || !enemies[i].alive) {
+      scene.remove(enemies[i].group); enemies.splice(i, 1);
+    }
+  }
+  totalSpawnedThisWave = 0; enemiesTotalThisWave = 0; enemiesKilledThisWave = 0;
+  fireballs.forEach(f => scene.remove(f.mesh)); fireballs.length = 0;
+  lavaPools.forEach(p => scene.remove(p.mesh)); lavaPools.length = 0;
+  if (currentWave % 5 === 0) {
+    enemiesTotalThisWave = 1;
+    setTimeout(() => { if (myGen === waveGeneration && !gameOver) { enemies.push(new Boss(currentWave)); totalSpawnedThisWave++; } }, 1500);
+    showMessage(`BOSS WELLE ${currentWave}`, 3000);
+  } else {
+    const count = 8 + currentWave * 5 + Math.floor(currentWave * currentWave * 0.5);
+    enemiesTotalThisWave = count;
+    const spawnDelay = Math.max(120, 380 - currentWave * 15);
+    for (let i = 0; i < count; i++) { setTimeout(() => { if (myGen === waveGeneration && !gameOver) { enemies.push(new Enemy(currentWave)); totalSpawnedThisWave++; } }, i * spawnDelay); }
+    showMessage(`WELLE ${currentWave}`, 1500);
+  }
+  updateHUD();
+}
+
+function _syncWaveToFirebase() {
+  if (!_firebaseReady || !_myKey) return;
+  set(ref(_db, 'game/zombie/session'), {
+    wave: currentWave, waveActive, host: _myKey, ts: Date.now()
+  }).catch(() => {});
+}
+
+// Gegner-Treffer melden (Non-Host → Host)
+function _reportHit(enemyIdx, dmg) {
+  if (_isHost) return; // Host verarbeitet direkt
+  push(ref(_db, `game/zombie/hits`), { idx: enemyIdx, dmg, by: _myKey, ts: Date.now() }).catch(() => {});
+}
+
+// Host: Treffer vom Non-Host empfangen und anwenden
+function _startHitListener() {
+  if (!_firebaseReady) return;
+  onValue(ref(_db, 'game/zombie/hits'), snap => {
+    if (!_isHost) return;
+    snap.forEach(child => {
+      const h = child.val();
+      if (!h || Date.now() - h.ts > 3000) return;
+      if (enemies[h.idx] && enemies[h.idx].alive) {
+        enemies[h.idx].hp -= h.dmg;
+        if (enemies[h.idx].hp <= 0) enemies[h.idx].alive = false;
+      }
+    });
+    // Verarbeitete Hits löschen
+    set(ref(_db, 'game/zombie/hits'), null).catch(() => {});
+  });
+}
+
+// Gegner-Positionen vom Host zu Firebase schreiben (100ms throttle)
+let _lastEnemySync = 0;
+function _syncEnemiesToFirebase() {
+  if (!_isHost || !_firebaseReady || !gameStarted) return;
+  const now = Date.now();
+  if (now - _lastEnemySync < 100) return;
+  _lastEnemySync = now;
+  const eData = {};
+  enemies.forEach((e, i) => {
+    if (!e.alive) return;
+    eData[i] = { x: e.position.x, z: e.position.z, hp: e.hp, maxHp: e.maxHp, ts: now };
+  });
+  set(ref(_db, 'game/zombie/enemies'), eData).catch(() => {});
+}
+
+// Non-Host: Gegner aus Firebase lesen und rendern
+const _remoteEnemies = {}; // idx → { x, z, hp, maxHp }
+function _startEnemyListener() {
+  if (!_firebaseReady) return;
+  onValue(ref(_db, 'game/zombie/enemies'), snap => {
+    if (_isHost) return;
+    const data = snap.val() || {};
+    for (const key in _remoteEnemies) { _remoteEnemies[key].stale = true; }
+    for (const idx in data) {
+      _remoteEnemies[idx] = { ...(data[idx] || {}), stale: false };
+    }
+  });
+}
+
+// =====================================================================
+// ENDE MULTIPLAYER-SYSTEM
+// =====================================================================
 
 // Hauptmenü zeigt nur noch die Garderobe — Waffen werden im Spiel am Waffen-Terminal verwaltet.
 const showcaseNameEl = document.getElementById('showcase-name');
@@ -7252,6 +7608,7 @@ let enemiesTotalThisWave = 0, enemiesKilledThisWave = 0;
 function startWave() {
   currentWave++; waveActive = true; switchActive = false;
   waveGeneration++;
+  _syncWaveToFirebase(); // Wellen-Start zu Firebase senden
   const myGen = waveGeneration;
   if(window.terminalScreen) window.terminalScreen.material.color.setHex(0xff0033);
   if(window.terminalLight) window.terminalLight.color.setHex(0xff0033);
@@ -8327,6 +8684,11 @@ function update(dt) {
         }
     }
   globalTime += dt;
+
+  // === MULTIPLAYER: Meine Position senden + Gegner rendern ===
+  _sendMyPosition();
+  _updateOppPlayer(dt);
+  if (_isHost) { _syncEnemiesToFirebase(); }
   if (window.godMode) { player.hp = player.maxHp; player.invuln = 1.0; }
   const pPos = particles.geometry.attributes.position.array;
   for(let i=0; i<particleCount; i++) {
@@ -10254,12 +10616,20 @@ function preWarmShaders() {
 
 updateHUD(); loop();
 
-// Pre-Compile nach 2 Frames (Charakter + Szene initial gerendert), dann Loading-Screen freigeben.
-// Wichtig: preWarmShaders ist synchron und blockiert kurz — das ist okay weil wir noch im Loading sind.
+// Pre-Compile nach 2 Frames, dann auf Firebase-Auth warten bevor Loading-Screen verschwindet
 requestAnimationFrame(() => requestAnimationFrame(() => {
   preWarmShaders();
-  // Kleine Pause damit der Browser den Compile-Hick verarbeitet, dann erst "ready"
-  requestAnimationFrame(() => { window._gameReady = true; });
+  // Warte bis Firebase-Auth UND Shader-Compile fertig sind
+  const waitForAuth = setInterval(() => {
+    if (_authResolved && _firebaseReady) {
+      clearInterval(waitForAuth);
+      // Gegner-Charakter initialisieren (braucht buildRiggedHumanoid, ist jetzt verfügbar)
+      _initOppPlayer();
+      _startHitListener();
+      _startEnemyListener();
+      window._gameReady = true;
+    }
+  }, 100);
 }));
 </script>
 </body>
