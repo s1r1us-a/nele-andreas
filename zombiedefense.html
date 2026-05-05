@@ -104,6 +104,49 @@
   
   .key-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 24px; padding: 0 7px; background: rgba(0,0,0,0.7); color: #f0e8e8; border: 1px solid rgba(255,80,80,0.6); border-radius: 2px; font-weight: 900; font-size: 12px; box-shadow: 0 2px 0 rgba(0,0,0,0.6), inset 0 0 6px rgba(196,30,30,0.2); letter-spacing: 1px; font-family: 'Courier New', monospace; }
 
+  /* === ONLINE-STATUS PANEL === */
+  #online-indicator {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    background: linear-gradient(180deg, rgba(18,8,10,0.88) 0%, rgba(10,4,5,0.92) 100%);
+    border: 1px solid rgba(180,30,30,0.4); border-radius: 4px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    pointer-events: none; cursor: default;
+    font-family: 'Courier New', monospace; font-size: 11px; font-weight: 900;
+    letter-spacing: 1px; color: #b8a8a8; text-transform: uppercase;
+    position: relative;
+  }
+  #online-indicator::before { content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:2px; background: linear-gradient(90deg, transparent 0%, #c41e1e 50%, transparent 100%); }
+  .online-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; transition: background 0.4s, box-shadow 0.4s; }
+  .online-dot.on  { background: #44ff88; box-shadow: 0 0 6px #44ff88; }
+  .online-dot.off { background: #555; box-shadow: none; }
+  .online-name { font-size: 10px; }
+
+  #online-panel {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: linear-gradient(180deg, rgba(18,8,10,0.97) 0%, rgba(10,4,5,0.99) 100%);
+    border: 1px solid rgba(196,30,30,0.6); border-radius: 6px;
+    padding: 28px 40px; z-index: 200; min-width: 320px;
+    box-shadow: 0 0 60px rgba(196,30,30,0.25), 0 20px 60px rgba(0,0,0,0.9);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    display: none; pointer-events: none;
+    font-family: 'Courier New', monospace;
+  }
+  #online-panel::before { content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:2px; background: linear-gradient(90deg, transparent 0%, #c41e1e 50%, transparent 100%); box-shadow: 0 0 10px rgba(196,30,30,0.5); }
+  #online-panel.show { display: block; }
+  .online-panel-title { font-size: 10px; letter-spacing: 4px; color: #c44; text-transform: uppercase; margin-bottom: 20px; }
+  .online-player-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .online-player-row:last-child { border-bottom: none; }
+  .online-player-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; transition: background 0.4s, box-shadow 0.4s; }
+  .online-player-dot.on  { background: #44ff88; box-shadow: 0 0 8px #44ff88; }
+  .online-player-dot.off { background: #555; box-shadow: none; }
+  .online-player-name { font-size: 16px; font-weight: 900; color: #f0e8e8; flex: 1; letter-spacing: 2px; }
+  .online-player-status { font-size: 10px; letter-spacing: 2px; }
+  .online-player-status.on  { color: #44ff88; }
+  .online-player-status.off { color: #666; }
+  .online-player-you { font-size: 9px; color: #c44; letter-spacing: 2px; margin-left: 6px; opacity: 0.8; }
+  .online-panel-hint { margin-top: 18px; font-size: 9px; letter-spacing: 3px; color: #555; text-align: center; }
+
   @keyframes promptPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
   #defense-shop-screen { position: fixed; inset: 0; background: rgba(5,2,3,0.88); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -510,7 +553,32 @@
       <span class="hud-label" style="margin-right: 12px;">Trank <span class="key-badge" style="transform: scale(0.75) translateY(-2px); margin-left: 2px;">4</span></span>
       <span class="hud-value" id="potion-count" style="font-size: 18px; color: #50c878;">0</span>
     </div>
+    <!-- Kompakte Online-Anzeige -->
+    <div id="online-indicator">
+      <span class="online-dot off" id="dot-me"></span>
+      <span class="online-name" id="name-me">—</span>
+      <span style="color:#444; margin: 0 4px;">|</span>
+      <span class="online-dot off" id="dot-opp"></span>
+      <span class="online-name" id="name-opp">—</span>
+      <span style="color:#555; margin-left: 10px; font-size:9px; opacity:0.7;"><span class="key-badge" style="transform: scale(0.7) translateY(-1px);">O</span></span>
+    </div>
   </div>
+</div>
+
+<!-- Großes Online-Status-Panel (Taste O) -->
+<div id="online-panel">
+  <div class="online-panel-title">Online-Status</div>
+  <div class="online-player-row">
+    <div class="online-player-dot off" id="panel-dot-me"></div>
+    <div class="online-player-name" id="panel-name-me">—<span class="online-player-you" id="panel-you-me"></span></div>
+    <div class="online-player-status off" id="panel-status-me">Offline</div>
+  </div>
+  <div class="online-player-row">
+    <div class="online-player-dot off" id="panel-dot-opp"></div>
+    <div class="online-player-name" id="panel-name-opp">—<span class="online-player-you" id="panel-you-opp"></span></div>
+    <div class="online-player-status off" id="panel-status-opp">Offline</div>
+  </div>
+  <div class="online-panel-hint">O — schließen</div>
 </div>
 
 <div id="crosshair"></div>
@@ -852,6 +920,8 @@ onAuthStateChanged(_auth, user => {
     // Startscreen-Name auf Account setzen
     const nameEl = document.getElementById('showcase-name');
     if (nameEl) nameEl.textContent = (_myKey === 'nele' ? '🌸 Nele' : '⚡ Andreas') + ' — Bereit!';
+    // Online-Anzeige initial befüllen (nur ich bin online)
+    _updateOnlineUI();
     // Diamanten-Anzeige im HUD aktualisieren
     if (typeof updateHUD === 'function') updateHUD();
     // Presence + Listeners starten
@@ -5961,6 +6031,7 @@ function _startPresence() {
     } else if (oppState.group) {
       oppState.group.visible = false;
     }
+    _updateOnlineUI();
   });
 
   // Beim Verlassen der Seite aufräumen
@@ -5975,6 +6046,53 @@ function _startPresence() {
       set(ref(_db, `game/zombie/online/${_myKey}`), { at: Date.now() }).catch(() => {});
     }
   });
+}
+
+// === ONLINE-STATUS UI ===
+let _onlinePanelOpen = false;
+
+function _updateOnlineUI() {
+  if (!_myKey) return;
+  const oppName = _oppKey === 'nele' ? 'Nele' : 'Andreas';
+  const myName  = _myKey  === 'nele' ? 'Nele' : 'Andreas';
+
+  // Kompakte Anzeige (immer sichtbar)
+  const dotMe   = document.getElementById('dot-me');
+  const dotOpp  = document.getElementById('dot-opp');
+  const nameMe  = document.getElementById('name-me');
+  const nameOpp = document.getElementById('name-opp');
+  if (dotMe)  { dotMe.className  = 'online-dot on'; }
+  if (dotOpp) { dotOpp.className = _oppOnline ? 'online-dot on' : 'online-dot off'; }
+  if (nameMe)  nameMe.textContent  = myName;
+  if (nameOpp) nameOpp.textContent = oppName;
+
+  // Großes Panel
+  const pdotMe    = document.getElementById('panel-dot-me');
+  const pdotOpp   = document.getElementById('panel-dot-opp');
+  const pNameMe   = document.getElementById('panel-name-me');
+  const pNameOpp  = document.getElementById('panel-name-opp');
+  const pStatMe   = document.getElementById('panel-status-me');
+  const pStatOpp  = document.getElementById('panel-status-opp');
+  const pYouMe    = document.getElementById('panel-you-me');
+  const pYouOpp   = document.getElementById('panel-you-opp');
+
+  if (pdotMe)   pdotMe.className  = 'online-player-dot on';
+  if (pdotOpp)  pdotOpp.className = _oppOnline ? 'online-player-dot on' : 'online-player-dot off';
+  if (pNameMe)  pNameMe.childNodes[0].textContent = myName;
+  if (pNameOpp) pNameOpp.childNodes[0].textContent = oppName;
+  if (pYouMe)   pYouMe.textContent  = ' (Du)';
+  if (pYouOpp)  pYouOpp.textContent = '';
+  if (pStatMe)  { pStatMe.textContent = 'Online'; pStatMe.className = 'online-player-status on'; }
+  if (pStatOpp) { pStatOpp.textContent = _oppOnline ? 'Online' : 'Offline'; pStatOpp.className = _oppOnline ? 'online-player-status on' : 'online-player-status off'; }
+}
+
+function _toggleOnlinePanel() {
+  _onlinePanelOpen = !_onlinePanelOpen;
+  const panel = document.getElementById('online-panel');
+  if (panel) {
+    if (_onlinePanelOpen) { _updateOnlineUI(); panel.classList.add('show'); }
+    else panel.classList.remove('show');
+  }
 }
 
 // Wellen-Sync: Host schreibt beim Wellen-Start, Non-Host startet lokal nach
@@ -7688,11 +7806,20 @@ const keys = {};
 // Setze dies auf false, wenn du das Spiel veröffentlichst!
 window.DEV_MODE = true; 
 
-window.addEventListener('keydown', e => { 
-    keys[e.code] = true; if(e.code==='Space') e.preventDefault(); 
+window.addEventListener('keydown', e => {
+    keys[e.code] = true; if(e.code==='Space') e.preventDefault();
     if(e.code==='Tab') {
         e.preventDefault();
         toggleWeaponWheel();
+    }
+    if (e.code === 'KeyO') {
+        e.preventDefault();
+        _toggleOnlinePanel();
+    }
+    if (e.code === 'Escape' && _onlinePanelOpen) {
+        _onlinePanelOpen = false;
+        const panel = document.getElementById('online-panel');
+        if (panel) panel.classList.remove('show');
     }
     if (gameStarted && !gameOver && !window.weaponWheelActive) {
         if (e.code === 'Digit1') selectWeaponSlot(0);
