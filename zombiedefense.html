@@ -1769,6 +1769,190 @@ wTermGroup.add(wDesk, wScreen, wKeyb, window.weaponTerminalScreen, window.weapon
 }
 buildWalkableHouse(35, -35);
 
+// ============================================================================
+// COMPANION DOG: kleiner schwarzer Hund "CHICHINYA" wartet im Haus
+// (Begleiter-Mechanik nach Vorbild von Ashnikko: Folgen, Kampf, Animationen)
+// ============================================================================
+function buildDogRig(opts = {}) {
+    const fur     = opts.fur   ?? 0x111111; // Tiefschwarz
+    const belly   = opts.belly ?? 0x2a2a2a; // Bauch leicht heller
+    const noseCol = opts.nose  ?? 0x000000;
+    const eyeCol  = opts.eye   ?? 0xffaa22; // Bernstein-Augen
+    const tongueCol = 0xff5577;
+
+    const furMat    = ToonMat(fur);
+    const bellyMat  = ToonMat(belly);
+    const noseMat   = ToonMat(noseCol);
+    const eyeMat    = new THREE.MeshBasicMaterial({ color: eyeCol });
+    const tongueMat = ToonMat(tongueCol);
+    const teethMat  = ToonMat(0xeeeeee);
+    const clawMat   = ToonMat(0x222222);
+
+    const group = new THREE.Group();
+
+    // ROOT: Hüft-Pivot in Schulterhöhe (Bodenkontakt der Pfoten = y≈0)
+    const root = new THREE.Group();
+    root.position.y = 0.42;
+    group.add(root);
+
+    // RUMPF
+    const torso = new THREE.Group();
+    root.add(torso);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.30, 0.56), furMat);
+    body.castShadow = true; torso.add(body);
+    const bodyBelly = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.10, 0.50), bellyMat);
+    bodyBelly.position.y = -0.13; torso.add(bodyBelly);
+
+    // HALS + KOPF
+    const neck = new THREE.Group();
+    neck.position.set(0, 0.06, 0.30);
+    torso.add(neck);
+    const neckMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.20, 0.18), furMat);
+    neckMesh.position.set(0, 0.04, 0.04); neck.add(neckMesh);
+
+    const head = new THREE.Group();
+    head.position.set(0, 0.14, 0.18);
+    neck.add(head);
+    const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 0.24), furMat);
+    head.add(headMesh);
+
+    // SCHNAUZE + MAUL (öffnet sich beim Bellen / Beißen)
+    const snout = new THREE.Group();
+    snout.position.set(0, -0.04, 0.16); head.add(snout);
+    const snoutMesh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.13, 0.16), furMat);
+    snout.add(snoutMesh);
+    const noseTip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.04), noseMat);
+    noseTip.position.set(0, 0.03, 0.10); snout.add(noseTip);
+
+    const jaw = new THREE.Group();
+    jaw.position.set(0, -0.05, 0.0); snout.add(jaw);
+    const lowerJaw = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.13), bellyMat);
+    lowerJaw.position.z = 0.02; jaw.add(lowerJaw);
+    const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.10), tongueMat);
+    tongue.position.set(0, 0.02, 0.05); jaw.add(tongue);
+    const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.02, 0.10), teethMat);
+    teeth.position.set(0, 0.045, 0.05); jaw.add(teeth);
+
+    // AUGEN
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+    eyeL.position.set(-0.07, 0.04, 0.10); head.add(eyeL);
+    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+    eyeR.position.set( 0.07, 0.04, 0.10); head.add(eyeR);
+
+    // OHREN (Schlappohren, Pivot am Kopf)
+    const earL = new THREE.Group();
+    earL.position.set(-0.10, 0.10, 0.0); earL.rotation.z = 0.25; head.add(earL);
+    const earLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.10), furMat);
+    earLMesh.position.y = -0.08; earL.add(earLMesh);
+    const earR = new THREE.Group();
+    earR.position.set( 0.10, 0.10, 0.0); earR.rotation.z = -0.25; head.add(earR);
+    const earRMesh = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.10), furMat);
+    earRMesh.position.y = -0.08; earR.add(earRMesh);
+
+    // SCHWANZ (3 Segmente, ideal zum Wedeln)
+    const tail = new THREE.Group();
+    tail.position.set(0, 0.10, -0.30); tail.rotation.x = -0.6; torso.add(tail);
+    const tailA = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.16), furMat);
+    tailA.position.z = -0.08; tail.add(tailA);
+    const tailMid = new THREE.Group();
+    tailMid.position.set(0, 0, -0.16); tail.add(tailMid);
+    const tailB = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.13), furMat);
+    tailB.position.z = -0.065; tailMid.add(tailB);
+    const tailEnd = new THREE.Group();
+    tailEnd.position.set(0, 0, -0.13); tailMid.add(tailEnd);
+    const tailC = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.10), furMat);
+    tailC.position.z = -0.05; tailEnd.add(tailC);
+
+    // BEINE (4 Stück mit thigh + shin Pivots)
+    const makeLeg = (xOff, zOff) => {
+        const thigh = new THREE.Group();
+        thigh.position.set(xOff, -0.12, zOff);
+        torso.add(thigh);
+        const upperMesh = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.20, 0.10), furMat);
+        upperMesh.position.y = -0.10; thigh.add(upperMesh);
+
+        const shin = new THREE.Group();
+        shin.position.y = -0.20; thigh.add(shin);
+        const lowerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.08), furMat);
+        lowerMesh.position.y = -0.08; shin.add(lowerMesh);
+        const paw = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.10), clawMat);
+        paw.position.set(0, -0.18, 0.01); shin.add(paw);
+        return { thigh, shin };
+    };
+    const legFL = makeLeg(-0.11,  0.20); // Vorne links
+    const legFR = makeLeg( 0.11,  0.20); // Vorne rechts
+    const legBL = makeLeg(-0.11, -0.20); // Hinten links
+    const legBR = makeLeg( 0.11, -0.20); // Hinten rechts
+
+    return {
+        group,
+        parts: { root, torso, neck, head, snout, jaw, earL, earR,
+                 tail, tailMid, tailEnd, legFL, legFR, legBL, legBR }
+    };
+}
+
+function spawnCompanionDog() {
+    // Hunde-Bett & Knochen-Spielzeug im Wohnzimmer
+    const bedGroup = new THREE.Group();
+    const bedBase = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.10, 0.9), ToonMat(0x6a3a8a));
+    bedBase.position.y = 0.05; bedGroup.add(bedBase);
+    const bedRimA = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.18, 0.2), ToonMat(0x4a2a6a));
+    bedRimA.position.set(0, 0.10, -0.4); bedGroup.add(bedRimA);
+    const bedRimB = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.18, 0.2), ToonMat(0x4a2a6a));
+    bedRimB.position.set(0, 0.10,  0.4); bedGroup.add(bedRimB);
+    const boneMid = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.05), ToonMat(0xeeeae0));
+    boneMid.position.set(0.45, 0.16, 0.25); bedGroup.add(boneMid);
+    const boneL  = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), ToonMat(0xeeeae0));
+    boneL.position.set(0.36, 0.16, 0.25); bedGroup.add(boneL);
+    const boneR  = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), ToonMat(0xeeeae0));
+    boneR.position.set(0.54, 0.16, 0.25); bedGroup.add(boneR);
+
+    // Namensschild "CHICHINYA" am Bett (kleines Holzschild)
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.10, 0.02), ToonMat(0xc8a06a));
+    sign.position.set(-0.45, 0.20, -0.40); bedGroup.add(sign);
+
+    // Welt-Position (im Wohnzimmer des Hauses; House-Mitte = 35, -35)
+    const dogX = 38.0;
+    const dogZ = -32.0;
+    bedGroup.position.set(dogX, 0, dogZ);
+    bedGroup.rotation.y = -0.3;
+    scene.add(bedGroup);
+
+    const dogRig = buildDogRig({ fur: 0x0e0e10, belly: 0x2a2a2e });
+
+    // Pinkes Halsband + goldenes Anhänger-Tag (passt zu Ashnikko-Vibe)
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.018, 6, 16), ToonMat(0xff44aa));
+    collar.rotation.x = Math.PI / 2;
+    collar.position.set(0, 0.04, 0.0);
+    dogRig.parts.neck.add(collar);
+    const tag = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.01), ToonMat(0xffd700));
+    tag.position.set(0, -0.02, 0.10);
+    dogRig.parts.neck.add(tag);
+
+    dogRig.group.position.set(dogX, 0, dogZ);
+    dogRig.group.rotation.y = Math.PI; // schaut Richtung Eingangstür
+    scene.add(dogRig.group);
+
+    window.companionDog = {
+        group:    dogRig.group,
+        rig:      dogRig,
+        worldPos: new THREE.Vector3(dogX, 0, dogZ),
+        bedPos:   new THREE.Vector3(dogX, 0, dogZ),
+        hp:       150,
+        maxHp:    150,
+    };
+    window.companionDogState = {
+        phase: 'sleeping', // sleeping → sitting → following ↔ attacking
+        animTime: 0,
+        attackCooldown: 0,
+        biteAnim: 0,
+        invuln: 0,
+        damageFlash: 0,
+        greeted: false,
+    };
+}
+spawnCompanionDog();
+
 // ==========================================
 // INSTANZIERTER KELLER (Off-Map bei X=500, Z=500)
 // ==========================================
@@ -8446,6 +8630,302 @@ function update(dt) {
     }
   }
 
+  // ============================================================================
+  // === COMPANION DOG (CHICHINYA) – KI, ANIMATION & KAMPF ====================
+  // ============================================================================
+  if (window.companionDog && window.companionDogState) {
+    const dog   = window.companionDog;
+    const dRig  = dog.rig;
+    const dGrp  = dog.group;
+    const dState = window.companionDogState;
+    const p = dRig.parts;
+
+    // Welt-Position aktualisieren
+    const dPos = new THREE.Vector3();
+    dGrp.getWorldPosition(dPos);
+    dog.worldPos.copy(dPos);
+
+    const distToPlayer = dPos.distanceTo(player.position);
+
+    // Cooldowns/Timer
+    dState.attackCooldown = Math.max(0, (dState.attackCooldown || 0) - dt);
+    dState.biteAnim       = Math.max(0, (dState.biteAnim       || 0) - dt);
+    dState.invuln         = Math.max(0, (dState.invuln         || 0) - dt);
+    dState.damageFlash    = Math.max(0, (dState.damageFlash    || 0) - dt);
+
+    // Spieler kommt nach Hause: Hund wacht auf und freut sich
+    if (dState.phase === 'sleeping' && distToPlayer < 4.5) {
+      dState.phase = 'sitting';
+      if (!dState.greeted) {
+        dState.greeted = true;
+        if (typeof showMessage === 'function') {
+          showMessage('🐾 Chichinya freut sich! Drücke E zum Mitnehmen', 3500);
+        }
+      }
+    }
+
+    // Nächsten Feind im Aggro-Radius finden (nur in Begleiter-Phase)
+    let closestEnemy = null;
+    let closestEnemyDist = Infinity;
+    if (dState.phase === 'following' || dState.phase === 'attacking') {
+      const aggroRange = 5.0;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        const d = dPos.distanceTo(e.position);
+        if (d < aggroRange && d < closestEnemyDist) {
+          closestEnemy = e;
+          closestEnemyDist = d;
+        }
+      }
+    }
+
+    // === SLEEPING (eingerollt im Bett) ===
+    if (dState.phase === 'sleeping') {
+      const t = globalTime;
+      p.root.position.y = 0.18;
+      p.torso.rotation.x = 0; p.torso.rotation.z = 0;
+      p.legFL.thigh.rotation.x =  1.4; p.legFL.shin.rotation.x = -1.6;
+      p.legFR.thigh.rotation.x =  1.4; p.legFR.shin.rotation.x = -1.6;
+      p.legBL.thigh.rotation.x = -1.2; p.legBL.shin.rotation.x =  1.6;
+      p.legBR.thigh.rotation.x = -1.2; p.legBR.shin.rotation.x =  1.6;
+      p.neck.rotation.x = 0.7;
+      p.head.rotation.x = -0.3 + Math.sin(t * 1.2) * 0.02;
+      p.head.rotation.y = 0; p.head.rotation.z = -0.4;
+      p.jaw.rotation.x = 0;
+      p.tail.rotation.x = -0.2; p.tail.rotation.y = 0;
+      p.tailMid.rotation.x = 0.3; p.tailMid.rotation.y = 0; p.tailEnd.rotation.y = 0;
+      p.earL.rotation.x = 0.3; p.earR.rotation.x = 0.3;
+    }
+    // === SITTING (sitzt aufrecht, Schwanz wedelt freudig) ===
+    else if (dState.phase === 'sitting') {
+      const t = globalTime;
+      p.root.position.y = 0.30;
+      p.torso.rotation.x = -0.45;
+      p.torso.rotation.z = 0;
+      // Vorderbeine gerade, Hinterbeine zusammengeklappt
+      p.legFL.thigh.rotation.x = 0.45; p.legFL.shin.rotation.x = 0;
+      p.legFR.thigh.rotation.x = 0.45; p.legFR.shin.rotation.x = 0;
+      p.legBL.thigh.rotation.x = 1.6;  p.legBL.shin.rotation.x = -1.8;
+      p.legBR.thigh.rotation.x = 1.6;  p.legBR.shin.rotation.x = -1.8;
+
+      // Sanft zum Spieler drehen
+      const toPlayer = new THREE.Vector3().subVectors(player.position, dPos); toPlayer.y = 0;
+      if (toPlayer.lengthSq() > 0.001) {
+        const desiredYaw = Math.atan2(toPlayer.x, toPlayer.z);
+        let dyaw = desiredYaw - dGrp.rotation.y;
+        while (dyaw >  Math.PI) dyaw -= Math.PI * 2;
+        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+        dGrp.rotation.y += dyaw * Math.min(1, dt * 5);
+      }
+
+      p.neck.rotation.x = -0.25 + Math.sin(t * 0.9) * 0.04;
+      p.head.rotation.x = 0;
+      p.head.rotation.y = Math.sin(t * 0.7) * 0.12;
+      p.head.rotation.z = 0;
+      p.jaw.rotation.x = 0.05 + Math.abs(Math.sin(t * 4)) * 0.06; // hechelt leicht
+      // Schwanz wedelt seitlich
+      p.tail.rotation.x = -0.9;
+      p.tail.rotation.y = Math.sin(t * 12) * 0.7;
+      p.tailMid.rotation.y = Math.sin(t * 12 - 0.3) * 0.6;
+      p.tailEnd.rotation.y = Math.sin(t * 12 - 0.6) * 0.5;
+      // Ohren leicht zucken
+      p.earL.rotation.x = Math.sin(t * 3.2) * 0.05;
+      p.earR.rotation.x = Math.sin(t * 3.4 + 0.2) * 0.05;
+      p.earL.rotation.z = 0.25; p.earR.rotation.z = -0.25;
+    }
+    // === FOLLOWING & ATTACKING (Begleiter-Modus) ===
+    else if (dState.phase === 'following' || dState.phase === 'attacking') {
+      // Anti-Stuck: Wenn zu weit weg, zum Spieler teleportieren
+      if (distToPlayer > 28.0) {
+        dGrp.position.copy(player.position);
+        dGrp.position.x += (Math.random() - 0.5) * 1.5;
+        dGrp.position.z -= 1.5;
+        dGrp.position.y = getGroundHeight(dGrp.position.x, dGrp.position.z, player.position.y);
+        if (typeof spawnHitParticles === 'function') {
+          spawnHitParticles(dGrp.position, 0xff44aa, 12, 0.8);
+        }
+      }
+
+      // === KAMPF: Lunge + Biss ===
+      if (closestEnemy && (closestEnemyDist < 2.4 || dState.phase === 'attacking')) {
+        dState.phase = 'attacking';
+        const dir = new THREE.Vector3().subVectors(closestEnemy.position, dPos);
+        dir.y = 0; if (dir.lengthSq() > 0.001) dir.normalize();
+        dGrp.rotation.y = Math.atan2(dir.x, dir.z);
+
+        // Biss auslösen
+        if (dState.attackCooldown <= 0 && closestEnemyDist < 1.7) {
+          dState.attackCooldown = 0.7;
+          dState.biteAnim = 0.35;
+          const dmg = 35;
+          closestEnemy.takeDamage(dmg, dir);
+          if (typeof spawnDamageNumber === 'function') {
+            spawnDamageNumber(closestEnemy.position.clone().add(new THREE.Vector3(0, 1.2, 0)), 'CHOMP!', 'crit');
+          }
+          if (typeof spawnHitParticles === 'function') {
+            spawnHitParticles(closestEnemy.position.clone().add(new THREE.Vector3(0, 1, 0)), 0xff3344, 8, 0.6);
+          }
+        }
+
+        // Lunge-Animation: Sprungwelle 0..1..0 über die Biss-Phase
+        const bt = dState.biteAnim > 0 ? (1.0 - dState.biteAnim / 0.35) : 0;
+        const lunge = Math.sin(bt * Math.PI);
+
+        p.root.position.y = 0.42 + lunge * 0.10;
+        p.torso.rotation.x = -0.3 + lunge * 0.4;
+        p.torso.rotation.z = 0;
+        p.legFL.thigh.rotation.x = -1.0 - lunge * 0.5; p.legFL.shin.rotation.x = lunge * 0.6;
+        p.legFR.thigh.rotation.x = -1.0 - lunge * 0.5; p.legFR.shin.rotation.x = lunge * 0.6;
+        p.legBL.thigh.rotation.x =  0.6; p.legBL.shin.rotation.x = -0.4;
+        p.legBR.thigh.rotation.x =  0.6; p.legBR.shin.rotation.x = -0.4;
+
+        p.neck.rotation.x = 0.2 + lunge * 0.2;
+        p.head.rotation.x = -0.1; p.head.rotation.y = 0; p.head.rotation.z = 0;
+        // Maul auf -> beim Aufprall zu
+        p.jaw.rotation.x = 0.65 - lunge * 0.55;
+
+        // Schwanz aufgerichtet, kämpferisch
+        p.tail.rotation.x = -1.4;
+        p.tail.rotation.y = Math.sin(globalTime * 14) * 0.4;
+        // Ohren zurückgelegt (aggressiv, wie ein knurrender Hund)
+        p.earL.rotation.x = -0.4; p.earL.rotation.z =  0.5;
+        p.earR.rotation.x = -0.4; p.earR.rotation.z = -0.5;
+
+        // Wenn Ziel weg/tot → zurück in Following
+        if (!closestEnemy.alive || closestEnemyDist > 3.0) {
+          dState.phase = 'following';
+          p.earL.rotation.z = 0.25; p.earR.rotation.z = -0.25;
+        }
+      }
+      // === LAUFEN / IDLE neben dem Spieler ===
+      else {
+        if (dState.phase === 'attacking') dState.phase = 'following';
+
+        const followDist = 2.5;
+        if (distToPlayer > followDist) {
+          // Folgt mit der Spieler-Geschwindigkeit (sprintet wenn der Spieler sprintet)
+          const playerSprinting = !!(input && input.sprint);
+          const speed = playerSprinting ? 11.0 : 7.5;
+          const dir = new THREE.Vector3().subVectors(player.position, dPos);
+          dir.y = 0; if (dir.lengthSq() > 0.001) dir.normalize();
+
+          dGrp.position.x += dir.x * speed * dt;
+          dGrp.position.z += dir.z * speed * dt;
+
+          const desiredYaw = Math.atan2(dir.x, dir.z);
+          let dyaw = desiredYaw - dGrp.rotation.y;
+          while (dyaw >  Math.PI) dyaw -= Math.PI * 2;
+          while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+          dGrp.rotation.y += dyaw * Math.min(1, dt * 12);
+
+          // 4-Bein-Lauf-Zyklus (diagonale Paare: FL+BR vs FR+BL)
+          dState.animTime = (dState.animTime || 0) + dt * speed * 1.6;
+          const w  = Math.sin(dState.animTime);
+          const w2 = Math.sin(dState.animTime + Math.PI);
+
+          p.root.position.y = 0.42 + Math.abs(Math.sin(dState.animTime * 2)) * 0.04;
+          p.torso.rotation.x = -0.05 + Math.sin(dState.animTime * 2) * 0.04;
+          p.torso.rotation.z = 0;
+
+          p.legFL.thigh.rotation.x =  w  * 0.9;
+          p.legFL.shin.rotation.x  = Math.max(0, -w  * 0.7);
+          p.legBR.thigh.rotation.x = -w  * 0.9;
+          p.legBR.shin.rotation.x  = Math.max(0,  w  * 0.7);
+
+          p.legFR.thigh.rotation.x =  w2 * 0.9;
+          p.legFR.shin.rotation.x  = Math.max(0, -w2 * 0.7);
+          p.legBL.thigh.rotation.x = -w2 * 0.9;
+          p.legBL.shin.rotation.x  = Math.max(0,  w2 * 0.7);
+
+          // Kopf vorgestreckt, Hecheln
+          p.neck.rotation.x = 0.05;
+          p.head.rotation.x = -0.05;
+          p.head.rotation.y = Math.sin(dState.animTime * 0.5) * 0.08;
+          p.head.rotation.z = 0;
+          p.jaw.rotation.x = 0.10 + Math.abs(Math.sin(globalTime * (playerSprinting ? 16 : 9))) * 0.10;
+
+          // Schwanz beim Laufen seitlich
+          p.tail.rotation.x = -1.0;
+          p.tail.rotation.y    = Math.sin(dState.animTime * 1.6) * 0.5;
+          p.tailMid.rotation.y = Math.sin(dState.animTime * 1.6 - 0.4) * 0.5;
+          p.tailEnd.rotation.y = Math.sin(dState.animTime * 1.6 - 0.8) * 0.4;
+
+          // Ohren wackeln im Wind
+          p.earL.rotation.x = Math.sin(dState.animTime * 1.6) * 0.15;
+          p.earR.rotation.x = Math.sin(dState.animTime * 1.6 + 0.2) * 0.15;
+          p.earL.rotation.z = 0.25; p.earR.rotation.z = -0.25;
+        } else {
+          // Idle neben dem Spieler: schaut sich um, wedelt, hechelt
+          const t = globalTime;
+          p.root.position.y = THREE.MathUtils.lerp(p.root.position.y, 0.42, dt * 8);
+          p.torso.rotation.x = THREE.MathUtils.lerp(p.torso.rotation.x, 0, dt * 8);
+          p.torso.rotation.z = 0;
+          p.legFL.thigh.rotation.x = THREE.MathUtils.lerp(p.legFL.thigh.rotation.x, 0, dt * 8);
+          p.legFL.shin.rotation.x  = THREE.MathUtils.lerp(p.legFL.shin.rotation.x , 0, dt * 8);
+          p.legFR.thigh.rotation.x = THREE.MathUtils.lerp(p.legFR.thigh.rotation.x, 0, dt * 8);
+          p.legFR.shin.rotation.x  = THREE.MathUtils.lerp(p.legFR.shin.rotation.x , 0, dt * 8);
+          p.legBL.thigh.rotation.x = THREE.MathUtils.lerp(p.legBL.thigh.rotation.x, 0, dt * 8);
+          p.legBL.shin.rotation.x  = THREE.MathUtils.lerp(p.legBL.shin.rotation.x , 0, dt * 8);
+          p.legBR.thigh.rotation.x = THREE.MathUtils.lerp(p.legBR.thigh.rotation.x, 0, dt * 8);
+          p.legBR.shin.rotation.x  = THREE.MathUtils.lerp(p.legBR.shin.rotation.x , 0, dt * 8);
+
+          p.neck.rotation.x = Math.sin(t * 0.9) * 0.03;
+          p.head.rotation.x = 0;
+          p.head.rotation.y = Math.sin(t * 0.5) * 0.18;
+          p.head.rotation.z = 0;
+          p.jaw.rotation.x = 0.05 + Math.abs(Math.sin(t * 5)) * 0.04;
+
+          p.tail.rotation.x = -1.1;
+          p.tail.rotation.y    = Math.sin(t * 9) * 0.5;
+          p.tailMid.rotation.y = Math.sin(t * 9 - 0.3) * 0.5;
+          p.tailEnd.rotation.y = Math.sin(t * 9 - 0.6) * 0.4;
+
+          p.earL.rotation.x = Math.sin(t * 2.6) * 0.05;
+          p.earR.rotation.x = Math.sin(t * 2.8 + 0.4) * 0.05;
+          p.earL.rotation.z = 0.25; p.earR.rotation.z = -0.25;
+        }
+      }
+
+      // Bodenhöhe folgen (Treppen, Gelände)
+      const targetY = getGroundHeight(dGrp.position.x, dGrp.position.z, dGrp.position.y);
+      dGrp.position.y = THREE.MathUtils.lerp(dGrp.position.y, targetY, dt * 12);
+    }
+
+    // === Schaden vom Zombie (passiv, mit kurzer Invuln) ===
+    if ((dState.phase === 'following' || dState.phase === 'attacking')
+        && dState.invuln <= 0 && dog.hp > 0) {
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        if (e.position.distanceTo(dPos) < 1.0) {
+          const dmg = ((e.damage || 8) * 0.4);
+          dog.hp = Math.max(0, dog.hp - dmg);
+          dState.invuln = 0.7;
+          dState.damageFlash = 0.4;
+          if (typeof spawnHitParticles === 'function') {
+            spawnHitParticles(dPos.clone().add(new THREE.Vector3(0, 0.4, 0)), 0xff2244, 6, 0.5);
+          }
+          if (dog.hp <= 0) {
+            // Hund flieht heim, regeneriert in Sicherheit
+            if (typeof showMessage === 'function') {
+              showMessage('🐾 Chichinya ist verletzt – flieht nach Hause!', 3500);
+            }
+            dState.phase = 'sleeping';
+            dGrp.position.copy(dog.bedPos);
+            dGrp.rotation.y = Math.PI;
+            dog.hp = dog.maxHp;
+          }
+          break;
+        }
+      }
+    }
+
+    // Damage-Flash (kurzes Zucken)
+    if (dState.damageFlash > 0) {
+      const flash = dState.damageFlash / 0.4;
+      p.torso.rotation.z = Math.sin(globalTime * 30) * flash * 0.15;
+    }
+  }
+
   // === Tarek Action State-Machine ===
   if (window.npcTarek && window.npcTarek.rig && window.tarekAction) {
     const tRig = window.npcTarek.rig;
@@ -9316,6 +9796,18 @@ function update(dt) {
       }
   }
 
+  // Companion-Hund: anpfeifen / heimschicken
+  let canCallDog = false;
+  let canDismissDog = false;
+  if (window.companionDog && window.companionDogState && gameStarted && !gameOver) {
+    const distDog = player.position.distanceTo(window.companionDog.worldPos);
+    const dogPhase = window.companionDogState.phase;
+    if (distDog < 3.0) {
+      if (dogPhase === 'sleeping' || dogPhase === 'sitting') canCallDog = true;
+      else if (dogPhase === 'following' || dogPhase === 'attacking') canDismissDog = true;
+    }
+  }
+
   const nearSiloDisplay = window.siloDisplayWorldPos && player.position.distanceTo(window.siloDisplayWorldPos) < 3.5;
   const canInteractSilo = nearSiloDisplay && gameStarted && !gameOver;
 
@@ -9364,6 +9856,12 @@ function update(dt) {
   } else if (canInteractAshnikko && !buildState.active && !uiBusy) {
       promptText.textContent = 'Ashnikko ansprechen';
       promptEl.classList.add('show');
+  } else if (canCallDog && !buildState.active && !uiBusy) {
+      promptText.textContent = '🐾 Chichinya mitnehmen';
+      promptEl.classList.add('show');
+  } else if (canDismissDog && !buildState.active && !uiBusy) {
+      promptText.textContent = '🐾 Chichinya bleibt zu Hause';
+      promptEl.classList.add('show');
   } else if (canInteractSilo && !buildState.active && !uiBusy) {
       promptText.textContent = 'Terminal bedienen';
       promptEl.classList.add('show');
@@ -9403,6 +9901,24 @@ function update(dt) {
           openDialogue('Tarek');
       } else if (canInteractAshnikko) {
           openDialogue('Ashnikko');
+      } else if (canCallDog) {
+          // Chichinya anpfeifen → folgt jetzt dem Spieler
+          window.companionDogState.phase = 'following';
+          window.companionDogState.animTime = 0;
+          window.companionDogState.attackCooldown = 0.3;
+          if (typeof showMessage === 'function') showMessage('🐾 Chichinya folgt dir jetzt!', 2500);
+          if (typeof spawnHitParticles === 'function') {
+              spawnHitParticles(window.companionDog.worldPos.clone().add(new THREE.Vector3(0, 0.4, 0)), 0xff44aa, 14, 0.8);
+          }
+      } else if (canDismissDog) {
+          // Chichinya nach Hause schicken → schläft im Bett
+          window.companionDogState.phase = 'sleeping';
+          if (window.companionDog.bedPos) {
+              window.companionDog.group.position.copy(window.companionDog.bedPos);
+              window.companionDog.group.rotation.y = Math.PI;
+          }
+          window.companionDog.hp = window.companionDog.maxHp;
+          if (typeof showMessage === 'function') showMessage('🐾 Chichinya wartet wieder zu Hause.', 2500);
       } else if (canInteractSilo) {
           openKeypad();
       } else if (canInteractSarcophagus) {
