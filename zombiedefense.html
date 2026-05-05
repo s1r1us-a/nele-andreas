@@ -193,136 +193,208 @@
   #build-hint.valid { background: rgba(60,120,40,0.85); border-color: rgba(120,180,80,0.6); box-shadow: 0 4px 16px rgba(0,0,0,0.7), 0 0 16px rgba(120,180,80,0.4); }
 
   /* === ZOMBIE START SCREEN === */
-  #start-screen { position: fixed; inset: 0;
+  /* ============================================================
+     WoW-STYLE LOGIN SCREEN
+     ============================================================ */
+
+  /* Hintergrund-Div: Zombie-Apokalypse-Welt, mit Loch in der Mitte
+     damit der 3D-Charakter auf dem Canvas durchscheint */
+  #login-bg {
+    position: fixed; inset: 0; z-index: 99; pointer-events: none;
+    /* Apokalyptischer Himmel: oben pechschwarz, Horizont lohfarben-rot */
     background:
-      linear-gradient(90deg, transparent 0%, transparent 55%, rgba(5,2,3,0.55) 75%, rgba(5,2,3,0.85) 100%);
-    display: flex; align-items: center; justify-content: flex-end; padding: 40px 5%; z-index: 100; transition: opacity 0.5s;
+      radial-gradient(ellipse 60% 30% at 72% 12%, rgba(255,80,20,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 20% at 28% 8%,  rgba(180,30,10,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 100% 45% at 50% 100%, rgba(160,30,0,0.55) 0%, rgba(80,10,0,0.3) 35%, transparent 65%),
+      linear-gradient(180deg, #030108 0%, #0a0210 18%, #140410 40%, #1c0608 65%, #120408 100%);
+    /* Loch in der Mitte — gibt Blick auf den 3D-Charakter frei */
+    -webkit-mask-image: radial-gradient(ellipse 48vw 72vh at 50% 46%, transparent 38%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.85) 68%, black 80%);
+    mask-image:         radial-gradient(ellipse 48vw 72vh at 50% 46%, transparent 38%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.85) 68%, black 80%);
+  }
+  /* Boden-Nebel am unteren Rand */
+  #login-bg::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 28%;
+    background: linear-gradient(0deg, rgba(80,5,5,0.55) 0%, rgba(40,3,3,0.25) 50%, transparent 100%);
+    -webkit-mask-image: none; mask-image: none;
+  }
+
+  /* Stadtsilhouette (2D-Canvas) */
+  #login-city-canvas {
+    position: absolute; bottom: 0; left: 0; right: 0; width: 100%;
+    height: 55%; pointer-events: none; opacity: 0.82;
+  }
+
+  /* Asche/Partikel */
+  .ash { position: absolute; border-radius: 50%; background: rgba(200,180,160,0.6); pointer-events: none;
+    animation: ashFall linear infinite;
+  }
+  @keyframes ashFall {
+    0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(100vh) translateX(var(--ash-drift)) rotate(360deg); opacity: 0; }
+  }
+
+  /* Blut-Regen (sehr subtil) */
+  .blood-drop { position: absolute; width: 1px; border-radius: 1px;
+    background: linear-gradient(180deg, transparent, rgba(160,10,10,0.4));
+    animation: bloodFall linear infinite; pointer-events: none;
+  }
+  @keyframes bloodFall {
+    0% { transform: translateY(-30px); opacity: 0; }
+    5% { opacity: 1; }
+    100% { transform: translateY(100vh); opacity: 0.3; }
+  }
+
+  /* ---- START SCREEN: transparenter UI-Container ---- */
+  #start-screen {
+    position: fixed; inset: 0; z-index: 100;
+    background: transparent;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
   }
   #start-screen.hidden { opacity: 0; pointer-events: none; }
-  /* Sehr dezente Vignette nur an den Rändern */
-  #start-screen::before { content:''; position:absolute; inset:0; pointer-events:none;
-    background:
-      radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(0,0,0,0.45) 100%);
-  }
 
-  .menu-panel { position: relative; background:
-      linear-gradient(180deg, rgba(18,8,10,0.92) 0%, rgba(10,4,5,0.94) 100%);
-    border: 1px solid rgba(180,30,30,0.35); border-radius: 4px; padding: 30px 30px 26px; width: 100%; max-width: 400px;
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 25px 70px rgba(0,0,0,0.9), 0 0 60px rgba(140,15,15,0.15), inset 0 0 30px rgba(0,0,0,0.5);
+  /* Logo oben links */
+  #login-logo {
+    padding: 32px 40px 0;
+    pointer-events: none;
+    align-self: start;
   }
-  /* Roter "Tape"-Streifen oben am Panel */
-  .menu-panel::before { content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:3px;
-    background: linear-gradient(90deg, transparent 0%, #8a1414 15%, #c41e1e 50%, #8a1414 85%, transparent 100%);
-    box-shadow: 0 0 12px rgba(196,30,30,0.6);
-  }
-  /* Eckmarkierungen für Grunge-Look */
-  .menu-panel::after { content:''; position:absolute; inset:6px; pointer-events:none; border:1px solid rgba(255,255,255,0.04);
-    border-image: linear-gradient(135deg, rgba(180,30,30,0.2), transparent 30%, transparent 70%, rgba(180,30,30,0.2)) 1;
-  }
-
-  .game-title { position: relative; font-size: 52px; font-weight: 900; color: #f0e8e8; margin-bottom: 2px;
-    letter-spacing: 8px; font-family: 'Impact', 'Arial Black', sans-serif; text-transform: uppercase;
+  .game-title {
+    font-size: 58px; font-weight: 900; color: #f0e8e8;
+    letter-spacing: 10px; font-family: 'Impact', 'Arial Black', sans-serif;
+    text-transform: uppercase; line-height: 1;
     text-shadow:
-      0 0 1px rgba(255,255,255,0.4),
-      2px 0 0 rgba(180,20,20,0.55),
-      -2px 0 0 rgba(80,150,180,0.25),
-      0 6px 24px rgba(140,15,15,0.55),
-      0 2px 0 rgba(0,0,0,0.9);
-    animation: titleGlitch 6s steps(1) infinite;
+      0 0 1px rgba(255,255,255,0.5),
+      3px 0 0 rgba(196,30,30,0.6),
+      -2px 0 0 rgba(60,120,180,0.22),
+      0 0 40px rgba(196,30,30,0.4),
+      0 3px 0 rgba(0,0,0,0.95);
+    animation: titleGlitch 7s steps(1) infinite;
   }
   @keyframes titleGlitch {
-    0%, 92%, 100% { transform: translate(0,0); }
-    93% { transform: translate(-1px, 1px); text-shadow: 0 0 1px rgba(255,255,255,0.4), 3px 0 0 rgba(180,20,20,0.7), -3px 0 0 rgba(80,150,180,0.4), 0 6px 24px rgba(140,15,15,0.55), 0 2px 0 rgba(0,0,0,0.9); }
-    95% { transform: translate(2px, -1px); }
-    97% { transform: translate(-1px, 0); }
+    0%, 90%, 100% { transform: translate(0,0) skewX(0deg); }
+    91% { transform: translate(-2px,1px) skewX(-1deg); filter: brightness(1.3); }
+    93% { transform: translate(3px,-1px) skewX(0.5deg); }
+    95% { transform: translate(-1px,0) skewX(0deg); filter: brightness(1); }
   }
-  .game-subtitle { font-size: 12px; color: #c44; font-weight: 800; margin-bottom: 24px; letter-spacing: 5px; text-transform: uppercase;
-    text-shadow: 0 0 12px rgba(196,30,30,0.6); position: relative;
+  .game-subtitle {
+    font-size: 11px; color: #c44; font-weight: 900; letter-spacing: 6px;
+    text-transform: uppercase; margin-top: 4px;
+    text-shadow: 0 0 16px rgba(196,30,30,0.8);
   }
-  .game-subtitle::before { content:'▸ '; opacity:0.7; }
-  .game-subtitle::after { content:' ◂'; opacity:0.7; }
+  .game-subtitle::before { content: '▸ '; }
+  .game-subtitle::after  { content: ' ◂'; }
 
-  /* Showcase-Hint (links unten) */
-  #showcase-hint { position: fixed; left: 5%; bottom: 9%; z-index: 101; pointer-events: none; opacity: 0.95; transition: opacity 0.5s; }
-  #showcase-hint.hidden { opacity: 0; }
-  #showcase-hint .hint-label { font-size: 10px; letter-spacing: 4px; color: #c44; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; opacity: 0.85;
-    border-left: 2px solid #8a1414; padding-left: 8px;
+  /* Charakter-Name schwebt in der Mitte unten */
+  #login-char-name {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: 28%; z-index: 101; pointer-events: none;
+    text-align: center; white-space: nowrap;
   }
-  #showcase-hint .hint-name { font-size: 24px; font-weight: 900; color: #f0e8e8; letter-spacing: 3px;
-    text-shadow: 0 4px 16px rgba(0,0,0,0.95), 0 0 24px rgba(140,15,15,0.5), 2px 2px 0 rgba(0,0,0,0.8);
-    text-transform: uppercase; padding-left: 10px;
+  #login-char-name .char-name-text {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 26px; font-weight: 900; letter-spacing: 6px; color: #f0e8e8;
+    text-transform: uppercase;
+    text-shadow: 0 0 30px rgba(196,30,30,0.9), 0 2px 12px rgba(0,0,0,0.95), 0 0 60px rgba(196,30,30,0.4);
+  }
+  #login-char-name .char-name-sub {
+    font-size: 10px; letter-spacing: 4px; color: #c44; font-weight: 900;
+    text-transform: uppercase; display: block; margin-top: 3px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(196,30,30,0.7);
   }
 
-  /* Controls-Hint */
-  .controls-hint { background: rgba(0,0,0,0.55); border: 1px solid rgba(180,30,30,0.25); border-radius: 2px;
-    padding: 12px 14px; margin-bottom: 20px; font-size: 11px; line-height: 1.8; color: #b8a8a8; letter-spacing: 0.5px;
+  /* Bottom-Bar: Garderobe + Survive */
+  #login-bottom {
+    pointer-events: auto;
+    padding: 0 0 0 0;
+    display: flex; flex-direction: column; align-items: stretch;
+  }
+
+  /* Garderobe-Panel am unteren Rand */
+  #login-wardrobe-panel {
+    background: linear-gradient(0deg, rgba(8,3,4,0.97) 0%, rgba(14,5,6,0.93) 100%);
+    border-top: 1px solid rgba(196,30,30,0.35);
+    padding: 18px 36px 14px;
+    display: flex; align-items: flex-start; gap: 32px; flex-wrap: wrap;
     position: relative;
   }
-  .controls-hint::before { content:'INTEL'; position:absolute; top:-7px; left:10px; font-size:9px; font-weight:900; color:#c44;
-    background: rgba(10,4,5,1); padding: 0 6px; letter-spacing: 3px;
+  #login-wardrobe-panel::before {
+    content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #8a1414 20%, #c41e1e 50%, #8a1414 80%, transparent);
+    box-shadow: 0 0 16px rgba(196,30,30,0.5);
   }
-  .controls-hint .ctrl-row { display: flex; justify-content: space-between; align-items: center; }
+  .login-wd-group { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .login-wd-label {
+    font-size: 9px; letter-spacing: 3px; color: #c44; font-weight: 900;
+    text-transform: uppercase; font-family: 'Courier New', monospace;
+  }
+
+  /* Survive-Button */
+  #start-btn {
+    width: 100%; padding: 22px; margin: 0;
+    background: linear-gradient(180deg, #8a1414 0%, #5a0808 60%, #3d0505 100%);
+    border: none; border-top: 1px solid rgba(196,30,30,0.5);
+    color: #fff; font-weight: 900; font-size: 22px;
+    cursor: pointer; letter-spacing: 10px; text-transform: uppercase;
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 30px rgba(255,80,80,0.3);
+    box-shadow: inset 0 1px 0 rgba(255,100,100,0.15);
+    transition: background 0.2s, letter-spacing 0.2s;
+    position: relative; overflow: hidden;
+  }
+  #start-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+    transform: translateX(-100%); animation: btnSweep 4s ease-in-out infinite;
+  }
+  #start-btn::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #c41e1e 30%, #ff4444 50%, #c41e1e 70%, transparent);
+    animation: btnGlow 2s ease-in-out infinite;
+  }
+  @keyframes btnSweep { 0%,40% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+  @keyframes btnGlow  { 0%,100% { opacity: 0.7; } 50% { opacity: 1; box-shadow: 0 0 12px rgba(196,30,30,0.8); } }
+  #start-btn:hover { background: linear-gradient(180deg, #c41e1e 0%, #8a1414 60%, #5a0808 100%); letter-spacing: 12px; }
+  #start-btn:active { transform: scaleY(0.97); }
+
+  /* === Restliche UI-Elemente (Wardrobe) === */
   .key-cap { display: inline-block; padding: 2px 8px; background: rgba(120,15,15,0.25); border: 1px solid rgba(180,30,30,0.5); border-radius: 2px;
     font-weight: 900; color: #f0e8e8; font-size: 10px; letter-spacing: 1px; min-width: 22px; text-align: center;
     box-shadow: 0 2px 0 rgba(80,10,10,0.6), inset 0 0 8px rgba(180,30,30,0.15);
     font-family: 'Courier New', monospace;
   }
 
-  /* === GARDEROBE: Survivor-Loadout-Style === */
-  .wardrobe-view { display: none; flex-direction: column; gap: 16px; margin-bottom: 22px; max-height: 30vh; overflow-y: auto; padding-right: 6px; padding-left: 2px; }
-  .wardrobe-label { font-size: 11px; letter-spacing: 4px; color: #f0e8e8; font-weight: 900; text-transform: uppercase;
-    margin-bottom: 14px; text-align: center; position: relative; padding: 8px 0;
-    background: linear-gradient(90deg, transparent, rgba(120,15,15,0.18), transparent);
-    border-top: 1px solid rgba(180,30,30,0.3); border-bottom: 1px solid rgba(180,30,30,0.3);
-  }
-  .wardrobe-label::before { content:'▣'; color:#c44; margin-right:8px; opacity:0.8; }
-  .wardrobe-label::after { content:'▣'; color:#c44; margin-left:8px; opacity:0.8; }
-  .wardrobe-view::-webkit-scrollbar { width: 4px; }
-  .wardrobe-view::-webkit-scrollbar-track { background: rgba(0,0,0,0.4); }
-  .wardrobe-view::-webkit-scrollbar-thumb { background: rgba(180,30,30,0.5); border-radius: 0; }
+  /* Wardrobe Buttons (jetzt kompakter, horizontal) */
+  .wardrobe-view { display: none; }
+  .wardrobe-label { display: none; }
+  #showcase-hint  { display: none; }
+  .controls-hint  { display: none; }
 
-  .w-label { font-size: 10px; color: #c44; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 8px;
+  .style-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .style-btn {
+    padding: 7px 12px; background: rgba(0,0,0,0.55); border: 1px solid rgba(180,30,30,0.28); border-radius: 2px;
+    color: #b8a8a8; font-size: 11px; font-weight: 800; cursor: pointer; text-align: center; transition: all 0.12s;
+    letter-spacing: 1px; text-transform: uppercase; font-family: 'Courier New', monospace; white-space: nowrap;
   }
-  .w-label::before { content:''; width:14px; height:1px; background: linear-gradient(90deg, #8a1414, transparent); }
+  .style-btn:hover  { background: rgba(120,15,15,0.25); border-color: rgba(196,30,30,0.6); color: #f0e8e8; }
+  .style-btn.active { background: linear-gradient(180deg, rgba(180,30,30,0.45), rgba(100,10,10,0.45));
+    border-color: #c41e1e; color: #fff; box-shadow: 0 0 8px rgba(196,30,30,0.4); }
 
-  .style-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .style-btn { flex: 1; padding: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid rgba(180,30,30,0.3); border-radius: 2px;
-    color: #b8a8a8; font-size: 12px; font-weight: 800; cursor: pointer; text-align: center; transition: all 0.15s;
-    letter-spacing: 1px; text-transform: uppercase; font-family: 'Courier New', monospace;
-  }
-  .style-btn:hover { background: rgba(120,15,15,0.2); border-color: rgba(196,30,30,0.6); color: #f0e8e8; }
-  .style-btn.active { background: linear-gradient(180deg, rgba(180,30,30,0.4), rgba(120,15,15,0.4));
-    border-color: #c41e1e; color: #fff; box-shadow: 0 0 10px rgba(196,30,30,0.5), inset 0 0 8px rgba(0,0,0,0.4);
-  }
-
-  .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .color-btn { width: 30px; height: 30px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; position: relative;
-    box-shadow: inset 0 0 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.6);
-  }
-  .color-btn:hover { transform: translateY(-2px); border-color: rgba(196,30,30,0.7); }
-  .color-btn.active { border-color: #c41e1e; transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 0 10px rgba(196,30,30,0.7), inset 0 0 6px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.7);
-  }
-  .color-btn.active::after { content:'✕'; position:absolute; top:-10px; left:50%; transform:translateX(-50%);
-    color:#c44; font-size:9px; font-weight:900;
-  }
-
-  /* Start-Button: Rot, dringlich */
-  #start-btn { width: 100%; padding: 18px; background: linear-gradient(180deg, #a01818 0%, #6a0c0c 100%); border: 1px solid #c41e1e;
-    color: #fff; font-weight: 900; font-size: 18px; border-radius: 2px; cursor: pointer; letter-spacing: 6px; text-transform: uppercase;
-    box-shadow: 0 8px 28px rgba(140,15,15,0.55), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -2px 8px rgba(0,0,0,0.4);
-    transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
-    font-family: 'Impact', 'Arial Black', sans-serif; position: relative; overflow: hidden;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-  }
-  #start-btn::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-    animation: btnSweep 3.5s ease-in-out infinite;
-  }
-  @keyframes btnSweep { 0%, 60% { left:-100%; } 100% { left:100%; } }
+  .color-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .color-btn { width: 26px; height: 26px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.12); cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.6); }
+  .color-btn:hover  { transform: translateY(-2px) scale(1.1); border-color: rgba(196,30,30,0.7); }
+  .color-btn.active { border-color: #c41e1e; transform: translateY(-2px) scale(1.12);
+    box-shadow: 0 0 8px rgba(196,30,30,0.7), inset 0 0 5px rgba(0,0,0,0.5); }
+  .color-btn.active::after { content:'✓'; position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    color:#ff6666; font-size:9px; font-weight:900; text-shadow: 0 0 4px rgba(196,30,30,0.8); }
   #start-btn:hover { background: linear-gradient(180deg, #c41e1e 0%, #8a1414 100%); box-shadow: 0 10px 35px rgba(196,30,30,0.7), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 8px rgba(0,0,0,0.4); }
   #start-btn:active { transform: scale(0.97); }
 
@@ -780,32 +852,55 @@
   </div>
 </div>
 
+<!-- WoW-style login background (zombie apocalypse atmosphere) -->
+<div id="login-bg">
+  <canvas id="login-city-canvas"></canvas>
+</div>
+
+<!-- Floating character name (centered over 3D character) -->
+<div id="login-char-name">
+  <div class="char-name-text" id="login-name-text">—</div>
+  <span class="char-name-sub" id="login-name-sub">Survivor</span>
+</div>
+
 <div id="start-screen">
-  <div id="showcase-hint">
-    <div class="hint-label">// Equipped</div>
-    <div class="hint-name" id="showcase-name">⚾ Baseballschläger</div>
-  </div>
-  <div class="menu-panel">
+  <!-- Top-left logo -->
+  <div id="login-logo">
     <div class="game-title">IKKIMEL</div>
     <div class="game-subtitle">Zombie Defense</div>
-    <div class="controls-hint" id="controls-hint">
-      <div class="ctrl-row"><span>Bewegen</span><span><span class="key-cap">W</span> <span class="key-cap">A</span> <span class="key-cap">S</span> <span class="key-cap">D</span></span></div>
-      <div class="ctrl-row"><span>Sprinten</span><span class="key-cap">Shift</span></div>
-      <div class="ctrl-row"><span>Springen</span><span class="key-cap">Space</span></div>
-      <div class="ctrl-row"><span>Angriff / Schießen</span><span class="key-cap">LMB</span></div>
-      <div class="ctrl-row"><span>Nachladen</span><span class="key-cap">R</span></div>
-      <div class="ctrl-row"><span>Welle / Build / Waffen</span><span class="key-cap">E / F / G</span></div>
-    </div>
-    <div class="wardrobe-label">Survivor Loadout</div>
-    <div class="wardrobe-view" id="wardrobe-view" style="display:flex;">
-      <div><div class="w-label">Körper</div><div class="style-row" id="gender-container"></div></div>
-      <div><div class="w-label">Frisur</div><div class="style-row" id="hair-style-container"></div></div>
-      <div><div class="w-label">Haarfarbe</div><div class="color-row" id="hair-color-container"></div></div>
-      <div><div class="w-label">Oberteil</div><div class="color-row" id="shirt-color-container"></div></div>
-      <div><div class="w-label">Hose</div><div class="color-row" id="pants-color-container"></div></div>
+  </div>
+
+  <!-- Middle spacer (character shows through) -->
+  <div></div>
+
+  <!-- Bottom bar: wardrobe + survive button -->
+  <div id="login-bottom">
+    <div id="login-wardrobe-panel">
+      <div class="login-wd-group">
+        <div class="login-wd-label">Körper</div>
+        <div class="style-row" id="gender-container"></div>
+      </div>
+      <div class="login-wd-group">
+        <div class="login-wd-label">Frisur</div>
+        <div class="style-row" id="hair-style-container"></div>
+      </div>
+      <div class="login-wd-group">
+        <div class="login-wd-label">Haarfarbe</div>
+        <div class="color-row" id="hair-color-container"></div>
+      </div>
+      <div class="login-wd-group">
+        <div class="login-wd-label">Oberteil</div>
+        <div class="color-row" id="shirt-color-container"></div>
+      </div>
+      <div class="login-wd-group">
+        <div class="login-wd-label">Hose</div>
+        <div class="color-row" id="pants-color-container"></div>
+      </div>
+      <div class="login-wd-group" style="margin-left:auto; align-self:center;">
+        <button id="options-btn" style="padding:10px 18px; background:rgba(0,0,0,0.5); border:1px solid rgba(180,30,30,0.4); color:#b8a8a8; font-weight:800; font-size:12px; border-radius:2px; cursor:pointer; letter-spacing:2px; text-transform:uppercase; font-family:'Courier New',monospace; white-space:nowrap;">⚙ Optionen</button>
+      </div>
     </div>
     <button id="start-btn">Survive</button>
-    <button id="options-btn">⚙️ Grafik-Optionen</button>
   </div>
 </div>
 
@@ -918,9 +1013,11 @@ onAuthStateChanged(_auth, user => {
     _applyAccountColors();
     initPlayerModel();
     renderWardrobeMenu();
-    // Startscreen-Name auf Account setzen
-    const nameEl = document.getElementById('showcase-name');
-    if (nameEl) nameEl.textContent = (_myKey === 'nele' ? '🌸 Nele' : '⚡ Andreas') + ' — Bereit!';
+    // Startscreen-Name auf Account setzen (WoW-Stil)
+    const nameEl = document.getElementById('login-name-text');
+    if (nameEl) nameEl.textContent = _myKey === 'nele' ? 'NELE' : 'ANDREAS';
+    const subEl = document.getElementById('login-name-sub');
+    if (subEl) subEl.textContent = _myKey === 'nele' ? 'Überlebende' : 'Überlebender';
     // Online-Anzeige initial befüllen (nur ich bin online)
     _updateOnlineUI();
     // Diamanten-Anzeige im HUD aktualisieren
@@ -4764,7 +4861,7 @@ const ACCOUNT_DEFAULTS = {
 };
 
 // savedData wird async befüllt — Defaults damit es vor Auth-Auflösung nicht crasht
-let savedData = { money: 0, unlocked: ['w0'], wardrobe: ACCOUNT_DEFAULTS.nele, weaponSlots: [0, -1, -1] };
+let savedData = { money: 0, unlocked: ['w0'], wardrobe: ACCOUNT_DEFAULTS.nele, weaponSlots: [0, -1, -1], lastPos: null };
 
 async function _loadProgressFromFirebase() {
   if (!_myKey) return;
@@ -4776,7 +4873,8 @@ async function _loadProgressFromFirebase() {
       money:      d.money      ?? 0,
       unlocked:   d.unlocked   ?? ['w0'],
       wardrobe:   { ...def, ...(d.wardrobe || {}) },
-      weaponSlots: d.weaponSlots ?? [0, -1, -1]
+      weaponSlots: d.weaponSlots ?? [0, -1, -1],
+      lastPos:    d.lastPos    ?? null
     };
     // Spieler-Objekt live aktualisieren
     if (typeof player !== 'undefined') {
@@ -4812,7 +4910,8 @@ function saveProgress() {
       money:       player.money,
       unlocked:    WEAPONS.filter(w => !w.locked).map(w => w.id),
       wardrobe:    { shirt: playerColors.shirt, pants: playerColors.pants, hair: playerColors.hair, hairStyle: playerColors.hairStyle, feminine: playerColors.feminine },
-      weaponSlots: player.weaponSlots
+      weaponSlots: player.weaponSlots,
+      lastPos:     gameStarted ? { x: +player.position.x.toFixed(2), y: +player.position.y.toFixed(2), z: +player.position.z.toFixed(2) } : (savedData.lastPos ?? null)
     }).catch(() => {});
   }, 500);
 }
@@ -6208,7 +6307,7 @@ function _startEnemyListener() {
 // =====================================================================
 
 // Hauptmenü zeigt nur noch die Garderobe — Waffen werden im Spiel am Waffen-Terminal verwaltet.
-const showcaseNameEl = document.getElementById('showcase-name');
+const showcaseNameEl = document.getElementById('login-name-text');
 
 function renderWardrobeMenu() {
   const styles = [ { label: 'Kurz', value: 0 }, { label: 'Lang', value: 1 }, { label: 'Glatze', value: 2 } ];
@@ -8838,6 +8937,13 @@ function update(dt) {
   _sendMyPosition();
   _updateOppPlayer(dt);
   if (_isHost) { _syncEnemiesToFirebase(); }
+
+  // === Position periodisch speichern (alle 15s) ===
+  if (gameStarted && !gameOver) {
+    if (!update._lastPosSave) update._lastPosSave = 0;
+    update._lastPosSave += dt;
+    if (update._lastPosSave >= 15) { update._lastPosSave = 0; saveProgress(); }
+  }
   if (window.godMode) { player.hp = player.maxHp; player.invuln = 1.0; }
   const pPos = particles.geometry.attributes.position.array;
   for(let i=0; i<particleCount; i++) {
@@ -9777,45 +9883,40 @@ function update(dt) {
   if (gameOver) return;
 
   if (!gameStarted) {
-    // Showcase-Offset: Charakter + Sockel räumlich nach links verschoben, damit der Charakter
-    // mittig zwischen linkem Bildschirmrand und Garderoben-Panel im Bild erscheint.
-    const showcaseOffsetX = -4.5;
-    // Spieler steht direkt auf der Boden-Disc — Schuhe komplett sichtbar
+    // WoW-Stil: Charakter zentriert, Kamera dramatisch frontal
+    const showcaseX = player.position.x;
     player.group.position.copy(player.position);
-    player.group.position.x = player.position.x + showcaseOffsetX;
-    player.group.position.y = 0.085; // auf der Disc-Oberfläche
-    showcasePodium.position.x = player.position.x + showcaseOffsetX;
-    player.rig.parts.root.position.y = 0.85 + Math.sin(globalTime * 1.8) * 0.04;
+    player.group.position.y = 0.085;
+    showcasePodium.position.x = showcaseX;
+    player.rig.parts.root.position.y = 0.85 + Math.sin(globalTime * 1.8) * 0.035;
     player.rig.parts.root.position.z = 0; player.rig.parts.root.rotation.z = 0;
     player.rig.parts.torso.rotation.x = Math.sin(globalTime * 1.8) * 0.02; player.rig.parts.torso.rotation.y = 0;
-    player.group.rotation.y = Math.sin(globalTime * 0.45) * 0.5;
-    // Showcase: Nahkampfwaffe sitzt links, also präsentiert die linke Hand die Waffe.
+    // Charakter dreht sich langsam für die Präsentation
+    player.group.rotation.y = Math.sin(globalTime * 0.35) * 0.55;
+    // Dramatische Pose: linke Hand hält Waffe hoch, rechte Hand entspannt
     player.rig.parts.armL.upper.rotation.x = -1.25; player.rig.parts.armL.upper.rotation.z = -0.38; player.rig.parts.armL.lower.rotation.x = -0.95;
     player.rig.parts.armR.upper.rotation.x = 0.18; player.rig.parts.armR.upper.rotation.z = 0.18; player.rig.parts.armR.lower.rotation.x = -0.12;
     if (player.rig.parts.armL.hand) { player.rig.parts.armL.hand.rotation.x = -0.25; player.rig.parts.armL.hand.rotation.z = 0.15; }
     if (player.rig.parts.armR.hand) { player.rig.parts.armR.hand.rotation.x = 0; player.rig.parts.armR.hand.rotation.z = 0; }
-    // Glow-Ring + Outer-Ring pulsieren rot
     podiumGlow.material.opacity = 0.65 + Math.sin(globalTime * 2.2) * 0.18;
     podiumRing.material.opacity = 0.4 + Math.sin(globalTime * 2.2 + 0.7) * 0.15;
     podiumRing.scale.setScalar(1 + Math.sin(globalTime * 2.2) * 0.04);
-    // Bodennebel langsam rotieren für lebendige Atmosphäre
     if (showcasePodium.userData.fogA) {
       showcasePodium.userData.fogA.rotation.z = globalTime * 0.08;
       showcasePodium.userData.fogB.rotation.z = -globalTime * 0.05;
       showcasePodium.userData.fogA.material.opacity = 0.3 + Math.sin(globalTime * 0.7) * 0.08;
       showcasePodium.userData.fogB.material.opacity = 0.22 + Math.sin(globalTime * 0.5 + 1) * 0.06;
     }
-    // Kamera frontal vor dem (verschobenen) Charakter
-    const camOscX = Math.sin(globalTime * 0.18) * 0.12;
-    const camOscY = Math.sin(globalTime * 0.25) * 0.05;
-    const targetX = player.position.x + showcaseOffsetX;
+    // Kamera: leicht erhöht, Frontansicht mit sanftem Zoom-Atemrhythmus
+    const camOscZ = Math.sin(globalTime * 0.22) * 0.18;
+    const camOscY = Math.sin(globalTime * 0.3) * 0.04;
     camera.position.set(
-      targetX + 3.3 + camOscX,
-      player.position.y + 1.35 + camOscY,
-      player.position.z + 2.6
+      showcaseX,
+      player.position.y + 1.3 + camOscY,
+      player.position.z + 2.8 + camOscZ
     );
-    camera.lookAt(targetX, player.position.y + 0.95, player.position.z);
-    return; 
+    camera.lookAt(showcaseX, player.position.y + 1.05, player.position.z);
+    return;
   }
 
   if (buildState.active && buildState.ghostMesh) {
@@ -10588,17 +10689,28 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
   });
 });
 
-document.getElementById('start-btn').addEventListener('click', () => { 
-  document.getElementById('start-screen').classList.add('hidden'); document.getElementById('showcase-hint').classList.add('hidden');
-  // Korrektes Crosshair je nach aktueller Waffe
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('start-screen').classList.add('hidden');
+  const loginBg = document.getElementById('login-bg');
+  if (loginBg) loginBg.style.display = 'none';
+  const loginCharName = document.getElementById('login-char-name');
+  if (loginCharName) loginCharName.style.display = 'none';
   document.getElementById('crosshair').classList.toggle('active', !player.weaponStats.ranged);
   document.getElementById('crosshair-ranged').classList.toggle('active', !!player.weaponStats.ranged);
-  showcasePodium.visible = false; gameStarted=true; player.facing = cameraYaw + Math.PI; 
+  showcasePodium.visible = false;
+  gameStarted = true;
+
+  // Letzte gespeicherte Position wiederherstellen
+  if (savedData.lastPos) {
+    player.position.set(savedData.lastPos.x, savedData.lastPos.y, savedData.lastPos.z);
+    cameraYaw = Math.PI;
+  }
+  player.facing = cameraYaw + Math.PI;
   player.mouseHeld = false; player.fireCooldown = 0; player.reloading = false;
   updateAmmoHUD();
   player.rig.parts.armR.upper.rotation.z = 0; player.rig.parts.armR.lower.rotation.x = -0.2; player.rig.parts.armL.upper.rotation.x = 0;
-  
-  setTimeout(() => canvas.requestPointerLock(), 100); 
+  updateHUD();
+  setTimeout(() => canvas.requestPointerLock(), 100);
 });
 
 function respawnPlayer() {
@@ -10764,6 +10876,99 @@ function preWarmShaders() {
 })();
 
 updateHUD(); loop();
+
+// ── WoW LOGIN BACKGROUND: Stadtsilhouette + Partikel ──────────────────────────
+function _initLoginBackground() {
+  // 1) Stadtsilhouette auf 2D-Canvas zeichnen
+  const cityCanvas = document.getElementById('login-city-canvas');
+  if (cityCanvas) {
+    const resizeCity = () => {
+      cityCanvas.width  = window.innerWidth;
+      cityCanvas.height = Math.floor(window.innerHeight * 0.55);
+      const ctx = cityCanvas.getContext('2d');
+      const W = cityCanvas.width, H = cityCanvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // Hintergrund-Wolken-Leuchten (Horizont)
+      const horizonGrad = ctx.createLinearGradient(0, H * 0.4, 0, H);
+      horizonGrad.addColorStop(0,   'rgba(100,15,5,0)');
+      horizonGrad.addColorStop(0.6, 'rgba(90,8,3,0.35)');
+      horizonGrad.addColorStop(1,   'rgba(60,5,2,0.7)');
+      ctx.fillStyle = horizonGrad; ctx.fillRect(0, 0, W, H);
+
+      // Zufällige, aber seed-deterministische Gebäude
+      const rng = (seed) => { let s = seed; return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; }; };
+      const rand = rng(42);
+      let x = 0;
+      while (x < W) {
+        const bw = 28 + rand() * 55;
+        const bh = H * (0.25 + rand() * 0.55);
+        const by = H - bh;
+        // Fenster-Leuchten
+        ctx.fillStyle = `rgba(${10 + rand()*15|0},${3 + rand()*5|0},${2 + rand()*3|0},0.95)`;
+        ctx.fillRect(x, by, bw, bh);
+        // Fenster
+        const rows = Math.floor(bh / 14), cols = Math.floor(bw / 10);
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          if (rand() > 0.62) continue; // Die meisten Lichter sind aus (Apokalypse)
+          const lit = rand() > 0.7;
+          ctx.fillStyle = lit ? `rgba(220,180,80,${0.35 + rand()*0.35})` : `rgba(80,120,160,${0.15 + rand()*0.2})`;
+          ctx.fillRect(x + 3 + c * 10, by + 6 + r * 14, 5, 7);
+        }
+        // Dach-Details
+        if (rand() > 0.6) {
+          ctx.fillStyle = 'rgba(5,2,2,0.9)';
+          ctx.fillRect(x + bw * 0.35, by - 12 - rand() * 20, 4, 12 + rand() * 20);
+        }
+        x += bw + 2 + rand() * 6;
+      }
+
+      // Vordergrund: dunklere Gebäude-Silhouette
+      x = 0;
+      const rand2 = rng(99);
+      while (x < W) {
+        const bw = 40 + rand2() * 90;
+        const bh = H * (0.12 + rand2() * 0.3);
+        ctx.fillStyle = `rgba(2,1,1,0.97)`;
+        ctx.fillRect(x, H - bh, bw, bh);
+        x += bw + rand2() * 4;
+      }
+
+      // Bodennebel unten
+      const fogGrad = ctx.createLinearGradient(0, H * 0.72, 0, H);
+      fogGrad.addColorStop(0,   'rgba(60,5,3,0)');
+      fogGrad.addColorStop(0.5, 'rgba(50,4,2,0.4)');
+      fogGrad.addColorStop(1,   'rgba(30,2,1,0.8)');
+      ctx.fillStyle = fogGrad; ctx.fillRect(0, 0, W, H);
+    };
+    resizeCity();
+    window.addEventListener('resize', resizeCity);
+  }
+
+  // 2) Asche-Partikel
+  const loginBg = document.getElementById('login-bg');
+  if (!loginBg) return;
+  for (let i = 0; i < 28; i++) {
+    const el = document.createElement('div');
+    el.className = 'ash';
+    const size = 1.5 + Math.random() * 3.5;
+    el.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*-20}%;` +
+      `--ash-drift:${(Math.random()-0.5)*60}px;animation-duration:${6+Math.random()*10}s;animation-delay:${Math.random()*-12}s;`;
+    loginBg.appendChild(el);
+  }
+
+  // 3) Blut-Tropfen (sehr subtil)
+  for (let i = 0; i < 14; i++) {
+    const el = document.createElement('div');
+    el.className = 'blood-drop';
+    const h = 20 + Math.random() * 50;
+    el.style.cssText = `height:${h}px;left:${Math.random()*100}%;top:${Math.random()*-10}%;` +
+      `animation-duration:${2+Math.random()*4}s;animation-delay:${Math.random()*-6}s;`;
+    loginBg.appendChild(el);
+  }
+}
+
+_initLoginBackground();
 
 // Pre-Compile nach 2 Frames, dann auf Firebase-Auth warten bevor Loading-Screen verschwindet
 requestAnimationFrame(() => requestAnimationFrame(() => {
