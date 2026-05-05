@@ -10694,7 +10694,13 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
 
 document.getElementById('back-to-mainmenu-btn').addEventListener('click', () => {
   document.exitPointerLock();
-  window.location.href = 'index.html';
+  document.getElementById('options-screen').classList.remove('show');
+  document.getElementById('start-screen').classList.remove('hidden');
+  const loginBg = document.getElementById('login-bg');
+  if (loginBg) loginBg.style.display = '';
+  const loginCharName = document.getElementById('login-char-name');
+  if (loginCharName) loginCharName.style.display = '';
+  gameStarted = false;
 });
 
 document.getElementById('back-to-mainmenu-btn').addEventListener('mouseenter', function() {
