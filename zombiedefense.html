@@ -4923,9 +4923,9 @@ function saveProgress() {
 function loadProgress() { return savedData; }
 
 const DEFENSES = [
-  { id: 'b1', name: '🚧 Barrikade', desc: 'Holzwand blockiert Zombies', cost: 100, type: 'barricade', w:3, d:1, hp: 500, color: 0x8b5a2b },
-  { id: 't1', name: '🪤 Stachelfalle', desc: 'Verlangsamt (50%) & kl. Schaden', cost: 150, type: 'trap', w:3, d:3, damage: 10, color: 0x444444 },
-  { id: 'tu1', name: '🔫 Schrott-Turm', desc: 'Schießt kleine Projektile ab', cost: 300, type: 'turret', w:1.2, d:1.2, range: 18, fireRate: 1.0, damage: 40, color: 0x8899aa }
+  { id: 'b1', name: '🚧 Barrikade', desc: 'Holzwand blockiert Zombies', cost: 1000, type: 'barricade', w:3, d:1, hp: 500, color: 0x8b5a2b },
+  { id: 't1', name: '🪤 Stachelfalle', desc: 'Verlangsamt (50%) & kl. Schaden', cost: 1500, type: 'trap', w:3, d:3, damage: 10, color: 0x444444 },
+  { id: 'tu1', name: '🔫 Schrott-Turm', desc: 'Schießt kleine Projektile ab', cost: 3000, type: 'turret', w:1.2, d:1.2, range: 18, fireRate: 1.0, damage: 40, color: 0x8899aa }
 ];
 
 // ===== SILO KEYPAD LOGIK =====
@@ -5723,15 +5723,15 @@ function buildRiggedHumanoid(isEnemy, colors, opts = {}) {
 const WEAPONS = [
   // Nahkampfwaffen (ranged: false)
   { id: 'w0', name: '⚾ Baseballschläger', desc: 'Startwaffe — solide Grundausstattung', damage: 30, range: 2.8, speed: 0.4, cost: 0, maxHits: 1, locked: !savedData.unlocked.includes('w0') },
-  { id: 'w1', name: '🔧 Eisenrohr', desc: 'Schwerer Hieb — mehr Wumms', damage: 60, range: 3.0, speed: 0.45, cost: 200, maxHits: 1, locked: !savedData.unlocked.includes('w1') },
-  { id: 'w2', name: '🪓 Daddys Axe', damage: 110, desc: 'Triff zwei auf einmal', range: 3.2, speed: 0.5, cost: 350, maxHits: 2, locked: !savedData.unlocked.includes('w2') },
-  { id: 'w3', name: '⚡ Feminine Energy', desc: 'Plasma-Klinge — stylisch & tödlich', damage: 200, range: 3.6, speed: 0.35, cost: 800, maxHits: 2, locked: !savedData.unlocked.includes('w3') },
-  { id: 'w4', name: '🔨 Scrotum Crusher', desc: 'Mjölnir-Energy — räumt komplett auf', damage: 350, range: 4.5, speed: 0.4, cost: 1500, maxHits: 3, locked: !savedData.unlocked.includes('w4') },
+  { id: 'w1', name: '🔧 Eisenrohr', desc: 'Schwerer Hieb — mehr Wumms', damage: 60, range: 3.0, speed: 0.45, cost: 4000, maxHits: 1, locked: !savedData.unlocked.includes('w1') },
+  { id: 'w2', name: '🪓 Daddys Axe', damage: 110, desc: 'Triff zwei auf einmal', range: 3.2, speed: 0.5, cost: 7000, maxHits: 2, locked: !savedData.unlocked.includes('w2') },
+  { id: 'w3', name: '⚡ Feminine Energy', desc: 'Plasma-Klinge — stylisch & tödlich', damage: 200, range: 3.6, speed: 0.35, cost: 16000, maxHits: 2, locked: !savedData.unlocked.includes('w3') },
+  { id: 'w4', name: '🔨 Scrotum Crusher', desc: 'Mjölnir-Energy — räumt komplett auf', damage: 350, range: 4.5, speed: 0.4, cost: 30000, maxHits: 3, locked: !savedData.unlocked.includes('w4') },
   // Schusswaffen (ranged: true) — echte Projektil-/Raycast-Mechanik
-  { id: 'w5', name: '🔫 Pistole', desc: 'Schnell, präzise, 12 Schuss', ranged: true, damage: 75, range: 35, fireRate: 0.22, magSize: 12, reloadTime: 1.2, spread: 0.012, pellets: 1, auto: false, cost: 500, locked: !savedData.unlocked.includes('w5') },
-  { id: 'w6', name: '💥 Schrotflinte', desc: '8 Schrotkugeln — verheerend nah', ranged: true, damage: 38, range: 14, fireRate: 0.7, magSize: 6, reloadTime: 2.0, spread: 0.18, pellets: 8, auto: false, cost: 1200, locked: !savedData.unlocked.includes('w6') },
-  { id: 'w7', name: '🎯 Sturmgewehr', desc: 'Vollautomatisch, hohe Reichweite', ranged: true, damage: 55, range: 50, fireRate: 0.09, magSize: 30, reloadTime: 1.8, spread: 0.025, pellets: 1, auto: true, cost: 2500, locked: !savedData.unlocked.includes('w7') },
-  { id: 'w8', name: '🔭 Scharfschützengewehr', desc: 'AWP — One-Shot Kill. Rechtsklick: Scope', ranged: true, isSniper: true, damage: 500, range: 120, fireRate: 1.5, magSize: 5, reloadTime: 3.2, spread: 0.001, pellets: 1, auto: false, cost: 5000, locked: !savedData.unlocked.includes('w8') }
+  { id: 'w5', name: '🔫 Pistole', desc: 'Schnell, präzise, 12 Schuss', ranged: true, damage: 75, range: 35, fireRate: 0.22, magSize: 12, reloadTime: 1.2, spread: 0.012, pellets: 1, auto: false, cost: 10000, locked: !savedData.unlocked.includes('w5') },
+  { id: 'w6', name: '💥 Schrotflinte', desc: '8 Schrotkugeln — verheerend nah', ranged: true, damage: 38, range: 14, fireRate: 0.7, magSize: 6, reloadTime: 2.0, spread: 0.18, pellets: 8, auto: false, cost: 24000, locked: !savedData.unlocked.includes('w6') },
+  { id: 'w7', name: '🎯 Sturmgewehr', desc: 'Vollautomatisch, hohe Reichweite', ranged: true, damage: 55, range: 50, fireRate: 0.09, magSize: 30, reloadTime: 1.8, spread: 0.025, pellets: 1, auto: true, cost: 50000, locked: !savedData.unlocked.includes('w7') },
+  { id: 'w8', name: '🔭 Scharfschützengewehr', desc: 'AWP — One-Shot Kill. Rechtsklick: Scope', ranged: true, isSniper: true, damage: 500, range: 120, fireRate: 1.5, magSize: 5, reloadTime: 3.2, spread: 0.001, pellets: 1, auto: false, cost: 100000, locked: !savedData.unlocked.includes('w8') }
 ];
 // Munitions-State pro Schusswaffe (current ammo im Magazin)
 const ammoState = {};
