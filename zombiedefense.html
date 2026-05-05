@@ -932,6 +932,9 @@
         <button class="opt-btn" data-opt="particles" data-val="false">AUS</button>
       </div>
     </div>
+    <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(180,30,30,0.25);">
+      <button id="back-to-mainmenu-btn" style="width:100%; padding:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(180,30,30,0.4); color:#b8a8a8; font-weight:800; font-size:13px; border-radius:2px; cursor:pointer; letter-spacing:3px; text-transform:uppercase; font-family:'Courier New',monospace; transition:all 0.15s;">🏠 HAUPTMENÜ</button>
+    </div>
   </div>
 </div>
 
@@ -10634,7 +10637,7 @@ function updateFPS() {
 function loop() { update(Math.min(0.05, clock.getDelta())); renderer.render(scene, camera); if (fpsVisible) updateFPS(); requestAnimationFrame(loop); }
 
 // === GRAFIK-OPTIONEN LOGIK ===
-const gameSettings = { shadows: true, res: 1.5, particles: true };
+const gameSettings = { shadows: false, res: 1.5, particles: true };
 
 function applySettings() {
   // 1. Pixel Ratio (Resolution / Render-Schärfe)
@@ -10687,6 +10690,22 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
     gameSettings[e.target.dataset.opt] = val;
     applySettings();
   });
+});
+
+document.getElementById('back-to-mainmenu-btn').addEventListener('click', () => {
+  document.exitPointerLock();
+  window.location.href = 'index.html';
+});
+
+document.getElementById('back-to-mainmenu-btn').addEventListener('mouseenter', function() {
+  this.style.background = 'rgba(120,15,15,0.25)';
+  this.style.borderColor = 'rgba(196,30,30,0.6)';
+  this.style.color = '#f0e8e8';
+});
+document.getElementById('back-to-mainmenu-btn').addEventListener('mouseleave', function() {
+  this.style.background = 'rgba(0,0,0,0.5)';
+  this.style.borderColor = 'rgba(180,30,30,0.4)';
+  this.style.color = '#b8a8a8';
 });
 
 document.getElementById('start-btn').addEventListener('click', () => {
