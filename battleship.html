@@ -488,7 +488,7 @@ let currentCoins = 0;
 let gameState    = null;
 let gameListener = null;
 let isShooting   = false;
-let prevTurn     = null;
+let prevOppLastShot = undefined;
 
 let placedShips   = [];
 let selectedShip  = null;
@@ -742,17 +742,16 @@ function renderGame(state) {
   const oppShotsData = state[oppK + 'Shots']  || emptyGrid();
   const isMyTurn = state.currentTurn === currentUser && state.status === 'running';
 
-  // Screen edge flash when turn switches to us
-  if (state.status === 'running' && state.currentTurn === currentUser && prevTurn !== null && prevTurn !== currentUser) {
-    const oppLastShot = state[oppK + 'LastShot'];
-    if (oppLastShot != null) {
+  // Screen edge flash whenever opponent fires a new shot
+  const oppLastShot = state[oppK + 'LastShot'] || null;
+  if (state.status === 'running' && prevOppLastShot !== undefined && oppLastShot) {
+    const changed = !prevOppLastShot || prevOppLastShot.r !== oppLastShot.r || prevOppLastShot.c !== oppLastShot.c;
+    if (changed) {
       const wasHit = (oppShotsData[oppLastShot.r] || [])[oppLastShot.c] === 1;
       triggerScreenFlash(wasHit ? 'red' : 'blue');
-    } else {
-      triggerScreenFlash('blue');
     }
   }
-  prevTurn = state.currentTurn;
+  prevOppLastShot = oppLastShot;
 
   // Turn banner
   const banner = document.getElementById('yourTurnBanner');
