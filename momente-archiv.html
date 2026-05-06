@@ -587,12 +587,17 @@
 
   /* Title in bubble */
   .moment-title {
-    font-family: 'Dancing Script', cursive;
-    font-size: 14px; font-weight: 700;
-    color: rgba(255,240,248,0.95); margin-bottom: 3px;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    background: linear-gradient(100deg, #ffb3d1 0%, #ff6b9d 45%, #ffd6e8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 6px rgba(255,107,157,0.55));
+    margin-bottom: 5px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  @media (max-width: 600px) { .moment-title { font-size: 12px; } }
+  @media (max-width: 600px) { .moment-title { font-size: 11px; } }
 
   /* White-space for text with line breaks */
   .moment-text { white-space: pre-wrap; }
