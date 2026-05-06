@@ -182,6 +182,7 @@
   .page-header {
     position: fixed; top: 45px; left: 0; right: 0; z-index: 100;
     text-align: center; padding: 18px 16px 16px; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(26,5,32,0.98) 60%, rgba(26,5,32,0) 100%);
   }
   .page-title {
     font-family: 'Dancing Script', cursive;
@@ -259,12 +260,30 @@
   /* Count badge */
   .count-badge {
     position: fixed; bottom: 20px; right: 16px; z-index: 200;
-    background: rgba(255,107,157,0.15); border: 1.5px solid rgba(255,107,157,0.3);
-    border-radius: 50px; padding: 7px 16px;
-    font-size: 12px; font-weight: 700; color: rgba(255,107,157,0.8);
-    backdrop-filter: blur(10px); display: none;
+    display: none; flex-direction: column; align-items: flex-end; gap: 6px;
   }
-  .count-badge.visible { display: block; }
+  .count-badge.visible { display: flex; }
+  .count-total {
+    background: rgba(255,107,157,0.13); border: 1.5px solid rgba(255,107,157,0.3);
+    border-radius: 50px; padding: 6px 14px;
+    font-size: 12px; font-weight: 700; color: rgba(255,107,157,0.85);
+    backdrop-filter: blur(10px); white-space: nowrap;
+  }
+  .count-authors {
+    display: flex; gap: 6px;
+  }
+  .count-author {
+    border-radius: 50px; padding: 5px 12px;
+    font-size: 11px; font-weight: 700; backdrop-filter: blur(10px); white-space: nowrap;
+  }
+  .count-author.andreas {
+    background: rgba(232,115,138,0.12); border: 1.5px solid rgba(232,115,138,0.3);
+    color: rgba(245,163,181,0.9);
+  }
+  .count-author.nele {
+    background: rgba(167,139,250,0.12); border: 1.5px solid rgba(167,139,250,0.3);
+    color: rgba(196,181,253,0.9);
+  }
 
   /* FLOATING MOMENT CARDS */
   .moments-canvas {
@@ -497,7 +516,8 @@
   @media (max-width: 480px) {
     .filter-btn { padding: 7px 14px; font-size: 11px; }
     .top-bar { padding: 9px 12px; }
-    .count-badge { display: none !important; }
+    .count-total { font-size: 11px; padding: 5px 12px; }
+    .count-author { font-size: 10px; padding: 4px 10px; }
   }
 
   /* Title in bubble */
@@ -603,9 +623,260 @@
   }
   .edit-save:hover, .edit-save:active { transform: scale(1.03); }
   .edit-save:disabled { opacity: 0.6; cursor: default; transform: none; }
+  /* ===== INTRO ANIMATION ===== */
+  .intro-overlay {
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(255,107,157,0.22) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 8%,  rgba(212,160,97,0.18)  0%, transparent 45%),
+      radial-gradient(ellipse at 50% 85%, rgba(232,115,138,0.15) 0%, transparent 55%),
+      linear-gradient(160deg, #1a0520 0%, #2d0a3a 30%, #1e0530 60%, #110320 100%);
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.9s ease;
+    cursor: pointer;
+  }
+  .intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+  /* Background particles layer */
+  .intro-particles { position: absolute; inset: 0; pointer-events: none; }
+
+  /* Expanding glow rings */
+  .intro-ring {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    border: 1.5px solid rgba(255,107,157,0.5);
+    width: 180px; height: 180px;
+    opacity: 0;
+    animation: introRingExpand 2.2s cubic-bezier(0.22,1,0.36,1) 0.7s both;
+  }
+  .intro-ring-2 {
+    border-color: rgba(212,160,97,0.35);
+    width: 120px; height: 120px;
+    animation-delay: 1.0s; animation-duration: 2s;
+  }
+  .intro-ring-3 {
+    border-color: rgba(167,139,250,0.3);
+    width: 240px; height: 240px;
+    animation-delay: 0.5s; animation-duration: 2.6s;
+  }
+  @keyframes introRingExpand {
+    0%   { transform: scale(1);   opacity: 0.85; }
+    70%  { opacity: 0.4; }
+    100% { transform: scale(5.5); opacity: 0; }
+  }
+
+  /* Central glow blob */
+  .intro-glow-blob {
+    position: absolute; width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,107,157,0.35) 0%, rgba(194,24,91,0.12) 45%, transparent 70%);
+    animation: introBlob 1.8s ease-out 0.5s both;
+    pointer-events: none;
+  }
+  @keyframes introBlob {
+    0%   { transform: scale(0.2); opacity: 0; }
+    50%  { opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* Content box */
+  .intro-content {
+    position: relative; z-index: 2; text-align: center; padding: 0 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .intro-heart {
+    font-size: 52px; line-height: 1;
+    animation: introHeartIn 0.65s cubic-bezier(0.34,1.6,0.64,1) 0.85s both;
+    filter: drop-shadow(0 0 18px rgba(255,107,157,0.7));
+  }
+  @keyframes introHeartIn {
+    0%   { transform: scale(0.1) rotate(-20deg); opacity: 0; }
+    100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
+  }
+
+  .intro-title {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(44px, 11vw, 86px); font-weight: 700; line-height: 1.05;
+    margin: 14px 0 6px;
+    background: linear-gradient(135deg, #ff6b9d 0%, #c2185b 38%, #f5a3b5 72%, #d4a061 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 28px rgba(255,107,157,0.65));
+    animation: introTitleIn 0.85s cubic-bezier(0.22,1,0.36,1) 1.15s both;
+  }
+  @keyframes introTitleIn {
+    0%   { transform: scale(0.55) translateY(24px); opacity: 0;
+           filter: drop-shadow(0 0 70px rgba(255,107,157,1)); }
+    100% { transform: scale(1)    translateY(0);    opacity: 1;
+           filter: drop-shadow(0 0 28px rgba(255,107,157,0.65)); }
+  }
+
+  .intro-divider {
+    width: 60px; height: 1.5px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,107,157,0.6), rgba(212,160,97,0.5), transparent);
+    animation: introDivider 0.5s ease-out 1.85s both;
+  }
+  @keyframes introDivider {
+    0%   { width: 0; opacity: 0; }
+    100% { width: 60px; opacity: 1; }
+  }
+
+  .intro-sub {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 12px; font-weight: 600; letter-spacing: 2.8px;
+    text-transform: uppercase; color: rgba(255,107,157,0.65);
+    margin-top: 10px;
+    animation: introFadeUp 0.6s ease-out 2.05s both;
+  }
+  .intro-sparkles {
+    margin-top: 18px; display: flex; gap: 14px; justify-content: center;
+    animation: introFadeUp 0.5s ease-out 2.45s both;
+  }
+  .intro-sparkle {
+    font-size: 20px; opacity: 0;
+    animation: introSparkleFloat 1.6s ease-out both;
+  }
+  @keyframes introSparkleFloat {
+    0%   { transform: translateY(0)     scale(0.4); opacity: 0; }
+    40%  { opacity: 1; }
+    100% { transform: translateY(-28px) scale(1.1); opacity: 0; }
+  }
+  @keyframes introFadeUp {
+    0%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Floating rising particles */
+  .intro-float {
+    position: absolute; pointer-events: none; opacity: 0;
+    animation: introRise linear both;
+  }
+  @keyframes introRise {
+    0%   { opacity: 0;   transform: translateY(0)     scale(0.6); }
+    15%  { opacity: 0.9; }
+    85%  { opacity: 0.5; }
+    100% { opacity: 0;   transform: translateY(-140px) scale(1.1); }
+  }
+
+  /* Star fade-in */
+  @keyframes introStarIn {
+    0%   { opacity: 0; transform: scale(0.3); }
+    100% { opacity: var(--op, 0.8); transform: scale(1); }
+  }
+  /* Shooting star */
+  @keyframes introShoot {
+    0%   { transform: translate(0,0) rotate(var(--ang)) scaleX(1);  opacity: 0; }
+    8%   { opacity: 1; }
+    80%  { opacity: 0.7; transform: translate(var(--tx),var(--ty)) rotate(var(--ang)) scaleX(90); }
+    100% { opacity: 0; }
+  }
+
+  .intro-skip {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255,107,157,0.35); pointer-events: none;
+    animation: introFadeUp 0.5s ease-out 2.8s both;
+  }
 </style>
 </head>
 <body>
+
+<!-- ===== INTRO ANIMATION ===== -->
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-particles" id="introParticles"></div>
+  <div class="intro-glow-blob"></div>
+  <div class="intro-ring"></div>
+  <div class="intro-ring intro-ring-2"></div>
+  <div class="intro-ring intro-ring-3"></div>
+  <div class="intro-content">
+    <div class="intro-heart">💕</div>
+    <div class="intro-title">Unsere Momente</div>
+    <div class="intro-divider"></div>
+    <div class="intro-sub">Für immer festgehalten</div>
+    <div class="intro-sparkles">
+      <span class="intro-sparkle" style="animation-delay:2.5s; animation-duration:1.8s">✨</span>
+      <span class="intro-sparkle" style="animation-delay:2.7s; animation-duration:1.6s">🌸</span>
+      <span class="intro-sparkle" style="animation-delay:2.6s; animation-duration:2.0s">💫</span>
+      <span class="intro-sparkle" style="animation-delay:2.8s; animation-duration:1.7s">⭐</span>
+      <span class="intro-sparkle" style="animation-delay:2.55s; animation-duration:1.9s">✨</span>
+    </div>
+  </div>
+  <div class="intro-skip">Tippen zum Überspringen</div>
+</div>
+
+<script>
+(function() {
+  var overlay = document.getElementById('introOverlay');
+  var particles = document.getElementById('introParticles');
+  var rand = function(a, b) { return a + Math.random() * (b - a); };
+  var done = false;
+
+  function dismiss() {
+    if (done) return;
+    done = true;
+    overlay.classList.add('fade-out');
+    setTimeout(function() { overlay.style.display = 'none'; }, 950);
+  }
+
+  // Background stars fading in
+  for (var i = 0; i < 110; i++) {
+    var s = document.createElement('div');
+    var size = i < 70 ? rand(1, 1.8) : i < 95 ? rand(2, 3) : rand(3, 4.5);
+    var op   = rand(0.4, 1.0);
+    var hue  = Math.random();
+    var col  = hue < 0.3 ? 'rgba(255,160,190,' + op + ')' : hue < 0.55 ? 'rgba(255,215,130,' + op + ')' : 'rgba(255,255,255,' + op + ')';
+    s.style.cssText =
+      'position:absolute;border-radius:50%;pointer-events:none;' +
+      'width:' + size + 'px;height:' + size + 'px;background:' + col + ';' +
+      'left:' + rand(0, 100) + '%;top:' + rand(0, 100) + '%;' +
+      'box-shadow:0 0 ' + (size * 2) + 'px ' + col + ';' +
+      '--op:' + op + ';' +
+      'opacity:0;animation:introStarIn 0.6s ease-out ' + rand(0, 1.4) + 's both;';
+    particles.appendChild(s);
+  }
+
+  // Dramatic shooting stars
+  var shootData = [
+    { lx: 15, ly: 12, ang: -38 }, { lx: 55, ly:  6, ang: -28 },
+    { lx: 72, ly: 22, ang: -44 }, { lx: 30, ly: 35, ang: -32 }
+  ];
+  shootData.forEach(function(d, idx) {
+    var s = document.createElement('div');
+    var dist = rand(220, 340);
+    var angR = d.ang * Math.PI / 180;
+    s.style.cssText =
+      'position:absolute;border-radius:50%;pointer-events:none;' +
+      'width:2px;height:2px;background:white;' +
+      'box-shadow:0 0 6px 2px rgba(255,255,255,0.9);' +
+      'left:' + d.lx + '%;top:' + d.ly + '%;' +
+      '--ang:' + d.ang + 'deg;' +
+      '--tx:' + (Math.cos(angR) * dist) + 'px;' +
+      '--ty:' + (Math.sin(angR) * dist) + 'px;' +
+      'animation:introShoot ' + rand(0.65, 0.9) + 's cubic-bezier(0.25,0,0.6,1) ' + (0.3 + idx * 0.35) + 's both;';
+    particles.appendChild(s);
+  });
+
+  // Floating rising hearts/sparkles
+  var floatEmojis = ['💕','✨','🌸','💫','🌟','💕','✨','🌸'];
+  floatEmojis.forEach(function(e, i) {
+    var f = document.createElement('div');
+    f.className = 'intro-float';
+    f.textContent = e;
+    f.style.cssText =
+      'left:' + rand(8, 92) + '%;bottom:' + rand(8, 28) + '%;' +
+      'font-size:' + rand(14, 24) + 'px;' +
+      'animation-delay:' + (1.8 + i * 0.18) + 's;' +
+      'animation-duration:' + rand(1.6, 2.4) + 's;';
+    particles.appendChild(f);
+  });
+
+  // Auto-dismiss after 4.2 s
+  setTimeout(dismiss, 4200);
+
+  // Tap/click to skip
+  overlay.addEventListener('click', dismiss);
+  overlay.addEventListener('touchend', dismiss, { passive: true });
+})();
+</script>
 
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
@@ -659,7 +930,13 @@
 <div class="moments-canvas" id="momentsCanvas"></div>
 
 <!-- Count badge -->
-<div class="count-badge" id="countBadge"></div>
+<div class="count-badge" id="countBadge">
+  <div class="count-total" id="countTotal"></div>
+  <div class="count-authors">
+    <div class="count-author andreas" id="countAndreas"></div>
+    <div class="count-author nele" id="countNele"></div>
+  </div>
+</div>
 
 <!-- Scroll hint -->
 <div class="scroll-hint" id="scrollHint">
@@ -902,7 +1179,7 @@
       return;
     }
 
-    const moments = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+    const moments = Object.values(data).sort((a, b) => (a.momentDate || a.timestamp) - (b.momentDate || b.timestamp));
     if (moments.length === 0) {
       document.getElementById('emptyState').classList.add('visible');
       document.getElementById('countBadge').classList.remove('visible');
@@ -910,7 +1187,11 @@
     }
 
     document.getElementById('emptyState').classList.remove('visible');
-    document.getElementById('countBadge').textContent = moments.length + ' Momente';
+    const andreasCount = moments.filter(m => (m.author || '').toLowerCase() === 'andreas').length;
+    const neleCount    = moments.filter(m => (m.author || '').toLowerCase() === 'nele').length;
+    document.getElementById('countTotal').textContent   = `✨ ${moments.length} Momente`;
+    document.getElementById('countAndreas').textContent = `🐾 Andreas ${andreasCount}`;
+    document.getElementById('countNele').textContent    = `🌸 Nele ${neleCount}`;
     document.getElementById('countBadge').classList.add('visible');
 
     const isMobile = window.innerWidth <= 600;
@@ -958,7 +1239,7 @@
       bubble.addEventListener('click', () => openDetail(m, bubble));
       canvas.appendChild(bubble);
 
-      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp });
+      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp, momentDate: m.momentDate || m.timestamp });
     });
 
     startDrift();
@@ -1071,7 +1352,8 @@
       // Remove dimmed class so all cards are fully visible in list view
       floatingCards.forEach(c => c.el.classList.remove('dimmed'));
 
-      const sorted = [...floatingCards].sort((a, b) => a.timestamp - b.timestamp);
+      window.scrollTo(0, 0); // zum Seitenanfang scrollen, damit Liste unterhalb des Headers beginnt
+      const sorted = [...floatingCards].sort((a, b) => a.momentDate - b.momentDate);
       const gap = isMobile ? 12 : 16; // gleichmäßiger Abstand zwischen Karten
       const startX = Math.max(8, Math.floor((vw - cardW) / 2));
 
