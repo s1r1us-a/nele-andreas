@@ -761,7 +761,6 @@ function renderGame(state) {
   markSunk(myShipsData, oppShotsData, document.getElementById('ownGrid'));
 
   // Highlight opponent's last shot on own grid
-  const oppLastShot = state[oppK + 'LastShot'];
   if (oppLastShot != null) {
     const lsCell = gc(document.getElementById('ownGrid'), oppLastShot.r, oppLastShot.c);
     if (lsCell) lsCell.classList.add('last-shot');
