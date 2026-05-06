@@ -980,7 +980,7 @@
 
   document.getElementById('filterBar').addEventListener('click', e => {
     const btn = e.target.closest('.filter-btn');
-    if (btn) applyFilter(btn.dataset.filter);
+    if (btn && btn.dataset.filter) applyFilter(btn.dataset.filter);
   });
 
   // ---- HELPERS ----
@@ -1148,7 +1148,11 @@
 
   // ---- RESIZE ----
   let resizeTimer;
+  let lastRenderVW = window.innerWidth;
   window.addEventListener('resize', () => {
+    const newVW = window.innerWidth;
+    if (newVW === lastRenderVW) return; // iOS-Adressleiste ändert nur Höhe → ignorieren
+    lastRenderVW = newVW;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       onValue(ref(db, 'saved_moments'), snap => renderMoments(snap.val()), { onlyOnce: true });
