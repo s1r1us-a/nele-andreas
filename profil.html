@@ -384,6 +384,11 @@
       <div class="stat-card-value" id="statZombieKills">–</div>
       <div class="stat-card-label">Zombies getötet</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">✨</div>
+      <div class="stat-card-value" id="statMomentsSaved">–</div>
+      <div class="stat-card-label">Momente gespeichert</div>
+    </div>
   </div>
 
   <div class="vg-section">
@@ -775,6 +780,13 @@
       const e1 = document.getElementById('statCoinsEarned');  if (e1) e1.textContent = fmt(d.coinsEarned);
       const e3 = document.getElementById('statBoxesOpened');  if (e3) e3.textContent = fmt(d.boxesOpened);
       const ez = document.getElementById('statZombieKills');  if (ez) ez.textContent = fmt(d.zombieKills);
+      // Momente gespeichert – aus saved_moments zählen
+      get(ref(db, 'saved_moments')).then(mSnap => {
+        const moments = mSnap.val() || {};
+        const count = Object.values(moments).filter(m => (m.author || '').toLowerCase() === key).length;
+        const em = document.getElementById('statMomentsSaved');
+        if (em) em.textContent = count.toLocaleString('de-DE');
+      });
 
       // Vier Gewinnt Stats
       const vg   = (d.vierGewinnt) || {};
