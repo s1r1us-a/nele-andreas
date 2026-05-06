@@ -582,8 +582,24 @@
     font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 600;
     color: var(--text-dark); line-height: 1.55; background: var(--ui-input-bg);
     border: 1.5px solid var(--ui-modal-border); border-radius: 14px;
-    padding: 14px 16px; margin-bottom: 14px; text-align: left; word-break: break-word;
+    padding: 14px 16px; margin-bottom: 8px; text-align: left; word-break: break-word;
   }
+  .moment-confirm-date {
+    font-size: 12px; color: var(--ui-btn-text); font-weight: 600;
+    margin-bottom: 14px; letter-spacing: 0.5px;
+  }
+  .moment-date-label {
+    display: block; font-size: 11px; font-weight: 700; color: var(--text-mid);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; text-align: left;
+  }
+  .moment-date-input {
+    width: 100%; border: 1.5px solid var(--ui-modal-border); border-radius: 14px;
+    padding: 11px 14px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ui-input-color); background: var(--ui-input-bg); outline: none;
+    transition: border-color 0.2s ease; box-sizing: border-box; margin-bottom: 12px;
+    cursor: pointer;
+  }
+  .moment-date-input:focus { border-color: #ff6b9d; }
   .moment-save-btn {
     flex: 1; border: none; border-radius: 50px; padding: 14px;
     font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
@@ -748,6 +764,8 @@
     <div id="momentStep1">
       <textarea class="moment-modal-textarea" id="momentText" placeholder="Beschreibe deinen besonderen Moment…" maxlength="280"></textarea>
       <div class="moment-char-count"><span id="momentCharCount">0</span> / 280</div>
+      <label class="moment-date-label">📅 Datum & Uhrzeit</label>
+      <input type="datetime-local" class="moment-date-input" id="momentDateTime">
       <div class="moment-modal-cost">🪙 Kostet 1.000 Coins</div>
       <div class="moment-modal-error" id="momentModalError"></div>
       <div class="moment-modal-btns">
@@ -759,6 +777,7 @@
     <!-- Schritt 2: Bestätigung -->
     <div id="momentStep2" style="display:none;">
       <div class="moment-confirm-preview" id="momentConfirmPreview"></div>
+      <div class="moment-confirm-date" id="momentConfirmDate"></div>
       <div class="moment-modal-cost">🪙 1.000 Coins werden abgezogen</div>
       <div class="moment-modal-error" id="momentConfirmError"></div>
       <div class="moment-modal-btns">
@@ -1542,7 +1561,16 @@
     momentCharCount.textContent = momentTextArea.value.length;
   });
 
+  function toDatetimeLocal(date) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
   saveMomentBtn.addEventListener('click', () => {
+    const now = new Date();
+    const dtInput = document.getElementById('momentDateTime');
+    dtInput.value = toDatetimeLocal(now);
+    dtInput.max = toDatetimeLocal(now);
     momentTextArea.value = '';
     momentCharCount.textContent = '0';
     momentModalError.textContent = '';
@@ -1558,12 +1586,17 @@
     if (e.target === momentModalOverlay) momentModalOverlay.classList.remove('open');
   });
 
-  // Schritt 1 → 2: Text prüfen, Vorschau zeigen
+  // Schritt 1 → 2: Text prüfen, Vorschau + Datum zeigen
   momentSaveBtn.addEventListener('click', () => {
     const text = momentTextArea.value.trim();
     if (!text) { momentModalError.textContent = 'Bitte einen Text eingeben.'; return; }
     momentModalError.textContent = '';
     document.getElementById('momentConfirmPreview').textContent = text;
+    const dtInput = document.getElementById('momentDateTime');
+    const selectedDt = dtInput.value ? new Date(dtInput.value) : new Date();
+    const dateStr = selectedDt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const timeStr = selectedDt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('momentConfirmDate').textContent = `📅 ${dateStr} · ${timeStr} Uhr`;
     momentConfirmError.textContent = '';
     showMomentStep(2);
   });
@@ -1586,14 +1619,15 @@
     momentConfirmError.textContent = '';
 
     try {
-      const now = new Date();
-      const momentId = now.getTime();
+      const dtInput = document.getElementById('momentDateTime');
+      const selectedDt = dtInput.value ? new Date(dtInput.value) : new Date();
+      const momentId = Date.now();
       await set(ref(db, `saved_moments/${momentId}`), {
         text,
         author: window.currentUser,
         timestamp: momentId,
-        date: now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        time: now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+        date: selectedDt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        time: selectedDt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
       });
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - 1000);
       momentModalOverlay.classList.remove('open');
