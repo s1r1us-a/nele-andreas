@@ -7527,7 +7527,7 @@ function updateDefenses(dt) {
   for (let i = turretProjectiles.length - 1; i >= 0; i--) {
     const p = turretProjectiles[i]; p.life -= dt; p.mesh.position.addScaledVector(p.dir, 25 * dt);
     let hit = false;
-    for (let e of enemies) { if (e.alive && p.mesh.position.distanceTo(e.group.position) < 1.5) { e.takeDamage(p.damage, p.dir); hit = true; break; } }
+    for (let e of enemies) { if (e.alive && p.mesh.position.distanceTo(e.group.position) < 1.5) { e.takeDamage(p.damage, p.dir, false, true); hit = true; break; } }
     if (hit || p.life <= 0) { scene.remove(p.mesh); turretProjectiles.splice(i, 1); }
   }
 }
@@ -7631,7 +7631,7 @@ class Enemy {
         this.group.position.x = this.position.x; this.group.position.z = this.position.z; this.rig.parts.torso.rotation.x = -0.5; return; 
     }
     let curSpeed = this.speed;
-    builtDefenses.traps.forEach(trap => { if (this.position.distanceTo(trap.pos) < trap.radius) { curSpeed *= 0.5; this.takeDamage(trap.damage * dt, new THREE.Vector3(), true); } });
+    builtDefenses.traps.forEach(trap => { if (this.position.distanceTo(trap.pos) < trap.radius) { curSpeed *= 0.5; this.takeDamage(trap.damage * dt, new THREE.Vector3(), true, true); } });
 
     // === SMART AI: Wegpunkt-System ===
     let targetPos = player.position.clone();
@@ -7937,7 +7937,7 @@ class Enemy {
 
     this.hpBarGroup.lookAt(camera.position); this.hpBar.scale.x = Math.max(0.001, this.hp / this.maxHp);
   }
-  takeDamage(amount, dirVec, isSilent = false) {
+  takeDamage(amount, dirVec, isSilent = false, ambient = false) {
     if (!this.alive) return;
     // Proxy (Non-Host): nur an Host melden, kein lokaler Zustand
     if (this.isProxy) {
@@ -7949,9 +7949,15 @@ class Enemy {
       }
       return;
     }
-    // Host: Track wer den Treffer ausgeführt hat (für Coin-Attribution).
-    // _startHitListener setzt _pendingHitBy vor dem Aufruf; lokale Treffer = Host.
-    this._lastHitBy = this._pendingHitBy || _myKey;
+    // Host: Schaden pro Spieler tracken für faire Kill-Attribution.
+    // Fallen/Türme/AI-Begleiter zählen als 'ambient' und überschreiben die
+    // Spieler-Attribution NICHT — sonst klauen sie Neles Kills.
+    if (!ambient) {
+      const attacker = this._pendingHitBy || _myKey;
+      this._dmgByPlayer = this._dmgByPlayer || {};
+      this._dmgByPlayer[attacker] = (this._dmgByPlayer[attacker] || 0) + amount;
+      this._lastHitBy = attacker;
+    }
     this._pendingHitBy = null;
     this.hp -= amount;
     if (!isSilent) {
@@ -8007,7 +8013,14 @@ class Enemy {
     if (this.hp <= 0) {
       this.alive = false; this.hpBarGroup.visible = false;
       const reward = 5;
-      const killer = this._lastHitBy || _myKey;
+      // Kill geht an den Spieler mit dem meisten Schaden; bei keinem Spieler-Schaden
+      // an den letzten Treffer; sonst Fallback auf Host.
+      const dmgMap = this._dmgByPlayer || {};
+      let killer = this._lastHitBy || _myKey;
+      let topDmg = 0;
+      for (const k in dmgMap) {
+        if (dmgMap[k] > topDmg) { topDmg = dmgMap[k]; killer = k; }
+      }
       runTransaction(ref(_db, `coins/${killer}`), c => (c || 0) + reward).catch(() => {});
       runTransaction(ref(_db, `stats/${killer}/zombieKills`), c => (c || 0) + 1).catch(() => {});
       if (killer === _myKey) spawnDamageNumber(this.position, '+' + reward + ' 🪙', 'kill');
@@ -8731,7 +8744,7 @@ class CryptBoss extends Boss {
         super.update(dt);
     }
 
-    takeDamage(amount, dirVec, isSilent = false) {
+    takeDamage(amount, dirVec, isSilent = false, ambient = false) {
         // Während Phasen-Übergang: unverwundbar (epischer Schrei-Moment)
         if (this.phaseTransitionInvuln > 0) {
             spawnDamageNumber(this.position, "ABSORBIERT", null);
@@ -8742,7 +8755,7 @@ class CryptBoss extends Boss {
             spawnDamageNumber(this.position, "ERWACHT...", null);
             return;
         }
-        super.takeDamage(amount, dirVec, isSilent);
+        super.takeDamage(amount, dirVec, isSilent, ambient);
         // Bei Tod: spezielle Belohnung statt Wave-Counter-Inkrement
         if (!this.alive && !this._deathHandled) {
             this._deathHandled = true;
@@ -10139,7 +10152,7 @@ function update(dt) {
             if (aState.swinging <= 0) {
                 aRig.parts.armR.upper.rotation.x = 0.8;
                 aRig.parts.torso.rotation.x = 0.3;
-                closestEnemy.takeDamage(aState.phase === 'following' ? 80 : 50, dir);
+                closestEnemy.takeDamage(aState.phase === 'following' ? 80 : 50, dir, false, true);
                 spawnDamageNumber(closestEnemy.position, "SMASH!", "crit");
                 shakeScreen();
             }
@@ -10430,7 +10443,7 @@ function update(dt) {
           dState.attackCooldown = 0.7;
           dState.biteAnim = 0.35;
           const dmg = 35;
-          closestEnemy.takeDamage(dmg, dir);
+          closestEnemy.takeDamage(dmg, dir, false, true);
           if (typeof spawnDamageNumber === 'function') {
             spawnDamageNumber(closestEnemy.position.clone().add(new THREE.Vector3(0, 1.2, 0)), 'CHOMP!', 'crit');
           }
