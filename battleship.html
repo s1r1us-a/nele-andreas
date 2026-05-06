@@ -182,6 +182,8 @@
 
   /* LAST SHOT */
   .gc.last-shot { outline:2.5px solid rgba(255,255,255,0.95) !important; outline-offset:-2px; }
+  /* SHIP REVEAL (end screen) */
+  .gc.ship-reveal { background:rgba(48,100,200,0.38) !important; border-color:rgba(100,150,255,0.35) !important; box-shadow:none !important; opacity:0.72; }
 
   /* FLEET TRACKER */
   .fleet-tracker { width:100%; margin-top:8px; }
@@ -509,7 +511,7 @@ function validPlacement(existing, ship) {
     if (other.id === ship.id) continue;
     for (const {r:er, c:ec} of cells(other))
       for (const {r,c} of cs)
-        if (Math.abs(r-er) <= 1 && Math.abs(c-ec) <= 1) return false;
+        if (r===er && c===ec) return false;
   }
   return true;
 }
@@ -708,6 +710,18 @@ function renderGame(state) {
   });
   markSunk(oppShipsData, myShotsData, document.getElementById('enemyGrid'));
 
+  // Reveal unhit enemy ship positions at game end
+  if (state.status === 'finished') {
+    const enemyGridEl = document.getElementById('enemyGrid');
+    for (const s of oppShipsData) {
+      for (const {r, c} of cells(s)) {
+        const d = gc(enemyGridEl, r, c);
+        if (d && !d.classList.contains('hit') && !d.classList.contains('sunk'))
+          d.classList.add('ship-reveal');
+      }
+    }
+  }
+
   // Status bar
   document.getElementById('potDisplay').textContent = ((state.bet || 0) * 2).toLocaleString('de-DE') + ' 🪙';
 
@@ -756,12 +770,7 @@ function renderFleetTracker(oppShips, myShots) {
     ftCells.className = 'ft-cells';
     for (let i = 0; i < def.size; i++) {
       const ftc = document.createElement('div');
-      if (ship) {
-        const {r, c} = shipCells[i];
-        ftc.className = 'ftc ' + (myShots[r][c] === 1 ? 'ft-sunk' : 'ft-alive');
-      } else {
-        ftc.className = 'ftc ft-alive';
-      }
+      ftc.className = 'ftc ' + (allHit ? 'ft-sunk' : 'ft-alive');
       ftCells.appendChild(ftc);
     }
     row.appendChild(ftCells);
