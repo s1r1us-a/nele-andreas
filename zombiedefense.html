@@ -2071,6 +2071,40 @@ function buildSquidGameHouse(cx, cz) {
     
     // Harte Hitbox für das Haus
     boxObstacles.push({ x: cx, z: cz, w: 8, d: 8, minY: 0, maxY: 5, isFloorOrCeiling: false });
+
+    // === TÜRE AN DER VORDERFRONT (Z=+4) ===
+    const doorFrameMat = ToonMat(0x1a1a1a);
+    const doorPanelMat = ToonMat(0x2a1505);
+
+    // Türrahmen (schwarz, leicht breiter als die Tür)
+    const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(1.9, 3.3, 0.15), doorFrameMat);
+    doorFrame.position.set(0, 1.65, 4.08);
+    sgGroup.add(doorFrame);
+
+    // Türblatt (dunkles Holz)
+    const doorPanel = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.9, 0.1), doorPanelMat);
+    doorPanel.position.set(0, 1.45, 4.12);
+    sgGroup.add(doorPanel);
+
+    // Türknauf (goldfarben)
+    const knobMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), knobMat);
+    knob.position.set(0.6, 1.2, 4.17);
+    sgGroup.add(knob);
+
+    // Leuchtendes Teleport-Pad vor der Tür
+    const doorTpPad = new THREE.Mesh(
+        new THREE.PlaneGeometry(2, 2),
+        new THREE.MeshBasicMaterial({ color: 0xaa44ff, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    doorTpPad.rotation.x = -Math.PI / 2;
+    doorTpPad.position.set(0, 0.1, 5.5);
+    sgGroup.add(doorTpPad);
+
+    // Weltkoordinaten für Interaktion (vor der Tür, zwischen Gebäude und Wächtern)
+    window.squidGameDoorWorldPos = new THREE.Vector3(cx, 1.0, cz + 5.5);
+    // Spawn-Punkt außen (wo der Spieler nach dem Verlassen des Raums landet)
+    window.squidRoomExitSpawnPos = new THREE.Vector3(cx, 1.0, cz + 8.0);
 }
 
 // Wir spawnen das Haus südwestlich der Plaza (kollidiert nicht mit dem Camp oder Haupthaus)
@@ -3919,6 +3953,79 @@ function buildInstancedCrypt(cx, cz) {
     window.instancedCryptExitPos = new THREE.Vector3(cx, 5.0, cz + 24);
 }
 buildInstancedCrypt(1500, 1500);
+
+// ==========================================
+// INSTANZIERTER SQUID GAME RAUM (Off-Map bei X=2000, Z=2000)
+// ==========================================
+function buildInstancedSquidRoom(cx, cz) {
+    const group = new THREE.Group(); group.position.set(cx, 0, cz);
+    const HW = 15; // halbe Breite → 30m breit
+    const HL = 15; // halbe Länge → 30m tief
+    const FH = 6;  // Deckenhöhe 6m
+
+    const wallMat  = ToonMat(0xe8e8e8); // Helles Grau – Wände
+    const floorMat = ToonMat(0xc8c8c8); // Etwas dunkler – Boden
+    const ceilMat  = ToonMat(0xf2f2f2); // Fast Weiß – Decke
+
+    // Boden
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.2, HL * 2), floorMat);
+    floor.position.set(0, 0.1, 0); floor.receiveShadow = true; group.add(floor);
+    floorAreas.push({ minX: cx - HW, maxX: cx + HW, minZ: cz - HL, maxZ: cz + HL, type: 'flat', y: 0.2 });
+
+    // Decke
+    const ceiling = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.3, HL * 2), ceilMat);
+    ceiling.position.set(0, FH, 0); group.add(ceiling);
+
+    // Wände
+    const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat); wallL.position.set(-HW, FH / 2, 0); group.add(wallL);
+    const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat); wallR.position.set( HW, FH / 2, 0); group.add(wallR);
+    const wallB = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat); wallB.position.set(0, FH / 2, -HL); group.add(wallB);
+    const wallF = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat); wallF.position.set(0, FH / 2,  HL); group.add(wallF);
+
+    // === HELLE DECKENBELEUCHUNG ===
+    // Zentrales Hauptlicht
+    const mainLight = new THREE.PointLight(0xffffff, 3.5, 70);
+    mainLight.position.set(0, FH - 0.5, 0); group.add(mainLight);
+
+    // 4 Quadrantenlichter für gleichmäßige Ausleuchtung
+    [[-HW * 0.55, -HL * 0.55], [HW * 0.55, -HL * 0.55],
+     [-HW * 0.55,  HL * 0.55], [HW * 0.55,  HL * 0.55]].forEach(([lx, lz]) => {
+        const l = new THREE.PointLight(0xffffff, 2.8, 45);
+        l.position.set(lx, FH - 0.5, lz); group.add(l);
+    });
+
+    // Leuchtstoffröhren-Optik an der Decke (weiße, flache Quader)
+    const tubeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    for (let tz = -HL + 5; tz <= HL - 5; tz += 8) {
+        const tube = new THREE.Mesh(new THREE.BoxGeometry(HW * 1.6, 0.12, 0.3), tubeMat);
+        tube.position.set(0, FH - 0.04, tz); group.add(tube);
+    }
+
+    // Kollisions-Rahmen (Wände als Hindernisse registrieren)
+    boxObstacles.push({ x: cx,      z: cz + HL, w: HW * 2, d: 0.5, minY: 0, maxY: FH, isFloorOrCeiling: false });
+    boxObstacles.push({ x: cx,      z: cz - HL, w: HW * 2, d: 0.5, minY: 0, maxY: FH, isFloorOrCeiling: false });
+    boxObstacles.push({ x: cx - HW, z: cz,      w: 0.5, d: HL * 2, minY: 0, maxY: FH, isFloorOrCeiling: false });
+    boxObstacles.push({ x: cx + HW, z: cz,      w: 0.5, d: HL * 2, minY: 0, maxY: FH, isFloorOrCeiling: false });
+
+    // Ausgangs-Pad (Südwand, nahe am Eingang-Ende)
+    const exitPad = new THREE.Mesh(
+        new THREE.PlaneGeometry(3, 3),
+        new THREE.MeshBasicMaterial({ color: 0xaa44ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    exitPad.rotation.x = -Math.PI / 2;
+    exitPad.position.set(0, 0.25, HL - 3);
+    group.add(exitPad);
+
+    window.instancedSquidRoomExitPos  = new THREE.Vector3(cx, 1.0, cz + HL - 3);
+    window.instancedSquidRoomSpawnPos = new THREE.Vector3(cx, 1.0, cz + HL - 6);
+
+    // Sichtbarkeitsbereich erweitern (damit Licht/Fog korrekt behandelt wird)
+    const origContains = houseInteriorBounds.contains.bind(houseInteriorBounds);
+    houseInteriorBounds.contains = (x, z) => origContains(x, z) || (x > cx - HW && x < cx + HW && z > cz - HL && z < cz + HL);
+
+    scene.add(group);
+}
+buildInstancedSquidRoom(2000, 2000);
 
 // === NEW: Environmental POIs & Corruption ===
 const deadWoodMat = ToonMat(0x1a1a1a);
@@ -11533,6 +11640,12 @@ function update(dt) {
   const nearCaveExit = window.instancedCaveExitPos && player.position.distanceTo(window.instancedCaveExitPos) < 3.0;
   const canExitCave = nearCaveExit && !buildState.active && !waveActive && gameStarted && !gameOver;
 
+  const nearSquidGameDoor = window.squidGameDoorWorldPos && player.position.distanceTo(window.squidGameDoorWorldPos) < 3.5;
+  const canEnterSquidRoom = nearSquidGameDoor && !buildState.active && !waveActive && gameStarted && !gameOver;
+
+  const nearSquidRoomExit = window.instancedSquidRoomExitPos && player.position.distanceTo(window.instancedSquidRoomExitPos) < 3.0;
+  const canExitSquidRoom = nearSquidRoomExit && !buildState.active && !waveActive && gameStarted && !gameOver;
+
   const promptEl = document.getElementById('interact-prompt');
   const promptText = document.getElementById('interact-text');
 
@@ -11578,6 +11691,12 @@ function update(dt) {
       promptEl.classList.add('show');
   } else if (canExitCave && !uiBusy) {
       promptText.textContent = 'Höhle verlassen';
+      promptEl.classList.add('show');
+  } else if (canEnterSquidRoom && !uiBusy) {
+      promptText.textContent = 'Raum betreten';
+      promptEl.classList.add('show');
+  } else if (canExitSquidRoom && !uiBusy) {
+      promptText.textContent = 'Raum verlassen';
       promptEl.classList.add('show');
   } else if (canInteractTerminal && !buildState.active && !uiBusy) {
       promptText.textContent = 'Terminal: Welle starten';
@@ -11645,6 +11764,14 @@ function update(dt) {
           player.position.set(window.caveExitSpawnPos.x, 1.0, window.caveExitSpawnPos.z);
           spawnHitParticles(player.position, 0xaa44ff, 30, 2.0);
           cameraYaw = Math.PI * 1.25; // Blick weg vom Eingang
+      } else if (canEnterSquidRoom) {
+          player.position.set(window.instancedSquidRoomSpawnPos.x, 1.0, window.instancedSquidRoomSpawnPos.z);
+          spawnHitParticles(player.position, 0xaa44ff, 30, 2.0);
+          cameraYaw = Math.PI; // Blick in den Raum
+      } else if (canExitSquidRoom) {
+          player.position.set(window.squidRoomExitSpawnPos.x, 1.0, window.squidRoomExitSpawnPos.z);
+          spawnHitParticles(player.position, 0xaa44ff, 30, 2.0);
+          cameraYaw = 0; // Blick weg vom Haus
       } else if (canInteractTerminal) {
           startWave(); 
       }
