@@ -633,148 +633,206 @@
       radial-gradient(ellipse at 50% 85%, rgba(232,115,138,0.15) 0%, transparent 55%),
       linear-gradient(160deg, #1a0520 0%, #2d0a3a 30%, #1e0530 60%, #110320 100%);
     overflow: hidden;
-    opacity: 1;
-    transition: opacity 0.9s ease;
-    cursor: pointer;
+    transition: opacity 1.2s ease;
   }
   .intro-overlay.fade-out { opacity: 0; pointer-events: none; }
-
-  /* Background particles layer */
   .intro-particles { position: absolute; inset: 0; pointer-events: none; }
 
-  /* Expanding glow rings */
-  .intro-ring {
-    position: absolute; border-radius: 50%; pointer-events: none;
-    border: 1.5px solid rgba(255,107,157,0.5);
-    width: 180px; height: 180px;
-    opacity: 0;
-    animation: introRingExpand 2.2s cubic-bezier(0.22,1,0.36,1) 0.7s both;
+  /* Nebula breathing */
+  .intro-nebula {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 30% 42%, rgba(255,107,157,0.13) 0%, transparent 55%),
+      radial-gradient(ellipse at 68% 58%, rgba(212,160,97,0.10)  0%, transparent 48%),
+      radial-gradient(ellipse at 52% 18%, rgba(167,139,250,0.09) 0%, transparent 42%);
+    animation: introNebulaBreath 3s ease-in-out 0.4s infinite alternate;
   }
-  .intro-ring-2 {
-    border-color: rgba(212,160,97,0.35);
-    width: 120px; height: 120px;
-    animation-delay: 1.0s; animation-duration: 2s;
-  }
-  .intro-ring-3 {
-    border-color: rgba(167,139,250,0.3);
-    width: 240px; height: 240px;
-    animation-delay: 0.5s; animation-duration: 2.6s;
-  }
-  @keyframes introRingExpand {
-    0%   { transform: scale(1);   opacity: 0.85; }
-    70%  { opacity: 0.4; }
-    100% { transform: scale(5.5); opacity: 0; }
+  @keyframes introNebulaBreath {
+    0%   { opacity: 0.45; transform: scale(1); }
+    100% { opacity: 1;    transform: scale(1.07); }
   }
 
-  /* Central glow blob */
-  .intro-glow-blob {
-    position: absolute; width: 320px; height: 320px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,107,157,0.35) 0%, rgba(194,24,91,0.12) 45%, transparent 70%);
-    animation: introBlob 1.8s ease-out 0.5s both;
-    pointer-events: none;
+  /* God rays – rotating conic gradient */
+  .intro-rays-wrap {
+    position: absolute; width: 700px; height: 700px; pointer-events: none;
+    animation: introRaysSpin 20s linear 0.7s infinite;
+  }
+  .intro-rays {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,   rgba(255,107,157,0.09) 7deg,   transparent 15deg,
+      transparent 40deg,  rgba(212,160,97,0.07)  46deg,  transparent 54deg,
+      transparent 78deg,  rgba(255,107,157,0.08) 85deg,  transparent 93deg,
+      transparent 118deg, rgba(167,139,250,0.07) 124deg, transparent 132deg,
+      transparent 158deg, rgba(212,160,97,0.07)  165deg, transparent 173deg,
+      transparent 198deg, rgba(255,107,157,0.08) 205deg, transparent 213deg,
+      transparent 242deg, rgba(167,139,250,0.06) 248deg, transparent 256deg,
+      transparent 288deg, rgba(212,160,97,0.07)  295deg, transparent 303deg,
+      transparent 332deg, rgba(255,107,157,0.08) 338deg, transparent 346deg
+    );
+    animation: introRaysIn 2.4s ease-out 0.7s both;
+  }
+  @keyframes introRaysSpin { to { transform: rotate(360deg); } }
+  @keyframes introRaysIn {
+    0%   { opacity: 0; transform: scale(0.3); }
+    35%  { opacity: 0.95; }
+    100% { opacity: 0.6;  transform: scale(1); }
+  }
+
+  /* Expanding rings – two waves */
+  .intro-ring { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; }
+  .intro-ring-r1 { width:160px; height:160px; border:1.5px solid rgba(255,107,157,0.65); animation:introRingExp 2.5s ease-out 0.60s both; }
+  .intro-ring-r2 { width:110px; height:110px; border:1.5px solid rgba(212,160,97,0.50);  animation:introRingExp 2.2s ease-out 0.90s both; }
+  .intro-ring-r3 { width:230px; height:230px; border:1px   solid rgba(167,139,250,0.38); animation:introRingExp 2.8s ease-out 0.42s both; }
+  /* Second wave */
+  .intro-ring-r4 { width: 90px; height: 90px; border:2px   solid rgba(255,107,157,0.55); animation:introRingExp 2.0s ease-out 2.75s both; }
+  .intro-ring-r5 { width:190px; height:190px; border:1px   solid rgba(212,160,97,0.42);  animation:introRingExp 2.4s ease-out 2.95s both; }
+  .intro-ring-r6 { width:310px; height:310px; border:1px   solid rgba(167,139,250,0.28); animation:introRingExp 2.7s ease-out 2.60s both; }
+  @keyframes introRingExp {
+    0%   { transform: scale(1);   opacity: 0.9; }
+    55%  { opacity: 0.5; }
+    100% { transform: scale(7);   opacity: 0; }
+  }
+
+  /* Glow blobs – two pulses */
+  .intro-blob {
+    position: absolute; border-radius: 50%; pointer-events: none;
+  }
+  .intro-blob-1 {
+    width:360px; height:360px;
+    background: radial-gradient(circle, rgba(255,107,157,0.40) 0%, rgba(194,24,91,0.14) 45%, transparent 70%);
+    animation: introBlob 2.1s ease-out 0.48s both;
+  }
+  .intro-blob-2 {
+    width:290px; height:290px;
+    background: radial-gradient(circle, rgba(212,160,97,0.34) 0%, rgba(180,120,50,0.10) 45%, transparent 70%);
+    animation: introBlob 2.0s ease-out 2.85s both;
   }
   @keyframes introBlob {
-    0%   { transform: scale(0.2); opacity: 0; }
-    50%  { opacity: 1; }
-    100% { transform: scale(1.6); opacity: 0; }
+    0%   { transform: scale(0.15); opacity: 0; }
+    42%  { opacity: 1; }
+    100% { transform: scale(2.2);  opacity: 0; }
   }
 
-  /* Content box */
+  /* Content */
   .intro-content {
-    position: relative; z-index: 2; text-align: center; padding: 0 24px;
-    display: flex; flex-direction: column; align-items: center; gap: 0;
-  }
-  .intro-heart {
-    font-size: 52px; line-height: 1;
-    animation: introHeartIn 0.65s cubic-bezier(0.34,1.6,0.64,1) 0.85s both;
-    filter: drop-shadow(0 0 18px rgba(255,107,157,0.7));
-  }
-  @keyframes introHeartIn {
-    0%   { transform: scale(0.1) rotate(-20deg); opacity: 0; }
-    100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
+    position: relative; z-index: 2; text-align: center; padding: 0 28px;
+    display: flex; flex-direction: column; align-items: center;
   }
 
+  /* Heart with two-beat cardiac rhythm */
+  .intro-heart {
+    font-size: 56px; line-height: 1;
+    animation: introHeartFull 3.8s cubic-bezier(0.22,1,0.36,1) 0.85s both;
+  }
+  @keyframes introHeartFull {
+    0%   { transform: scale(0.05) rotate(-28deg); opacity: 0;   filter: drop-shadow(0 0 0 transparent); }
+    11%  { transform: scale(1.22) rotate(5deg);   opacity: 1; }
+    18%  { transform: scale(0.90) rotate(-2deg);  filter: drop-shadow(0 0 22px rgba(255,107,157,0.8)); }
+    26%  { transform: scale(1)    rotate(0deg);   filter: drop-shadow(0 0 18px rgba(255,107,157,0.7)); }
+    /* Heartbeat – two pulses like a real heart */
+    44%  { transform: scale(1);    filter: drop-shadow(0 0 18px rgba(255,107,157,0.7)); }
+    50%  { transform: scale(1.32); filter: drop-shadow(0 0 44px rgba(255,107,157,1));   }
+    57%  { transform: scale(0.90); filter: drop-shadow(0 0 10px rgba(255,107,157,0.5)); }
+    63%  { transform: scale(1.22); filter: drop-shadow(0 0 34px rgba(255,107,157,0.9)); }
+    74%  { transform: scale(1);    filter: drop-shadow(0 0 18px rgba(255,107,157,0.7)); }
+    100% { transform: scale(1);    filter: drop-shadow(0 0 16px rgba(255,107,157,0.65)); }
+  }
+
+  /* Title – crystallises from starlight blur */
+  .intro-title-wrap { position: relative; overflow: hidden; }
   .intro-title {
     font-family: 'Dancing Script', cursive;
-    font-size: clamp(44px, 11vw, 86px); font-weight: 700; line-height: 1.05;
-    margin: 14px 0 6px;
-    background: linear-gradient(135deg, #ff6b9d 0%, #c2185b 38%, #f5a3b5 72%, #d4a061 100%);
+    font-size: clamp(46px, 12vw, 92px); font-weight: 700; line-height: 1.05;
+    margin: 18px 0 8px;
+    background: linear-gradient(110deg,
+      #ff6b9d 0%, #c2185b 28%,
+      #ffb3d1 47%, rgba(255,255,255,0.85) 52%, #f5a3b5 57%,
+      #e8738a 72%, #d4a061 100%);
+    background-size: 220% auto; background-position: 0% center;
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    filter: drop-shadow(0 0 28px rgba(255,107,157,0.65));
-    animation: introTitleIn 0.85s cubic-bezier(0.22,1,0.36,1) 1.15s both;
+    animation:
+      introTitleFocus   1.2s cubic-bezier(0.22,1,0.36,1) 1.18s both,
+      introTitleShimmer 0.8s ease-out                    2.15s forwards;
   }
-  @keyframes introTitleIn {
-    0%   { transform: scale(0.55) translateY(24px); opacity: 0;
-           filter: drop-shadow(0 0 70px rgba(255,107,157,1)); }
-    100% { transform: scale(1)    translateY(0);    opacity: 1;
-           filter: drop-shadow(0 0 28px rgba(255,107,157,0.65)); }
+  @keyframes introTitleFocus {
+    0%   { opacity: 0; transform: scale(1.14); filter: blur(32px) drop-shadow(0 0 90px rgba(255,107,157,1)) brightness(3.5); }
+    30%  { opacity: 1; filter: blur(6px)  drop-shadow(0 0 60px rgba(255,107,157,0.95)) brightness(1.9); }
+    68%  { filter: blur(1px)  drop-shadow(0 0 38px rgba(255,107,157,0.78)) brightness(1.15); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0) drop-shadow(0 0 22px rgba(255,107,157,0.6)) brightness(1); }
+  }
+  @keyframes introTitleShimmer {
+    0%   { background-position: 0%   center; }
+    100% { background-position: 150% center; }
   }
 
+  /* Divider */
   .intro-divider {
-    width: 60px; height: 1.5px; border-radius: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255,107,157,0.6), rgba(212,160,97,0.5), transparent);
-    animation: introDivider 0.5s ease-out 1.85s both;
+    height: 1.5px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,107,157,0.75), rgba(212,160,97,0.65), transparent);
+    animation: introDivider 0.65s ease-out 2.18s both;
   }
   @keyframes introDivider {
-    0%   { width: 0; opacity: 0; }
-    100% { width: 60px; opacity: 1; }
+    0%   { width: 0;    opacity: 0; }
+    100% { width: 72px; opacity: 1; }
   }
 
+  /* Subtitle with letter-spacing expansion */
   .intro-sub {
     font-family: 'Quicksand', sans-serif;
-    font-size: 12px; font-weight: 600; letter-spacing: 2.8px;
+    font-size: 12px; font-weight: 600;
     text-transform: uppercase; color: rgba(255,107,157,0.65);
     margin-top: 10px;
-    animation: introFadeUp 0.6s ease-out 2.05s both;
+    animation: introSubTrack 1.0s cubic-bezier(0.22,1,0.36,1) 2.35s both;
   }
-  .intro-sparkles {
-    margin-top: 18px; display: flex; gap: 14px; justify-content: center;
-    animation: introFadeUp 0.5s ease-out 2.45s both;
-  }
-  .intro-sparkle {
-    font-size: 20px; opacity: 0;
-    animation: introSparkleFloat 1.6s ease-out both;
-  }
-  @keyframes introSparkleFloat {
-    0%   { transform: translateY(0)     scale(0.4); opacity: 0; }
-    40%  { opacity: 1; }
-    100% { transform: translateY(-28px) scale(1.1); opacity: 0; }
-  }
-  @keyframes introFadeUp {
-    0%   { opacity: 0; transform: translateY(12px); }
-    100% { opacity: 1; transform: translateY(0); }
+  @keyframes introSubTrack {
+    0%   { opacity: 0; letter-spacing: 16px; }
+    100% { opacity: 1; letter-spacing: 2.8px; }
   }
 
-  /* Floating rising particles */
+  /* Sparkle arc row */
+  .intro-sparkle-row { margin-top: 22px; display: flex; gap: 16px; justify-content: center; }
+  .intro-sparkle {
+    font-size: 20px; opacity: 0;
+    animation: introSparkleArc ease-out both;
+  }
+  @keyframes introSparkleArc {
+    0%   { opacity: 0; transform: translateY(8px)   scale(0.35); }
+    35%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+  }
+
+  /* Starburst particles (JS-created) */
+  @keyframes introBurst {
+    0%   { transform: translate(0,0) scale(1.3); opacity: 1; }
+    100% { transform: translate(var(--bx),var(--by)) scale(0.1); opacity: 0; }
+  }
+
+  /* Rising floating particles */
   .intro-float {
     position: absolute; pointer-events: none; opacity: 0;
     animation: introRise linear both;
   }
   @keyframes introRise {
-    0%   { opacity: 0;   transform: translateY(0)     scale(0.6); }
-    15%  { opacity: 0.9; }
-    85%  { opacity: 0.5; }
-    100% { opacity: 0;   transform: translateY(-140px) scale(1.1); }
+    0%   { opacity: 0;   transform: translateY(0)     scale(0.7)  rotate(-5deg); }
+    10%  { opacity: 0.9; }
+    85%  { opacity: 0.35; }
+    100% { opacity: 0;   transform: translateY(-170px) scale(1.15) rotate(18deg); }
   }
 
-  /* Star fade-in */
+  /* Background stars */
   @keyframes introStarIn {
-    0%   { opacity: 0; transform: scale(0.3); }
+    0%   { opacity: 0; transform: scale(0.2); }
     100% { opacity: var(--op, 0.8); transform: scale(1); }
   }
-  /* Shooting star */
-  @keyframes introShoot {
-    0%   { transform: translate(0,0) rotate(var(--ang)) scaleX(1);  opacity: 0; }
-    8%   { opacity: 1; }
-    80%  { opacity: 0.7; transform: translate(var(--tx),var(--ty)) rotate(var(--ang)) scaleX(90); }
-    100% { opacity: 0; }
-  }
 
-  .intro-skip {
-    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-    font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
-    color: rgba(255,107,157,0.35); pointer-events: none;
-    animation: introFadeUp 0.5s ease-out 2.8s both;
+  /* Shooting stars */
+  @keyframes introShoot {
+    0%   { transform: translate(0,0) rotate(var(--ang)) scaleX(1);    opacity: 0; }
+    5%   { opacity: 1; }
+    75%  { opacity: 0.8; transform: translate(var(--tx),var(--ty)) rotate(var(--ang)) scaleX(110); }
+    100% { opacity: 0; }
   }
 </style>
 </head>
@@ -783,98 +841,124 @@
 <!-- ===== INTRO ANIMATION ===== -->
 <div class="intro-overlay" id="introOverlay">
   <div class="intro-particles" id="introParticles"></div>
-  <div class="intro-glow-blob"></div>
-  <div class="intro-ring"></div>
-  <div class="intro-ring intro-ring-2"></div>
-  <div class="intro-ring intro-ring-3"></div>
+  <div class="intro-nebula"></div>
+  <div class="intro-rays-wrap"><div class="intro-rays"></div></div>
+  <div class="intro-blob intro-blob-1"></div>
+  <div class="intro-blob intro-blob-2"></div>
+  <div class="intro-ring intro-ring-r1"></div>
+  <div class="intro-ring intro-ring-r2"></div>
+  <div class="intro-ring intro-ring-r3"></div>
+  <div class="intro-ring intro-ring-r4"></div>
+  <div class="intro-ring intro-ring-r5"></div>
+  <div class="intro-ring intro-ring-r6"></div>
   <div class="intro-content">
     <div class="intro-heart">💕</div>
-    <div class="intro-title">Unsere Momente</div>
+    <div class="intro-title-wrap">
+      <div class="intro-title">Unsere Momente</div>
+    </div>
     <div class="intro-divider"></div>
     <div class="intro-sub">Für immer festgehalten</div>
-    <div class="intro-sparkles">
-      <span class="intro-sparkle" style="animation-delay:2.5s; animation-duration:1.8s">✨</span>
-      <span class="intro-sparkle" style="animation-delay:2.7s; animation-duration:1.6s">🌸</span>
-      <span class="intro-sparkle" style="animation-delay:2.6s; animation-duration:2.0s">💫</span>
-      <span class="intro-sparkle" style="animation-delay:2.8s; animation-duration:1.7s">⭐</span>
-      <span class="intro-sparkle" style="animation-delay:2.55s; animation-duration:1.9s">✨</span>
+    <div class="intro-sparkle-row">
+      <span class="intro-sparkle" style="animation-delay:2.62s;animation-duration:2.1s">✨</span>
+      <span class="intro-sparkle" style="animation-delay:2.82s;animation-duration:1.8s">🌸</span>
+      <span class="intro-sparkle" style="animation-delay:2.70s;animation-duration:2.3s">💫</span>
+      <span class="intro-sparkle" style="animation-delay:2.92s;animation-duration:1.9s">⭐</span>
+      <span class="intro-sparkle" style="animation-delay:2.75s;animation-duration:2.0s">✨</span>
     </div>
   </div>
-  <div class="intro-skip">Tippen zum Überspringen</div>
 </div>
 
 <script>
 (function() {
-  var overlay = document.getElementById('introOverlay');
+  var overlay  = document.getElementById('introOverlay');
   var particles = document.getElementById('introParticles');
   var rand = function(a, b) { return a + Math.random() * (b - a); };
-  var done = false;
 
-  function dismiss() {
-    if (done) return;
-    done = true;
-    overlay.classList.add('fade-out');
-    setTimeout(function() { overlay.style.display = 'none'; }, 950);
-  }
-
-  // Background stars fading in
-  for (var i = 0; i < 110; i++) {
+  /* ── Stars in 3 waves ── */
+  for (var i = 0; i < 135; i++) {
+    var wave = i < 80 ? 0 : i < 112 ? 1 : 2;
+    var size = wave === 0 ? rand(1, 1.8) : wave === 1 ? rand(2, 3.2) : rand(3, 5.5);
+    var op   = wave === 0 ? rand(0.25, 0.75) : wave === 1 ? rand(0.5, 0.9) : rand(0.75, 1.0);
+    var h    = Math.random();
+    var col  = h < 0.25 ? 'rgba(255,160,190,' : h < 0.48 ? 'rgba(255,215,130,' : h < 0.68 ? 'rgba(196,181,253,' : 'rgba(255,255,255,';
+    col = col + op + ')';
+    var del  = wave === 0 ? rand(0.05, 1.1) : wave === 1 ? rand(0.3, 1.5) : rand(0.55, 1.85);
     var s = document.createElement('div');
-    var size = i < 70 ? rand(1, 1.8) : i < 95 ? rand(2, 3) : rand(3, 4.5);
-    var op   = rand(0.4, 1.0);
-    var hue  = Math.random();
-    var col  = hue < 0.3 ? 'rgba(255,160,190,' + op + ')' : hue < 0.55 ? 'rgba(255,215,130,' + op + ')' : 'rgba(255,255,255,' + op + ')';
     s.style.cssText =
       'position:absolute;border-radius:50%;pointer-events:none;' +
       'width:' + size + 'px;height:' + size + 'px;background:' + col + ';' +
       'left:' + rand(0, 100) + '%;top:' + rand(0, 100) + '%;' +
-      'box-shadow:0 0 ' + (size * 2) + 'px ' + col + ';' +
-      '--op:' + op + ';' +
-      'opacity:0;animation:introStarIn 0.6s ease-out ' + rand(0, 1.4) + 's both;';
+      'box-shadow:0 0 ' + (size * 2.8) + 'px ' + col + ';--op:' + op + ';' +
+      'opacity:0;animation:introStarIn 0.5s ease-out ' + del + 's both;';
     particles.appendChild(s);
   }
 
-  // Dramatic shooting stars
-  var shootData = [
-    { lx: 15, ly: 12, ang: -38 }, { lx: 55, ly:  6, ang: -28 },
-    { lx: 72, ly: 22, ang: -44 }, { lx: 30, ly: 35, ang: -32 }
+  /* ── 7 Shooting stars ── */
+  var shoots = [
+    {lx:7,  ly:7,  ang:-38, del:0.26}, {lx:50, ly:4,  ang:-27, del:0.60},
+    {lx:76, ly:17, ang:-46, del:0.92}, {lx:22, ly:30, ang:-34, del:1.25},
+    {lx:63, ly:24, ang:-23, del:1.52}, {lx:13, ly:54, ang:-53, del:0.80},
+    {lx:88, ly:40, ang:-19, del:1.80}
   ];
-  shootData.forEach(function(d, idx) {
-    var s = document.createElement('div');
-    var dist = rand(220, 340);
-    var angR = d.ang * Math.PI / 180;
+  shoots.forEach(function(d) {
+    var dist = rand(230, 370);
+    var r    = d.ang * Math.PI / 180;
+    var s    = document.createElement('div');
     s.style.cssText =
       'position:absolute;border-radius:50%;pointer-events:none;' +
       'width:2px;height:2px;background:white;' +
-      'box-shadow:0 0 6px 2px rgba(255,255,255,0.9);' +
+      'box-shadow:0 0 8px 2px rgba(255,255,255,0.95);' +
       'left:' + d.lx + '%;top:' + d.ly + '%;' +
       '--ang:' + d.ang + 'deg;' +
-      '--tx:' + (Math.cos(angR) * dist) + 'px;' +
-      '--ty:' + (Math.sin(angR) * dist) + 'px;' +
-      'animation:introShoot ' + rand(0.65, 0.9) + 's cubic-bezier(0.25,0,0.6,1) ' + (0.3 + idx * 0.35) + 's both;';
+      '--tx:' + (Math.cos(r)*dist).toFixed(1) + 'px;' +
+      '--ty:' + (Math.sin(r)*dist).toFixed(1) + 'px;' +
+      'animation:introShoot ' + rand(0.52,0.82) + 's cubic-bezier(0.22,0,0.55,1) ' + d.del + 's both;';
     particles.appendChild(s);
   });
 
-  // Floating rising hearts/sparkles
-  var floatEmojis = ['💕','✨','🌸','💫','🌟','💕','✨','🌸'];
-  floatEmojis.forEach(function(e, i) {
+  /* ── Starburst when title appears (1.2 s) ── */
+  setTimeout(function() {
+    for (var i = 0; i < 16; i++) {
+      var angle = (i / 16) * Math.PI * 2 + rand(-0.15, 0.15);
+      var dist2 = rand(65, 175);
+      var bx = Math.cos(angle) * dist2;
+      var by = Math.sin(angle) * dist2 - 28;
+      var sz = rand(2, 4.5);
+      var ci = i % 3;
+      var bc = ci===0 ? 'rgba(255,215,130,0.95)' : ci===1 ? 'rgba(255,155,190,0.9)' : 'rgba(196,181,253,0.88)';
+      var b = document.createElement('div');
+      b.style.cssText =
+        'position:absolute;border-radius:50%;pointer-events:none;' +
+        'width:' + sz + 'px;height:' + sz + 'px;background:' + bc + ';' +
+        'box-shadow:0 0 ' + (sz*2.2) + 'px ' + bc + ';' +
+        'top:calc(50% - 38px);left:50%;' +
+        'margin:' + (-sz/2) + 'px 0 0 ' + (-sz/2) + 'px;' +
+        'animation:introBurst 0.9s cubic-bezier(0.18,0,0.48,1) both;';
+      b.style.setProperty('--bx', bx.toFixed(1) + 'px');
+      b.style.setProperty('--by', by.toFixed(1) + 'px');
+      overlay.appendChild(b);
+    }
+  }, 1180);
+
+  /* ── Rising hearts & sparkles ── */
+  var floats = ['💕','✨','🌸','💫','🌟','💕','✨','🌸','💫','⭐','🌸','✨','💕','💫'];
+  floats.forEach(function(e, i) {
     var f = document.createElement('div');
     f.className = 'intro-float';
     f.textContent = e;
     f.style.cssText =
-      'left:' + rand(8, 92) + '%;bottom:' + rand(8, 28) + '%;' +
-      'font-size:' + rand(14, 24) + 'px;' +
-      'animation-delay:' + (1.8 + i * 0.18) + 's;' +
-      'animation-duration:' + rand(1.6, 2.4) + 's;';
+      'left:' + rand(5, 95) + '%;bottom:' + rand(4, 28) + '%;' +
+      'font-size:' + rand(12, 26) + 'px;' +
+      'animation-delay:' + (1.55 + i * 0.22) + 's;' +
+      'animation-duration:' + rand(1.9, 3.0) + 's;';
     particles.appendChild(f);
   });
 
-  // Auto-dismiss after 4.2 s
-  setTimeout(dismiss, 4200);
-
-  // Tap/click to skip
-  overlay.addEventListener('click', dismiss);
-  overlay.addEventListener('touchend', dismiss, { passive: true });
+  /* ── Auto-dismiss after 5.8 s ── */
+  setTimeout(function() {
+    overlay.classList.add('fade-out');
+    setTimeout(function() { overlay.style.display = 'none'; }, 1250);
+  }, 5800);
 })();
 </script>
 
