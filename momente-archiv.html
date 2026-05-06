@@ -270,6 +270,7 @@
   .moments-canvas {
     position: absolute; top: 0; left: 0; width: 100%;
     z-index: 10; pointer-events: none;
+    transform: translateZ(0);
   }
   .moment-bubble {
     position: absolute; pointer-events: auto;
@@ -351,9 +352,16 @@
   /* Dimmed state */
   .moment-bubble.dimmed { opacity: 0.06 !important; pointer-events: none; }
 
-  /* Mobile: much smaller cards so many fit on screen at once */
+  /* Mobile: smaller cards + remove backdrop-filter to prevent scroll jank */
   @media (max-width: 600px) {
-    .moment-bubble { padding: 10px 12px 9px; border-radius: 16px; }
+    .moment-bubble {
+      padding: 10px 12px 9px; border-radius: 16px;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      background: rgba(18, 4, 24, 0.93) !important;
+    }
+    .moment-bubble.andreas { background: rgba(40, 6, 20, 0.95) !important; }
+    .moment-bubble.nele    { background: rgba(18, 6, 40, 0.95) !important; }
     .moment-author-row { gap: 6px; margin-bottom: 6px; }
     .moment-avatar { width: 20px; height: 20px; font-size: 9px; }
     .moment-author-name { font-size: 9px; letter-spacing: 0.8px; }
@@ -844,38 +852,40 @@
   let skyBounds = { w: 0, h: 0 };
   let listMode = false;
 
-  // Pause position updates during scroll to prevent mobile jank
-  let isScrolling = false;
+  // Stop RAF completely during scroll — re-requesting frames while iOS scrolls causes jank
   let scrollTimer;
+  function stopDrift() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  }
   window.addEventListener('scroll', () => {
-    isScrolling = true;
+    stopDrift();
     clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => { isScrolling = false; }, 200);
+    scrollTimer = setTimeout(() => {
+      if (floatingCards.length && !listMode) startDrift();
+    }, 250);
   }, { passive: true });
 
   function startDrift() {
     if (rafId) cancelAnimationFrame(rafId);
     function tick() {
-      if (!isScrolling && !listMode) {
-        floatingCards.forEach(c => {
-          c.x  += c.vx;
-          c.y  += c.vy;
-          c.rot += c.vrot;
-          if (c.x <= 0)                   { c.x = 0;                  c.vx =  Math.abs(c.vx); }
-          if (c.x >= skyBounds.w - c.w)  { c.x = skyBounds.w - c.w;  c.vx = -Math.abs(c.vx); }
-          if (c.y <= c.topBound)          { c.y = c.topBound;          c.vy =  Math.abs(c.vy); }
-          if (c.y >= skyBounds.h - c.h)  { c.y = skyBounds.h - c.h;  c.vy = -Math.abs(c.vy); }
-          c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
-        });
-      }
+      floatingCards.forEach(c => {
+        c.x  += c.vx;
+        c.y  += c.vy;
+        c.rot += c.vrot;
+        if (c.x <= 0)                   { c.x = 0;                  c.vx =  Math.abs(c.vx); }
+        if (c.x >= skyBounds.w - c.w)  { c.x = skyBounds.w - c.w;  c.vx = -Math.abs(c.vx); }
+        if (c.y <= c.topBound)          { c.y = c.topBound;          c.vy =  Math.abs(c.vy); }
+        if (c.y >= skyBounds.h - c.h)  { c.y = skyBounds.h - c.h;  c.vy = -Math.abs(c.vy); }
+        c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
+      });
       rafId = requestAnimationFrame(tick);
     }
     rafId = requestAnimationFrame(tick);
   }
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
-    else if (floatingCards.length) startDrift();
+    if (document.hidden) { stopDrift(); }
+    else if (floatingCards.length && !listMode) startDrift();
   });
 
   function renderMoments(data) {
@@ -1057,7 +1067,10 @@
     const canvas = document.getElementById('momentsCanvas');
 
     if (listMode) {
-      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      stopDrift();
+      // Remove dimmed class so all cards are fully visible in list view
+      floatingCards.forEach(c => c.el.classList.remove('dimmed'));
+
       const sorted = [...floatingCards].sort((a, b) => a.timestamp - b.timestamp);
       const itemH = isMobile ? 112 : 168;
       const startX = Math.max(8, Math.floor((vw - cardW) / 2));
@@ -1095,6 +1108,7 @@
       setTimeout(() => {
         floatingCards.forEach(c => { c.el.classList.remove('list-transition'); c.el.style.transitionDelay = ''; });
         startDrift();
+        applyFilter(activeFilter); // restore filter after exiting list mode
       }, 650);
     }
   }
