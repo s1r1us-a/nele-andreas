@@ -22,7 +22,8 @@
                 linear-gradient(160deg, #1a0520 0%, #2d0a3a 30%, #1e0530 60%, #110320 100%);
     background-attachment: fixed;
     font-family: 'Quicksand', sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     position: relative;
   }
 
@@ -267,7 +268,7 @@
 
   /* FLOATING MOMENT CARDS */
   .moments-canvas {
-    position: fixed; inset: 0; overflow: hidden;
+    position: absolute; top: 0; left: 0; width: 100%;
     z-index: 10; pointer-events: none;
   }
   .moment-bubble {
@@ -717,21 +718,20 @@
   // ---- RAF DRIFT ENGINE ----
   let rafId = null;
   let floatingCards = [];
+  let skyBounds = { w: 0, h: 0 };
 
   function startDrift() {
     if (rafId) cancelAnimationFrame(rafId);
     function tick() {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      // Use frozen skyBounds — never window.innerHeight, which fluctuates on iOS during scroll
       floatingCards.forEach(c => {
         c.x  += c.vx;
         c.y  += c.vy;
         c.rot += c.vrot;
-        // Bounce off viewport edges
-        if (c.x <= 0)           { c.x = 0;            c.vx =  Math.abs(c.vx); }
-        if (c.x >= vw - c.w)   { c.x = vw - c.w;     c.vx = -Math.abs(c.vx); }
-        if (c.y <= c.topBound)  { c.y = c.topBound;   c.vy =  Math.abs(c.vy); }
-        if (c.y >= vh - c.h)   { c.y = vh - c.h;     c.vy = -Math.abs(c.vy); }
+        if (c.x <= 0)                   { c.x = 0;                  c.vx =  Math.abs(c.vx); }
+        if (c.x >= skyBounds.w - c.w)  { c.x = skyBounds.w - c.w;  c.vx = -Math.abs(c.vx); }
+        if (c.y <= c.topBound)          { c.y = c.topBound;          c.vy =  Math.abs(c.vy); }
+        if (c.y >= skyBounds.h - c.h)  { c.y = skyBounds.h - c.h;  c.vy = -Math.abs(c.vy); }
         c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
       });
       rafId = requestAnimationFrame(tick);
@@ -770,13 +770,18 @@
     const isMobile = window.innerWidth <= 600;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const cardW  = isMobile ? 148 : 240;
-    const cardH  = isMobile ? 92  : 145;
+    const cardW   = isMobile ? 148 : 240;
+    const cardH   = isMobile ? 92  : 145;
     const headerH = getHeaderOffset();
+
+    // Sky starts at viewport height, grows downward only when needed
+    const skyH = Math.max(vh, headerH + moments.length * 190 + 120);
+    canvas.style.height = skyH + 'px';
+    skyBounds = { w: vw, h: skyH };
 
     moments.forEach((m) => {
       const x   = Math.random() * Math.max(10, vw - cardW - 10);
-      const y   = headerH + Math.random() * Math.max(50, vh - headerH - cardH - 10);
+      const y   = headerH + Math.random() * Math.max(50, skyH - headerH - cardH - 20);
       const rot = (Math.random() - 0.5) * 6;
 
       const speed = isMobile ? (0.15 + Math.random() * 0.18) : (0.20 + Math.random() * 0.25);
