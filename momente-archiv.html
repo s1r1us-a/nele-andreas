@@ -29,75 +29,140 @@
 
   /* Stars */
   .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-  .star {
-    position: absolute; border-radius: 50%;
-    animation: starTwinkle ease-in-out infinite;
-  }
+  .star { position: absolute; border-radius: 50%; will-change: opacity, transform; }
+
   /* tiny */
   .star.s { width: 1px; height: 1px; background: rgba(255,255,255,0.9); }
   /* small */
   .star.m { width: 2px; height: 2px; background: white; }
   /* medium – tinted */
-  .star.l {
-    width: 3px; height: 3px;
-    box-shadow: 0 0 4px 1px currentColor;
-  }
+  .star.l { width: 3px; height: 3px; box-shadow: 0 0 5px 1.5px currentColor; }
   .star.l.rose   { color: rgba(255,160,190,0.9); background: rgba(255,160,190,0.9); }
   .star.l.gold   { color: rgba(255,210,130,0.9); background: rgba(255,210,130,0.9); }
   .star.l.violet { color: rgba(196,181,253,0.9); background: rgba(196,181,253,0.9); }
   .star.l.white  { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.9); }
-  /* large – cross sparkle */
+  .star.l.teal   { color: rgba(94,234,212,0.85); background: rgba(94,234,212,0.85); }
+  .star.l.blue   { color: rgba(147,197,253,0.85); background: rgba(147,197,253,0.85); }
+
+  /* large – cross sparkle, longer arms */
   .star.xl {
     width: 4px; height: 4px; background: white;
-    box-shadow: 0 0 6px 2px rgba(255,255,255,0.6),
-                0 -5px 0 0 rgba(255,255,255,0.35),
-                0  5px 0 0 rgba(255,255,255,0.35),
-                -5px 0 0 0 rgba(255,255,255,0.35),
-                 5px 0 0 0 rgba(255,255,255,0.35);
+    box-shadow: 0 0 8px 2px rgba(255,255,255,0.65),
+                0 -9px 0 0 rgba(255,255,255,0.42),
+                0  9px 0 0 rgba(255,255,255,0.42),
+                -9px 0 0 0 rgba(255,255,255,0.42),
+                 9px 0 0 0 rgba(255,255,255,0.42),
+                0 -18px 0 0 rgba(255,255,255,0.16),
+                0  18px 0 0 rgba(255,255,255,0.16),
+                -18px 0 0 0 rgba(255,255,255,0.16),
+                 18px 0 0 0 rgba(255,255,255,0.16);
   }
   .star.xl.rose {
     background: rgba(255,160,190,1);
-    box-shadow: 0 0 8px 3px rgba(255,107,157,0.55),
-                0 -6px 0 0 rgba(255,160,190,0.3),
-                0  6px 0 0 rgba(255,160,190,0.3),
-                -6px 0 0 0 rgba(255,160,190,0.3),
-                 6px 0 0 0 rgba(255,160,190,0.3);
+    box-shadow: 0 0 10px 3px rgba(255,107,157,0.6),
+                0 -9px 0 0 rgba(255,160,190,0.42),
+                0  9px 0 0 rgba(255,160,190,0.42),
+                -9px 0 0 0 rgba(255,160,190,0.42),
+                 9px 0 0 0 rgba(255,160,190,0.42),
+                0 -18px 0 0 rgba(255,160,190,0.16),
+                0  18px 0 0 rgba(255,160,190,0.16),
+                -18px 0 0 0 rgba(255,160,190,0.16),
+                 18px 0 0 0 rgba(255,160,190,0.16);
   }
   .star.xl.gold {
     background: rgba(255,215,120,1);
-    box-shadow: 0 0 8px 3px rgba(212,160,97,0.55),
-                0 -6px 0 0 rgba(255,215,120,0.3),
-                0  6px 0 0 rgba(255,215,120,0.3),
-                -6px 0 0 0 rgba(255,215,120,0.3),
-                 6px 0 0 0 rgba(255,215,120,0.3);
+    box-shadow: 0 0 10px 3px rgba(212,160,97,0.6),
+                0 -9px 0 0 rgba(255,215,120,0.42),
+                0  9px 0 0 rgba(255,215,120,0.42),
+                -9px 0 0 0 rgba(255,215,120,0.42),
+                 9px 0 0 0 rgba(255,215,120,0.42),
+                0 -18px 0 0 rgba(255,215,120,0.16),
+                0  18px 0 0 rgba(255,215,120,0.16),
+                -18px 0 0 0 rgba(255,215,120,0.16),
+                 18px 0 0 0 rgba(255,215,120,0.16);
+  }
+
+  /* XXL – rare dramatic 4+fade sparkle */
+  .star.xxl {
+    width: 5px; height: 5px; background: white;
+    box-shadow: 0 0 14px 4px rgba(255,255,255,0.6),
+                0 -13px 0 0 rgba(255,255,255,0.48),
+                0  13px 0 0 rgba(255,255,255,0.48),
+                -13px 0 0 0 rgba(255,255,255,0.48),
+                 13px 0 0 0 rgba(255,255,255,0.48),
+                0 -26px 0 0 rgba(255,255,255,0.2),
+                0  26px 0 0 rgba(255,255,255,0.2),
+                -26px 0 0 0 rgba(255,255,255,0.2),
+                 26px 0 0 0 rgba(255,255,255,0.2);
+  }
+  .star.xxl.rose {
+    background: rgba(255,160,190,1);
+    box-shadow: 0 0 18px 5px rgba(255,107,157,0.65),
+                0 -13px 0 0 rgba(255,160,190,0.5),
+                0  13px 0 0 rgba(255,160,190,0.5),
+                -13px 0 0 0 rgba(255,160,190,0.5),
+                 13px 0 0 0 rgba(255,160,190,0.5),
+                0 -26px 0 0 rgba(255,160,190,0.2),
+                0  26px 0 0 rgba(255,160,190,0.2),
+                -26px 0 0 0 rgba(255,160,190,0.2),
+                 26px 0 0 0 rgba(255,160,190,0.2);
+  }
+  .star.xxl.gold {
+    background: rgba(255,215,120,1);
+    box-shadow: 0 0 18px 5px rgba(212,160,97,0.65),
+                0 -13px 0 0 rgba(255,215,120,0.5),
+                0  13px 0 0 rgba(255,215,120,0.5),
+                -13px 0 0 0 rgba(255,215,120,0.5),
+                 13px 0 0 0 rgba(255,215,120,0.5),
+                0 -26px 0 0 rgba(255,215,120,0.2),
+                0  26px 0 0 rgba(255,215,120,0.2),
+                -26px 0 0 0 rgba(255,215,120,0.2),
+                 26px 0 0 0 rgba(255,215,120,0.2);
   }
 
   @keyframes starTwinkle {
-    0%   { opacity: 0.05; transform: scale(0.8); }
-    50%  { opacity: 1;    transform: scale(1.25); }
-    100% { opacity: 0.05; transform: scale(0.8); }
+    0%   { opacity: 0.04; transform: scale(0.75); }
+    50%  { opacity: 1;    transform: scale(1.3); }
+    100% { opacity: 0.04; transform: scale(0.75); }
   }
   @keyframes starFade {
     0%   { opacity: 0; }
-    20%  { opacity: 0.7; }
-    80%  { opacity: 0.5; }
+    18%  { opacity: 0.75; }
+    80%  { opacity: 0.45; }
     100% { opacity: 0; }
   }
+  /* Slower deep-pulse for rare stars */
+  @keyframes starGlow {
+    0%   { opacity: 0.06; transform: scale(0.7); }
+    48%  { opacity: 0.95; transform: scale(1.4); }
+    100% { opacity: 0.06; transform: scale(0.7); }
+  }
 
-  /* Shooting stars */
+  /* Nebula clouds */
+  .nebula-cloud {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    animation: nebulaFloat ease-in-out infinite alternate;
+  }
+  @keyframes nebulaFloat {
+    0%   { transform: translate(-50%,-50%) scale(1);    opacity: var(--nlo, 0.55); }
+    100% { transform: translate(calc(-50% + var(--ndx,14px)), calc(-50% + var(--ndy,10px))) scale(1.08);
+           opacity: var(--nhi, 1); }
+  }
+
+  /* Shooting stars – brighter, bigger head */
   .shooting-star {
     position: absolute; pointer-events: none;
-    width: 2px; height: 2px; border-radius: 50%;
+    width: 3px; height: 3px; border-radius: 50%;
     background: white;
-    box-shadow: 0 0 4px 1px rgba(255,255,255,0.6);
+    box-shadow: 0 0 10px 3px rgba(255,255,255,0.75);
     animation: shootingStar linear infinite;
     opacity: 0;
   }
   @keyframes shootingStar {
-    0%   { transform: translate(0, 0) rotate(var(--angle, -35deg)) scaleX(1); opacity: 0; }
-    2%   { opacity: 1; }
-    5%   { transform: translate(var(--tx, 180px), var(--ty, 100px)) rotate(var(--angle, -35deg)) scaleX(60); opacity: 0.8; }
-    8%   { opacity: 0; }
+    0%   { transform: translate(0,0) rotate(var(--angle,-35deg)) scaleX(1);   opacity: 0; }
+    1.5% { opacity: 1; }
+    7%   { transform: translate(var(--tx,180px),var(--ty,100px)) rotate(var(--angle,-35deg)) scaleX(85); opacity: 0.85; }
+    10%  { opacity: 0; }
     100% { opacity: 0; }
   }
 
@@ -1013,49 +1078,81 @@
   const starsEl = document.getElementById('stars');
   const rand = (a, b) => a + Math.random() * (b - a);
 
+  // Nebula clouds – soft drifting colour blobs
+  const nebulaDefs = [
+    { color:'rgba(180,60,120,0.07)', w:420, h:260 },
+    { color:'rgba(80,30,160,0.08)',  w:380, h:300 },
+    { color:'rgba(30,80,180,0.06)',  w:500, h:220 },
+    { color:'rgba(160,40,80,0.06)',  w:350, h:280 },
+    { color:'rgba(60,20,140,0.07)',  w:460, h:200 },
+    { color:'rgba(20,100,160,0.05)', w:400, h:320 },
+  ];
+  nebulaDefs.forEach(def => {
+    const n = document.createElement('div');
+    n.className = 'nebula-cloud';
+    n.style.cssText = `
+      left:${rand(-10,90)}%; top:${rand(-10,90)}%;
+      width:${def.w}px; height:${def.h}px;
+      background:radial-gradient(ellipse at center, ${def.color} 0%, transparent 70%);
+      animation-duration:${rand(18,32)}s;
+      animation-delay:${rand(0,18)}s;
+    `;
+    starsEl.appendChild(n);
+  });
+
   // Tiny background stars
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 200; i++) {
     const s = document.createElement('div');
     s.className = 'star s';
     s.style.cssText = `left:${rand(0,100)}%;top:${rand(0,100)}%;animation:starFade ${rand(3,8)}s ease-in-out ${rand(0,8)}s infinite;`;
     starsEl.appendChild(s);
   }
-  // Small stars
-  for (let i = 0; i < 60; i++) {
+  // Small stars – some with deep glow pulse
+  for (let i = 0; i < 90; i++) {
     const s = document.createElement('div');
     s.className = 'star m';
-    s.style.cssText = `left:${rand(0,100)}%;top:${rand(0,100)}%;animation:starTwinkle ${rand(2,6)}s ease-in-out ${rand(0,6)}s infinite;`;
+    const anim = i % 5 === 0 ? 'starGlow' : 'starTwinkle';
+    s.style.cssText = `left:${rand(0,100)}%;top:${rand(0,100)}%;animation:${anim} ${rand(2,7)}s ease-in-out ${rand(0,7)}s infinite;`;
     starsEl.appendChild(s);
   }
-  // Tinted medium stars
-  const tints = ['rose','gold','violet','white'];
-  for (let i = 0; i < 30; i++) {
+  // Tinted medium stars – rose, gold, violet, white, teal, blue
+  const tints = ['rose','gold','violet','white','teal','blue'];
+  for (let i = 0; i < 48; i++) {
     const s = document.createElement('div');
     s.className = `star l ${tints[i % tints.length]}`;
-    s.style.cssText = `left:${rand(0,100)}%;top:${rand(0,100)}%;animation:starTwinkle ${rand(3,7)}s ease-in-out ${rand(0,7)}s infinite;`;
+    const anim = i % 4 === 0 ? 'starGlow' : 'starTwinkle';
+    s.style.cssText = `left:${rand(0,100)}%;top:${rand(0,100)}%;animation:${anim} ${rand(3,8)}s ease-in-out ${rand(0,8)}s infinite;`;
     starsEl.appendChild(s);
   }
   // Large sparkle stars
-  const xlTints = ['white','rose','gold','white','white'];
-  for (let i = 0; i < 10; i++) {
+  const xlTints = ['white','rose','gold','white','white','teal','blue','rose'];
+  for (let i = 0; i < 18; i++) {
     const s = document.createElement('div');
     s.className = `star xl ${xlTints[i % xlTints.length]}`;
     s.style.cssText = `left:${rand(5,95)}%;top:${rand(5,90)}%;animation:starTwinkle ${rand(4,9)}s ease-in-out ${rand(0,9)}s infinite;`;
     starsEl.appendChild(s);
   }
-  // Shooting stars
+  // Extra-large sparkle stars
+  const xxlTints = ['white','rose','gold','white','blue'];
   for (let i = 0; i < 5; i++) {
+    const s = document.createElement('div');
+    s.className = `star xxl ${xxlTints[i % xxlTints.length]}`;
+    s.style.cssText = `left:${rand(5,95)}%;top:${rand(5,85)}%;animation:starTwinkle ${rand(5,11)}s ease-in-out ${rand(0,11)}s infinite;`;
+    starsEl.appendChild(s);
+  }
+  // Shooting stars
+  for (let i = 0; i < 8; i++) {
     const s = document.createElement('div');
     s.className = 'shooting-star';
     const angle = rand(-50, -20);
-    const dist  = rand(140, 260);
+    const dist  = rand(160, 300);
     const tx    = Math.cos(angle * Math.PI / 180) * dist;
     const ty    = Math.sin(angle * Math.PI / 180) * dist;
     s.style.cssText = `
       left:${rand(10,80)}%; top:${rand(5,50)}%;
       --angle:${angle}deg; --tx:${tx}px; --ty:${ty}px;
-      animation-duration:${rand(6,14)}s;
-      animation-delay:${rand(0,14)}s;
+      animation-duration:${rand(5,11)}s;
+      animation-delay:${rand(0,12)}s;
     `;
     starsEl.appendChild(s);
   }
