@@ -3965,53 +3965,56 @@ function buildInstancedSquidRoom(cx, cz) {
 
     // MeshBasicMaterial ignoriert Licht UND Fog → immer 100 % maximale Helligkeit,
     // egal wie weit entfernt oder wie dunkel die restliche Szene ist.
-    const mkBasic = (hex, fogOff = true) =>
-        new THREE.MeshBasicMaterial({ color: hex, fog: !fogOff });
+    // DoubleSide damit die Kamera bei Wand-Clipping kein dunkles Loch sieht.
+    const mkBasic = (hex) =>
+        new THREE.MeshBasicMaterial({ color: hex, fog: false, side: THREE.DoubleSide });
 
     const wallMat  = mkBasic(0xf5f5f5); // Reinweißes Grau – Wände
     const floorMat = mkBasic(0xe0e0e0); // Helles Grau – Boden
     const ceilMat  = mkBasic(0xffffff); // Reinweiß – Decke
 
+    const noShadow = (m) => { m.castShadow = false; m.receiveShadow = false; return m; };
+
     // Boden
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.2, HL * 2), floorMat);
+    const floor = noShadow(new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.2, HL * 2), floorMat));
     floor.position.set(0, 0.1, 0); group.add(floor);
     floorAreas.push({ minX: cx - HW, maxX: cx + HW, minZ: cz - HL, maxZ: cz + HL, type: 'flat', y: 0.2 });
 
     // Decke
-    const ceiling = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, 0.3, HL * 2 + 0.6), ceilMat);
+    const ceiling = noShadow(new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, 0.3, HL * 2 + 0.6), ceilMat));
     ceiling.position.set(0, FH, 0); group.add(ceiling);
 
     // Vier Wände (schließen lückenlos an Decke und Boden an)
-    const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat); wallL.position.set(-HW, FH / 2, 0); group.add(wallL);
-    const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat); wallR.position.set( HW, FH / 2, 0); group.add(wallR);
-    const wallB = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat); wallB.position.set(0, FH / 2, -HL); group.add(wallB);
-    const wallF = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat); wallF.position.set(0, FH / 2,  HL); group.add(wallF);
+    const wallL = noShadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat)); wallL.position.set(-HW, FH / 2, 0); group.add(wallL);
+    const wallR = noShadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat)); wallR.position.set( HW, FH / 2, 0); group.add(wallR);
+    const wallB = noShadow(new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat)); wallB.position.set(0, FH / 2, -HL); group.add(wallB);
+    const wallF = noShadow(new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat)); wallF.position.set(0, FH / 2,  HL); group.add(wallF);
 
     // === TAGESLICHT-BELEUCHTUNG ===
-    // 4×4-Raster starker PointLights knapp unter der Decke.
-    // MeshToonMaterial (Spieler, Zombies) benötigt diese Lichter, um vollständig
-    // ausgeleuchtet zu erscheinen. Jedes Licht deckt ~12 m Radius ab, der Raster-
-    // abstand von 10 m sorgt für lückenlose Überdeckung des gesamten Bodens.
-    // Reichweite 22 m bleibt weit unter dem Abstand zum Hauptmap-Ursprung (≥1980 m).
-    const lightStep = 10;
-    const lightOffsets = [-HL * 0.5, -lightStep * 0.0, HL * 0.5]; // 3 Positionen pro Achse
-    for (const lx of lightOffsets) {
-        for (const lz of lightOffsets) {
-            const l = new THREE.PointLight(0xfffaf0, 6.0, 22);
+    // Echtes 4×4-Raster (16 Lichter) plus zentrales Überlicht. Hohe Intensität,
+    // weil THREE r160 mit physikalisch korrektem Lichtfall arbeitet — bei 15 m
+    // Abstand ist die Beleuchtung sonst kaum wahrnehmbar.
+    // Reichweite 35 m bleibt weit unter dem Abstand zum Hauptmap-Ursprung (≥1980 m).
+    const gridPos = [-HL * 0.75, -HL * 0.25, HL * 0.25, HL * 0.75]; // 4 Positionen, 7.5m Abstand
+    for (const lx of gridPos) {
+        for (const lz of gridPos) {
+            const l = new THREE.PointLight(0xfffaf0, 30.0, 35, 1.0);
             l.position.set(lx, FH - 0.3, lz);
+            l.castShadow = false;
             group.add(l);
         }
     }
     // Zusätzliches zentrisches Überlicht – füllt die Mitte auf Tageslicht-Niveau
-    const centerLight = new THREE.PointLight(0xfffaf0, 8.0, 30);
+    const centerLight = new THREE.PointLight(0xfffaf0, 60.0, 50, 1.0);
     centerLight.position.set(0, FH - 0.3, 0);
+    centerLight.castShadow = false;
     group.add(centerLight);
 
     // Dekorative Deckenplatten (immer weiß leuchtend, kein Licht nötig)
     const panelMat = mkBasic(0xffffff);
     for (let px = -HW + 5; px <= HW - 5; px += 10) {
         for (let pz = -HL + 5; pz <= HL - 5; pz += 10) {
-            const panel = new THREE.Mesh(new THREE.BoxGeometry(6, 0.06, 6), panelMat);
+            const panel = noShadow(new THREE.Mesh(new THREE.BoxGeometry(6, 0.06, 6), panelMat));
             panel.position.set(px, FH - 0.02, pz);
             group.add(panel);
         }
@@ -4033,7 +4036,8 @@ function buildInstancedSquidRoom(cx, cz) {
     group.add(exitPad);
 
     window.instancedSquidRoomExitPos  = new THREE.Vector3(cx, 1.0, cz + HL - 3);
-    window.instancedSquidRoomSpawnPos = new THREE.Vector3(cx, 1.0, cz + HL - 6);
+    // Spawn weiter im Raum platzieren, damit die Third-Person-Kamera nicht durch die Rückwand clippt
+    window.instancedSquidRoomSpawnPos = new THREE.Vector3(cx, 1.0, cz + HL - 9);
 
     // houseInteriorBounds erweitern (Kamera-Logik, Wall-Clipping)
     const origContains = houseInteriorBounds.contains.bind(houseInteriorBounds);
