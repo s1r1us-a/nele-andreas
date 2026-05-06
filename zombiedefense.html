@@ -6696,6 +6696,8 @@ function _startPresence() {
     const data = snap.val() || {};
     const myAt  = data[_myKey]?.at  ?? Infinity;
     const oppAt = data[_oppKey]?.at ?? Infinity;
+    const _prevIsHost = _isHost;
+    const _prevOppOnline = _oppOnline;
     _isHost = myAt <= oppAt;
     _oppOnline = !!(data[_oppKey]?.at);
     if (_oppOnline && oppState.group) {
@@ -6705,6 +6707,22 @@ function _startPresence() {
       oppState.group.visible = false;
     }
     _updateOnlineUI();
+    // Als Host: veraltete Proxy-Zombies aus vorherigen Sessions säubern
+    if (_isHost) {
+      for (const idx in _proxyByIdx) {
+        const p = _proxyByIdx[idx];
+        if (p) { p.alive = false; scene.remove(p.group); const pi = enemies.indexOf(p); if (pi >= 0) enemies.splice(pi, 1); }
+        delete _proxyByIdx[idx]; delete _remoteEnemies[idx];
+      }
+      set(ref(_db, 'game/zombie/enemies'), null).catch(() => {});
+    }
+    // Als Non-Host: lokale Cave-Zombies entfernen, Proxies übernehmen die Darstellung
+    if (!_isHost && _oppOnline && (_prevIsHost || !_prevOppOnline)) {
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if (e.isCaveZombie && !e.isProxy) { scene.remove(e.group); enemies.splice(i, 1); }
+      }
+    }
   });
 
   // Beim Verlassen der Seite aufräumen
@@ -6869,7 +6887,7 @@ const _proxyByIdx = {};    // hostIdx → proxy Enemy
 function _startEnemyListener() {
   if (!_firebaseReady) return;
   onValue(ref(_db, 'game/zombie/enemies'), snap => {
-    if (_isHost) return;
+    if (_isHost || !_oppOnline) return;
     const data = snap.val() || {};
     // Eingehende Daten in _remoteEnemies + Proxies spiegeln
     const seen = new Set();
@@ -8940,7 +8958,7 @@ window.addEventListener('keyup', e => { keys[e.code] = false; if(e.code==='KeyE'
 let pointerLocked = false; const canvas = renderer.domElement;
 canvas.addEventListener('mousedown', (ev) => {
   if (ev.button !== 0) return; // nur linke Maustaste
-  if (!gameStarted || gameOver || shopScreen.classList.contains('show') || weaponShopScreen.classList.contains('show') || window.inventoryActive || window.weaponWheelActive) return;
+  if (!gameStarted || gameOver || playerDying || shopScreen.classList.contains('show') || weaponShopScreen.classList.contains('show') || window.inventoryActive || window.weaponWheelActive) return;
   if (buildState.active && buildState.valid) { attemptPlaceDefense(); return; }
   if (!pointerLocked) { canvas.requestPointerLock(); return; }
   player.mouseHeld = true;
@@ -10700,6 +10718,7 @@ function update(dt) {
     }
     if (playerDeathTimer <= 0) {
       gameOver = true;
+      if (document.pointerLockElement) document.exitPointerLock();
       document.getElementById('final-wave').textContent = currentWave - (waveActive?1:0);
       document.getElementById('game-over').classList.add('show');
     }
