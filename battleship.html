@@ -383,7 +383,7 @@
             <div class="ocean-grid" id="ownGrid"></div>
           </div>
         </div>
-        <div class="sunk-row" id="sunkOnMe"></div>
+        <div class="fleet-tracker" id="myFleetTracker"></div>
       </div>
       <div class="board-panel">
         <div class="board-panel-lbl">Feindesgewässer</div>
@@ -801,7 +801,7 @@ function renderGame(state) {
   document.getElementById('statusN').textContent = state.currentTurn==='Nele'    && state.status==='running' ? '🎯 Am Zug' : '';
 
   document.getElementById('surrenderBtn').style.display = state.status === 'running' ? 'block' : 'none';
-  renderSunkOnMe(myShipsData, oppShotsData);
+  renderMyFleetTracker(myShipsData, oppShotsData);
   renderFleetTracker(oppShipsData, myShotsData);
 }
 
@@ -812,13 +812,34 @@ function markSunk(ships, shots, gridEl) {
   }
 }
 
-function renderSunkOnMe(myShips, oppShots) {
-  const sOnMe = document.getElementById('sunkOnMe');
-  sOnMe.innerHTML = '';
-  for (const s of myShips) {
-    if (cells(s).every(({r,c}) => oppShots[r][c] === 1)) {
-      const sp = document.createElement('span'); sp.className = 'sunk-icon'; sp.textContent = '💥'; sOnMe.appendChild(sp);
+function renderMyFleetTracker(myShips, oppShots) {
+  const el = document.getElementById('myFleetTracker');
+  if (!el) return;
+  el.innerHTML = '<div class="fleet-tracker-lbl">Deine Flotte</div>';
+  for (const def of SHIPS) {
+    const ship = myShips.find(s => s.id === def.id);
+    const shipCells = ship ? cells(ship) : [];
+    const allSunk = ship && shipCells.every(({r,c}) => oppShots[r][c] === 1);
+    const row = document.createElement('div');
+    row.className = 'fleet-ship-row' + (allSunk ? ' ship-sunk' : '');
+    const emojiEl = document.createElement('span');
+    emojiEl.className = 'ft-ship-emoji';
+    emojiEl.textContent = def.emoji;
+    row.appendChild(emojiEl);
+    const ftCells = document.createElement('div');
+    ftCells.className = 'ft-cells';
+    for (let i = 0; i < def.size; i++) {
+      const ftc = document.createElement('div');
+      if (ship) {
+        const {r, c} = shipCells[i];
+        ftc.className = 'ftc ' + (oppShots[r][c] === 1 ? 'ft-sunk' : 'ft-alive');
+      } else {
+        ftc.className = 'ftc ft-alive';
+      }
+      ftCells.appendChild(ftc);
     }
+    row.appendChild(ftCells);
+    el.appendChild(row);
   }
 }
 
