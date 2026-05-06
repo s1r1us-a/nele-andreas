@@ -1072,19 +1072,26 @@
       floatingCards.forEach(c => c.el.classList.remove('dimmed'));
 
       const sorted = [...floatingCards].sort((a, b) => a.timestamp - b.timestamp);
-      const itemH = isMobile ? 112 : 168;
+      const gap = isMobile ? 12 : 16; // gleichmäßiger Abstand zwischen Karten
       const startX = Math.max(8, Math.floor((vw - cardW) / 2));
-      const totalH = headerH + sorted.length * itemH + 80;
+
+      // Tatsächliche Höhe jeder Karte messen → gleicher Abstand unabhängig vom Inhalt
+      let currentY = headerH;
+      const targetY = sorted.map(c => {
+        const y = currentY;
+        currentY += c.el.offsetHeight + gap;
+        return y;
+      });
+
+      const totalH = currentY + 40;
       canvas.style.height = totalH + 'px';
       skyBounds.h = totalH;
 
       sorted.forEach((c, i) => {
         c.el.classList.add('list-transition');
         c.el.style.transitionDelay = `${i * 40}ms`;
-        const tx = startX;
-        const ty = headerH + i * itemH;
-        c.el.style.transform = `translate(${tx}px,${ty}px) rotate(0deg)`;
-        c.x = tx; c.y = ty; c.rot = 0;
+        c.el.style.transform = `translate(${startX}px,${targetY[i]}px) rotate(0deg)`;
+        c.x = startX; c.y = targetY[i]; c.rot = 0;
       });
       setTimeout(() => floatingCards.forEach(c => { c.el.style.transitionDelay = ''; }), sorted.length * 40 + 600);
     } else {
