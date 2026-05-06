@@ -489,8 +489,112 @@
   @media (max-width: 480px) {
     .filter-btn { padding: 7px 14px; font-size: 11px; }
     .top-bar { padding: 9px 12px; }
-    .count-badge { display: none !important; } /* replaced by scroll hint on mobile */
+    .count-badge { display: none !important; }
   }
+
+  /* Title in bubble */
+  .moment-title {
+    font-family: 'Dancing Script', cursive;
+    font-size: 14px; font-weight: 700;
+    color: rgba(255,240,248,0.95); margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  @media (max-width: 600px) { .moment-title { font-size: 12px; } }
+
+  /* White-space for text with line breaks */
+  .moment-text { white-space: pre-wrap; }
+
+  /* Title in detail modal */
+  .detail-title {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(20px, 5.5vw, 26px); font-weight: 700;
+    color: rgba(255,240,248,0.95); line-height: 1.3;
+    margin-bottom: 6px; word-break: break-word;
+  }
+  .detail-text { white-space: pre-wrap; }
+
+  /* Edit button in detail modal */
+  .detail-edit {
+    flex: 1; border: 1.5px solid rgba(212,160,97,0.28); border-radius: 50px; padding: 12px 20px;
+    font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; background: transparent; color: rgba(212,160,97,0.75);
+    transition: all 0.2s ease; -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation; white-space: nowrap;
+  }
+  .detail-edit:hover, .detail-edit:active { border-color: #d4a061; color: #d4a061; background: rgba(212,160,97,0.1); }
+
+  /* List mode button */
+  .filter-btn.btn-list {
+    background: rgba(212,160,97,0.08); color: rgba(212,160,97,0.65);
+    border-color: rgba(212,160,97,0.25);
+  }
+  .filter-btn.btn-list:hover { background: rgba(212,160,97,0.18); color: #d4a061; border-color: rgba(212,160,97,0.55); }
+  .filter-btn.btn-list.active {
+    background: linear-gradient(135deg, rgba(212,160,97,0.38), rgba(180,120,50,0.3));
+    color: #fde8b4; border-color: rgba(212,160,97,0.72);
+    box-shadow: 0 4px 20px rgba(212,160,97,0.28), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  /* Smooth transition for list mode fly-in */
+  .moment-bubble.list-transition {
+    transition: transform 0.55s cubic-bezier(0.22,1,0.36,1) !important;
+  }
+
+  /* Edit overlay */
+  .edit-overlay {
+    position: fixed; inset: 0; z-index: 9500;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(20,3,28,0.93); backdrop-filter: blur(14px); padding: 16px;
+  }
+  .edit-overlay.open { display: flex; }
+  .edit-card {
+    background: rgba(40,10,52,0.98); border: 1.5px solid rgba(255,107,157,0.35);
+    border-radius: 24px; padding: 28px 24px 24px; max-width: 380px; width: 100%;
+    text-align: center; box-shadow: 0 24px 80px rgba(255,107,157,0.2);
+    animation: detailIn 0.3s cubic-bezier(0.22,1,0.36,1);
+    max-height: 88vh; overflow-y: auto;
+  }
+  .edit-heading {
+    font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: 700;
+    color: rgba(255,240,248,0.95); margin-bottom: 18px;
+  }
+  .edit-field-label {
+    display: block; font-size: 11px; font-weight: 700; color: rgba(255,107,157,0.6);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; text-align: left;
+  }
+  .edit-input {
+    width: 100%; border: 1.5px solid rgba(255,107,157,0.25); border-radius: 14px;
+    padding: 12px 14px; font-family: 'Quicksand', sans-serif; font-size: 14px;
+    font-weight: 500; color: #fde8ed; background: rgba(255,107,157,0.06);
+    outline: none; transition: border-color 0.2s ease; box-sizing: border-box; margin-bottom: 12px;
+  }
+  .edit-input:focus { border-color: #ff6b9d; }
+  .edit-textarea {
+    width: 100%; min-height: 100px; border: 1.5px solid rgba(255,107,157,0.25); border-radius: 14px;
+    padding: 12px 14px; font-family: 'Quicksand', sans-serif; font-size: 14px;
+    font-weight: 500; color: #fde8ed; background: rgba(255,107,157,0.06);
+    outline: none; resize: none; transition: border-color 0.2s ease; box-sizing: border-box;
+    margin-bottom: 10px; line-height: 1.6;
+  }
+  .edit-textarea:focus { border-color: #ff6b9d; }
+  .edit-error { font-size: 12px; color: #ff6b9d; margin-top: 4px; min-height: 18px; font-weight: 600; }
+  .edit-btns { display: flex; gap: 10px; margin-top: 10px; }
+  .edit-cancel {
+    flex: 1; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 50px; padding: 13px;
+    font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; background: transparent; color: rgba(255,255,255,0.55);
+    transition: all 0.2s ease; touch-action: manipulation;
+  }
+  .edit-cancel:hover, .edit-cancel:active { border-color: rgba(255,255,255,0.4); color: white; }
+  .edit-save {
+    flex: 1; border: none; border-radius: 50px; padding: 13px;
+    font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; background: linear-gradient(135deg, #ff6b9d, #c2185b); color: white;
+    box-shadow: 0 4px 18px rgba(255,107,157,0.35); transition: transform 0.2s ease;
+    touch-action: manipulation;
+  }
+  .edit-save:hover, .edit-save:active { transform: scale(1.03); }
+  .edit-save:disabled { opacity: 0.6; cursor: default; transform: none; }
 </style>
 </head>
 <body>
@@ -532,6 +636,7 @@
     <button class="filter-btn btn-all active" data-filter="all">✨ Alle</button>
     <button class="filter-btn btn-andreas" data-filter="andreas">🐾 Andreas</button>
     <button class="filter-btn btn-nele" data-filter="nele">🌸 Nele</button>
+    <button class="filter-btn btn-list" id="listModeBtn">📋 Chronologisch</button>
   </div>
 </div>
 
@@ -561,11 +666,13 @@
       <div class="detail-avatar" id="detailAvatar"></div>
       <div class="detail-author-name" id="detailAuthor"></div>
     </div>
+    <div class="detail-title" id="detailTitle" style="display:none;"></div>
     <div class="detail-text" id="detailText"></div>
     <div class="detail-meta" id="detailMeta"></div>
     <div class="detail-btns">
-      <button class="detail-delete" id="detailDelete">🗑️ Löschen</button>
+      <button class="detail-edit" id="detailEdit">✏️ Bearbeiten</button>
       <button class="detail-close" id="detailClose">Schließen</button>
+      <button class="detail-delete" id="detailDelete">🗑️ Löschen</button>
     </div>
   </div>
 </div>
@@ -584,9 +691,25 @@
   </div>
 </div>
 
+<!-- Edit overlay -->
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-card">
+    <div class="edit-heading">Moment bearbeiten ✏️</div>
+    <label class="edit-field-label">📝 Titel</label>
+    <input class="edit-input" type="text" id="editTitleInput" maxlength="60" placeholder="Titel des Moments…">
+    <label class="edit-field-label">✍️ Text</label>
+    <textarea class="edit-textarea" id="editTextInput" maxlength="500" placeholder="Beschreibe diesen besonderen Moment…"></textarea>
+    <div class="edit-error" id="editError"></div>
+    <div class="edit-btns">
+      <button class="edit-cancel" id="editCancel">Abbrechen</button>
+      <button class="edit-save" id="editSave">Speichern 💕</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const app = initializeApp({
@@ -719,21 +842,32 @@
   let rafId = null;
   let floatingCards = [];
   let skyBounds = { w: 0, h: 0 };
+  let listMode = false;
+
+  // Pause position updates during scroll to prevent mobile jank
+  let isScrolling = false;
+  let scrollTimer;
+  window.addEventListener('scroll', () => {
+    isScrolling = true;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => { isScrolling = false; }, 200);
+  }, { passive: true });
 
   function startDrift() {
     if (rafId) cancelAnimationFrame(rafId);
     function tick() {
-      // Use frozen skyBounds — never window.innerHeight, which fluctuates on iOS during scroll
-      floatingCards.forEach(c => {
-        c.x  += c.vx;
-        c.y  += c.vy;
-        c.rot += c.vrot;
-        if (c.x <= 0)                   { c.x = 0;                  c.vx =  Math.abs(c.vx); }
-        if (c.x >= skyBounds.w - c.w)  { c.x = skyBounds.w - c.w;  c.vx = -Math.abs(c.vx); }
-        if (c.y <= c.topBound)          { c.y = c.topBound;          c.vy =  Math.abs(c.vy); }
-        if (c.y >= skyBounds.h - c.h)  { c.y = skyBounds.h - c.h;  c.vy = -Math.abs(c.vy); }
-        c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
-      });
+      if (!isScrolling && !listMode) {
+        floatingCards.forEach(c => {
+          c.x  += c.vx;
+          c.y  += c.vy;
+          c.rot += c.vrot;
+          if (c.x <= 0)                   { c.x = 0;                  c.vx =  Math.abs(c.vx); }
+          if (c.x >= skyBounds.w - c.w)  { c.x = skyBounds.w - c.w;  c.vx = -Math.abs(c.vx); }
+          if (c.y <= c.topBound)          { c.y = c.topBound;          c.vy =  Math.abs(c.vy); }
+          if (c.y >= skyBounds.h - c.h)  { c.y = skyBounds.h - c.h;  c.vy = -Math.abs(c.vy); }
+          c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
+        });
+      }
       rafId = requestAnimationFrame(tick);
     }
     rafId = requestAnimationFrame(tick);
@@ -745,6 +879,8 @@
   });
 
   function renderMoments(data) {
+    listMode = false;
+    document.getElementById('listModeBtn').classList.remove('active');
     const canvas = document.getElementById('momentsCanvas');
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     floatingCards = [];
@@ -797,19 +933,22 @@
       bubble.className = `moment-bubble ${authorClass}`;
       bubble.dataset.author = authorClass;
       bubble.style.cssText = `left:0;top:0;width:${cardW}px;will-change:transform;transform:translate(${x}px,${y}px) rotate(${rot}deg);`;
+      const hasTitle = m.title && m.title.trim();
+      const textLimit = isMobile ? (hasTitle ? 35 : 55) : (hasTitle ? 70 : 100);
       bubble.innerHTML = `
         <div class="moment-glow"></div>
         <div class="moment-author-row">
           <div class="moment-avatar">${initials}</div>
           <div class="moment-author-name">${m.author || 'Unbekannt'}</div>
         </div>
-        <div class="moment-text">${escapeHtml(truncate(m.text, isMobile ? 55 : 100))}</div>
+        ${hasTitle ? `<div class="moment-title">${escapeHtml(truncate(m.title, isMobile ? 22 : 35))}</div>` : ''}
+        <div class="moment-text">${escapeHtml(truncate(m.text || '', textLimit))}</div>
         <div class="moment-meta">📅 ${m.date || ''} · ${m.time || ''}</div>
       `;
       bubble.addEventListener('click', () => openDetail(m, bubble));
       canvas.appendChild(bubble);
 
-      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH });
+      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp });
     });
 
     startDrift();
@@ -856,6 +995,14 @@
     detailCard.className = `detail-card ${authorClass}`;
     document.getElementById('detailAvatar').textContent  = (m.author || '?')[0].toUpperCase();
     document.getElementById('detailAuthor').textContent  = m.author || 'Unbekannt';
+    const titleEl = document.getElementById('detailTitle');
+    if (m.title && m.title.trim()) {
+      titleEl.textContent = m.title;
+      titleEl.style.display = 'block';
+    } else {
+      titleEl.textContent = '';
+      titleEl.style.display = 'none';
+    }
     document.getElementById('detailText').textContent    = m.text || '';
     document.getElementById('detailMeta').textContent    = `📅 ${m.date || ''} · ${m.time || ''}`;
     detailOverlay.classList.add('open');
@@ -892,6 +1039,96 @@
     } finally {
       btn.textContent = 'Ja, löschen';
       btn.disabled = false;
+    }
+  });
+
+  // ---- LIST MODE ----
+  document.getElementById('listModeBtn').addEventListener('click', toggleListMode);
+
+  function toggleListMode() {
+    listMode = !listMode;
+    document.getElementById('listModeBtn').classList.toggle('active', listMode);
+
+    const isMobile = window.innerWidth <= 600;
+    const vw = window.innerWidth;
+    const cardW = isMobile ? 148 : 260;
+    const cardH = isMobile ? 92 : 145;
+    const headerH = getHeaderOffset();
+    const canvas = document.getElementById('momentsCanvas');
+
+    if (listMode) {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      const sorted = [...floatingCards].sort((a, b) => a.timestamp - b.timestamp);
+      const itemH = isMobile ? 112 : 168;
+      const startX = Math.max(8, Math.floor((vw - cardW) / 2));
+      const totalH = headerH + sorted.length * itemH + 80;
+      canvas.style.height = totalH + 'px';
+      skyBounds.h = totalH;
+
+      sorted.forEach((c, i) => {
+        c.el.classList.add('list-transition');
+        c.el.style.transitionDelay = `${i * 40}ms`;
+        const tx = startX;
+        const ty = headerH + i * itemH;
+        c.el.style.transform = `translate(${tx}px,${ty}px) rotate(0deg)`;
+        c.x = tx; c.y = ty; c.rot = 0;
+      });
+      setTimeout(() => floatingCards.forEach(c => { c.el.style.transitionDelay = ''; }), sorted.length * 40 + 600);
+    } else {
+      const vh = window.innerHeight;
+      const skyH = Math.max(vh, headerH + floatingCards.length * 190 + 120);
+      canvas.style.height = skyH + 'px';
+      skyBounds = { w: vw, h: skyH };
+
+      floatingCards.forEach(c => {
+        c.x = Math.random() * Math.max(10, vw - cardW - 10);
+        c.y = headerH + Math.random() * Math.max(50, skyH - headerH - cardH - 20);
+        c.rot = (Math.random() - 0.5) * 6;
+        const speed = isMobile ? (0.15 + Math.random() * 0.18) : (0.20 + Math.random() * 0.25);
+        const angle = Math.random() * Math.PI * 2;
+        c.vx = Math.cos(angle) * speed;
+        c.vy = Math.sin(angle) * speed;
+        c.vrot = (Math.random() - 0.5) * 0.007;
+        c.el.classList.add('list-transition');
+        c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
+      });
+      setTimeout(() => {
+        floatingCards.forEach(c => { c.el.classList.remove('list-transition'); c.el.style.transitionDelay = ''; });
+        startDrift();
+      }, 650);
+    }
+  }
+
+  // ---- BEARBEITEN ----
+  const editOverlay = document.getElementById('editOverlay');
+
+  document.getElementById('detailEdit').addEventListener('click', () => {
+    if (!currentMoment) return;
+    document.getElementById('editTitleInput').value = currentMoment.title || '';
+    document.getElementById('editTextInput').value  = currentMoment.text  || '';
+    document.getElementById('editError').textContent = '';
+    detailOverlay.classList.remove('open');
+    editOverlay.classList.add('open');
+  });
+
+  document.getElementById('editCancel').addEventListener('click', () => editOverlay.classList.remove('open'));
+  editOverlay.addEventListener('click', e => { if (e.target === editOverlay) editOverlay.classList.remove('open'); });
+
+  document.getElementById('editSave').addEventListener('click', async () => {
+    if (!currentMoment) return;
+    const title = document.getElementById('editTitleInput').value.trim();
+    const text  = document.getElementById('editTextInput').value.trim();
+    if (!text) { document.getElementById('editError').textContent = 'Bitte einen Text eingeben.'; return; }
+    const btn = document.getElementById('editSave');
+    btn.textContent = '…'; btn.disabled = true;
+    try {
+      await update(ref(db, `saved_moments/${currentMoment.timestamp}`), { title, text });
+      editOverlay.classList.remove('open');
+      currentMoment = null;
+    } catch {
+      document.getElementById('editError').textContent = 'Fehler beim Speichern. Nochmal versuchen.';
+    } finally {
+      btn.textContent = 'Speichern 💕'; btn.disabled = false;
     }
   });
 

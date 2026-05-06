@@ -762,8 +762,11 @@
 
     <!-- Schritt 1: Eingabe -->
     <div id="momentStep1">
-      <textarea class="moment-modal-textarea" id="momentText" placeholder="Beschreibe deinen besonderen Moment…" maxlength="280"></textarea>
-      <div class="moment-char-count"><span id="momentCharCount">0</span> / 280</div>
+      <label class="moment-date-label">📝 Titel</label>
+      <input type="text" class="moment-date-input" id="momentTitle" placeholder="Titel des Moments…" maxlength="60" style="margin-bottom:14px;">
+      <label class="moment-date-label">✍️ Text</label>
+      <textarea class="moment-modal-textarea" id="momentText" placeholder="Beschreibe deinen besonderen Moment…" maxlength="500"></textarea>
+      <div class="moment-char-count"><span id="momentCharCount">0</span> / 500</div>
       <label class="moment-date-label">📅 Datum & Uhrzeit</label>
       <input type="datetime-local" class="moment-date-input" id="momentDateTime">
       <div class="moment-modal-cost">🪙 Kostet 1.000 Coins</div>
@@ -776,6 +779,7 @@
 
     <!-- Schritt 2: Bestätigung -->
     <div id="momentStep2" style="display:none;">
+      <div id="momentConfirmTitle" style="font-family:'Dancing Script',cursive;font-size:20px;font-weight:700;color:var(--text-dark);margin-bottom:6px;text-align:left;word-break:break-word;display:none;"></div>
       <div class="moment-confirm-preview" id="momentConfirmPreview"></div>
       <div class="moment-confirm-date" id="momentConfirmDate"></div>
       <div class="moment-modal-cost">🪙 1.000 Coins werden abgezogen</div>
@@ -1572,12 +1576,13 @@
     dtInput.value = toDatetimeLocal(now);
     dtInput.max = toDatetimeLocal(now);
     momentTextArea.value = '';
+    document.getElementById('momentTitle').value = '';
     momentCharCount.textContent = '0';
     momentModalError.textContent = '';
     momentConfirmError.textContent = '';
     showMomentStep(1);
     momentModalOverlay.classList.add('open');
-    setTimeout(() => momentTextArea.focus(), 100);
+    setTimeout(() => document.getElementById('momentTitle').focus(), 100);
   });
 
   momentCancelBtn.addEventListener('click', () => momentModalOverlay.classList.remove('open'));
@@ -1591,6 +1596,14 @@
     const text = momentTextArea.value.trim();
     if (!text) { momentModalError.textContent = 'Bitte einen Text eingeben.'; return; }
     momentModalError.textContent = '';
+    const titleVal = document.getElementById('momentTitle').value.trim();
+    const titlePreview = document.getElementById('momentConfirmTitle');
+    if (titleVal) {
+      titlePreview.textContent = titleVal;
+      titlePreview.style.display = 'block';
+    } else {
+      titlePreview.style.display = 'none';
+    }
     document.getElementById('momentConfirmPreview').textContent = text;
     const dtInput = document.getElementById('momentDateTime');
     const selectedDt = dtInput.value ? new Date(dtInput.value) : new Date();
@@ -1622,13 +1635,16 @@
       const dtInput = document.getElementById('momentDateTime');
       const selectedDt = dtInput.value ? new Date(dtInput.value) : new Date();
       const momentId = Date.now();
-      await set(ref(db, `saved_moments/${momentId}`), {
+      const titleVal = document.getElementById('momentTitle').value.trim();
+      const momentData = {
         text,
         author: window.currentUser,
         timestamp: momentId,
         date: selectedDt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         time: selectedDt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-      });
+      };
+      if (titleVal) momentData.title = titleVal;
+      await set(ref(db, `saved_moments/${momentId}`), momentData);
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - 1000);
       momentModalOverlay.classList.remove('open');
     } catch (e) {
