@@ -44,81 +44,18 @@
   .star.l.teal   { color: rgba(94,234,212,0.85); background: rgba(94,234,212,0.85); }
   .star.l.blue   { color: rgba(147,197,253,0.85); background: rgba(147,197,253,0.85); }
 
-  /* large – cross sparkle, longer arms */
-  .star.xl {
-    width: 4px; height: 4px; background: white;
-    box-shadow: 0 0 8px 2px rgba(255,255,255,0.65),
-                0 -9px 0 0 rgba(255,255,255,0.42),
-                0  9px 0 0 rgba(255,255,255,0.42),
-                -9px 0 0 0 rgba(255,255,255,0.42),
-                 9px 0 0 0 rgba(255,255,255,0.42),
-                0 -18px 0 0 rgba(255,255,255,0.16),
-                0  18px 0 0 rgba(255,255,255,0.16),
-                -18px 0 0 0 rgba(255,255,255,0.16),
-                 18px 0 0 0 rgba(255,255,255,0.16);
-  }
-  .star.xl.rose {
-    background: rgba(255,160,190,1);
-    box-shadow: 0 0 10px 3px rgba(255,107,157,0.6),
-                0 -9px 0 0 rgba(255,160,190,0.42),
-                0  9px 0 0 rgba(255,160,190,0.42),
-                -9px 0 0 0 rgba(255,160,190,0.42),
-                 9px 0 0 0 rgba(255,160,190,0.42),
-                0 -18px 0 0 rgba(255,160,190,0.16),
-                0  18px 0 0 rgba(255,160,190,0.16),
-                -18px 0 0 0 rgba(255,160,190,0.16),
-                 18px 0 0 0 rgba(255,160,190,0.16);
-  }
-  .star.xl.gold {
-    background: rgba(255,215,120,1);
-    box-shadow: 0 0 10px 3px rgba(212,160,97,0.6),
-                0 -9px 0 0 rgba(255,215,120,0.42),
-                0  9px 0 0 rgba(255,215,120,0.42),
-                -9px 0 0 0 rgba(255,215,120,0.42),
-                 9px 0 0 0 rgba(255,215,120,0.42),
-                0 -18px 0 0 rgba(255,215,120,0.16),
-                0  18px 0 0 rgba(255,215,120,0.16),
-                -18px 0 0 0 rgba(255,215,120,0.16),
-                 18px 0 0 0 rgba(255,215,120,0.16);
-  }
+  /* large – bright glowing dot */
+  .star.xl { width: 4px; height: 4px; background: white; box-shadow: 0 0 10px 3px rgba(255,255,255,0.7); }
+  .star.xl.rose { background: rgba(255,160,190,1); box-shadow: 0 0 12px 4px rgba(255,107,157,0.65); }
+  .star.xl.gold { background: rgba(255,215,120,1); box-shadow: 0 0 12px 4px rgba(212,160,97,0.65); }
+  .star.xl.teal { background: rgba(94,234,212,1);  box-shadow: 0 0 12px 4px rgba(94,234,212,0.6); }
+  .star.xl.blue { background: rgba(147,197,253,1); box-shadow: 0 0 12px 4px rgba(147,197,253,0.6); }
 
-  /* XXL – rare dramatic 4+fade sparkle */
-  .star.xxl {
-    width: 5px; height: 5px; background: white;
-    box-shadow: 0 0 14px 4px rgba(255,255,255,0.6),
-                0 -13px 0 0 rgba(255,255,255,0.48),
-                0  13px 0 0 rgba(255,255,255,0.48),
-                -13px 0 0 0 rgba(255,255,255,0.48),
-                 13px 0 0 0 rgba(255,255,255,0.48),
-                0 -26px 0 0 rgba(255,255,255,0.2),
-                0  26px 0 0 rgba(255,255,255,0.2),
-                -26px 0 0 0 rgba(255,255,255,0.2),
-                 26px 0 0 0 rgba(255,255,255,0.2);
-  }
-  .star.xxl.rose {
-    background: rgba(255,160,190,1);
-    box-shadow: 0 0 18px 5px rgba(255,107,157,0.65),
-                0 -13px 0 0 rgba(255,160,190,0.5),
-                0  13px 0 0 rgba(255,160,190,0.5),
-                -13px 0 0 0 rgba(255,160,190,0.5),
-                 13px 0 0 0 rgba(255,160,190,0.5),
-                0 -26px 0 0 rgba(255,160,190,0.2),
-                0  26px 0 0 rgba(255,160,190,0.2),
-                -26px 0 0 0 rgba(255,160,190,0.2),
-                 26px 0 0 0 rgba(255,160,190,0.2);
-  }
-  .star.xxl.gold {
-    background: rgba(255,215,120,1);
-    box-shadow: 0 0 18px 5px rgba(212,160,97,0.65),
-                0 -13px 0 0 rgba(255,215,120,0.5),
-                0  13px 0 0 rgba(255,215,120,0.5),
-                -13px 0 0 0 rgba(255,215,120,0.5),
-                 13px 0 0 0 rgba(255,215,120,0.5),
-                0 -26px 0 0 rgba(255,215,120,0.2),
-                0  26px 0 0 rgba(255,215,120,0.2),
-                -26px 0 0 0 rgba(255,215,120,0.2),
-                 26px 0 0 0 rgba(255,215,120,0.2);
-  }
+  /* xxl – extra-large glowing dot */
+  .star.xxl { width: 6px; height: 6px; background: white; box-shadow: 0 0 16px 5px rgba(255,255,255,0.65); }
+  .star.xxl.rose { background: rgba(255,160,190,1); box-shadow: 0 0 20px 6px rgba(255,107,157,0.7); }
+  .star.xxl.gold { background: rgba(255,215,120,1); box-shadow: 0 0 20px 6px rgba(212,160,97,0.7); }
+  .star.xxl.blue { background: rgba(147,197,253,1); box-shadow: 0 0 20px 6px rgba(147,197,253,0.65); }
 
   @keyframes starTwinkle {
     0%   { opacity: 0.04; transform: scale(0.75); }
@@ -633,9 +570,20 @@
     box-shadow: 0 4px 20px rgba(212,160,97,0.28), inset 0 1px 0 rgba(255,255,255,0.1);
   }
 
-  /* Smooth transition for list mode fly-in */
-  .moment-bubble.list-transition {
-    transition: transform 0.55s cubic-bezier(0.22,1,0.36,1) !important;
+  /* List-mode transitions */
+  .moment-bubble.list-enter {
+    transition: transform 0.62s cubic-bezier(0.34,1.52,0.64,1) !important;
+  }
+  .moment-bubble.list-exit {
+    transition: transform 0.52s cubic-bezier(0.22,1,0.36,1) !important;
+  }
+  @keyframes cardLand {
+    0%   { box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+    22%  { box-shadow: 0 0 32px 10px rgba(255,107,157,0.52), 0 0 70px 28px rgba(180,60,120,0.18), inset 0 1px 0 rgba(255,255,255,0.28); }
+    100% { box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+  }
+  .moment-bubble.list-land {
+    animation: cardLand 0.7s ease-out forwards;
   }
 
   /* Edit overlay */
@@ -1535,15 +1483,15 @@
 
     if (listMode) {
       stopDrift();
-      // Remove dimmed class so all cards are fully visible in list view
-      floatingCards.forEach(c => c.el.classList.remove('dimmed'));
+      floatingCards.forEach(c => {
+        c.el.classList.remove('dimmed', 'list-enter', 'list-exit', 'list-land');
+      });
 
-      window.scrollTo(0, 0); // zum Seitenanfang scrollen, damit Liste unterhalb des Headers beginnt
+      window.scrollTo(0, 0);
       const sorted = [...floatingCards].sort((a, b) => a.momentDate - b.momentDate);
-      const gap = isMobile ? 12 : 16; // gleichmäßiger Abstand zwischen Karten
+      const gap = isMobile ? 12 : 16;
       const startX = Math.max(8, Math.floor((vw - cardW) / 2));
 
-      // Tatsächliche Höhe jeder Karte messen → gleicher Abstand unabhängig vom Inhalt
       let currentY = headerH;
       const targetY = sorted.map(c => {
         const y = currentY;
@@ -1551,40 +1499,54 @@
         return y;
       });
 
-      const totalH = currentY + 40;
-      canvas.style.height = totalH + 'px';
-      skyBounds.h = totalH;
+      canvas.style.height = (currentY + 40) + 'px';
+      skyBounds.h = currentY + 40;
 
+      // Cascade in top-to-bottom with spring bounce; flash glow on landing
       sorted.forEach((c, i) => {
-        c.el.classList.add('list-transition');
-        c.el.style.transitionDelay = `${i * 40}ms`;
+        c.el.classList.add('list-enter');
+        c.el.style.transitionDelay = `${i * 42}ms`;
         c.el.style.transform = `translate(${startX}px,${targetY[i]}px) rotate(0deg)`;
         c.x = startX; c.y = targetY[i]; c.rot = 0;
+
+        setTimeout(() => {
+          c.el.classList.add('list-land');
+          setTimeout(() => c.el.classList.remove('list-land'), 700);
+        }, i * 42 + 640);
       });
-      setTimeout(() => floatingCards.forEach(c => { c.el.style.transitionDelay = ''; }), sorted.length * 40 + 600);
+
+      setTimeout(() => {
+        floatingCards.forEach(c => { c.el.classList.remove('list-enter'); c.el.style.transitionDelay = ''; });
+      }, sorted.length * 42 + 780);
+
     } else {
       const vh = window.innerHeight;
       const skyH = Math.max(vh, headerH + floatingCards.length * 190 + 120);
       canvas.style.height = skyH + 'px';
       skyBounds = { w: vw, h: skyH };
 
-      floatingCards.forEach(c => {
+      // Dissolve: scatter top-to-bottom with quick stagger
+      const sorted = [...floatingCards].sort((a, b) => a.momentDate - b.momentDate);
+      sorted.forEach((c, i) => {
         c.x = Math.random() * Math.max(10, vw - cardW - 10);
         c.y = headerH + Math.random() * Math.max(50, skyH - headerH - cardH - 20);
-        c.rot = (Math.random() - 0.5) * 6;
+        c.rot = (Math.random() - 0.5) * 10;
         const speed = isMobile ? (0.15 + Math.random() * 0.18) : (0.20 + Math.random() * 0.25);
         const angle = Math.random() * Math.PI * 2;
         c.vx = Math.cos(angle) * speed;
         c.vy = Math.sin(angle) * speed;
         c.vrot = (Math.random() - 0.5) * 0.007;
-        c.el.classList.add('list-transition');
+        c.el.classList.remove('list-enter', 'list-land');
+        c.el.classList.add('list-exit');
+        c.el.style.transitionDelay = `${i * 20}ms`;
         c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
       });
+
       setTimeout(() => {
-        floatingCards.forEach(c => { c.el.classList.remove('list-transition'); c.el.style.transitionDelay = ''; });
+        floatingCards.forEach(c => { c.el.classList.remove('list-exit'); c.el.style.transitionDelay = ''; });
         startDrift();
-        applyFilter(activeFilter); // restore filter after exiting list mode
-      }, 650);
+        applyFilter(activeFilter);
+      }, sorted.length * 20 + 600);
     }
   }
 
