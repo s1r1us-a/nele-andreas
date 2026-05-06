@@ -22,8 +22,7 @@
                 linear-gradient(160deg, #1a0520 0%, #2d0a3a 30%, #1e0530 60%, #110320 100%);
     background-attachment: fixed;
     font-family: 'Quicksand', sans-serif;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
     position: relative;
   }
 
@@ -268,7 +267,7 @@
 
   /* FLOATING MOMENT CARDS */
   .moments-canvas {
-    position: absolute; top: 0; left: 0; width: 100%;
+    position: fixed; inset: 0; overflow: hidden;
     z-index: 10; pointer-events: none;
   }
   .moment-bubble {
@@ -350,6 +349,16 @@
 
   /* Dimmed state */
   .moment-bubble.dimmed { opacity: 0.06 !important; pointer-events: none; }
+
+  /* Mobile: much smaller cards so many fit on screen at once */
+  @media (max-width: 600px) {
+    .moment-bubble { padding: 10px 12px 9px; border-radius: 16px; }
+    .moment-author-row { gap: 6px; margin-bottom: 6px; }
+    .moment-avatar { width: 20px; height: 20px; font-size: 9px; }
+    .moment-author-name { font-size: 9px; letter-spacing: 0.8px; }
+    .moment-text { font-size: 11px; line-height: 1.5; margin-bottom: 6px; }
+    .moment-meta { font-size: 9px; }
+  }
 
   /* Pop on tap */
   @keyframes bubblePop {
@@ -708,23 +717,21 @@
   // ---- RAF DRIFT ENGINE ----
   let rafId = null;
   let floatingCards = [];
-  let skyBounds = { w: 0, h: 0, top: 0 };
 
   function startDrift() {
     if (rafId) cancelAnimationFrame(rafId);
     function tick() {
-      const maxX = skyBounds.w;
-      const maxY = skyBounds.h;
-      const minY = skyBounds.top;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
       floatingCards.forEach(c => {
         c.x  += c.vx;
         c.y  += c.vy;
         c.rot += c.vrot;
-        // Bounce off canvas edges
-        if (c.x <= 0)          { c.x = 0;          c.vx =  Math.abs(c.vx); }
-        if (c.x >= maxX - c.w) { c.x = maxX - c.w; c.vx = -Math.abs(c.vx); }
-        if (c.y <= minY)       { c.y = minY;        c.vy =  Math.abs(c.vy); }
-        if (c.y >= maxY - c.h) { c.y = maxY - c.h; c.vy = -Math.abs(c.vy); }
+        // Bounce off viewport edges
+        if (c.x <= 0)           { c.x = 0;            c.vx =  Math.abs(c.vx); }
+        if (c.x >= vw - c.w)   { c.x = vw - c.w;     c.vx = -Math.abs(c.vx); }
+        if (c.y <= c.topBound)  { c.y = c.topBound;   c.vy =  Math.abs(c.vy); }
+        if (c.y >= vh - c.h)   { c.y = vh - c.h;     c.vy = -Math.abs(c.vy); }
         c.el.style.transform = `translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
       });
       rafId = requestAnimationFrame(tick);
@@ -763,23 +770,16 @@
     const isMobile = window.innerWidth <= 600;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const cardW = isMobile ? Math.min(vw * 0.78, 250) : 240;
-    const cardH = isMobile ? 130 : 145;
+    const cardW  = isMobile ? 148 : 240;
+    const cardH  = isMobile ? 92  : 145;
     const headerH = getHeaderOffset();
 
-    // Sky starts at viewport size and grows downward only as moments fill up
-    const skyH = Math.max(vh, headerH + moments.length * 190 + 120);
-    canvas.style.height = skyH + 'px';
-
-    skyBounds = { w: vw, h: skyH, top: headerH };
-
     moments.forEach((m) => {
-      // Spread randomly across full sky
-      const x   = Math.random() * Math.max(20, vw - cardW - 20);
-      const y   = headerH + Math.random() * (skyH - headerH - cardH - 20);
+      const x   = Math.random() * Math.max(10, vw - cardW - 10);
+      const y   = headerH + Math.random() * Math.max(50, vh - headerH - cardH - 10);
       const rot = (Math.random() - 0.5) * 6;
 
-      const speed = 0.20 + Math.random() * 0.25;
+      const speed = isMobile ? (0.15 + Math.random() * 0.18) : (0.20 + Math.random() * 0.25);
       const angle = Math.random() * Math.PI * 2;
       const vx    = Math.cos(angle) * speed;
       const vy    = Math.sin(angle) * speed;
@@ -798,13 +798,13 @@
           <div class="moment-avatar">${initials}</div>
           <div class="moment-author-name">${m.author || 'Unbekannt'}</div>
         </div>
-        <div class="moment-text">${escapeHtml(truncate(m.text, isMobile ? 80 : 100))}</div>
+        <div class="moment-text">${escapeHtml(truncate(m.text, isMobile ? 55 : 100))}</div>
         <div class="moment-meta">📅 ${m.date || ''} · ${m.time || ''}</div>
       `;
       bubble.addEventListener('click', () => openDetail(m, bubble));
       canvas.appendChild(bubble);
 
-      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH });
+      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH });
     });
 
     startDrift();
