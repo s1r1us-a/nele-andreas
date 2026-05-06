@@ -1776,36 +1776,48 @@
     else if (species === 'pig') {
       baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="gradPig" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffd6e7"/><stop offset="100%" stop-color="#ffb3c6"/></radialGradient>
+          <radialGradient id="gradPig" cx="35%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffe0ec"/><stop offset="60%" stop-color="#ffb8cd"/><stop offset="100%" stop-color="#f590ae"/></radialGradient>
+          <radialGradient id="gradPigHead" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffe6f0"/><stop offset="60%" stop-color="#ffbcd0"/><stop offset="100%" stop-color="#f598b4"/></radialGradient>
+          <radialGradient id="gradSnout" cx="40%" cy="40%" r="70%"><stop offset="0%" stop-color="#ffc4d6"/><stop offset="100%" stop-color="#e87fa3"/></radialGradient>
         </defs>
-        <g class="tail"><path d="M 9 37 Q 2 32 5 25 Q 11 21 7 15" fill="none" stroke="#ff85a1" stroke-width="2.5" stroke-linecap="round"/></g>
-        <rect x="13" y="51" width="5" height="12" rx="2.5" fill="#ffb3c6"/>
-        <rect x="13" y="59" width="5" height="4" rx="2" fill="#e8789a"/>
-        <rect x="21" y="51" width="5" height="12" rx="2.5" fill="#ffb3c6"/>
-        <rect x="21" y="59" width="5" height="4" rx="2" fill="#e8789a"/>
-        <rect x="31" y="51" width="5" height="12" rx="2.5" fill="#ffb3c6"/>
-        <rect x="31" y="59" width="5" height="4" rx="2" fill="#e8789a"/>
-        <rect x="39" y="51" width="5" height="12" rx="2.5" fill="#ffb3c6"/>
-        <rect x="39" y="59" width="5" height="4" rx="2" fill="#e8789a"/>
-        <ellipse cx="25" cy="42" rx="18" ry="12" fill="url(#gradPig)"/>
-        <ellipse cx="21" cy="43" rx="10" ry="7" fill="#ffd6e7" opacity="0.5"/>
-        <ellipse cx="37" cy="36" rx="8" ry="9" fill="#ffb3c6"/>
-        <ellipse cx="31" cy="12" rx="5" ry="7.5" fill="#ff85a1" transform="rotate(-15 31 12)"/>
-        <ellipse cx="31" cy="13" rx="3" ry="5" fill="#ffaac8" transform="rotate(-15 31 13)"/>
-        <ellipse cx="45" cy="12" rx="5" ry="7.5" fill="#ff85a1" transform="rotate(15 45 12)"/>
-        <ellipse cx="45" cy="13" rx="3" ry="5" fill="#ffaac8" transform="rotate(15 45 13)"/>
-        <circle cx="38" cy="24" r="13" fill="url(#gradPig)"/>
-        <ellipse cx="33" cy="18" rx="5.5" ry="4" fill="#ffd6e7" opacity="0.7"/>
-        <ellipse cx="45" cy="28" rx="7" ry="5.5" fill="#ff9ab5"/>
-        <ellipse cx="45" cy="27.5" rx="5" ry="3.5" fill="#ffc0d2" opacity="0.5"/>
-        <circle cx="42.5" cy="28.5" r="1.8" fill="#cc4477"/>
-        <circle cx="47.5" cy="28.5" r="1.8" fill="#cc4477"/>
-        <ellipse cx="31" cy="29" rx="4" ry="2.5" fill="#ff6699" opacity="0.3"/>
-        <circle cx="34" cy="21" r="2.8" fill="#2a0a1a"/>
-        <circle cx="43" cy="21" r="2.8" fill="#2a0a1a"/>
-        <circle cx="35" cy="20.2" r="1.1" fill="#ffffff"/>
-        <circle cx="44" cy="20.2" r="1.1" fill="#ffffff"/>
-        <path d="M 38 26.5 Q 40.5 29 44 27" fill="none" stroke="#cc4477" stroke-width="1.3" stroke-linecap="round"/>
+        <g class="tail"><path d="M 9 38 Q 3 36 4 31 Q 9 30 8 25 Q 3 24 5 19" fill="none" stroke="#f590ae" stroke-width="2.2" stroke-linecap="round"/></g>
+        <ellipse cx="15" cy="62" rx="4.5" ry="2" fill="rgba(0,0,0,0.12)"/>
+        <ellipse cx="36" cy="62" rx="5" ry="2" fill="rgba(0,0,0,0.12)"/>
+        <rect x="12" y="48" width="6" height="14" rx="2.5" fill="#f5a3bd"/>
+        <path d="M 12 60 L 18 60 L 18 63 Q 15 64 12 63 Z" fill="#3a1020"/>
+        <path d="M 15 63 L 15 60" stroke="#ffb8cd" stroke-width="0.8"/>
+        <rect x="20" y="48" width="6" height="14" rx="2.5" fill="#f5a3bd"/>
+        <path d="M 20 60 L 26 60 L 26 63 Q 23 64 20 63 Z" fill="#3a1020"/>
+        <path d="M 23 63 L 23 60" stroke="#ffb8cd" stroke-width="0.8"/>
+        <rect x="30" y="48" width="6" height="14" rx="2.5" fill="#ffb8cd"/>
+        <path d="M 30 60 L 36 60 L 36 63 Q 33 64 30 63 Z" fill="#3a1020"/>
+        <path d="M 33 63 L 33 60" stroke="#ffd6e2" stroke-width="0.8"/>
+        <rect x="38" y="48" width="6" height="14" rx="2.5" fill="#ffb8cd"/>
+        <path d="M 38 60 L 44 60 L 44 63 Q 41 64 38 63 Z" fill="#3a1020"/>
+        <path d="M 41 63 L 41 60" stroke="#ffd6e2" stroke-width="0.8"/>
+        <ellipse cx="24" cy="44" rx="20" ry="13" fill="url(#gradPig)"/>
+        <ellipse cx="20" cy="46" rx="12" ry="8" fill="#ffe0ec" opacity="0.55"/>
+        <ellipse cx="38" cy="38" rx="9" ry="10" fill="url(#gradPigHead)"/>
+        <path d="M 30 11 Q 27 5 32 6 Q 36 8 36 16 Q 33 18 30 17 Z" fill="#e88aa8"/>
+        <path d="M 31 12 Q 30 9 33 9 Q 35 11 34 15 Q 32 16 31 14 Z" fill="#ffc4d6"/>
+        <path d="M 46 12 Q 49 6 50 11 Q 50 17 44 18 Q 42 16 42 13 Z" fill="#e88aa8"/>
+        <path d="M 46 13 Q 48 10 48 13 Q 47 16 45 16 Q 44 14 44 13 Z" fill="#ffc4d6"/>
+        <circle cx="40" cy="26" r="13" fill="url(#gradPigHead)"/>
+        <ellipse cx="34" cy="20" rx="5" ry="3.5" fill="#ffe6f0" opacity="0.7"/>
+        <ellipse cx="33" cy="32" rx="3.5" ry="2" fill="#ff7a9e" opacity="0.35"/>
+        <ellipse cx="47" cy="30" rx="3.5" ry="2" fill="#ff7a9e" opacity="0.35"/>
+        <ellipse cx="47" cy="30" rx="6.5" ry="5.5" fill="url(#gradSnout)" stroke="#d96a8e" stroke-width="0.6"/>
+        <ellipse cx="46.5" cy="28.5" rx="4" ry="2.5" fill="#ffd1de" opacity="0.6"/>
+        <ellipse cx="45" cy="30" rx="1.2" ry="1.7" fill="#5a1830"/>
+        <ellipse cx="49" cy="30" rx="1.2" ry="1.7" fill="#5a1830"/>
+        <ellipse cx="35" cy="22" rx="2.6" ry="2.9" fill="#1a0410"/>
+        <ellipse cx="44" cy="22" rx="2.6" ry="2.9" fill="#1a0410"/>
+        <circle cx="35.8" cy="21" r="1" fill="#ffffff"/>
+        <circle cx="44.8" cy="21" r="1" fill="#ffffff"/>
+        <circle cx="34.5" cy="22.5" r="0.4" fill="#ffffff" opacity="0.7"/>
+        <circle cx="43.5" cy="22.5" r="0.4" fill="#ffffff" opacity="0.7"/>
+        <path d="M 39 33 Q 41.5 35.5 44 33.5" fill="none" stroke="#a83560" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M 41 34.8 Q 41.5 35.5 42 34.8" fill="#a83560"/>
       </svg>`;
     }
 
