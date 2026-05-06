@@ -3202,7 +3202,7 @@
       if (a.rewardReady) {
         cardClass  = 'stall-card-ready';
         statusHtml = `<span class="stall-status-badge stall-badge-ready">${rewardIcons[a.species]||'🎁'} Bereit!</span>`;
-        actionHtml = `<button class="stall-action-btn stall-btn-collect" onclick="event.stopPropagation();window.stallOpenAnimal(${a.id})">Abholen</button>`;
+        actionHtml = `<button class="stall-action-btn stall-btn-collect" onclick="event.stopPropagation();window.stallCollectDirect(${a.id})">Abholen</button>`;
       } else if (a.isProducing) {
         const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - Math.floor((Date.now()-a.fedAt)/1000));
         const mm = String(Math.floor(rem/60)).padStart(2,'0');
@@ -3215,7 +3215,7 @@
         const stock = f ? (f.isItem ? (inventory.items[f.foodType]||0) : (inventory.crops[f.foodType]||0)) : 0;
         cardClass  = 'stall-card-hungry';
         statusHtml = `<span class="stall-status-badge stall-badge-hungry">🍽️ Hungrig</span>`;
-        actionHtml = `<button class="stall-action-btn stall-btn-feed" ${stock>0?'':'disabled'} onclick="event.stopPropagation();window.stallOpenAnimal(${a.id})">Füttern</button>`;
+        actionHtml = `<button class="stall-action-btn stall-btn-feed" ${stock>0?'':'disabled'} onclick="event.stopPropagation();window.stallFeedDirect(${a.id})">Füttern</button>`;
       }
       const svgOnly = getAnimalSVG(a.species, a.equipped).replace(/<div class="rabbit-shadow[^"]*"[^>]*><\/div>/g, '');
       const filterStyle = `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
@@ -3235,6 +3235,51 @@
   window.stallOpenAnimal = function(animalId) {
     window.closeAllModals();
     setTimeout(() => window.openAnimalStats(animalId), 50);
+  };
+
+  window.stallFeedDirect = async function(animalId) {
+    const a = animals.find(anim => anim.id === animalId);
+    if (!a) return;
+    const f = getAnimalFood(a.species);
+    if (!f) return;
+    const invCategory = f.isItem ? inventory.items : inventory.crops;
+    if (invCategory[f.foodType] > 0) {
+      invCategory[f.foodType]--;
+      a.isProducing = true;
+      a.fedAt = Date.now();
+      a.rewardReady = false;
+      await saveFarmData();
+      const activeTab = document.querySelector('.stall-tab.active');
+      window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
+      window.showToast(`🍎 ${a.name} wurde gefüttert!`);
+      const el = document.getElementById('animal-' + a.id);
+      if (el) {
+        const heart = document.createElement('div');
+        heart.className = 'feed-heart';
+        heart.textContent = '❤️';
+        el.appendChild(heart);
+        setTimeout(() => heart.remove(), 1500);
+      }
+    }
+  };
+
+  window.stallCollectDirect = async function(animalId) {
+    const a = animals.find(anim => anim.id === animalId);
+    if (!a) return;
+    a.isProducing = false;
+    a.rewardReady = false;
+    if (a.species === 'rabbit')      { inventory.items.fertilizer++; window.showToast(`🪴 Dünger erhalten!`); }
+    else if (a.species === 'chicken'){ inventory.items.egg++;        window.showToast(`🥚 Ei erhalten!`); }
+    else if (a.species === 'cow')    { inventory.items.milk++;       window.showToast(`🥛 Milch erhalten!`); }
+    else if (a.species === 'cat')    { inventory.items.diamond++;    window.showToast(`💎 Diamant erhalten!`); }
+    else if (a.species === 'sheep')  { inventory.items.wool++;       window.showToast(`🧶 Wolle erhalten!`); }
+    else if (a.species === 'duck')   { inventory.items.feather++;    window.showToast(`🪶 Feder erhalten!`); }
+    else if (a.species === 'goat')   { inventory.items.goatmilk++;   window.showToast(`🥛 Ziegenmilch erhalten!`); }
+    else if (a.species === 'pig')    { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
+    await saveFarmData();
+    updateFarmDOM();
+    const activeTab = document.querySelector('.stall-tab.active');
+    window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
   };
   
   // ── BESUCHSMODUS ──
