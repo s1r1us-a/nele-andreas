@@ -667,15 +667,15 @@ async function doShootMulti(r, c) {
   const updates = {
     ...gameState,
     [myK + 'Shots']: shots,
-    currentTurn: won ? currentUser : other(currentUser),
+    currentTurn: won ? currentUser : (hit ? currentUser : other(currentUser)),
     status: won ? 'finished' : 'running',
     winner: won ? currentUser : null,
   };
   await set(ref(db, GAME_REF), updates);
 
-  if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt!`, 2500);
-  else if (hit) showToast('🎯 Treffer!', 1500);
-  else showToast('💦 Daneben!', 1500);
+  if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt! Nochmal! 🎯`, 2500);
+  else if (hit) showToast('🎯 Treffer! Nochmal schießen!', 1800);
+  else showToast('💦 Daneben – Gegner ist dran!', 1500);
 
   if (won) await finishGame(currentUser, gameState.bet);
 }
@@ -699,39 +699,47 @@ async function doShootTest(r, c) {
   gameState = {
     ...gameState,
     [myK + 'Shots']: shots,
-    currentTurn: won ? 'Andreas' : 'Nele',
+    currentTurn: won ? 'Andreas' : (hit ? 'Andreas' : 'Nele'),
     status: won ? 'finished' : 'running',
     winner: won ? 'Andreas' : null,
   };
 
-  if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt!`, 2500);
-  else if (hit) showToast('🎯 Treffer!', 1500);
-  else showToast('💦 Daneben!', 1500);
+  if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt! Nochmal! 🎯`, 2500);
+  else if (hit) showToast('🎯 Treffer! Nochmal schießen!', 1800);
+  else showToast('💦 Daneben – Nele ist dran!', 1500);
 
   renderGame(gameState);
 
   if (won) { showResult(gameState); return; }
 
-  // AI turn
+  // AI turn only on miss
+  if (hit) return;
+  doAiTurns(700);
+}
+
+function doAiTurns(delay) {
   setTimeout(() => {
+    if (!gameState || gameState.status !== 'running' || gameState.currentTurn !== 'Nele') return;
     const before = (gameState['neleShots'] || emptyGrid()).map(row=>[...row]);
     gameState = aiTurn(gameState);
     const after = gameState['neleShots'] || emptyGrid();
     const aiHit = after.flat().filter(v=>v===1).length > before.flat().filter(v=>v===1).length;
 
     let aiSunkDef = null;
-    const myShipsData = gameState['andreasShips'] || [];
-    for (const s of myShipsData)
+    for (const s of (gameState['andreasShips'] || []))
       if (shipSunkNow(s, before, after)) { aiSunkDef = SHIPS.find(d => d.id === s.id); break; }
 
     renderGame(gameState);
 
-    if (aiSunkDef) showToast(`💥 Nele versenkt: ${aiSunkDef.name}!`, 2500);
-    else if (aiHit) showToast('💥 Nele hat getroffen!', 1500);
-    else showToast('💦 Nele daneben!', 1500);
+    if (aiSunkDef) showToast(`💥 Nele versenkt: ${aiSunkDef.name}! Nochmal!`, 2000);
+    else if (aiHit) showToast('💥 Nele hat getroffen! Nochmal!', 1500);
+    else showToast('💦 Nele daneben – du bist dran!', 1500);
 
-    if (gameState.winner === 'Nele') showResult(gameState);
-  }, 700);
+    if (gameState.winner === 'Nele') { showResult(gameState); return; }
+
+    // KI trifft → nochmal schießen
+    if (aiHit) doAiTurns(900);
+  }, delay);
 }
 
 function aiTurn(state) {
@@ -775,7 +783,7 @@ function aiTurn(state) {
   return {
     ...state,
     neleShots: shots,
-    currentTurn: won ? 'Nele' : 'Andreas',
+    currentTurn: won ? 'Nele' : (hit ? 'Nele' : 'Andreas'),
     status: won ? 'finished' : 'running',
     winner: won ? 'Nele' : null,
   };
