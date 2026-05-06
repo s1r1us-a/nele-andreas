@@ -767,8 +767,8 @@
     const cardH = isMobile ? 130 : 145;
     const headerH = getHeaderOffset();
 
-    // Sky is at least 3× viewport tall, and big enough for all cards to have room
-    const skyH = Math.max(vh * 3, moments.length * 320 + headerH + 100);
+    // Sky starts at viewport size and grows downward only as moments fill up
+    const skyH = Math.max(vh, headerH + moments.length * 190 + 120);
     canvas.style.height = skyH + 'px';
 
     skyBounds = { w: vw, h: skyH, top: headerH };
