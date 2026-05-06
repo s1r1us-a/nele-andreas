@@ -177,8 +177,10 @@
   @keyframes hitFlash { 0%{transform:scale(1.8);filter:brightness(3)} 60%{transform:scale(1.1);filter:brightness(1.5)} 100%{transform:scale(1);filter:brightness(1)} }
   .gc.miss { background:rgba(30,60,120,0.35); border-color:rgba(96,165,250,0.3) !important; }
   .gc.miss::after { content:'✕'; color:rgba(147,197,253,0.85); font-size:13px; font-weight:900; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; line-height:1; text-shadow:0 0 8px rgba(96,165,250,0.6); }
-  .gc.sunk { background:radial-gradient(circle,#fdba74 5%,#f97316 40%,#dc2626 100%) !important; box-shadow:0 0 18px rgba(220,38,38,1), 0 0 36px rgba(249,115,22,0.55) !important; border-color:rgba(251,191,36,0.7) !important; animation:sunkPop .5s ease-out; }
+  .gc.sunk { background:radial-gradient(circle,#7f1d1d 5%,#3b0808 50%,#050101 100%) !important; box-shadow:0 0 22px rgba(239,68,68,1), 0 0 44px rgba(220,38,38,0.7) !important; border-color:rgba(239,68,68,0.95) !important; animation:sunkPop .5s ease-out, sunkGlow 2s ease-in-out 0.5s infinite; }
+  .gc.sunk::before { content:'☠'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; color:rgba(252,165,165,0.9); text-shadow:0 0 8px rgba(239,68,68,0.9); pointer-events:none; }
   @keyframes sunkPop { 0%{transform:scale(1.6);filter:brightness(3)} 60%{transform:scale(1.15);filter:brightness(1.5)} 100%{transform:scale(1);filter:brightness(1)} }
+  @keyframes sunkGlow { 0%,100%{box-shadow:0 0 16px rgba(239,68,68,0.8),0 0 32px rgba(220,38,38,0.4)} 50%{box-shadow:0 0 30px rgba(239,68,68,1),0 0 60px rgba(220,38,38,0.8)} }
 
   /* LAST SHOT */
   .gc.last-shot { outline:2.5px solid rgba(255,255,255,0.95) !important; outline-offset:-2px; }
