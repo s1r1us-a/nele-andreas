@@ -147,6 +147,14 @@
   .ship-item-size { font-size:11px; color:var(--text-dim); font-weight:600; }
   .ship-check { font-size:14px; color:#22c55e; font-weight:700; text-shadow:0 0 8px rgba(34,197,94,0.7); }
 
+  @keyframes shipSplash {
+    0%   { transform:translateY(-12px) scale(0.4); opacity:0; filter:brightness(3); }
+    45%  { transform:translateY(3px) scale(1.18); opacity:1; filter:brightness(1.7); }
+    70%  { transform:translateY(-1px) scale(0.96); filter:brightness(1.1); }
+    100% { transform:translateY(0) scale(1); filter:brightness(1); }
+  }
+  .gc.ship-placing { animation:shipSplash 0.42s cubic-bezier(.22,1,.36,1) both !important; }
+
   .placement-controls { display:flex; gap:10px; margin-bottom:12px; }
   .btn-rotate { flex:1; border:1.5px solid rgba(14,165,233,0.3); border-radius:12px; padding:9px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:var(--ocean); background:rgba(14,165,233,0.06); cursor:pointer; transition:all .2s; }
   .btn-rotate:hover { background:rgba(14,165,233,0.12); border-color:var(--ocean); }
@@ -668,10 +676,50 @@ function placeAt(r, c) {
   hoverR = -1; hoverC = -1;
   rebuildShipList();
   renderPlacement();
+  animateShipPlace(ship, 0);
   if (placedShips.length === SHIPS.length) {
     document.getElementById('readyBtn').disabled = false;
     document.getElementById('placementSub').textContent = 'Alle Schiffe platziert – bereit? 🚀';
   }
+}
+
+function animateShipPlace(ship, baseDelay) {
+  const grid = document.getElementById('placementGrid');
+  const shipCells = cells(ship);
+  for (let i = 0; i < shipCells.length; i++) {
+    const {r: sr, c: sc} = shipCells[i];
+    const delay = baseDelay + i * 60;
+    setTimeout(() => {
+      const d = gc(grid, sr, sc);
+      if (!d) return;
+      d.classList.add('ship-placing');
+      showPlaceSplash(grid, sr, sc);
+      setTimeout(() => d.classList.remove('ship-placing'), 480);
+    }, delay);
+  }
+}
+
+function showPlaceSplash(gridEl, r, c) {
+  const cell = gc(gridEl, r, c);
+  if (!cell) return;
+  const rect = cell.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top  + rect.height / 2;
+  const cols = ['#60a5fa','#22d3ee','#93c5fd','#38bdf8'];
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('div');
+    const angle = (i / 6) * 2 * Math.PI + (Math.random() - .5) * .5;
+    const dist  = 9 + Math.random() * 14;
+    p.className = 'shot-particle miss-particle';
+    p.style.cssText = `left:${x}px;top:${y}px;--dx:${(Math.cos(angle)*dist).toFixed(1)}px;--dy:${(Math.sin(angle)*dist-13).toFixed(1)}px;--dur:.48s;background:${cols[Math.floor(Math.random()*cols.length)]};width:4px;height:4px;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 600);
+  }
+  const ring = document.createElement('div');
+  ring.className = 'shot-ring miss-ring';
+  ring.style.cssText = `left:${x}px;top:${y}px;border-color:rgba(34,211,238,0.8);box-shadow:0 0 6px rgba(34,211,238,.4);`;
+  document.body.appendChild(ring);
+  setTimeout(() => ring.remove(), 600);
 }
 
 function triggerScreenFlash(color) {
@@ -1125,6 +1173,11 @@ document.getElementById('randomBtn').addEventListener('click', () => {
   renderPlacement();
   document.getElementById('readyBtn').disabled = false;
   document.getElementById('placementSub').textContent = 'Alle Schiffe platziert – bereit? 🚀';
+  let delay = 0;
+  for (const s of placedShips) {
+    animateShipPlace(s, delay);
+    delay += s.size * 60 + 40;
+  }
 });
 document.getElementById('betInput').addEventListener('input', function() {
   const v = parseInt(this.value) || 0;
