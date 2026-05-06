@@ -3963,42 +3963,58 @@ function buildInstancedSquidRoom(cx, cz) {
     const HL = 15; // halbe Länge → 30m tief
     const FH = 6;  // Deckenhöhe 6m
 
-    const wallMat  = ToonMat(0xe8e8e8); // Helles Grau – Wände
-    const floorMat = ToonMat(0xc8c8c8); // Etwas dunkler – Boden
-    const ceilMat  = ToonMat(0xf2f2f2); // Fast Weiß – Decke
+    // MeshBasicMaterial ignoriert Licht UND Fog → immer 100 % maximale Helligkeit,
+    // egal wie weit entfernt oder wie dunkel die restliche Szene ist.
+    const mkBasic = (hex, fogOff = true) =>
+        new THREE.MeshBasicMaterial({ color: hex, fog: !fogOff });
+
+    const wallMat  = mkBasic(0xf5f5f5); // Reinweißes Grau – Wände
+    const floorMat = mkBasic(0xe0e0e0); // Helles Grau – Boden
+    const ceilMat  = mkBasic(0xffffff); // Reinweiß – Decke
 
     // Boden
     const floor = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.2, HL * 2), floorMat);
-    floor.position.set(0, 0.1, 0); floor.receiveShadow = true; group.add(floor);
+    floor.position.set(0, 0.1, 0); group.add(floor);
     floorAreas.push({ minX: cx - HW, maxX: cx + HW, minZ: cz - HL, maxZ: cz + HL, type: 'flat', y: 0.2 });
 
     // Decke
-    const ceiling = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.3, HL * 2), ceilMat);
+    const ceiling = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, 0.3, HL * 2 + 0.6), ceilMat);
     ceiling.position.set(0, FH, 0); group.add(ceiling);
 
-    // Wände
+    // Vier Wände (schließen lückenlos an Decke und Boden an)
     const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat); wallL.position.set(-HW, FH / 2, 0); group.add(wallL);
     const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.3, FH, HL * 2), wallMat); wallR.position.set( HW, FH / 2, 0); group.add(wallR);
     const wallB = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat); wallB.position.set(0, FH / 2, -HL); group.add(wallB);
     const wallF = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.6, FH, 0.3), wallMat); wallF.position.set(0, FH / 2,  HL); group.add(wallF);
 
-    // === HELLE DECKENBELEUCHUNG ===
-    // Zentrales Hauptlicht
-    const mainLight = new THREE.PointLight(0xffffff, 3.5, 70);
-    mainLight.position.set(0, FH - 0.5, 0); group.add(mainLight);
+    // === TAGESLICHT-BELEUCHTUNG ===
+    // 4×4-Raster starker PointLights knapp unter der Decke.
+    // MeshToonMaterial (Spieler, Zombies) benötigt diese Lichter, um vollständig
+    // ausgeleuchtet zu erscheinen. Jedes Licht deckt ~12 m Radius ab, der Raster-
+    // abstand von 10 m sorgt für lückenlose Überdeckung des gesamten Bodens.
+    // Reichweite 22 m bleibt weit unter dem Abstand zum Hauptmap-Ursprung (≥1980 m).
+    const lightStep = 10;
+    const lightOffsets = [-HL * 0.5, -lightStep * 0.0, HL * 0.5]; // 3 Positionen pro Achse
+    for (const lx of lightOffsets) {
+        for (const lz of lightOffsets) {
+            const l = new THREE.PointLight(0xfffaf0, 6.0, 22);
+            l.position.set(lx, FH - 0.3, lz);
+            group.add(l);
+        }
+    }
+    // Zusätzliches zentrisches Überlicht – füllt die Mitte auf Tageslicht-Niveau
+    const centerLight = new THREE.PointLight(0xfffaf0, 8.0, 30);
+    centerLight.position.set(0, FH - 0.3, 0);
+    group.add(centerLight);
 
-    // 4 Quadrantenlichter für gleichmäßige Ausleuchtung
-    [[-HW * 0.55, -HL * 0.55], [HW * 0.55, -HL * 0.55],
-     [-HW * 0.55,  HL * 0.55], [HW * 0.55,  HL * 0.55]].forEach(([lx, lz]) => {
-        const l = new THREE.PointLight(0xffffff, 2.8, 45);
-        l.position.set(lx, FH - 0.5, lz); group.add(l);
-    });
-
-    // Leuchtstoffröhren-Optik an der Decke (weiße, flache Quader)
-    const tubeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    for (let tz = -HL + 5; tz <= HL - 5; tz += 8) {
-        const tube = new THREE.Mesh(new THREE.BoxGeometry(HW * 1.6, 0.12, 0.3), tubeMat);
-        tube.position.set(0, FH - 0.04, tz); group.add(tube);
+    // Dekorative Deckenplatten (immer weiß leuchtend, kein Licht nötig)
+    const panelMat = mkBasic(0xffffff);
+    for (let px = -HW + 5; px <= HW - 5; px += 10) {
+        for (let pz = -HL + 5; pz <= HL - 5; pz += 10) {
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(6, 0.06, 6), panelMat);
+            panel.position.set(px, FH - 0.02, pz);
+            group.add(panel);
+        }
     }
 
     // Kollisions-Rahmen (Wände als Hindernisse registrieren)
@@ -4019,7 +4035,7 @@ function buildInstancedSquidRoom(cx, cz) {
     window.instancedSquidRoomExitPos  = new THREE.Vector3(cx, 1.0, cz + HL - 3);
     window.instancedSquidRoomSpawnPos = new THREE.Vector3(cx, 1.0, cz + HL - 6);
 
-    // Sichtbarkeitsbereich erweitern (damit Licht/Fog korrekt behandelt wird)
+    // houseInteriorBounds erweitern (Kamera-Logik, Wall-Clipping)
     const origContains = houseInteriorBounds.contains.bind(houseInteriorBounds);
     houseInteriorBounds.contains = (x, z) => origContains(x, z) || (x > cx - HW && x < cx + HW && z > cz - HL && z < cz + HL);
 
