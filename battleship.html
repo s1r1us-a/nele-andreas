@@ -485,6 +485,7 @@ let gameState    = null;
 let gameListener = null;
 let isShooting   = false;
 let prevOppLastShot = undefined;
+let statsRecorded   = false;
 
 let placedShips   = [];
 let selectedShip  = null;
@@ -996,16 +997,22 @@ async function doShootMulti(r, c) {
 // ── COINS & STATS ─────────────────────────────────────────────────────────────
 async function finishGame(winner, bet) {
   if (!bet) return;
+  // Only winner's client adds the prize coins (avoid double-credit)
   await runTransaction(ref(db, `coins/${pkey(winner)}`), c => (c||0) + bet*2);
-  const loser = other(winner);
-  const stats = [
-    {p:`stats/${pkey(winner)}/schiffeVersenken/gamesWon`, fn:c=>(c||0)+1},
-    {p:`stats/${pkey(loser)}/schiffeVersenken/gamesLost`, fn:c=>(c||0)+1},
-    {p:`stats/${pkey(winner)}/coinsEarned`,  fn:c=>(c||0)+bet*2},
-    {p:`stats/${pkey(winner)}/coinsSpent`,   fn:c=>(c||0)+bet},
-    {p:`stats/${pkey(loser)}/coinsSpent`,    fn:c=>(c||0)+bet},
+  try { await runTransaction(ref(db, `stats/${pkey(winner)}/coinsEarned`), c => (c||0)+bet*2); } catch(e) { console.warn(e); }
+}
+
+async function updateOwnStats(state) {
+  // Each player updates only their own stats — avoids cross-user Firebase write issues
+  if (statsRecorded || !state.bet) return;
+  statsRecorded = true;
+  const isWinner = state.winner === currentUser;
+  const myK = pkey(currentUser);
+  const paths = [
+    { p: `stats/${myK}/schiffeVersenken/${isWinner ? 'gamesWon' : 'gamesLost'}`, fn: c => (c||0)+1 },
+    { p: `stats/${myK}/coinsSpent`, fn: c => (c||0)+state.bet },
   ];
-  for (const s of stats) {
+  for (const s of paths) {
     try { await runTransaction(ref(db, s.p), s.fn); } catch(e) { console.warn(e); }
   }
 }
@@ -1064,12 +1071,16 @@ function handleGameState(state) {
       initGame(state);
     else
       renderGame(state);
-    if (state.status === 'finished') setTimeout(() => showResult(state), 5000);
+    if (state.status === 'finished') {
+      updateOwnStats(state);
+      setTimeout(() => showResult(state), 5000);
+    }
     return;
   }
 }
 
 function showLobby(mode, state = null) {
+  if (mode === 'create') statsRecorded = false;
   document.getElementById('lobbySection').style.display     = 'block';
   document.getElementById('placementSection').style.display = 'none';
   document.getElementById('gameSection').style.display      = 'none';
