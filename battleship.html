@@ -180,6 +180,21 @@
   .gc.sunk { background:radial-gradient(circle,#fdba74 5%,#f97316 40%,#dc2626 100%) !important; box-shadow:0 0 18px rgba(220,38,38,1), 0 0 36px rgba(249,115,22,0.55) !important; border-color:rgba(251,191,36,0.7) !important; animation:sunkPop .5s ease-out; }
   @keyframes sunkPop { 0%{transform:scale(1.6);filter:brightness(3)} 60%{transform:scale(1.15);filter:brightness(1.5)} 100%{transform:scale(1);filter:brightness(1)} }
 
+  /* LAST SHOT */
+  .gc.last-shot { outline:2.5px solid rgba(255,255,255,0.95) !important; outline-offset:-2px; }
+
+  /* FLEET TRACKER */
+  .fleet-tracker { width:100%; margin-top:8px; }
+  .fleet-tracker-lbl { font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); font-weight:700; text-align:center; margin-bottom:5px; }
+  .fleet-ship-row { display:flex; align-items:center; gap:5px; padding:2px 0; }
+  .fleet-ship-row.ship-sunk { opacity:0.45; }
+  .fleet-ship-row.ship-sunk .ft-ship-emoji { filter:grayscale(1); }
+  .ft-cells { display:flex; gap:2px; }
+  .ftc { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .ft-alive { background:rgba(48,100,200,0.65); border:1px solid rgba(80,130,255,0.3); }
+  .ft-sunk  { background:radial-gradient(circle,#f97316,#dc2626); box-shadow:0 0 3px rgba(220,38,38,0.7); border:1px solid rgba(251,191,36,0.4); }
+  .ft-ship-emoji { font-size:10px; line-height:1; }
+
   /* SHOT EFFECTS */
   .shot-particle { position:fixed; pointer-events:none; z-index:9999999; border-radius:50%; transform:translate(-50%,-50%); animation:particleFly var(--dur,.7s) ease-out forwards; }
   .hit-particle  { width:7px; height:7px; }
@@ -363,7 +378,7 @@
             <div class="ocean-grid" id="enemyGrid"></div>
           </div>
         </div>
-        <div class="sunk-row" id="sunkByMe"></div>
+        <div class="fleet-tracker" id="fleetTracker"></div>
       </div>
     </div>
 
@@ -673,6 +688,13 @@ function renderGame(state) {
   });
   markSunk(myShipsData, oppShotsData, document.getElementById('ownGrid'));
 
+  // Highlight opponent's last shot on own grid
+  const oppLastShot = state[oppK + 'LastShot'];
+  if (oppLastShot != null) {
+    const lsCell = gc(document.getElementById('ownGrid'), oppLastShot.r, oppLastShot.c);
+    if (lsCell) lsCell.classList.add('last-shot');
+  }
+
   // Enemy grid: my shots + clickable if my turn
   buildGrid(document.getElementById('enemyGrid'), (div, r, c) => {
     const shot = myShotsData[r][c];
@@ -695,7 +717,8 @@ function renderGame(state) {
   document.getElementById('statusN').textContent = state.currentTurn==='Nele'    && state.status==='running' ? '🎯 Am Zug' : '';
 
   document.getElementById('surrenderBtn').style.display = state.status === 'running' ? 'block' : 'none';
-  renderSunkRows(myShipsData, oppShipsData, myShotsData, oppShotsData);
+  renderSunkOnMe(myShipsData, oppShotsData);
+  renderFleetTracker(oppShipsData, myShotsData);
 }
 
 function markSunk(ships, shots, gridEl) {
@@ -705,21 +728,44 @@ function markSunk(ships, shots, gridEl) {
   }
 }
 
-function renderSunkRows(myShips, oppShips, myShots, oppShots) {
+function renderSunkOnMe(myShips, oppShots) {
   const sOnMe = document.getElementById('sunkOnMe');
-  const sByMe = document.getElementById('sunkByMe');
   sOnMe.innerHTML = '';
-  sByMe.innerHTML = '';
   for (const s of myShips) {
     if (cells(s).every(({r,c}) => oppShots[r][c] === 1)) {
       const sp = document.createElement('span'); sp.className = 'sunk-icon'; sp.textContent = '💥'; sOnMe.appendChild(sp);
     }
   }
-  for (const s of oppShips) {
-    const def = SHIPS.find(d => d.id === s.id);
-    if (cells(s).every(({r,c}) => myShots[r][c] === 1)) {
-      const sp = document.createElement('span'); sp.className = 'sunk-icon'; sp.textContent = def?.emoji || '⚓'; sByMe.appendChild(sp);
+}
+
+function renderFleetTracker(oppShips, myShots) {
+  const el = document.getElementById('fleetTracker');
+  if (!el) return;
+  el.innerHTML = '<div class="fleet-tracker-lbl">Feindesflotte</div>';
+  for (const def of SHIPS) {
+    const ship = oppShips.find(os => os.id === def.id);
+    const shipCells = ship ? cells(ship) : [];
+    const allHit = ship && shipCells.every(({r,c}) => myShots[r][c] === 1);
+    const row = document.createElement('div');
+    row.className = 'fleet-ship-row' + (allHit ? ' ship-sunk' : '');
+    const emojiEl = document.createElement('span');
+    emojiEl.className = 'ft-ship-emoji';
+    emojiEl.textContent = def.emoji;
+    row.appendChild(emojiEl);
+    const ftCells = document.createElement('div');
+    ftCells.className = 'ft-cells';
+    for (let i = 0; i < def.size; i++) {
+      const ftc = document.createElement('div');
+      if (ship) {
+        const {r, c} = shipCells[i];
+        ftc.className = 'ftc ' + (myShots[r][c] === 1 ? 'ft-sunk' : 'ft-alive');
+      } else {
+        ftc.className = 'ftc ft-alive';
+      }
+      ftCells.appendChild(ftc);
     }
+    row.appendChild(ftCells);
+    el.appendChild(row);
   }
 }
 
@@ -834,6 +880,7 @@ async function doShootMulti(r, c) {
   const updates = {
     ...gameState,
     [myK + 'Shots']: shots,
+    [myK + 'LastShot']: {r, c},
     currentTurn: won ? currentUser : (hit ? currentUser : other(currentUser)),
     status: won ? 'finished' : 'running',
     winner: won ? currentUser : null,
