@@ -738,11 +738,21 @@
       <div class="game-invite-bet" id="gameInviteBet"></div>
     </a>
   </div>
+  <div class="game-invite-banner" id="battleshipInviteBanner">
+    <a href="battleship.html" class="game-invite-inner">
+      <span class="game-invite-emoji">⚓</span>
+      <div class="game-invite-text">
+        <div class="game-invite-title" id="battleshipInviteTitle">fordert dich heraus!</div>
+        <div class="game-invite-sub">Schiffe Versenken – Tippe zum Annehmen</div>
+      </div>
+      <div class="game-invite-bet" id="battleshipInviteBet"></div>
+    </a>
+  </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
     <a href="game.html" style="display: block; width: 100%; background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(167,139,250,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🔴 Vier Gewinnt</a>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
-    <span style="display: block; width: 100%; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.6); text-align: center; letter-spacing: 0.5px; cursor: not-allowed; opacity: 0.6;">⚓ Schiffe Versenken <span style="font-size: 12px; font-weight: 600; opacity: 0.9;">– Bald verfügbar</span></span>
+    <a href="battleship.html" style="display: block; width: 100%; background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(14,165,233,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">⚓ Schiffe Versenken</a>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
     <a href="zombiedefense.html" style="display: block; width: 100%; background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(74,222,128,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🧟 Zombie Land</a>
@@ -956,13 +966,26 @@
       // Load badges
       loadUserBadges();
 
-      // Game-Invite live lauschen
+      // Vier Gewinnt Invite live lauschen
       onValue(ref(db, 'game/andreas_vs_nele'), snap => {
         const game = snap.val();
         const banner = document.getElementById('gameInviteBanner');
         if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
           document.getElementById('gameInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
           document.getElementById('gameInviteBet').textContent = game.bet.toLocaleString('de-DE') + ' 🪙';
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      });
+
+      // Schiffe Versenken Invite live lauschen
+      onValue(ref(db, 'battleship/andreas_vs_nele'), snap => {
+        const game = snap.val();
+        const banner = document.getElementById('battleshipInviteBanner');
+        if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
+          document.getElementById('battleshipInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
+          document.getElementById('battleshipInviteBet').textContent = game.bet.toLocaleString('de-DE') + ' 🪙';
           banner.style.display = 'block';
         } else {
           banner.style.display = 'none';
