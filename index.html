@@ -578,6 +578,12 @@
   }
   .moment-modal-error { font-size: 12px; color: #c85070; min-height: 18px; font-weight: 600; margin-bottom: 10px; }
   .moment-modal-btns { display: flex; gap: 10px; }
+  .moment-confirm-preview {
+    font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 600;
+    color: var(--text-dark); line-height: 1.55; background: var(--ui-input-bg);
+    border: 1.5px solid var(--ui-modal-border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 14px; text-align: left; word-break: break-word;
+  }
   .moment-save-btn {
     flex: 1; border: none; border-radius: 50px; padding: 14px;
     font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
@@ -683,6 +689,12 @@
       </div>
     </div>
   </div>
+  <div class="save-moment-btn-wrap">
+    <button class="save-moment-btn disabled" id="saveMomentBtn" disabled>✨ Momente Speichern</button>
+  </div>
+  <div style="margin-top: 10px; max-width: 420px; width: 100%;">
+    <span style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid rgba(255,107,157,0.15); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,107,157,0.35); text-align: center; letter-spacing: 0.5px; cursor: not-allowed; pointer-events: none; filter: grayscale(0.3);">📖 Momente Archiv</span>
+  </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
     <a href="stats.html" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid var(--ui-quote-card-border); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--rose); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(232,115,138,0.1);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📊 Statistik</a>
   </div>
@@ -719,12 +731,6 @@
   <div class="shop-btn-wrap" style="margin-top: 16px; max-width: 420px; width: 100%;">
     <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #c87830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(212,160,97,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
   </div>
-  <div class="save-moment-btn-wrap">
-    <button class="save-moment-btn disabled" id="saveMomentBtn" disabled>✨ Momente Speichern</button>
-  </div>
-  <div style="margin-top: 10px; max-width: 420px; width: 100%;">
-    <span style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid rgba(255,107,157,0.15); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,107,157,0.35); text-align: center; letter-spacing: 0.5px; cursor: not-allowed; pointer-events: none; filter: grayscale(0.3);">📖 Momente Archiv</span>
-  </div>
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
     <div class="footer-hearts">🌸 · 🌸</div>
@@ -737,13 +743,28 @@
     <span class="modal-emoji">✨</span>
     <div class="modal-title">Moment festhalten</div>
     <div class="modal-subtitle">Für immer konserviert</div>
-    <textarea class="moment-modal-textarea" id="momentText" placeholder="Beschreibe deinen besonderen Moment…" maxlength="280"></textarea>
-    <div class="moment-char-count"><span id="momentCharCount">0</span> / 280</div>
-    <div class="moment-modal-cost">🪙 Kostet 1.000 Coins</div>
-    <div class="moment-modal-error" id="momentModalError"></div>
-    <div class="moment-modal-btns">
-      <button class="moment-cancel-btn" id="momentCancelBtn">Abbrechen</button>
-      <button class="moment-save-btn" id="momentSaveBtn">Speichern ✨</button>
+
+    <!-- Schritt 1: Eingabe -->
+    <div id="momentStep1">
+      <textarea class="moment-modal-textarea" id="momentText" placeholder="Beschreibe deinen besonderen Moment…" maxlength="280"></textarea>
+      <div class="moment-char-count"><span id="momentCharCount">0</span> / 280</div>
+      <div class="moment-modal-cost">🪙 Kostet 1.000 Coins</div>
+      <div class="moment-modal-error" id="momentModalError"></div>
+      <div class="moment-modal-btns">
+        <button class="moment-cancel-btn" id="momentCancelBtn">Abbrechen</button>
+        <button class="moment-save-btn" id="momentSaveBtn">Weiter →</button>
+      </div>
+    </div>
+
+    <!-- Schritt 2: Bestätigung -->
+    <div id="momentStep2" style="display:none;">
+      <div class="moment-confirm-preview" id="momentConfirmPreview"></div>
+      <div class="moment-modal-cost">🪙 1.000 Coins werden abgezogen</div>
+      <div class="moment-modal-error" id="momentConfirmError"></div>
+      <div class="moment-modal-btns">
+        <button class="moment-cancel-btn" id="momentBackBtn">← Zurück</button>
+        <button class="moment-save-btn" id="momentConfirmBtn">Ja, speichern 💕</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1499,13 +1520,23 @@
   }
 
   // ---- MOMENTE SPEICHERN ----
-  const saveMomentBtn       = document.getElementById('saveMomentBtn');
-  const momentModalOverlay  = document.getElementById('momentModalOverlay');
-  const momentCancelBtn     = document.getElementById('momentCancelBtn');
-  const momentSaveBtn       = document.getElementById('momentSaveBtn');
-  const momentTextArea      = document.getElementById('momentText');
-  const momentModalError    = document.getElementById('momentModalError');
-  const momentCharCount     = document.getElementById('momentCharCount');
+  const saveMomentBtn      = document.getElementById('saveMomentBtn');
+  const momentModalOverlay = document.getElementById('momentModalOverlay');
+  const momentCancelBtn    = document.getElementById('momentCancelBtn');
+  const momentSaveBtn      = document.getElementById('momentSaveBtn');
+  const momentBackBtn      = document.getElementById('momentBackBtn');
+  const momentConfirmBtn   = document.getElementById('momentConfirmBtn');
+  const momentTextArea     = document.getElementById('momentText');
+  const momentModalError   = document.getElementById('momentModalError');
+  const momentConfirmError = document.getElementById('momentConfirmError');
+  const momentCharCount    = document.getElementById('momentCharCount');
+  const momentStep1        = document.getElementById('momentStep1');
+  const momentStep2        = document.getElementById('momentStep2');
+
+  function showMomentStep(n) {
+    momentStep1.style.display = n === 1 ? '' : 'none';
+    momentStep2.style.display = n === 2 ? '' : 'none';
+  }
 
   momentTextArea.addEventListener('input', () => {
     momentCharCount.textContent = momentTextArea.value.length;
@@ -1515,35 +1546,44 @@
     momentTextArea.value = '';
     momentCharCount.textContent = '0';
     momentModalError.textContent = '';
+    momentConfirmError.textContent = '';
+    showMomentStep(1);
     momentModalOverlay.classList.add('open');
     setTimeout(() => momentTextArea.focus(), 100);
   });
 
-  momentCancelBtn.addEventListener('click', () => {
-    momentModalOverlay.classList.remove('open');
-  });
-
+  momentCancelBtn.addEventListener('click', () => momentModalOverlay.classList.remove('open'));
+  momentBackBtn.addEventListener('click', () => showMomentStep(1));
   momentModalOverlay.addEventListener('click', e => {
     if (e.target === momentModalOverlay) momentModalOverlay.classList.remove('open');
   });
 
-  momentSaveBtn.addEventListener('click', async () => {
+  // Schritt 1 → 2: Text prüfen, Vorschau zeigen
+  momentSaveBtn.addEventListener('click', () => {
     const text = momentTextArea.value.trim();
     if (!text) { momentModalError.textContent = 'Bitte einen Text eingeben.'; return; }
+    momentModalError.textContent = '';
+    document.getElementById('momentConfirmPreview').textContent = text;
+    momentConfirmError.textContent = '';
+    showMomentStep(2);
+  });
 
+  // Schritt 2: Wirklich speichern
+  momentConfirmBtn.addEventListener('click', async () => {
+    const text = momentTextArea.value.trim();
     const userKey = window.currentUser ? window.currentUser.toLowerCase() : null;
-    if (!userKey) { momentModalError.textContent = 'Bitte zuerst einloggen.'; return; }
+    if (!userKey) { momentConfirmError.textContent = 'Bitte zuerst einloggen.'; return; }
 
     const coinSnap = await get(ref(db, `coins/${userKey}`));
     const currentCoins = coinSnap.val() || 0;
     if (currentCoins < 1000) {
-      momentModalError.textContent = 'Nicht genug Coins! Du brauchst 1.000 🪙';
+      momentConfirmError.textContent = 'Nicht genug Coins! Du brauchst 1.000 🪙';
       return;
     }
 
-    momentSaveBtn.textContent = '…';
-    momentSaveBtn.disabled = true;
-    momentModalError.textContent = '';
+    momentConfirmBtn.textContent = '…';
+    momentConfirmBtn.disabled = true;
+    momentConfirmError.textContent = '';
 
     try {
       const now = new Date();
@@ -1558,10 +1598,10 @@
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - 1000);
       momentModalOverlay.classList.remove('open');
     } catch (e) {
-      momentModalError.textContent = 'Fehler beim Speichern. Bitte nochmal versuchen.';
+      momentConfirmError.textContent = 'Fehler beim Speichern. Bitte nochmal versuchen.';
     } finally {
-      momentSaveBtn.textContent = 'Speichern ✨';
-      momentSaveBtn.disabled = false;
+      momentConfirmBtn.textContent = 'Ja, speichern 💕';
+      momentConfirmBtn.disabled = false;
     }
   });
 
