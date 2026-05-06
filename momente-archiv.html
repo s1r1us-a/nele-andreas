@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momente Archiv ✨ – Nele & Andreas</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8738a;
+    --rose-light: #f5a3b5;
+    --rose-pale: #fde8ed;
+    --cream: #fff8f0;
+    --gold: #d4a061;
+    --text-dark: #5a2d3a;
+    --text-mid: #8b5565;
+    --accent: #ff6b9d;
+    --ui-topbar-bg: rgba(255,248,240,0.95);
+    --ui-topbar-border: rgba(232,115,138,0.2);
+    --ui-btn-bg: rgba(255,255,255,0.9);
+    --ui-btn-border: rgba(232,115,138,0.25);
+    --ui-btn-text: var(--text-mid);
+    --ui-coin-bg: rgba(255,255,255,0.9);
+    --ui-modal-bg: #fff;
+    --ui-modal-overlay: rgba(90,45,58,0.85);
+    --ui-modal-border: rgba(232,115,138,0.3);
+    --ui-input-bg: var(--cream);
+    --ui-input-color: var(--text-dark);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 10% 10%, rgba(255,107,157,0.18) 0%, transparent 45%),
+                radial-gradient(ellipse at 90% 5%, rgba(212,160,97,0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 90%, rgba(232,115,138,0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #1a0520 0%, #2d0a3a 30%, #1e0530 60%, #110320 100%);
+    font-family: 'Quicksand', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Stars background */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .star {
+    position: absolute; border-radius: 50%;
+    background: white; animation: starTwinkle ease-in-out infinite;
+  }
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50%       { opacity: 0.9; transform: scale(1.4); }
+  }
+
+  /* Floating particles */
+  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .particle {
+    position: absolute; pointer-events: none; font-size: 16px;
+    animation: particleDrift linear infinite; opacity: 0;
+  }
+  @keyframes particleDrift {
+    0%   { transform: translateY(100vh) rotate(0deg) scale(0.5); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-10vh) rotate(360deg) scale(1); opacity: 0; }
+  }
+
+  /* Top bar */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 10px 16px;
+    background: rgba(26,5,32,0.9); border-bottom: 1px solid rgba(255,107,157,0.2);
+    backdrop-filter: blur(12px);
+  }
+  .top-bar.visible { display: flex; }
+  .top-bar-btn {
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,107,157,0.3);
+    border-radius: 50px; padding: 7px 16px;
+    font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600;
+    color: rgba(255,107,157,0.9); cursor: pointer; transition: all 0.2s ease;
+    text-decoration: none; display: inline-block;
+  }
+  .top-bar-btn:hover { background: rgba(255,107,157,0.15); border-color: #ff6b9d; color: #ff6b9d; }
+  .coin-display {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(212,160,97,0.12); border: 1.5px solid rgba(212,160,97,0.35);
+    border-radius: 50px; padding: 6px 14px;
+    font-size: 12px; font-weight: 700; color: var(--gold);
+  }
+  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 18px; }
+  .top-bar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+  /* Auth loading */
+  .auth-loading {
+    position: fixed; inset: 0; z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+    background: #1a0520;
+  }
+  .auth-spinner {
+    width: 36px; height: 36px; border: 3px solid rgba(255,107,157,0.2);
+    border-top-color: #ff6b9d; border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Login modal */
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(26,5,32,0.95); backdrop-filter: blur(10px);
+  }
+  .login-overlay.open { display: flex; }
+  .login-card {
+    background: rgba(40,10,50,0.95); border: 1.5px solid rgba(255,107,157,0.3);
+    border-radius: 28px; padding: 40px 36px 36px; max-width: 340px; width: 90%;
+    text-align: center; box-shadow: 0 20px 70px rgba(255,107,157,0.2);
+  }
+  .login-emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+  .login-title {
+    font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700;
+    background: linear-gradient(135deg, #ff6b9d, #c2185b 60%, #f5a3b5);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+  .login-sub { font-size: 13px; color: rgba(255,107,157,0.7); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px; font-weight: 500; }
+  .login-field {
+    width: 100%; border: 1.5px solid rgba(255,107,157,0.3); border-radius: 14px;
+    padding: 13px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 500;
+    color: #fde8ed; background: rgba(255,107,157,0.06); outline: none; margin-bottom: 12px;
+    transition: border-color 0.2s ease; box-sizing: border-box;
+  }
+  .login-field:focus { border-color: #ff6b9d; }
+  .login-btn {
+    width: 100%; border: none; border-radius: 50px; padding: 16px;
+    font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(135deg, #ff6b9d 0%, #c2185b 100%); color: white;
+    box-shadow: 0 4px 20px rgba(255,107,157,0.4); transition: transform 0.2s ease; margin-top: 4px;
+  }
+  .login-btn:hover { transform: scale(1.03) translateY(-2px); }
+  .login-error { font-size: 12px; color: #ff6b9d; margin-top: 10px; min-height: 18px; font-weight: 600; }
+
+  /* Page header */
+  .page-header {
+    position: fixed; top: 52px; left: 0; right: 0; z-index: 100;
+    text-align: center; padding: 24px 20px 16px; pointer-events: none;
+  }
+  .page-title {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(40px, 9vw, 72px); font-weight: 700;
+    background: linear-gradient(135deg, #ff6b9d 0%, #c2185b 40%, #f5a3b5 80%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(255,107,157,0.4));
+    line-height: 1.1;
+  }
+  .page-subtitle {
+    font-size: 12px; color: rgba(255,107,157,0.6); letter-spacing: 2.5px;
+    text-transform: uppercase; margin-top: 6px; font-weight: 500;
+  }
+
+  /* Empty state */
+  .empty-state {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center; z-index: 50; flex-direction: column; gap: 16px;
+  }
+  .empty-state.visible { display: flex; }
+  .empty-emoji { font-size: 64px; animation: emptyFloat 3s ease-in-out infinite; }
+  @keyframes emptyFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  .empty-text { font-family: 'Dancing Script', cursive; font-size: 28px; color: rgba(255,107,157,0.7); text-align: center; }
+  .empty-sub { font-size: 13px; color: rgba(255,107,157,0.4); text-align: center; font-weight: 500; }
+
+  /* Count badge */
+  .count-badge {
+    position: fixed; bottom: 24px; right: 24px; z-index: 200;
+    background: rgba(255,107,157,0.15); border: 1.5px solid rgba(255,107,157,0.3);
+    border-radius: 50px; padding: 8px 18px;
+    font-size: 13px; font-weight: 700; color: rgba(255,107,157,0.8);
+    backdrop-filter: blur(10px); display: none;
+  }
+  .count-badge.visible { display: block; }
+
+  /* FLOATING MOMENT CARDS */
+  .moments-canvas { position: fixed; inset: 0; z-index: 10; }
+  .moment-bubble {
+    position: absolute;
+    max-width: 260px; min-width: 180px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,107,157,0.25);
+    border-radius: 20px; padding: 18px 20px;
+    cursor: pointer; user-select: none;
+    box-shadow:
+      0 8px 32px rgba(255,107,157,0.12),
+      0 2px 8px rgba(0,0,0,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .moment-bubble:hover {
+    transform: scale(1.06) !important;
+    box-shadow: 0 16px 48px rgba(255,107,157,0.25), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+    border-color: rgba(255,107,157,0.55);
+    z-index: 200;
+  }
+  .moment-bubble.andreas { border-color: rgba(232,115,138,0.3); }
+  .moment-bubble.nele    { border-color: rgba(167,139,250,0.3); }
+  .moment-bubble.andreas:hover { border-color: rgba(232,115,138,0.65); box-shadow: 0 16px 48px rgba(232,115,138,0.3), 0 4px 16px rgba(0,0,0,0.4); }
+  .moment-bubble.nele:hover    { border-color: rgba(167,139,250,0.65); box-shadow: 0 16px 48px rgba(167,139,250,0.3), 0 4px 16px rgba(0,0,0,0.4); }
+
+  .moment-glow {
+    position: absolute; inset: -1px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,107,157,0.08), transparent, rgba(212,160,97,0.05));
+    pointer-events: none;
+  }
+  .moment-bubble.nele .moment-glow {
+    background: linear-gradient(135deg, rgba(167,139,250,0.08), transparent, rgba(196,181,253,0.05));
+  }
+
+  .moment-author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .moment-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Dancing Script', cursive; font-size: 13px; font-weight: 700;
+    color: white; flex-shrink: 0;
+  }
+  .moment-bubble.andreas .moment-avatar { background: linear-gradient(135deg, #e8738a, #c85070); }
+  .moment-bubble.nele    .moment-avatar { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+  .moment-author-name { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .moment-bubble.andreas .moment-author-name { color: rgba(232,115,138,0.9); }
+  .moment-bubble.nele    .moment-author-name { color: rgba(167,139,250,0.9); }
+
+  .moment-text {
+    font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 600;
+    color: rgba(255,240,248,0.92); line-height: 1.55;
+    word-break: break-word; margin-bottom: 12px;
+  }
+
+  .moment-meta {
+    font-size: 10px; color: rgba(255,107,157,0.4); font-weight: 600;
+    letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
+  }
+  .moment-bubble.nele .moment-meta { color: rgba(167,139,250,0.4); }
+
+  /* Float animations – 10 varied paths */
+  @keyframes float0 {
+    0%   { transform: translate(0px,   0px)   rotate(-0.8deg); }
+    25%  { transform: translate(18px, -28px)  rotate(0.6deg); }
+    50%  { transform: translate(-8px, -45px)  rotate(-0.4deg); }
+    75%  { transform: translate(-22px,-20px)  rotate(0.9deg); }
+    100% { transform: translate(0px,   0px)   rotate(-0.8deg); }
+  }
+  @keyframes float1 {
+    0%   { transform: translate(0px,   0px)   rotate(0.6deg); }
+    30%  { transform: translate(-20px,-32px)  rotate(-0.8deg); }
+    60%  { transform: translate(14px, -50px)  rotate(0.5deg); }
+    80%  { transform: translate(24px, -18px)  rotate(-0.6deg); }
+    100% { transform: translate(0px,   0px)   rotate(0.6deg); }
+  }
+  @keyframes float2 {
+    0%   { transform: translate(0px,   0px)   rotate(-0.5deg); }
+    20%  { transform: translate(26px, -18px)  rotate(0.7deg); }
+    55%  { transform: translate(10px, -42px)  rotate(-0.9deg); }
+    80%  { transform: translate(-16px,-30px)  rotate(0.4deg); }
+    100% { transform: translate(0px,   0px)   rotate(-0.5deg); }
+  }
+  @keyframes float3 {
+    0%   { transform: translate(0px,   0px)   rotate(0.9deg); }
+    35%  { transform: translate(-14px,-38px)  rotate(-0.5deg); }
+    65%  { transform: translate(20px, -22px)  rotate(0.7deg); }
+    85%  { transform: translate(8px,  -48px)  rotate(-0.3deg); }
+    100% { transform: translate(0px,   0px)   rotate(0.9deg); }
+  }
+  @keyframes float4 {
+    0%   { transform: translate(0px,   0px)   rotate(-0.7deg); }
+    25%  { transform: translate(22px, -40px)  rotate(0.5deg); }
+    50%  { transform: translate(-18px,-55px)  rotate(-0.8deg); }
+    75%  { transform: translate(-6px, -25px)  rotate(0.6deg); }
+    100% { transform: translate(0px,   0px)   rotate(-0.7deg); }
+  }
+  @keyframes float5 {
+    0%   { transform: translate(0px,   0px)   rotate(0.4deg); }
+    40%  { transform: translate(-26px,-20px)  rotate(-0.9deg); }
+    70%  { transform: translate(12px, -36px)  rotate(0.6deg); }
+    90%  { transform: translate(20px, -10px)  rotate(-0.4deg); }
+    100% { transform: translate(0px,   0px)   rotate(0.4deg); }
+  }
+  @keyframes float6 {
+    0%   { transform: translate(0px,   0px)   rotate(-1.0deg); }
+    30%  { transform: translate(16px, -44px)  rotate(0.8deg); }
+    60%  { transform: translate(-20px,-30px)  rotate(-0.6deg); }
+    80%  { transform: translate(-10px,-52px)  rotate(0.4deg); }
+    100% { transform: translate(0px,   0px)   rotate(-1.0deg); }
+  }
+  @keyframes float7 {
+    0%   { transform: translate(0px,   0px)   rotate(0.7deg); }
+    20%  { transform: translate(-12px,-35px)  rotate(-0.5deg); }
+    50%  { transform: translate(24px, -18px)  rotate(0.9deg); }
+    75%  { transform: translate(6px,  -46px)  rotate(-0.7deg); }
+    100% { transform: translate(0px,   0px)   rotate(0.7deg); }
+  }
+  @keyframes float8 {
+    0%   { transform: translate(0px,   0px)   rotate(-0.6deg); }
+    35%  { transform: translate(-28px,-22px)  rotate(0.5deg); }
+    65%  { transform: translate(10px, -40px)  rotate(-0.8deg); }
+    90%  { transform: translate(18px, -12px)  rotate(0.6deg); }
+    100% { transform: translate(0px,   0px)   rotate(-0.6deg); }
+  }
+  @keyframes float9 {
+    0%   { transform: translate(0px,   0px)   rotate(0.5deg); }
+    25%  { transform: translate(14px, -50px)  rotate(-0.7deg); }
+    55%  { transform: translate(-22px,-28px)  rotate(0.9deg); }
+    80%  { transform: translate(-8px, -38px)  rotate(-0.4deg); }
+    100% { transform: translate(0px,   0px)   rotate(0.5deg); }
+  }
+
+  /* Pop animation on click */
+  @keyframes bubblePop {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.18); }
+    60%  { transform: scale(0.94); }
+    100% { transform: scale(1); }
+  }
+  .moment-bubble.popping { animation: bubblePop 0.4s cubic-bezier(0.22,1,0.36,1) !important; }
+
+  /* Detail modal */
+  .detail-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(26,5,32,0.88); backdrop-filter: blur(12px);
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-card {
+    background: rgba(40,10,52,0.97); border: 1.5px solid rgba(255,107,157,0.3);
+    border-radius: 28px; padding: 36px 32px 32px; max-width: 420px; width: 92%;
+    text-align: center; box-shadow: 0 24px 80px rgba(255,107,157,0.2);
+    animation: detailIn 0.35s cubic-bezier(0.22,1,0.36,1);
+    position: relative; max-height: 85vh; overflow-y: auto;
+  }
+  @keyframes detailIn {
+    0%  { transform: scale(0.85) translateY(24px); opacity: 0; }
+    100%{ transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .detail-author-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+  .detail-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; color: white;
+  }
+  .detail-author-name { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  .detail-text {
+    font-family: 'Dancing Script', cursive; font-size: 24px; font-weight: 600;
+    color: rgba(255,240,248,0.95); line-height: 1.6; margin-bottom: 20px;
+    word-break: break-word;
+  }
+  .detail-meta {
+    font-size: 12px; color: rgba(255,107,157,0.5); font-weight: 600;
+    letter-spacing: 0.5px; margin-bottom: 24px;
+  }
+  .detail-close {
+    border: 1.5px solid rgba(255,107,157,0.3); border-radius: 50px; padding: 12px 32px;
+    font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; background: transparent; color: rgba(255,107,157,0.8);
+    transition: all 0.2s ease;
+  }
+  .detail-close:hover { border-color: #ff6b9d; color: #ff6b9d; background: rgba(255,107,157,0.08); }
+  .detail-card.andreas .detail-avatar { background: linear-gradient(135deg, #e8738a, #c85070); }
+  .detail-card.andreas .detail-author-name { color: rgba(232,115,138,0.9); }
+  .detail-card.nele    .detail-avatar { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+  .detail-card.nele    .detail-author-name { color: rgba(167,139,250,0.9); }
+  .detail-card.nele    .detail-meta { color: rgba(167,139,250,0.5); }
+  .detail-card.nele    .detail-close { border-color: rgba(167,139,250,0.3); color: rgba(167,139,250,0.8); }
+  .detail-card.nele    .detail-close:hover { border-color: #a78bfa; color: #a78bfa; background: rgba(167,139,250,0.08); }
+</style>
+</head>
+<body>
+
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Top bar -->
+<div class="top-bar" id="topBar">
+  <a href="index.html" class="top-bar-btn">← Zurück</a>
+  <div class="top-bar-right">
+    <div class="coin-display" id="coinDisplay" style="display:none;">
+      <span>🪙</span><span class="coin-count" id="coinCount">0</span>
+    </div>
+    <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
+  </div>
+</div>
+
+<!-- Login overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <span class="login-emoji">✨</span>
+    <div class="login-title">Momente Archiv</div>
+    <div class="login-sub">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPw" placeholder="Passwort">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- Page header -->
+<div class="page-header" id="pageHeader" style="display:none;">
+  <div class="page-title">Unsere Momente</div>
+  <div class="page-subtitle">Für immer festgehalten ✨</div>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" id="emptyState">
+  <div class="empty-emoji">🌸</div>
+  <div class="empty-text">Noch keine Momente</div>
+  <div class="empty-sub">Speichere euren ersten Moment auf der Startseite</div>
+</div>
+
+<!-- Canvas for floating bubbles -->
+<div class="moments-canvas" id="momentsCanvas"></div>
+
+<!-- Count badge -->
+<div class="count-badge" id="countBadge"></div>
+
+<!-- Detail modal -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-card" id="detailCard">
+    <div class="detail-author-row">
+      <div class="detail-avatar" id="detailAvatar"></div>
+      <div class="detail-author-name" id="detailAuthor"></div>
+    </div>
+    <div class="detail-text" id="detailText"></div>
+    <div class="detail-meta" id="detailMeta"></div>
+    <button class="detail-close" id="detailClose">Schließen</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  // Stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      animation-duration:${2+Math.random()*4}s;
+      animation-delay:${Math.random()*5}s;
+    `;
+    starsEl.appendChild(s);
+  }
+
+  // Particles
+  const particlesEl = document.getElementById('particles');
+  const particleEmojis = ['✨','🌸','💕','🌷','💫','⭐','🩷','🌺'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = particleEmojis[Math.floor(Math.random() * particleEmojis.length)];
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      animation-duration:${12+Math.random()*18}s;
+      animation-delay:${Math.random()*20}s;
+      font-size:${10+Math.random()*14}px;
+    `;
+    particlesEl.appendChild(p);
+  }
+
+  function displayName(email) {
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
+    return email.split('@')[0];
+  }
+
+  // Login
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPw').value;
+    document.getElementById('loginError').textContent = '';
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch {
+      document.getElementById('loginError').textContent = 'E-Mail oder Passwort falsch 🐾';
+    }
+  });
+  document.getElementById('loginPw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+  document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+  // Auth state
+  onAuthStateChanged(auth, user => {
+    document.getElementById('authLoading').style.display = 'none';
+    if (user) {
+      const name = displayName(user.email);
+      document.getElementById('loginOverlay').classList.remove('open');
+      document.getElementById('topBar').classList.add('visible');
+      document.getElementById('pageHeader').style.display = 'block';
+      document.getElementById('logoutBtn').textContent = name + ' ausloggen';
+      document.getElementById('coinDisplay').style.display = 'flex';
+
+      // Load coins
+      onValue(ref(db, `coins/${name.toLowerCase()}`), snap => {
+        document.getElementById('coinCount').textContent = (snap.val() || 0).toLocaleString('de-DE');
+      });
+
+      // Load moments
+      onValue(ref(db, 'saved_moments'), snap => {
+        const data = snap.val();
+        renderMoments(data);
+      });
+    } else {
+      document.getElementById('topBar').classList.remove('visible');
+      document.getElementById('pageHeader').style.display = 'none';
+      document.getElementById('loginOverlay').classList.add('open');
+      document.getElementById('momentsCanvas').innerHTML = '';
+      document.getElementById('emptyState').classList.remove('visible');
+      document.getElementById('countBadge').classList.remove('visible');
+    }
+  });
+
+  // Render moments as floating bubbles
+  function renderMoments(data) {
+    const canvas = document.getElementById('momentsCanvas');
+    canvas.innerHTML = '';
+
+    if (!data) {
+      document.getElementById('emptyState').classList.add('visible');
+      document.getElementById('countBadge').classList.remove('visible');
+      return;
+    }
+
+    const moments = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+    if (moments.length === 0) {
+      document.getElementById('emptyState').classList.add('visible');
+      document.getElementById('countBadge').classList.remove('visible');
+      return;
+    }
+
+    document.getElementById('emptyState').classList.remove('visible');
+    const badge = document.getElementById('countBadge');
+    badge.textContent = moments.length + ' Momente';
+    badge.classList.add('visible');
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const headerH = 160;
+    const padding = 20;
+    const cardW = Math.min(260, vw * 0.42);
+    const cardH = 140;
+
+    // Grid-based placement to avoid extreme overlaps
+    const cols = Math.max(2, Math.floor((vw - padding * 2) / (cardW + 20)));
+    const rows = Math.max(2, Math.ceil(moments.length / cols));
+    const cellW = (vw - padding * 2) / cols;
+    const cellH = Math.max(cardH + 30, (vh - headerH - padding) / Math.min(rows, 5));
+
+    const floatAnims = ['float0','float1','float2','float3','float4','float5','float6','float7','float8','float9'];
+
+    moments.forEach((m, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+
+      // Randomize within cell
+      const baseX = padding + col * cellW + Math.random() * (cellW - cardW - 10);
+      const baseY = headerH + row * cellH + Math.random() * (cellH - cardH - 10) + Math.random() * 20;
+
+      const x = Math.max(padding, Math.min(vw - cardW - padding, baseX));
+      const y = Math.max(headerH, baseY);
+
+      const authorClass = (m.author || '').toLowerCase();
+      const initials = (m.author || '?')[0].toUpperCase();
+      const animName  = floatAnims[i % floatAnims.length];
+      const animDur   = (18 + Math.random() * 14).toFixed(1) + 's';
+      const animDelay = (Math.random() * -20).toFixed(1) + 's';
+      const opacity   = (0.82 + Math.random() * 0.15).toFixed(2);
+
+      const bubble = document.createElement('div');
+      bubble.className = `moment-bubble ${authorClass}`;
+      bubble.style.cssText = `
+        left: ${x}px; top: ${y}px;
+        width: ${cardW}px;
+        opacity: ${opacity};
+        animation: ${animName} ${animDur} ease-in-out ${animDelay} infinite;
+      `;
+      bubble.innerHTML = `
+        <div class="moment-glow"></div>
+        <div class="moment-author-row">
+          <div class="moment-avatar">${initials}</div>
+          <div class="moment-author-name">${m.author || 'Unbekannt'}</div>
+        </div>
+        <div class="moment-text">${escapeHtml(truncate(m.text, 80))}</div>
+        <div class="moment-meta">📅 ${m.date || ''} · ${m.time || ''}</div>
+      `;
+      bubble.addEventListener('click', () => openDetail(m, bubble));
+      canvas.appendChild(bubble);
+    });
+  }
+
+  function truncate(str, n) {
+    if (!str) return '';
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Detail modal
+  const detailOverlay = document.getElementById('detailOverlay');
+  const detailCard    = document.getElementById('detailCard');
+
+  function openDetail(m, bubble) {
+    bubble.classList.add('popping');
+    setTimeout(() => bubble.classList.remove('popping'), 400);
+
+    const authorClass = (m.author || '').toLowerCase();
+    detailCard.className = `detail-card ${authorClass}`;
+    document.getElementById('detailAvatar').textContent = (m.author || '?')[0].toUpperCase();
+    document.getElementById('detailAuthor').textContent = m.author || 'Unbekannt';
+    document.getElementById('detailText').textContent   = m.text || '';
+    document.getElementById('detailMeta').textContent   = `📅 ${m.date || ''} · ${m.time || ''}`;
+    detailOverlay.classList.add('open');
+  }
+
+  document.getElementById('detailClose').addEventListener('click', () => {
+    detailOverlay.classList.remove('open');
+  });
+  detailOverlay.addEventListener('click', e => {
+    if (e.target === detailOverlay) detailOverlay.classList.remove('open');
+  });
+
+  // Re-render on resize
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      onValue(ref(db, 'saved_moments'), snap => renderMoments(snap.val()), { onlyOnce: true });
+    }, 300);
+  });
+</script>
+</body>
+</html>
