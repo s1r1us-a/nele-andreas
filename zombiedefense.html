@@ -1254,8 +1254,10 @@
 
 <style>
   /* === INVENTAR UI === */
-  #inventory-screen { position: fixed; inset: 0; background: rgba(5,2,3,0.88); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 130; }
-  #inventory-screen.show { display: flex; }
+  #inventory-screen, #chest-screen { position: fixed; inset: 0; background: rgba(5,2,3,0.88); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 130; }
+  #inventory-screen.show, #chest-screen.show { display: flex; }
+  .chest-section-label { margin-top: 18px; margin-bottom: 6px; font-family: 'Courier New', monospace; font-weight: 900; font-size: 11px; letter-spacing: 3px; color: #c44; text-transform: uppercase; }
+  .chest-hint { margin-top: 14px; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; color: #888; text-align: center; text-transform: uppercase; }
   .inventory-panel { background: linear-gradient(180deg, rgba(18,8,10,0.96) 0%, rgba(10,4,5,0.98) 100%); border: 1px solid rgba(180,30,30,0.45); border-radius: 4px; padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 25px 70px rgba(0,0,0,0.9), 0 0 60px rgba(140,15,15,0.2), inset 0 0 30px rgba(0,0,0,0.5); position: relative; }
   .inventory-panel::before { content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:3px; background: linear-gradient(90deg, transparent 0%, #8a1414 15%, #c41e1e 50%, #8a1414 85%, transparent 100%); }
   .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
@@ -1325,6 +1327,20 @@
       <button class="close-btn" id="close-inventory-btn">×</button>
     </div>
     <div class="inventory-grid" id="inventory-grid"></div>
+  </div>
+</div>
+
+<div id="chest-screen">
+  <div class="inventory-panel" style="max-width: 580px;">
+    <div class="shop-header" style="margin-bottom:0; padding-bottom: 12px;">
+      <div class="shop-title" id="chest-title">📦 KISTE</div>
+      <button class="close-btn" id="close-chest-btn">×</button>
+    </div>
+    <div class="chest-section-label">Inhalt der Kiste</div>
+    <div class="inventory-grid" id="chest-grid"></div>
+    <div class="chest-section-label">Dein Rucksack</div>
+    <div class="inventory-grid" id="chest-inventory-grid"></div>
+    <div class="chest-hint">Klick auf ein Item, um es zu verschieben</div>
   </div>
 </div>
 
@@ -1533,6 +1549,7 @@ onAuthStateChanged(_auth, user => {
     _startPresence();
     _startOpponentListener();
     _startWaveListener();
+    if (typeof _attachChestListeners === 'function') _attachChestListeners();
   });
 });
 
@@ -2504,6 +2521,54 @@ wTermGroup.add(wDesk, wScreen, wKeyb, window.weaponTerminalScreen, window.weapon
     const pPink = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.0), new THREE.MeshBasicMaterial({color: 0xff44aa}));
     pPink.position.set(8.3, 7.6, -13.79); ashPoster.add(pPink);
     group.add(ashPoster);
+
+    // === LAGERKISTEN (OG): Neles und Andreas Kiste ===
+    const buildStorageChest = (lx, ly, lz, mainColor, accentColor, ownerKey) => {
+        const cgrp = new THREE.Group();
+        const bodyMat   = ToonMat(mainColor);
+        const accentMat = ToonMat(accentColor);
+        const metalMat  = ToonMat(0x3a3a3a);
+        const goldMat   = ToonMat(0xc8a83a);
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.6), bodyMat);
+        body.position.y = 0.25; body.castShadow = true; body.receiveShadow = true; cgrp.add(body);
+
+        const lid = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.18, 0.6), bodyMat);
+        lid.position.y = 0.59; lid.castShadow = true; cgrp.add(lid);
+
+        for (const dx of [-0.42, 0, 0.42]) {
+            const band = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.72, 0.62), metalMat);
+            band.position.set(dx, 0.36, 0); cgrp.add(band);
+        }
+        const trimFront = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.04, 0.04), metalMat);
+        trimFront.position.set(0, 0.49, 0.31); cgrp.add(trimFront);
+        const trimBack  = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.04, 0.04), metalMat);
+        trimBack.position.set(0, 0.49, -0.31); cgrp.add(trimBack);
+
+        const lock = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.06), goldMat);
+        lock.position.set(0, 0.46, 0.32); cgrp.add(lock);
+        const keyhole = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.02), metalMat);
+        keyhole.position.set(0, 0.46, 0.355); cgrp.add(keyhole);
+
+        const nameplate = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.02), accentMat);
+        nameplate.position.set(0, 0.65, 0.31); cgrp.add(nameplate);
+
+        cgrp.position.set(lx, ly, lz);
+        cgrp.userData.chestOwner = ownerKey;
+        group.add(cgrp);
+
+        boxObstacles.push({
+            x: cx + lx, z: cz + lz, w: 1.0, d: 0.6,
+            minY: ly, maxY: ly + 0.7, isFloorOrCeiling: false
+        });
+
+        return new THREE.Vector3(cx + lx, ly + 0.4, cz + lz);
+    };
+
+    // Andreas's Kiste (links, dunkelbraun mit Gold-Akzent)
+    window.chestAndreasWorldPos = buildStorageChest(0, 4.83, -13.4, 0x5a3a1a, 0xc8a83a, 'andreas');
+    // Neles Kiste (rechts, pink mit Magenta-Akzent)
+    window.chestNeleWorldPos    = buildStorageChest(2.5, 4.83, -13.4, 0xa8336a, 0xff66bb, 'nele');
 
     scene.add(group);
 }
@@ -5778,6 +5843,7 @@ function renderLab() {
 
 function toggleInventory() {
   if (buildState.active || gameOver || !gameStarted) return;
+  if (window.chestActive) return; // Kiste offen → Inventar-Toggle blockiert
   window.inventoryActive = !window.inventoryActive;
   
   if (window.inventoryActive) {
@@ -5796,6 +5862,131 @@ function closeInventory() {
   setTimeout(() => canvas.requestPointerLock(), 100);
 }
 document.getElementById('close-inventory-btn').addEventListener('click', closeInventory);
+
+// ===== KISTEN SYSTEM (Lagerkisten im OG des Haupthauses) =====
+// Pro Account 20 Slots; nur der Eigentümer kann seine eigene Kiste öffnen.
+const CHEST_SIZE = 20;
+const chestStorage = {
+  nele:    new Array(CHEST_SIZE).fill(null),
+  andreas: new Array(CHEST_SIZE).fill(null)
+};
+window.chestActive  = false;
+window.activeChestOwner = null;
+let _chestSaveTimer = null;
+
+const chestScreen      = document.getElementById('chest-screen');
+const chestGridEl      = document.getElementById('chest-grid');
+const chestInvGridEl   = document.getElementById('chest-inventory-grid');
+const chestTitleEl     = document.getElementById('chest-title');
+
+function _saveChestToFirebase(ownerKey) {
+  if (!_firebaseReady || !ownerKey) return;
+  clearTimeout(_chestSaveTimer);
+  _chestSaveTimer = setTimeout(() => {
+    // Speichert nur die eigene Kiste (Sicherheit: niemand schreibt fremde Kisten)
+    if (ownerKey !== _myKey) return;
+    const compact = chestStorage[ownerKey].map(it => it ? { id: it.id, name: it.name, icon: it.icon } : null);
+    set(ref(_db, `game/zombie/chests/${ownerKey}`), compact).catch(() => {});
+  }, 300);
+}
+
+function _attachChestListeners() {
+  if (!_firebaseReady || !_myKey) return;
+  // Nur die eigene Kiste live laden (initial + bei Änderungen)
+  onValue(ref(_db, `game/zombie/chests/${_myKey}`), snap => {
+    const data = snap.val();
+    if (Array.isArray(data)) {
+      for (let i = 0; i < CHEST_SIZE; i++) {
+        chestStorage[_myKey][i] = data[i] || null;
+      }
+    } else {
+      chestStorage[_myKey] = new Array(CHEST_SIZE).fill(null);
+    }
+    if (window.chestActive && window.activeChestOwner === _myKey) renderChest();
+  });
+}
+
+function openChest(ownerKey) {
+  if (buildState.active || gameOver || !gameStarted) return;
+  if (ownerKey !== _myKey) {
+    if (typeof showMessage === 'function') {
+      showMessage('Diese Kiste gehört ' + (ownerKey === 'nele' ? 'Nele' : 'Andreas'), 2000);
+    }
+    return;
+  }
+  if (pointerLocked) document.exitPointerLock();
+  player.mouseHeld = false;
+  window.chestActive = true;
+  window.activeChestOwner = ownerKey;
+  chestTitleEl.textContent = ownerKey === 'nele' ? '📦 NELES KISTE' : '📦 ANDREAS KISTE';
+  renderChest();
+  chestScreen.classList.add('show');
+}
+
+function closeChest() {
+  window.chestActive = false;
+  window.activeChestOwner = null;
+  chestScreen.classList.remove('show');
+  setTimeout(() => canvas.requestPointerLock(), 100);
+}
+
+document.getElementById('close-chest-btn').addEventListener('click', closeChest);
+
+function renderChest() {
+  const owner = window.activeChestOwner;
+  if (!owner) return;
+  const chest = chestStorage[owner];
+
+  // Kisten-Grid: Klick → in den ersten freien Inventar-Slot verschieben
+  chestGridEl.innerHTML = '';
+  chest.forEach((item, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'inventory-slot' + (item ? ' filled' : '');
+    slot.innerHTML = item ? item.icon : '';
+    slot.title = item ? `${item.name} (Klick → in Rucksack)` : '';
+    slot.onclick = () => {
+      if (!item) return;
+      const emptyInv = playerInventory.findIndex(s => s === null);
+      if (emptyInv === -1) {
+        if (typeof showMessage === 'function') showMessage('Rucksack ist voll!', 1500);
+        return;
+      }
+      playerInventory[emptyInv] = item;
+      chest[index] = null;
+      _saveChestToFirebase(owner);
+      saveProgress();
+      renderChest();
+      if (typeof renderInventory === 'function') renderInventory();
+      if (typeof updateHUD === 'function') updateHUD();
+    };
+    chestGridEl.appendChild(slot);
+  });
+
+  // Inventar-Grid: Klick → in den ersten freien Kisten-Slot verschieben
+  chestInvGridEl.innerHTML = '';
+  playerInventory.forEach((item, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'inventory-slot' + (item ? ' filled' : '');
+    slot.innerHTML = item ? item.icon : '';
+    slot.title = item ? `${item.name} (Klick → in Kiste)` : '';
+    slot.onclick = () => {
+      if (!item) return;
+      const emptyChest = chest.findIndex(s => s === null);
+      if (emptyChest === -1) {
+        if (typeof showMessage === 'function') showMessage('Kiste ist voll!', 1500);
+        return;
+      }
+      chest[emptyChest] = item;
+      playerInventory[index] = null;
+      _saveChestToFirebase(owner);
+      saveProgress();
+      renderChest();
+      if (typeof renderInventory === 'function') renderInventory();
+      if (typeof updateHUD === 'function') updateHUD();
+    };
+    chestInvGridEl.appendChild(slot);
+  });
+}
 
 function startBuildMode(defItem) {
   buildState.active = true; buildState.item = defItem;
@@ -8958,7 +9149,7 @@ window.addEventListener('keyup', e => { keys[e.code] = false; if(e.code==='KeyE'
 let pointerLocked = false; const canvas = renderer.domElement;
 canvas.addEventListener('mousedown', (ev) => {
   if (ev.button !== 0) return; // nur linke Maustaste
-  if (!gameStarted || gameOver || playerDying || shopScreen.classList.contains('show') || weaponShopScreen.classList.contains('show') || window.inventoryActive || window.weaponWheelActive) return;
+  if (!gameStarted || gameOver || playerDying || shopScreen.classList.contains('show') || weaponShopScreen.classList.contains('show') || window.inventoryActive || window.chestActive || window.weaponWheelActive) return;
   if (buildState.active && buildState.valid) { attemptPlaceDefense(); return; }
   if (!pointerLocked) { canvas.requestPointerLock(); return; }
   player.mouseHeld = true;
@@ -8991,7 +9182,7 @@ canvas.addEventListener('mousedown', (ev) => {
   if (ev.button !== 2) return;
   if (!gameStarted || gameOver || !pointerLocked) return;
   if (buildState.active) return; // Build-Mode hat eigene Rechtsklick-Logik
-  if (shopScreen.classList.contains('show') || weaponShopScreen.classList.contains('show') || window.inventoryActive || window.weaponWheelActive) return;
+  if (shopScreen.classList.contains('show') || weaponShopScreen.classList.contains('show') || window.inventoryActive || window.chestActive || window.weaponWheelActive) return;
   if (player.weaponStats && player.weaponStats.isSniper) {
     ev.preventDefault();
     toggleSniperScope();
@@ -9036,12 +9227,13 @@ document.addEventListener('pointerlockchange', () => {
   // Der Trick für ESC: Wenn die Maus freigegeben wird, das Spiel aber läuft...
   if (!pointerLocked && gameStarted && !gameOver) {
     // Prüfen, ob wir nicht absichtlich in einem anderen Menü sind
-    const inOtherMenu = shopScreen.classList.contains('show') || 
-                    weaponShopScreen.classList.contains('show') || 
-                    window.keypadActive || 
+    const inOtherMenu = shopScreen.classList.contains('show') ||
+                    weaponShopScreen.classList.contains('show') ||
+                    window.keypadActive ||
                     window.dialogueActive ||
                     window.labActive ||
                     window.inventoryActive ||
+                    window.chestActive ||
                     window.weaponWheelActive ||
                     playerDying ||
                     document.getElementById('game-over').classList.contains('show');
@@ -11316,6 +11508,12 @@ function update(dt) {
   const nearExit = window.basementExitPos && player.position.distanceTo(window.basementExitPos) < 2.5;
   const canExitBasement = nearExit && !buildState.active && !waveActive && gameStarted && !gameOver;
 
+  // Lagerkisten im OG: Eigentümer kann öffnen, andere bekommen Hinweis
+  const nearChestNele    = window.chestNeleWorldPos    && player.position.distanceTo(window.chestNeleWorldPos)    < 2.2;
+  const nearChestAndreas = window.chestAndreasWorldPos && player.position.distanceTo(window.chestAndreasWorldPos) < 2.2;
+  const chestNearbyOwner = nearChestNele ? 'nele' : (nearChestAndreas ? 'andreas' : null);
+  const canInteractChest = !!chestNearbyOwner && !buildState.active && gameStarted && !gameOver;
+
   const nearCaveEntrance = window.caveEntranceWorldPos && player.position.distanceTo(window.caveEntranceWorldPos) < 3.0;
   const canEnterCave = nearCaveEntrance && !buildState.active && !waveActive && gameStarted && !gameOver;
 
@@ -11325,8 +11523,8 @@ function update(dt) {
   const promptEl = document.getElementById('interact-prompt');
   const promptText = document.getElementById('interact-text');
 
-  // Dialog- und Keypad-Aktivität blockiert die Prompts
-  const uiBusy = window.dialogueActive || window.keypadActive;
+  // Dialog-, Keypad- und Kisten-Aktivität blockiert die Prompts
+  const uiBusy = window.dialogueActive || window.keypadActive || window.chestActive;
 
   if (canInteractNico && !buildState.active && !uiBusy) {
       promptText.textContent = 'Nico ansprechen';
@@ -11355,6 +11553,13 @@ function update(dt) {
   } else if (canExitBasement && !uiBusy) {
       promptText.textContent = 'Keller verlassen';
       promptEl.classList.add('show');
+  } else if (canInteractChest && !uiBusy) {
+      if (chestNearbyOwner === _myKey) {
+          promptText.textContent = chestNearbyOwner === 'nele' ? 'Neles Kiste öffnen' : 'Andreas\' Kiste öffnen';
+      } else {
+          promptText.textContent = chestNearbyOwner === 'nele' ? 'Neles Kiste (abgeschlossen)' : 'Andreas\' Kiste (abgeschlossen)';
+      }
+      promptEl.classList.add('show');
   } else if (canEnterCave && !uiBusy) {
       promptText.textContent = 'Höhle betreten';
       promptEl.classList.add('show');
@@ -11371,10 +11576,12 @@ function update(dt) {
   document.getElementById('shop-prompt').classList.toggle('show', canShop && !window.dialogueActive);
   document.getElementById('weapon-prompt').classList.toggle('show', canWeaponShop && !window.dialogueActive);
 
-  if (input.interact) { 
+  if (input.interact) {
       input.interact = false; // Input konsumieren
       if (window.dialogueActive) {
           closeDialogue();
+      } else if (window.chestActive) {
+          closeChest();
       } else if (window.keypadActive) {
           closeKeypad();
       } else if (canInteractNico) {
@@ -11415,6 +11622,8 @@ function update(dt) {
           // Tür wieder schließen
           window.siloDoorOpen = false;
           if(window.siloDoorMesh) window.siloDoorMesh.position.y = 1.6;
+      } else if (canInteractChest) {
+          openChest(chestNearbyOwner);
       } else if (canEnterCave) {
           player.position.set(window.instancedCaveSpawnPos.x, 1.0, window.instancedCaveSpawnPos.z);
           spawnHitParticles(player.position, 0xaa44ff, 30, 2.0);
