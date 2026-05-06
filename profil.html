@@ -392,6 +392,24 @@
   </div>
 
   <div class="vg-section">
+    <div class="vg-section-title">⚓ Schiffe Versenken ⚓</div>
+    <div class="vg-grid">
+      <div class="vg-card win">
+        <div class="vg-card-icon">🏆</div>
+        <div class="vg-card-value" id="bsWon">–</div>
+        <div class="vg-card-label">Gewonnen</div>
+        <div class="vg-card-pct" id="bsWonPct"></div>
+      </div>
+      <div class="vg-card lose">
+        <div class="vg-card-icon">💔</div>
+        <div class="vg-card-value" id="bsLost">–</div>
+        <div class="vg-card-label">Verloren</div>
+        <div class="vg-card-pct" id="bsLostPct"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vg-section">
     <div class="vg-section-title">🔴 Vier Gewinnt 🟣</div>
     <div class="vg-grid">
       <div class="vg-card win">
@@ -787,6 +805,22 @@
         const em = document.getElementById('statMomentsSaved');
         if (em) em.textContent = count.toLocaleString('de-DE');
       });
+
+      // Schiffe Versenken Stats
+      const bs      = (d.schiffeVersenken) || {};
+      const bsWon   = Number(bs.gamesWon)  || 0;
+      const bsLost  = Number(bs.gamesLost) || 0;
+      const bsTotal = bsWon + bsLost;
+      const bsPctWon  = bsTotal > 0 ? Math.round(bsWon  / bsTotal * 100) : null;
+      const bsPctLost = bsTotal > 0 ? Math.round(bsLost / bsTotal * 100) : null;
+      const elBsWon     = document.getElementById('bsWon');
+      const elBsLost    = document.getElementById('bsLost');
+      const elBsWonPct  = document.getElementById('bsWonPct');
+      const elBsLostPct = document.getElementById('bsLostPct');
+      if (elBsWon)     elBsWon.textContent     = bsWon.toLocaleString('de-DE');
+      if (elBsLost)    elBsLost.textContent    = bsLost.toLocaleString('de-DE');
+      if (elBsWonPct)  elBsWonPct.textContent  = bsPctWon  !== null ? bsPctWon  + ' %' : '';
+      if (elBsLostPct) elBsLostPct.textContent = bsPctLost !== null ? bsPctLost + ' %' : '';
 
       // Vier Gewinnt Stats
       const vg   = (d.vierGewinnt) || {};
