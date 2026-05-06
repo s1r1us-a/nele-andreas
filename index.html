@@ -1640,6 +1640,7 @@
         text,
         author: window.currentUser,
         timestamp: momentId,
+        momentDate: selectedDt.getTime(),
         date: selectedDt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         time: selectedDt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
       };

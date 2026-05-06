@@ -182,6 +182,7 @@
   .page-header {
     position: fixed; top: 45px; left: 0; right: 0; z-index: 100;
     text-align: center; padding: 18px 16px 16px; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(26,5,32,0.98) 60%, rgba(26,5,32,0) 100%);
   }
   .page-title {
     font-family: 'Dancing Script', cursive;
@@ -902,7 +903,7 @@
       return;
     }
 
-    const moments = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+    const moments = Object.values(data).sort((a, b) => (a.momentDate || a.timestamp) - (b.momentDate || b.timestamp));
     if (moments.length === 0) {
       document.getElementById('emptyState').classList.add('visible');
       document.getElementById('countBadge').classList.remove('visible');
@@ -958,7 +959,7 @@
       bubble.addEventListener('click', () => openDetail(m, bubble));
       canvas.appendChild(bubble);
 
-      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp });
+      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp, momentDate: m.momentDate || m.timestamp });
     });
 
     startDrift();
@@ -1071,7 +1072,8 @@
       // Remove dimmed class so all cards are fully visible in list view
       floatingCards.forEach(c => c.el.classList.remove('dimmed'));
 
-      const sorted = [...floatingCards].sort((a, b) => a.timestamp - b.timestamp);
+      window.scrollTo(0, 0); // zum Seitenanfang scrollen, damit Liste unterhalb des Headers beginnt
+      const sorted = [...floatingCards].sort((a, b) => a.momentDate - b.momentDate);
       const gap = isMobile ? 12 : 16; // gleichmäßiger Abstand zwischen Karten
       const startX = Math.max(8, Math.floor((vw - cardW) / 2));
 
