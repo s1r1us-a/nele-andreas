@@ -109,8 +109,7 @@
   .btn-primary:disabled { background:rgba(80,80,100,0.4); box-shadow:none; cursor:default; transform:none; }
   .btn-secondary { width:100%; border:1.5px solid rgba(255,107,157,0.25); border-radius:50px; padding:14px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all .2s; margin-top:10px; }
   .btn-secondary:hover { border-color:var(--rose); color:var(--rose); background:rgba(255,107,157,0.06); }
-  .btn-test { width:100%; border:1.5px dashed rgba(14,165,233,0.3); border-radius:50px; padding:12px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:rgba(14,165,233,0.7); background:rgba(14,165,233,0.04); cursor:pointer; transition:all .2s; margin-top:12px; }
-  .btn-test:hover { background:rgba(14,165,233,0.1); border-color:var(--ocean); color:var(--ocean); }
+
 
   /* WAITING / INVITE */
   .waiting-card { background:var(--card); backdrop-filter:blur(20px); border:1.5px solid rgba(212,160,97,0.2); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; text-align:center; }
@@ -135,7 +134,7 @@
   .placement-header { text-align:center; margin-bottom:16px; }
   .placement-title { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text); margin-bottom:4px; }
   .placement-sub { font-size:12px; color:var(--text-mid); font-weight:500; }
-  .test-badge { display:inline-block; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); color:white; font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 10px; border-radius:50px; margin-bottom:8px; }
+
 
   .ship-list { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
   .ship-item { display:flex; align-items:center; gap:10px; padding:9px 14px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,107,157,0.15); border-radius:12px; cursor:pointer; transition:all .2s; }
@@ -280,7 +279,6 @@
       <input class="bet-input" type="number" id="betInput" placeholder="500" min="50" step="50">
       <div class="bet-hint" id="betHint">Mindestens 50 🪙</div>
       <button class="btn-primary" id="createGameBtn">Spiel erstellen ⚔️</button>
-      <button class="btn-test" id="testModeBtn">🧪 Testmodus – Alleine spielen</button>
     </div>
 
     <div class="waiting-card" id="waitingCard" style="display:none;">
@@ -304,7 +302,6 @@
   <!-- PLACEMENT -->
   <div id="placementSection" style="display:none;" class="placement-wrapper">
     <div class="placement-header">
-      <div class="test-badge" id="testBadge" style="display:none;">🧪 TESTMODUS</div>
       <div class="placement-title">Schiffe platzieren</div>
       <div class="placement-sub" id="placementSub">Wähle ein Schiff und klicke aufs Feld</div>
     </div>
@@ -449,13 +446,13 @@ const SHIPS = [
   { id:'s1c', name:'Mine',           size:1, emoji:'💣' },
   { id:'s1d', name:'Mine',           size:1, emoji:'💣' },
 ];
-const TOTAL_CELLS = SHIPS.reduce((a,s) => a + s.size, 0);
+
 
 let currentUser  = null;
 let currentCoins = 0;
 let gameState    = null;
 let gameListener = null;
-let testMode     = false;
+let isShooting   = false;
 
 let placedShips   = [];
 let selectedShip  = null;
@@ -559,7 +556,6 @@ function initPlacement() {
   document.getElementById('lobbySection').style.display    = 'none';
   document.getElementById('placementSection').style.display = 'block';
   document.getElementById('gameSection').style.display    = 'none';
-  document.getElementById('testBadge').style.display = testMode ? 'inline-block' : 'none';
   document.getElementById('readyBtn').disabled = true;
   document.getElementById('waitingReadyDiv').style.display = 'none';
   document.getElementById('readyBtn').style.display = 'block';
@@ -691,15 +687,12 @@ function renderGame(state) {
   markSunk(oppShipsData, myShotsData, document.getElementById('enemyGrid'));
 
   // Status bar
-  document.getElementById('potDisplay').textContent = testMode
-    ? '🧪 Test'
-    : ((state.bet || 0) * 2).toLocaleString('de-DE') + ' 🪙';
+  document.getElementById('potDisplay').textContent = ((state.bet || 0) * 2).toLocaleString('de-DE') + ' 🪙';
 
   document.getElementById('badgeA').className = 'pbadge' + (state.currentTurn==='Andreas' && state.status==='running' ? ' active' : '');
   document.getElementById('badgeN').className = 'pbadge' + (state.currentTurn==='Nele'    && state.status==='running' ? ' active' : '');
   document.getElementById('statusA').textContent = state.currentTurn==='Andreas' && state.status==='running' ? '🎯 Am Zug' : '';
-  document.getElementById('statusN').textContent = state.currentTurn==='Nele'    && state.status==='running'
-    ? (testMode ? '🤖 KI' : '🎯 Am Zug') : '';
+  document.getElementById('statusN').textContent = state.currentTurn==='Nele'    && state.status==='running' ? '🎯 Am Zug' : '';
 
   document.getElementById('surrenderBtn').style.display = state.status === 'running' ? 'block' : 'none';
   renderSunkRows(myShipsData, oppShipsData, myShotsData, oppShotsData);
@@ -809,13 +802,14 @@ function showShotEffect(gridEl, r, c, isHit, sunkShipCells) {
 
 // ── SHOOTING ─────────────────────────────────────────────────────────────────
 async function handleShoot(r, c) {
+  if (isShooting) return;
   if (!gameState || gameState.status !== 'running') return;
   if (gameState.currentTurn !== currentUser) return;
   const myK = pkey(currentUser);
   const prevShots = (gameState[myK + 'Shots'] || emptyGrid());
   if (prevShots[r][c] !== 0) { showToast('Hier hast du schon geschossen!'); return; }
-  if (testMode) await doShootTest(r, c);
-  else await doShootMulti(r, c);
+  isShooting = true;
+  try { await doShootMulti(r, c); } finally { isShooting = false; }
 }
 
 async function doShootMulti(r, c) {
@@ -853,127 +847,9 @@ async function doShootMulti(r, c) {
   if (won) await finishGame(currentUser, gameState.bet);
 }
 
-async function doShootTest(r, c) {
-  const myK    = 'andreas';
-  const oppK   = 'nele';
-  const shots    = (gameState[myK + 'Shots'] || emptyGrid()).map(row => [...row]);
-  const oppShips = gameState[oppK + 'Ships'] || [];
-  const prevShots = (gameState[myK + 'Shots'] || emptyGrid());
-
-  const hit = shipHit(oppShips, r, c);
-  shots[r][c] = hit ? 1 : 2;
-
-  let sunkDef = null, sunkShip = null;
-  for (const s of oppShips)
-    if (shipSunkNow(s, prevShots, shots)) { sunkShip = s; sunkDef = SHIPS.find(d => d.id === s.id); break; }
-
-  const won = shots.flat().filter(v => v===1).length >= TOTAL_CELLS;
-
-  // Show effect before renderGame rebuilds the grid
-  showShotEffect(document.getElementById('enemyGrid'), r, c, hit, sunkShip ? cells(sunkShip) : null);
-
-  gameState = {
-    ...gameState,
-    [myK + 'Shots']: shots,
-    currentTurn: won ? 'Andreas' : (hit ? 'Andreas' : 'Nele'),
-    status: won ? 'finished' : 'running',
-    winner: won ? 'Andreas' : null,
-  };
-
-  if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt!`, 2500);
-  else if (hit) showToast('🎯 Treffer! Nochmal!', 1800);
-  else showToast('💦 Daneben!', 1500);
-
-  renderGame(gameState);
-  if (won) { showResult(gameState); return; }
-
-  if (!hit) {
-    setTimeout(runAiTurn, 900);
-  }
-}
-
-function runAiTurn() {
-  if (!gameState || gameState.status !== 'running') return;
-
-  const before = (gameState.neleShots || emptyGrid()).map(row => [...row]);
-  const myShipsData = gameState.andreasShips || [];
-
-  const { newState, shotR, shotC, aiHit } = aiShot(gameState);
-  gameState = newState;
-  const after = gameState.neleShots || emptyGrid();
-
-  let aiSunkDef = null, aiSunkShip = null;
-  for (const s of myShipsData)
-    if (shipSunkNow(s, before, after)) { aiSunkShip = s; aiSunkDef = SHIPS.find(d => d.id === s.id); break; }
-
-  // Show effect on own grid before renderGame rebuilds it
-  showShotEffect(document.getElementById('ownGrid'), shotR, shotC, aiHit, aiSunkShip ? cells(aiSunkShip) : null);
-
-  renderGame(gameState);
-
-  if (aiSunkDef) showToast(`💥 Nele versenkt: ${aiSunkDef.name}!`, 2500);
-  else if (aiHit) showToast('💥 Nele hat getroffen! Nochmal…', 1800);
-  else showToast('💦 Nele daneben!', 1500);
-
-  if (gameState.winner === 'Nele') { showResult(gameState); return; }
-
-  if (aiHit) {
-    setTimeout(runAiTurn, 1100);
-  }
-}
-
-function aiShot(state) {
-  const shots   = (state.neleShots || emptyGrid()).map(row => [...row]);
-  const myShips = state.andreasShips || [];
-
-  const hits = [];
-  for (let r=0; r<SIZE; r++)
-    for (let c=0; c<SIZE; c++)
-      if (shots[r][c] === 1) hits.push([r,c]);
-
-  let target = null;
-  if (hits.length > 0) {
-    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
-    outer: for (const [hr,hc] of hits)
-      for (const [dr,dc] of dirs) {
-        const nr=hr+dr, nc=hc+dc;
-        if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&shots[nr][nc]===0) { target=[nr,nc]; break outer; }
-      }
-  }
-  if (!target) {
-    const pool = [];
-    for (let r=0; r<SIZE; r++) for (let c=0; c<SIZE; c++)
-      if (shots[r][c]===0 && (r+c)%2===0) pool.push([r,c]);
-    const fallback = [];
-    for (let r=0; r<SIZE; r++) for (let c=0; c<SIZE; c++)
-      if (shots[r][c]===0) fallback.push([r,c]);
-    const src = pool.length > 0 ? pool : fallback;
-    target = src[Math.floor(Math.random() * src.length)];
-  }
-
-  if (!target) return { newState: state, shotR: -1, shotC: -1, aiHit: false };
-  const [r,c] = target;
-  const aiHit = shipHit(myShips, r, c);
-  shots[r][c] = aiHit ? 1 : 2;
-
-  const totalMyCells = myShips.reduce((a,s) => a+s.size, 0);
-  const won = shots.flat().filter(v=>v===1).length >= totalMyCells;
-
-  return {
-    newState: {
-      ...state,
-      neleShots: shots,
-      currentTurn: won ? 'Nele' : (aiHit ? 'Nele' : 'Andreas'),
-      status: won ? 'finished' : 'running',
-      winner: won ? 'Nele' : null,
-    },
-    shotR: r, shotC: c, aiHit,
-  };
-}
-
 // ── COINS & STATS ─────────────────────────────────────────────────────────────
 async function finishGame(winner, bet) {
-  if (testMode || !bet) return;
+  if (!bet) return;
   await runTransaction(ref(db, `coins/${pkey(winner)}`), c => (c||0) + bet*2);
   const loser = other(winner);
   const stats = [
@@ -997,14 +873,10 @@ function showResult(state) {
   document.getElementById('resultSub').textContent   = win
     ? `Du hast die Flotte von ${other(currentUser)} versenkt!`
     : `${state.winner} hat alle deine Schiffe versenkt.`;
-  if (testMode) {
-    document.getElementById('resultCoins').textContent = '🧪 Testmodus';
-  } else {
-    const bet = state.bet || 0;
-    document.getElementById('resultCoins').textContent = win
-      ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
-      : `-${bet.toLocaleString('de-DE')} 🪙`;
-  }
+  const bet = state.bet || 0;
+  document.getElementById('resultCoins').textContent = win
+    ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
+    : `-${bet.toLocaleString('de-DE')} 🪙`;
   document.getElementById('yourTurnBanner').classList.remove('visible');
   o.classList.add('open');
   if (win) spawnKonfetti();
@@ -1089,11 +961,6 @@ async function createGame() {
   });
 }
 
-function startTest() {
-  testMode = true;
-  initPlacement();
-}
-
 async function cancelGame() {
   if (!gameState) return;
   await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) + gameState.bet);
@@ -1117,16 +984,6 @@ async function declineGame() {
 
 async function setReady() {
   if (placedShips.length !== SHIPS.length) { showToast('Platziere zuerst alle Schiffe!'); return; }
-  if (testMode) {
-    gameState = {
-      status: 'running', createdBy: 'Andreas', bet: 0, currentTurn: 'Andreas', winner: null,
-      andreasReady: true, neleReady: true,
-      andreasShips: placedShips, neleShips: randomPlace(),
-      andreasShots: emptyGrid(), neleShots: emptyGrid(),
-    };
-    initGame(gameState);
-    return;
-  }
   const myK  = pkey(currentUser);
   const oppK = pkey(other(currentUser));
   const updates = {
@@ -1144,12 +1001,6 @@ async function setReady() {
 }
 
 async function surrender() {
-  if (testMode) {
-    gameState = {...gameState, status:'finished', winner:'Nele'};
-    renderGame(gameState);
-    showResult(gameState);
-    return;
-  }
   if (!gameState || gameState.status !== 'running') return;
   const winner = other(currentUser);
   await set(ref(db, GAME_REF), {...gameState, status:'finished', winner});
@@ -1158,13 +1009,11 @@ async function surrender() {
 
 async function playAgain() {
   document.getElementById('resultOverlay').classList.remove('open');
-  if (testMode) { testMode = false; showLobby('create'); return; }
   await remove(ref(db, GAME_REF));
 }
 
 // ── EVENTS ────────────────────────────────────────────────────────────────────
 document.getElementById('createGameBtn').addEventListener('click', createGame);
-document.getElementById('testModeBtn').addEventListener('click', startTest);
 document.getElementById('cancelGameBtn').addEventListener('click', cancelGame);
 document.getElementById('acceptBtn').addEventListener('click', acceptGame);
 document.getElementById('declineBtn').addEventListener('click', declineGame);
@@ -1232,7 +1081,7 @@ onAuthStateChanged(auth, user => {
 
   if (gameListener) gameListener();
   gameListener = onValue(ref(db, GAME_REF), snap => {
-    if (!testMode) handleGameState(snap.val());
+    handleGameState(snap.val());
   });
 });
 </script>
