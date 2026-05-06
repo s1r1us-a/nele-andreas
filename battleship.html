@@ -7,172 +7,213 @@
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --rose: #e8738a;
+    --rose: #ff6b9d;
+    --rose-dark: #c2185b;
     --rose-light: #f5a3b5;
-    --rose-pale: #fde8ed;
-    --cream: #fff8f0;
     --gold: #d4a061;
-    --text-dark: #5a2d3a;
-    --text-mid: #8b5565;
     --ocean: #0ea5e9;
     --ocean-dark: #0369a1;
-    --nele-color: #a78bfa;
-    --hit: #ef4444;
-    --miss: #94a3b8;
-    --ship-bg: rgba(71,85,105,0.75);
+    --teal: #22d3ee;
+    --violet: #a78bfa;
+    --text: rgba(255,240,250,0.92);
+    --text-mid: rgba(255,150,190,0.7);
+    --text-dim: rgba(255,150,190,0.4);
+    --card: rgba(22,4,36,0.9);
+    --card-border: rgba(255,107,157,0.2);
     --cell: 30px;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { min-height:100vh; background:var(--cream); font-family:'Quicksand',sans-serif; overflow-x:hidden; }
-
-  .bg-gradient {
-    position:fixed; inset:0; z-index:0;
+  body {
+    min-height:100vh;
     background:
-      radial-gradient(ellipse at 15% 20%, rgba(14,165,233,0.1) 0%, transparent 50%),
-      radial-gradient(ellipse at 85% 80%, rgba(167,139,250,0.1) 0%, transparent 50%),
-      linear-gradient(160deg,#fff8f0 0%,#e8f4fd 40%,#f5f0ff 70%,#fff8e8 100%);
+      radial-gradient(ellipse at 10% 10%, rgba(255,107,157,0.15) 0%, transparent 45%),
+      radial-gradient(ellipse at 90% 5%, rgba(14,165,233,0.12) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 90%, rgba(167,139,250,0.1) 0%, transparent 50%),
+      linear-gradient(160deg, #0d0118 0%, #1a0530 30%, #0a1a40 60%, #0d0118 100%);
+    background-attachment:fixed;
+    font-family:'Quicksand',sans-serif;
+    overflow-x:hidden;
+    color:var(--text);
+  }
+
+  /* STARS */
+  .stars { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .star { position:absolute; border-radius:50%; will-change:opacity,transform; }
+  .star.s  { width:1px; height:1px; background:rgba(255,255,255,0.9); }
+  .star.m  { width:2px; height:2px; background:white; }
+  .star.l  { width:3px; height:3px; box-shadow:0 0 5px 1.5px currentColor; }
+  .star.l.rose  { color:rgba(255,160,190,0.9); background:rgba(255,160,190,0.9); }
+  .star.l.gold  { color:rgba(255,210,130,0.9); background:rgba(255,210,130,0.9); }
+  .star.l.blue  { color:rgba(147,197,253,0.85); background:rgba(147,197,253,0.85); }
+  .star.l.teal  { color:rgba(94,234,212,0.85); background:rgba(94,234,212,0.85); }
+  .star.xl { width:4px; height:4px; background:white; box-shadow:0 0 10px 3px rgba(255,255,255,0.7); }
+  .star.xl.rose { background:rgba(255,160,190,1); box-shadow:0 0 12px 4px rgba(255,107,157,0.65); }
+  .star.xl.teal { background:rgba(94,234,212,1);  box-shadow:0 0 12px 4px rgba(94,234,212,0.6); }
+  @keyframes starTwinkle {
+    0%,100% { opacity:0.04; transform:scale(0.75); }
+    50%     { opacity:1;    transform:scale(1.3); }
+  }
+  @keyframes starFade {
+    0%   { opacity:0; }
+    18%  { opacity:0.75; }
+    80%  { opacity:0.45; }
+    100% { opacity:0; }
   }
 
   /* AUTH LOADING */
-  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
-  .auth-spinner { width:36px; height:36px; border:3px solid rgba(14,165,233,0.2); border-top-color:var(--ocean); border-radius:50%; animation:spin .7s linear infinite; }
+  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:#0d0118; }
+  .auth-spinner { width:36px; height:36px; border:3px solid rgba(255,107,157,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
   /* LOGIN */
-  .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(232,244,253,0.92); backdrop-filter:blur(4px); }
-  .modal-card { background:#fff; border:1.5px solid rgba(14,165,233,0.3); border-radius:28px; padding:40px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 16px 60px rgba(14,165,233,0.15); }
-  .modal-emoji { font-size:40px; margin-bottom:12px; display:block; }
-  .modal-title { font-family:'Dancing Script',cursive; font-size:32px; font-weight:700; background:linear-gradient(135deg,var(--ocean),var(--nele-color)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
+  .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(13,1,24,0.96); backdrop-filter:blur(10px); }
+  .modal-card { background:rgba(22,4,36,0.97); border:1.5px solid rgba(14,165,233,0.3); border-radius:28px; padding:40px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 20px 70px rgba(14,165,233,0.15); }
+  .modal-emoji { font-size:44px; margin-bottom:12px; display:block; filter:drop-shadow(0 0 16px rgba(14,165,233,0.7)); }
+  .modal-title { font-family:'Dancing Script',cursive; font-size:32px; font-weight:700; background:linear-gradient(135deg,var(--ocean),var(--teal) 50%,var(--rose-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
   .modal-subtitle { font-size:13px; color:var(--text-mid); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:24px; font-weight:500; }
-  .login-field { width:100%; border:1.5px solid rgba(14,165,233,0.3); border-radius:14px; padding:13px 16px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:500; color:var(--text-dark); background:var(--cream); outline:none; margin-bottom:12px; transition:border-color .2s; }
+  .login-field { width:100%; border:1.5px solid rgba(14,165,233,0.25); border-radius:14px; padding:13px 16px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:500; color:var(--text); background:rgba(14,165,233,0.06); outline:none; margin-bottom:12px; transition:border-color .2s; }
   .login-field:focus { border-color:var(--ocean); }
-  .login-btn { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); color:white; box-shadow:0 4px 20px rgba(14,165,233,0.4); transition:transform .2s; margin-top:4px; }
+  .login-field::placeholder { color:rgba(255,150,190,0.35); }
+  .login-btn { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); color:white; box-shadow:0 4px 24px rgba(14,165,233,0.4); transition:transform .2s; margin-top:4px; }
   .login-btn:hover { transform:scale(1.03) translateY(-2px); }
-  .login-error { font-size:12px; color:#dc2626; margin-top:10px; min-height:18px; font-weight:600; }
+  .login-error { font-size:12px; color:var(--rose); margin-top:10px; min-height:18px; font-weight:600; }
 
   /* TOP BAR */
-  .top-bar { position:fixed; top:0; left:0; right:0; z-index:9999; display:none; align-items:center; justify-content:space-between; padding:10px 16px; background:rgba(255,248,240,0.95); border-bottom:1px solid rgba(14,165,233,0.2); box-shadow:0 2px 12px rgba(14,165,233,0.08); backdrop-filter:blur(8px); gap:8px; }
-  .top-bar-btn { background:rgba(255,255,255,0.9); border:1.5px solid rgba(14,165,233,0.25); border-radius:50px; padding:7px 16px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:600; color:var(--text-mid); cursor:pointer; transition:all .2s; text-decoration:none; display:inline-block; }
-  .top-bar-btn:hover { color:var(--ocean); border-color:var(--ocean); }
-  .coin-display { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.9); border:1.5px solid rgba(212,160,97,0.35); border-radius:50px; padding:6px 14px; font-size:12px; font-weight:700; color:var(--gold); }
+  .top-bar { position:fixed; top:0; left:0; right:0; z-index:9999; display:none; align-items:center; justify-content:space-between; padding:10px 16px; background:rgba(10,1,20,0.94); border-bottom:1px solid rgba(255,107,157,0.15); box-shadow:0 2px 24px rgba(0,0,0,0.5); backdrop-filter:blur(14px); gap:8px; }
+  .top-bar-btn { background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,107,157,0.25); border-radius:50px; padding:7px 16px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:600; color:rgba(255,107,157,0.8); cursor:pointer; transition:all .2s; text-decoration:none; display:inline-block; }
+  .top-bar-btn:hover { color:var(--rose); border-color:var(--rose); background:rgba(255,107,157,0.1); }
+  .coin-display { display:flex; align-items:center; gap:6px; background:rgba(212,160,97,0.1); border:1.5px solid rgba(212,160,97,0.3); border-radius:50px; padding:6px 14px; font-size:12px; font-weight:700; color:var(--gold); }
   .coin-display .coin-num { font-family:'Dancing Script',cursive; font-size:18px; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:rgba(15,3,28,0.97); border:1px solid rgba(14,165,233,0.3); color:var(--text); border-radius:50px; padding:12px 24px; font-size:14px; font-weight:600; z-index:999999; transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .4s; opacity:0; white-space:nowrap; max-width:88vw; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,0.6); backdrop-filter:blur(10px); }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
   /* PAGE */
   .page { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:80px 16px 60px; }
-  .page-title { font-family:'Dancing Script',cursive; font-size:clamp(32px,7vw,56px); font-weight:700; background:linear-gradient(135deg,var(--ocean) 0%,var(--nele-color) 60%,var(--rose-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; margin-bottom:6px; }
+  .page-title { font-family:'Dancing Script',cursive; font-size:clamp(32px,7vw,56px); font-weight:700; background:linear-gradient(135deg,var(--ocean) 0%,var(--teal) 40%,var(--rose-light) 80%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; margin-bottom:6px; filter:drop-shadow(0 0 22px rgba(14,165,233,0.4)); }
   .page-subtitle { font-size:12px; color:var(--text-mid); letter-spacing:2px; text-transform:uppercase; font-weight:500; text-align:center; margin-bottom:28px; }
 
-  /* TOAST */
-  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--text-dark); color:#fff; border-radius:50px; padding:12px 24px; font-size:14px; font-weight:600; z-index:999999; transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .4s; opacity:0; white-space:nowrap; max-width:88vw; text-align:center; }
-  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
-
-  /* LOBBY */
-  .lobby-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:1.5px solid rgba(14,165,233,0.2); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 8px 40px rgba(14,165,233,0.1); text-align:center; }
-  .lobby-title { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--text-dark); margin-bottom:6px; }
+  /* CARDS */
+  .lobby-card { background:var(--card); backdrop-filter:blur(20px); border:1.5px solid var(--card-border); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 8px 50px rgba(0,0,0,0.5),0 0 60px rgba(255,107,157,0.04); text-align:center; }
+  .lobby-title { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--text); margin-bottom:6px; }
   .lobby-sub { font-size:12px; color:var(--text-mid); font-weight:500; margin-bottom:24px; letter-spacing:.5px; }
-  .bet-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); font-weight:700; margin-bottom:8px; }
-  .bet-input { width:100%; border:1.5px solid rgba(14,165,233,0.3); border-radius:14px; padding:13px 16px; font-family:'Dancing Script',cursive; font-size:24px; font-weight:700; color:var(--gold); background:var(--cream); outline:none; text-align:center; margin-bottom:6px; transition:border-color .2s; }
-  .bet-input:focus { border-color:var(--ocean); }
+  .bet-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); font-weight:700; margin-bottom:8px; }
+  .bet-input { width:100%; border:1.5px solid rgba(212,160,97,0.3); border-radius:14px; padding:13px 16px; font-family:'Dancing Script',cursive; font-size:24px; font-weight:700; color:var(--gold); background:rgba(212,160,97,0.06); outline:none; text-align:center; margin-bottom:6px; transition:border-color .2s; }
+  .bet-input:focus { border-color:var(--gold); }
   .bet-hint { font-size:11px; color:var(--text-mid); margin-bottom:20px; font-weight:500; }
-  .btn-primary { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); box-shadow:0 4px 20px rgba(14,165,233,0.4); transition:all .2s; }
-  .btn-primary:hover { transform:scale(1.03) translateY(-2px); }
-  .btn-primary:disabled { background:#ccc; box-shadow:none; cursor:default; transform:none; }
-  .btn-secondary { width:100%; border:1.5px solid rgba(14,165,233,0.3); border-radius:50px; padding:14px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all .2s; margin-top:10px; }
-  .btn-secondary:hover { border-color:var(--ocean); color:var(--ocean); }
-  .btn-test { width:100%; border:1.5px dashed rgba(14,165,233,0.35); border-radius:50px; padding:12px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:var(--ocean); background:rgba(14,165,233,0.04); cursor:pointer; transition:all .2s; margin-top:12px; }
-  .btn-test:hover { background:rgba(14,165,233,0.1); }
+
+  /* BUTTONS */
+  .btn-primary { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); box-shadow:0 4px 24px rgba(14,165,233,0.35); transition:all .2s; }
+  .btn-primary:hover { transform:scale(1.03) translateY(-2px); box-shadow:0 6px 32px rgba(14,165,233,0.5); }
+  .btn-primary:disabled { background:rgba(80,80,100,0.4); box-shadow:none; cursor:default; transform:none; }
+  .btn-secondary { width:100%; border:1.5px solid rgba(255,107,157,0.25); border-radius:50px; padding:14px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all .2s; margin-top:10px; }
+  .btn-secondary:hover { border-color:var(--rose); color:var(--rose); background:rgba(255,107,157,0.06); }
+  .btn-test { width:100%; border:1.5px dashed rgba(14,165,233,0.3); border-radius:50px; padding:12px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:rgba(14,165,233,0.7); background:rgba(14,165,233,0.04); cursor:pointer; transition:all .2s; margin-top:12px; }
+  .btn-test:hover { background:rgba(14,165,233,0.1); border-color:var(--ocean); color:var(--ocean); }
 
   /* WAITING / INVITE */
-  .waiting-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:1.5px solid rgba(212,160,97,0.25); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; text-align:center; }
-  .waiting-dots span { display:inline-block; width:8px; height:8px; background:var(--ocean); border-radius:50%; margin:0 3px; animation:dotBounce 1.2s ease-in-out infinite; }
+  .waiting-card { background:var(--card); backdrop-filter:blur(20px); border:1.5px solid rgba(212,160,97,0.2); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; text-align:center; }
+  .waiting-dots span { display:inline-block; width:8px; height:8px; background:var(--rose); border-radius:50%; margin:0 3px; animation:dotBounce 1.2s ease-in-out infinite; }
   .waiting-dots span:nth-child(2) { animation-delay:.2s; }
   .waiting-dots span:nth-child(3) { animation-delay:.4s; }
   @keyframes dotBounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-10px)} }
-  .invite-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:2px solid rgba(14,165,233,0.3); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; text-align:center; animation:invitePulse 2s ease-in-out infinite; }
-  @keyframes invitePulse { 0%,100%{box-shadow:0 8px 40px rgba(14,165,233,0.12)} 50%{box-shadow:0 8px 50px rgba(14,165,233,0.28)} }
-  .invite-emoji { font-size:56px; margin-bottom:12px; display:block; animation:inviteBounce 1s ease-in-out infinite; }
+  .invite-card { background:var(--card); backdrop-filter:blur(20px); border:2px solid rgba(14,165,233,0.3); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; text-align:center; animation:invitePulse 2s ease-in-out infinite; }
+  @keyframes invitePulse { 0%,100%{box-shadow:0 8px 40px rgba(14,165,233,0.1)} 50%{box-shadow:0 8px 60px rgba(14,165,233,0.3)} }
+  .invite-emoji { font-size:56px; margin-bottom:12px; display:block; animation:inviteBounce 1s ease-in-out infinite; filter:drop-shadow(0 0 14px rgba(14,165,233,0.6)); }
   @keyframes inviteBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-  .invite-title { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text-dark); margin-bottom:8px; }
-  .invite-bet { font-size:24px; font-weight:700; color:var(--gold); font-family:'Dancing Script',cursive; margin-bottom:6px; }
+  .invite-title { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .invite-bet { font-size:24px; font-weight:700; color:var(--gold); font-family:'Dancing Script',cursive; margin-bottom:6px; text-shadow:0 0 12px rgba(212,160,97,0.4); }
   .invite-sub { font-size:12px; color:var(--text-mid); margin-bottom:24px; font-weight:500; line-height:1.6; }
-  .btn-accept { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 4px 20px rgba(34,197,94,0.4); transition:all .2s; }
-  .btn-accept:hover { transform:scale(1.03); }
-  .btn-decline { width:100%; border:1.5px solid rgba(232,115,138,0.3); border-radius:50px; padding:13px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all .2s; margin-top:10px; }
+  .btn-accept { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 4px 20px rgba(34,197,94,0.35); transition:all .2s; }
+  .btn-accept:hover { transform:scale(1.03); box-shadow:0 6px 28px rgba(34,197,94,0.5); }
+  .btn-decline { width:100%; border:1.5px solid rgba(255,107,157,0.25); border-radius:50px; padding:13px; font-family:'Quicksand',sans-serif; font-size:14px; font-weight:600; color:var(--text-mid); background:transparent; cursor:pointer; transition:all .2s; margin-top:10px; }
   .btn-decline:hover { border-color:var(--rose); color:var(--rose); }
 
   /* PLACEMENT */
   .placement-wrapper { max-width:440px; width:100%; }
   .placement-header { text-align:center; margin-bottom:16px; }
-  .placement-title { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text-dark); margin-bottom:4px; }
+  .placement-title { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text); margin-bottom:4px; }
   .placement-sub { font-size:12px; color:var(--text-mid); font-weight:500; }
   .test-badge { display:inline-block; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); color:white; font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 10px; border-radius:50px; margin-bottom:8px; }
 
   .ship-list { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
-  .ship-item { display:flex; align-items:center; gap:10px; padding:9px 14px; background:rgba(255,255,255,0.8); border:1.5px solid rgba(14,165,233,0.2); border-radius:12px; cursor:pointer; transition:all .2s; }
-  .ship-item.selected { border-color:var(--ocean); background:rgba(14,165,233,0.07); box-shadow:0 2px 10px rgba(14,165,233,0.15); }
+  .ship-item { display:flex; align-items:center; gap:10px; padding:9px 14px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,107,157,0.15); border-radius:12px; cursor:pointer; transition:all .2s; }
+  .ship-item:hover:not(.placed) { border-color:rgba(255,107,157,0.4); background:rgba(255,107,157,0.06); }
+  .ship-item.selected { border-color:var(--ocean); background:rgba(14,165,233,0.1); box-shadow:0 0 16px rgba(14,165,233,0.15); }
   .ship-item.placed { opacity:.4; pointer-events:none; }
   .ship-cells-preview { display:flex; gap:2px; }
-  .ship-cell-dot { width:12px; height:12px; border-radius:2px; background:#475569; }
-  .ship-item-name { font-size:13px; font-weight:700; color:var(--text-dark); flex:1; }
-  .ship-item-size { font-size:11px; color:var(--text-mid); font-weight:600; }
-  .ship-check { font-size:13px; color:#22c55e; font-weight:700; }
+  .ship-cell-dot { width:12px; height:12px; border-radius:2px; background:rgba(14,165,233,0.7); box-shadow:0 0 4px rgba(14,165,233,0.5); }
+  .ship-item-name { font-size:13px; font-weight:700; color:var(--text); flex:1; }
+  .ship-item-size { font-size:11px; color:var(--text-dim); font-weight:600; }
+  .ship-check { font-size:14px; color:#22c55e; font-weight:700; text-shadow:0 0 8px rgba(34,197,94,0.7); }
 
   .placement-controls { display:flex; gap:10px; margin-bottom:12px; }
-  .btn-rotate { flex:1; border:1.5px solid rgba(14,165,233,0.3); border-radius:12px; padding:9px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:var(--ocean); background:transparent; cursor:pointer; transition:all .2s; }
-  .btn-rotate:hover { background:rgba(14,165,233,0.07); }
-  .btn-rnd { flex:1; border:none; border-radius:12px; padding:9px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:700; color:white; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); cursor:pointer; transition:transform .2s; }
+  .btn-rotate { flex:1; border:1.5px solid rgba(14,165,233,0.3); border-radius:12px; padding:9px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:var(--ocean); background:rgba(14,165,233,0.06); cursor:pointer; transition:all .2s; }
+  .btn-rotate:hover { background:rgba(14,165,233,0.12); border-color:var(--ocean); }
+  .btn-rnd { flex:1; border:none; border-radius:12px; padding:9px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:700; color:white; background:linear-gradient(135deg,var(--rose),var(--rose-dark)); cursor:pointer; transition:transform .2s; box-shadow:0 2px 12px rgba(255,107,157,0.3); }
   .btn-rnd:hover { transform:scale(1.03); }
 
   /* OCEAN GRID */
   .grid-outer { display:inline-block; }
   .grid-col-labels { display:flex; padding-left:22px; margin-bottom:2px; }
-  .grid-col-lbl { width:var(--cell); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--text-mid); }
+  .grid-col-lbl { width:var(--cell); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:rgba(34,211,238,0.5); }
   .grid-main { display:flex; }
   .grid-row-labels { display:flex; flex-direction:column; width:20px; margin-right:2px; }
-  .grid-row-lbl { height:var(--cell); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--text-mid); }
-  .ocean-grid { display:grid; grid-template-columns:repeat(10, var(--cell)); grid-template-rows:repeat(10, var(--cell)); gap:2px; background:linear-gradient(135deg,#0369a1,#0284c7); border-radius:10px; padding:3px; box-shadow:0 4px 18px rgba(14,165,233,0.25); }
-  .gc { border-radius:3px; background:rgba(255,255,255,0.14); cursor:default; transition:all .12s; position:relative; }
+  .grid-row-lbl { height:var(--cell); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:rgba(34,211,238,0.5); }
+  .ocean-grid {
+    display:grid; grid-template-columns:repeat(10, var(--cell)); grid-template-rows:repeat(10, var(--cell)); gap:2px;
+    background:linear-gradient(135deg,#020c1f 0%,#031a40 50%,#020c1f 100%);
+    border-radius:10px; padding:3px;
+    box-shadow:0 6px 40px rgba(0,0,0,0.7), 0 0 50px rgba(14,165,233,0.08), inset 0 0 30px rgba(14,165,233,0.04);
+    border:1px solid rgba(14,165,233,0.12);
+  }
+  .gc { border-radius:3px; background:rgba(14,165,233,0.05); cursor:default; transition:background .1s, transform .1s, box-shadow .1s; position:relative; }
   .gc.can-shoot { cursor:crosshair; }
-  .gc.can-shoot:hover { background:rgba(239,68,68,0.35) !important; transform:scale(1.08); }
-  .gc.ship { background:var(--ship-bg); }
-  .gc.preview { background:rgba(56,189,248,0.55); }
-  .gc.invalid { background:rgba(239,68,68,0.45); }
-  .gc.hit { background:radial-gradient(circle,#fbbf24,#ef4444); box-shadow:0 0 5px rgba(239,68,68,0.5); }
-  .gc.miss { background:rgba(148,163,184,0.4); }
-  .gc.miss::after { content:'·'; color:rgba(255,255,255,0.7); font-size:16px; font-weight:900; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; line-height:1; }
-  .gc.sunk { background:radial-gradient(circle,#f97316,#dc2626) !important; box-shadow:0 0 7px rgba(220,38,38,0.7) !important; animation:sunkPop .4s ease-out; }
-  @keyframes sunkPop { 0%{transform:scale(1.25)} 100%{transform:scale(1)} }
+  .gc.can-shoot:hover { background:rgba(239,68,68,0.32) !important; transform:scale(1.12); box-shadow:0 0 10px rgba(239,68,68,0.45); }
+  .gc.ship { background:rgba(48,80,160,0.65); box-shadow:inset 0 1px 0 rgba(100,160,255,0.2); }
+  .gc.preview { background:rgba(34,211,238,0.38) !important; box-shadow:0 0 7px rgba(34,211,238,0.45); }
+  .gc.invalid { background:rgba(239,68,68,0.38) !important; box-shadow:0 0 5px rgba(239,68,68,0.35); }
+  .gc.hit { background:radial-gradient(circle,#fbbf24,#ef4444) !important; box-shadow:0 0 10px rgba(239,68,68,0.8), 0 0 20px rgba(251,191,36,0.3); }
+  .gc.miss { background:rgba(80,100,140,0.18); }
+  .gc.miss::after { content:'·'; color:rgba(147,197,253,0.4); font-size:16px; font-weight:900; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; line-height:1; }
+  .gc.sunk { background:radial-gradient(circle,#f97316,#dc2626) !important; box-shadow:0 0 12px rgba(220,38,38,0.9), 0 0 24px rgba(249,115,22,0.4) !important; animation:sunkPop .4s ease-out; }
+  @keyframes sunkPop { 0%{transform:scale(1.3)} 100%{transform:scale(1)} }
   .gc.shot-anim { animation:shotAnim .35s cubic-bezier(.22,1,.36,1); }
-  @keyframes shotAnim { 0%{transform:scale(1.4);opacity:.4} 100%{transform:scale(1);opacity:1} }
+  @keyframes shotAnim { 0%{transform:scale(1.5);opacity:.3} 100%{transform:scale(1);opacity:1} }
 
   /* GAME SECTION */
   .game-wrapper { max-width:720px; width:100%; display:flex; flex-direction:column; align-items:center; }
-  .status-bar { display:flex; justify-content:space-between; align-items:center; width:100%; max-width:680px; margin-bottom:14px; background:rgba(255,255,255,0.8); border-radius:18px; padding:10px 18px; gap:8px; }
+  .your-turn-banner { display:none; align-items:center; gap:8px; background:rgba(14,165,233,0.1); border:1.5px solid rgba(14,165,233,0.3); border-radius:50px; padding:8px 22px; font-size:13px; font-weight:700; color:var(--ocean); margin-bottom:10px; animation:turnPulse 1.5s ease-in-out infinite; box-shadow:0 0 24px rgba(14,165,233,0.12); }
+  .your-turn-banner.visible { display:flex; }
+  @keyframes turnPulse { 0%,100%{box-shadow:0 0 16px rgba(14,165,233,0.12)} 50%{box-shadow:0 0 32px rgba(14,165,233,0.35)} }
+
+  .status-bar { display:flex; justify-content:space-between; align-items:center; width:100%; max-width:680px; margin-bottom:14px; background:rgba(12,2,24,0.88); border:1px solid rgba(255,107,157,0.12); border-radius:18px; padding:10px 18px; gap:8px; backdrop-filter:blur(12px); }
   .pbadge { text-align:center; flex:1; border-radius:10px; padding:6px 8px; transition:all .3s; }
-  .pbadge.active { background:rgba(14,165,233,0.1); }
+  .pbadge.active { background:rgba(14,165,233,0.1); box-shadow:0 0 18px rgba(14,165,233,0.1); }
   .pbadge-name { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-mid); }
-  .pbadge-status { font-size:12px; font-weight:600; min-height:17px; margin-top:2px; }
-  .pbadge.active .pbadge-status { color:var(--ocean); }
+  .pbadge-status { font-size:12px; font-weight:600; min-height:17px; margin-top:2px; color:var(--text-dim); }
+  .pbadge.active .pbadge-status { color:var(--ocean); text-shadow:0 0 8px rgba(14,165,233,0.5); }
   .pot-center { text-align:center; }
-  .pot-lbl { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); font-weight:700; }
-  .pot-val { font-family:'Dancing Script',cursive; font-size:22px; font-weight:700; color:var(--gold); }
+  .pot-lbl { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); font-weight:700; }
+  .pot-val { font-family:'Dancing Script',cursive; font-size:22px; font-weight:700; color:var(--gold); text-shadow:0 0 12px rgba(212,160,97,0.4); }
 
   .boards-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; width:100%; max-width:680px; }
   .board-panel { display:flex; flex-direction:column; align-items:center; }
-  .board-panel-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-mid); margin-bottom:6px; background:rgba(14,165,233,0.08); border-radius:50px; padding:3px 12px; }
+  .board-panel-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-mid); margin-bottom:6px; background:rgba(14,165,233,0.07); border:1px solid rgba(14,165,233,0.15); border-radius:50px; padding:3px 12px; }
   .sunk-row { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; margin-top:6px; min-height:22px; }
   .sunk-icon { font-size:18px; animation:sunkIconPop .4s cubic-bezier(.22,1,.36,1); }
   @keyframes sunkIconPop { 0%{transform:scale(0) rotate(-15deg);opacity:0} 100%{transform:scale(1) rotate(0);opacity:1} }
 
   /* RESULT */
-  .result-overlay { position:fixed; inset:0; z-index:99999; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); }
+  .result-overlay { position:fixed; inset:0; z-index:99999; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); }
   .result-overlay.open { display:flex; }
-  .result-card { background:#fff; border-radius:32px; padding:44px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 20px 80px rgba(0,0,0,0.2); animation:resultPop .5s cubic-bezier(.22,1,.36,1); }
+  .result-card { background:rgba(14,3,26,0.98); border:1.5px solid rgba(255,107,157,0.3); border-radius:32px; padding:44px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 20px 80px rgba(255,107,157,0.15),0 0 60px rgba(0,0,0,0.6); animation:resultPop .5s cubic-bezier(.22,1,.36,1); }
   @keyframes resultPop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
-  .result-emoji { font-size:72px; display:block; margin-bottom:12px; }
-  .result-title { font-family:'Dancing Script',cursive; font-size:36px; font-weight:700; color:var(--text-dark); margin-bottom:8px; }
+  .result-emoji { font-size:72px; display:block; margin-bottom:12px; filter:drop-shadow(0 0 24px rgba(255,200,50,0.5)); }
+  .result-title { font-family:'Dancing Script',cursive; font-size:36px; font-weight:700; color:var(--text); margin-bottom:8px; }
   .result-sub { font-size:14px; color:var(--text-mid); font-weight:500; margin-bottom:8px; line-height:1.6; }
-  .result-coins { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--gold); margin-bottom:28px; }
+  .result-coins { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--gold); margin-bottom:28px; text-shadow:0 0 16px rgba(212,160,97,0.5); }
   .btn-again { width:100%; border:none; border-radius:50px; padding:16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:700; color:white; cursor:pointer; background:linear-gradient(135deg,var(--ocean),var(--ocean-dark)); box-shadow:0 4px 20px rgba(14,165,233,0.4); transition:transform .2s; }
   .btn-again:hover { transform:scale(1.03); }
 
@@ -188,6 +229,8 @@
 </style>
 </head>
 <body>
+
+<div class="stars" id="starsContainer"></div>
 
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
@@ -211,8 +254,6 @@
   <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
 </div>
 
-<div class="bg-gradient"></div>
-
 <div class="page" id="mainPage" style="display:none;">
   <h1 class="page-title">⚓ Schiffe Versenken ⚓</h1>
   <p class="page-subtitle">Setzt Coins · Versenkt die Flotte</p>
@@ -230,7 +271,7 @@
     </div>
 
     <div class="waiting-card" id="waitingCard" style="display:none;">
-      <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+      <div style="font-size:48px;margin-bottom:16px;filter:drop-shadow(0 0 12px rgba(212,160,97,0.5))">⏳</div>
       <div class="lobby-title">Warten auf <span id="waitingForName"></span>…</div>
       <div class="lobby-sub" style="margin:12px 0 20px;">Einsatz: <strong id="waitingBetDisplay" style="color:var(--gold);font-family:'Dancing Script',cursive;font-size:20px;"></strong> 🪙</div>
       <div class="waiting-dots"><span></span><span></span><span></span></div>
@@ -275,6 +316,7 @@
 
   <!-- GAME -->
   <div id="gameSection" style="display:none;" class="game-wrapper">
+    <div class="your-turn-banner" id="yourTurnBanner">🎯 Dein Zug – Feuer frei!</div>
     <div class="status-bar">
       <div class="pbadge" id="badgeA">
         <div class="pbadge-name">Andreas</div>
@@ -329,6 +371,37 @@
   </div>
 </div>
 
+<script>
+// Stars
+(function() {
+  const container = document.getElementById('starsContainer');
+  const types = [
+    {cls:'s', count:120, anim:'starFade', durMin:3, durMax:8},
+    {cls:'m', count:60,  anim:'starFade', durMin:4, durMax:10},
+    {cls:'l rose',  count:18, anim:'starTwinkle', durMin:2.5, durMax:5},
+    {cls:'l gold',  count:12, anim:'starTwinkle', durMin:3,   durMax:6},
+    {cls:'l blue',  count:14, anim:'starTwinkle', durMin:2,   durMax:5},
+    {cls:'l teal',  count:10, anim:'starTwinkle', durMin:2.5, durMax:5},
+    {cls:'xl rose', count:6,  anim:'starTwinkle', durMin:3,   durMax:7},
+    {cls:'xl teal', count:4,  anim:'starTwinkle', durMin:4,   durMax:8},
+  ];
+  const frag = document.createDocumentFragment();
+  for (const t of types) {
+    for (let i = 0; i < t.count; i++) {
+      const el = document.createElement('div');
+      el.className = 'star ' + t.cls;
+      el.style.left = Math.random() * 100 + '%';
+      el.style.top  = Math.random() * 100 + '%';
+      const dur = t.durMin + Math.random() * (t.durMax - t.durMin);
+      const delay = Math.random() * t.durMax;
+      el.style.animation = `${t.anim} ${dur.toFixed(2)}s ${delay.toFixed(2)}s ease-in-out infinite`;
+      frag.appendChild(el);
+    }
+  }
+  container.appendChild(frag);
+})();
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -358,29 +431,26 @@ const SHIPS = [
   { id:'s3b',name:'Zerstörer',      size:3, emoji:'🛥️' },
   { id:'s2', name:'U-Boot',         size:2, emoji:'🤿' },
 ];
-const TOTAL_CELLS = SHIPS.reduce((a,s) => a + s.size, 0); // 17
+const TOTAL_CELLS = SHIPS.reduce((a,s) => a + s.size, 0);
 
-// ── STATE ────────────────────────────────────────────────────────────────────
 let currentUser  = null;
 let currentCoins = 0;
 let gameState    = null;
 let gameListener = null;
 let testMode     = false;
 
-// placement
 let placedShips   = [];
 let selectedShip  = null;
 let placementDir  = 'h';
 let hoverR = -1, hoverC = -1;
 
-// ── UTILS ────────────────────────────────────────────────────────────────────
 function displayName(email) {
   if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
   if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
   return email.split('@')[0];
 }
-function other(name)   { return name === 'Andreas' ? 'Nele' : 'Andreas'; }
-function pkey(name)    { return name.toLowerCase(); }
+function other(name) { return name === 'Andreas' ? 'Nele' : 'Andreas'; }
+function pkey(name)  { return name.toLowerCase(); }
 
 function showToast(msg, dur = 3000) {
   const t = document.getElementById('toast');
@@ -394,7 +464,6 @@ function emptyGrid() {
   return Array.from({length: SIZE}, () => Array(SIZE).fill(0));
 }
 
-// ── SHIP HELPERS ─────────────────────────────────────────────────────────────
 function cells(ship) {
   const out = [];
   for (let i = 0; i < ship.size; i++)
@@ -445,7 +514,6 @@ function shipSunkNow(ship, shotsBefore, shotsAfter) {
   return !wasSunk && isSunk;
 }
 
-// ── GRID BUILDERS ─────────────────────────────────────────────────────────────
 function buildLabels(colEl, rowEl) {
   colEl.innerHTML = COL_LBLS.map(l => `<div class="grid-col-lbl">${l}</div>`).join('');
   rowEl.innerHTML = ROW_LBLS.map(l => `<div class="grid-row-lbl">${l}</div>`).join('');
@@ -470,9 +538,9 @@ function gc(el, r, c) {
 
 // ── PLACEMENT ────────────────────────────────────────────────────────────────
 function initPlacement() {
-  document.getElementById('lobbySection').style.display   = 'none';
+  document.getElementById('lobbySection').style.display    = 'none';
   document.getElementById('placementSection').style.display = 'block';
-  document.getElementById('gameSection').style.display   = 'none';
+  document.getElementById('gameSection').style.display    = 'none';
   document.getElementById('testBadge').style.display = testMode ? 'inline-block' : 'none';
   document.getElementById('readyBtn').disabled = true;
   document.getElementById('waitingReadyDiv').style.display = 'none';
@@ -480,6 +548,7 @@ function initPlacement() {
   placedShips  = [];
   selectedShip = null;
   placementDir = 'h';
+  hoverR = -1; hoverC = -1;
   document.getElementById('dirLabel').textContent = 'Horizontal';
   buildLabels(document.getElementById('pColLabels'), document.getElementById('pRowLabels'));
   rebuildShipList();
@@ -518,18 +587,23 @@ function buildPlacementGrid() {
 function renderPlacement() {
   const grid = document.getElementById('placementGrid');
   if (!grid) return;
+  // Reset all cells
   for (const div of grid.querySelectorAll('.gc')) div.className = 'gc';
+  // Draw placed ships
   for (const s of placedShips)
-    for (const {r,c} of cells(s)) { const d = gc(grid,r,c); if(d) d.classList.add('ship'); }
+    for (const {r,c} of cells(s)) { const d = gc(grid,r,c); if (d) d.classList.add('ship'); }
+  // Draw hover preview
   if (selectedShip && hoverR >= 0) {
     const def = SHIPS.find(d => d.id === selectedShip);
     if (def) {
       const preview = {id: selectedShip, r: hoverR, c: hoverC, size: def.size, dir: placementDir};
       const ok = validPlacement(placedShips, preview);
-      for (const {r,c} of cells(preview))
-        if (r>=0 && r<SIZE && c>=0 && c<SIZE) {
-          const d = gc(grid,r,c); if(d) d.classList.add(ok ? 'preview' : 'invalid');
+      for (const {r,c} of cells(preview)) {
+        if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) {
+          const d = gc(grid, r, c);
+          if (d) d.classList.add(ok ? 'preview' : 'invalid');
         }
+      }
     }
   }
 }
@@ -543,11 +617,12 @@ function placeAt(r, c) {
   placedShips.push(ship);
   const next = SHIPS.find(d => !placedShips.some(s => s.id === d.id));
   selectedShip = next ? next.id : null;
+  hoverR = -1; hoverC = -1;
   rebuildShipList();
   renderPlacement();
   if (placedShips.length === SHIPS.length) {
     document.getElementById('readyBtn').disabled = false;
-    document.getElementById('placementSub').textContent = 'Alle Schiffe platziert – bereit?';
+    document.getElementById('placementSub').textContent = 'Alle Schiffe platziert – bereit? 🚀';
   }
 }
 
@@ -570,16 +645,21 @@ function renderGame(state) {
   const oppShotsData = state[oppK + 'Shots']  || emptyGrid();
   const isMyTurn = state.currentTurn === currentUser && state.status === 'running';
 
-  // Own grid: show my ships + incoming shots from opponent
+  // Turn banner
+  const banner = document.getElementById('yourTurnBanner');
+  if (isMyTurn) banner.classList.add('visible');
+  else banner.classList.remove('visible');
+
+  // Own grid: my ships + incoming shots
   buildGrid(document.getElementById('ownGrid'), (div, r, c) => {
     const shot = oppShotsData[r][c];
     if      (shot === 1) div.classList.add('hit');
     else if (shot === 2) div.classList.add('miss');
     else if (shipHit(myShipsData, r, c)) div.classList.add('ship');
   });
-  markSunk(myShipsData,  oppShotsData, document.getElementById('ownGrid'));
+  markSunk(myShipsData, oppShotsData, document.getElementById('ownGrid'));
 
-  // Enemy grid: show only my shots; clickable if my turn
+  // Enemy grid: my shots + clickable if my turn
   buildGrid(document.getElementById('enemyGrid'), (div, r, c) => {
     const shot = myShotsData[r][c];
     if      (shot === 1) div.classList.add('hit');
@@ -593,10 +673,9 @@ function renderGame(state) {
   markSunk(oppShipsData, myShotsData, document.getElementById('enemyGrid'));
 
   // Status bar
-  const bet = state.bet || 0;
   document.getElementById('potDisplay').textContent = testMode
     ? '🧪 Test'
-    : (bet * 2).toLocaleString('de-DE') + ' 🪙';
+    : ((state.bet || 0) * 2).toLocaleString('de-DE') + ' 🪙';
 
   document.getElementById('badgeA').className = 'pbadge' + (state.currentTurn==='Andreas' && state.status==='running' ? ' active' : '');
   document.getElementById('badgeN').className = 'pbadge' + (state.currentTurn==='Nele'    && state.status==='running' ? ' active' : '');
@@ -616,8 +695,8 @@ function markSunk(ships, shots, gridEl) {
 }
 
 function renderSunkRows(myShips, oppShips, myShots, oppShots) {
-  const sOnMe  = document.getElementById('sunkOnMe');
-  const sByMe  = document.getElementById('sunkByMe');
+  const sOnMe = document.getElementById('sunkOnMe');
+  const sByMe = document.getElementById('sunkByMe');
   sOnMe.innerHTML = '';
   sByMe.innerHTML = '';
   for (const s of myShips) {
@@ -640,18 +719,14 @@ async function handleShoot(r, c) {
   const myK = pkey(currentUser);
   const prevShots = (gameState[myK + 'Shots'] || emptyGrid());
   if (prevShots[r][c] !== 0) { showToast('Hier hast du schon geschossen!'); return; }
-
-  if (testMode) {
-    await doShootTest(r, c);
-  } else {
-    await doShootMulti(r, c);
-  }
+  if (testMode) await doShootTest(r, c);
+  else await doShootMulti(r, c);
 }
 
 async function doShootMulti(r, c) {
   const myK  = pkey(currentUser);
   const oppK = pkey(other(currentUser));
-  const shots = (gameState[myK + 'Shots'] || emptyGrid()).map(row => [...row]);
+  const shots    = (gameState[myK + 'Shots'] || emptyGrid()).map(row => [...row]);
   const oppShips = gameState[oppK + 'Ships'] || [];
   const prevShots = gameState[myK + 'Shots'] || emptyGrid();
 
@@ -667,23 +742,24 @@ async function doShootMulti(r, c) {
   const updates = {
     ...gameState,
     [myK + 'Shots']: shots,
-    currentTurn: won ? currentUser : other(currentUser),
+    // On hit: stay on current player; on miss: switch turn
+    currentTurn: won ? currentUser : (hit ? currentUser : other(currentUser)),
     status: won ? 'finished' : 'running',
     winner: won ? currentUser : null,
   };
   await set(ref(db, GAME_REF), updates);
 
   if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt!`, 2500);
-  else if (hit) showToast('🎯 Treffer!', 1500);
+  else if (hit) showToast('🎯 Treffer! Nochmal!', 1800);
   else showToast('💦 Daneben!', 1500);
 
   if (won) await finishGame(currentUser, gameState.bet);
 }
 
 async function doShootTest(r, c) {
-  const myK  = 'andreas';
-  const oppK = 'nele';
-  const shots = (gameState[myK + 'Shots'] || emptyGrid()).map(row => [...row]);
+  const myK    = 'andreas';
+  const oppK   = 'nele';
+  const shots    = (gameState[myK + 'Shots'] || emptyGrid()).map(row => [...row]);
   const oppShips = gameState[oppK + 'Ships'] || [];
   const prevShots = (gameState[myK + 'Shots'] || emptyGrid());
 
@@ -699,51 +775,65 @@ async function doShootTest(r, c) {
   gameState = {
     ...gameState,
     [myK + 'Shots']: shots,
-    currentTurn: won ? 'Andreas' : 'Nele',
+    // On hit: Andreas keeps turn; on miss: Nele's turn
+    currentTurn: won ? 'Andreas' : (hit ? 'Andreas' : 'Nele'),
     status: won ? 'finished' : 'running',
     winner: won ? 'Andreas' : null,
   };
 
   if (sunkDef) showToast(`${sunkDef.emoji} ${sunkDef.name} versenkt!`, 2500);
-  else if (hit) showToast('🎯 Treffer!', 1500);
+  else if (hit) showToast('🎯 Treffer! Nochmal!', 1800);
   else showToast('💦 Daneben!', 1500);
 
   renderGame(gameState);
-
   if (won) { showResult(gameState); return; }
 
-  // AI turn
-  setTimeout(() => {
-    const before = (gameState['neleShots'] || emptyGrid()).map(row=>[...row]);
-    gameState = aiTurn(gameState);
-    const after = gameState['neleShots'] || emptyGrid();
-    const aiHit = after.flat().filter(v=>v===1).length > before.flat().filter(v=>v===1).length;
+  if (!hit) {
+    // Nele's (AI) turn
+    setTimeout(runAiTurn, 800);
+  }
+  // If hit, Andreas keeps turn – nothing else to do
+}
 
-    let aiSunkDef = null;
-    const myShipsData = gameState['andreasShips'] || [];
-    for (const s of myShipsData)
-      if (shipSunkNow(s, before, after)) { aiSunkDef = SHIPS.find(d => d.id === s.id); break; }
+function runAiTurn() {
+  if (!gameState || gameState.status !== 'running') return;
 
-    renderGame(gameState);
+  const before = (gameState.neleShots || emptyGrid()).map(row => [...row]);
+  const myShipsData = gameState.andreasShips || [];
 
-    if (aiSunkDef) showToast(`💥 Nele versenkt: ${aiSunkDef.name}!`, 2500);
-    else if (aiHit) showToast('💥 Nele hat getroffen!', 1500);
-    else showToast('💦 Nele daneben!', 1500);
+  let aiSunkDef = null;
+  gameState = aiTurn(gameState);
+  const after = gameState.neleShots || emptyGrid();
 
-    if (gameState.winner === 'Nele') showResult(gameState);
-  }, 700);
+  const aiHit = after.flat().filter(v=>v===1).length > before.flat().filter(v=>v===1).length;
+  for (const s of myShipsData)
+    if (shipSunkNow(s, before, after)) { aiSunkDef = SHIPS.find(d => d.id === s.id); break; }
+
+  renderGame(gameState);
+
+  if (aiSunkDef) showToast(`💥 Nele versenkt: ${aiSunkDef.name}!`, 2500);
+  else if (aiHit) showToast('💥 Nele hat getroffen! Nochmal…', 1800);
+  else showToast('💦 Nele daneben!', 1500);
+
+  if (gameState.winner === 'Nele') { showResult(gameState); return; }
+
+  if (aiHit) {
+    // AI gets another turn on hit
+    setTimeout(runAiTurn, 900);
+  }
+  // If Nele missed, it's Andreas's turn – renderGame already shows that
 }
 
 function aiTurn(state) {
-  const shots = (state.neleShots || emptyGrid()).map(row => [...row]);
+  const shots   = (state.neleShots || emptyGrid()).map(row => [...row]);
   const myShips = state.andreasShips || [];
 
-  // Collect hit cells not yet surrounded
   const hits = [];
-  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) if (shots[r][c]===1) hits.push([r,c]);
+  for (let r=0; r<SIZE; r++)
+    for (let c=0; c<SIZE; c++)
+      if (shots[r][c] === 1) hits.push([r,c]);
 
   let target = null;
-  // Smart: try adjacent to a hit
   if (hits.length > 0) {
     const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
     outer: for (const [hr,hc] of hits)
@@ -752,16 +842,15 @@ function aiTurn(state) {
         if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&shots[nr][nc]===0) { target=[nr,nc]; break outer; }
       }
   }
-  // Fallback: checkerboard random
   if (!target) {
     const pool = [];
-    for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++)
+    for (let r=0; r<SIZE; r++) for (let c=0; c<SIZE; c++)
       if (shots[r][c]===0 && (r+c)%2===0) pool.push([r,c]);
     const fallback = [];
-    for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++)
+    for (let r=0; r<SIZE; r++) for (let c=0; c<SIZE; c++)
       if (shots[r][c]===0) fallback.push([r,c]);
-    const src = pool.length>0 ? pool : fallback;
-    target = src[Math.floor(Math.random()*src.length)];
+    const src = pool.length > 0 ? pool : fallback;
+    target = src[Math.floor(Math.random() * src.length)];
   }
 
   if (!target) return state;
@@ -769,13 +858,14 @@ function aiTurn(state) {
   const hit = shipHit(myShips, r, c);
   shots[r][c] = hit ? 1 : 2;
 
-  const totalMyCells = myShips.reduce((a,s)=>a+s.size,0);
+  const totalMyCells = myShips.reduce((a,s) => a+s.size, 0);
   const won = shots.flat().filter(v=>v===1).length >= totalMyCells;
 
   return {
     ...state,
     neleShots: shots,
-    currentTurn: won ? 'Nele' : 'Andreas',
+    // On hit: Nele keeps turn; on miss: Andreas's turn
+    currentTurn: won ? 'Nele' : (hit ? 'Nele' : 'Andreas'),
     status: won ? 'finished' : 'running',
     winner: won ? 'Nele' : null,
   };
@@ -798,7 +888,6 @@ async function finishGame(winner, bet) {
   }
 }
 
-// ── RESULT ────────────────────────────────────────────────────────────────────
 function showResult(state) {
   const o = document.getElementById('resultOverlay');
   if (o.classList.contains('open')) return;
@@ -816,16 +905,17 @@ function showResult(state) {
       ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
       : `-${bet.toLocaleString('de-DE')} 🪙`;
   }
+  document.getElementById('yourTurnBanner').classList.remove('visible');
   o.classList.add('open');
   if (win) spawnKonfetti();
 }
 
 function spawnKonfetti() {
-  const cols = ['#0ea5e9','#38bdf8','#d4a061','#a78bfa','#4ecdc4','#fbbf24'];
-  for (let i=0;i<80;i++) {
+  const cols = ['#0ea5e9','#22d3ee','#d4a061','#a78bfa','#ff6b9d','#fbbf24'];
+  for (let i=0; i<90; i++) {
     const el = document.createElement('div');
     el.className = 'konfetti-piece';
-    const s = 6+Math.random()*10;
+    const s = 6 + Math.random() * 10;
     el.style.cssText = `width:${s}px;height:${s*(.4+Math.random()*.6)}px;left:${Math.random()*100}vw;top:${-20-Math.random()*40}px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.5}s;transform:rotate(${Math.random()*360}deg);border-radius:${Math.random()>.5?'50%':'3px'};`;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 4000);
@@ -836,27 +926,22 @@ function spawnKonfetti() {
 function handleGameState(state) {
   gameState = state;
   if (!state) { showLobby('create'); return; }
-
   if (state.status === 'waiting') {
     if (state.createdBy === currentUser) showLobby('waiting', state);
     else showLobby('invite', state);
     return;
   }
-
   if (state.status === 'placement') {
     const myK = pkey(currentUser);
     if (!state[myK + 'Ready']) {
       if (placedShips.length === 0) initPlacement();
-      // else already in placement UI, wait
     } else {
-      // My ships saved, waiting for opponent
       document.getElementById('readyBtn').style.display = 'none';
       document.getElementById('waitingReadyDiv').style.display = 'block';
       document.getElementById('waitingReadyName').textContent = other(currentUser);
     }
     return;
   }
-
   if (state.status === 'running' || state.status === 'finished') {
     if (document.getElementById('gameSection').style.display === 'none')
       initGame(state);
@@ -867,7 +952,6 @@ function handleGameState(state) {
   }
 }
 
-// ── LOBBY UI ──────────────────────────────────────────────────────────────────
 function showLobby(mode, state = null) {
   document.getElementById('lobbySection').style.display     = 'block';
   document.getElementById('placementSection').style.display = 'none';
@@ -880,7 +964,7 @@ function showLobby(mode, state = null) {
     document.getElementById('waitingBetDisplay').textContent = state.bet.toLocaleString('de-DE');
   }
   if (mode==='invite' && state) {
-    document.getElementById('inviterName').textContent  = state.createdBy;
+    document.getElementById('inviterName').textContent = state.createdBy;
     document.getElementById('inviteBetDisplay').textContent = state.bet.toLocaleString('de-DE') + ' 🪙 Einsatz';
   }
   if (mode==='create')
@@ -890,10 +974,10 @@ function showLobby(mode, state = null) {
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 async function createGame() {
   const bet = parseInt(document.getElementById('betInput').value);
-  if (!bet || bet < 50)      { showToast('Mindestens 50 🪙!'); return; }
-  if (bet > currentCoins)    { showToast('Nicht genug Coins! 😅'); return; }
+  if (!bet || bet < 50)   { showToast('Mindestens 50 🪙!'); return; }
+  if (bet > currentCoins) { showToast('Nicht genug Coins! 😅'); return; }
   const snap = await get(ref(db, GAME_REF));
-  if (snap.val())            { showToast('Es läuft bereits ein Spiel! ⚔️'); return; }
+  if (snap.val())         { showToast('Es läuft bereits ein Spiel! ⚔️'); return; }
   await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) - bet);
   await set(ref(db, GAME_REF), {
     status: 'waiting', createdBy: currentUser, bet,
@@ -995,14 +1079,15 @@ document.getElementById('rotateBtn').addEventListener('click', () => {
 document.getElementById('randomBtn').addEventListener('click', () => {
   placedShips = randomPlace();
   selectedShip = null;
+  hoverR = -1; hoverC = -1;
   rebuildShipList();
   renderPlacement();
   document.getElementById('readyBtn').disabled = false;
-  document.getElementById('placementSub').textContent = 'Alle Schiffe platziert – bereit?';
+  document.getElementById('placementSub').textContent = 'Alle Schiffe platziert – bereit? 🚀';
 });
 document.getElementById('betInput').addEventListener('input', function() {
-  const v = parseInt(this.value)||0;
-  document.getElementById('betHint').style.color = v > currentCoins ? '#dc2626' : 'var(--text-mid)';
+  const v = parseInt(this.value) || 0;
+  document.getElementById('betHint').style.color = v > currentCoins ? '#ff6b9d' : 'var(--text-mid)';
 });
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
