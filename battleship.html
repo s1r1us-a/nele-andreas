@@ -1065,7 +1065,7 @@ function handleGameState(state) {
       initGame(state);
     else
       renderGame(state);
-    if (state.status === 'finished') setTimeout(() => showResult(state), 2200);
+    if (state.status === 'finished') setTimeout(() => showResult(state), 5000);
     return;
   }
 }
