@@ -543,6 +543,7 @@
   }
   .save-moment-btn:hover { transform: scale(1.03) translateY(-2px); box-shadow: 0 8px 32px rgba(194,24,91,0.55); }
   .save-moment-btn:active { transform: scale(0.97); }
+  .save-moment-btn.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; box-shadow: none; filter: grayscale(0.3); }
 
   .moment-modal-overlay {
     position: fixed; inset: 0; z-index: 10001; display: none;
@@ -719,10 +720,10 @@
     <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #c87830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(212,160,97,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
   </div>
   <div class="save-moment-btn-wrap">
-    <button class="save-moment-btn" id="saveMomentBtn">✨ Momente Speichern</button>
+    <button class="save-moment-btn disabled" id="saveMomentBtn" disabled>✨ Momente Speichern</button>
   </div>
   <div style="margin-top: 10px; max-width: 420px; width: 100%;">
-    <a href="momente-archiv.html" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid rgba(255,107,157,0.3); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: #ff6b9d; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 3px 14px rgba(194,24,91,0.08);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📖 Momente Archiv</a>
+    <span style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid rgba(255,107,157,0.15); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,107,157,0.35); text-align: center; letter-spacing: 0.5px; cursor: not-allowed; pointer-events: none; filter: grayscale(0.3);">📖 Momente Archiv</span>
   </div>
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
