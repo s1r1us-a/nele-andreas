@@ -68,8 +68,9 @@
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             border-radius: 24px; border: 1px solid var(--border-glass); box-shadow: var(--shadow-lush);
             display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 100;
+            pointer-events: none;
         }
-        #ui-container.visible { transform: translateY(-50%) translateX(0%); }
+        #ui-container.visible { transform: translateY(-50%) translateX(0%); pointer-events: auto; }
         #ui-toggle {
             position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; background: var(--glass);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-glass);
@@ -774,7 +775,10 @@
                 const p = getSVGCoords(e.clientX, e.clientY);
                 const isFloor = selectedItemForPlacement.label === 'Flora' || selectedItemForPlacement.label === 'Deko';
                 const y = isFloor ? clampFloor(p.x, p.y) : p.y;
-                previewObjectSVG.setAttribute("transform", `translate(${p.x},${y})`);
+                const allTypes = [...fishTypes, ...plantTypes, ...decoTypes];
+                const def = allTypes.find(t => t.id === selectedItemForPlacement.typeId);
+                const size = def?.size || 1;
+                previewObjectSVG.setAttribute("transform", `translate(${p.x},${y}) scale(${size})`);
             }
         });
         root.addEventListener("pointerdown", e => {
@@ -896,7 +900,8 @@
             await runTransaction(ref(db, `coins/${currentUserKey}`), c => (c||0)-price);
         }
         const fy = label==='Bewohner' ? y : clampFloor(x, y);
-        push(ref(db, 'aquarium/shared/objects'), { label, typeId, x: Math.round(x), y: Math.round(fy), addedBy:currentUser, addedAt:Date.now(), price, itemName: def?.name||typeId });
+        push(ref(db, 'aquarium/shared/objects'), { label, typeId, x: Math.round(x), y: Math.round(fy), addedBy:currentUser, addedAt:Date.now(), price, itemName: def?.name||typeId })
+            .catch(() => showBanner('Platzierung fehlgeschlagen – bitte neu laden ❌', 'rgba(255,71,87,0.9)'));
     }
 
     function initFirebaseListeners() {
