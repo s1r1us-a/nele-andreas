@@ -1659,6 +1659,7 @@
           if (dataOven) {
               if (dataOven.slots) {
                   oven = dataOven;
+                  while (oven.slots.length < 5) oven.slots.push({ state: 'empty', item: null, startedAt: 0 });
               } else {
                   let oldSlot = dataOven.state !== 'empty' && dataOven.state ? dataOven : { state: 'empty', item: null, startedAt: 0 };
                   oven = { slots: [oldSlot, { state: 'empty', item: null, startedAt: 0 }, { state: 'empty', item: null, startedAt: 0 }, { state: 'empty', item: null, startedAt: 0 }, { state: 'empty', item: null, startedAt: 0 }] };
