@@ -2277,7 +2277,7 @@
     if (tabType === 'recipes') {
         document.getElementById('tabRecipes').classList.add('active');
         
-        let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Ofen-Slots: ${freeSlots}/3</div>`;
+        let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Ofen-Slots: ${freeSlots}/5</div>`;
         content.innerHTML = headerHtml;
 
         Object.values(bakeryRecipes).forEach(r => {
@@ -2708,7 +2708,7 @@
 
     if (tabType === 'recipes') {
       document.getElementById('tabWeavingRecipes').classList.add('active');
-      let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Webstuhl-Slots: ${freeSlots}/3</div>`;
+      let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Webstuhl-Slots: ${freeSlots}/5</div>`;
       content.innerHTML = headerHtml;
 
       Object.values(weavingRecipes).forEach(r => {
