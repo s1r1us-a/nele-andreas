@@ -1213,6 +1213,7 @@
     <div class="shop-tabs">
       <button class="shop-tab active" id="tabSeeds" onclick="renderShop('seeds')">🌱 Samen</button>
       <button class="shop-tab" id="tabAnimals" onclick="renderShop('animals')">🐾 Tiere</button>
+      <button class="shop-tab" id="tabFields" onclick="renderShop('fields')">🌾 Felder</button>
     </div>
     <div class="item-list" id="shopList"></div>
   </div>
@@ -1554,7 +1555,7 @@
     featherboa:     { id: 'featherboa',     name: 'Federboa',            icon: '🪶', time: 1800, sellPrice: 1600, req: { items: { feather: 2, wool: 1 } } }
   };
 
-  const bedPrices = [0, 500, 2500, 10000, 50000, 100000];
+  const bedPrices = [0, 500, 2500, 10000, 50000, 100000, 125000, 150000, 175000, 200000, 225000, 250000];
   const ANIMAL_PRODUCTION_TIME = 3600;
 
   // ── FARM STATE ──
@@ -1579,7 +1580,7 @@
   window.inventory = inventory;
 
   let oven = { slots: Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
-  let beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+  let beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = []; 
 
   async function saveFarmData() {
@@ -1638,7 +1639,7 @@
 
           if (data.beds) {
             beds = data.beds;
-            while (beds.length < 5) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+            while (beds.length < 12) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
           }
 
           const rawAnimals = data.animals;
@@ -2152,23 +2153,14 @@
 
     const bedsContainer = document.getElementById('bedsContainer');
     const currentBeds = bedsContainer.querySelectorAll('.bed').length;
-    const expectedBeds = unlockedBeds < 6 ? unlockedBeds + 1 : 6;
-    
+    const expectedBeds = unlockedBeds;
+
     if (currentBeds !== expectedBeds || bedsContainer.innerHTML === '') {
       let bedsHtml = '';
       for(let b = 0; b < unlockedBeds; b++) {
         bedsHtml += `<div class="bed">`;
         for(let s = 0; s < 4; s++) { bedsHtml += `<div class="bed-slot" id="slot-${b}-${s}" onclick="window.handleSlotClick(${b}, ${s})"></div>`; }
         bedsHtml += `</div>`;
-      }
-      if(unlockedBeds < 6) {
-          const nextCost = bedPrices[unlockedBeds];
-          bedsHtml += `<div class="bed" style="opacity:0.55; border-color: rgba(0,0,0,0.2); cursor:pointer;" onclick="window.buyBed()">
-              <div style="grid-column: 1 / span 2; grid-row: 1 / span 2; display:flex; flex-direction:column; align-items:center; justify-content:center; color: var(--text-dark); gap:2px;">
-                <span style="font-size:20px;">🔒</span>
-                <span style="font-size:8px; font-weight:700; color:var(--gold); white-space:nowrap;">${nextCost >= 1000 ? (nextCost/1000)+'k' : nextCost} 🪙</span>
-              </div>
-          </div>`;
       }
       bedsContainer.innerHTML = bedsHtml;
     }
@@ -2376,9 +2368,30 @@
   window.openShop = function() { window.renderShop('seeds'); window.showSpecificModal('modalShop'); }
 
   window.renderShop = function(tabType) {
-    document.getElementById('tabSeeds').classList.remove('active'); document.getElementById('tabAnimals').classList.remove('active');
+    document.getElementById('tabSeeds').classList.remove('active');
+    document.getElementById('tabAnimals').classList.remove('active');
+    document.getElementById('tabFields').classList.remove('active');
     const list = document.getElementById('shopList'); list.innerHTML = '';
-    
+
+    if (tabType === 'fields') {
+      document.getElementById('tabFields').classList.add('active');
+      const MAX_BEDS = 12;
+      if (unlockedBeds >= MAX_BEDS) {
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-mid); font-weight:700;">🌾 Alle Felder freigeschaltet!</div>`;
+      } else {
+        for (let i = unlockedBeds; i < MAX_BEDS; i++) {
+          const cost = bedPrices[i];
+          const label = cost >= 1000 ? (cost / 1000) + 'k' : cost;
+          list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🌾</span><div><div class="item-name">Feld ${i + 1}</div><div class="item-price">${label} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBed()">Kaufen</button></div>`;
+          break;
+        }
+        if (unlockedBeds < MAX_BEDS - 1) {
+          list.innerHTML += `<div style="padding:10px 0; color:var(--text-mid); font-size:12px; text-align:center;">Weitere Felder werden nach dem Kauf freigeschaltet.</div>`;
+        }
+      }
+      return;
+    }
+
     if (tabType === 'seeds') {
       document.getElementById('tabSeeds').classList.add('active');
       Object.values(shopItems).forEach(item => { list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${item.price} 🪙 | ⏱️ ${Math.round(item.growTime/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
@@ -3452,9 +3465,9 @@
 
       if (data.beds) {
         beds = data.beds;
-        while (beds.length < 6) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        while (beds.length < 12) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       } else {
-        beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       }
       
       const rawAnimals = data.animals;
@@ -3508,9 +3521,9 @@
 
       if (data.beds) {
         beds = data.beds;
-        while (beds.length < 6) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        while (beds.length < 12) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       } else {
-        beds = Array(6).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       }
       const rawAnimals = data.animals;
       if (!rawAnimals || rawAnimals === 0) animals = [];
