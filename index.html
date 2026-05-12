@@ -871,6 +871,17 @@
   // Profile → eigene Seite
   // topBarAvatar navigiert via href direkt
 
+  function syncPagePadding() {
+    const mainPage = document.getElementById('mainPage');
+    if (topBar && mainPage) {
+      mainPage.style.paddingTop = topBar.offsetHeight + 'px';
+    }
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncPagePadding).observe(topBar);
+  }
+  window.addEventListener('resize', syncPagePadding);
+
 
 
   // Map email → display name
@@ -922,6 +933,7 @@
       document.getElementById('authLoading').style.display='none';
       overlay.style.display = 'none';
       topBar.style.display = 'flex';
+      syncPagePadding();
       logoutBtn.textContent = window.currentUser + ' ausloggen';
       // Anderen Profil-Avatar befüllen
       const otherUser = window.currentUser === 'Andreas' ? 'Nele' : 'Andreas';
