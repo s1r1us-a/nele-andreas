@@ -59,7 +59,6 @@
     .night-mode .cloud { opacity: 0.3; filter: brightness(0.7) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
     .night-mode .cloud::before, .night-mode .cloud::after { filter: brightness(0.7); }
     .night-mode .fence-post, .night-mode .bakery-base, .night-mode .bakery-roof, .night-mode .bed { filter: brightness(0.75); }
-    .night-mode .farm-fence-side { filter: brightness(0.72); }
     .night-mode .animal-wrapper { filter: brightness(0.85); }
     .night-mode .grass-tuft::before, .night-mode .grass-tuft::after { background: #166534; }
     .night-mode .grass-tuft-center { background: #15803d; }
@@ -411,46 +410,36 @@
     .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); z-index: 17; }
     .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; transition: filter 2s ease; }
 
-    /* ── SEITENZÄUNE & UNTERER ZAUN ── */
-    .farm-fence-side {
+    /* ── ZONEN-TRENNZAUN ── */
+    .zone-divider {
       position: absolute;
-      top: calc(35% - 18px);
-      bottom: 0;
-      min-height: 130%;
-      width: 14px;
-      z-index: 16;
-      pointer-events: none;
-      border-radius: 3px 3px 0 0;
-      /* Holzpfosten (oben 20px jeder 50px-Sektion) + 2 Querriegel */
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          transparent 0,        transparent 21px,
-          #6a3c1a 21px,         /* Riegel-Schatten oben */
-          #c8855a 22px,         #d4956a 23px, #d4956a 25px,
-          #8e5a32 26px,         /* Riegel-Schatten unten */
-          transparent 27px,     transparent 37px,
-          #6a3c1a 37px,
-          #c8855a 38px,         #d4956a 39px, #d4956a 41px,
-          #8e5a32 42px,
-          transparent 43px,     transparent 50px
-        ),
-        repeating-linear-gradient(
-          to bottom,
-          #3d2008 0,            /* Pfostenkappe */
-          #8e5a32 1px,
-          #c8855a 2px,          #d4956a 7px,
-          #c8855a 14px,         #8e5a32 17px,
-          #3d2008 19px,         transparent 20px,
-          transparent 50px
-        );
-      filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.22));
-      transition: filter 2s ease;
+      left: 0; right: 0;
+      height: 20px;
+      display: flex;
+      align-items: flex-end;
+      z-index: 17;
+      transform: translateY(-18px);
     }
-    .farm-fence-left  { left: 1.5%; box-shadow:  3px 0 8px rgba(0,0,0,0.12); }
-    .farm-fence-right { right: 1.5%; box-shadow: -3px 0 8px rgba(0,0,0,0.12); }
-    .sunset-mode  .farm-fence-side { filter: sepia(0.25) saturate(0.85) drop-shadow(2px 3px 4px rgba(0,0,0,0.22)); }
-    .sunrise-mode .farm-fence-side { filter: saturate(0.9) brightness(0.95) drop-shadow(2px 3px 4px rgba(0,0,0,0.22)); }
+    .zone-label {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #d4a061 0%, #e8b87a 50%, #d4a061 100%);
+      border: 2px solid #8e5a32;
+      border-radius: 10px;
+      padding: 3px 14px 3px 10px;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #5a2d3a;
+      white-space: nowrap;
+      z-index: 2;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.3);
+      letter-spacing: 0.3px;
+    }
+    .night-mode .zone-label { filter: brightness(0.75); }
+    .sunset-mode .zone-label, .sunrise-mode .zone-label { filter: sepia(0.2); }
 
     /* ── BACKHAUS UPGRADE ── */
     .bakery-building { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -1097,10 +1086,8 @@
   <div class="bush bush-3"></div>
 
   <div class="fence" id="fenceContainer"></div>
-  <div class="fence" id="fenceBottom" style="top: 150%; transform: translateY(-18px);"></div>
-  <div class="farm-fence-side farm-fence-left"></div>
-  <div class="farm-fence-side farm-fence-right"></div>
-  <div class="ground-area"></div>
+  <div id="zoneDividers"></div>
+  <div class="ground-area" id="groundArea"></div>
   
   <div class="grass-tuft" style="top: 42%; left: 15%;"><div class="grass-tuft-center"></div></div>
   <div class="grass-tuft" style="top: 48%; left: 85%; animation-delay: -1s;"><div class="grass-tuft-center"></div></div>
@@ -1659,9 +1646,12 @@
           else if (Array.isArray(rawAnimals)) { animals = rawAnimals.filter(a => a !== null && typeof a === 'object'); } 
           else { animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object'); }
           animals.forEach(a => {
-            if (a.y < 72) a.y = 72 + Math.random() * 20;
-            if (!a.x || a.x < 8) a.x = 8 + Math.random() * 10;
-            if (a.x > 92) a.x = 82 + Math.random() * 10;
+            const zb = getSpeciesZoneBounds(a.species);
+            if (a.y < zb.yMin || a.y > zb.yMax) {
+              a.y = zb.yMin + Math.random() * (zb.yMax - zb.yMin);
+            }
+            if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
+            if (a.x > 95) a.x = 80 + Math.random() * 15;
           });
           
           const dataOven = data.oven;
@@ -2022,6 +2012,67 @@
     </div>`;
   }
 
+  // ── TIERARTEN-ZONEN ──
+  const SPECIES_ORDER = ['cow', 'pig', 'sheep', 'goat', 'rabbit', 'duck', 'chicken', 'cat'];
+  const SPECIES_NAMES = { cow:'Kühe', pig:'Schweine', sheep:'Schafe', goat:'Ziegen', rabbit:'Hasen', duck:'Enten', chicken:'Hühner', cat:'Katzen' };
+  const SPECIES_EMOJI = { cow:'🐄', pig:'🐷', sheep:'🐑', goat:'🐐', rabbit:'🐰', duck:'🦆', chicken:'🐔', cat:'🐱' };
+  const ZONE_HEIGHT = 48;   // % pro Zone (relativ zur farm-world Höhe)
+  const ZONE_START  = 72;   // % – unterhalb der Felder
+
+  function getPresentSpecies() {
+    const present = [...new Set(animals.map(a => a.species))];
+    return SPECIES_ORDER.filter(s => present.includes(s));
+  }
+
+  function getSpeciesZoneBounds(species) {
+    const list = getPresentSpecies();
+    const idx  = list.indexOf(species);
+    if (idx === -1) return { yMin: ZONE_START, yMax: ZONE_START + ZONE_HEIGHT - 2 };
+    return {
+      yMin: ZONE_START + idx * ZONE_HEIGHT + 2,
+      yMax: ZONE_START + (idx + 1) * ZONE_HEIGHT - 2
+    };
+  }
+
+  function buildFenceRow() {
+    let s = '';
+    for (let i = 0; i < window.innerWidth; i += 40) {
+      s += `<div style="position:relative;width:40px;height:20px;display:flex;align-items:flex-end;flex-shrink:0;">` +
+           `<div class="fence-post" style="position:absolute;left:0;bottom:0;"></div>` +
+           `<div style="position:absolute;left:3px;right:0;bottom:12px;height:3px;background:#d4956a;border-radius:2px;"></div>` +
+           `<div style="position:absolute;left:3px;right:0;bottom:4px;height:3px;background:#d4956a;border-radius:2px;"></div>` +
+           `</div>`;
+    }
+    return s;
+  }
+
+  function renderZoneDividers() {
+    const container = document.getElementById('zoneDividers');
+    const ground    = document.getElementById('groundArea');
+    if (!container) return;
+    const list = getPresentSpecies();
+    if (!list.length) { container.innerHTML = ''; return; }
+
+    const totalBottom = ZONE_START + list.length * ZONE_HEIGHT + 10;
+    if (ground) ground.style.minHeight = totalBottom + '%';
+
+    let html = '';
+    list.forEach((species, idx) => {
+      const yTop = ZONE_START + idx * ZONE_HEIGHT;
+      const emoji = SPECIES_EMOJI[species] || '🐾';
+      const name  = SPECIES_NAMES[species]  || species;
+      html += `<div class="zone-divider" style="top:${yTop}%">` +
+              `<div style="display:flex;align-items:flex-end;width:100%;">${buildFenceRow()}</div>` +
+              `<div class="zone-label">${emoji} ${name}</div>` +
+              `</div>`;
+    });
+    // Abschluss-Zaun ganz unten
+    html += `<div class="zone-divider" style="top:${ZONE_START + list.length * ZONE_HEIGHT}%">` +
+            `<div style="display:flex;align-items:flex-end;width:100%;">${buildFenceRow()}</div>` +
+            `</div>`;
+    container.innerHTML = html;
+  }
+
   function updateFarmDOM() {
     const fence = document.getElementById('fenceContainer');
     if (fence.innerHTML === '') {
@@ -2029,12 +2080,7 @@
       for (let i = 0; i < window.innerWidth; i += 40) { fenceStr += `<div style="position:relative; width:40px; height:20px; display:flex; align-items:flex-end; flex-shrink:0;"><div class="fence-post" style="position:absolute; left:0; bottom:0;"></div><div style="position:absolute; left:3px; right:0; bottom:12px; height:3px; background:#d4956a; border-radius:2px;"></div><div style="position:absolute; left:3px; right:0; bottom:4px; height:3px; background:#d4956a; border-radius:2px;"></div></div>`; }
       fence.innerHTML = fenceStr;
     }
-    const fenceBottom = document.getElementById('fenceBottom');
-    if (fenceBottom && fenceBottom.innerHTML === '') {
-      let fb = '';
-      for (let i = 0; i < window.innerWidth; i += 40) { fb += `<div style="position:relative; width:40px; height:20px; display:flex; align-items:flex-end; flex-shrink:0;"><div class="fence-post" style="position:absolute; left:0; bottom:0;"></div><div style="position:absolute; left:3px; right:0; bottom:12px; height:3px; background:#d4956a; border-radius:2px;"></div><div style="position:absolute; left:3px; right:0; bottom:4px; height:3px; background:#d4956a; border-radius:2px;"></div></div>`; }
-      fenceBottom.innerHTML = fb;
-    }
+    renderZoneDividers();
 
     const hiveEl = document.getElementById('beehiveBuilding');
     if (beehive.level > 0) {
@@ -2487,12 +2533,13 @@
         let s = (85 + Math.random() * 30) / 100;     
         let b = (90 + Math.random() * 20) / 100;     
 
-        let newAnimal = { 
-            id: Date.now(), 
-            name: nameInput, 
-            species: itemToBuy.id, 
+        const spawnZone = getSpeciesZoneBounds(itemToBuy.id);
+        let newAnimal = {
+            id: Date.now(),
+            name: nameInput,
+            species: itemToBuy.id,
             x: 12 + Math.random() * 76,
-            y: 80 + Math.random() * 50, 
+            y: spawnZone.yMin + Math.random() * (spawnZone.yMax - spawnZone.yMin), 
             isWalking: false, 
             facingLeft: false, 
             isProducing: false, 
@@ -3501,10 +3548,11 @@
           newX = a.x + (Math.random() - 0.5) * 25; 
           newY = a.y + (Math.random() - 0.5) * 20; 
           
-          newX = Math.max(8, Math.min(92, newX));
-          newY = Math.max(72, Math.min(148, newY));
-          
-          let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); 
+          const zb = getSpeciesZoneBounds(a.species);
+          newX = Math.max(5, Math.min(95, newX));
+          newY = Math.max(zb.yMin, Math.min(zb.yMax, newY));
+
+          let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68);
           let inBakery = (newX > 38 && newX < 62 && newY > 22 && newY < 45);
           let inWeaving = (newX > 58 && newX < 82 && newY > 20 && newY < 48);
           let inBeehive = (newX > 18 && newX < 32 && newY > 25 && newY < 40);
@@ -3542,8 +3590,8 @@
   window.addEventListener('resize', () => {
       if(currentUser) {
           document.getElementById('fenceContainer').innerHTML = '';
-          const fb = document.getElementById('fenceBottom');
-          if (fb) fb.innerHTML = '';
+          const zd = document.getElementById('zoneDividers');
+          if (zd) zd.innerHTML = '';
           updateFarmDOM();
       }
   });
