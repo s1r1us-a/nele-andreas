@@ -790,8 +790,8 @@
             layer.addEventListener("pointerover", e => {
                 const g = e.target.closest('g[data-added-by]');
                 if (!g) { tooltip.style.display='none'; return; }
-                document.getElementById('tt-name').textContent = g.dataset.itemName || '';
-                const by = g.dataset.addedBy || '';
+                document.getElementById('tt-name').textContent = g.getAttribute('data-item-name') || '';
+                const by = g.getAttribute('data-added-by') || '';
                 document.getElementById('tt-by').innerHTML = by ? `💙 Hinzugefügt von <span>${by}</span>${by===currentUser?' (du)':''}` : '';
                 tooltip.style.display = 'block';
             });
@@ -920,9 +920,9 @@
         const type = fishTypes.find(f => f.id===typeId); if (!type) return;
         const svg = createFishSVG(typeId);
         svg.style.display='block';
-        svg.dataset.addedBy = addedBy||'';
-        svg.dataset.firebaseKey = firebaseKey||'';
-        svg.dataset.itemName = itemName||type.name;
+        svg.setAttribute('data-added-by',    addedBy||'');
+        svg.setAttribute('data-firebase-key', firebaseKey||'');
+        svg.setAttribute('data-item-name',   itemName||type.name);
         document.getElementById("fish-layer").appendChild(svg);
         fishObjects.push({ id:'fish_'+firebaseKey, typeId, x, y, size:type.size, agility:type.agility, vx:(Math.random()-0.5)*type.baseSpeed, vy:(Math.random()-0.5)*type.baseSpeed*0.5, targetX:x, targetY:y, facing:1, svg, firebaseKey, addedBy });
         updateCounts();
@@ -934,9 +934,9 @@
         const def = all.find(t => t.id===typeId);
         const size = def?.size||3;
         const svg = label==='Flora' ? createPlantSVG(typeId) : createDecoSVG(typeId);
-        svg.dataset.addedBy = addedBy||'';
-        svg.dataset.firebaseKey = firebaseKey||'';
-        svg.dataset.itemName = itemName||typeId;
+        svg.setAttribute('data-added-by',    addedBy||'');
+        svg.setAttribute('data-firebase-key', firebaseKey||'');
+        svg.setAttribute('data-item-name',   itemName||typeId);
         svg.setAttribute("transform", `translate(${x},${cy}) scale(${size})`);
         svg.style.display='block';
         document.getElementById(label==='Flora'?'plant-layer':'deco-layer').appendChild(svg);
@@ -947,8 +947,8 @@
     function initCoinDisplay() {
         onValue(ref(db, `coins/${currentUserKey}`), snap => {
             coinsBalance = snap.val()||0;
-            const el = document.getElementById('aquarium-coin-count');
-            if (el) el.textContent = coinsBalance.toLocaleString("de-DE");
+            const coinEl = document.getElementById('aquarium-coin-count');
+            if (coinEl) coinEl.textContent = coinsBalance.toLocaleString("de-DE");
         });
     }
 
