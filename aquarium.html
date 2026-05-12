@@ -6,7 +6,6 @@
     <title>Unser Aquarium 🐠</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* --- MODERNE BASIS & ATMOSPHÄRE --- */
         :root {
             --bg-deep: #030b17; --bg-shallow: #0d2238; --aqua-primary: #00ffcc;
             --glass: rgba(16, 42, 69, 0.75); --border-glass: rgba(0, 255, 204, 0.25);
@@ -15,14 +14,11 @@
             --font-stack: 'Quicksand', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             --gold: #d4a061;
         }
-
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
             background-color: var(--bg-deep); color: var(--text-main); font-family: var(--font-stack);
             user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none;
         }
-
-        /* --- QUERFORMAT-ZWANG --- */
         #orientation-warning {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #030b17; color: var(--aqua-primary); z-index: 99999;
@@ -33,13 +29,10 @@
         #orientation-warning p { color: var(--text-main); font-size: 1.2em; max-width: 80%; }
         .rotate-icon { font-size: 70px; margin-bottom: 20px; animation: rotatePhone 2s ease-in-out infinite; }
         @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(-90deg); } }
-
         @media screen and (orientation: portrait) and (max-width: 1024px) {
             #orientation-warning { display: flex; }
             #aquarium-root { display: none !important; }
         }
-
-        /* --- AUTH OVERLAY --- */
         #auth-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #030b17; z-index: 9999;
@@ -49,30 +42,26 @@
         #auth-overlay h2 { font-family: 'Dancing Script', cursive; font-size: 2.5em; color: var(--aqua-primary); margin: 0; }
         #auth-overlay p { color: var(--text-dim); font-size: 1.1em; margin: 0; }
         .auth-back-btn {
-            display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, var(--aqua-primary), #00c8a0);
-            color: #030b17; border-radius: 50px; font-weight: 700; font-size: 1em; text-decoration: none;
-            box-shadow: 0 4px 20px rgba(0,255,204,0.4); transition: transform 0.2s ease;
+            display: inline-block; padding: 14px 32px;
+            background: linear-gradient(135deg, var(--aqua-primary), #00c8a0);
+            color: #030b17; border-radius: 50px; font-weight: 700; font-size: 1em;
+            text-decoration: none; box-shadow: 0 4px 20px rgba(0,255,204,0.4); transition: transform 0.2s ease;
         }
         .auth-back-btn:hover { transform: scale(1.05) translateY(-2px); }
-
-        /* --- AQUARIUM --- */
         #aquarium-root {
             width: 100vw; height: 100vh; position: relative;
             background: radial-gradient(circle at 50% -10%, #153c60 0%, #0a1c30 50%, #030b17 100%);
             cursor: none; display: block;
         }
         #aquarium-svg { width: 100%; height: 100%; display: block; }
-
         #custom-cursor {
             width: 15px; height: 15px; background: var(--aqua-primary); border-radius: 50%;
             position: absolute; pointer-events: none; transform: translate(-50%, -50%); z-index: 1000;
             mix-blend-mode: screen; transition: width 0.2s, height 0.2s, background-color 0.2s;
             box-shadow: 0 0 20px var(--aqua-primary), 0 0 40px var(--aqua-primary);
         }
-        #custom-cursor.active { width: 35px; height: 35px; background: rgba(255, 255, 255, 0.4); }
+        #custom-cursor.active { width: 35px; height: 35px; background: rgba(255,255,255,0.4); }
         #custom-cursor.sell-mode { background: #ff4757; box-shadow: 0 0 20px #ff4757; }
-
-        /* --- UI MENÜ --- */
         #ui-container {
             position: absolute; top: 50%; right: 20px; transform: translateY(-50%) translateX(120%);
             width: 360px; max-width: 85vw; max-height: 85vh; background: var(--glass);
@@ -81,7 +70,6 @@
             display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 100;
         }
         #ui-container.visible { transform: translateY(-50%) translateX(0%); }
-
         #ui-toggle {
             position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; background: var(--glass);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-glass);
@@ -89,12 +77,11 @@
             box-shadow: var(--shadow-lush); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
         }
         #ui-toggle.menu-open { color: #fff; transform: rotate(-90deg); }
-
         .shop-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border-glass); }
         .shop-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .shop-back-btn {
-            display: flex; align-items: center; gap: 5px; color: var(--text-dim); text-decoration: none;
-            font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; padding: 4px 0;
+            display: flex; align-items: center; gap: 5px; color: var(--text-dim);
+            text-decoration: none; font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; padding: 4px 0;
         }
         .shop-back-btn:hover { color: var(--aqua-primary); }
         .shop-coin-display {
@@ -105,49 +92,34 @@
         .shop-header h3 { margin: 0 0 4px 0; font-family: 'Dancing Script', cursive; font-size: 1.6em; font-weight: 700; text-shadow: 0 2px 10px rgba(0,255,204,0.3); text-align: center; }
         #aquarium-user-info { font-size: 0.75em; color: var(--text-dim); text-align: center; }
         #aquarium-user-info span { color: var(--aqua-primary); font-weight: 600; }
-
         .shop-content { overflow-y: auto; padding: 15px; }
         .shop-content::-webkit-scrollbar { width: 4px; }
         .shop-content::-webkit-scrollbar-thumb { background-color: var(--aqua-primary); border-radius: 2px; }
-
-        .category-title { font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; color: var(--aqua-primary); margin: 20px 0 10px 5px; font-size: 0.8em; border-bottom: 1px solid rgba(0,255,204,0.1); padding-bottom: 5px; }
-
+        .category-title {
+            font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; color: var(--aqua-primary);
+            margin: 20px 0 10px 5px; font-size: 0.8em; border-bottom: 1px solid rgba(0,255,204,0.1); padding-bottom: 5px;
+        }
         .shop-item {
             cursor: pointer; display: flex; align-items: center; padding: 10px; margin-bottom: 8px;
             background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
             border-radius: 16px; border: 1px solid transparent; transition: all 0.2s;
         }
-        @media (hover: hover) { .shop-item:hover { background: rgba(0, 255, 204, 0.08); border: 1px solid var(--border-glass); transform: translateX(5px); } }
-        .shop-item:active { transform: scale(0.95); background: rgba(0, 255, 204, 0.2); }
-
-        .item-icon-container { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; margin-right: 15px; flex-shrink: 0; }
+        @media (hover: hover) { .shop-item:hover { background: rgba(0,255,204,0.08); border: 1px solid var(--border-glass); transform: translateX(5px); } }
+        .shop-item:active { transform: scale(0.95); background: rgba(0,255,204,0.2); }
+        .item-icon-container { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(0,0,0,0.3); border-radius: 12px; margin-right: 15px; flex-shrink: 0; }
         .item-info { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
         .item-name { font-size: 1em; font-weight: 600; }
         .item-type { font-size: 0.75em; color: var(--text-dim); margin-top: 1px; }
-        .item-price {
-            display: inline-block; font-size: 0.7em; font-weight: 700; padding: 2px 8px;
-            border-radius: 10px; margin-top: 3px; width: fit-content;
-            background: rgba(212,160,97,0.15); color: var(--gold); border: 1px solid rgba(212,160,97,0.3);
-        }
+        .item-price { display: inline-block; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 3px; width: fit-content; background: rgba(212,160,97,0.15); color: var(--gold); border: 1px solid rgba(212,160,97,0.3); }
         .item-price-free { background: rgba(0,255,204,0.1); color: var(--aqua-primary); border-color: rgba(0,255,204,0.2); }
-
         #sell-mode-banner {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 71, 87, 0.9); backdrop-filter: blur(10px); padding: 10px 20px;
-            border-radius: 20px; font-weight: bold; font-size: 1em; box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4);
+            background: rgba(255,71,87,0.9); backdrop-filter: blur(10px); padding: 10px 20px;
+            border-radius: 20px; font-weight: bold; font-size: 1em; box-shadow: 0 5px 20px rgba(255,71,87,0.4);
             display: none; z-index: 1000; pointer-events: none; width: max-content; max-width: 90vw; text-align: center;
         }
-
         .resource-display { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 10px; z-index: 90; flex-wrap: wrap; }
-        .resource {
-            background: var(--glass); backdrop-filter: blur(5px); padding: 8px 15px;
-            border-radius: 12px; border: 1px solid var(--border-glass); font-weight: 600;
-            font-size: 0.9em; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-family: 'Quicksand', sans-serif;
-        }
-
-        .placement-preview { opacity: 0.7; pointer-events: none; filter: drop-shadow(0 0 15px var(--aqua-primary)); }
-
-        /* --- TOOLTIP --- */
+        .resource { background: var(--glass); backdrop-filter: blur(5px); padding: 8px 15px; border-radius: 12px; border: 1px solid var(--border-glass); font-weight: 600; font-size: 0.9em; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-family: 'Quicksand', sans-serif; }
         #fish-tooltip {
             position: fixed; display: none; pointer-events: none; z-index: 500;
             background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass);
@@ -157,15 +129,15 @@
         #fish-tooltip .tt-name { font-size: 1em; font-weight: 700; color: var(--aqua-primary); }
         #fish-tooltip .tt-by { font-size: 0.8em; color: var(--text-dim); margin-top: 3px; }
         #fish-tooltip .tt-by span { color: var(--text-main); font-weight: 600; }
-
-        @keyframes bubbleRise {
-            0% { transform: translateY(0) scale(1); opacity: 0; }
-            20% { opacity: 0.6; } 80% { opacity: 0.4; }
-            100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
-        }
-        .bubble { fill: rgba(255, 255, 255, 0.4); opacity: 0; animation: bubbleRise 15s ease-in infinite; }
+        .placement-preview { opacity: 0.7; pointer-events: none; filter: drop-shadow(0 0 15px var(--aqua-primary)); }
+        @keyframes bubbleRise { 0% { transform: translateY(0) scale(1); opacity: 0; } 20% { opacity: 0.6; } 80% { opacity: 0.4; } 100% { transform: translateY(-110vh) scale(1.5); opacity: 0; } }
+        .bubble { fill: rgba(255,255,255,0.4); opacity: 0; animation: bubbleRise 15s ease-in infinite; }
         @keyframes plantSway { 0%, 100% { transform: skewX(0deg); } 50% { transform: skewX(4deg); } }
         @keyframes glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.5) drop-shadow(0 0 10px #f1c40f); } }
+        @keyframes jellyfishPulse { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.88); } }
+        @keyframes coralGlow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3) drop-shadow(0 0 10px rgba(255,80,80,0.7)); } }
+        @keyframes mossGlow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.2) drop-shadow(0 0 10px rgba(50,200,50,0.5)); } }
+        .jellyfish-bell { animation: jellyfishPulse 3s ease-in-out infinite; transform-origin: 0px -20px; }
     </style>
 </head>
 <body>
@@ -195,42 +167,62 @@
     <svg id="aquarium-svg" viewBox="0 0 5120 2880" preserveAspectRatio="xMidYMid slice">
         <defs>
             <linearGradient id="lightRay" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="rgba(0, 255, 204, 0.12)" />
-                <stop offset="100%" stop-color="rgba(0, 255, 204, 0)" />
+                <stop offset="0%" stop-color="rgba(0,255,204,0.12)"/> <stop offset="100%" stop-color="rgba(0,255,204,0)"/>
             </linearGradient>
             <linearGradient id="sandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#c19a6b" /> <stop offset="100%" stop-color="#6e5537" />
+                <stop offset="0%" stop-color="#c19a6b"/> <stop offset="100%" stop-color="#6e5537"/>
             </linearGradient>
             <linearGradient id="kelpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#1a6b3c" /> <stop offset="100%" stop-color="#2ecc71" />
+                <stop offset="0%" stop-color="#1a6b3c"/> <stop offset="100%" stop-color="#2ecc71"/>
             </linearGradient>
             <linearGradient id="redLotusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#c0392b" /> <stop offset="100%" stop-color="#8e44ad" />
+                <stop offset="0%" stop-color="#c0392b"/> <stop offset="100%" stop-color="#8e44ad"/>
             </linearGradient>
             <linearGradient id="tetraGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#111" /> <stop offset="40%" stop-color="#00ffff" />
-                <stop offset="60%" stop-color="#ff0044" /> <stop offset="100%" stop-color="#fff" />
+                <stop offset="0%" stop-color="#111"/> <stop offset="40%" stop-color="#00ffff"/> <stop offset="60%" stop-color="#ff0044"/> <stop offset="100%" stop-color="#fff"/>
             </linearGradient>
             <linearGradient id="angelfishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffffff" /> <stop offset="50%" stop-color="#a0b4c4" /> <stop offset="100%" stop-color="#4a5d6e" />
+                <stop offset="0%" stop-color="#ffffff"/> <stop offset="50%" stop-color="#a0b4c4"/> <stop offset="100%" stop-color="#4a5d6e"/>
             </linearGradient>
             <linearGradient id="bettaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#0984e3" /> <stop offset="50%" stop-color="#6c5ce7" /> <stop offset="100%" stop-color="#d63031" />
+                <stop offset="0%" stop-color="#0984e3"/> <stop offset="50%" stop-color="#6c5ce7"/> <stop offset="100%" stop-color="#d63031"/>
             </linearGradient>
             <linearGradient id="discusGrad" x1="50%" y1="50%" r="50%">
-                <stop offset="0%" stop-color="#f1c40f" /> <stop offset="70%" stop-color="#e67e22" /> <stop offset="100%" stop-color="#2980b9" />
+                <stop offset="0%" stop-color="#f1c40f"/> <stop offset="70%" stop-color="#e67e22"/> <stop offset="100%" stop-color="#2980b9"/>
             </linearGradient>
             <linearGradient id="sharkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#95a5a6" /> <stop offset="100%" stop-color="#bdc3c7" />
+                <stop offset="0%" stop-color="#95a5a6"/> <stop offset="100%" stop-color="#bdc3c7"/>
             </linearGradient>
             <linearGradient id="woodGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#5c3a21" /> <stop offset="100%" stop-color="#3e2312" />
+                <stop offset="0%" stop-color="#5c3a21"/> <stop offset="100%" stop-color="#3e2312"/>
             </linearGradient>
             <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#f1c40f" /> <stop offset="50%" stop-color="#f39c12" /> <stop offset="100%" stop-color="#f1c40f" />
+                <stop offset="0%" stop-color="#f1c40f"/> <stop offset="50%" stop-color="#f39c12"/> <stop offset="100%" stop-color="#f1c40f"/>
             </linearGradient>
             <linearGradient id="vaseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#d35400" /> <stop offset="100%" stop-color="#a04000" />
+                <stop offset="0%" stop-color="#d35400"/> <stop offset="100%" stop-color="#a04000"/>
+            </linearGradient>
+            <!-- Neue Gradients -->
+            <linearGradient id="goldFishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff8c00"/> <stop offset="50%" stop-color="#ffd700"/> <stop offset="100%" stop-color="#e65c00"/>
+            </linearGradient>
+            <linearGradient id="jellyfishGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="rgba(180,255,255,0.9)"/> <stop offset="100%" stop-color="rgba(80,180,255,0.1)"/>
+            </linearGradient>
+            <linearGradient id="axolotlGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#ffb6c1"/> <stop offset="50%" stop-color="#ff9eb5"/> <stop offset="100%" stop-color="#ffe4e8"/>
+            </linearGradient>
+            <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff6b6b"/> <stop offset="50%" stop-color="#ff8e53"/> <stop offset="100%" stop-color="#ff4757"/>
+            </linearGradient>
+            <linearGradient id="seahorseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#00b894"/> <stop offset="100%" stop-color="#006d5b"/>
+            </linearGradient>
+            <linearGradient id="shellGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f4a261"/> <stop offset="100%" stop-color="#e76f51"/>
+            </linearGradient>
+            <linearGradient id="amazonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4caf50"/> <stop offset="100%" stop-color="#2e7d32"/>
             </linearGradient>
             <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
                 <feDropShadow dx="10" dy="25" stdDeviation="12" flood-color="#000" flood-opacity="0.7"/>
@@ -250,8 +242,7 @@
             <div class="shop-header-top">
                 <a href="index.html" class="shop-back-btn">← Zurück</a>
                 <div class="shop-coin-display">
-                    <span>🪙</span>
-                    <span class="coin-val" id="aquarium-coin-count">–</span>
+                    <span>🪙</span><span class="coin-val" id="aquarium-coin-count">–</span>
                 </div>
             </div>
             <h3>🌊 Unser Aquarium</h3>
@@ -267,24 +258,28 @@
                 <div class="item-icon-container">🗑️</div>
                 <div class="item-info"><span class="item-name">Pflege & Entfernen</span><span class="item-type">Objekte löschen</span></div>
             </div>
-
-            <div class="category-title">Bewohner</div>
-            <div id="shop-fish"></div>
-            <div class="category-title">Flora & Deko</div>
+            <div class="category-title">Schwarmfische</div>
+            <div id="shop-schwarm"></div>
+            <div class="category-title">Besondere Bewohner</div>
+            <div id="shop-special"></div>
+            <div class="category-title">Exoten</div>
+            <div id="shop-exotic"></div>
+            <div class="category-title">Flora</div>
             <div id="shop-plants"></div>
+            <div class="category-title">Dekorationen</div>
             <div id="shop-deco"></div>
         </div>
     </div>
 
     <div class="resource-display">
-        <div class="resource" id="count-fish">0 Fische</div>
+        <div class="resource" id="count-fish">0 Bewohner</div>
         <div class="resource" id="count-plants">0 Objekte</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, push, remove, onChildAdded, onChildRemoved, runTransaction, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, push, remove, onChildAdded, onChildRemoved, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const app = initializeApp({
@@ -297,446 +292,517 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    /* --- ZUSTAND --- */
-    let currentUser = null;
-    let currentUserKey = null;
-    let coinsBalance = 0;
+    let currentUser = null, currentUserKey = null, coinsBalance = 0;
+    const W = 5120, H = 2880, svgNS = "http://www.w3.org/2000/svg";
+    let selectedItemForPlacement = null, previewObjectSVG = null, isSellMode = false;
+    let fishObjects = [], plantObjects = [], foodObjects = [];
 
-    const aquariumWidth = 5120;
-    const aquariumHeight = 2880;
-    const svgNS = "http://www.w3.org/2000/svg";
-
-    let selectedItemForPlacement = null;
-    let previewObjectSVG = null;
-    let isSellMode = false;
-    let fishObjects = [];
-    let plantObjects = [];
-    let foodObjects = [];
-
-    /* --- TYPEN MIT PREISEN (TESTPHASE: alle 0) --- */
+    /* ─── TYPEN ─────────────────────────────────────────────────────────── */
     const fishTypes = [
-        { id: 'tetra',     name: 'Neon Tetra',        icon: '🐟', baseSpeed: 4.5,  size: 1.2, agility: 0.08, type: 'Schwarmfisch', price: 0 },
-        { id: 'guppy',     name: 'Leuchtfleck-Guppy', icon: '🐠', baseSpeed: 3.75, size: 1.05,agility: 0.1,  type: 'Schwarmfisch', price: 0 },
-        { id: 'clown',     name: 'Clownfisch',         icon: '🐡', baseSpeed: 3.3,  size: 1.65,agility: 0.04, type: 'Riffbewohner', price: 0 },
-        { id: 'angelfish', name: 'Kaiser-Skalar',      icon: '🎏', baseSpeed: 2.4,  size: 3.0, agility: 0.02, type: 'Majestätisch', price: 0 },
-        { id: 'puffer',    name: 'Kugelfisch',         icon: '🐡', baseSpeed: 2.1,  size: 2.1, agility: 0.03, type: 'Gemütlich',    price: 0 },
-        { id: 'discus',    name: 'Königs-Diskus',      icon: '🧿', baseSpeed: 2.25, size: 3.3, agility: 0.02, type: 'Edel',         price: 0 },
-        { id: 'betta',     name: 'Kampffisch (Betta)', icon: '🎎', baseSpeed: 2.7,  size: 2.4, agility: 0.05, type: 'Fließend',     price: 0 },
-        { id: 'shark',     name: 'Zwerg-Riffhai',      icon: '🦈', baseSpeed: 6.75, size: 4.5, agility: 0.06, type: 'Raubfisch',    price: 0 }
+        // Schwarmfische
+        { id:'tetra',     name:'Neon Tetra',         icon:'🐟', baseSpeed:4.5,  size:1.2,  agility:0.08, type:'Schwarmfisch',  price:0, group:'schwarm' },
+        { id:'guppy',     name:'Leuchtfleck-Guppy',  icon:'🐠', baseSpeed:3.75, size:1.05, agility:0.1,  type:'Schwarmfisch',  price:0, group:'schwarm' },
+        { id:'goldfish',  name:'Goldfisch',           icon:'🐟', baseSpeed:2.5,  size:2.0,  agility:0.05, type:'Klassiker',     price:0, group:'schwarm' },
+        // Besondere Bewohner
+        { id:'clown',     name:'Clownfisch',          icon:'🐡', baseSpeed:3.3,  size:1.65, agility:0.04, type:'Riffbewohner',  price:0, group:'special' },
+        { id:'angelfish', name:'Kaiser-Skalar',       icon:'🎏', baseSpeed:2.4,  size:3.0,  agility:0.02, type:'Majestätisch',  price:0, group:'special' },
+        { id:'puffer',    name:'Kugelfisch',          icon:'🐡', baseSpeed:2.1,  size:2.1,  agility:0.03, type:'Gemütlich',     price:0, group:'special' },
+        { id:'discus',    name:'Königs-Diskus',       icon:'🧿', baseSpeed:2.25, size:3.3,  agility:0.02, type:'Edel',          price:0, group:'special' },
+        { id:'betta',     name:'Kampffisch (Betta)',  icon:'🎎', baseSpeed:2.7,  size:2.4,  agility:0.05, type:'Fließend',      price:0, group:'special' },
+        { id:'shark',     name:'Zwerg-Riffhai',       icon:'🦈', baseSpeed:6.75, size:4.5,  agility:0.06, type:'Raubfisch',     price:0, group:'special' },
+        // Exoten
+        { id:'seahorse',  name:'Seepferdchen',        icon:'🐴', baseSpeed:0.6,  size:2.2,  agility:0.03, type:'Riffbewohner',  price:0, group:'exotic' },
+        { id:'jellyfish', name:'Qualle',              icon:'🪼', baseSpeed:0.4,  size:3.0,  agility:0.02, type:'Treibend',      price:0, group:'exotic' },
+        { id:'axolotl',   name:'Axolotl',             icon:'🦎', baseSpeed:1.0,  size:2.5,  agility:0.04, type:'Exotisch',      price:0, group:'exotic' },
     ];
 
     const plantTypes = [
-        { id: 'seagrass',    name: 'Rotes Tausendblatt', icon: '🌿', size: 3.0,  type: 'Vordergrund', price: 0 },
-        { id: 'anubias',     name: 'Anubias Barteri',    icon: '🌱', size: 2.7,  type: 'Mittelgrund', price: 0 },
-        { id: 'javafern',    name: 'Javafarn Busch',     icon: '☘️', size: 3.6,  type: 'Mittelgrund', price: 0 },
-        { id: 'tigerlotus',  name: 'Roter Tigerlotus',   icon: '🌺', size: 3.3,  type: 'Bodenbedecker', price: 0 },
-        { id: 'vallisneria', name: 'Vallisneria',        icon: '🌾', size: 8.0,  type: 'Hintergrund', price: 0 },
-        { id: 'kelp_forest', name: 'Riesen-Kelp',        icon: '🌲', size: 10.5, type: 'Hintergrund', price: 0 }
+        { id:'seagrass',    name:'Rotes Tausendblatt', icon:'🌿', size:3.0,  type:'Vordergrund',   price:0 },
+        { id:'anubias',     name:'Anubias Barteri',    icon:'🌱', size:2.7,  type:'Mittelgrund',   price:0 },
+        { id:'javafern',    name:'Javafarn Busch',     icon:'☘️', size:3.6,  type:'Mittelgrund',   price:0 },
+        { id:'tigerlotus',  name:'Roter Tigerlotus',   icon:'🌺', size:3.3,  type:'Bodenbedecker', price:0 },
+        { id:'vallisneria', name:'Vallisneria',        icon:'🌾', size:8.0,  type:'Hintergrund',   price:0 },
+        { id:'kelp_forest', name:'Riesen-Kelp',        icon:'🌲', size:10.5, type:'Hintergrund',   price:0 },
+        { id:'marimo',      name:'Mooskugel',          icon:'🟢', size:2.5,  type:'Bodendeko',     price:0 },
+        { id:'hornwort',    name:'Hornkraut',          icon:'🌿', size:5.0,  type:'Mittelgrund',   price:0 },
+        { id:'amazon_sword',name:'Amazonas-Schwert',   icon:'🗡️', size:4.5,  type:'Hintergrund',   price:0 },
     ];
 
     const decoTypes = [
-        { id: 'chest',   name: 'Versunkene Truhe',   icon: '🪙', size: 3.0,  type: 'Antik',     price: 0 },
-        { id: 'vase',    name: 'Griechische Amphore', icon: '🏺', size: 3.75, type: 'Antik',     price: 0 },
-        { id: 'crystal', name: 'Kristall-Grotte',    icon: '💎', size: 4.5,  type: 'Geologisch', price: 0 },
-        { id: 'anchor',  name: 'Rostiger Anker',     icon: '⚓', size: 4.2,  type: 'Maritim',   price: 0 }
+        { id:'chest',   name:'Versunkene Truhe',   icon:'🪙', size:3.0,  type:'Antik',      price:0 },
+        { id:'vase',    name:'Griechische Amphore', icon:'🏺', size:3.75, type:'Antik',      price:0 },
+        { id:'crystal', name:'Kristall-Grotte',    icon:'💎', size:4.5,  type:'Geologisch', price:0 },
+        { id:'anchor',  name:'Rostiger Anker',     icon:'⚓', size:4.2,  type:'Maritim',    price:0 },
+        { id:'coral',   name:'Bunte Koralle',      icon:'🪸', size:4.0,  type:'Riff',       price:0 },
+        { id:'temple',  name:'Tempel-Ruine',       icon:'🏛️', size:5.5,  type:'Antik',      price:0 },
+        { id:'shell',   name:'Große Muschel',      icon:'🐚', size:3.2,  type:'Maritim',    price:0 },
     ];
 
-    /* --- SVG GENERATOREN --- */
+    /* ─── SVG HELPERS ────────────────────────────────────────────────────── */
+    function el(tag, attrs) {
+        const e = document.createElementNS(svgNS, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        return e;
+    }
+
+    /* ─── FISCH SVG ──────────────────────────────────────────────────────── */
     function createFishSVG(typeId) {
         const type = fishTypes.find(f => f.id === typeId);
-        const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("class", `fish ${typeId}`);
-        const tailAnimGroup = document.createElementNS(svgNS, "g");
-        tailAnimGroup.setAttribute("class", "fish-tail");
-        const bodyGroup = document.createElementNS(svgNS, "g");
+        const group = el('g', { class: `fish ${typeId}` });
+        const tailG = el('g', { class: 'fish-tail' });
+        const bodyG = el('g', {});
 
-        let tailRot = 0; let tailOrigin = "-20px 0px";
+        let tailRot = 0, tailOrigin = "-20px 0px", animDur = Math.max(0.25, 1.0 - type.baseSpeed / 10);
+
+        // 3-layer eye helper
+        function eye(cx, cy, r) {
+            bodyG.appendChild(el('circle', { cx, cy, r,          fill:'#fff' }));
+            bodyG.appendChild(el('circle', { cx, cy, r: r*0.58,  fill:'#1a1a2e' }));
+            bodyG.appendChild(el('circle', { cx: String(+cx + r*0.22), cy: String(+cy - r*0.28), r: r*0.22, fill:'rgba(255,255,255,0.85)' }));
+        }
+        // Body highlight helper
+        function hl(d) { bodyG.appendChild(el('path', { d, fill:'rgba(255,255,255,0.18)' })); }
 
         if (typeId === 'tetra' || typeId === 'guppy') {
-            const isGuppy = typeId === 'guppy';
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", isGuppy ? "M-15,0 C-30,-20 -40,-10 -35,0 C-40,10 -30,20 -15,0" : "M-20,0 L-35,-12 C-30,-5 -30,5 -35,12 Z");
-            tail.setAttribute("fill", isGuppy ? "url(#bettaGrad)" : "#ff0044");
-            tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "path");
-            body.setAttribute("d", "M-25,0 C-15,12, 15,12, 25,0 C15,-12, -15,-12, -25,0 Z");
-            body.setAttribute("fill", isGuppy ? "#2ecc71" : "url(#tetraGrad)");
-            bodyGroup.appendChild(body);
-            if (!isGuppy) {
-                const stripe = document.createElementNS(svgNS, "path");
-                stripe.setAttribute("d", "M-20,-2 C0,-2, 15,-2, 20,-2 C15,0, 0,0, -20,0 Z");
-                stripe.setAttribute("fill", "#00ffff");
-                bodyGroup.appendChild(stripe);
-            }
-            const eye = document.createElementNS(svgNS, "circle");
-            eye.setAttribute("cx", "18"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "2"); eye.setAttribute("fill", "#000");
-            bodyGroup.appendChild(eye);
-            tailRot = isGuppy ? 15 : 12;
+            const isG = typeId === 'guppy';
+            tailG.appendChild(el('path', { d: isG ? "M-15,0 C-30,-20 -40,-10 -35,0 C-40,10 -30,20 -15,0" : "M-20,0 L-35,-12 C-30,-5 -30,5 -35,12 Z", fill: isG ? "url(#bettaGrad)" : "#ff0044" }));
+            bodyG.appendChild(el('path', { d:"M-25,0 C-15,12 15,12 25,0 C15,-12 -15,-12 -25,0 Z", fill: isG ? "#2ecc71" : "url(#tetraGrad)" }));
+            if (!isG) bodyG.appendChild(el('path', { d:"M-20,-2 C0,-2 15,-2 20,-2 C15,0 0,0 -20,0 Z", fill:"#00ffff" }));
+            hl("M-15,-8 C0,-11 15,-8 20,-4 C14,-6 0,-9 -15,-8 Z");
+            eye("18", "-3", 2.5);
+            tailRot = isG ? 15 : 12;
+
+        } else if (typeId === 'goldfish') {
+            tailG.appendChild(el('path', { d:"M-20,0 C-32,-22 -44,-16 -40,-5 C-37,-1 -28,-1 -20,0 Z", fill:"url(#goldFishGrad)" }));
+            tailG.appendChild(el('path', { d:"M-20,0 C-32,22 -44,16 -40,5 C-37,1 -28,1 -20,0 Z",  fill:"url(#goldFishGrad)" }));
+            bodyG.appendChild(el('ellipse', { cx:"2", cy:"0", rx:"22", ry:"15", fill:"url(#goldFishGrad)" }));
+            bodyG.appendChild(el('path', { d:"M-4,-15 C1,-24 12,-22 13,-15", fill:"url(#goldFishGrad)", stroke:"#e65c00", "stroke-width":"0.5" }));
+            hl("M-5,-10 C5,-13 16,-10 20,-5 C14,-7 4,-10 -5,-10 Z");
+            eye("16", "-2", 3.5);
+            tailRot = 18; tailOrigin = "-20px 0px"; animDur = 0.65;
+
         } else if (typeId === 'clown') {
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", "M-25,0 L-40,-15 C-35,0 -35,0 -40,15 Z");
-            tail.setAttribute("fill", "#ff6600"); tail.setAttribute("stroke", "#000"); tail.setAttribute("stroke-width", "2");
-            tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "path");
-            body.setAttribute("d", "M-30,0 C-20,22, 20,22, 30,0 C20,-22, -20,-22, -30,0 Z");
-            body.setAttribute("fill", "#ff6600"); body.setAttribute("stroke", "#000");
-            bodyGroup.appendChild(body);
-            const band = document.createElementNS(svgNS, "path");
-            band.setAttribute("d", "M10,-17 C15,-5, 15,5, 10,17 L18,15 C20,5, 20,-5, 18,-15 Z");
-            band.setAttribute("fill", "#fff"); band.setAttribute("stroke", "#000");
-            bodyGroup.appendChild(band);
-            const eye = document.createElementNS(svgNS, "circle");
-            eye.setAttribute("cx", "20"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "2"); eye.setAttribute("fill", "#000");
-            bodyGroup.appendChild(eye);
+            tailG.appendChild(el('path', { d:"M-25,0 L-40,-15 C-35,0 -35,0 -40,15 Z", fill:"#ff6600", stroke:"#000", "stroke-width":"2" }));
+            bodyG.appendChild(el('path', { d:"M-30,0 C-20,22 20,22 30,0 C20,-22 -20,-22 -30,0 Z", fill:"#ff6600", stroke:"#000" }));
+            bodyG.appendChild(el('path', { d:"M10,-17 C15,-5 15,5 10,17 L18,15 C20,5 20,-5 18,-15 Z", fill:"#fff", stroke:"#000" }));
+            bodyG.appendChild(el('path', { d:"M-15,-14 C-18,-5 -18,5 -15,14 L-8,12 C-10,5 -10,-5 -8,-12 Z", fill:"#fff", stroke:"#000" }));
+            hl("M-10,-18 C5,-22 20,-18 25,-10 C18,-14 3,-18 -10,-18 Z");
+            eye("20", "-5", 3);
             tailRot = 8;
+
         } else if (typeId === 'angelfish') {
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", "M-10,0 L-35,-25 C-25,-10 -25,10 -35,25 Z");
-            tail.setAttribute("fill", "url(#angelfishGrad)");
-            tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "path");
-            body.setAttribute("d", "M25,0 L-5,-50 L-15,0 L-5,50 Z");
-            body.setAttribute("fill", "url(#angelfishGrad)");
-            bodyGroup.appendChild(body);
-            const eye = document.createElementNS(svgNS, "circle");
-            eye.setAttribute("cx", "15"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "2.5"); eye.setAttribute("fill", "#000");
-            bodyGroup.appendChild(eye);
+            tailG.appendChild(el('path', { d:"M-10,0 L-35,-25 C-25,-10 -25,10 -35,25 Z", fill:"url(#angelfishGrad)" }));
+            bodyG.appendChild(el('path', { d:"M25,0 L-5,-50 L-15,0 L-5,50 Z", fill:"url(#angelfishGrad)" }));
+            bodyG.appendChild(el('path', { d:"M5,-48 L8,-20 L12,0", stroke:"rgba(0,0,0,0.2)", "stroke-width":"2", fill:"none" }));
+            hl("M15,-5 C20,-15 22,-30 18,-40 C20,-30 22,-15 20,-5 Z");
+            eye("15", "-5", 3);
             tailRot = 6; tailOrigin = "-10px 0px";
+
         } else if (typeId === 'betta') {
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", "M-15,0 C-40,-40 -60,-20 -40,0 C-60,20 -40,40 -15,0 Z");
-            tail.setAttribute("fill", "url(#bettaGrad)"); tail.setAttribute("opacity", "0.9");
-            tailAnimGroup.appendChild(tail);
-            const dorsal = document.createElementNS(svgNS, "path");
-            dorsal.setAttribute("d", "M-10,-10 C-30,-30 0,-40 10,-15 Z");
-            dorsal.setAttribute("fill", "url(#bettaGrad)");
-            bodyGroup.appendChild(dorsal);
-            const body = document.createElementNS(svgNS, "path");
-            body.setAttribute("d", "M-20,0 C-10,15, 15,10, 25,0 C15,-10, -10,-15, -20,0 Z");
-            body.setAttribute("fill", "#2c3e50");
-            bodyGroup.appendChild(body);
-            const eye = document.createElementNS(svgNS, "circle");
-            eye.setAttribute("cx", "18"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "1.5"); eye.setAttribute("fill", "#fff");
-            bodyGroup.appendChild(eye);
-            tailRot = 10;
+            // 3 layers of tail for dramatic fins
+            tailG.appendChild(el('path', { d:"M-15,0 C-45,-48 -68,-24 -45,0 C-68,24 -45,48 -15,0 Z", fill:"url(#bettaGrad)", opacity:"0.35" }));
+            tailG.appendChild(el('path', { d:"M-15,0 C-40,-40 -62,-20 -40,0 C-62,20 -40,40 -15,0 Z",  fill:"url(#bettaGrad)", opacity:"0.6" }));
+            tailG.appendChild(el('path', { d:"M-15,0 C-35,-30 -55,-15 -36,0 C-55,15 -35,30 -15,0 Z",  fill:"url(#bettaGrad)", opacity:"0.9" }));
+            bodyG.appendChild(el('path', { d:"M-10,-10 C-30,-30 0,-40 10,-15 Z", fill:"url(#bettaGrad)" }));
+            bodyG.appendChild(el('path', { d:"M-10,10  C-30,30  0,40  10,15  Z", fill:"url(#bettaGrad)", opacity:"0.7" }));
+            bodyG.appendChild(el('path', { d:"M-20,0 C-10,15 15,10 25,0 C15,-10 -10,-15 -20,0 Z", fill:"#2c3e50" }));
+            hl("M-10,-8 C2,-11 16,-8 22,-3 C15,-5 2,-9 -10,-8 Z");
+            eye("18", "-3", 2);
+            tailRot = 12;
+
         } else if (typeId === 'discus') {
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", "M-25,0 L-40,-15 L-40,15 Z");
-            tail.setAttribute("fill", "#2980b9");
-            tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "circle");
-            body.setAttribute("cx", "0"); body.setAttribute("cy", "0"); body.setAttribute("r", "30");
-            body.setAttribute("fill", "url(#discusGrad)");
-            bodyGroup.appendChild(body);
-            const stripes = document.createElementNS(svgNS, "path");
-            stripes.setAttribute("d", "M-10,-28 Q-5,0 -10,28 M0,-30 Q5,0 0,30 M10,-28 Q15,0 10,28");
-            stripes.setAttribute("stroke", "#2980b9"); stripes.setAttribute("stroke-width", "3");
-            stripes.setAttribute("fill", "none"); stripes.setAttribute("opacity", "0.5");
-            bodyGroup.appendChild(stripes);
-            const eye = document.createElementNS(svgNS, "circle");
-            eye.setAttribute("cx", "15"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "3"); eye.setAttribute("fill", "#000");
-            bodyGroup.appendChild(eye);
+            tailG.appendChild(el('path', { d:"M-25,0 L-40,-15 L-40,15 Z", fill:"#2980b9" }));
+            bodyG.appendChild(el('circle', { cx:"0", cy:"0", r:"30", fill:"url(#discusGrad)" }));
+            // Stronger stripes
+            for (let i = -3; i <= 3; i++) {
+                const x = i * 9;
+                bodyG.appendChild(el('path', { d:`M${x},-28 Q${x+3},0 ${x},28`, stroke: i % 2 === 0 ? "#2980b9" : "rgba(0,0,0,0.3)", "stroke-width": i % 2 === 0 ? "4" : "2", fill:"none", opacity:"0.6" }));
+            }
+            hl("M-18,-22 C0,-28 18,-22 25,-10 C18,-16 0,-24 -18,-22 Z");
+            eye("15", "-5", 3.5);
             tailRot = 5; tailOrigin = "-25px 0px";
+
         } else if (typeId === 'puffer') {
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", "M-25,0 L-35,-8 L-35,8 Z");
-            tail.setAttribute("fill", "#f39c12");
-            tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "ellipse");
-            body.setAttribute("cx", "0"); body.setAttribute("cy", "0"); body.setAttribute("rx", "28"); body.setAttribute("ry", "22");
-            body.setAttribute("fill", "#f1c40f");
-            bodyGroup.appendChild(body);
-            const spots = document.createElementNS(svgNS, "path");
-            spots.setAttribute("d", "M-10,-10 A3,3 0 1,0 -9.9,-10 M0,-15 A4,4 0 1,0 0.1,-15 M-15,5 A2,2 0 1,0 -14.9,5");
-            spots.setAttribute("stroke", "#d35400"); spots.setAttribute("stroke-width", "4"); spots.setAttribute("stroke-linecap", "round");
-            bodyGroup.appendChild(spots);
-            const eyeOuter = document.createElementNS(svgNS, "circle");
-            eyeOuter.setAttribute("cx", "15"); eyeOuter.setAttribute("cy", "-2"); eyeOuter.setAttribute("r", "6"); eyeOuter.setAttribute("fill", "#fff");
-            const eyeInner = document.createElementNS(svgNS, "circle");
-            eyeInner.setAttribute("cx", "17"); eyeInner.setAttribute("cy", "-2"); eyeInner.setAttribute("r", "3"); eyeInner.setAttribute("fill", "#000");
-            bodyGroup.appendChild(eyeOuter); bodyGroup.appendChild(eyeInner);
+            tailG.appendChild(el('path', { d:"M-25,0 L-35,-8 L-35,8 Z", fill:"#f39c12" }));
+            bodyG.appendChild(el('ellipse', { cx:"0", cy:"0", rx:"28", ry:"22", fill:"#f1c40f" }));
+            // Spikes
+            for (let a = 0; a < 12; a++) {
+                const angle = (a / 12) * Math.PI * 2;
+                const x1 = Math.cos(angle) * 22, y1 = Math.sin(angle) * 18;
+                const x2 = Math.cos(angle) * 30, y2 = Math.sin(angle) * 26;
+                bodyG.appendChild(el('line', { x1: x1.toFixed(1), y1: y1.toFixed(1), x2: x2.toFixed(1), y2: y2.toFixed(1), stroke:"#d35400", "stroke-width":"1.5", "stroke-linecap":"round" }));
+            }
+            bodyG.appendChild(el('path', { d:"M-12,-8 A4,4 0 1,0 -11.9,-8 M2,-14 A5,5 0 1,0 2.1,-14 M-10,8 A3,3 0 1,0 -9.9,8", stroke:"#d35400", "stroke-width":"4", "stroke-linecap":"round" }));
+            bodyG.appendChild(el('circle', { cx:"14", cy:"-2", r:"7", fill:"#fff" }));
+            eye("16", "-2", 4);
             tailRot = 20;
+
         } else if (typeId === 'shark') {
-            const tail = document.createElementNS(svgNS, "path");
-            tail.setAttribute("d", "M-30,0 C-45,-20 -50,-30 -50,0 C-50,20 -40,15 -30,0 Z");
-            tail.setAttribute("fill", "#7f8c8d");
-            tailAnimGroup.appendChild(tail);
-            const dorsal = document.createElementNS(svgNS, "path");
-            dorsal.setAttribute("d", "M-5,-15 L5,-35 L15,-15 Z");
-            dorsal.setAttribute("fill", "#7f8c8d");
-            bodyGroup.appendChild(dorsal);
-            const body = document.createElementNS(svgNS, "path");
-            body.setAttribute("d", "M-35,0 C-20,15, 30,10, 50,0 C30,-10, -20,-15, -35,0 Z");
-            body.setAttribute("fill", "url(#sharkGrad)");
-            bodyGroup.appendChild(body);
-            const eye = document.createElementNS(svgNS, "circle");
-            eye.setAttribute("cx", "35"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "1.5"); eye.setAttribute("fill", "#000");
-            bodyGroup.appendChild(eye);
+            tailG.appendChild(el('path', { d:"M-30,0 C-45,-20 -50,-30 -50,0 C-50,20 -40,15 -30,0 Z", fill:"#7f8c8d" }));
+            bodyG.appendChild(el('path', { d:"M-5,-15 L5,-35 L15,-15 Z", fill:"#7f8c8d" }));
+            // Two-tone body: gray top, white belly
+            bodyG.appendChild(el('path', { d:"M-35,0 C-20,15 30,10 50,0 C30,-10 -20,-15 -35,0 Z", fill:"url(#sharkGrad)" }));
+            bodyG.appendChild(el('path', { d:"M-30,4 C-10,14 30,10 48,3 C30,8 -10,12 -30,4 Z", fill:"rgba(255,255,255,0.5)" }));
+            // Gill slits
+            for (let i = 0; i < 3; i++) bodyG.appendChild(el('line', { x1: String(20-i*5), y1:"-8", x2: String(20-i*5), y2:"6", stroke:"rgba(0,0,0,0.3)", "stroke-width":"2" }));
+            hl("M-25,-8 C0,-14 30,-10 45,-2 C30,-8 0,-12 -25,-8 Z");
+            eye("35", "-3", 2);
             tailRot = 6; tailOrigin = "-30px 0px";
+
+        } else if (typeId === 'seahorse') {
+            // Seahorse: vertical orientation, head up
+            bodyG.appendChild(el('ellipse', { cx:"0", cy:"-38", rx:"9", ry:"10", fill:"url(#seahorseGrad)" }));
+            bodyG.appendChild(el('path',   { d:"M8,-42 L22,-40 L22,-37 L8,-34 Z", fill:"url(#seahorseGrad)" }));
+            // Crown
+            for (let i = -2; i <= 2; i++) bodyG.appendChild(el('line', { x1: String(i*3), y1:"-47", x2: String(i*3), y2:"-42", stroke:"#00b894", "stroke-width":"2", "stroke-linecap":"round" }));
+            // Body trunk
+            bodyG.appendChild(el('path', { d:"M-8,-29 C-11,-18 -11,-8 -8,2 C-5,12 -1,22 3,28", stroke:"url(#seahorseGrad)", "stroke-width":"14", fill:"none", "stroke-linecap":"round" }));
+            // Segment lines
+            for (let y = -25; y <= 22; y += 7) {
+                bodyG.appendChild(el('line', { x1:"-13", y1: String(y), x2:"5", y2: String(y), stroke:"rgba(0,80,60,0.35)", "stroke-width":"1.5" }));
+            }
+            // Dorsal fin
+            bodyG.appendChild(el('path', { d:"M-7,-20 C-20,-18 -20,-8 -7,-6", fill:"rgba(0,180,148,0.4)", stroke:"#00b894", "stroke-width":"0.5" }));
+            // Tail curl
+            tailG.appendChild(el('path', { d:"M3,28 C8,34 12,40 9,46 C6,52 0,52 -3,48 C-6,44 -4,40 0,38", stroke:"url(#seahorseGrad)", "stroke-width":"8", fill:"none", "stroke-linecap":"round" }));
+            eye("5", "-40", 3);
+            tailRot = 6; tailOrigin = "3px 28px"; animDur = 0.8;
+
+        } else if (typeId === 'jellyfish') {
+            // Bell (inner group for CSS pulse animation)
+            const bellG = el('g', { class:'jellyfish-bell' });
+            bellG.appendChild(el('ellipse', { cx:"0", cy:"-22", rx:"36", ry:"28", fill:"url(#jellyfishGrad)", opacity:"0.65" }));
+            bellG.appendChild(el('ellipse', { cx:"0", cy:"-28", rx:"22", ry:"17", fill:"rgba(220,255,255,0.35)" }));
+            bellG.appendChild(el('path', { d:"M-36,-22 C-28,-5 -18,-2 -8,-9 C0,-15 8,-15 18,-9 C28,-2 34,-5 36,-22", fill:"none", stroke:"url(#jellyfishGrad)", "stroke-width":"4", opacity:"0.8" }));
+            bodyG.appendChild(bellG);
+            // Tentacles
+            const tColors = ["rgba(150,230,255,0.65)", "rgba(200,245,255,0.5)", "rgba(120,210,255,0.7)"];
+            for (let i = 0; i < 8; i++) {
+                const x = -28 + i * 8;
+                const w = (i % 2 === 0) ? 9 : -9;
+                tailG.appendChild(el('path', { d:`M${x},0 Q${x+w},35 ${x},70 Q${x-w},105 ${x},140`, stroke: tColors[i%3], "stroke-width":"1.5", fill:"none", "stroke-linecap":"round" }));
+            }
+            tailRot = 3; tailOrigin = "0px 0px"; animDur = 2.5;
+
+        } else if (typeId === 'axolotl') {
+            tailG.appendChild(el('path', { d:"M-28,0 C-35,-9 -44,-6 -41,0 C-44,6 -35,9 -28,0 Z", fill:"url(#axolotlGrad)" }));
+            bodyG.appendChild(el('path', { d:"M-28,0 C-18,11 18,11 28,0 C18,-11 -18,-11 -28,0 Z", fill:"url(#axolotlGrad)" }));
+            // Legs
+            [[-14,1],[-14,-1],[8,1],[8,-1]].forEach(([x, s]) => {
+                bodyG.appendChild(el('path', { d:`M${x},${s*8} C${x-3},${s*14} ${x+3},${s*20} ${x},${s*22}`, stroke:"#ffb6c1", "stroke-width":"3.5", fill:"none", "stroke-linecap":"round" }));
+            });
+            // External gills (3 feathery structures)
+            [22, 26, 22].forEach((x, gi) => {
+                const yBase = -8 + gi * 4;
+                bodyG.appendChild(el('path', { d:`M${x},${yBase} C${x+2},${yBase-10} ${x+2},${yBase-20} ${x},${yBase-28}`, stroke:"#ff6b9d", "stroke-width":"2.5", fill:"none", "stroke-linecap":"round" }));
+                bodyG.appendChild(el('path', { d:`M${x+1},${yBase-12} C${x+7},${yBase-15} ${x+9},${yBase-18} ${x+7},${yBase-22}`, stroke:"#ff6b9d", "stroke-width":"1.5", fill:"none", "stroke-linecap":"round" }));
+                bodyG.appendChild(el('path', { d:`M${x+1},${yBase-18} C${x-4},${yBase-21} ${x-5},${yBase-24} ${x-3},${yBase-28}`, stroke:"#ff6b9d", "stroke-width":"1.5", fill:"none", "stroke-linecap":"round" }));
+            });
+            hl("M-16,-8 C0,-11 16,-8 24,-3 C15,-5 0,-9 -16,-8 Z");
+            eye("20", "0", 3.5);
+            tailRot = 14; tailOrigin = "-28px 0px"; animDur = 0.75;
         }
 
-        group.appendChild(bodyGroup);
-        group.appendChild(tailAnimGroup);
+        group.appendChild(bodyG);
+        group.appendChild(tailG);
         group.style.display = 'none';
-        const style = document.createElementNS(svgNS, "style");
-        style.textContent = `.${typeId} .fish-tail { animation: ${typeId}-swimTail ${1.0 - (type.baseSpeed / 10)}s ease-in-out infinite; transform-origin: ${tailOrigin}; } @keyframes ${typeId}-swimTail { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(${tailRot}deg); } }`;
-        group.appendChild(style);
+        group.appendChild(el('style', {})).textContent =
+            `.${typeId} .fish-tail { animation: ${typeId}-swimTail ${animDur}s ease-in-out infinite; transform-origin: ${tailOrigin}; }` +
+            `@keyframes ${typeId}-swimTail { 0%,100% { transform:rotate(0deg); } 50% { transform:rotate(${tailRot}deg); } }`;
         return group;
     }
 
+    /* ─── PFLANZE SVG ────────────────────────────────────────────────────── */
     function createPlantSVG(typeId) {
-        const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("class", `plant ${typeId}`);
-        group.setAttribute("filter", "url(#drop-shadow)");
-        const leavesGroup = document.createElementNS(svgNS, "g");
-        leavesGroup.setAttribute("class", "leaves-sway");
+        const group = el('g', { class:`plant ${typeId}`, filter:"url(#drop-shadow)" });
+        const leavesG = el('g', { class:'leaves-sway' });
+        let skipRock = false;
 
         if (typeId === 'vallisneria') {
-            for (let i = 0; i < 6; i++) {
-                const path = document.createElementNS(svgNS, "path");
-                const h = -100 - Math.random() * 50;
-                path.setAttribute("d", `M0,0 Q${(i % 2 === 0 ? 15 : -15)},${h / 2} 0,${h} T0,${h * 1.5}`);
-                path.setAttribute("stroke", "url(#kelpGrad)"); path.setAttribute("stroke-width", "5"); path.setAttribute("fill", "none");
-                path.setAttribute("transform", `translate(${(i - 3) * 5}, 0)`);
-                leavesGroup.appendChild(path);
-            }
-        } else if (typeId === 'tigerlotus') {
             for (let i = 0; i < 7; i++) {
-                const leaf = document.createElementNS(svgNS, "path");
-                leaf.setAttribute("d", "M0,0 C20,-5 25,-25 0,-30 C-25,-25 -20,-5 0,0 Z");
-                leaf.setAttribute("fill", "url(#redLotusGrad)");
-                leaf.setAttribute("transform", `rotate(${(i - 3) * 25}) scale(${0.8 + Math.random() * 0.4})`);
-                leavesGroup.appendChild(leaf);
+                const h = -110 - Math.random() * 60;
+                leavesG.appendChild(el('path', { d:`M0,0 Q${(i%2===0?18:-18)},${h/2} 0,${h} T0,${h*1.5}`, stroke:"url(#kelpGrad)", "stroke-width":"5", fill:"none" }));
             }
-        } else if (typeId === 'javafern') {
-            for (let i = 0; i < 12; i++) {
-                const leaf = document.createElementNS(svgNS, "polygon");
-                leaf.setAttribute("points", "0,0 -5,-20 0,-40 5,-20");
-                leaf.setAttribute("fill", "#27ae60");
-                leaf.setAttribute("transform", `rotate(${(i - 6) * 12})`);
-                leavesGroup.appendChild(leaf);
-            }
-        } else if (typeId === 'seagrass') {
+            // Rötliche Spitzen
+            for (let i = 0; i < 3; i++) leavesG.appendChild(el('circle', { cx: String(-10+i*10), cy: String(-155-Math.random()*30), r:"4", fill:"#c0392b", opacity:"0.6" }));
+
+        } else if (typeId === 'tigerlotus') {
             for (let i = 0; i < 8; i++) {
-                const leaf = document.createElementNS(svgNS, "path");
-                const height = -30 - Math.random() * 20;
-                const curve = (Math.random() - 0.5) * 15;
-                leaf.setAttribute("d", `M0,0 Q${curve},${height / 2} ${curve / 2},${height} Q${curve - 5},${height / 2} 0,0 Z`);
-                leaf.setAttribute("fill", i % 2 === 0 ? "#e74c3c" : "#c0392b");
-                leaf.setAttribute("transform", `rotate(${(i - 3.5) * 10})`);
-                leavesGroup.appendChild(leaf);
+                const g2 = el('g', { transform:`rotate(${(i-3.5)*22}) scale(${0.7+Math.random()*0.5})` });
+                g2.appendChild(el('path', { d:"M0,0 C22,-5 26,-26 0,-32 C-26,-26 -22,-5 0,0 Z", fill:"url(#redLotusGrad)" }));
+                g2.appendChild(el('line', { x1:"0", y1:"0", x2:"0", y2:"-28", stroke:"rgba(0,0,0,0.2)", "stroke-width":"1" }));
+                leavesG.appendChild(g2);
             }
+
+        } else if (typeId === 'javafern') {
+            for (let i = 0; i < 14; i++) {
+                const g2 = el('g', { transform:`rotate(${(i-7)*11})` });
+                g2.appendChild(el('polygon', { points:"0,0 -6,-22 0,-42 6,-22", fill:"#27ae60" }));
+                g2.appendChild(el('line', { x1:"0", y1:"0", x2:"0", y2:"-40", stroke:"#1e8449", "stroke-width":"1" }));
+                leavesG.appendChild(g2);
+            }
+
+        } else if (typeId === 'seagrass') {
+            for (let i = 0; i < 9; i++) {
+                const h = -32 - Math.random() * 22, c = (Math.random()-0.5)*18;
+                leavesG.appendChild(el('path', { d:`M0,0 Q${c},${h/2} ${c/2},${h} Q${c-5},${h/2} 0,0 Z`, fill: i%2===0?"#e74c3c":"#c0392b", transform:`rotate(${(i-4)*10})` }));
+            }
+
         } else if (typeId === 'anubias') {
-            const leafData = [
-                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: -20, scale: 1 },
-                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 25, scale: 0.9 },
-                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 0, scale: 1.2 },
-                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: -45, scale: 0.7 },
-                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 45, scale: 0.8 }
-            ];
-            leafData.forEach(l => {
-                const lGroup = document.createElementNS(svgNS, "g");
-                lGroup.setAttribute("transform", `rotate(${l.rot}) scale(${l.scale})`);
-                const path = document.createElementNS(svgNS, "path");
-                path.setAttribute("d", l.d); path.setAttribute("fill", "url(#kelpGrad)");
-                lGroup.appendChild(path); leavesGroup.appendChild(lGroup);
+            [[-20,1],[ 25,0.9],[0,1.2],[-45,0.7],[45,0.8]].forEach(([rot, scale]) => {
+                const g2 = el('g', { transform:`rotate(${rot}) scale(${scale})` });
+                g2.appendChild(el('path', { d:"M0,0 C16,-10 20,-26 5,-36 C-10,-26 -5,-10 0,0 Z", fill:"url(#kelpGrad)" }));
+                g2.appendChild(el('path', { d:"M0,0 L3,-35", stroke:"#1e8449", "stroke-width":"1.5", fill:"none" }));
+                leavesG.appendChild(g2);
             });
+
         } else if (typeId === 'kelp_forest') {
-            const stalk = document.createElementNS(svgNS, "path");
-            stalk.setAttribute("d", "M0,0 Q5,-30 0,-60 T0,-120 T0,-180");
-            stalk.setAttribute("stroke", "#1e8449"); stalk.setAttribute("stroke-width", "3"); stalk.setAttribute("fill", "none");
-            leavesGroup.appendChild(stalk);
-            for (let y = -20; y > -170; y -= 20) {
-                const leaf = document.createElementNS(svgNS, "path");
-                const dir = (y % 40 === 0) ? 1 : -1;
-                leaf.setAttribute("d", `M0,${y} C${15 * dir},${y - 5} ${20 * dir},${y - 15} ${30 * dir},${y - 10} C${20 * dir},${y - 5} ${15 * dir},${y + 5} 0,${y}`);
-                leaf.setAttribute("fill", "url(#kelpGrad)");
-                leavesGroup.appendChild(leaf);
+            leavesG.appendChild(el('path', { d:"M0,0 Q6,-35 0,-70 T0,-140 T0,-200", stroke:"#1e8449", "stroke-width":"4", fill:"none" }));
+            for (let y = -22; y > -190; y -= 18) {
+                const dir = (Math.floor(-y/18) % 2 === 0) ? 1 : -1;
+                leavesG.appendChild(el('path', { d:`M0,${y} C${16*dir},${y-6} ${22*dir},${y-17} ${32*dir},${y-12} C${22*dir},${y-5} ${16*dir},${y+6} 0,${y}`, fill:"url(#kelpGrad)" }));
+                // Glanz-Highlight
+                leavesG.appendChild(el('path', { d:`M${4*dir},${y-4} C${12*dir},${y-8} ${16*dir},${y-14} ${20*dir},${y-12}`, stroke:"rgba(255,255,255,0.2)", "stroke-width":"1", fill:"none" }));
+            }
+
+        } else if (typeId === 'marimo') {
+            skipRock = true;
+            leavesG.appendChild(el('circle', { cx:"0", cy:"-22", r:"24", fill:"#2d6a2d" }));
+            leavesG.appendChild(el('ellipse', { cx:"-7", cy:"-32", rx:"10", ry:"6", fill:"rgba(100,200,100,0.3)" }));
+            for (let i = 0; i < 18; i++) {
+                const a = (i/18)*Math.PI*2, r = 7 + Math.random()*14;
+                leavesG.appendChild(el('circle', { cx: String((Math.cos(a)*r).toFixed(1)), cy: String((-22+Math.sin(a)*r*0.9).toFixed(1)), r:"2.5", fill:"#1a4a1a", opacity:"0.5" }));
+            }
+            leavesG.appendChild(el('circle', { cx:"0", cy:"-22", r:"24", fill:"none", stroke:"#3d8a3d", "stroke-width":"1", opacity:"0.4" }));
+            leavesG.childNodes[0].style.animation = "mossGlow 4s ease-in-out infinite";
+
+        } else if (typeId === 'hornwort') {
+            leavesG.appendChild(el('path', { d:"M0,0 L0,-110", stroke:"#2d5a27", "stroke-width":"3", fill:"none" }));
+            for (let y = -12; y >= -105; y -= 11) {
+                const maxLen = 22 - Math.abs(y+58)/4;
+                for (let a = 0; a < 8; a++) {
+                    const angle = (a/8)*Math.PI*2;
+                    const len = Math.max(8, maxLen);
+                    leavesG.appendChild(el('line', { x1:"0", y1: String(y), x2: String((Math.cos(angle)*len).toFixed(1)), y2: String((y+Math.sin(angle)*len*0.3).toFixed(1)), stroke: a%2===0 ? "#3a7a30" : "#2d5a27", "stroke-width":"1.5", "stroke-linecap":"round" }));
+                }
+            }
+
+        } else if (typeId === 'amazon_sword') {
+            const configs = [[-38,-18,55],[-18,-32,30],[0,-38,0],[18,-32,-30],[38,-18,-55]];
+            configs.forEach(([cx, cy, rot]) => {
+                const g2 = el('g', { transform:`rotate(${rot})` });
+                const leafH = 38 + Math.abs(rot)/6;
+                g2.appendChild(el('path', { d:`M0,0 C-${10+Math.abs(rot)/12},-${leafH/2} -${8+Math.abs(rot)/14},-${leafH} 0,-${leafH+5} C${8+Math.abs(rot)/14},-${leafH} ${10+Math.abs(rot)/12},-${leafH/2} 0,0 Z`, fill:"url(#amazonGrad)" }));
+                g2.appendChild(el('line', { x1:"0", y1:"0", x2:"0", y2: String(-leafH-5), stroke:"#1b5e20", "stroke-width":"1.5" }));
+                leavesG.appendChild(g2);
+            });
+        }
+
+        group.appendChild(leavesG);
+        if (!skipRock) {
+            // Individuell gestaltete Basis pro Pflanze
+            if (typeId === 'kelp_forest' || typeId === 'vallisneria') {
+                const base = el('g', {});
+                base.appendChild(el('ellipse', { cx:"0", cy:"0", rx:"18", ry:"6", fill:"#5a4030" }));
+                base.appendChild(el('circle', { cx:"-12", cy:"-2", r:"5", fill:"#4a3525" }));
+                base.appendChild(el('circle', { cx:"10",  cy:"-3", r:"6", fill:"#4a3525" }));
+                group.appendChild(base);
+            } else {
+                const base = el('g', {});
+                base.appendChild(el('path', { d:"M-14,0 C-16,-6 -5,-11 0,-9 C8,-13 16,-6 11,0 Z", fill:"#4b5563" }));
+                base.appendChild(el('circle', { cx:"-8", cy:"-1", r:"3", fill:"#374151" }));
+                base.appendChild(el('circle', { cx:"6",  cy:"-1", r:"2.5", fill:"#374151" }));
+                group.appendChild(base);
             }
         }
-
-        group.appendChild(leavesGroup);
-        const rock = document.createElementNS(svgNS, "path");
-        rock.setAttribute("d", "M-12,0 C-15,-5 -5,-10 0,-8 C8,-12 15,-5 10,0 Z");
-        rock.setAttribute("fill", "#4b5563");
-        group.appendChild(rock);
-        const style = document.createElementNS(svgNS, "style");
-        style.textContent = `.${typeId} .leaves-sway { transform-origin: 0px 0px; animation: plantSway ${4 + Math.random() * 2}s ease-in-out infinite; }`;
-        group.appendChild(style);
+        const s = el('style', {});
+        s.textContent = `.${typeId} .leaves-sway { transform-origin:0px 0px; animation:plantSway ${4+Math.random()*2}s ease-in-out infinite; }`;
+        group.appendChild(s);
         group.style.display = 'none';
         return group;
     }
 
+    /* ─── DEKO SVG ───────────────────────────────────────────────────────── */
     function createDecoSVG(typeId) {
-        const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("class", `deco ${typeId}`);
-        group.setAttribute("filter", "url(#drop-shadow)");
+        const group = el('g', { class:`deco ${typeId}`, filter:"url(#drop-shadow)" });
+
         if (typeId === 'chest') {
-            const base = document.createElementNS(svgNS, "path");
-            base.setAttribute("d", "M-25,0 L25,0 L20,-25 L-20,-25 Z");
-            base.setAttribute("fill", "url(#woodGrad)"); base.setAttribute("stroke", "#000");
-            group.appendChild(base);
-            const lid = document.createElementNS(svgNS, "path");
-            lid.setAttribute("d", "M-20,-25 C-20,-40 20,-40 20,-25 L-20,-25 Z");
-            lid.setAttribute("fill", "url(#woodGrad)"); lid.setAttribute("stroke", "#000");
-            lid.setAttribute("transform", "rotate(-15 -20 -25)");
-            group.appendChild(lid);
-            const gold = document.createElementNS(svgNS, "path");
-            gold.setAttribute("d", "M-15,-25 L15,-25 L10,-30 L-10,-30 Z");
-            gold.setAttribute("fill", "url(#goldGrad)");
-            gold.style.animation = "glow 3s infinite";
-            group.appendChild(gold);
+            group.appendChild(el('path', { d:"M-25,0 L25,0 L20,-25 L-20,-25 Z", fill:"url(#woodGrad)", stroke:"#000" }));
+            group.appendChild(el('path', { d:"M-20,-25 C-20,-40 20,-40 20,-25 L-20,-25 Z", fill:"url(#woodGrad)", stroke:"#000", transform:"rotate(-15 -20 -25)" }));
+            // Gold band
+            group.appendChild(el('path', { d:"M-18,-23 L18,-23 L14,-28 L-14,-28 Z", fill:"url(#goldGrad)" }));
+            // Lock
+            group.appendChild(el('rect', { x:"-4", y:"-21", width:"8", height:"6", rx:"1", fill:"url(#goldGrad)" }));
+            group.appendChild(el('circle', { cx:"0", cy:"-25", r:"4", fill:"none", stroke:"url(#goldGrad)", "stroke-width":"2" }));
+            const goldEl = group.childNodes[1];
+            goldEl.style.animation = "glow 2.5s infinite";
+
         } else if (typeId === 'vase') {
-            const vase = document.createElementNS(svgNS, "path");
-            vase.setAttribute("d", "M-10,0 L10,0 L15,-10 C25,-30 -25,-30 -15,-10 Z M-8,-35 L8,-35 L5,-45 L-5,-45 Z");
-            vase.setAttribute("fill", "url(#vaseGrad)"); vase.setAttribute("stroke", "#5c2a00");
-            group.appendChild(vase);
-            const moss = document.createElementNS(svgNS, "path");
-            moss.setAttribute("d", "M-15,-10 Q-10,-5 -5,-15 Q0,-10 5,-20");
-            moss.setAttribute("stroke", "#27ae60"); moss.setAttribute("stroke-width", "4");
-            moss.setAttribute("fill", "none"); moss.setAttribute("stroke-linecap", "round");
-            group.appendChild(moss);
+            group.appendChild(el('path', { d:"M-10,0 L10,0 L15,-10 C25,-30 -25,-30 -15,-10 Z M-8,-35 L8,-35 L5,-45 L-5,-45 Z", fill:"url(#vaseGrad)", stroke:"#5c2a00" }));
+            // Decorative pattern line
+            group.appendChild(el('path', { d:"M-14,-12 L-10,-18 L-6,-12 L-2,-18 L2,-12 L6,-18 L10,-12 L14,-18", stroke:"rgba(0,0,0,0.3)", "stroke-width":"1.5", fill:"none", "stroke-linecap":"round" }));
+            group.appendChild(el('path', { d:"M-15,-10 Q-10,-5 -5,-15 Q0,-10 5,-20 Q8,-14 12,-18", stroke:"#27ae60", "stroke-width":"4", fill:"none", "stroke-linecap":"round" }));
+
         } else if (typeId === 'crystal') {
-            const crystals = [
-                { d: "M0,0 L10,-40 L0,-50 L-10,-40 Z", c: "#00d2d3", r: 0 },
-                { d: "M0,0 L8,-30 L0,-40 L-8,-30 Z", c: "#48dbfb", r: -30 },
-                { d: "M0,0 L6,-25 L0,-35 L-6,-25 Z", c: "#0abde3", r: 40 }
-            ];
-            crystals.forEach(c => {
-                const p = document.createElementNS(svgNS, "path");
-                p.setAttribute("d", c.d); p.setAttribute("fill", c.c);
-                p.setAttribute("stroke", "#fff"); p.setAttribute("stroke-width", "0.5");
-                p.setAttribute("transform", `rotate(${c.r})`);
-                group.appendChild(p);
+            [[  "M0,0 L10,-44 L0,-56 L-10,-44 Z", "#00d2d3",  0 ],
+             [  "M0,0 L8,-33 L0,-43 L-8,-33 Z",   "#48dbfb", -30],
+             [  "M0,0 L6,-27 L0,-37 L-6,-27 Z",   "#0abde3",  40]].forEach(([d,c,r]) => {
+                const g2 = el('g', { transform:`rotate(${r})` });
+                g2.appendChild(el('path', { d, fill:c, stroke:"rgba(255,255,255,0.6)", "stroke-width":"0.5" }));
+                // Inner white glow core
+                const innerD = d.replace(/[\d.-]+(?=,)/g, n => (parseFloat(n)*0.45).toFixed(1));
+                g2.appendChild(el('path', { d: innerD, fill:"rgba(255,255,255,0.25)" }));
+                group.appendChild(g2);
             });
-            const base = document.createElementNS(svgNS, "path");
-            base.setAttribute("d", "M-20,0 Q0,-10 20,0 Z");
-            base.setAttribute("fill", "#2d3436");
-            group.appendChild(base);
+            group.appendChild(el('path', { d:"M-22,0 Q0,-12 22,0 Z", fill:"#2d3436" }));
+            group.style.animation = "glow 4s ease-in-out infinite";
+
         } else if (typeId === 'anchor') {
-            const anchor = document.createElementNS(svgNS, "path");
-            anchor.setAttribute("d", "M-5,0 L5,0 L5,-50 L-5,-50 Z M-25,-10 C-15,5 15,5 25,-10 L20,-15 C10,-5 -10,-5 -20,-15 Z M0,-50 A10,10 0 1,0 0,-70 A10,10 0 1,0 0,-50 M-15,-40 L15,-40 L15,-35 L-15,-35 Z");
-            anchor.setAttribute("fill", "#7f8c8d"); anchor.setAttribute("stroke", "#2c3e50");
-            anchor.setAttribute("transform", "rotate(20)");
-            group.appendChild(anchor);
+            group.appendChild(el('path', { d:"M-5,0 L5,0 L5,-50 L-5,-50 Z M-25,-10 C-15,5 15,5 25,-10 L20,-15 C10,-5 -10,-5 -20,-15 Z M0,-50 A10,10 0 1,0 0,-70 A10,10 0 1,0 0,-50 M-15,-40 L15,-40 L15,-35 L-15,-35 Z", fill:"#7f8c8d", stroke:"#2c3e50", transform:"rotate(20)" }));
+            // Rust patches
+            [[-8,-20],[5,-35],[-12,-45]].forEach(([x,y]) => group.appendChild(el('ellipse', { cx: String(x), cy: String(y), rx:"3", ry:"2", fill:"#cc5200", opacity:"0.7" })));
+            group.appendChild(el('path', { d:"M15,-10 Q18,-5 16,-15 Q20,-12 18,-18", stroke:"#27ae60", "stroke-width":"3", fill:"none", "stroke-linecap":"round" }));
+
+        } else if (typeId === 'coral') {
+            // Branch cluster
+            [["M0,0 C-4,-22 -7,-44 -5,-60",  "#ff6b6b"],
+             ["M0,0 C5,-16 10,-32 9,-50",     "#ff8e53"],
+             ["M0,0 C1,-12 -14,-26 -20,-42",  "#ff4757"],
+             ["M0,0 C3,-22 17,-36 19,-52",    "#ff6b9d"],
+             ["M0,0 C-2,-8 -25,-18 -28,-32",  "#ff8c00"]].forEach(([d,c]) => {
+                group.appendChild(el('path', { d, stroke:c, "stroke-width":"7", fill:"none", "stroke-linecap":"round" }));
+            });
+            // Polyp tips
+            [[-5,-60],[9,-50],[-20,-42],[19,-52],[-28,-32]].forEach(([x,y]) => {
+                group.appendChild(el('circle', { cx: String(x), cy: String(y), r:"5", fill:"#ffdd57" }));
+                for (let i = 0; i < 5; i++) {
+                    const a = (i/5)*Math.PI*2;
+                    group.appendChild(el('line', { x1: String(x), y1: String(y), x2: String((x+Math.cos(a)*8).toFixed(1)), y2: String((y+Math.sin(a)*8).toFixed(1)), stroke:"#ffdd57", "stroke-width":"1.5", "stroke-linecap":"round" }));
+                }
+            });
+            group.style.animation = "coralGlow 3s ease-in-out infinite";
+
+        } else if (typeId === 'temple') {
+            // Stone base
+            group.appendChild(el('rect', { x:"-48", y:"-8", width:"96", height:"9", rx:"2", fill:"#9a8c7a" }));
+            // Three columns
+            [[-32,true],[0,false],[32,true]].forEach(([x, broken]) => {
+                const h = broken ? 55 : 72;
+                group.appendChild(el('rect', { x: String(x-6), y: String(-h-8), width:"12", height: String(h), fill:"#b0a090", rx:"1" }));
+                group.appendChild(el('rect', { x: String(x-9), y: String(-h-12), width:"18", height:"6", fill:"#c0b0a0" }));
+                if (!broken) {
+                    group.appendChild(el('path', { d:`M${x-7},-80 L${x-7},-88 L${x-2},-94 L${x+4},-91 L${x+7},-85 L${x+7},-80 Z`, fill:"#c0b0a0" }));
+                }
+            });
+            // Partial architrave
+            group.appendChild(el('rect', { x:"-42", y:"-82", width:"48", height:"7", fill:"#b8a898" }));
+            // Moss
+            group.appendChild(el('path', { d:"M-36,-18 Q-28,-12 -22,-20 Q-18,-14 -12,-18", stroke:"#3d7a3d", "stroke-width":"3", fill:"none", "stroke-linecap":"round" }));
+            // Rubble
+            group.appendChild(el('path', { d:"M36,-5 C42,-9 50,-7 47,-3 C44,1 38,-1 36,-5 Z", fill:"#9a8c7a" }));
+            group.appendChild(el('path', { d:"M-46,-2 C-40,-6 -34,-4 -36,0 Z", fill:"#9a8c7a" }));
+
+        } else if (typeId === 'shell') {
+            // Left half
+            group.appendChild(el('path', { d:"M0,0 C-5,-6 -16,-22 -22,-38 C-17,-43 -6,-44 0,-40 Z", fill:"url(#shellGrad)", stroke:"#c0692d", "stroke-width":"1" }));
+            // Right half
+            group.appendChild(el('path', { d:"M0,0 C5,-6 16,-22 22,-38 C17,-43 6,-44 0,-40 Z",  fill:"url(#shellGrad)", stroke:"#c0692d", "stroke-width":"1" }));
+            // Inner
+            group.appendChild(el('path', { d:"M0,-4 C-3,-16 -11,-30 -13,-38 C-5,-41 5,-41 13,-38 C11,-30 3,-16 0,-4 Z", fill:"url(#goldGrad)", opacity:"0.5" }));
+            // Shell ridges
+            for (let i = 1; i <= 4; i++) {
+                const f = i/5;
+                group.appendChild(el('path', { d:`M0,${-i*2} C${-11*f},${-9-i*7} ${-19*f},${-26-i} ${-21*f},${-37+i*2}`, stroke:"rgba(0,0,0,0.15)", "stroke-width":"1", fill:"none" }));
+                group.appendChild(el('path', { d:`M0,${-i*2} C${11*f},${-9-i*7} ${19*f},${-26-i} ${21*f},${-37+i*2}`,  stroke:"rgba(0,0,0,0.15)", "stroke-width":"1", fill:"none" }));
+            }
+            // Pearl
+            group.appendChild(el('circle', { cx:"0", cy:"-22", r:"6", fill:"#f5f5f5" }));
+            group.appendChild(el('circle', { cx:"-2", cy:"-24", r:"2.2", fill:"rgba(255,255,255,0.85)" }));
         }
+
         group.style.display = 'none';
         return group;
     }
 
-    /* --- KOORDINATEN (BUGFIX) --- */
-    function getSVGCoordinates(clientX, clientY) {
+    /* ─── KOORDINATEN ────────────────────────────────────────────────────── */
+    function getSVGCoords(clientX, clientY) {
         const svg = document.getElementById("aquarium-svg");
         const rect = svg.getBoundingClientRect();
-        const scaleX = rect.width / 5120;
-        const scaleY = rect.height / 2880;
-        const scale = Math.max(scaleX, scaleY);
-        const renderedW = 5120 * scale;
-        const renderedH = 2880 * scale;
-        const offsetX = (rect.width - renderedW) / 2;
-        const offsetY = (rect.height - renderedH) / 2;
+        const scale = Math.max(rect.width/W, rect.height/H);
         return {
-            x: (clientX - rect.left - offsetX) / scale,
-            y: (clientY - rect.top - offsetY) / scale
+            x: (clientX - rect.left  - (rect.width  - W*scale)/2) / scale,
+            y: (clientY - rect.top   - (rect.height - H*scale)/2) / scale
         };
     }
 
-    /* --- SETUP & EVENTS --- */
+    /* ─── INIT ───────────────────────────────────────────────────────────── */
     function init() {
-        const bgLayer = document.getElementById("bg-layer");
-
-        const sand = document.createElementNS(svgNS, "path");
-        sand.setAttribute("d", `M0,${aquariumHeight} L0,${aquariumHeight - 400} Q${aquariumWidth / 4},${aquariumHeight - 550} ${aquariumWidth / 2},${aquariumHeight - 450} T${aquariumWidth},${aquariumHeight - 500} L${aquariumWidth},${aquariumHeight} Z`);
-        sand.setAttribute("fill", "url(#sandGrad)");
-        bgLayer.appendChild(sand);
-
+        const bg = document.getElementById("bg-layer");
+        // Sand
+        bg.appendChild(el('path', { d:`M0,${H} L0,${H-400} Q${W/4},${H-550} ${W/2},${H-450} T${W},${H-500} L${W},${H} Z`, fill:"url(#sandGrad)" }));
+        // Light rays
         for (let i = 0; i < 15; i++) {
-            const ray = document.createElementNS(svgNS, "polygon");
-            const startX = Math.random() * aquariumWidth;
-            const width = 300 + Math.random() * 800;
-            const slant = (Math.random() - 0.5) * 1200;
-            ray.setAttribute("points", `${startX},0 ${startX + width},0 ${startX + width + slant},${aquariumHeight} ${startX + slant},${aquariumHeight}`);
-            ray.setAttribute("fill", "url(#lightRay)");
-            bgLayer.appendChild(ray);
+            const sx = Math.random()*W, w = 300+Math.random()*800, sl = (Math.random()-0.5)*1200;
+            bg.appendChild(el('polygon', { points:`${sx},0 ${sx+w},0 ${sx+w+sl},${H} ${sx+sl},${H}`, fill:"url(#lightRay)" }));
         }
-
+        // Bubbles
         for (let i = 0; i < 100; i++) {
-            const bubble = document.createElementNS(svgNS, "circle");
-            bubble.setAttribute("class", "bubble");
-            bubble.setAttribute("r", 4 + Math.random() * 10);
-            bubble.setAttribute("cx", Math.random() * aquariumWidth);
-            bubble.setAttribute("cy", aquariumHeight + 100);
-            bubble.style.animationDelay = (Math.random() * 20) + "s";
-            bubble.style.animationDuration = (10 + Math.random() * 15) + "s";
-            bgLayer.appendChild(bubble);
+            const b = el('circle', { class:"bubble", r: String(4+Math.random()*10), cx: String(Math.random()*W), cy: String(H+100) });
+            b.style.animationDelay = (Math.random()*20)+"s";
+            b.style.animationDuration = (10+Math.random()*15)+"s";
+            bg.appendChild(b);
         }
 
-        const shopFish = document.getElementById("shop-fish");
-        fishTypes.forEach(type => createShopItem(shopFish, type, 'Bewohner'));
-        const shopPlants = document.getElementById("shop-plants");
-        plantTypes.forEach(type => createShopItem(shopPlants, type, 'Flora'));
-        const shopDeco = document.getElementById("shop-deco");
-        decoTypes.forEach(type => createShopItem(shopDeco, type, 'Deko'));
+        // Shop items grouped by category
+        const schwarmTypes = fishTypes.filter(f => f.group === 'schwarm');
+        const specialTypes = fishTypes.filter(f => f.group === 'special');
+        const exoticTypes  = fishTypes.filter(f => f.group === 'exotic');
+
+        schwarmTypes.forEach(t => createShopItem(document.getElementById('shop-schwarm'), t, 'Bewohner'));
+        specialTypes.forEach(t => createShopItem(document.getElementById('shop-special'), t, 'Bewohner'));
+        exoticTypes.forEach(t  => createShopItem(document.getElementById('shop-exotic'),  t, 'Bewohner'));
+        plantTypes.forEach(t   => createShopItem(document.getElementById('shop-plants'),  t, 'Flora'));
+        decoTypes.forEach(t    => createShopItem(document.getElementById('shop-deco'),    t, 'Deko'));
 
         document.getElementById("ui-toggle").addEventListener("click", toggleUI);
         const root = document.getElementById("aquarium-root");
         const cursor = document.getElementById("custom-cursor");
 
-        root.addEventListener("pointermove", (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
+        root.addEventListener("pointermove", e => {
+            cursor.style.left = e.clientX+'px'; cursor.style.top = e.clientY+'px';
             if (selectedItemForPlacement && previewObjectSVG) {
-                const svgP = getSVGCoordinates(e.clientX, e.clientY);
-                if (selectedItemForPlacement.label === 'Flora' || selectedItemForPlacement.label === 'Deko') {
-                    const clampedY = getClampedFloorY(svgP.x, svgP.y);
-                    previewObjectSVG.setAttribute("transform", `translate(${svgP.x}, ${clampedY})`);
-                } else {
-                    previewObjectSVG.setAttribute("transform", `translate(${svgP.x}, ${svgP.y})`);
-                }
+                const p = getSVGCoords(e.clientX, e.clientY);
+                const isFloor = selectedItemForPlacement.label === 'Flora' || selectedItemForPlacement.label === 'Deko';
+                const y = isFloor ? clampFloor(p.x, p.y) : p.y;
+                previewObjectSVG.setAttribute("transform", `translate(${p.x},${y})`);
             }
         });
-
-        root.addEventListener("pointerdown", (e) => {
+        root.addEventListener("pointerdown", e => {
             cursor.classList.add('active');
-            const isClickInsideUI = e.target.closest('#ui-container') || e.target.closest('#ui-toggle');
-            if (!isClickInsideUI) handleAquariumClick(e);
+            if (!e.target.closest('#ui-container') && !e.target.closest('#ui-toggle')) handleClick(e);
         });
-
         root.addEventListener("pointerup", () => cursor.classList.remove('active'));
 
-        /* Tooltip-Logik auf den Layern */
+        // Tooltip
         const tooltip = document.getElementById("fish-tooltip");
-        const ttName = document.getElementById("tt-name");
-        const ttBy = document.getElementById("tt-by");
-
-        ['fish-layer', 'plant-layer', 'deco-layer'].forEach(layerId => {
-            const layer = document.getElementById(layerId);
-            layer.addEventListener("pointerover", (e) => {
-                const group = e.target.closest('g[data-added-by]');
-                if (!group) { tooltip.style.display = 'none'; return; }
-                const name = group.dataset.itemName || '';
-                const addedBy = group.dataset.addedBy || '';
-                if (!addedBy) return;
-                ttName.textContent = name;
-                const isMe = addedBy === currentUser;
-                ttBy.innerHTML = `💙 Hinzugefügt von <span>${addedBy}</span>${isMe ? ' (du)' : ''}`;
+        ['fish-layer','plant-layer','deco-layer'].forEach(id => {
+            const layer = document.getElementById(id);
+            layer.addEventListener("pointerover", e => {
+                const g = e.target.closest('g[data-added-by]');
+                if (!g) { tooltip.style.display='none'; return; }
+                document.getElementById('tt-name').textContent = g.dataset.itemName || '';
+                const by = g.dataset.addedBy || '';
+                document.getElementById('tt-by').innerHTML = by ? `💙 Hinzugefügt von <span>${by}</span>${by===currentUser?' (du)':''}` : '';
                 tooltip.style.display = 'block';
             });
-            layer.addEventListener("pointermove", (e) => {
-                if (tooltip.style.display === 'block') {
-                    tooltip.style.left = (e.clientX + 16) + 'px';
-                    tooltip.style.top = (e.clientY - 10) + 'px';
-                }
+            layer.addEventListener("pointermove", e => {
+                if (tooltip.style.display==='block') { tooltip.style.left=(e.clientX+16)+'px'; tooltip.style.top=(e.clientY-10)+'px'; }
             });
-            layer.addEventListener("pointerout", (e) => {
-                if (!e.target.closest('g[data-added-by]')) tooltip.style.display = 'none';
-            });
+            layer.addEventListener("pointerout", e => { if (!e.target.closest('g[data-added-by]')) tooltip.style.display='none'; });
         });
 
         updateCounts();
         requestAnimationFrame(gameLoop);
-
-        // Firebase-Listener starten
         initFirebaseListeners();
     }
 
@@ -744,341 +810,237 @@
         const item = document.createElement("div");
         item.className = "shop-item";
         const price = type.price || 0;
-        const priceHtml = price === 0
-            ? `<span class="item-price item-price-free">Gratis ✓</span>`
-            : `<span class="item-price">🪙 ${price.toLocaleString("de-DE")}</span>`;
+        const priceHtml = price === 0 ? `<span class="item-price item-price-free">Gratis ✓</span>` : `<span class="item-price">🪙 ${price.toLocaleString("de-DE")}</span>`;
         item.innerHTML = `<div class="item-icon-container">${type.icon}</div><div class="item-info"><span class="item-name">${type.name}</span><span class="item-type">${label} · ${type.type}</span>${priceHtml}</div>`;
-        item.addEventListener("click", () => {
-            if (!currentUser) return;
-            enterPlacementMode(label, type.id);
-        });
+        item.addEventListener("click", () => { if (currentUser) enterPlacementMode(label, type.id); });
         container.appendChild(item);
     }
 
     function toggleUI() {
-        const ui = document.getElementById("ui-container");
-        const btn = document.getElementById("ui-toggle");
-        ui.classList.toggle("visible");
-        btn.classList.toggle("menu-open");
+        const ui = document.getElementById("ui-container"), btn = document.getElementById("ui-toggle");
+        ui.classList.toggle("visible"); btn.classList.toggle("menu-open");
         if (ui.classList.contains("visible") && selectedItemForPlacement) exitPlacementMode();
     }
 
     function updateCounts() {
-        document.getElementById("count-fish").textContent = fishObjects.length + " Fische";
+        document.getElementById("count-fish").textContent   = fishObjects.length  + " Bewohner";
         document.getElementById("count-plants").textContent = plantObjects.length + " Objekte";
     }
 
-    // Globale Funktion für onclick im HTML
-    window.triggerFeed = function () {
+    window.triggerFeed = function() {
         document.getElementById("ui-container").classList.remove("visible");
         document.getElementById("ui-toggle").classList.remove("menu-open");
-        const foodLayer = document.getElementById("food-layer");
+        const fl = document.getElementById("food-layer");
         for (let i = 0; i < 20; i++) {
-            const food = document.createElementNS(svgNS, "circle");
-            food.setAttribute("r", 6 + Math.random() * 4);
-            food.setAttribute("fill", "#e67e22");
-            food.setAttribute("stroke", "#d35400");
-            const x = 500 + Math.random() * (aquariumWidth - 1000);
-            const y = -50 - Math.random() * 100;
-            food.setAttribute("cx", x); food.setAttribute("cy", y);
-            foodLayer.appendChild(food);
-            foodObjects.push({ id: Date.now() + i, svg: food, x, y, speed: 3 + Math.random() * 3 });
+            const f = el('circle', { r: String(6+Math.random()*4), fill:"#e67e22", stroke:"#d35400", cx: String(500+Math.random()*(W-1000)), cy: String(-50-Math.random()*100) });
+            fl.appendChild(f);
+            foodObjects.push({ id: Date.now()+i, svg:f, x:+f.getAttribute('cx'), y:+f.getAttribute('cy'), speed:3+Math.random()*3 });
         }
     };
 
-    window.toggleSellMode = function () {
+    window.toggleSellMode = function() {
         isSellMode = !isSellMode;
         document.getElementById("ui-container").classList.remove("visible");
         document.getElementById("ui-toggle").classList.remove("menu-open");
-        const cursor = document.getElementById("custom-cursor");
-        const banner = document.getElementById("sell-mode-banner");
-        if (isSellMode) {
-            cursor.classList.add("sell-mode");
-            banner.style.display = "block";
-            exitPlacementMode();
-        } else {
-            cursor.classList.remove("sell-mode");
-            banner.style.display = "none";
-        }
+        const cursor = document.getElementById("custom-cursor"), banner = document.getElementById("sell-mode-banner");
+        if (isSellMode) { cursor.classList.add("sell-mode"); banner.style.display="block"; exitPlacementMode(); }
+        else { cursor.classList.remove("sell-mode"); banner.style.display="none"; }
     };
 
-    function getClampedFloorY(x, y) {
-        const topOfSand = aquariumHeight - 500;
-        const bottomOfAquarium = aquariumHeight - 80;
-        return Math.max(topOfSand, Math.min(bottomOfAquarium, y));
+    function clampFloor(x, y) {
+        return Math.max(H-500, Math.min(H-80, y));
     }
 
     function enterPlacementMode(label, typeId) {
         if (isSellMode) window.toggleSellMode();
         exitPlacementMode();
         selectedItemForPlacement = { label, typeId };
-
-        if (label === 'Bewohner') previewObjectSVG = createFishSVG(typeId);
-        else if (label === 'Flora') previewObjectSVG = createPlantSVG(typeId);
-        else if (label === 'Deko') previewObjectSVG = createDecoSVG(typeId);
-
-        previewObjectSVG.classList.add('placement-preview');
-        previewObjectSVG.style.display = 'block';
-        const layer = label === 'Bewohner' ? "fish-layer" : (label === 'Flora' ? "plant-layer" : "deco-layer");
-        document.getElementById(layer).appendChild(previewObjectSVG);
+        previewObjectSVG = label==='Bewohner' ? createFishSVG(typeId) : label==='Flora' ? createPlantSVG(typeId) : createDecoSVG(typeId);
+        previewObjectSVG.classList.add('placement-preview'); previewObjectSVG.style.display='block';
+        document.getElementById(label==='Bewohner'?'fish-layer':label==='Flora'?'plant-layer':'deco-layer').appendChild(previewObjectSVG);
         document.getElementById("ui-container").classList.remove("visible");
         document.getElementById("ui-toggle").classList.remove("menu-open");
     }
 
     function exitPlacementMode() {
-        if (previewObjectSVG) { previewObjectSVG.remove(); previewObjectSVG = null; }
+        if (previewObjectSVG) { previewObjectSVG.remove(); previewObjectSVG=null; }
         selectedItemForPlacement = null;
     }
 
-    function handleAquariumClick(e) {
-        const svgP = getSVGCoordinates(e.clientX, e.clientY);
-
+    function handleClick(e) {
+        const p = getSVGCoords(e.clientX, e.clientY);
         if (isSellMode) {
-            let closestObj = null;
-            let minDist = 250;
-            fishObjects.forEach(f => {
-                const d = Math.sqrt((f.x - svgP.x) ** 2 + (f.y - svgP.y) ** 2);
-                if (d < minDist) { minDist = d; closestObj = f; }
+            let closest = null, minD = 250;
+            [...fishObjects, ...plantObjects].forEach(o => {
+                const oy = o.y + (fishObjects.includes(o) ? 0 : -120);
+                const d = Math.hypot(o.x-p.x, oy-p.y);
+                if (d < minD) { minD=d; closest=o; }
             });
-            plantObjects.forEach(p => {
-                const d = Math.sqrt((p.x - svgP.x) ** 2 + ((p.y - 120) - svgP.y) ** 2);
-                if (d < minDist) { minDist = d; closestObj = p; }
-            });
-
-            if (closestObj && closestObj.firebaseKey) {
-                // Firebase entfernt das Objekt → onChildRemoved räumt lokal auf
-                remove(ref(db, 'aquarium/shared/objects/' + closestObj.firebaseKey));
-            } else if (!closestObj) {
-                window.toggleSellMode();
-            }
+            if (closest?.firebaseKey) remove(ref(db, 'aquarium/shared/objects/'+closest.firebaseKey));
+            else if (!closest) window.toggleSellMode();
             return;
         }
-
         if (!selectedItemForPlacement) return;
-        placeObjectViaFirebase(selectedItemForPlacement.label, selectedItemForPlacement.typeId, svgP.x, svgP.y);
+        placeObject(selectedItemForPlacement.label, selectedItemForPlacement.typeId, p.x, p.y);
         exitPlacementMode();
     }
 
-    /* --- FIREBASE: OBJEKT PLATZIEREN --- */
-    async function placeObjectViaFirebase(label, typeId, x, y) {
+    /* ─── FIREBASE ───────────────────────────────────────────────────────── */
+    async function placeObject(label, typeId, x, y) {
         if (!currentUser) return;
-
-        const allTypes = [...fishTypes, ...plantTypes, ...decoTypes];
-        const itemDef = allTypes.find(t => t.id === typeId);
-        const price = itemDef ? (itemDef.price || 0) : 0;
-
+        const all = [...fishTypes, ...plantTypes, ...decoTypes];
+        const def = all.find(t => t.id===typeId);
+        const price = def?.price || 0;
         if (price > 0) {
-            if (coinsBalance < price) {
-                showInsufficientCoins();
-                return;
-            }
-            await runTransaction(ref(db, `coins/${currentUserKey}`), c => (c || 0) - price);
+            if (coinsBalance < price) { showBanner('Nicht genug Münzen! 🪙', 'rgba(255,165,0,0.9)'); return; }
+            await runTransaction(ref(db, `coins/${currentUserKey}`), c => (c||0)-price);
         }
-
-        const finalY = (label === 'Bewohner') ? y : getClampedFloorY(x, y);
-
-        push(ref(db, 'aquarium/shared/objects'), {
-            label,
-            typeId,
-            x: Math.round(finalY === y ? x : x),
-            y: Math.round(finalY),
-            addedBy: currentUser,
-            addedAt: Date.now(),
-            price,
-            itemName: itemDef ? itemDef.name : typeId
-        });
+        const fy = label==='Bewohner' ? y : clampFloor(x, y);
+        push(ref(db, 'aquarium/shared/objects'), { label, typeId, x: Math.round(x), y: Math.round(fy), addedBy:currentUser, addedAt:Date.now(), price, itemName: def?.name||typeId });
     }
 
-    /* --- FIREBASE: ECHTZEIT-SYNC --- */
     function initFirebaseListeners() {
-        const objectsRef = ref(db, 'aquarium/shared/objects');
-
-        onChildAdded(objectsRef, (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-            const key = snapshot.key;
-            if (data.label === 'Bewohner') {
-                spawnFish(data.typeId, data.x, data.y, key, data.addedBy, data.itemName || data.typeId);
-            } else {
-                spawnFloorItem(data.label, data.typeId, data.x, data.y, key, data.addedBy, data.itemName || data.typeId);
-            }
+        const oRef = ref(db, 'aquarium/shared/objects');
+        onChildAdded(oRef, snap => {
+            const d = snap.val(); if (!d) return;
+            if (d.label==='Bewohner') spawnFish(d.typeId, d.x, d.y, snap.key, d.addedBy, d.itemName);
+            else                       spawnFloorItem(d.label, d.typeId, d.x, d.y, snap.key, d.addedBy, d.itemName);
         });
-
-        onChildRemoved(objectsRef, (snapshot) => {
-            const key = snapshot.key;
-            const fish = fishObjects.find(f => f.firebaseKey === key);
-            if (fish) {
-                fish.svg.remove();
-                fishObjects = fishObjects.filter(f => f.firebaseKey !== key);
-            }
-            const plant = plantObjects.find(p => p.firebaseKey === key);
-            if (plant) {
-                plant.svg.remove();
-                plantObjects = plantObjects.filter(p => p.firebaseKey !== key);
-            }
+        onChildRemoved(oRef, snap => {
+            const key = snap.key;
+            const f = fishObjects.find(o => o.firebaseKey===key);
+            if (f) { f.svg.remove(); fishObjects = fishObjects.filter(o => o.firebaseKey!==key); }
+            const p = plantObjects.find(o => o.firebaseKey===key);
+            if (p) { p.svg.remove(); plantObjects = plantObjects.filter(o => o.firebaseKey!==key); }
             updateCounts();
         });
     }
 
-    /* --- SPAWN-FUNKTIONEN (mit Firebase-Key und addedBy) --- */
     function spawnFish(typeId, x, y, firebaseKey, addedBy, itemName) {
-        const type = fishTypes.find(f => f.id === typeId);
-        if (!type) return;
-        const svgGroup = createFishSVG(typeId);
-        svgGroup.style.display = 'block';
-        svgGroup.dataset.addedBy = addedBy || '';
-        svgGroup.dataset.firebaseKey = firebaseKey || '';
-        svgGroup.dataset.itemName = itemName || type.name;
-        document.getElementById("fish-layer").appendChild(svgGroup);
-        fishObjects.push({
-            id: 'fish_' + firebaseKey,
-            typeId, x, y,
-            size: type.size, agility: type.agility,
-            vx: (Math.random() - 0.5) * type.baseSpeed,
-            vy: (Math.random() - 0.5) * type.baseSpeed * 0.5,
-            targetX: x, targetY: y, facing: 1,
-            svg: svgGroup,
-            firebaseKey,
-            addedBy
-        });
+        const type = fishTypes.find(f => f.id===typeId); if (!type) return;
+        const svg = createFishSVG(typeId);
+        svg.style.display='block';
+        svg.dataset.addedBy = addedBy||'';
+        svg.dataset.firebaseKey = firebaseKey||'';
+        svg.dataset.itemName = itemName||type.name;
+        document.getElementById("fish-layer").appendChild(svg);
+        fishObjects.push({ id:'fish_'+firebaseKey, typeId, x, y, size:type.size, agility:type.agility, vx:(Math.random()-0.5)*type.baseSpeed, vy:(Math.random()-0.5)*type.baseSpeed*0.5, targetX:x, targetY:y, facing:1, svg, firebaseKey, addedBy });
         updateCounts();
     }
 
     function spawnFloorItem(label, typeId, x, y, firebaseKey, addedBy, itemName) {
-        const clampedY = getClampedFloorY(x, y);
-        let svgGroup, size;
-        if (label === 'Flora') {
-            svgGroup = createPlantSVG(typeId);
-            size = (plantTypes.find(p => p.id === typeId) || {}).size || 3;
-            document.getElementById("plant-layer").appendChild(svgGroup);
-        } else {
-            svgGroup = createDecoSVG(typeId);
-            size = (decoTypes.find(d => d.id === typeId) || {}).size || 3;
-            document.getElementById("deco-layer").appendChild(svgGroup);
-        }
-        svgGroup.dataset.addedBy = addedBy || '';
-        svgGroup.dataset.firebaseKey = firebaseKey || '';
-        svgGroup.dataset.itemName = itemName || typeId;
-        svgGroup.setAttribute("transform", `translate(${x}, ${clampedY}) scale(${size})`);
-        svgGroup.style.display = 'block';
-        plantObjects.push({
-            id: 'item_' + firebaseKey,
-            type: typeId, x, y: clampedY,
-            svg: svgGroup,
-            firebaseKey,
-            addedBy
-        });
+        const cy = clampFloor(x, y);
+        const all = [...plantTypes, ...decoTypes];
+        const def = all.find(t => t.id===typeId);
+        const size = def?.size||3;
+        const svg = label==='Flora' ? createPlantSVG(typeId) : createDecoSVG(typeId);
+        svg.dataset.addedBy = addedBy||'';
+        svg.dataset.firebaseKey = firebaseKey||'';
+        svg.dataset.itemName = itemName||typeId;
+        svg.setAttribute("transform", `translate(${x},${cy}) scale(${size})`);
+        svg.style.display='block';
+        document.getElementById(label==='Flora'?'plant-layer':'deco-layer').appendChild(svg);
+        plantObjects.push({ id:'item_'+firebaseKey, type:typeId, x, y:cy, svg, firebaseKey, addedBy });
         updateCounts();
     }
 
-    /* --- MÜNZEN-ANZEIGE --- */
     function initCoinDisplay() {
         onValue(ref(db, `coins/${currentUserKey}`), snap => {
-            coinsBalance = snap.val() || 0;
+            coinsBalance = snap.val()||0;
             const el = document.getElementById('aquarium-coin-count');
             if (el) el.textContent = coinsBalance.toLocaleString("de-DE");
         });
     }
 
-    function showInsufficientCoins() {
-        const banner = document.getElementById("sell-mode-banner");
-        const orig = banner.style.background;
-        banner.textContent = 'Nicht genug Münzen! 🪙';
-        banner.style.background = 'rgba(255, 165, 0, 0.9)';
-        banner.style.display = 'block';
-        setTimeout(() => {
-            banner.style.display = 'none';
-            banner.style.background = orig;
-            banner.textContent = 'Tippe auf Objekte zum Löschen. Tippe ins Wasser zum Abbrechen.';
-        }, 2000);
+    function showBanner(text, bg) {
+        const b = document.getElementById("sell-mode-banner");
+        const origBg = b.style.background, origTxt = b.textContent;
+        b.textContent=text; b.style.background=bg; b.style.display='block';
+        setTimeout(() => { b.style.display='none'; b.style.background=origBg; b.textContent=origTxt; }, 2000);
     }
 
-    /* --- PHYSIK LOOP --- */
+    /* ─── GAME LOOP ──────────────────────────────────────────────────────── */
     function gameLoop() {
-        const margin = 300;
-        const sandTop = aquariumHeight - 550;
+        const margin = 300, sandTop = H - 550;
 
-        for (let i = foodObjects.length - 1; i >= 0; i--) {
-            const food = foodObjects[i];
-            food.y += food.speed;
-            food.svg.setAttribute("cy", food.y);
-            if (food.y > sandTop) { food.svg.remove(); foodObjects.splice(i, 1); }
+        // Food physics
+        for (let i = foodObjects.length-1; i >= 0; i--) {
+            const f = foodObjects[i]; f.y += f.speed; f.svg.setAttribute("cy", f.y);
+            if (f.y > sandTop) { f.svg.remove(); foodObjects.splice(i,1); }
         }
 
         fishObjects.forEach(fish => {
-            const type = fishTypes.find(f => f.id === fish.typeId);
-            if (!type) return;
-            let nearestFood = null;
-            let minDistToFood = 1500;
+            const type = fishTypes.find(f => f.id===fish.typeId); if (!type) return;
 
-            for (let i = 0; i < foodObjects.length; i++) {
-                const f = foodObjects[i];
-                const d = Math.sqrt((f.x - fish.x) ** 2 + (f.y - fish.y) ** 2);
-                if (d < minDistToFood) { minDistToFood = d; nearestFood = { data: f, index: i }; }
-            }
+            // Food detection
+            let nearFood = null, minFD = 1500;
+            foodObjects.forEach((f, i) => { const d = Math.hypot(f.x-fish.x, f.y-fish.y); if (d < minFD) { minFD=d; nearFood={data:f,index:i}; } });
 
-            if (nearestFood) {
-                fish.targetX = nearestFood.data.x;
-                fish.targetY = nearestFood.data.y;
-                if (minDistToFood < 120) {
-                    nearestFood.data.svg.remove();
-                    foodObjects.splice(nearestFood.index, 1);
-                    fish.vx *= 1.5;
-                }
+            if (nearFood) {
+                fish.targetX = nearFood.data.x; fish.targetY = nearFood.data.y;
+                if (minFD < 120) { nearFood.data.svg.remove(); foodObjects.splice(nearFood.index,1); fish.vx *= 1.5; }
             } else {
-                const dist = Math.sqrt((fish.targetX - fish.x) ** 2 + (fish.targetY - fish.y) ** 2);
+                const dist = Math.hypot(fish.targetX-fish.x, fish.targetY-fish.y);
                 if (dist < 150 || Math.random() < 0.005) {
-                    fish.targetX = margin + Math.random() * (aquariumWidth - margin * 2);
-                    fish.targetY = 200 + Math.random() * (sandTop - 200);
+                    if (fish.typeId === 'axolotl') {
+                        // Stays near bottom
+                        fish.targetX = margin + Math.random()*(W-margin*2);
+                        fish.targetY = sandTop - 30 - Math.random()*120;
+                    } else if (fish.typeId === 'jellyfish') {
+                        // Drifts mostly vertically, small X movement
+                        fish.targetX = fish.x + (Math.random()-0.5)*700;
+                        fish.targetY = 120 + Math.random()*(sandTop-300);
+                    } else {
+                        fish.targetX = margin + Math.random()*(W-margin*2);
+                        fish.targetY = 200 + Math.random()*(sandTop-200);
+                    }
                 }
             }
 
-            let dx = fish.targetX - fish.x;
-            let dy = fish.targetY - fish.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            if (len > 0) { dx = (dx / len) * type.baseSpeed; dy = (dy / len) * type.baseSpeed; }
+            // Steering
+            let dx = fish.targetX-fish.x, dy = fish.targetY-fish.y;
+            const len = Math.hypot(dx, dy);
+            if (len > 0) { dx = dx/len*type.baseSpeed; dy = dy/len*type.baseSpeed; }
+            const agility = nearFood ? fish.agility*2.5 : fish.agility;
+            fish.vx += (dx-fish.vx)*agility; fish.vy += (dy-fish.vy)*agility;
 
-            const currentAgility = nearestFood ? fish.agility * 2.5 : fish.agility;
-            fish.vx += (dx - fish.vx) * currentAgility;
-            fish.vy += (dy - fish.vy) * currentAgility;
+            // Boundaries
+            if (fish.x < margin) fish.vx += 0.2; if (fish.x > W-margin) fish.vx -= 0.2;
+            if (fish.y < margin) fish.vy += 0.2; if (fish.y > sandTop)   fish.vy -= 0.2;
 
-            if (fish.x < margin) fish.vx += 0.2;
-            if (fish.x > aquariumWidth - margin) fish.vx -= 0.2;
-            if (fish.y < margin) fish.vy += 0.2;
-            if (fish.y > sandTop) fish.vy -= 0.2;
+            fish.x += fish.vx; fish.y += fish.vy;
 
-            fish.x += fish.vx;
-            fish.y += fish.vy;
-            if (fish.vx > 0.1) fish.facing = 1;
-            else if (fish.vx < -0.1) fish.facing = -1;
-            const pitch = Math.max(-25, Math.min(25, (fish.vy / type.baseSpeed) * 20));
-
-            fish.svg.setAttribute("transform", `translate(${fish.x}, ${fish.y}) scale(${fish.size * fish.facing}, ${fish.size}) rotate(${pitch * fish.facing})`);
+            // Transform (special handling per type)
+            if (fish.typeId === 'seahorse') {
+                const tilt = Math.max(-22, Math.min(22, fish.vx*9));
+                fish.svg.setAttribute("transform", `translate(${fish.x},${fish.y}) scale(${fish.size}) rotate(${tilt})`);
+            } else if (fish.typeId === 'jellyfish') {
+                fish.svg.setAttribute("transform", `translate(${fish.x},${fish.y}) scale(${fish.size})`);
+            } else {
+                if (fish.vx >  0.1) fish.facing =  1;
+                if (fish.vx < -0.1) fish.facing = -1;
+                const pitch = Math.max(-25, Math.min(25, fish.vy/type.baseSpeed*20));
+                fish.svg.setAttribute("transform", `translate(${fish.x},${fish.y}) scale(${fish.size*fish.facing},${fish.size}) rotate(${pitch*fish.facing})`);
+            }
         });
 
         requestAnimationFrame(gameLoop);
     }
 
-    /* --- AUTH --- */
-    onAuthStateChanged(auth, (user) => {
+    /* ─── AUTH ───────────────────────────────────────────────────────────── */
+    onAuthStateChanged(auth, user => {
         if (!user) {
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('aquarium-root').style.display = 'none';
             return;
         }
-
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('aquarium-root').style.display = 'block';
-
-        currentUser = user.email.toLowerCase() === 'nele.busse@web.de' ? 'Nele' : 'Andreas';
+        currentUser    = user.email.toLowerCase() === 'nele.busse@web.de' ? 'Nele' : 'Andreas';
         currentUserKey = currentUser.toLowerCase();
-
-        const userInfoEl = document.getElementById('aquarium-user-info');
-        if (userInfoEl) {
-            const other = currentUser === 'Nele' ? 'Andreas' : 'Nele';
-            userInfoEl.innerHTML = `Du bist <span>${currentUser}</span> · Teilst mit <span>${other}</span> 💙`;
-        }
-
+        const other = currentUser === 'Nele' ? 'Andreas' : 'Nele';
+        const info = document.getElementById('aquarium-user-info');
+        if (info) info.innerHTML = `Du bist <span>${currentUser}</span> · Teilst mit <span>${other}</span> 💙`;
         initCoinDisplay();
         init();
     });
