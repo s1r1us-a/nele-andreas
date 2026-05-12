@@ -92,7 +92,15 @@
     .topbar-coins { display: flex; align-items: center; gap: 4px; background: rgba(212,160,97,0.12); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 10px; font-size: 13px; font-weight: 700; color: var(--gold); white-space: nowrap; }
 
     /* ── FARM WORLD & ATMOSPHERE ── */
-    .farm-world { flex: 1; position: relative; width: 100%; overflow: hidden; display: none; }
+    .farm-world { flex: 1; position: relative; width: 100%; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; display: none; }
+    .farm-world::-webkit-scrollbar { display: none; }
+
+    /* Scroll-Hinweis */
+    .scroll-hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
+    .scroll-hint.visible { opacity: 1; }
+    .scroll-hint-arrow { width: 28px; height: 28px; border-right: 3px solid rgba(255,255,255,0.85); border-bottom: 3px solid rgba(255,255,255,0.85); border-radius: 3px; transform: rotate(45deg); animation: scrollBounce 1.2s ease-in-out infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+    .scroll-hint-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9); text-shadow: 0 1px 4px rgba(0,0,0,0.3); letter-spacing: 1px; text-transform: uppercase; }
+    @keyframes scrollBounce { 0%, 100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(5px); } }
     .sky { position: absolute; top: 0; left: 0; right: 0; height: 35%; background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%); transition: background 2s ease; z-index: 0; }
     
     /* Sterne in der Nacht */
@@ -389,7 +397,7 @@
     .bush-3 { width: 50px; height: 30px; top: 33%; left: 70%; opacity: 0.8; }
 
     /* Noise Texture für den Boden */
-    .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
+    .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; min-height: 110%; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
     .ground-area::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1; }
 
     /* Wackelndes Gras */
@@ -1113,6 +1121,12 @@
 
   <!-- VOGEL-CONTAINER -->
   <div id="birdContainer"></div>
+</div>
+
+<!-- SCROLL-HINWEIS (außerhalb von farmWorld, fixed) -->
+<div class="scroll-hint" id="scrollHint">
+  <div class="scroll-hint-arrow"></div>
+  <span class="scroll-hint-label">Scrollen</span>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()">
@@ -2138,7 +2152,7 @@
     else if (a.species === 'goat') sizeMod = 1.25;
     else if (a.species === 'duck') sizeMod = 0.9;
 
-    const scale = (0.5 + ((a.y - 35) / 60) * 0.7) * sizeMod; 
+    const scale = Math.min(1.55, 0.5 + ((a.y - 35) / 60) * 0.7) * sizeMod;
     el.style.left = a.x + '%'; el.style.top = a.y + '%';
     el.style.transform = `scale(${scale})`; el.style.zIndex = Math.floor(a.y);
     
@@ -3431,8 +3445,8 @@
           newX = a.x + (Math.random() - 0.5) * 25; 
           newY = a.y + (Math.random() - 0.5) * 20; 
           
-          newX = Math.max(5, Math.min(95, newX)); 
-          newY = Math.max(40, Math.min(95, newY)); 
+          newX = Math.max(5, Math.min(95, newX));
+          newY = Math.max(40, Math.min(130, newY));
           
           let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); 
           let inBakery = (newX > 38 && newX < 62 && newY > 22 && newY < 45);
@@ -3469,12 +3483,32 @@
     }); 
   }, 3000);
 
-  window.addEventListener('resize', () => { 
+  window.addEventListener('resize', () => {
       if(currentUser) {
           document.getElementById('fenceContainer').innerHTML = '';
-          updateFarmDOM(); 
+          updateFarmDOM();
       }
   });
+
+  // ── SCROLL-HINWEIS ──
+  function updateScrollHint() {
+    const hint = document.getElementById('scrollHint');
+    const fw = document.getElementById('farmWorld');
+    if (!hint || !fw) return;
+    const hasOffscreen = animals.some(a => a.y > 92);
+    const alreadyScrolled = fw.scrollTop > 30;
+    if (hasOffscreen && !alreadyScrolled) {
+      hint.classList.add('visible');
+    } else {
+      hint.classList.remove('visible');
+    }
+  }
+
+  document.getElementById('farmWorld').addEventListener('scroll', () => {
+    updateScrollHint();
+  });
+
+  setInterval(updateScrollHint, 4000);
 
   // ── OFFLINE ERKENNUNG ──
   function updateOnlineStatus() {
