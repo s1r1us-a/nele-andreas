@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaGrow - 5K Ozean Edition (Fixed)</title>
+    <title>Unser Aquarium 🐠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         /* --- MODERNE BASIS & ATMOSPHÄRE --- */
         :root {
@@ -11,11 +12,12 @@
             --glass: rgba(16, 42, 69, 0.75); --border-glass: rgba(0, 255, 204, 0.25);
             --shadow-lush: 0 15px 35px rgba(0, 0, 0, 0.9);
             --text-main: #e6f1ff; --text-dim: #8892b0;
-            --font-stack: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-stack: 'Quicksand', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --gold: #d4a061;
         }
 
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
             background-color: var(--bg-deep); color: var(--text-main); font-family: var(--font-stack);
             user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none;
         }
@@ -27,7 +29,6 @@
             flex-direction: column; align-items: center; justify-content: center;
             text-align: center; padding: 20px; box-sizing: border-box;
         }
-        
         #orientation-warning h1 { font-size: 2.2em; margin-bottom: 10px; }
         #orientation-warning p { color: var(--text-main); font-size: 1.2em; max-width: 80%; }
         .rotate-icon { font-size: 70px; margin-bottom: 20px; animation: rotatePhone 2s ease-in-out infinite; }
@@ -38,17 +39,35 @@
             #aquarium-root { display: none !important; }
         }
 
+        /* --- AUTH OVERLAY --- */
+        #auth-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #030b17; z-index: 9999;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; gap: 20px;
+        }
+        #auth-overlay h2 { font-family: 'Dancing Script', cursive; font-size: 2.5em; color: var(--aqua-primary); margin: 0; }
+        #auth-overlay p { color: var(--text-dim); font-size: 1.1em; margin: 0; }
+        .auth-back-btn {
+            display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, var(--aqua-primary), #00c8a0);
+            color: #030b17; border-radius: 50px; font-weight: 700; font-size: 1em; text-decoration: none;
+            box-shadow: 0 4px 20px rgba(0,255,204,0.4); transition: transform 0.2s ease;
+        }
+        .auth-back-btn:hover { transform: scale(1.05) translateY(-2px); }
+
         /* --- AQUARIUM --- */
-        #aquarium-root { 
-            width: 100vw; height: 100vh; position: relative; 
-            background: radial-gradient(circle at 50% -10%, #153c60 0%, #0a1c30 50%, #030b17 100%); 
+        #aquarium-root {
+            width: 100vw; height: 100vh; position: relative;
+            background: radial-gradient(circle at 50% -10%, #153c60 0%, #0a1c30 50%, #030b17 100%);
             cursor: none; display: block;
         }
         #aquarium-svg { width: 100%; height: 100%; display: block; }
 
         #custom-cursor {
             width: 15px; height: 15px; background: var(--aqua-primary); border-radius: 50%;
-            position: absolute; pointer-events: none; transform: translate(-50%, -50%); z-index: 1000; mix-blend-mode: screen; transition: width 0.2s, height 0.2s, background-color 0.2s; box-shadow: 0 0 20px var(--aqua-primary), 0 0 40px var(--aqua-primary);
+            position: absolute; pointer-events: none; transform: translate(-50%, -50%); z-index: 1000;
+            mix-blend-mode: screen; transition: width 0.2s, height 0.2s, background-color 0.2s;
+            box-shadow: 0 0 20px var(--aqua-primary), 0 0 40px var(--aqua-primary);
         }
         #custom-cursor.active { width: 35px; height: 35px; background: rgba(255, 255, 255, 0.4); }
         #custom-cursor.sell-mode { background: #ff4757; box-shadow: 0 0 20px #ff4757; }
@@ -56,19 +75,37 @@
         /* --- UI MENÜ --- */
         #ui-container {
             position: absolute; top: 50%; right: 20px; transform: translateY(-50%) translateX(120%);
-            width: 360px; max-width: 85vw; max-height: 85vh; background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border-radius: 24px; border: 1px solid var(--border-glass); box-shadow: var(--shadow-lush); display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 100;
+            width: 360px; max-width: 85vw; max-height: 85vh; background: var(--glass);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; border: 1px solid var(--border-glass); box-shadow: var(--shadow-lush);
+            display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 100;
         }
         #ui-container.visible { transform: translateY(-50%) translateX(0%); }
 
         #ui-toggle {
-            position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-glass); border-radius: 50%; cursor: pointer; color: var(--aqua-primary); font-size: 28px; z-index: 101; box-shadow: var(--shadow-lush); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
+            position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; background: var(--glass);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-glass);
+            border-radius: 50%; cursor: pointer; color: var(--aqua-primary); font-size: 28px; z-index: 101;
+            box-shadow: var(--shadow-lush); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
         }
         #ui-toggle.menu-open { color: #fff; transform: rotate(-90deg); }
 
-        .shop-header { padding: 20px; border-bottom: 1px solid var(--border-glass); text-align: center; }
-        .shop-header h3 { margin: 0; font-size: 1.4em; font-weight: 600; text-shadow: 0 2px 10px rgba(0,255,204,0.3); }
-        
+        .shop-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border-glass); }
+        .shop-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .shop-back-btn {
+            display: flex; align-items: center; gap: 5px; color: var(--text-dim); text-decoration: none;
+            font-size: 0.8em; font-weight: 600; transition: color 0.2s ease; padding: 4px 0;
+        }
+        .shop-back-btn:hover { color: var(--aqua-primary); }
+        .shop-coin-display {
+            display: flex; align-items: center; gap: 6px; background: rgba(212,160,97,0.12);
+            border: 1px solid rgba(212,160,97,0.3); border-radius: 20px; padding: 5px 12px;
+        }
+        .shop-coin-display .coin-val { font-family: 'Dancing Script', cursive; font-size: 1.1em; color: var(--gold); font-weight: 700; }
+        .shop-header h3 { margin: 0 0 4px 0; font-family: 'Dancing Script', cursive; font-size: 1.6em; font-weight: 700; text-shadow: 0 2px 10px rgba(0,255,204,0.3); text-align: center; }
+        #aquarium-user-info { font-size: 0.75em; color: var(--text-dim); text-align: center; }
+        #aquarium-user-info span { color: var(--aqua-primary); font-weight: 600; }
+
         .shop-content { overflow-y: auto; padding: 15px; }
         .shop-content::-webkit-scrollbar { width: 4px; }
         .shop-content::-webkit-scrollbar-thumb { background-color: var(--aqua-primary); border-radius: 2px; }
@@ -76,24 +113,56 @@
         .category-title { font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; color: var(--aqua-primary); margin: 20px 0 10px 5px; font-size: 0.8em; border-bottom: 1px solid rgba(0,255,204,0.1); padding-bottom: 5px; }
 
         .shop-item {
-            cursor: pointer; display: flex; align-items: center; padding: 10px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%); border-radius: 16px; border: 1px solid transparent; transition: all 0.2s;
+            cursor: pointer; display: flex; align-items: center; padding: 10px; margin-bottom: 8px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 16px; border: 1px solid transparent; transition: all 0.2s;
         }
         @media (hover: hover) { .shop-item:hover { background: rgba(0, 255, 204, 0.08); border: 1px solid var(--border-glass); transform: translateX(5px); } }
         .shop-item:active { transform: scale(0.95); background: rgba(0, 255, 204, 0.2); }
 
-        .item-icon-container { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; margin-right: 15px; }
-        .item-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .item-name { font-size: 1em; font-weight: 500; }
-        .item-type { font-size: 0.75em; color: var(--text-dim); margin-top: 2px; }
+        .item-icon-container { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; margin-right: 15px; flex-shrink: 0; }
+        .item-info { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+        .item-name { font-size: 1em; font-weight: 600; }
+        .item-type { font-size: 0.75em; color: var(--text-dim); margin-top: 1px; }
+        .item-price {
+            display: inline-block; font-size: 0.7em; font-weight: 700; padding: 2px 8px;
+            border-radius: 10px; margin-top: 3px; width: fit-content;
+            background: rgba(212,160,97,0.15); color: var(--gold); border: 1px solid rgba(212,160,97,0.3);
+        }
+        .item-price-free { background: rgba(0,255,204,0.1); color: var(--aqua-primary); border-color: rgba(0,255,204,0.2); }
 
-        #sell-mode-banner { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255, 71, 87, 0.9); backdrop-filter: blur(10px); padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 1em; box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4); display: none; z-index: 1000; pointer-events: none; width: max-content; max-width: 90vw; text-align: center; }
+        #sell-mode-banner {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 71, 87, 0.9); backdrop-filter: blur(10px); padding: 10px 20px;
+            border-radius: 20px; font-weight: bold; font-size: 1em; box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4);
+            display: none; z-index: 1000; pointer-events: none; width: max-content; max-width: 90vw; text-align: center;
+        }
 
         .resource-display { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 10px; z-index: 90; flex-wrap: wrap; }
-        .resource { background: var(--glass); backdrop-filter: blur(5px); padding: 8px 15px; border-radius: 12px; border: 1px solid var(--border-glass); font-weight: 600; font-size: 0.9em; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .resource {
+            background: var(--glass); backdrop-filter: blur(5px); padding: 8px 15px;
+            border-radius: 12px; border: 1px solid var(--border-glass); font-weight: 600;
+            font-size: 0.9em; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-family: 'Quicksand', sans-serif;
+        }
 
         .placement-preview { opacity: 0.7; pointer-events: none; filter: drop-shadow(0 0 15px var(--aqua-primary)); }
 
-        @keyframes bubbleRise { 0% { transform: translateY(0) scale(1); opacity: 0; } 20% { opacity: 0.6; } 80% { opacity: 0.4; } 100% { transform: translateY(-110vh) scale(1.5); opacity: 0; } }
+        /* --- TOOLTIP --- */
+        #fish-tooltip {
+            position: fixed; display: none; pointer-events: none; z-index: 500;
+            background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass);
+            border-radius: 14px; padding: 10px 15px; max-width: 220px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6); font-family: 'Quicksand', sans-serif;
+        }
+        #fish-tooltip .tt-name { font-size: 1em; font-weight: 700; color: var(--aqua-primary); }
+        #fish-tooltip .tt-by { font-size: 0.8em; color: var(--text-dim); margin-top: 3px; }
+        #fish-tooltip .tt-by span { color: var(--text-main); font-weight: 600; }
+
+        @keyframes bubbleRise {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            20% { opacity: 0.6; } 80% { opacity: 0.4; }
+            100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
+        }
         .bubble { fill: rgba(255, 255, 255, 0.4); opacity: 0; animation: bubbleRise 15s ease-in infinite; }
         @keyframes plantSway { 0%, 100% { transform: skewX(0deg); } 50% { transform: skewX(4deg); } }
         @keyframes glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.5) drop-shadow(0 0 10px #f1c40f); } }
@@ -107,6 +176,18 @@
     <p>Der Ozean braucht viel Platz. Bitte halte dein Gerät im Querformat (Landscape).</p>
 </div>
 
+<div id="auth-overlay">
+    <div style="font-size:70px; margin-bottom:10px;">🐠</div>
+    <h2>Unser Aquarium</h2>
+    <p>Bitte erst einloggen, um das Aquarium zu öffnen.</p>
+    <a href="index.html" class="auth-back-btn">← Zur Hauptseite</a>
+</div>
+
+<div id="fish-tooltip">
+    <div class="tt-name" id="tt-name"></div>
+    <div class="tt-by" id="tt-by"></div>
+</div>
+
 <div id="aquarium-root">
     <div id="custom-cursor"></div>
     <div id="sell-mode-banner">Tippe auf Objekte zum Löschen. Tippe ins Wasser zum Abbrechen.</div>
@@ -114,7 +195,8 @@
     <svg id="aquarium-svg" viewBox="0 0 5120 2880" preserveAspectRatio="xMidYMid slice">
         <defs>
             <linearGradient id="lightRay" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="rgba(0, 255, 204, 0.12)" /> <stop offset="100%" stop-color="rgba(0, 255, 204, 0)" />
+                <stop offset="0%" stop-color="rgba(0, 255, 204, 0.12)" />
+                <stop offset="100%" stop-color="rgba(0, 255, 204, 0)" />
             </linearGradient>
             <linearGradient id="sandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#c19a6b" /> <stop offset="100%" stop-color="#6e5537" />
@@ -126,7 +208,8 @@
                 <stop offset="0%" stop-color="#c0392b" /> <stop offset="100%" stop-color="#8e44ad" />
             </linearGradient>
             <linearGradient id="tetraGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#111" /> <stop offset="40%" stop-color="#00ffff" /> <stop offset="60%" stop-color="#ff0044" /> <stop offset="100%" stop-color="#fff" />
+                <stop offset="0%" stop-color="#111" /> <stop offset="40%" stop-color="#00ffff" />
+                <stop offset="60%" stop-color="#ff0044" /> <stop offset="100%" stop-color="#fff" />
             </linearGradient>
             <linearGradient id="angelfishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#ffffff" /> <stop offset="50%" stop-color="#a0b4c4" /> <stop offset="100%" stop-color="#4a5d6e" />
@@ -149,12 +232,10 @@
             <linearGradient id="vaseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#d35400" /> <stop offset="100%" stop-color="#a04000" />
             </linearGradient>
-
             <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
                 <feDropShadow dx="10" dy="25" stdDeviation="12" flood-color="#000" flood-opacity="0.7"/>
             </filter>
         </defs>
-
         <g id="bg-layer"></g>
         <g id="deco-layer"></g>
         <g id="plant-layer"></g>
@@ -166,7 +247,15 @@
 
     <div id="ui-container">
         <div class="shop-header">
-            <h3>5K Ozean</h3>
+            <div class="shop-header-top">
+                <a href="index.html" class="shop-back-btn">← Zurück</a>
+                <div class="shop-coin-display">
+                    <span>🪙</span>
+                    <span class="coin-val" id="aquarium-coin-count">–</span>
+                </div>
+            </div>
+            <h3>🌊 Unser Aquarium</h3>
+            <div id="aquarium-user-info">Lade...</div>
         </div>
         <div class="shop-content">
             <div class="category-title">Aktionen</div>
@@ -181,7 +270,6 @@
 
             <div class="category-title">Bewohner</div>
             <div id="shop-fish"></div>
-            
             <div class="category-title">Flora & Deko</div>
             <div id="shop-plants"></div>
             <div id="shop-deco"></div>
@@ -194,46 +282,72 @@
     </div>
 </div>
 
-<script>
-    const aquariumWidth = 5120; 
-    const aquariumHeight = 2880; 
-    const svgNS = "http://www.w3.org/2000/svg";
-    
-    let selectedItemForPlacement = null; let previewObjectSVG = null; let isSellMode = false;
-    let fishObjects = []; let plantObjects = []; let foodObjects = [];
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, remove, onChildAdded, onChildRemoved, runTransaction, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+    const app = initializeApp({
+        apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+        authDomain: "nele-und-andreas.firebaseapp.com",
+        databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "nele-und-andreas",
+        storageBucket: "nele-und-andreas.firebasestorage.app"
+    });
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    /* --- ZUSTAND --- */
+    let currentUser = null;
+    let currentUserKey = null;
+    let coinsBalance = 0;
+
+    const aquariumWidth = 5120;
+    const aquariumHeight = 2880;
+    const svgNS = "http://www.w3.org/2000/svg";
+
+    let selectedItemForPlacement = null;
+    let previewObjectSVG = null;
+    let isSellMode = false;
+    let fishObjects = [];
+    let plantObjects = [];
+    let foodObjects = [];
+
+    /* --- TYPEN MIT PREISEN (TESTPHASE: alle 0) --- */
     const fishTypes = [
-        { id: 'tetra', name: 'Neon Tetra', icon: '🐟', baseSpeed: 4.5, size: 1.2, agility: 0.08, type: 'Schwarmfisch' },
-        { id: 'guppy', name: 'Leuchtfleck-Guppy', icon: '🐠', baseSpeed: 3.75, size: 1.05, agility: 0.1, type: 'Schwarmfisch' },
-        { id: 'clown', name: 'Clownfisch', icon: '🐡', baseSpeed: 3.3, size: 1.65, agility: 0.04, type: 'Riffbewohner' },
-        { id: 'angelfish', name: 'Kaiser-Skalar', icon: '🎏', baseSpeed: 2.4, size: 3.0, agility: 0.02, type: 'Majestätisch' },
-        { id: 'puffer', name: 'Kugelfisch', icon: '🐡', baseSpeed: 2.1, size: 2.1, agility: 0.03, type: 'Gemütlich' },
-        { id: 'discus', name: 'Königs-Diskus', icon: '🧿', baseSpeed: 2.25, size: 3.3, agility: 0.02, type: 'Edel' },
-        { id: 'betta', name: 'Kampffisch (Betta)', icon: '🎎', baseSpeed: 2.7, size: 2.4, agility: 0.05, type: 'Fließend' },
-        { id: 'shark', name: 'Zwerg-Riffhai', icon: '🦈', baseSpeed: 6.75, size: 4.5, agility: 0.06, type: 'Raubfisch' }
+        { id: 'tetra',     name: 'Neon Tetra',        icon: '🐟', baseSpeed: 4.5,  size: 1.2, agility: 0.08, type: 'Schwarmfisch', price: 0 },
+        { id: 'guppy',     name: 'Leuchtfleck-Guppy', icon: '🐠', baseSpeed: 3.75, size: 1.05,agility: 0.1,  type: 'Schwarmfisch', price: 0 },
+        { id: 'clown',     name: 'Clownfisch',         icon: '🐡', baseSpeed: 3.3,  size: 1.65,agility: 0.04, type: 'Riffbewohner', price: 0 },
+        { id: 'angelfish', name: 'Kaiser-Skalar',      icon: '🎏', baseSpeed: 2.4,  size: 3.0, agility: 0.02, type: 'Majestätisch', price: 0 },
+        { id: 'puffer',    name: 'Kugelfisch',         icon: '🐡', baseSpeed: 2.1,  size: 2.1, agility: 0.03, type: 'Gemütlich',    price: 0 },
+        { id: 'discus',    name: 'Königs-Diskus',      icon: '🧿', baseSpeed: 2.25, size: 3.3, agility: 0.02, type: 'Edel',         price: 0 },
+        { id: 'betta',     name: 'Kampffisch (Betta)', icon: '🎎', baseSpeed: 2.7,  size: 2.4, agility: 0.05, type: 'Fließend',     price: 0 },
+        { id: 'shark',     name: 'Zwerg-Riffhai',      icon: '🦈', baseSpeed: 6.75, size: 4.5, agility: 0.06, type: 'Raubfisch',    price: 0 }
     ];
 
     const plantTypes = [
-        { id: 'seagrass', name: 'Rotes Tausendblatt', icon: '🌿', size: 3.0, type: 'Vordergrund' },
-        { id: 'anubias', name: 'Anubias Barteri', icon: '🌱', size: 2.7, type: 'Mittelgrund' },
-        { id: 'javafern', name: 'Javafarn Busch', icon: '☘️', size: 3.6, type: 'Mittelgrund' },
-        { id: 'tigerlotus', name: 'Roter Tigerlotus', icon: '🌺', size: 3.3, type: 'Bodenbedecker' },
-        { id: 'vallisneria', name: 'Vallisneria', icon: '🌾', size: 8.0, type: 'Hintergrund' },
-        { id: 'kelp_forest', name: 'Riesen-Kelp', icon: '🌲', size: 10.5, type: 'Hintergrund' }
+        { id: 'seagrass',    name: 'Rotes Tausendblatt', icon: '🌿', size: 3.0,  type: 'Vordergrund', price: 0 },
+        { id: 'anubias',     name: 'Anubias Barteri',    icon: '🌱', size: 2.7,  type: 'Mittelgrund', price: 0 },
+        { id: 'javafern',    name: 'Javafarn Busch',     icon: '☘️', size: 3.6,  type: 'Mittelgrund', price: 0 },
+        { id: 'tigerlotus',  name: 'Roter Tigerlotus',   icon: '🌺', size: 3.3,  type: 'Bodenbedecker', price: 0 },
+        { id: 'vallisneria', name: 'Vallisneria',        icon: '🌾', size: 8.0,  type: 'Hintergrund', price: 0 },
+        { id: 'kelp_forest', name: 'Riesen-Kelp',        icon: '🌲', size: 10.5, type: 'Hintergrund', price: 0 }
     ];
 
     const decoTypes = [
-        { id: 'chest', name: 'Versunkene Truhe', icon: '🪙', size: 3.0, type: 'Antik' },
-        { id: 'vase', name: 'Griechische Amphore', icon: '🏺', size: 3.75, type: 'Antik' },
-        { id: 'crystal', name: 'Kristall-Grotte', icon: '💎', size: 4.5, type: 'Geologisch' },
-        { id: 'anchor', name: 'Rostiger Anker', icon: '⚓', size: 4.2, type: 'Maritim' }
+        { id: 'chest',   name: 'Versunkene Truhe',   icon: '🪙', size: 3.0,  type: 'Antik',     price: 0 },
+        { id: 'vase',    name: 'Griechische Amphore', icon: '🏺', size: 3.75, type: 'Antik',     price: 0 },
+        { id: 'crystal', name: 'Kristall-Grotte',    icon: '💎', size: 4.5,  type: 'Geologisch', price: 0 },
+        { id: 'anchor',  name: 'Rostiger Anker',     icon: '⚓', size: 4.2,  type: 'Maritim',   price: 0 }
     ];
 
     /* --- SVG GENERATOREN --- */
     function createFishSVG(typeId) {
         const type = fishTypes.find(f => f.id === typeId);
-        const group = document.createElementNS(svgNS, "g"); group.setAttribute("class", `fish ${typeId}`);
-        const tailAnimGroup = document.createElementNS(svgNS, "g"); tailAnimGroup.setAttribute("class", "fish-tail");
+        const group = document.createElementNS(svgNS, "g");
+        group.setAttribute("class", `fish ${typeId}`);
+        const tailAnimGroup = document.createElementNS(svgNS, "g");
+        tailAnimGroup.setAttribute("class", "fish-tail");
         const bodyGroup = document.createElementNS(svgNS, "g");
 
         let tailRot = 0; let tailOrigin = "-20px 0px";
@@ -242,189 +356,337 @@
             const isGuppy = typeId === 'guppy';
             const tail = document.createElementNS(svgNS, "path");
             tail.setAttribute("d", isGuppy ? "M-15,0 C-30,-20 -40,-10 -35,0 C-40,10 -30,20 -15,0" : "M-20,0 L-35,-12 C-30,-5 -30,5 -35,12 Z");
-            tail.setAttribute("fill", isGuppy ? "url(#bettaGrad)" : "#ff0044"); tailAnimGroup.appendChild(tail);
+            tail.setAttribute("fill", isGuppy ? "url(#bettaGrad)" : "#ff0044");
+            tailAnimGroup.appendChild(tail);
             const body = document.createElementNS(svgNS, "path");
-            body.setAttribute("d", "M-25,0 C-15,12, 15,12, 25,0 C15,-12, -15,-12, -25,0 Z"); body.setAttribute("fill", isGuppy ? "#2ecc71" : "url(#tetraGrad)"); bodyGroup.appendChild(body);
-            if(!isGuppy){ const stripe = document.createElementNS(svgNS, "path"); stripe.setAttribute("d", "M-20,-2 C0,-2, 15,-2, 20,-2 C15,0, 0,0, -20,0 Z"); stripe.setAttribute("fill", "#00ffff"); bodyGroup.appendChild(stripe); }
-            const eye = document.createElementNS(svgNS, "circle"); eye.setAttribute("cx", "18"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "2"); eye.setAttribute("fill", "#000"); bodyGroup.appendChild(eye);
+            body.setAttribute("d", "M-25,0 C-15,12, 15,12, 25,0 C15,-12, -15,-12, -25,0 Z");
+            body.setAttribute("fill", isGuppy ? "#2ecc71" : "url(#tetraGrad)");
+            bodyGroup.appendChild(body);
+            if (!isGuppy) {
+                const stripe = document.createElementNS(svgNS, "path");
+                stripe.setAttribute("d", "M-20,-2 C0,-2, 15,-2, 20,-2 C15,0, 0,0, -20,0 Z");
+                stripe.setAttribute("fill", "#00ffff");
+                bodyGroup.appendChild(stripe);
+            }
+            const eye = document.createElementNS(svgNS, "circle");
+            eye.setAttribute("cx", "18"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "2"); eye.setAttribute("fill", "#000");
+            bodyGroup.appendChild(eye);
             tailRot = isGuppy ? 15 : 12;
-        } 
-        else if (typeId === 'clown') {
-            const tail = document.createElementNS(svgNS, "path"); tail.setAttribute("d", "M-25,0 L-40,-15 C-35,0 -35,0 -40,15 Z"); tail.setAttribute("fill", "#ff6600"); tail.setAttribute("stroke", "#000"); tail.setAttribute("stroke-width", "2"); tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "path"); body.setAttribute("d", "M-30,0 C-20,22, 20,22, 30,0 C20,-22, -20,-22, -30,0 Z"); body.setAttribute("fill", "#ff6600"); body.setAttribute("stroke", "#000"); bodyGroup.appendChild(body);
-            const band = document.createElementNS(svgNS, "path"); band.setAttribute("d", "M10,-17 C15,-5, 15,5, 10,17 L18,15 C20,5, 20,-5, 18,-15 Z"); band.setAttribute("fill", "#fff"); band.setAttribute("stroke", "#000"); bodyGroup.appendChild(band);
-            const eye = document.createElementNS(svgNS, "circle"); eye.setAttribute("cx", "20"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "2"); eye.setAttribute("fill", "#000"); bodyGroup.appendChild(eye);
+        } else if (typeId === 'clown') {
+            const tail = document.createElementNS(svgNS, "path");
+            tail.setAttribute("d", "M-25,0 L-40,-15 C-35,0 -35,0 -40,15 Z");
+            tail.setAttribute("fill", "#ff6600"); tail.setAttribute("stroke", "#000"); tail.setAttribute("stroke-width", "2");
+            tailAnimGroup.appendChild(tail);
+            const body = document.createElementNS(svgNS, "path");
+            body.setAttribute("d", "M-30,0 C-20,22, 20,22, 30,0 C20,-22, -20,-22, -30,0 Z");
+            body.setAttribute("fill", "#ff6600"); body.setAttribute("stroke", "#000");
+            bodyGroup.appendChild(body);
+            const band = document.createElementNS(svgNS, "path");
+            band.setAttribute("d", "M10,-17 C15,-5, 15,5, 10,17 L18,15 C20,5, 20,-5, 18,-15 Z");
+            band.setAttribute("fill", "#fff"); band.setAttribute("stroke", "#000");
+            bodyGroup.appendChild(band);
+            const eye = document.createElementNS(svgNS, "circle");
+            eye.setAttribute("cx", "20"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "2"); eye.setAttribute("fill", "#000");
+            bodyGroup.appendChild(eye);
             tailRot = 8;
-        } 
-        else if (typeId === 'angelfish') {
-            const tail = document.createElementNS(svgNS, "path"); tail.setAttribute("d", "M-10,0 L-35,-25 C-25,-10 -25,10 -35,25 Z"); tail.setAttribute("fill", "url(#angelfishGrad)"); tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "path"); body.setAttribute("d", "M25,0 L-5,-50 L-15,0 L-5,50 Z"); body.setAttribute("fill", "url(#angelfishGrad)"); bodyGroup.appendChild(body);
-            const eye = document.createElementNS(svgNS, "circle"); eye.setAttribute("cx", "15"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "2.5"); eye.setAttribute("fill", "#000"); bodyGroup.appendChild(eye);
+        } else if (typeId === 'angelfish') {
+            const tail = document.createElementNS(svgNS, "path");
+            tail.setAttribute("d", "M-10,0 L-35,-25 C-25,-10 -25,10 -35,25 Z");
+            tail.setAttribute("fill", "url(#angelfishGrad)");
+            tailAnimGroup.appendChild(tail);
+            const body = document.createElementNS(svgNS, "path");
+            body.setAttribute("d", "M25,0 L-5,-50 L-15,0 L-5,50 Z");
+            body.setAttribute("fill", "url(#angelfishGrad)");
+            bodyGroup.appendChild(body);
+            const eye = document.createElementNS(svgNS, "circle");
+            eye.setAttribute("cx", "15"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "2.5"); eye.setAttribute("fill", "#000");
+            bodyGroup.appendChild(eye);
             tailRot = 6; tailOrigin = "-10px 0px";
-        }
-        else if (typeId === 'betta') {
-            const tail = document.createElementNS(svgNS, "path"); tail.setAttribute("d", "M-15,0 C-40,-40 -60,-20 -40,0 C-60,20 -40,40 -15,0 Z"); tail.setAttribute("fill", "url(#bettaGrad)"); tail.setAttribute("opacity", "0.9"); tailAnimGroup.appendChild(tail);
-            const dorsal = document.createElementNS(svgNS, "path"); dorsal.setAttribute("d", "M-10,-10 C-30,-30 0,-40 10,-15 Z"); dorsal.setAttribute("fill", "url(#bettaGrad)"); bodyGroup.appendChild(dorsal);
-            const body = document.createElementNS(svgNS, "path"); body.setAttribute("d", "M-20,0 C-10,15, 15,10, 25,0 C15,-10, -10,-15, -20,0 Z"); body.setAttribute("fill", "#2c3e50"); bodyGroup.appendChild(body);
-            const eye = document.createElementNS(svgNS, "circle"); eye.setAttribute("cx", "18"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "1.5"); eye.setAttribute("fill", "#fff"); bodyGroup.appendChild(eye);
+        } else if (typeId === 'betta') {
+            const tail = document.createElementNS(svgNS, "path");
+            tail.setAttribute("d", "M-15,0 C-40,-40 -60,-20 -40,0 C-60,20 -40,40 -15,0 Z");
+            tail.setAttribute("fill", "url(#bettaGrad)"); tail.setAttribute("opacity", "0.9");
+            tailAnimGroup.appendChild(tail);
+            const dorsal = document.createElementNS(svgNS, "path");
+            dorsal.setAttribute("d", "M-10,-10 C-30,-30 0,-40 10,-15 Z");
+            dorsal.setAttribute("fill", "url(#bettaGrad)");
+            bodyGroup.appendChild(dorsal);
+            const body = document.createElementNS(svgNS, "path");
+            body.setAttribute("d", "M-20,0 C-10,15, 15,10, 25,0 C15,-10, -10,-15, -20,0 Z");
+            body.setAttribute("fill", "#2c3e50");
+            bodyGroup.appendChild(body);
+            const eye = document.createElementNS(svgNS, "circle");
+            eye.setAttribute("cx", "18"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "1.5"); eye.setAttribute("fill", "#fff");
+            bodyGroup.appendChild(eye);
             tailRot = 10;
-        }
-        else if (typeId === 'discus') {
-            const tail = document.createElementNS(svgNS, "path"); tail.setAttribute("d", "M-25,0 L-40,-15 L-40,15 Z"); tail.setAttribute("fill", "#2980b9"); tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "circle"); body.setAttribute("cx", "0"); body.setAttribute("cy", "0"); body.setAttribute("r", "30"); body.setAttribute("fill", "url(#discusGrad)"); bodyGroup.appendChild(body);
-            const stripes = document.createElementNS(svgNS, "path"); stripes.setAttribute("d", "M-10,-28 Q-5,0 -10,28 M0,-30 Q5,0 0,30 M10,-28 Q15,0 10,28"); stripes.setAttribute("stroke", "#2980b9"); stripes.setAttribute("stroke-width", "3"); stripes.setAttribute("fill", "none"); stripes.setAttribute("opacity", "0.5"); bodyGroup.appendChild(stripes);
-            const eye = document.createElementNS(svgNS, "circle"); eye.setAttribute("cx", "15"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "3"); eye.setAttribute("fill", "#000"); bodyGroup.appendChild(eye);
+        } else if (typeId === 'discus') {
+            const tail = document.createElementNS(svgNS, "path");
+            tail.setAttribute("d", "M-25,0 L-40,-15 L-40,15 Z");
+            tail.setAttribute("fill", "#2980b9");
+            tailAnimGroup.appendChild(tail);
+            const body = document.createElementNS(svgNS, "circle");
+            body.setAttribute("cx", "0"); body.setAttribute("cy", "0"); body.setAttribute("r", "30");
+            body.setAttribute("fill", "url(#discusGrad)");
+            bodyGroup.appendChild(body);
+            const stripes = document.createElementNS(svgNS, "path");
+            stripes.setAttribute("d", "M-10,-28 Q-5,0 -10,28 M0,-30 Q5,0 0,30 M10,-28 Q15,0 10,28");
+            stripes.setAttribute("stroke", "#2980b9"); stripes.setAttribute("stroke-width", "3");
+            stripes.setAttribute("fill", "none"); stripes.setAttribute("opacity", "0.5");
+            bodyGroup.appendChild(stripes);
+            const eye = document.createElementNS(svgNS, "circle");
+            eye.setAttribute("cx", "15"); eye.setAttribute("cy", "-5"); eye.setAttribute("r", "3"); eye.setAttribute("fill", "#000");
+            bodyGroup.appendChild(eye);
             tailRot = 5; tailOrigin = "-25px 0px";
-        }
-        else if (typeId === 'puffer') {
-            const tail = document.createElementNS(svgNS, "path"); tail.setAttribute("d", "M-25,0 L-35,-8 L-35,8 Z"); tail.setAttribute("fill", "#f39c12"); tailAnimGroup.appendChild(tail);
-            const body = document.createElementNS(svgNS, "ellipse"); body.setAttribute("cx", "0"); body.setAttribute("cy", "0"); body.setAttribute("rx", "28"); body.setAttribute("ry", "22"); body.setAttribute("fill", "#f1c40f"); bodyGroup.appendChild(body);
-            const spots = document.createElementNS(svgNS, "path"); spots.setAttribute("d", "M-10,-10 A3,3 0 1,0 -9.9,-10 M0,-15 A4,4 0 1,0 0.1,-15 M-15,5 A2,2 0 1,0 -14.9,5"); spots.setAttribute("stroke", "#d35400"); spots.setAttribute("stroke-width", "4"); spots.setAttribute("stroke-linecap", "round"); bodyGroup.appendChild(spots);
-            const eyeOuter = document.createElementNS(svgNS, "circle"); eyeOuter.setAttribute("cx", "15"); eyeOuter.setAttribute("cy", "-2"); eyeOuter.setAttribute("r", "6"); eyeOuter.setAttribute("fill", "#fff");
-            const eyeInner = document.createElementNS(svgNS, "circle"); eyeInner.setAttribute("cx", "17"); eyeInner.setAttribute("cy", "-2"); eyeInner.setAttribute("r", "3"); eyeInner.setAttribute("fill", "#000");
+        } else if (typeId === 'puffer') {
+            const tail = document.createElementNS(svgNS, "path");
+            tail.setAttribute("d", "M-25,0 L-35,-8 L-35,8 Z");
+            tail.setAttribute("fill", "#f39c12");
+            tailAnimGroup.appendChild(tail);
+            const body = document.createElementNS(svgNS, "ellipse");
+            body.setAttribute("cx", "0"); body.setAttribute("cy", "0"); body.setAttribute("rx", "28"); body.setAttribute("ry", "22");
+            body.setAttribute("fill", "#f1c40f");
+            bodyGroup.appendChild(body);
+            const spots = document.createElementNS(svgNS, "path");
+            spots.setAttribute("d", "M-10,-10 A3,3 0 1,0 -9.9,-10 M0,-15 A4,4 0 1,0 0.1,-15 M-15,5 A2,2 0 1,0 -14.9,5");
+            spots.setAttribute("stroke", "#d35400"); spots.setAttribute("stroke-width", "4"); spots.setAttribute("stroke-linecap", "round");
+            bodyGroup.appendChild(spots);
+            const eyeOuter = document.createElementNS(svgNS, "circle");
+            eyeOuter.setAttribute("cx", "15"); eyeOuter.setAttribute("cy", "-2"); eyeOuter.setAttribute("r", "6"); eyeOuter.setAttribute("fill", "#fff");
+            const eyeInner = document.createElementNS(svgNS, "circle");
+            eyeInner.setAttribute("cx", "17"); eyeInner.setAttribute("cy", "-2"); eyeInner.setAttribute("r", "3"); eyeInner.setAttribute("fill", "#000");
             bodyGroup.appendChild(eyeOuter); bodyGroup.appendChild(eyeInner);
-            tailRot = 20; 
-        }
-        else if (typeId === 'shark') {
-            const tail = document.createElementNS(svgNS, "path"); tail.setAttribute("d", "M-30,0 C-45,-20 -50,-30 -50,0 C-50,20 -40,15 -30,0 Z"); tail.setAttribute("fill", "#7f8c8d"); tailAnimGroup.appendChild(tail);
-            const dorsal = document.createElementNS(svgNS, "path"); dorsal.setAttribute("d", "M-5,-15 L5,-35 L15,-15 Z"); dorsal.setAttribute("fill", "#7f8c8d"); bodyGroup.appendChild(dorsal);
-            const body = document.createElementNS(svgNS, "path"); body.setAttribute("d", "M-35,0 C-20,15, 30,10, 50,0 C30,-10, -20,-15, -35,0 Z"); body.setAttribute("fill", "url(#sharkGrad)"); bodyGroup.appendChild(body);
-            const eye = document.createElementNS(svgNS, "circle"); eye.setAttribute("cx", "35"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "1.5"); eye.setAttribute("fill", "#000"); bodyGroup.appendChild(eye);
+            tailRot = 20;
+        } else if (typeId === 'shark') {
+            const tail = document.createElementNS(svgNS, "path");
+            tail.setAttribute("d", "M-30,0 C-45,-20 -50,-30 -50,0 C-50,20 -40,15 -30,0 Z");
+            tail.setAttribute("fill", "#7f8c8d");
+            tailAnimGroup.appendChild(tail);
+            const dorsal = document.createElementNS(svgNS, "path");
+            dorsal.setAttribute("d", "M-5,-15 L5,-35 L15,-15 Z");
+            dorsal.setAttribute("fill", "#7f8c8d");
+            bodyGroup.appendChild(dorsal);
+            const body = document.createElementNS(svgNS, "path");
+            body.setAttribute("d", "M-35,0 C-20,15, 30,10, 50,0 C30,-10, -20,-15, -35,0 Z");
+            body.setAttribute("fill", "url(#sharkGrad)");
+            bodyGroup.appendChild(body);
+            const eye = document.createElementNS(svgNS, "circle");
+            eye.setAttribute("cx", "35"); eye.setAttribute("cy", "-3"); eye.setAttribute("r", "1.5"); eye.setAttribute("fill", "#000");
+            bodyGroup.appendChild(eye);
             tailRot = 6; tailOrigin = "-30px 0px";
         }
 
-        group.appendChild(bodyGroup); group.appendChild(tailAnimGroup); group.style.display = 'none'; 
+        group.appendChild(bodyGroup);
+        group.appendChild(tailAnimGroup);
+        group.style.display = 'none';
         const style = document.createElementNS(svgNS, "style");
-        style.textContent = `.${typeId} .fish-tail { animation: ${typeId}-swimTail ${1.0 - (type.baseSpeed/10)}s ease-in-out infinite; transform-origin: ${tailOrigin}; } @keyframes ${typeId}-swimTail { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(${tailRot}deg); } }`;
-        group.appendChild(style); return group;
+        style.textContent = `.${typeId} .fish-tail { animation: ${typeId}-swimTail ${1.0 - (type.baseSpeed / 10)}s ease-in-out infinite; transform-origin: ${tailOrigin}; } @keyframes ${typeId}-swimTail { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(${tailRot}deg); } }`;
+        group.appendChild(style);
+        return group;
     }
 
     function createPlantSVG(typeId) {
-        const group = document.createElementNS(svgNS, "g"); group.setAttribute("class", `plant ${typeId}`); group.setAttribute("filter", "url(#drop-shadow)");
-        const leavesGroup = document.createElementNS(svgNS, "g"); leavesGroup.setAttribute("class", "leaves-sway");
+        const group = document.createElementNS(svgNS, "g");
+        group.setAttribute("class", `plant ${typeId}`);
+        group.setAttribute("filter", "url(#drop-shadow)");
+        const leavesGroup = document.createElementNS(svgNS, "g");
+        leavesGroup.setAttribute("class", "leaves-sway");
 
         if (typeId === 'vallisneria') {
-            for(let i=0; i<6; i++) {
+            for (let i = 0; i < 6; i++) {
                 const path = document.createElementNS(svgNS, "path");
                 const h = -100 - Math.random() * 50;
-                path.setAttribute("d", `M0,0 Q${(i%2===0?15:-15)},${h/2} 0,${h} T0,${h*1.5}`);
+                path.setAttribute("d", `M0,0 Q${(i % 2 === 0 ? 15 : -15)},${h / 2} 0,${h} T0,${h * 1.5}`);
                 path.setAttribute("stroke", "url(#kelpGrad)"); path.setAttribute("stroke-width", "5"); path.setAttribute("fill", "none");
-                path.setAttribute("transform", `translate(${(i-3)*5}, 0)`); leavesGroup.appendChild(path);
+                path.setAttribute("transform", `translate(${(i - 3) * 5}, 0)`);
+                leavesGroup.appendChild(path);
             }
-        }
-        else if (typeId === 'tigerlotus') {
-            for(let i=0; i<7; i++) {
-                const leaf = document.createElementNS(svgNS, "path"); leaf.setAttribute("d", "M0,0 C20,-5 25,-25 0,-30 C-25,-25 -20,-5 0,0 Z");
-                leaf.setAttribute("fill", "url(#redLotusGrad)"); leaf.setAttribute("transform", `rotate(${(i-3)*25}) scale(${0.8 + Math.random()*0.4})`); leavesGroup.appendChild(leaf);
+        } else if (typeId === 'tigerlotus') {
+            for (let i = 0; i < 7; i++) {
+                const leaf = document.createElementNS(svgNS, "path");
+                leaf.setAttribute("d", "M0,0 C20,-5 25,-25 0,-30 C-25,-25 -20,-5 0,0 Z");
+                leaf.setAttribute("fill", "url(#redLotusGrad)");
+                leaf.setAttribute("transform", `rotate(${(i - 3) * 25}) scale(${0.8 + Math.random() * 0.4})`);
+                leavesGroup.appendChild(leaf);
             }
-        }
-        else if (typeId === 'javafern') {
-            for(let i=0; i<12; i++) {
-                const leaf = document.createElementNS(svgNS, "polygon"); leaf.setAttribute("points", "0,0 -5,-20 0,-40 5,-20");
-                leaf.setAttribute("fill", "#27ae60"); leaf.setAttribute("transform", `rotate(${(i-6)*12})`); leavesGroup.appendChild(leaf);
+        } else if (typeId === 'javafern') {
+            for (let i = 0; i < 12; i++) {
+                const leaf = document.createElementNS(svgNS, "polygon");
+                leaf.setAttribute("points", "0,0 -5,-20 0,-40 5,-20");
+                leaf.setAttribute("fill", "#27ae60");
+                leaf.setAttribute("transform", `rotate(${(i - 6) * 12})`);
+                leavesGroup.appendChild(leaf);
             }
-        }
-        else if (typeId === 'seagrass') {
-            for(let i=0; i<8; i++) { const leaf = document.createElementNS(svgNS, "path"); const height = -30 - Math.random() * 20; const curve = (Math.random() - 0.5) * 15; leaf.setAttribute("d", `M0,0 Q${curve},${height/2} ${curve/2},${height} Q${curve-5},${height/2} 0,0 Z`); leaf.setAttribute("fill", i%2===0 ? "#e74c3c" : "#c0392b"); leaf.setAttribute("transform", `rotate(${(i-3.5)*10})`); leavesGroup.appendChild(leaf); }
+        } else if (typeId === 'seagrass') {
+            for (let i = 0; i < 8; i++) {
+                const leaf = document.createElementNS(svgNS, "path");
+                const height = -30 - Math.random() * 20;
+                const curve = (Math.random() - 0.5) * 15;
+                leaf.setAttribute("d", `M0,0 Q${curve},${height / 2} ${curve / 2},${height} Q${curve - 5},${height / 2} 0,0 Z`);
+                leaf.setAttribute("fill", i % 2 === 0 ? "#e74c3c" : "#c0392b");
+                leaf.setAttribute("transform", `rotate(${(i - 3.5) * 10})`);
+                leavesGroup.appendChild(leaf);
+            }
         } else if (typeId === 'anubias') {
-            const leafData = [ {d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: -20, scale: 1}, {d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 25, scale: 0.9}, {d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 0, scale: 1.2}, {d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: -45, scale: 0.7}, {d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 45, scale: 0.8} ];
-            leafData.forEach(l => { const lGroup = document.createElementNS(svgNS, "g"); lGroup.setAttribute("transform", `rotate(${l.rot}) scale(${l.scale})`); const path = document.createElementNS(svgNS, "path"); path.setAttribute("d", l.d); path.setAttribute("fill", "url(#kelpGrad)"); lGroup.appendChild(path); leavesGroup.appendChild(lGroup); });
+            const leafData = [
+                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: -20, scale: 1 },
+                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 25, scale: 0.9 },
+                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 0, scale: 1.2 },
+                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: -45, scale: 0.7 },
+                { d: "M0,0 C15,-10, 20,-25, 5,-35 C-10,-25, -5,-10, 0,0", rot: 45, scale: 0.8 }
+            ];
+            leafData.forEach(l => {
+                const lGroup = document.createElementNS(svgNS, "g");
+                lGroup.setAttribute("transform", `rotate(${l.rot}) scale(${l.scale})`);
+                const path = document.createElementNS(svgNS, "path");
+                path.setAttribute("d", l.d); path.setAttribute("fill", "url(#kelpGrad)");
+                lGroup.appendChild(path); leavesGroup.appendChild(lGroup);
+            });
         } else if (typeId === 'kelp_forest') {
-            const stalk = document.createElementNS(svgNS, "path"); stalk.setAttribute("d", "M0,0 Q5,-30 0,-60 T0,-120 T0,-180"); stalk.setAttribute("stroke", "#1e8449"); stalk.setAttribute("stroke-width", "3"); stalk.setAttribute("fill", "none"); leavesGroup.appendChild(stalk);
-            for(let y= -20; y > -170; y-=20) { const leaf = document.createElementNS(svgNS, "path"); const dir = (y % 40 === 0) ? 1 : -1; leaf.setAttribute("d", `M0,${y} C${15*dir},${y-5} ${20*dir},${y-15} ${30*dir},${y-10} C${20*dir},${y-5} ${15*dir},${y+5} 0,${y}`); leaf.setAttribute("fill", "url(#kelpGrad)"); leavesGroup.appendChild(leaf); }
+            const stalk = document.createElementNS(svgNS, "path");
+            stalk.setAttribute("d", "M0,0 Q5,-30 0,-60 T0,-120 T0,-180");
+            stalk.setAttribute("stroke", "#1e8449"); stalk.setAttribute("stroke-width", "3"); stalk.setAttribute("fill", "none");
+            leavesGroup.appendChild(stalk);
+            for (let y = -20; y > -170; y -= 20) {
+                const leaf = document.createElementNS(svgNS, "path");
+                const dir = (y % 40 === 0) ? 1 : -1;
+                leaf.setAttribute("d", `M0,${y} C${15 * dir},${y - 5} ${20 * dir},${y - 15} ${30 * dir},${y - 10} C${20 * dir},${y - 5} ${15 * dir},${y + 5} 0,${y}`);
+                leaf.setAttribute("fill", "url(#kelpGrad)");
+                leavesGroup.appendChild(leaf);
+            }
         }
 
         group.appendChild(leavesGroup);
-        const rock = document.createElementNS(svgNS, "path"); rock.setAttribute("d", "M-12,0 C-15,-5 -5,-10 0,-8 C8,-12 15,-5 10,0 Z"); rock.setAttribute("fill", "#4b5563"); group.appendChild(rock);
-        const style = document.createElementNS(svgNS, "style"); style.textContent = `.${typeId} .leaves-sway { transform-origin: 0px 0px; animation: plantSway ${4 + Math.random()*2}s ease-in-out infinite; }`; group.appendChild(style); group.style.display = 'none'; return group;
+        const rock = document.createElementNS(svgNS, "path");
+        rock.setAttribute("d", "M-12,0 C-15,-5 -5,-10 0,-8 C8,-12 15,-5 10,0 Z");
+        rock.setAttribute("fill", "#4b5563");
+        group.appendChild(rock);
+        const style = document.createElementNS(svgNS, "style");
+        style.textContent = `.${typeId} .leaves-sway { transform-origin: 0px 0px; animation: plantSway ${4 + Math.random() * 2}s ease-in-out infinite; }`;
+        group.appendChild(style);
+        group.style.display = 'none';
+        return group;
     }
 
     function createDecoSVG(typeId) {
-        const group = document.createElementNS(svgNS, "g"); group.setAttribute("class", `deco ${typeId}`); group.setAttribute("filter", "url(#drop-shadow)");
+        const group = document.createElementNS(svgNS, "g");
+        group.setAttribute("class", `deco ${typeId}`);
+        group.setAttribute("filter", "url(#drop-shadow)");
         if (typeId === 'chest') {
-            const base = document.createElementNS(svgNS, "path"); base.setAttribute("d", "M-25,0 L25,0 L20,-25 L-20,-25 Z"); base.setAttribute("fill", "url(#woodGrad)"); base.setAttribute("stroke", "#000"); group.appendChild(base);
-            const lid = document.createElementNS(svgNS, "path"); lid.setAttribute("d", "M-20,-25 C-20,-40 20,-40 20,-25 L-20,-25 Z"); lid.setAttribute("fill", "url(#woodGrad)"); lid.setAttribute("stroke", "#000"); lid.setAttribute("transform", "rotate(-15 -20 -25)"); group.appendChild(lid);
-            const gold = document.createElementNS(svgNS, "path"); gold.setAttribute("d", "M-15,-25 L15,-25 L10,-30 L-10,-30 Z"); gold.setAttribute("fill", "url(#goldGrad)"); gold.style.animation = "glow 3s infinite"; group.appendChild(gold);
+            const base = document.createElementNS(svgNS, "path");
+            base.setAttribute("d", "M-25,0 L25,0 L20,-25 L-20,-25 Z");
+            base.setAttribute("fill", "url(#woodGrad)"); base.setAttribute("stroke", "#000");
+            group.appendChild(base);
+            const lid = document.createElementNS(svgNS, "path");
+            lid.setAttribute("d", "M-20,-25 C-20,-40 20,-40 20,-25 L-20,-25 Z");
+            lid.setAttribute("fill", "url(#woodGrad)"); lid.setAttribute("stroke", "#000");
+            lid.setAttribute("transform", "rotate(-15 -20 -25)");
+            group.appendChild(lid);
+            const gold = document.createElementNS(svgNS, "path");
+            gold.setAttribute("d", "M-15,-25 L15,-25 L10,-30 L-10,-30 Z");
+            gold.setAttribute("fill", "url(#goldGrad)");
+            gold.style.animation = "glow 3s infinite";
+            group.appendChild(gold);
+        } else if (typeId === 'vase') {
+            const vase = document.createElementNS(svgNS, "path");
+            vase.setAttribute("d", "M-10,0 L10,0 L15,-10 C25,-30 -25,-30 -15,-10 Z M-8,-35 L8,-35 L5,-45 L-5,-45 Z");
+            vase.setAttribute("fill", "url(#vaseGrad)"); vase.setAttribute("stroke", "#5c2a00");
+            group.appendChild(vase);
+            const moss = document.createElementNS(svgNS, "path");
+            moss.setAttribute("d", "M-15,-10 Q-10,-5 -5,-15 Q0,-10 5,-20");
+            moss.setAttribute("stroke", "#27ae60"); moss.setAttribute("stroke-width", "4");
+            moss.setAttribute("fill", "none"); moss.setAttribute("stroke-linecap", "round");
+            group.appendChild(moss);
+        } else if (typeId === 'crystal') {
+            const crystals = [
+                { d: "M0,0 L10,-40 L0,-50 L-10,-40 Z", c: "#00d2d3", r: 0 },
+                { d: "M0,0 L8,-30 L0,-40 L-8,-30 Z", c: "#48dbfb", r: -30 },
+                { d: "M0,0 L6,-25 L0,-35 L-6,-25 Z", c: "#0abde3", r: 40 }
+            ];
+            crystals.forEach(c => {
+                const p = document.createElementNS(svgNS, "path");
+                p.setAttribute("d", c.d); p.setAttribute("fill", c.c);
+                p.setAttribute("stroke", "#fff"); p.setAttribute("stroke-width", "0.5");
+                p.setAttribute("transform", `rotate(${c.r})`);
+                group.appendChild(p);
+            });
+            const base = document.createElementNS(svgNS, "path");
+            base.setAttribute("d", "M-20,0 Q0,-10 20,0 Z");
+            base.setAttribute("fill", "#2d3436");
+            group.appendChild(base);
+        } else if (typeId === 'anchor') {
+            const anchor = document.createElementNS(svgNS, "path");
+            anchor.setAttribute("d", "M-5,0 L5,0 L5,-50 L-5,-50 Z M-25,-10 C-15,5 15,5 25,-10 L20,-15 C10,-5 -10,-5 -20,-15 Z M0,-50 A10,10 0 1,0 0,-70 A10,10 0 1,0 0,-50 M-15,-40 L15,-40 L15,-35 L-15,-35 Z");
+            anchor.setAttribute("fill", "#7f8c8d"); anchor.setAttribute("stroke", "#2c3e50");
+            anchor.setAttribute("transform", "rotate(20)");
+            group.appendChild(anchor);
         }
-        else if (typeId === 'vase') {
-            const vase = document.createElementNS(svgNS, "path"); vase.setAttribute("d", "M-10,0 L10,0 L15,-10 C25,-30 -25,-30 -15,-10 Z M-8,-35 L8,-35 L5,-45 L-5,-45 Z"); vase.setAttribute("fill", "url(#vaseGrad)"); vase.setAttribute("stroke", "#5c2a00"); group.appendChild(vase);
-            const moss = document.createElementNS(svgNS, "path"); moss.setAttribute("d", "M-15,-10 Q-10,-5 -5,-15 Q0,-10 5,-20"); moss.setAttribute("stroke", "#27ae60"); moss.setAttribute("stroke-width", "4"); moss.setAttribute("fill", "none"); moss.setAttribute("stroke-linecap", "round"); group.appendChild(moss);
-        }
-        else if (typeId === 'crystal') {
-            const crystals = [ {d: "M0,0 L10,-40 L0,-50 L-10,-40 Z", c: "#00d2d3", r: 0}, {d: "M0,0 L8,-30 L0,-40 L-8,-30 Z", c: "#48dbfb", r: -30}, {d: "M0,0 L6,-25 L0,-35 L-6,-25 Z", c: "#0abde3", r: 40} ];
-            crystals.forEach(c => { const p = document.createElementNS(svgNS, "path"); p.setAttribute("d", c.d); p.setAttribute("fill", c.c); p.setAttribute("stroke", "#fff"); p.setAttribute("stroke-width", "0.5"); p.setAttribute("transform", `rotate(${c.r})`); group.appendChild(p); });
-            const base = document.createElementNS(svgNS, "path"); base.setAttribute("d", "M-20,0 Q0,-10 20,0 Z"); base.setAttribute("fill", "#2d3436"); group.appendChild(base);
-        }
-        else if (typeId === 'anchor') {
-            const anchor = document.createElementNS(svgNS, "path"); anchor.setAttribute("d", "M-5,0 L5,0 L5,-50 L-5,-50 Z M-25,-10 C-15,5 15,5 25,-10 L20,-15 C10,-5 -10,-5 -20,-15 Z M0,-50 A10,10 0 1,0 0,-70 A10,10 0 1,0 0,-50 M-15,-40 L15,-40 L15,-35 L-15,-35 Z"); anchor.setAttribute("fill", "#7f8c8d"); anchor.setAttribute("stroke", "#2c3e50"); anchor.setAttribute("transform", "rotate(20)"); group.appendChild(anchor);
-        }
-        group.style.display = 'none'; return group;
+        group.style.display = 'none';
+        return group;
     }
 
-    /* --- DIE NEUE MATHEMATISCHE KOORDINATEN-FUNKTION (BUGFIX) --- */
+    /* --- KOORDINATEN (BUGFIX) --- */
     function getSVGCoordinates(clientX, clientY) {
         const svg = document.getElementById("aquarium-svg");
         const rect = svg.getBoundingClientRect();
-        
-        const screenW = rect.width;
-        const screenH = rect.height;
-        
-        // Unsere echten SVG-Dimensionen
-        const viewBoxW = 5120;
-        const viewBoxH = 2880;
-        
-        // Berechnung des exakten Skalierungsfaktors (preserveAspectRatio="xMidYMid slice")
-        const scaleX = screenW / viewBoxW;
-        const scaleY = screenH / viewBoxH;
+        const scaleX = rect.width / 5120;
+        const scaleY = rect.height / 2880;
         const scale = Math.max(scaleX, scaleY);
-        
-        // Wie groß wird das SVG tatsächlich in Pixeln gezeichnet?
-        const renderedW = viewBoxW * scale;
-        const renderedH = viewBoxH * scale;
-        
-        // Da es zentriert ist (xMidYMid), müssen wir den Überhang berechnen
-        const offsetX = (screenW - renderedW) / 2;
-        const offsetY = (screenH - renderedH) / 2;
-        
-        // Maus-Position relativ zum SVG-Canvas (Korrektur für Offset und Scale)
-        const svgX = (clientX - rect.left - offsetX) / scale;
-        const svgY = (clientY - rect.top - offsetY) / scale;
-        
-        return { x: svgX, y: svgY };
+        const renderedW = 5120 * scale;
+        const renderedH = 2880 * scale;
+        const offsetX = (rect.width - renderedW) / 2;
+        const offsetY = (rect.height - renderedH) / 2;
+        return {
+            x: (clientX - rect.left - offsetX) / scale,
+            y: (clientY - rect.top - offsetY) / scale
+        };
     }
 
     /* --- SETUP & EVENTS --- */
     function init() {
         const bgLayer = document.getElementById("bg-layer");
-        
-        const sand = document.createElementNS(svgNS, "path");
-        sand.setAttribute("d", `M0,${aquariumHeight} L0,${aquariumHeight-400} Q${aquariumWidth/4},${aquariumHeight-550} ${aquariumWidth/2},${aquariumHeight-450} T${aquariumWidth},${aquariumHeight-500} L${aquariumWidth},${aquariumHeight} Z`);
-        sand.setAttribute("fill", "url(#sandGrad)"); bgLayer.appendChild(sand);
 
-        for(let i=0; i<15; i++) {
-            const ray = document.createElementNS(svgNS, "polygon"); const startX = Math.random() * aquariumWidth; const width = 300 + Math.random() * 800; const slant = (Math.random() - 0.5) * 1200;
-            ray.setAttribute("points", `${startX},0 ${startX+width},0 ${startX+width+slant},${aquariumHeight} ${startX+slant},${aquariumHeight}`); ray.setAttribute("fill", "url(#lightRay)"); bgLayer.appendChild(ray);
+        const sand = document.createElementNS(svgNS, "path");
+        sand.setAttribute("d", `M0,${aquariumHeight} L0,${aquariumHeight - 400} Q${aquariumWidth / 4},${aquariumHeight - 550} ${aquariumWidth / 2},${aquariumHeight - 450} T${aquariumWidth},${aquariumHeight - 500} L${aquariumWidth},${aquariumHeight} Z`);
+        sand.setAttribute("fill", "url(#sandGrad)");
+        bgLayer.appendChild(sand);
+
+        for (let i = 0; i < 15; i++) {
+            const ray = document.createElementNS(svgNS, "polygon");
+            const startX = Math.random() * aquariumWidth;
+            const width = 300 + Math.random() * 800;
+            const slant = (Math.random() - 0.5) * 1200;
+            ray.setAttribute("points", `${startX},0 ${startX + width},0 ${startX + width + slant},${aquariumHeight} ${startX + slant},${aquariumHeight}`);
+            ray.setAttribute("fill", "url(#lightRay)");
+            bgLayer.appendChild(ray);
         }
 
         for (let i = 0; i < 100; i++) {
-            const bubble = document.createElementNS(svgNS, "circle"); bubble.setAttribute("class", "bubble"); bubble.setAttribute("r", 4 + Math.random() * 10); bubble.setAttribute("cx", Math.random() * aquariumWidth); bubble.setAttribute("cy", aquariumHeight + 100);
-            bubble.style.animationDelay = (Math.random() * 20) + "s"; bubble.style.animationDuration = (10 + Math.random() * 15) + "s"; bgLayer.appendChild(bubble);
+            const bubble = document.createElementNS(svgNS, "circle");
+            bubble.setAttribute("class", "bubble");
+            bubble.setAttribute("r", 4 + Math.random() * 10);
+            bubble.setAttribute("cx", Math.random() * aquariumWidth);
+            bubble.setAttribute("cy", aquariumHeight + 100);
+            bubble.style.animationDelay = (Math.random() * 20) + "s";
+            bubble.style.animationDuration = (10 + Math.random() * 15) + "s";
+            bgLayer.appendChild(bubble);
         }
 
-        const shopFish = document.getElementById("shop-fish"); fishTypes.forEach(type => createShopItem(shopFish, type, 'Bewohner'));
-        const shopPlants = document.getElementById("shop-plants"); plantTypes.forEach(type => createShopItem(shopPlants, type, 'Flora'));
-        const shopDeco = document.getElementById("shop-deco"); decoTypes.forEach(type => createShopItem(shopDeco, type, 'Deko'));
+        const shopFish = document.getElementById("shop-fish");
+        fishTypes.forEach(type => createShopItem(shopFish, type, 'Bewohner'));
+        const shopPlants = document.getElementById("shop-plants");
+        plantTypes.forEach(type => createShopItem(shopPlants, type, 'Flora'));
+        const shopDeco = document.getElementById("shop-deco");
+        decoTypes.forEach(type => createShopItem(shopDeco, type, 'Deko'));
 
         document.getElementById("ui-toggle").addEventListener("click", toggleUI);
-        const root = document.getElementById("aquarium-root"); 
-        const cursor = document.getElementById("custom-cursor"); 
+        const root = document.getElementById("aquarium-root");
+        const cursor = document.getElementById("custom-cursor");
 
         root.addEventListener("pointermove", (e) => {
-            cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
             if (selectedItemForPlacement && previewObjectSVG) {
-                // HIER NUTZEN WIR NUN DIE BUG-FREIE FUNKTION!
                 const svgP = getSVGCoordinates(e.clientX, e.clientY);
-                
                 if (selectedItemForPlacement.label === 'Flora' || selectedItemForPlacement.label === 'Deko') {
                     const clampedY = getClampedFloorY(svgP.x, svgP.y);
                     previewObjectSVG.setAttribute("transform", `translate(${svgP.x}, ${clampedY})`);
@@ -436,31 +698,68 @@
 
         root.addEventListener("pointerdown", (e) => {
             cursor.classList.add('active');
-            
-            // VERBESSERTER KLICK-FILTER: Solange der Klick nicht im UI passiert, wird platziert!
             const isClickInsideUI = e.target.closest('#ui-container') || e.target.closest('#ui-toggle');
-            const isClickOnActionBtn = e.target.id === 'action-feed' || e.target.id === 'action-sell';
-            
-            if (!isClickInsideUI && !isClickOnActionBtn) {
-               handleAquariumClick(e);
-            }
+            if (!isClickInsideUI) handleAquariumClick(e);
         });
-        
+
         root.addEventListener("pointerup", () => cursor.classList.remove('active'));
-        
-        updateCounts(); requestAnimationFrame(gameLoop);
+
+        /* Tooltip-Logik auf den Layern */
+        const tooltip = document.getElementById("fish-tooltip");
+        const ttName = document.getElementById("tt-name");
+        const ttBy = document.getElementById("tt-by");
+
+        ['fish-layer', 'plant-layer', 'deco-layer'].forEach(layerId => {
+            const layer = document.getElementById(layerId);
+            layer.addEventListener("pointerover", (e) => {
+                const group = e.target.closest('g[data-added-by]');
+                if (!group) { tooltip.style.display = 'none'; return; }
+                const name = group.dataset.itemName || '';
+                const addedBy = group.dataset.addedBy || '';
+                if (!addedBy) return;
+                ttName.textContent = name;
+                const isMe = addedBy === currentUser;
+                ttBy.innerHTML = `💙 Hinzugefügt von <span>${addedBy}</span>${isMe ? ' (du)' : ''}`;
+                tooltip.style.display = 'block';
+            });
+            layer.addEventListener("pointermove", (e) => {
+                if (tooltip.style.display === 'block') {
+                    tooltip.style.left = (e.clientX + 16) + 'px';
+                    tooltip.style.top = (e.clientY - 10) + 'px';
+                }
+            });
+            layer.addEventListener("pointerout", (e) => {
+                if (!e.target.closest('g[data-added-by]')) tooltip.style.display = 'none';
+            });
+        });
+
+        updateCounts();
+        requestAnimationFrame(gameLoop);
+
+        // Firebase-Listener starten
+        initFirebaseListeners();
     }
 
     function createShopItem(container, type, label) {
-        const item = document.createElement("div"); item.className = "shop-item";
-        item.innerHTML = `<div class="item-icon-container">${type.icon}</div><div class="item-info"><span class="item-name">${type.name}</span><span class="item-type">${label} / ${type.type}</span></div>`;
-        item.addEventListener("click", () => enterPlacementMode(label, type.id));
+        const item = document.createElement("div");
+        item.className = "shop-item";
+        const price = type.price || 0;
+        const priceHtml = price === 0
+            ? `<span class="item-price item-price-free">Gratis ✓</span>`
+            : `<span class="item-price">🪙 ${price.toLocaleString("de-DE")}</span>`;
+        item.innerHTML = `<div class="item-icon-container">${type.icon}</div><div class="item-info"><span class="item-name">${type.name}</span><span class="item-type">${label} · ${type.type}</span>${priceHtml}</div>`;
+        item.addEventListener("click", () => {
+            if (!currentUser) return;
+            enterPlacementMode(label, type.id);
+        });
         container.appendChild(item);
     }
 
     function toggleUI() {
-        const ui = document.getElementById("ui-container"); const btn = document.getElementById("ui-toggle");
-        ui.classList.toggle("visible"); btn.classList.toggle("menu-open");
+        const ui = document.getElementById("ui-container");
+        const btn = document.getElementById("ui-toggle");
+        ui.classList.toggle("visible");
+        btn.classList.toggle("menu-open");
         if (ui.classList.contains("visible") && selectedItemForPlacement) exitPlacementMode();
     }
 
@@ -469,26 +768,39 @@
         document.getElementById("count-plants").textContent = plantObjects.length + " Objekte";
     }
 
-    function triggerFeed() {
-        document.getElementById("ui-container").classList.remove("visible"); document.getElementById("ui-toggle").classList.remove("menu-open");
+    // Globale Funktion für onclick im HTML
+    window.triggerFeed = function () {
+        document.getElementById("ui-container").classList.remove("visible");
+        document.getElementById("ui-toggle").classList.remove("menu-open");
         const foodLayer = document.getElementById("food-layer");
         for (let i = 0; i < 20; i++) {
-            const food = document.createElementNS(svgNS, "circle"); 
-            food.setAttribute("r", 6 + Math.random() * 4); 
-            food.setAttribute("fill", "#e67e22"); food.setAttribute("stroke", "#d35400");
-            const x = 500 + Math.random() * (aquariumWidth - 1000); const y = -50 - Math.random() * 100;
-            food.setAttribute("cx", x); food.setAttribute("cy", y); foodLayer.appendChild(food);
-            foodObjects.push({ id: Date.now() + i, svg: food, x: x, y: y, speed: 3 + Math.random() * 3 });
+            const food = document.createElementNS(svgNS, "circle");
+            food.setAttribute("r", 6 + Math.random() * 4);
+            food.setAttribute("fill", "#e67e22");
+            food.setAttribute("stroke", "#d35400");
+            const x = 500 + Math.random() * (aquariumWidth - 1000);
+            const y = -50 - Math.random() * 100;
+            food.setAttribute("cx", x); food.setAttribute("cy", y);
+            foodLayer.appendChild(food);
+            foodObjects.push({ id: Date.now() + i, svg: food, x, y, speed: 3 + Math.random() * 3 });
         }
-    }
+    };
 
-    function toggleSellMode() {
+    window.toggleSellMode = function () {
         isSellMode = !isSellMode;
-        document.getElementById("ui-container").classList.remove("visible"); document.getElementById("ui-toggle").classList.remove("menu-open");
-        const cursor = document.getElementById("custom-cursor"); const banner = document.getElementById("sell-mode-banner");
-        if (isSellMode) { cursor.classList.add("sell-mode"); banner.style.display = "block"; exitPlacementMode(); } 
-        else { cursor.classList.remove("sell-mode"); banner.style.display = "none"; }
-    }
+        document.getElementById("ui-container").classList.remove("visible");
+        document.getElementById("ui-toggle").classList.remove("menu-open");
+        const cursor = document.getElementById("custom-cursor");
+        const banner = document.getElementById("sell-mode-banner");
+        if (isSellMode) {
+            cursor.classList.add("sell-mode");
+            banner.style.display = "block";
+            exitPlacementMode();
+        } else {
+            cursor.classList.remove("sell-mode");
+            banner.style.display = "none";
+        }
+    };
 
     function getClampedFloorY(x, y) {
         const topOfSand = aquariumHeight - 500;
@@ -497,18 +809,20 @@
     }
 
     function enterPlacementMode(label, typeId) {
-        if(isSellMode) toggleSellMode();
-        exitPlacementMode(); selectedItemForPlacement = { label, typeId };
-        
+        if (isSellMode) window.toggleSellMode();
+        exitPlacementMode();
+        selectedItemForPlacement = { label, typeId };
+
         if (label === 'Bewohner') previewObjectSVG = createFishSVG(typeId);
         else if (label === 'Flora') previewObjectSVG = createPlantSVG(typeId);
         else if (label === 'Deko') previewObjectSVG = createDecoSVG(typeId);
 
-        previewObjectSVG.classList.add('placement-preview'); previewObjectSVG.style.display = 'block';
-        
+        previewObjectSVG.classList.add('placement-preview');
+        previewObjectSVG.style.display = 'block';
         const layer = label === 'Bewohner' ? "fish-layer" : (label === 'Flora' ? "plant-layer" : "deco-layer");
         document.getElementById(layer).appendChild(previewObjectSVG);
-        document.getElementById("ui-container").classList.remove("visible"); document.getElementById("ui-toggle").classList.remove("menu-open");
+        document.getElementById("ui-container").classList.remove("visible");
+        document.getElementById("ui-toggle").classList.remove("menu-open");
     }
 
     function exitPlacementMode() {
@@ -517,95 +831,227 @@
     }
 
     function handleAquariumClick(e) {
-        // HIER NUTZEN WIR NUN DIE BUG-FREIE FUNKTION!
         const svgP = getSVGCoordinates(e.clientX, e.clientY);
-        
+
         if (isSellMode) {
-            let closestObj = null; let minDist = 250; 
-            let isFish = false;
-            fishObjects.forEach(f => { let d = Math.sqrt((f.x - svgP.x)**2 + (f.y - svgP.y)**2); if (d < minDist) { minDist = d; closestObj = f; isFish = true; } });
-            plantObjects.forEach(p => { let d = Math.sqrt((p.x - svgP.x)**2 + ((p.y - 120) - svgP.y)**2); if (d < minDist) { minDist = d; closestObj = p; isFish = false; } });
-            
-            if (closestObj) {
-                closestObj.svg.remove();
-                if (isFish) fishObjects = fishObjects.filter(f => f.id !== closestObj.id);
-                else plantObjects = plantObjects.filter(p => p.id !== closestObj.id);
-                updateCounts();
-            } else { toggleSellMode(); }
+            let closestObj = null;
+            let minDist = 250;
+            fishObjects.forEach(f => {
+                const d = Math.sqrt((f.x - svgP.x) ** 2 + (f.y - svgP.y) ** 2);
+                if (d < minDist) { minDist = d; closestObj = f; }
+            });
+            plantObjects.forEach(p => {
+                const d = Math.sqrt((p.x - svgP.x) ** 2 + ((p.y - 120) - svgP.y) ** 2);
+                if (d < minDist) { minDist = d; closestObj = p; }
+            });
+
+            if (closestObj && closestObj.firebaseKey) {
+                // Firebase entfernt das Objekt → onChildRemoved räumt lokal auf
+                remove(ref(db, 'aquarium/shared/objects/' + closestObj.firebaseKey));
+            } else if (!closestObj) {
+                window.toggleSellMode();
+            }
             return;
         }
 
         if (!selectedItemForPlacement) return;
-        
-        if (selectedItemForPlacement.label === 'Bewohner') spawnFish(selectedItemForPlacement.typeId, svgP.x, svgP.y);
-        else spawnFloorItem(selectedItemForPlacement.label, selectedItemForPlacement.typeId, svgP.x, svgP.y);
-        
+        placeObjectViaFirebase(selectedItemForPlacement.label, selectedItemForPlacement.typeId, svgP.x, svgP.y);
         exitPlacementMode();
     }
 
-    function spawnFloorItem(label, typeId, x, y) {
-        const clampedY = getClampedFloorY(x, y);
-        let svgGroup, size;
-        if (label === 'Flora') {
-            svgGroup = createPlantSVG(typeId); size = plantTypes.find(p=>p.id===typeId).size;
-            document.getElementById("plant-layer").appendChild(svgGroup);
-        } else {
-            svgGroup = createDecoSVG(typeId); size = decoTypes.find(d=>d.id===typeId).size;
-            document.getElementById("deco-layer").appendChild(svgGroup);
+    /* --- FIREBASE: OBJEKT PLATZIEREN --- */
+    async function placeObjectViaFirebase(label, typeId, x, y) {
+        if (!currentUser) return;
+
+        const allTypes = [...fishTypes, ...plantTypes, ...decoTypes];
+        const itemDef = allTypes.find(t => t.id === typeId);
+        const price = itemDef ? (itemDef.price || 0) : 0;
+
+        if (price > 0) {
+            if (coinsBalance < price) {
+                showInsufficientCoins();
+                return;
+            }
+            await runTransaction(ref(db, `coins/${currentUserKey}`), c => (c || 0) - price);
         }
-        svgGroup.setAttribute("transform", `translate(${x}, ${clampedY}) scale(${size})`); svgGroup.style.display = 'block';
-        plantObjects.push({ id: 'item_' + Date.now(), type: typeId, x: x, y: clampedY, svg: svgGroup });
+
+        const finalY = (label === 'Bewohner') ? y : getClampedFloorY(x, y);
+
+        push(ref(db, 'aquarium/shared/objects'), {
+            label,
+            typeId,
+            x: Math.round(finalY === y ? x : x),
+            y: Math.round(finalY),
+            addedBy: currentUser,
+            addedAt: Date.now(),
+            price,
+            itemName: itemDef ? itemDef.name : typeId
+        });
+    }
+
+    /* --- FIREBASE: ECHTZEIT-SYNC --- */
+    function initFirebaseListeners() {
+        const objectsRef = ref(db, 'aquarium/shared/objects');
+
+        onChildAdded(objectsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            const key = snapshot.key;
+            if (data.label === 'Bewohner') {
+                spawnFish(data.typeId, data.x, data.y, key, data.addedBy, data.itemName || data.typeId);
+            } else {
+                spawnFloorItem(data.label, data.typeId, data.x, data.y, key, data.addedBy, data.itemName || data.typeId);
+            }
+        });
+
+        onChildRemoved(objectsRef, (snapshot) => {
+            const key = snapshot.key;
+            const fish = fishObjects.find(f => f.firebaseKey === key);
+            if (fish) {
+                fish.svg.remove();
+                fishObjects = fishObjects.filter(f => f.firebaseKey !== key);
+            }
+            const plant = plantObjects.find(p => p.firebaseKey === key);
+            if (plant) {
+                plant.svg.remove();
+                plantObjects = plantObjects.filter(p => p.firebaseKey !== key);
+            }
+            updateCounts();
+        });
+    }
+
+    /* --- SPAWN-FUNKTIONEN (mit Firebase-Key und addedBy) --- */
+    function spawnFish(typeId, x, y, firebaseKey, addedBy, itemName) {
+        const type = fishTypes.find(f => f.id === typeId);
+        if (!type) return;
+        const svgGroup = createFishSVG(typeId);
+        svgGroup.style.display = 'block';
+        svgGroup.dataset.addedBy = addedBy || '';
+        svgGroup.dataset.firebaseKey = firebaseKey || '';
+        svgGroup.dataset.itemName = itemName || type.name;
+        document.getElementById("fish-layer").appendChild(svgGroup);
+        fishObjects.push({
+            id: 'fish_' + firebaseKey,
+            typeId, x, y,
+            size: type.size, agility: type.agility,
+            vx: (Math.random() - 0.5) * type.baseSpeed,
+            vy: (Math.random() - 0.5) * type.baseSpeed * 0.5,
+            targetX: x, targetY: y, facing: 1,
+            svg: svgGroup,
+            firebaseKey,
+            addedBy
+        });
         updateCounts();
     }
 
-    function spawnFish(typeId, x, y) {
-        const type = fishTypes.find(f => f.id === typeId); const svgGroup = createFishSVG(typeId); svgGroup.style.display = 'block'; document.getElementById("fish-layer").appendChild(svgGroup);
-        fishObjects.push({ id: 'fish_' + Date.now(), typeId, x, y, size: type.size, agility: type.agility, vx: (Math.random() - 0.5) * type.baseSpeed, vy: (Math.random() - 0.5) * type.baseSpeed * 0.5, targetX: x, targetY: y, facing: 1, svg: svgGroup });
+    function spawnFloorItem(label, typeId, x, y, firebaseKey, addedBy, itemName) {
+        const clampedY = getClampedFloorY(x, y);
+        let svgGroup, size;
+        if (label === 'Flora') {
+            svgGroup = createPlantSVG(typeId);
+            size = (plantTypes.find(p => p.id === typeId) || {}).size || 3;
+            document.getElementById("plant-layer").appendChild(svgGroup);
+        } else {
+            svgGroup = createDecoSVG(typeId);
+            size = (decoTypes.find(d => d.id === typeId) || {}).size || 3;
+            document.getElementById("deco-layer").appendChild(svgGroup);
+        }
+        svgGroup.dataset.addedBy = addedBy || '';
+        svgGroup.dataset.firebaseKey = firebaseKey || '';
+        svgGroup.dataset.itemName = itemName || typeId;
+        svgGroup.setAttribute("transform", `translate(${x}, ${clampedY}) scale(${size})`);
+        svgGroup.style.display = 'block';
+        plantObjects.push({
+            id: 'item_' + firebaseKey,
+            type: typeId, x, y: clampedY,
+            svg: svgGroup,
+            firebaseKey,
+            addedBy
+        });
         updateCounts();
+    }
+
+    /* --- MÜNZEN-ANZEIGE --- */
+    function initCoinDisplay() {
+        onValue(ref(db, `coins/${currentUserKey}`), snap => {
+            coinsBalance = snap.val() || 0;
+            const el = document.getElementById('aquarium-coin-count');
+            if (el) el.textContent = coinsBalance.toLocaleString("de-DE");
+        });
+    }
+
+    function showInsufficientCoins() {
+        const banner = document.getElementById("sell-mode-banner");
+        const orig = banner.style.background;
+        banner.textContent = 'Nicht genug Münzen! 🪙';
+        banner.style.background = 'rgba(255, 165, 0, 0.9)';
+        banner.style.display = 'block';
+        setTimeout(() => {
+            banner.style.display = 'none';
+            banner.style.background = orig;
+            banner.textContent = 'Tippe auf Objekte zum Löschen. Tippe ins Wasser zum Abbrechen.';
+        }, 2000);
     }
 
     /* --- PHYSIK LOOP --- */
     function gameLoop() {
-        const margin = 300; const sandTop = aquariumHeight - 550;
+        const margin = 300;
+        const sandTop = aquariumHeight - 550;
 
         for (let i = foodObjects.length - 1; i >= 0; i--) {
-            let food = foodObjects[i]; food.y += food.speed; food.svg.setAttribute("cy", food.y);
+            const food = foodObjects[i];
+            food.y += food.speed;
+            food.svg.setAttribute("cy", food.y);
             if (food.y > sandTop) { food.svg.remove(); foodObjects.splice(i, 1); }
         }
 
         fishObjects.forEach(fish => {
             const type = fishTypes.find(f => f.id === fish.typeId);
-            let nearestFood = null; let minDistToFood = 1500; 
+            if (!type) return;
+            let nearestFood = null;
+            let minDistToFood = 1500;
 
             for (let i = 0; i < foodObjects.length; i++) {
-                let f = foodObjects[i]; let d = Math.sqrt((f.x - fish.x)**2 + (f.y - fish.y)**2);
+                const f = foodObjects[i];
+                const d = Math.sqrt((f.x - fish.x) ** 2 + (f.y - fish.y) ** 2);
                 if (d < minDistToFood) { minDistToFood = d; nearestFood = { data: f, index: i }; }
             }
 
             if (nearestFood) {
-                fish.targetX = nearestFood.data.x; fish.targetY = nearestFood.data.y;
-                if (minDistToFood < 120) { nearestFood.data.svg.remove(); foodObjects.splice(nearestFood.index, 1); fish.vx *= 1.5; }
+                fish.targetX = nearestFood.data.x;
+                fish.targetY = nearestFood.data.y;
+                if (minDistToFood < 120) {
+                    nearestFood.data.svg.remove();
+                    foodObjects.splice(nearestFood.index, 1);
+                    fish.vx *= 1.5;
+                }
             } else {
-                const dist = Math.sqrt((fish.targetX - fish.x)**2 + (fish.targetY - fish.y)**2);
+                const dist = Math.sqrt((fish.targetX - fish.x) ** 2 + (fish.targetY - fish.y) ** 2);
                 if (dist < 150 || Math.random() < 0.005) {
                     fish.targetX = margin + Math.random() * (aquariumWidth - margin * 2);
                     fish.targetY = 200 + Math.random() * (sandTop - 200);
                 }
             }
 
-            let dx = fish.targetX - fish.x; let dy = fish.targetY - fish.y;
-            const len = Math.sqrt(dx*dx + dy*dy);
-            if (len > 0) { dx = (dx/len)*type.baseSpeed; dy = (dy/len)*type.baseSpeed; }
+            let dx = fish.targetX - fish.x;
+            let dy = fish.targetY - fish.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 0) { dx = (dx / len) * type.baseSpeed; dy = (dy / len) * type.baseSpeed; }
 
-            let currentAgility = nearestFood ? fish.agility * 2.5 : fish.agility;
-            fish.vx += (dx - fish.vx) * currentAgility; fish.vy += (dy - fish.vy) * currentAgility;
+            const currentAgility = nearestFood ? fish.agility * 2.5 : fish.agility;
+            fish.vx += (dx - fish.vx) * currentAgility;
+            fish.vy += (dy - fish.vy) * currentAgility;
 
-            if (fish.x < margin) fish.vx += 0.2; if (fish.x > aquariumWidth - margin) fish.vx -= 0.2;
-            if (fish.y < margin) fish.vy += 0.2; if (fish.y > sandTop) fish.vy -= 0.2;
+            if (fish.x < margin) fish.vx += 0.2;
+            if (fish.x > aquariumWidth - margin) fish.vx -= 0.2;
+            if (fish.y < margin) fish.vy += 0.2;
+            if (fish.y > sandTop) fish.vy -= 0.2;
 
-            fish.x += fish.vx; fish.y += fish.vy;
-            if (fish.vx > 0.1) fish.facing = 1; else if (fish.vx < -0.1) fish.facing = -1; 
-            let pitch = (fish.vy / type.baseSpeed) * 20; pitch = Math.max(-25, Math.min(25, pitch)); 
+            fish.x += fish.vx;
+            fish.y += fish.vy;
+            if (fish.vx > 0.1) fish.facing = 1;
+            else if (fish.vx < -0.1) fish.facing = -1;
+            const pitch = Math.max(-25, Math.min(25, (fish.vy / type.baseSpeed) * 20));
 
             fish.svg.setAttribute("transform", `translate(${fish.x}, ${fish.y}) scale(${fish.size * fish.facing}, ${fish.size}) rotate(${pitch * fish.facing})`);
         });
@@ -613,7 +1059,29 @@
         requestAnimationFrame(gameLoop);
     }
 
-    window.onload = init;
+    /* --- AUTH --- */
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('aquarium-root').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('aquarium-root').style.display = 'block';
+
+        currentUser = user.email.toLowerCase() === 'nele.busse@web.de' ? 'Nele' : 'Andreas';
+        currentUserKey = currentUser.toLowerCase();
+
+        const userInfoEl = document.getElementById('aquarium-user-info');
+        if (userInfoEl) {
+            const other = currentUser === 'Nele' ? 'Andreas' : 'Nele';
+            userInfoEl.innerHTML = `Du bist <span>${currentUser}</span> · Teilst mit <span>${other}</span> 💙`;
+        }
+
+        initCoinDisplay();
+        init();
+    });
 </script>
 </body>
 </html>
