@@ -59,6 +59,7 @@
     .night-mode .cloud { opacity: 0.3; filter: brightness(0.7) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
     .night-mode .cloud::before, .night-mode .cloud::after { filter: brightness(0.7); }
     .night-mode .fence-post, .night-mode .bakery-base, .night-mode .bakery-roof, .night-mode .bed { filter: brightness(0.75); }
+    .night-mode .farm-fence-side { filter: brightness(0.72); }
     .night-mode .animal-wrapper { filter: brightness(0.85); }
     .night-mode .grass-tuft::before, .night-mode .grass-tuft::after { background: #166534; }
     .night-mode .grass-tuft-center { background: #15803d; }
@@ -397,7 +398,7 @@
     .bush-3 { width: 50px; height: 30px; top: 33%; left: 70%; opacity: 0.8; }
 
     /* Noise Texture für den Boden */
-    .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; min-height: 110%; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
+    .ground-area { position: absolute; top: 35%; bottom: 0; left: 0; right: 0; min-height: 130%; background: linear-gradient(180deg, var(--grass-mid) 0%, var(--grass-top) 100%); border-radius: 50% 50% 0 0 / 10% 10% 0 0; box-shadow: inset 0 20px 20px rgba(0,0,0,0.05); transition: background 2s ease; z-index: 10; }
     .ground-area::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1; }
 
     /* Wackelndes Gras */
@@ -407,8 +408,49 @@
     .grass-tuft::after { right: 2px; transform: rotate(15deg); }
     .grass-tuft-center { position: absolute; bottom: 0; left: 5px; width: 5px; height: 15px; background: #9be860; border-radius: 10px; }
 
-    .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); z-index: 15; }
+    .fence { position: absolute; top: 35%; left: 0; right: 0; height: 20px; display: flex; align-items: flex-end; transform: translateY(-18px); z-index: 17; }
     .fence-post { width: 6px; height: 20px; background: #c8855a; border-radius: 2px 2px 0 0; transition: filter 2s ease; }
+
+    /* ── SEITENZÄUNE & UNTERER ZAUN ── */
+    .farm-fence-side {
+      position: absolute;
+      top: calc(35% - 18px);
+      bottom: 0;
+      min-height: 130%;
+      width: 14px;
+      z-index: 16;
+      pointer-events: none;
+      border-radius: 3px 3px 0 0;
+      /* Holzpfosten (oben 20px jeder 50px-Sektion) + 2 Querriegel */
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0,        transparent 21px,
+          #6a3c1a 21px,         /* Riegel-Schatten oben */
+          #c8855a 22px,         #d4956a 23px, #d4956a 25px,
+          #8e5a32 26px,         /* Riegel-Schatten unten */
+          transparent 27px,     transparent 37px,
+          #6a3c1a 37px,
+          #c8855a 38px,         #d4956a 39px, #d4956a 41px,
+          #8e5a32 42px,
+          transparent 43px,     transparent 50px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          #3d2008 0,            /* Pfostenkappe */
+          #8e5a32 1px,
+          #c8855a 2px,          #d4956a 7px,
+          #c8855a 14px,         #8e5a32 17px,
+          #3d2008 19px,         transparent 20px,
+          transparent 50px
+        );
+      filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.22));
+      transition: filter 2s ease;
+    }
+    .farm-fence-left  { left: 1.5%; box-shadow:  3px 0 8px rgba(0,0,0,0.12); }
+    .farm-fence-right { right: 1.5%; box-shadow: -3px 0 8px rgba(0,0,0,0.12); }
+    .sunset-mode  .farm-fence-side { filter: sepia(0.25) saturate(0.85) drop-shadow(2px 3px 4px rgba(0,0,0,0.22)); }
+    .sunrise-mode .farm-fence-side { filter: saturate(0.9) brightness(0.95) drop-shadow(2px 3px 4px rgba(0,0,0,0.22)); }
 
     /* ── BACKHAUS UPGRADE ── */
     .bakery-building { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -1055,6 +1097,9 @@
   <div class="bush bush-3"></div>
 
   <div class="fence" id="fenceContainer"></div>
+  <div class="fence" id="fenceBottom" style="top: 150%; transform: translateY(-18px);"></div>
+  <div class="farm-fence-side farm-fence-left"></div>
+  <div class="farm-fence-side farm-fence-right"></div>
   <div class="ground-area"></div>
   
   <div class="grass-tuft" style="top: 42%; left: 15%;"><div class="grass-tuft-center"></div></div>
@@ -1613,6 +1658,11 @@
           if (!rawAnimals || rawAnimals === 0) { animals = []; } 
           else if (Array.isArray(rawAnimals)) { animals = rawAnimals.filter(a => a !== null && typeof a === 'object'); } 
           else { animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object'); }
+          animals.forEach(a => {
+            if (a.y < 72) a.y = 72 + Math.random() * 20;
+            if (!a.x || a.x < 8) a.x = 8 + Math.random() * 10;
+            if (a.x > 92) a.x = 82 + Math.random() * 10;
+          });
           
           const dataOven = data.oven;
           if (dataOven) {
@@ -1978,6 +2028,12 @@
       let fenceStr = '';
       for (let i = 0; i < window.innerWidth; i += 40) { fenceStr += `<div style="position:relative; width:40px; height:20px; display:flex; align-items:flex-end; flex-shrink:0;"><div class="fence-post" style="position:absolute; left:0; bottom:0;"></div><div style="position:absolute; left:3px; right:0; bottom:12px; height:3px; background:#d4956a; border-radius:2px;"></div><div style="position:absolute; left:3px; right:0; bottom:4px; height:3px; background:#d4956a; border-radius:2px;"></div></div>`; }
       fence.innerHTML = fenceStr;
+    }
+    const fenceBottom = document.getElementById('fenceBottom');
+    if (fenceBottom && fenceBottom.innerHTML === '') {
+      let fb = '';
+      for (let i = 0; i < window.innerWidth; i += 40) { fb += `<div style="position:relative; width:40px; height:20px; display:flex; align-items:flex-end; flex-shrink:0;"><div class="fence-post" style="position:absolute; left:0; bottom:0;"></div><div style="position:absolute; left:3px; right:0; bottom:12px; height:3px; background:#d4956a; border-radius:2px;"></div><div style="position:absolute; left:3px; right:0; bottom:4px; height:3px; background:#d4956a; border-radius:2px;"></div></div>`; }
+      fenceBottom.innerHTML = fb;
     }
 
     const hiveEl = document.getElementById('beehiveBuilding');
@@ -2435,8 +2491,8 @@
             id: Date.now(), 
             name: nameInput, 
             species: itemToBuy.id, 
-            x: 10 + Math.random() * 80, 
-            y: 80 + Math.random() * 10, 
+            x: 12 + Math.random() * 76,
+            y: 80 + Math.random() * 50, 
             isWalking: false, 
             facingLeft: false, 
             isProducing: false, 
@@ -3445,8 +3501,8 @@
           newX = a.x + (Math.random() - 0.5) * 25; 
           newY = a.y + (Math.random() - 0.5) * 20; 
           
-          newX = Math.max(5, Math.min(95, newX));
-          newY = Math.max(40, Math.min(130, newY));
+          newX = Math.max(8, Math.min(92, newX));
+          newY = Math.max(72, Math.min(148, newY));
           
           let inBeet = (newX > 25 && newX < 75 && newY > 48 && newY < 68); 
           let inBakery = (newX > 38 && newX < 62 && newY > 22 && newY < 45);
@@ -3486,6 +3542,8 @@
   window.addEventListener('resize', () => {
       if(currentUser) {
           document.getElementById('fenceContainer').innerHTML = '';
+          const fb = document.getElementById('fenceBottom');
+          if (fb) fb.innerHTML = '';
           updateFarmDOM();
       }
   });
@@ -3495,7 +3553,7 @@
     const hint = document.getElementById('scrollHint');
     const fw = document.getElementById('farmWorld');
     if (!hint || !fw) return;
-    const hasOffscreen = animals.some(a => a.y > 92);
+    const hasOffscreen = animals.some(a => a.y > 100);
     const alreadyScrolled = fw.scrollTop > 30;
     if (hasOffscreen && !alreadyScrolled) {
       hint.classList.add('visible');
