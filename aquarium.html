@@ -802,7 +802,7 @@
             layer.addEventListener("pointermove", e => {
                 if (tooltip.style.display==='block') { tooltip.style.left=(e.clientX+16)+'px'; tooltip.style.top=(e.clientY-10)+'px'; }
             });
-            layer.addEventListener("pointerout", e => { if (!e.target.closest('g[data-added-by]')) tooltip.style.display='none'; });
+            layer.addEventListener("pointerout", e => { if (!e.relatedTarget?.closest('g[data-added-by]')) tooltip.style.display='none'; });
         });
 
         updateCounts();
