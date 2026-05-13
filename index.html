@@ -1022,12 +1022,8 @@
       const userKey = window.currentUser.toLowerCase();
       const coinRef = ref(db, `coins/${userKey}`);
       onValue(coinRef, snap => {
-        const coins = snap.val() || 0;
-        const el = document.getElementById('coinCount');
-        el.textContent = coins.toLocaleString("de-DE");
-        el.classList.remove('coin-bump');
-        void el.offsetWidth;
-        el.classList.add('coin-bump');
+        _coinsBase = snap.val() || 0;
+        renderCoinCount(true);
       });
       // Load active theme
       get(ref(db, `shop/${userKey}/activeTheme`)).then(snap => {
@@ -1151,10 +1147,31 @@
   const cntNToday       = document.getElementById('countNeleToday');
   const emojis      = ['✨','🌸','💫','🌷','⭐','🌼'];
   let sA = 0, sN = 0, sAT = 0, sNT = 0;
+  // Live-Anzeige: Firebase-Basiswerte; lokal akkumulierte Klicks aus window._pending
+  // werden bis zum Flush optimistisch dazu addiert, damit Momente & Coins
+  // bei jedem Klick sofort hochzählen statt erst nach dem 2-Sekunden-Debounce.
+  let _momentsTotalBase = 0;
+  let _coinsBase = 0;
+  function _pendingNum(k) { return (window._pending && window._pending[k]) || 0; }
+  function renderHeartCount() {
+    const c = _momentsTotalBase + _pendingNum('moments');
+    heartCount.textContent = c.toLocaleString('de-DE') + ' ' + emojis[c % emojis.length];
+  }
+  function renderCoinCount(bump) {
+    const el = document.getElementById('coinCount');
+    if (!el) return;
+    const c = _coinsBase + _pendingNum('coins');
+    el.textContent = c.toLocaleString('de-DE');
+    if (bump) {
+      el.classList.remove('coin-bump');
+      void el.offsetWidth;
+      el.classList.add('coin-bump');
+    }
+  }
 
   onValue(momentsRef, s => {
-    const c = s.val() || 0;
-    heartCount.textContent = c.toLocaleString('de-DE') + ' ' + emojis[c % emojis.length];
+    _momentsTotalBase = s.val() || 0;
+    renderHeartCount();
   });
 
   onValue(lastClickRef, s => {
@@ -1163,29 +1180,35 @@
   });
 
   function updateStats() {
-    const t = sA + sN;
-    cntA.textContent = sA.toLocaleString('de-DE'); cntN.textContent = sN.toLocaleString('de-DE');
+    const pendU = _pendingNum('userMoments');
+    const a = sA + (window.currentUser === 'Andreas' ? pendU : 0);
+    const n = sN + (window.currentUser === 'Nele'    ? pendU : 0);
+    const t = a + n;
+    cntA.textContent = a.toLocaleString('de-DE'); cntN.textContent = n.toLocaleString('de-DE');
     if (t === 0) { barAndreas.style.width='50%'; barNele.style.width='50%'; verdict.textContent='–'; pctA.textContent=''; pctN.textContent=''; return; }
-    const pA = Math.round(sA/t*100), pN = Math.round(sN/t*100);
+    const pA = Math.round(a/t*100), pN = Math.round(n/t*100);
     barAndreas.style.width = Math.max(6, pA) + '%';
     barNele.style.width    = Math.max(6, pN) + '%';
     pctA.textContent = ' · ' + pA + '%';
     pctN.textContent = ' · ' + pN + '%';
-    if (sA > sN)      verdict.textContent = 'Andreas führt mit ' + (sA-sN).toLocaleString('de-DE') + ' Momenten 🐾';
-    else if (sN > sA) verdict.textContent = 'Nele führt mit ' + (sN-sA).toLocaleString('de-DE') + ' Momenten 🌸';
-    else              verdict.textContent = 'Gleichstand! 🤝';
+    if (a > n)      verdict.textContent = 'Andreas führt mit ' + (a-n).toLocaleString('de-DE') + ' Momenten 🐾';
+    else if (n > a) verdict.textContent = 'Nele führt mit ' + (n-a).toLocaleString('de-DE') + ' Momenten 🌸';
+    else            verdict.textContent = 'Gleichstand! 🤝';
   }
 
   onValue(andreasRef, s => { sA = s.val()||0; updateStats(); });
   onValue(neleRef,    s => { sN = s.val()||0; updateStats(); });
 
   function updateTodayStats() {
-    const t = sAT + sNT;
-    cntAToday.textContent = sAT.toLocaleString('de-DE');
-    cntNToday.textContent = sNT.toLocaleString('de-DE');
+    const pendT = _pendingNum('today');
+    const at = sAT + (window.currentUser === 'Andreas' ? pendT : 0);
+    const nt = sNT + (window.currentUser === 'Nele'    ? pendT : 0);
+    const t = at + nt;
+    cntAToday.textContent = at.toLocaleString('de-DE');
+    cntNToday.textContent = nt.toLocaleString('de-DE');
     if (t === 0) { barAndreasToday.style.width='50%'; barNeleToday.style.width='50%'; return; }
-    barAndreasToday.style.width = Math.max(6, Math.round(sAT/t*100)) + '%';
-    barNeleToday.style.width    = Math.max(6, Math.round(sNT/t*100)) + '%';
+    barAndreasToday.style.width = Math.max(6, Math.round(at/t*100)) + '%';
+    barNeleToday.style.width    = Math.max(6, Math.round(nt/t*100)) + '%';
   }
 
   onValue(andreasRefToday, s => { sAT = s.val()||0; updateTodayStats(); });
@@ -1317,6 +1340,13 @@
     p.user        = user;
     p.userKey     = userKey;
     p.lastClick   = { name: user, time: now };
+
+    // Live-Anzeige sofort aktualisieren – Firebase-Write ist debounced (2s)
+    renderHeartCount();
+    renderCoinCount(true);
+    updateStats();
+    updateTodayStats();
+    lastClickEl.textContent = 'Letzter Moment von ' + user + (user === 'Andreas' ? ' 🐾' : ' 🌸');
 
     spawnCoin(e.clientX, e.clientY, coinAmount);
     heartCount.classList.remove('bump');
