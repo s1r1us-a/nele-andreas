@@ -4402,6 +4402,7 @@
     else if (a.species === 'duck')   { inventory.items.feather++;    window.showToast(`🪶 Feder erhalten!`); }
     else if (a.species === 'goat')   { inventory.items.goatmilk++;   window.showToast(`🥛 Ziegenmilch erhalten!`); }
     else if (a.species === 'pig')    { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
+    else if (a.species === 'horse')  { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
     await saveFarmData();
     updateFarmDOM();
     const activeTab = document.querySelector('.stall-tab.active');
