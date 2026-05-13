@@ -174,6 +174,20 @@
     border-radius:10px; padding:4px;
     box-shadow:0 8px 50px rgba(0,0,0,0.85), 0 0 70px rgba(14,165,233,0.2), inset 0 0 40px rgba(14,165,233,0.07);
     border:2px solid rgba(14,165,233,0.3);
+    position:relative; isolation:isolate;
+  }
+  .ocean-grid::before {
+    content:''; position:absolute; inset:0; border-radius:10px; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(ellipse at 25% 30%, rgba(34,211,238,0.045), transparent 45%),
+      radial-gradient(ellipse at 75% 70%, rgba(14,165,233,0.04), transparent 50%);
+    background-size:220% 220%;
+    animation:oceanDrift 42s ease-in-out infinite alternate;
+  }
+  .ocean-grid > * { position:relative; z-index:1; }
+  @keyframes oceanDrift {
+    0%   { background-position: 0% 0%, 100% 100%; }
+    100% { background-position: 100% 60%, 0% 40%; }
   }
   .gc { border-radius:3px; background:rgba(14,165,233,0.13); border:1px solid rgba(14,165,233,0.1); cursor:default; transition:background .1s, transform .1s, box-shadow .1s; position:relative; overflow:hidden; }
   .gc.can-shoot { cursor:crosshair; }
@@ -263,6 +277,61 @@
   /* KONFETTI */
   .konfetti-piece { position:fixed; pointer-events:none; z-index:9999998; border-radius:3px; animation:kFall linear forwards; }
   @keyframes kFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+
+  /* A2 — SHOCKWAVE + SCREENSHAKE */
+  .shockwave-ring { position:fixed; width:14px; height:14px; border-radius:50%; pointer-events:none; z-index:9999999; transform:translate(-50%,-50%); border:2.5px solid rgba(255,255,255,0.95); box-shadow:0 0 22px rgba(255,255,255,0.75); animation:shockwaveExpand .42s cubic-bezier(.16,.84,.44,1) forwards; }
+  @keyframes shockwaveExpand { 0%{transform:translate(-50%,-50%) scale(.25);opacity:1} 100%{transform:translate(-50%,-50%) scale(7.5);opacity:0;border-width:.5px} }
+  @keyframes screenShake { 0%,100%{transform:translate(0,0)} 15%{transform:translate(-6px,3px)} 30%{transform:translate(5px,-4px)} 45%{transform:translate(-4px,3px)} 60%{transform:translate(4px,-2px)} 80%{transform:translate(-2px,1px)} }
+  .shake { animation:screenShake .28s ease-in-out; }
+
+  /* A3 — SHIP SINKING */
+  @keyframes sinkTilt {
+    0%   { transform:rotate(0) translateY(0);    filter:brightness(1.2); }
+    35%  { transform:rotate(-14deg) translateY(2px); filter:brightness(0.7); }
+    70%  { transform:rotate(-4deg) translateY(4px);  filter:brightness(0.55); }
+    100% { transform:rotate(-7deg) translateY(3px);  filter:brightness(0.5); }
+  }
+  .gc.sinking { animation:sinkTilt .65s cubic-bezier(.22,1,.36,1) both; }
+  .smoke-puff { position:fixed; pointer-events:none; z-index:9999998; font-size:20px; opacity:0; transform:translate(-50%,-50%); animation:smokeRise 1.8s ease-out forwards; }
+  @keyframes smokeRise {
+    0%   { opacity:0;  transform:translate(-50%,-50%) translateY(0)   scale(.5); }
+    20%  { opacity:.85; }
+    100% { opacity:0;  transform:translate(-50%,-50%) translateY(-52px) scale(1.7); }
+  }
+
+  /* A4 — WATER DROPLETS + SPLASH RING */
+  .droplet { position:fixed; pointer-events:none; z-index:9999998; width:5px; height:8px; border-radius:50% 50% 50% 50% / 65% 65% 35% 35%; background:linear-gradient(180deg,#dbeafe,#3b82f6); box-shadow:0 0 5px rgba(96,165,250,0.6); transform:translate(-50%,-50%); animation:dropletArc var(--dur,.7s) cubic-bezier(.45,.05,.55,.95) forwards; }
+  @keyframes dropletArc {
+    0%   { opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); }
+    45%  { opacity:1; transform:translate(-50%,-50%) translate(calc(var(--dx)*0.55), var(--peak,-18px)) scale(.95); }
+    100% { opacity:0; transform:translate(-50%,-50%) translate(var(--dx), var(--dy)) scale(.55); }
+  }
+  .splash-ring { position:fixed; width:8px; height:8px; border-radius:50%; pointer-events:none; z-index:9999997; transform:translate(-50%,-50%); border:2px solid rgba(191,219,254,0.9); box-shadow:0 0 10px rgba(96,165,250,0.6); animation:splashExpand .55s ease-out forwards; }
+  @keyframes splashExpand { 0%{transform:translate(-50%,-50%) scale(.2);opacity:1} 100%{transform:translate(-50%,-50%) scale(4);opacity:0;border-width:.5px} }
+
+  /* A5 — LAST SHOT (stronger static + soft pulse on plain cells) */
+  .gc.last-shot { outline:2.5px solid rgba(255,255,255,1) !important; outline-offset:-2px; filter:drop-shadow(0 0 4px rgba(255,255,255,0.55)); }
+
+  /* A6 — SHIP SHAPES via clip-path on own grid */
+  .gc.ship[data-pos="bow"][data-orient="h"]   { clip-path: polygon(0 8%, 70% 8%, 100% 50%, 70% 92%, 0 92%); }
+  .gc.ship[data-pos="stern"][data-orient="h"] { clip-path: polygon(0 18%, 100% 8%, 100% 92%, 0 82%); }
+  .gc.ship[data-pos="mid"][data-orient="h"]   { clip-path: polygon(0 8%, 100% 8%, 100% 92%, 0 92%); }
+  .gc.ship[data-pos="bow"][data-orient="v"]   { clip-path: polygon(50% 0, 92% 30%, 92% 100%, 8% 100%, 8% 30%); }
+  .gc.ship[data-pos="stern"][data-orient="v"] { clip-path: polygon(8% 0, 92% 0, 92% 100%, 50% 82%, 8% 100%); }
+  .gc.ship[data-pos="mid"][data-orient="v"]   { clip-path: polygon(8% 0, 92% 0, 92% 100%, 8% 100%); }
+  .gc.ship[data-pos="single"] { clip-path: polygon(20% 8%, 80% 8%, 100% 50%, 80% 92%, 20% 92%, 0 50%); }
+  .gc.ship { background:linear-gradient(180deg, rgba(90,150,235,0.78), rgba(38,88,180,0.72)) !important; }
+
+  /* A7 — HOVER PREVIEW as outline+glow (lets water show through) */
+  .gc.preview { background:rgba(34,211,238,0.14) !important; outline:2px solid rgba(34,211,238,0.9); outline-offset:-2px; box-shadow:0 0 12px rgba(34,211,238,0.45) !important; border-color:transparent !important; }
+  .gc.invalid { background:rgba(239,68,68,0.14) !important; outline:2px solid rgba(239,68,68,0.85); outline-offset:-2px; box-shadow:0 0 10px rgba(239,68,68,0.45) !important; border-color:transparent !important; }
+
+  /* A8 — FINAL BLOW + RAIN */
+  .final-blow { position:fixed; inset:0; pointer-events:none; z-index:99998; display:flex; align-items:center; justify-content:center; }
+  .final-blow-core { width:220px; height:220px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,0.98) 0%, rgba(251,191,36,0.9) 18%, rgba(239,68,68,0.7) 42%, transparent 72%); animation:finalBlowPulse .9s cubic-bezier(.22,1,.36,1) forwards; }
+  @keyframes finalBlowPulse { 0%{transform:scale(0);opacity:1;filter:brightness(2.2)} 55%{transform:scale(3);opacity:.85} 100%{transform:scale(6.5);opacity:0;filter:brightness(1)} }
+  .rain-drop { position:fixed; pointer-events:none; z-index:9999996; width:2px; height:18px; background:linear-gradient(180deg, transparent, rgba(147,197,253,0.75)); animation:rainFall linear forwards; }
+  @keyframes rainFall { 0%{transform:translateY(-40px);opacity:0} 10%{opacity:.7} 100%{transform:translateY(110vh);opacity:.25} }
 
   @media (max-width:520px) {
     :root { --cell:26px; }
@@ -636,9 +705,20 @@ function renderPlacement() {
   if (!grid) return;
   // Reset all cells
   for (const div of grid.querySelectorAll('.gc')) div.className = 'gc';
-  // Draw placed ships
-  for (const s of placedShips)
-    for (const {r,c} of cells(s)) { const d = gc(grid,r,c); if (d) d.classList.add('ship'); }
+  // Draw placed ships (with bow/mid/stern shape data)
+  for (const s of placedShips) {
+    const cs = cells(s);
+    cs.forEach(({r, c}, idx) => {
+      const d = gc(grid, r, c);
+      if (!d) return;
+      d.classList.add('ship');
+      let pos = 'mid';
+      if (cs.length === 1)            pos = 'single';
+      else if (idx === 0)             pos = 'bow';
+      else if (idx === cs.length - 1) pos = 'stern';
+      d.dataset.pos = pos; d.dataset.orient = s.dir;
+    });
+  }
   // Draw hover preview
   if (selectedShip && hoverR >= 0) {
     const def = SHIPS.find(d => d.id === selectedShip);
@@ -752,12 +832,29 @@ function renderGame(state) {
 
   // Turn banner
 
+  // Pre-compute ship-cell map for shape rendering on own grid
+  const myShapeMap = {};
+  for (const s of myShipsData) {
+    const cs = cells(s);
+    cs.forEach(({r, c}, idx) => {
+      let pos = 'mid';
+      if (cs.length === 1)            pos = 'single';
+      else if (idx === 0)             pos = 'bow';
+      else if (idx === cs.length - 1) pos = 'stern';
+      myShapeMap[r + ',' + c] = { pos, orient: s.dir };
+    });
+  }
+
   // Own grid: my ships + incoming shots
   buildGrid(document.getElementById('ownGrid'), (div, r, c) => {
     const shot = oppShotsData[r][c];
     if      (shot === 1) div.classList.add('hit');
     else if (shot === 2) div.classList.add('miss');
-    else if (shipHit(myShipsData, r, c)) div.classList.add('ship');
+    else if (shipHit(myShipsData, r, c)) {
+      div.classList.add('ship');
+      const shape = myShapeMap[r + ',' + c];
+      if (shape) { div.dataset.pos = shape.pos; div.dataset.orient = shape.orient; }
+    }
   });
   markSunk(myShipsData, oppShotsData, document.getElementById('ownGrid'));
 
@@ -807,9 +904,35 @@ function renderGame(state) {
 
 function markSunk(ships, shots, gridEl) {
   for (const s of ships) {
-    if (cells(s).every(({r,c}) => shots[r][c] === 1))
+    if (cells(s).every(({r,c}) => shots[r][c] === 1)) {
       for (const {r,c} of cells(s)) { const d = gc(gridEl,r,c); if(d) d.classList.add('sunk'); }
+      playShipSinking(gridEl, s);
+    }
   }
+}
+
+function playShipSinking(gridEl, ship) {
+  const key = gridEl.id + '|' + ship.id;
+  if (sunkAnimated.has(key)) return;
+  sunkAnimated.add(key);
+  const cs = cells(ship);
+  cs.forEach(({r,c}, i) => {
+    setTimeout(() => {
+      const cel = gc(gridEl, r, c);
+      if (!cel) return;
+      cel.classList.add('sinking');
+      const rb = cel.getBoundingClientRect();
+      const cx = rb.left + rb.width / 2;
+      const cy = rb.top  + rb.height / 2;
+      const puff = document.createElement('div');
+      puff.className = 'smoke-puff';
+      puff.textContent = '💨';
+      puff.style.left = cx + 'px';
+      puff.style.top  = cy + 'px';
+      document.body.appendChild(puff);
+      setTimeout(() => puff.remove(), 1900);
+    }, i * 70);
+  });
 }
 
 function renderMyFleetTracker(myShips, oppShots) {
@@ -870,6 +993,8 @@ function renderFleetTracker(oppShips, myShots) {
 }
 
 // ── SHOT EFFECTS ─────────────────────────────────────────────────────────────
+const sunkAnimated = new Set();
+
 function showShotEffect(gridEl, r, c, isHit, sunkShipCells) {
   const cell = gc(gridEl, r, c);
   if (!cell) return;
@@ -877,34 +1002,71 @@ function showShotEffect(gridEl, r, c, isHit, sunkShipCells) {
   const x = rect.left + rect.width / 2;
   const y = rect.top  + rect.height / 2;
 
-  const hitCols  = ['#fbbf24','#f97316','#ef4444','#fff7'];
-  const missCols = ['#60a5fa','#93c5fd','#bfdbfe'];
-
-  const count = isHit ? 12 : 7;
-  for (let i = 0; i < count; i++) {
-    const p = document.createElement('div');
-    const angle = (i / count) * 2 * Math.PI + (Math.random() - .5) * .6;
-    const dist  = isHit ? 28 + Math.random() * 42 : 14 + Math.random() * 26;
-    const dur   = (.45 + Math.random() * .45).toFixed(2);
-    const cols  = isHit ? hitCols : missCols;
-    p.className = `shot-particle ${isHit ? 'hit-particle' : 'miss-particle'}`;
-    p.style.cssText = `left:${x}px;top:${y}px;--dx:${(Math.cos(angle)*dist).toFixed(1)}px;--dy:${(Math.sin(angle)*dist-(isHit?18:12)).toFixed(1)}px;--dur:${dur}s;background:${cols[Math.floor(Math.random()*cols.length)]};`;
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), parseFloat(dur)*1000+100);
-  }
-
-  const ring = document.createElement('div');
-  ring.className = `shot-ring ${isHit ? 'hit-ring' : 'miss-ring'}`;
-  ring.style.left = x+'px'; ring.style.top = y+'px';
-  document.body.appendChild(ring);
-  setTimeout(() => ring.remove(), 650);
+  const hitCols  = ['#fbbf24','#f97316','#ef4444','#fff7','#fde68a'];
 
   if (isHit) {
+    // Sparks
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      const angle = (i / 14) * 2 * Math.PI + (Math.random() - .5) * .7;
+      const dist  = 30 + Math.random() * 46;
+      const dur   = (.45 + Math.random() * .5).toFixed(2);
+      p.className = 'shot-particle hit-particle';
+      p.style.cssText = `left:${x}px;top:${y}px;--dx:${(Math.cos(angle)*dist).toFixed(1)}px;--dy:${(Math.sin(angle)*dist-20).toFixed(1)}px;--dur:${dur}s;background:${hitCols[Math.floor(Math.random()*hitCols.length)]};`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), parseFloat(dur)*1000+100);
+    }
+    // Two colored rings + white shockwave
+    const ring = document.createElement('div');
+    ring.className = 'shot-ring hit-ring';
+    ring.style.cssText = `left:${x}px;top:${y}px;`;
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 650);
+
     const ring2 = document.createElement('div');
     ring2.className = 'shot-ring hit-ring';
     ring2.style.cssText = `left:${x}px;top:${y}px;animation-delay:.12s;border-color:#ef4444;`;
     document.body.appendChild(ring2);
     setTimeout(() => ring2.remove(), 800);
+
+    const shock = document.createElement('div');
+    shock.className = 'shockwave-ring';
+    shock.style.cssText = `left:${x}px;top:${y}px;`;
+    document.body.appendChild(shock);
+    setTimeout(() => shock.remove(), 500);
+
+    // Screenshake only when *I* land a hit on the enemy grid
+    if (gridEl.id === 'enemyGrid') {
+      const page = document.getElementById('mainPage');
+      page.classList.remove('shake'); void page.offsetWidth; page.classList.add('shake');
+      setTimeout(() => page.classList.remove('shake'), 320);
+    }
+  } else {
+    // Water droplets (parabolic arc) + splash ring
+    for (let i = 0; i < 8; i++) {
+      const p = document.createElement('div');
+      const angle = -Math.PI/2 + (Math.random() - .5) * Math.PI * 0.9;
+      const dist  = 20 + Math.random() * 28;
+      const dur   = (.55 + Math.random() * .3).toFixed(2);
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.abs(Math.sin(angle)) * dist + 16;
+      const peak = -(20 + Math.random() * 14);
+      p.className = 'droplet';
+      p.style.cssText = `left:${x}px;top:${y}px;--dx:${dx.toFixed(1)}px;--dy:${dy.toFixed(1)}px;--peak:${peak.toFixed(1)}px;--dur:${dur}s;`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), parseFloat(dur)*1000+100);
+    }
+    const sring = document.createElement('div');
+    sring.className = 'splash-ring';
+    sring.style.cssText = `left:${x}px;top:${y}px;`;
+    document.body.appendChild(sring);
+    setTimeout(() => sring.remove(), 650);
+
+    const ring = document.createElement('div');
+    ring.className = 'shot-ring miss-ring';
+    ring.style.cssText = `left:${x}px;top:${y}px;`;
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 650);
   }
 
   const txt = document.createElement('div');
@@ -1021,17 +1183,43 @@ function showResult(state) {
   const o = document.getElementById('resultOverlay');
   if (o.classList.contains('open')) return;
   const win = state.winner === currentUser;
-  document.getElementById('resultEmoji').textContent = win ? '🏆' : '💔';
-  document.getElementById('resultTitle').textContent = win ? 'Gewonnen! 🎉' : 'Verloren…';
-  document.getElementById('resultSub').textContent   = win
-    ? `Du hast die Flotte von ${other(currentUser)} versenkt!`
-    : `${state.winner} hat alle deine Schiffe versenkt.`;
-  const bet = state.bet || 0;
-  document.getElementById('resultCoins').textContent = win
-    ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
-    : `-${bet.toLocaleString('de-DE')} 🪙`;
-  o.classList.add('open');
-  if (win) spawnKonfetti();
+  spawnFinalBlow();
+  if (!win) spawnRain();
+  setTimeout(() => {
+    document.getElementById('resultEmoji').textContent = win ? '🏆' : '💔';
+    document.getElementById('resultTitle').textContent = win ? 'Gewonnen! 🎉' : 'Verloren…';
+    document.getElementById('resultSub').textContent   = win
+      ? `Du hast die Flotte von ${other(currentUser)} versenkt!`
+      : `${state.winner} hat alle deine Schiffe versenkt.`;
+    const bet = state.bet || 0;
+    document.getElementById('resultCoins').textContent = win
+      ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
+      : `-${bet.toLocaleString('de-DE')} 🪙`;
+    o.classList.add('open');
+    if (win) spawnKonfetti();
+  }, 850);
+}
+
+function spawnFinalBlow() {
+  const wrap = document.createElement('div');
+  wrap.className = 'final-blow';
+  const core = document.createElement('div');
+  core.className = 'final-blow-core';
+  wrap.appendChild(core);
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 1000);
+}
+
+function spawnRain() {
+  for (let i = 0; i < 70; i++) {
+    const d = document.createElement('div');
+    d.className = 'rain-drop';
+    d.style.left = (Math.random() * 100) + 'vw';
+    d.style.animationDuration = (1.3 + Math.random() * 1.4) + 's';
+    d.style.animationDelay = (Math.random() * 0.7) + 's';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 4000);
+  }
 }
 
 function spawnKonfetti() {
@@ -1080,7 +1268,7 @@ function handleGameState(state) {
 }
 
 function showLobby(mode, state = null) {
-  if (mode === 'create') statsRecorded = false;
+  if (mode === 'create') { statsRecorded = false; sunkAnimated.clear(); prevOppLastShot = undefined; }
   document.getElementById('lobbySection').style.display     = 'block';
   document.getElementById('placementSection').style.display = 'none';
   document.getElementById('gameSection').style.display      = 'none';
