@@ -587,19 +587,19 @@
     .tradehouse-building { left: auto !important; right: 5%; }
 
     @media (max-width: 540px) {
-      /* 6 Gebäude gleichmäßig in einer Reihe – kein Überlappen */
-      .mine-building         { width: 42px; height: 47px; left: 2%;  top: 27%; }
-      .beehive-building      { width: 36px; height: 43px; left: 16%; top: 30%; }
-      .bakery-building       { left: 31%; transform: translateX(0); width: 52px; height: 58px; top: 26%; }
+      /* 6 Gebäude gleichmäßig in einer Reihe – Basen sitzen an der Bodenlinie (35%) */
+      .mine-building         { width: 42px; height: 47px; left: 2%;  top: calc(35% - 47px); }
+      .beehive-building      { width: 36px; height: 43px; left: 16%; top: calc(35% - 43px); }
+      .bakery-building       { left: 31%; transform: translateX(0); width: 52px; height: 58px; top: calc(35% - 58px); }
       .bakery-roof           { border-left: 26px solid transparent; border-right: 26px solid transparent; border-bottom: 27px solid #d45d5d; }
       .bakery-roof::after    { left: -26px; width: 52px; top: 27px; }
       .bakery-base           { width: 44px; height: 28px; }
       .bakery-chimney        { right: 9px; width: 10px; height: 24px; }
       .bakery-door           { left: 7px; width: 12px; height: 18px; }
       .bakery-window         { top: 6px; right: 6px; width: 11px; height: 11px; }
-      .weaving-building      { width: 52px; height: 64px; left: 48%; top: 22%; }
-      .forge-building        { width: 52px; height: 60px; left: 64%; right: auto; top: 21%; }
-      .tradehouse-building   { left: 81% !important; right: auto !important; width: 44px; height: 49px; top: 27%; }
+      .weaving-building      { width: 52px; height: 64px; left: 48%; top: calc(35% - 64px); }
+      .forge-building        { width: 52px; height: 60px; left: 64%; right: auto; top: calc(35% - 60px); }
+      .tradehouse-building   { left: 81% !important; right: auto !important; width: 44px; height: 49px; top: calc(35% - 49px); }
     }
 
     /* ── FARMING BEDS ── */
