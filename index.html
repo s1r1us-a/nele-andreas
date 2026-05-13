@@ -1279,41 +1279,44 @@
     const user = window.currentUser;
     if (!user) { alert('Bitte erst oben auswählen wer du bist 🐾'); return; }
 
-    const momentBoost = isBoosterActive(activeBoosterMoments) ? 2 : 1;
-    for (let i = 0; i < momentBoost; i++) {
-      runTransaction(momentsRef, c => (c||0)+1);
-      runTransaction(user === 'Andreas' ? andreasRef : neleRef, c => (c||0)+1);
-      runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
-    }
+    const userKey      = user.toLowerCase();
+    const momentBoost  = isBoosterActive(activeBoosterMoments) ? 2 : 1;
+    const coinAmount   = isBoosterActive(activeBoosterCoin)    ? 2 : 1;
+    const now          = Date.now();
 
-    // Coin für jeden Klick – lokal akkumulieren, Firebase max 1×/2s schreiben
-    {
-      const userKey = user.toLowerCase();
-      const coinAmount = isBoosterActive(activeBoosterCoin) ? 2 : 1;
-      spawnCoin(e.clientX, e.clientY, coinAmount);
-      if (!window._pendingCoins) window._pendingCoins = {};
-      if (!window._pendingCoins[userKey]) window._pendingCoins[userKey] = 0;
-      window._pendingCoins[userKey] += coinAmount;
-      clearTimeout(window._coinFlushTimer);
-      window._coinFlushTimer = setTimeout(() => {
-        const amount = window._pendingCoins[userKey] || 0;
-        if (amount <= 0) return;
-        window._pendingCoins[userKey] = 0;
-        runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+amount)
-          .catch(err => console.error('Coin-Fehler:', err));
-        runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0)+amount)
-          .catch(err => console.error('Stats-Fehler:', err));
-      }, 2000);
-    }
+    // Alles lokal akkumulieren – Firebase max 1×/2s schreiben
+    if (!window._pending) window._pending = {};
+    const p = window._pending;
+    p.moments     = (p.moments     || 0) + momentBoost;
+    p.userMoments = (p.userMoments || 0) + momentBoost;
+    p.today       = (p.today       || 0) + momentBoost;
+    p.coins       = (p.coins       || 0) + coinAmount;
+    p.coinsEarned = (p.coinsEarned || 0) + coinAmount;
+    p.user        = user;
+    p.userKey     = userKey;
+    p.lastClick   = { name: user, time: now };
 
-    const now = Date.now();
-    set(lastClickRef, { name: user, time: now });
-    const clickDate = getGermanDate(now);
-    set(ref(db, `moments/clicks/${clickDate}/${now}_${user.toLowerCase()}`), { user, time: now });
+    spawnCoin(e.clientX, e.clientY, coinAmount);
     heartCount.classList.remove('bump');
     void heartCount.offsetWidth;
     heartCount.classList.add('bump');
     spawnHeart(e.clientX, e.clientY);
+
+    clearTimeout(window._flushTimer);
+    window._flushTimer = setTimeout(() => {
+      const { moments, userMoments, today, coins, coinsEarned, user: u, userKey: uk, lastClick } = window._pending;
+      window._pending = {};
+      const uRef     = uk === 'andreas' ? andreasRef : neleRef;
+      const todayRef = uk === 'andreas' ? andreasRefToday : neleRefToday;
+      runTransaction(momentsRef, c => (c||0) + moments);
+      runTransaction(uRef,       c => (c||0) + userMoments);
+      runTransaction(todayRef,   c => (c||0) + today);
+      runTransaction(ref(db, `coins/${uk}`),             c => (c||0) + coins).catch(err => console.error('Coin-Fehler:', err));
+      runTransaction(ref(db, `stats/${uk}/coinsEarned`), c => (c||0) + coinsEarned).catch(err => console.error('Stats-Fehler:', err));
+      set(lastClickRef, lastClick);
+      const clickDate = getGermanDate(lastClick.time);
+      set(ref(db, `moments/clicks/${clickDate}/${lastClick.time}_${uk}`), { user: u, time: lastClick.time });
+    }, 2000);
   });
 
   // Theme anwenden
