@@ -1301,10 +1301,9 @@
     else if (floatingCards.length && !listMode) startDrift();
   });
 
-  // Sortier-Schlüssel: Event-Datum bevorzugen, sonst aus angezeigtem date/time parsen,
-  // erst zuletzt auf Erstellungs-Timestamp zurückfallen.
+  // Sortier-Schlüssel: aus dem auf der Karte angezeigten date/time-String parsen
+  // (das ist, was der Nutzer sieht). Fällt nur zurück, wenn dieses Feld fehlt.
   function getMomentSortMs(m) {
-    if (typeof m.momentDate === 'number' && !isNaN(m.momentDate)) return m.momentDate;
     if (m.date) {
       const parts = m.date.split('.').map(s => parseInt(s, 10));
       if (parts.length === 3 && parts.every(n => !isNaN(n))) {
@@ -1314,6 +1313,7 @@
         if (!isNaN(t)) return t;
       }
     }
+    if (typeof m.momentDate === 'number' && !isNaN(m.momentDate)) return m.momentDate;
     return m.timestamp || 0;
   }
 
