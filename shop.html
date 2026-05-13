@@ -562,28 +562,33 @@
         <span class="lootbox-icon" id="lootboxIcon">📦</span>
       </div>
       <div class="lootbox-name">Mysteriöse Box</div>
-      <div class="lootbox-desc">Enthält Coins, Farm-Items, Booster, exklusive Badges oder seltene Profilrahmen 👀</div>
+      <div class="lootbox-desc">Enthält Coins, Farm-Items, Erze, Booster, exklusive Badges oder seltene Profilrahmen 👀</div>
       <div class="lootbox-desc" style="margin-top:-10px;">⏳ 5 Minuten Cooldown zwischen Käufen · Preis steigt täglich mit jedem Kauf</div>
       <div class="lootbox-odds">
         <div class="lootbox-odds-title">Mögliche Gewinne</div>
-        <div class="lootbox-odds-row"><span>200 🪙</span><span>18%</span></div>
-        <div class="lootbox-odds-row"><span>500 🪙</span><span>12%</span></div>
-        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>6%</span></div>
-        <div class="lootbox-odds-row"><span>5.000 🪙</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🌱 Farm-Samen</span><span>10%</span></div>
+        <div class="lootbox-odds-row"><span>500 🪙</span><span>15%</span></div>
+        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>13%</span></div>
+        <div class="lootbox-odds-row"><span>3.000 🪙</span><span>9%</span></div>
+        <div class="lootbox-odds-row"><span>7.500 🪙</span><span>5%</span></div>
+        <div class="lootbox-odds-row"><span>15.000 🪙</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>25.000 🪙 (Mega-Jackpot)</span><span>1%</span></div>
+        <div class="lootbox-odds-row"><span>🌱 Farm-Samen</span><span>8%</span></div>
         <div class="lootbox-odds-row"><span>🥚 Farm-Item (Gewöhnlich)</span><span>6%</span></div>
-        <div class="lootbox-odds-row"><span>💎 Farm-Item (Selten)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>15%</span></div>
-        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>12%</span></div>
-        <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>6%</span></div>
-        <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>👑 Badge (Legendär)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>💎 Farm-Item (Selten)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>🟤 Erz (Häufig: Kupfer/Eisen)</span><span>8%</span></div>
+        <div class="lootbox-odds-row"><span>🥈 Erz (Selten: Silber/Gold)</span><span>5%</span></div>
+        <div class="lootbox-odds-row"><span>💜 Erz (Episch: Amethyst/Smaragd)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>5%</span></div>
+        <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>👑 Badge (Legendär)</span><span>1%</span></div>
         <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>3%</span></div>
         <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>1%</span></div>
+        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>5%</span></div>
+        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>4%</span></div>
       </div>
-      <div class="lootbox-price" id="lootboxPrice">🪙 300 Coins</div>
-      <div class="lootbox-price-info" id="lootboxPriceInfo" style="font-size:11px;color:var(--text-mid);font-weight:500;margin-top:-10px;margin-bottom:16px;display:none;">Preis steigt pro Kauf um 100 🪙 · Reset um Mitternacht</div>
+      <div class="lootbox-price" id="lootboxPrice">🪙 500 Coins</div>
+      <div class="lootbox-price-info" id="lootboxPriceInfo" style="font-size:11px;color:var(--text-mid);font-weight:500;margin-top:-10px;margin-bottom:16px;display:none;">Preis steigt pro Kauf um 150 🪙 · Reset um Mitternacht</div>
       <div class="lootbox-cooldown" id="lootboxCooldown" style="font-size:13px;color:var(--text-mid);font-weight:600;margin-bottom:12px;min-height:20px;"></div>
       <button class="btn-open-box" id="openBoxBtn">📦 Box öffnen</button>
     </div>
@@ -1276,8 +1281,8 @@
     { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
-  const BOX_BASE_PRICE = 300;
-  const BOX_PRICE_INCREMENT = 100;
+  const BOX_BASE_PRICE = 500;
+  const BOX_PRICE_INCREMENT = 150;
   const BOX_COOLDOWN_MS = 5 * 60 * 1000; // 5 Minuten
 
   let ownedBadges = [];
@@ -1367,46 +1372,71 @@
 
   // Farm-Belohnungen aus der Loot-Box
   const FARM_SEEDS = [
-    { id: 'radish',    name: 'Radieschen-Samen', icon: '🧅', min: 3, max: 6 },
-    { id: 'carrot',    name: 'Karotten-Samen',   icon: '🥕', min: 2, max: 4 },
-    { id: 'lettuce',   name: 'Salat-Samen',      icon: '🥬', min: 2, max: 3 },
-    { id: 'oats',      name: 'Hafer-Samen',      icon: '🌿', min: 1, max: 3 },
-    { id: 'wheat',     name: 'Weizen-Samen',     icon: '🌾', min: 1, max: 2 },
-    { id: 'blueberry', name: 'Blaubeer-Samen',   icon: '🫐', min: 1, max: 2 }
+    { id: 'radish',    name: 'Radieschen-Samen',    icon: '🧅', min: 3, max: 6 },
+    { id: 'carrot',    name: 'Karotten-Samen',      icon: '🥕', min: 2, max: 4 },
+    { id: 'lettuce',   name: 'Salat-Samen',         icon: '🥬', min: 2, max: 3 },
+    { id: 'oats',      name: 'Hafer-Samen',         icon: '🌿', min: 1, max: 3 },
+    { id: 'wheat',     name: 'Weizen-Samen',        icon: '🌾', min: 1, max: 2 },
+    { id: 'blueberry', name: 'Blaubeer-Samen',      icon: '🫐', min: 1, max: 2 },
+    { id: 'tomato',    name: 'Tomaten-Samen',       icon: '🍅', min: 1, max: 3 },
+    { id: 'corn',      name: 'Mais-Samen',          icon: '🌽', min: 1, max: 3 },
+    { id: 'sunflower', name: 'Sonnenblumen-Samen',  icon: '🌻', min: 1, max: 2 }
   ];
   const FARM_ITEMS_COMMON = [
     { id: 'fertilizer', name: 'Dünger',       icon: '🪴', min: 1, max: 3 },
     { id: 'egg',        name: 'Ei',           icon: '🥚', min: 1, max: 2 },
     { id: 'milk',       name: 'Kuhmilch',     icon: '🥛', min: 1, max: 2 },
-    { id: 'firefly',    name: 'Glühwürmchen', icon: '🫙', min: 2, max: 5 }
+    { id: 'firefly',    name: 'Glühwürmchen', icon: '🫙', min: 2, max: 5 },
+    { id: 'feather',    name: 'Feder',        icon: '🪶', min: 1, max: 3 },
+    { id: 'goatmilk',   name: 'Ziegenmilch',  icon: '🥛', min: 1, max: 2 }
   ];
   const FARM_ITEMS_RARE = [
-    { id: 'wool',    name: 'Wolle',   icon: '🧶', min: 1, max: 2 },
-    { id: 'honey',   name: 'Honig',   icon: '🍯', min: 1, max: 2 },
-    { id: 'diamond', name: 'Diamant', icon: '💎', min: 1, max: 1 }
+    { id: 'wool',      name: 'Wolle',    icon: '🧶', min: 1, max: 2 },
+    { id: 'honey',     name: 'Honig',    icon: '🍯', min: 1, max: 2 },
+    { id: 'diamond',   name: 'Diamant',  icon: '💎', min: 1, max: 1 },
+    { id: 'truffle',   name: 'Trüffel',  icon: '🍄', min: 1, max: 2 },
+    { id: 'horseshoe', name: 'Hufeisen', icon: '🧲', min: 1, max: 1 }
+  ];
+  const FARM_ORES_COMMON = [
+    { id: 'kupfer', name: 'Kupfer', icon: '🟤', min: 2, max: 5 },
+    { id: 'eisen',  name: 'Eisen',  icon: '⚙️', min: 1, max: 3 }
+  ];
+  const FARM_ORES_RARE = [
+    { id: 'silber', name: 'Silber', icon: '🥈', min: 1, max: 2 },
+    { id: 'gold',   name: 'Gold',   icon: '🥇', min: 1, max: 2 }
+  ];
+  const FARM_ORES_EPIC = [
+    { id: 'amethyst', name: 'Amethyst', icon: '💜', min: 1, max: 1 },
+    { id: 'smaragd',  name: 'Smaragd',  icon: '💚', min: 1, max: 1 }
   ];
 
   function rollLootbox() {
     const r = Math.random() * 100;
-    // Coins
-    if (r < 18)  return { type: 'coins', amount: 200 };
-    if (r < 30)  return { type: 'coins', amount: 500 };
-    if (r < 36)  return { type: 'coins', amount: 1500 };
-    if (r < 38)  return { type: 'coins', amount: 5000 };
-    // Farm-Items (gehen automatisch ins Farm-Inventar)
-    if (r < 48)  return { type: 'farm', category: 'seeds' };
-    if (r < 54)  return { type: 'farm', category: 'items_common' };
-    if (r < 56)  return { type: 'farm', category: 'items_rare' };
+    // Coins (Min 500, Max 25.000 Mega-Jackpot)
+    if (r < 15)  return { type: 'coins', amount: 500 };
+    if (r < 28)  return { type: 'coins', amount: 1500 };
+    if (r < 37)  return { type: 'coins', amount: 3000 };
+    if (r < 42)  return { type: 'coins', amount: 7500 };
+    if (r < 44)  return { type: 'coins', amount: 15000 };
+    if (r < 45)  return { type: 'coins', amount: 25000 };
+    // Farm-Saaten/Items (gehen automatisch ins Farm-Inventar)
+    if (r < 53)  return { type: 'farm', category: 'seeds' };
+    if (r < 59)  return { type: 'farm', category: 'items_common' };
+    if (r < 62)  return { type: 'farm', category: 'items_rare' };
+    // Erze (gehen ins Bergwerk-Inventar)
+    if (r < 70)  return { type: 'farm', category: 'ores_common' };
+    if (r < 75)  return { type: 'farm', category: 'ores_rare' };
+    if (r < 77)  return { type: 'farm', category: 'ores_epic' };
     // Badges
-    if (r < 62)  return { type: 'badge', rarity: 'common' };
-    if (r < 65)  return { type: 'badge', rarity: 'rare' };
-    if (r < 67)  return { type: 'badge', rarity: 'legendary' };
+    if (r < 82)  return { type: 'badge', rarity: 'common' };
+    if (r < 84)  return { type: 'badge', rarity: 'rare' };
+    if (r < 85)  return { type: 'badge', rarity: 'legendary' };
     // Profilrahmen
-    if (r < 70)  return { type: 'frame', rarity: 'common' };
-    if (r < 72)  return { type: 'frame', rarity: 'rare' };
-    if (r < 73)  return { type: 'frame', rarity: 'legendary' };
-    // Booster (deutlich erhöhte Chance)
-    if (r < 88)  return { type: 'booster', boosterId: 'coins_booster' };
+    if (r < 88)  return { type: 'frame', rarity: 'common' };
+    if (r < 90)  return { type: 'frame', rarity: 'rare' };
+    if (r < 91)  return { type: 'frame', rarity: 'legendary' };
+    // Booster
+    if (r < 96)  return { type: 'booster', boosterId: 'coins_booster' };
     return               { type: 'booster', boosterId: 'moments_booster' };
   }
 
@@ -1451,10 +1481,12 @@
       rewardType.className = 'reward-type coins';
       rewardType.textContent = isDuplicate ? 'Trostpreis!' : 'Coins gewonnen!';
       rewardTitle.textContent = `+${result.amount.toLocaleString('de-DE')} 🪙`;
-      rewardSub.textContent = result.amount >= 5000 ? 'MEGA-JACKPOT! 🎉' :
-                              result.amount >= 1500 ? 'Fetter Gewinn! 😍' :
-                              result.amount >= 500  ? 'Break-even! 👌' :
-                              result.amount >= 200  ? 'Solider Gewinn 💪' : 'Trostpreis – nächstes Mal! 🤞';
+      rewardSub.textContent = result.amount >= 25000 ? 'MEGA-JACKPOT! 🤯🎉' :
+                              result.amount >= 15000 ? 'Riesengewinn! 💰' :
+                              result.amount >= 7500  ? 'Fetter Gewinn! 😍' :
+                              result.amount >= 3000  ? 'Klasse! 🥳' :
+                              result.amount >= 1500  ? 'Solide 💪' :
+                                                       'Trostpreis 🤞';
     } else if (result.type === 'badge' && result.item) {
       const b = result.item;
       rewardEmoji.textContent = b.emoji;
@@ -1462,7 +1494,7 @@
       rewardType.textContent = `${b.rarityLabel} Badge`;
       rewardTitle.textContent = b.name;
       rewardSub.textContent = isDuplicate
-        ? 'Schon gehabt – du bekommst stattdessen 100 🪙'
+        ? 'Schon gehabt – du bekommst stattdessen 500 🪙'
         : 'Neuer Badge! Im Profil ausrüsten 🎨';
     } else if (result.type === 'booster') {
       const isCoin = result.boosterId === 'coins_booster';
@@ -1476,9 +1508,13 @@
     } else if (result.type === 'farm' && result.item) {
       rewardEmoji.textContent = result.item.icon;
       rewardType.className = 'reward-type coins';
-      rewardType.textContent = result.farmInvPath === 'seeds' ? 'Farm-Samen gewonnen!' : 'Farm-Item gewonnen!';
+      rewardType.textContent = result.farmInvPath === 'seeds' ? 'Farm-Samen gewonnen!'
+                              : result.farmInvPath === 'ores'  ? 'Erz gewonnen!'
+                              : 'Farm-Item gewonnen!';
       rewardTitle.textContent = `+${result.amount}× ${result.item.name}`;
-      rewardSub.textContent = 'Liegt jetzt im Farm-Inventar 🌱\nDirekt im Farm-Spiel verwendbar!';
+      rewardSub.textContent = result.farmInvPath === 'ores'
+        ? 'Liegt jetzt im Bergwerk-Inventar ⛏️\nFür Schmuck-Herstellung nutzbar!'
+        : 'Liegt jetzt im Farm-Inventar 🌱\nDirekt im Farm-Spiel verwendbar!';
     } else if (result.type === 'frame' && result.item) {
       const f = result.item;
       rewardEmoji.style.display = 'none';
@@ -1490,7 +1526,7 @@
       rewardType.textContent = `${f.rarityLabel} Profilrahmen`;
       rewardTitle.textContent = `${f.emoji} ${f.name}`;
       rewardSub.textContent = isDuplicate
-        ? 'Schon gehabt – du bekommst stattdessen 100 🪙'
+        ? 'Schon gehabt – du bekommst stattdessen 500 🪙'
         : 'Neuer Rahmen! Im Profil ausrüsten ✨';
     }
 
@@ -1543,9 +1579,12 @@
         await set(invRef, current + 1);
       } else if (roll.type === 'farm') {
         let pool, invSubPath;
-        if (roll.category === 'seeds')        { pool = FARM_SEEDS;         invSubPath = 'seeds'; }
+        if      (roll.category === 'seeds')        { pool = FARM_SEEDS;        invSubPath = 'seeds'; }
         else if (roll.category === 'items_common') { pool = FARM_ITEMS_COMMON; invSubPath = 'items'; }
-        else                                  { pool = FARM_ITEMS_RARE;    invSubPath = 'items'; }
+        else if (roll.category === 'items_rare')   { pool = FARM_ITEMS_RARE;   invSubPath = 'items'; }
+        else if (roll.category === 'ores_common')  { pool = FARM_ORES_COMMON;  invSubPath = 'ores';  }
+        else if (roll.category === 'ores_rare')    { pool = FARM_ORES_RARE;    invSubPath = 'ores';  }
+        else                                       { pool = FARM_ORES_EPIC;    invSubPath = 'ores';  }
         const item = pool[Math.floor(Math.random() * pool.length)];
         const amount = item.min + Math.floor(Math.random() * (item.max - item.min + 1));
         result.item = item;
@@ -1563,7 +1602,7 @@
           ownedBadges.push(item.id);
           await set(ref(db, `shop/${userKey}/badges`), ownedBadges);
         } else {
-          result = { type: 'coins', amount: 100 };
+          result = { type: 'coins', amount: 500 };
           isDuplicate = true;
         }
       } else if (roll.type === 'frame') {
@@ -1574,7 +1613,7 @@
           ownedFrames.push(item.id);
           await set(ref(db, `shop/${userKey}/frames`), ownedFrames);
         } else {
-          result = { type: 'coins', amount: 100 };
+          result = { type: 'coins', amount: 500 };
           isDuplicate = true;
         }
       }
