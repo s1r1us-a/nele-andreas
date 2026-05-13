@@ -5216,51 +5216,78 @@
   };
 
   window.acceptTrade = async function() {
-    const t = pendingTrades[pendingTradeId];
+    if (isSending) return;
+    const tradeId = pendingTradeId;
+    const t = pendingTrades[tradeId];
     if (!t || t.status !== 'pending') { window.showToast('Handel nicht mehr verfügbar.'); return; }
     for (const it of (t.request || [])) {
       if (it.coins) { if (currentCoins < it.coins) { window.showToast('Nicht genug Münzen!'); return; } }
       else { if (getInventoryQty(it.category, it.itemId) < it.qty) { window.showToast('Nicht genug ' + getItemLabel(it.category, it.itemId) + '!'); return; } }
     }
-    for (const it of (t.request || [])) {
-      if (it.coins) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - it.coins); }
-      else { inventory[it.category][it.itemId] = (inventory[it.category][it.itemId] || 0) - it.qty; }
-    }
-    for (const it of (t.offer || [])) {
-      if (it.coins) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + it.coins); await runTransaction(ref(db, `coins/${t.fromUser}`), c => (c || 0) - it.coins); }
-      else { inventory[it.category][it.itemId] = (inventory[it.category][it.itemId] || 0) + it.qty; }
-    }
-    for (const it of (t.request || [])) {
-      if (!it.coins) {
-        const otherSnap = await get(ref(db, `farm/${t.fromUser}/inventory/${it.category}/${it.itemId}`));
-        const curVal = Number(otherSnap.val()) || 0;
-        await set(ref(db, `farm/${t.fromUser}/inventory/${it.category}/${it.itemId}`), curVal + it.qty);
-      } else {
-        await runTransaction(ref(db, `coins/${t.fromUser}`), c => (c || 0) + it.coins);
+    isSending = true;
+    try {
+      // Status atomar auf 'accepted' setzen – verhindert doppeltes Annehmen/Race mit Decline
+      const claim = await runTransaction(ref(db, `trades/${tradeId}/status`), s => (s === 'pending' ? 'accepted' : undefined));
+      if (!claim.committed) { window.showToast('Handel nicht mehr verfügbar.'); return; }
+
+      // Empfänger zahlt Request (Items lokal, Coins per Transaction)
+      for (const it of (t.request || [])) {
+        if (it.coins) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - it.coins); }
+        else { inventory[it.category][it.itemId] = (inventory[it.category][it.itemId] || 0) - it.qty; }
       }
+      // Empfänger erhält Offer (Offer-Coins wurden bereits beim Senden vom Sender abgezogen → nur gutschreiben!)
+      for (const it of (t.offer || [])) {
+        if (it.coins) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + it.coins); }
+        else { inventory[it.category][it.itemId] = (inventory[it.category][it.itemId] || 0) + it.qty; }
+      }
+      // Sender erhält Request (Items per Transaction → race-safe gegen parallele Inventar-Änderungen)
+      for (const it of (t.request || [])) {
+        if (it.coins) {
+          await runTransaction(ref(db, `coins/${t.fromUser}`), c => (c || 0) + it.coins);
+        } else {
+          await runTransaction(ref(db, `farm/${t.fromUser}/inventory/${it.category}/${it.itemId}`), v => (Number(v) || 0) + it.qty);
+        }
+      }
+      await saveFarmData();
+      pendingTradeId = null;
+      window.showToast('✅ Handel abgeschlossen!');
+      window.showFloatingNumber('+🤝', '#10b981');
+      window.showSpecificModal('modalTradeHouse');
+      window.switchTradeTab('inbox');
+    } catch(e) {
+      console.error('acceptTrade Fehler:', e);
+      window.showToast('❌ Fehler beim Annehmen – bitte nochmal versuchen.');
+    } finally {
+      isSending = false;
     }
-    await saveFarmData();
-    await update(ref(db, `trades/${pendingTradeId}`), { status: 'accepted' });
-    pendingTradeId = null;
-    window.showToast('✅ Handel abgeschlossen!');
-    window.showFloatingNumber('+🤝', '#10b981');
-    window.showSpecificModal('modalTradeHouse');
-    window.switchTradeTab('inbox');
   };
 
   window.declineTrade = async function(tradeId) {
+    if (isSending) return;
     const t = pendingTrades[tradeId];
-    if (!t) return;
-    for (const it of (t.offer || [])) {
-      if (it.coins) { await runTransaction(ref(db, `coins/${t.fromUser}`), c => (c || 0) + it.coins); }
-      else {
-        const snap = await get(ref(db, `farm/${t.fromUser}/inventory/${it.category}/${it.itemId}`));
-        await set(ref(db, `farm/${t.fromUser}/inventory/${it.category}/${it.itemId}`), (Number(snap.val()) || 0) + it.qty);
+    if (!t || t.status !== 'pending') return;
+    isSending = true;
+    try {
+      // Status atomar auf 'declined' setzen – verhindert doppelte Rückerstattung
+      const claim = await runTransaction(ref(db, `trades/${tradeId}/status`), s => (s === 'pending' ? 'declined' : undefined));
+      if (!claim.committed) return;
+
+      // Offer an Sender zurückerstatten (Coins + Items race-safe per Transaction)
+      for (const it of (t.offer || [])) {
+        if (it.coins) {
+          await runTransaction(ref(db, `coins/${t.fromUser}`), c => (c || 0) + it.coins);
+        } else {
+          await runTransaction(ref(db, `farm/${t.fromUser}/inventory/${it.category}/${it.itemId}`), v => (Number(v) || 0) + it.qty);
+        }
       }
+      window.showToast('❌ Handel abgelehnt.');
+      window.renderTradeContent();
+    } catch(e) {
+      console.error('declineTrade Fehler:', e);
+      window.showToast('❌ Fehler beim Ablehnen – bitte nochmal versuchen.');
+    } finally {
+      isSending = false;
     }
-    await update(ref(db, `trades/${tradeId}`), { status: 'declined' });
-    window.showToast('❌ Handel abgelehnt.');
-    window.renderTradeContent();
   };
 
   window._copyAllOffsets = function() {
