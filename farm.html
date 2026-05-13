@@ -847,6 +847,18 @@
   </div>
 </div>
 
+<div class="sell-confirm-overlay" id="sendConfirmOverlay" onclick="window.closeSendConfirm()">
+  <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
+    <div class="sell-confirm-icon" id="sendConfirmIcon">🎁</div>
+    <div class="sell-confirm-title" id="sendConfirmTitle">Wirklich senden?</div>
+    <div class="sell-confirm-sub" id="sendConfirmSub" style="text-align:left;line-height:1.8;"></div>
+    <div class="sell-confirm-btns" style="margin-top:18px;">
+      <button class="sell-confirm-no" onclick="window.closeSendConfirm()">Abbrechen</button>
+      <button class="sell-confirm-yes" onclick="window._doSendConfirm()">✅ Senden</button>
+    </div>
+  </div>
+</div>
+
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
 <div class="auth-overlay" id="authOverlay">
@@ -4297,7 +4309,7 @@
     return `
       ${renderPanel('gift', '🎁 Für ' + otherName, 'trade-panel-offer', activeCat)}
       <input id="giftMessage" type="text" maxlength="60" placeholder="💬 Optionale Nachricht…" class="trade-msg-input" style="margin-top:4px;">
-      <button id="giftSendBtn" class="trade-send-btn green" onclick="window.sendGift()">🎁 Senden an ${otherName}</button>`;
+      <button id="giftSendBtn" class="trade-send-btn green" onclick="window.openGiftSendConfirm()">🎁 Senden an ${otherName}</button>`;
   }
 
   function renderTradeTab() {
@@ -4305,7 +4317,7 @@
     return `
       ${renderPanel('offer', '✅ Ich biete', 'trade-panel-offer', offerActiveCat)}
       ${renderPanel('request', '❓ Ich möchte von ' + otherName, 'trade-panel-request', requestActiveCat, true)}
-      <button id="tradeSendBtn" class="trade-send-btn" onclick="window.sendTrade()">🤝 Handelsangebot senden</button>`;
+      <button id="tradeSendBtn" class="trade-send-btn" onclick="window.openTradeSendConfirm()">🤝 Handelsangebot senden</button>`;
   }
 
   function renderInboxTab() {
@@ -4339,6 +4351,43 @@
   }
 
   window._removeBasketItem = function() {}; // legacy – nicht mehr gebraucht
+
+  let _sendConfirmFn = null;
+
+  window.openSendConfirm = function(icon, title, subHtml, fn) {
+    _sendConfirmFn = fn;
+    document.getElementById('sendConfirmIcon').textContent = icon;
+    document.getElementById('sendConfirmTitle').textContent = title;
+    document.getElementById('sendConfirmSub').innerHTML = subHtml;
+    document.getElementById('sendConfirmOverlay').classList.add('show');
+  };
+  window.closeSendConfirm = function() {
+    document.getElementById('sendConfirmOverlay').classList.remove('show');
+    _sendConfirmFn = null;
+  };
+  window._doSendConfirm = function() {
+    const fn = _sendConfirmFn;
+    window.closeSendConfirm();
+    if (fn) fn();
+  };
+
+  window.openGiftSendConfirm = function() {
+    const items = qtysToArray(giftQtys);
+    if (!items.length) { window.showToast('Wähle zuerst etwas aus!'); return; }
+    const sub = items.map(b => b.label + ' ×' + b.qty).join('<br>');
+    window.openSendConfirm('🎁', 'Geschenk an ' + getOtherName() + '?', sub, window.sendGift);
+  };
+
+  window.openTradeSendConfirm = function() {
+    const offerItems = qtysToArray(offerQtys);
+    const requestItems = qtysToArray(requestQtys);
+    if (!offerItems.length && offerCoins <= 0) { window.showToast('Füge etwas zum Angebot hinzu!'); return; }
+    if (!requestItems.length && requestCoins <= 0) { window.showToast('Was möchtest du dafür?'); return; }
+    const offerParts = [...offerItems.map(b => b.label + ' ×' + b.qty), ...(offerCoins > 0 ? ['🪙 ' + offerCoins + ' Münzen'] : [])];
+    const reqParts   = [...requestItems.map(b => b.label + ' ×' + b.qty), ...(requestCoins > 0 ? ['🪙 ' + requestCoins + ' Münzen'] : [])];
+    const sub = '<strong>Du bietest:</strong><br>' + offerParts.join('<br>') + '<br><br><strong>Du möchtest:</strong><br>' + reqParts.join('<br>');
+    window.openSendConfirm('🤝', 'Handelsangebot an ' + getOtherName() + '?', sub, window.sendTrade);
+  };
 
   window.openTradeHouse = function() {
     if (!currentUser) return;
