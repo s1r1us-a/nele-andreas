@@ -1668,57 +1668,57 @@
 
   // ── NEUE ITEMS (BALANCED) ──
   const shopItems = {
-    radish:    { id: 'radish',    name: 'Radieschen',  icon: '🧅', price: 5,  sellPrice: 15,  growTime: 300 },
-    carrot:    { id: 'carrot',    name: 'Karotte',     icon: '🥕', price: 10, sellPrice: 28,  growTime: 600 },
+    radish:    { id: 'radish',    name: 'Radieschen',  icon: '🧅', price: 5,  sellPrice: 15,  growTime: 300  },
+    carrot:    { id: 'carrot',    name: 'Karotte',     icon: '🥕', price: 10, sellPrice: 28,  growTime: 600  },
+    tomato:    { id: 'tomato',    name: 'Tomate',      icon: '🍅', price: 20, sellPrice: 60,  growTime: 1200 },
     lettuce:   { id: 'lettuce',   name: 'Salat',       icon: '🥬', price: 20, sellPrice: 75,  growTime: 1800 },
+    corn:      { id: 'corn',      name: 'Mais',        icon: '🌽', price: 22, sellPrice: 78,  growTime: 1800 },
     oats:      { id: 'oats',      name: 'Hafer',       icon: '🌿', price: 30, sellPrice: 110, growTime: 2700 },
+    sunflower: { id: 'sunflower', name: 'Sonnenblume', icon: '🌻', price: 40, sellPrice: 120, growTime: 2700 },
     wheat:     { id: 'wheat',     name: 'Weizen',      icon: '🌾', price: 40, sellPrice: 140, growTime: 3600 },
-    blueberry: { id: 'blueberry', name: 'Blaubeere',   icon: '🫐', price: 60, sellPrice: 240, growTime: 7200 },
-    tomato:    { id: 'tomato',    name: 'Tomate',      icon: '🍅', price: 25, sellPrice: 90,  growTime: 1200 },
-    corn:      { id: 'corn',      name: 'Mais',        icon: '🌽', price: 35, sellPrice: 130, growTime: 1800 },
-    sunflower: { id: 'sunflower', name: 'Sonnenblume', icon: '🌻', price: 50, sellPrice: 160, growTime: 2700 }
+    blueberry: { id: 'blueberry', name: 'Blaubeere',   icon: '🫐', price: 60, sellPrice: 240, growTime: 7200 }
   };
 
   const animalItems = {
-    rabbit:  { id: 'rabbit',  name: 'Hase',   icon: '🐰', price: 120 },
-    chicken: { id: 'chicken', name: 'Huhn',   icon: '🐔', price: 1800 },
-    cow:     { id: 'cow',     name: 'Kuh',    icon: '🐮', price: 3000 },
-    sheep:   { id: 'sheep',   name: 'Schaf',  icon: '🐑', price: 4500 },
-    cat:     { id: 'cat',     name: 'Katze',  icon: '🐱', price: 6000 },
-    duck:    { id: 'duck',    name: 'Ente',   icon: '🦆', price: 7500  },
-    goat:    { id: 'goat',    name: 'Ziege',  icon: '🐐', price: 10000 },
-    pig:     { id: 'pig',     name: 'Schwein',icon: '🐷', price: 15000 },
-    horse:   { id: 'horse',   name: 'Pferd',  icon: '🐴', price: 12000 },
-    dog:     { id: 'dog',     name: 'Hund',   icon: '🐕', price: 8000  }
+    rabbit:  { id: 'rabbit',  name: 'Hase',    icon: '🐰', price: 120   },
+    chicken: { id: 'chicken', name: 'Huhn',    icon: '🐔', price: 1800  },
+    cow:     { id: 'cow',     name: 'Kuh',     icon: '🐮', price: 3000  },
+    sheep:   { id: 'sheep',   name: 'Schaf',   icon: '🐑', price: 4500  },
+    cat:     { id: 'cat',     name: 'Katze',   icon: '🐱', price: 6000  },
+    duck:    { id: 'duck',    name: 'Ente',    icon: '🦆', price: 7500  },
+    dog:     { id: 'dog',     name: 'Hund',    icon: '🐕', price: 8000  },
+    goat:    { id: 'goat',    name: 'Ziege',   icon: '🐐', price: 10000 },
+    horse:   { id: 'horse',   name: 'Pferd',   icon: '🐴', price: 12000 },
+    pig:     { id: 'pig',     name: 'Schwein', icon: '🐷', price: 15000 }
   };
 
   // ── NEUE REZEPTE (WIRTSCHAFTLICH SINNVOLL) ──
   const bakeryRecipes = {
-    salad:      { id: 'salad',      name: 'Radieschen-Salat', icon: '🥗', time: 600,  sellPrice: 200, req: { crops: { radish: 2, lettuce: 1 } } },
-    bread:      { id: 'bread',      name: 'Rustikales Brot',  icon: '🍞', time: 900,  sellPrice: 420, req: { crops: { wheat: 2 } } },
-    oatmilk:    { id: 'oatmilk',    name: 'Hafermilch',       icon: '🥛', time: 900,  sellPrice: 350, req: { crops: { oats: 2 } } },
-    carrotcake: { id: 'carrotcake', name: 'Karottenkuchen',   icon: '🥧', time: 1200, sellPrice: 380, req: { crops: { carrot: 2, wheat: 1 } } },
-    bluemuffin: { id: 'bluemuffin', name: 'Blue Muffin',      icon: '🧁', time: 1800, sellPrice: 900, req: { crops: { blueberry: 2, wheat: 1 } } },
-    cake:       { id: 'cake',       name: 'Premium Torte',    icon: '🍰', time: 2700, sellPrice: 1100, req: { crops: { wheat: 1 }, items: { egg: 1, milk: 1 } } },
-    honeycake:    { id: 'honeycake',    name: 'Honigkuchen',   icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } },
-    goatcheese:    { id: 'goatcheese',    name: 'Ziegenkäse',      icon: '🧀', time: 1200, sellPrice: 700,  req: { items: { goatmilk: 2 } } },
-    trufflesauce:  { id: 'trufflesauce',  name: 'Trüffelsoße',     icon: '🍄', time: 2400, sellPrice: 1900, req: { items: { truffle: 1 }, crops: { carrot: 1 } } },
-    tomatosoup:    { id: 'tomatosoup',    name: 'Tomatensuppe',    icon: '🍲', time: 900,  sellPrice: 380,  req: { crops: { tomato: 2, carrot: 1 } } },
-    cornbread:     { id: 'cornbread',     name: 'Maisbrot',        icon: '🥖', time: 1200, sellPrice: 460,  req: { crops: { corn: 2, wheat: 1 } } },
-    sunfloweroil:  { id: 'sunfloweroil',  name: 'Sonnenblumenöl',  icon: '🧴', time: 1800, sellPrice: 700,  req: { crops: { sunflower: 2 } } },
-    pizza:         { id: 'pizza',         name: 'Pizza',           icon: '🍕', time: 2700, sellPrice: 950,  req: { crops: { tomato: 2, wheat: 1 }, items: { milk: 1 } } },
-    popcorn:       { id: 'popcorn',       name: 'Popcorn',         icon: '🍿', time: 600,  sellPrice: 200,  req: { crops: { corn: 2 } } }
+    salad:        { id: 'salad',        name: 'Radieschen-Salat', icon: '🥗', time: 600,  sellPrice: 200,  req: { crops: { radish: 2, lettuce: 1 } } },
+    popcorn:      { id: 'popcorn',      name: 'Popcorn',          icon: '🍿', time: 600,  sellPrice: 260,  req: { crops: { corn: 2 } } },
+    bread:        { id: 'bread',        name: 'Rustikales Brot',  icon: '🍞', time: 900,  sellPrice: 420,  req: { crops: { wheat: 2 } } },
+    oatmilk:      { id: 'oatmilk',      name: 'Hafermilch',       icon: '🥛', time: 900,  sellPrice: 350,  req: { crops: { oats: 2 } } },
+    tomatosoup:   { id: 'tomatosoup',   name: 'Tomatensuppe',     icon: '🍲', time: 900,  sellPrice: 300,  req: { crops: { tomato: 2, carrot: 1 } } },
+    carrotcake:   { id: 'carrotcake',   name: 'Karottenkuchen',   icon: '🥧', time: 1200, sellPrice: 380,  req: { crops: { carrot: 2, wheat: 1 } } },
+    goatcheese:   { id: 'goatcheese',   name: 'Ziegenkäse',       icon: '🧀', time: 1200, sellPrice: 700,  req: { items: { goatmilk: 2 } } },
+    cornbread:    { id: 'cornbread',    name: 'Maisbrot',         icon: '🥖', time: 1200, sellPrice: 460,  req: { crops: { corn: 2, wheat: 1 } } },
+    bluemuffin:   { id: 'bluemuffin',   name: 'Blue Muffin',      icon: '🧁', time: 1800, sellPrice: 900,  req: { crops: { blueberry: 2, wheat: 1 } } },
+    sunfloweroil: { id: 'sunfloweroil', name: 'Sonnenblumenöl',   icon: '🧴', time: 1800, sellPrice: 520,  req: { crops: { sunflower: 2 } } },
+    trufflesauce: { id: 'trufflesauce', name: 'Trüffelsoße',      icon: '🍄', time: 2400, sellPrice: 1900, req: { items: { truffle: 1 }, crops: { carrot: 1 } } },
+    cake:         { id: 'cake',         name: 'Premium Torte',    icon: '🍰', time: 2700, sellPrice: 1100, req: { crops: { wheat: 1 }, items: { egg: 1, milk: 1 } } },
+    pizza:        { id: 'pizza',        name: 'Pizza',            icon: '🍕', time: 2700, sellPrice: 950,  req: { crops: { tomato: 2, wheat: 1 }, items: { milk: 1 } } },
+    honeycake:    { id: 'honeycake',    name: 'Honigkuchen',      icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } }
   };
 
   const weavingRecipes = {
     strawhat:       { id: 'strawhat',       name: 'Strohhut',            icon: '👒', time: 600,  sellPrice: 850,  req: { crops: { wheat: 3 } } },
     porkpie:        { id: 'porkpie',        name: 'Schwarzer Hut',       icon: '🎩', time: 900,  sellPrice: 1700, req: { items: { wool: 2 } } },
     spectrespecs:   { id: 'spectrespecs',   name: 'Gespensterbrille',    icon: '👓', time: 1800, sellPrice: 2800, req: { items: { wool: 1, diamond: 1 } } },
+    featherboa:     { id: 'featherboa',     name: 'Federboa',            icon: '🪶', time: 1800, sellPrice: 1600, req: { items: { feather: 2, wool: 1 } } },
+    sunhat:         { id: 'sunhat',         name: 'Sonnenhut',           icon: '🌞', time: 1800, sellPrice: 1800, req: { crops: { sunflower: 2 }, items: { wool: 1 } } },
     radishearrings: { id: 'radishearrings', name: 'Radieschen-Ohrringe', icon: '🧅', time: 2700, sellPrice: 3800, req: { items: { wool: 1 }, crops: { radish: 2 } } },
     flowercrown:    { id: 'flowercrown',    name: 'Blumenkranz',         icon: '🌸', time: 3600, sellPrice: 3500, req: { crops: { oats: 2 }, items: { fertilizer: 1 } } },
-    featherboa:     { id: 'featherboa',     name: 'Federboa',            icon: '🪶', time: 1800, sellPrice: 1600, req: { items: { feather: 2, wool: 1 } } },
-    goldenbridle:   { id: 'goldenbridle',   name: 'Goldenes Zaumzeug',   icon: '🏅', time: 3600, sellPrice: 4500, req: { items: { horseshoe: 1, wool: 2 } } },
-    sunhat:         { id: 'sunhat',         name: 'Sonnenhut',           icon: '🌞', time: 1800, sellPrice: 1800, req: { crops: { sunflower: 2 }, items: { wool: 1 } } }
+    goldenbridle:   { id: 'goldenbridle',   name: 'Goldenes Zaumzeug',   icon: '🏅', time: 3600, sellPrice: 4500, req: { items: { horseshoe: 1, wool: 2 } } }
   };
 
   const bedPrices = [0, 500, 2500, 10000, 50000, 100000, 125000, 150000, 175000, 200000, 225000, 250000];
