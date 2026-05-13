@@ -567,6 +567,31 @@
     .weaving-smoke circle:nth-child(3) { animation-delay: 2s; }
     @keyframes weavePuff { 0% { transform: translateY(0) scale(0.4); opacity: 0.6; } 100% { transform: translateY(-22px) scale(2); opacity: 0; } }
 
+    /* ── MINE ── */
+    .mine-building { position: absolute; top: 28%; left: 5%; width: 70px; height: 78px; cursor: pointer; z-index: 39; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .mine-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .night-mode .mine-building { filter: brightness(0.7) drop-shadow(0 8px 6px rgba(0,0,0,0.25)); }
+    .sunset-mode .mine-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+
+    /* ── SCHMUCKWERKSTATT ── */
+    .forge-building { position: absolute; top: 25%; right: 15%; width: 76px; height: 80px; cursor: pointer; z-index: 39; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .forge-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .night-mode .forge-building { filter: brightness(0.7) drop-shadow(0 8px 6px rgba(0,0,0,0.25)); }
+    .sunset-mode .forge-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
+    .forge-smoke { opacity: 0; pointer-events: none; }
+    .is-forging .forge-smoke { opacity: 1; }
+    .forge-smoke circle { animation: weavePuff 3s ease-out infinite; }
+    .forge-smoke circle:nth-child(2) { animation-delay: 1s; }
+
+    /* ── HANDELSPOSTEN NEU RECHTS ── */
+    .tradehouse-building { left: auto !important; right: 5%; }
+
+    @media (max-width: 540px) {
+      .mine-building { width: 50px; height: 56px; }
+      .forge-building { width: 56px; height: 60px; right: 10%; }
+      .tradehouse-building { right: 2%; }
+    }
+
     /* ── FARMING BEDS ── */
     .beds-container { position: absolute; top: 57%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 55; width: 230px; }
     .bed { width: 50px; height: 50px; background: var(--brown); border: 2px dashed #6b4020; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 2px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); transition: all 0.3s, filter 2s ease; }
@@ -1163,6 +1188,73 @@
     </svg>
   </div>
 
+  <!-- MINE BUILDING -->
+  <div class="mine-building" id="mineBuilding" onclick="window.openMine()">
+    <svg viewBox="0 0 70 78" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+      <!-- Rock mass -->
+      <path d="M 2 78 L 2 28 Q 6 8 18 6 Q 30 2 40 10 Q 54 4 64 18 Q 70 28 68 78 Z" fill="#78716c"/>
+      <path d="M 4 78 L 4 30 Q 8 12 20 10 Q 32 6 42 14 Q 54 8 63 20 Q 68 30 66 78 Z" fill="#a8a29e"/>
+      <!-- Rock cracks -->
+      <line x1="16" y1="18" x2="22" y2="34" stroke="#57534e" stroke-width="1.5" opacity="0.6"/>
+      <line x1="47" y1="13" x2="52" y2="28" stroke="#57534e" stroke-width="1.5" opacity="0.6"/>
+      <line x1="30" y1="8" x2="35" y2="20" stroke="#57534e" stroke-width="1" opacity="0.5"/>
+      <!-- Cave entrance -->
+      <path d="M 16 78 L 16 50 Q 16 36 28 36 Q 40 36 40 50 L 40 78 Z" fill="#1c1917"/>
+      <path d="M 18 78 L 18 51 Q 18 38 28 38 Q 38 38 38 51 L 38 78 Z" fill="#0c0a09"/>
+      <!-- Wooden support beams -->
+      <rect x="15" y="47" width="3" height="31" rx="1" fill="#92400e"/>
+      <rect x="38" y="47" width="3" height="31" rx="1" fill="#92400e"/>
+      <rect x="15" y="44" width="26" height="4" rx="1" fill="#78350f"/>
+      <!-- Ore sparkles inside cave -->
+      <circle cx="26" cy="60" r="2" fill="#fbbf24" opacity="0.8"/>
+      <circle cx="32" cy="56" r="1.5" fill="#a78bfa" opacity="0.7"/>
+      <circle cx="22" cy="68" r="1.5" fill="#34d399" opacity="0.6"/>
+      <!-- Sign -->
+      <rect x="19" y="26" width="20" height="12" rx="2" fill="#d97706"/>
+      <rect x="19" y="26" width="20" height="12" rx="2" fill="none" stroke="#92400e" stroke-width="1"/>
+      <text x="29" y="35" text-anchor="middle" font-size="5.5" fill="#fff" font-family="serif" font-weight="bold">MINE</text>
+      <!-- Pickaxe icon -->
+      <line x1="48" y1="32" x2="56" y2="22" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="56" y1="22" x2="60" y2="18" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+      <line x1="53" y1="19" x2="63" y2="25" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- SCHMUCKWERKSTATT BUILDING -->
+  <div class="forge-building" id="forgeBuilding" onclick="window.openForge()">
+    <svg viewBox="0 0 76 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;overflow:visible">
+      <!-- Chimney smoke -->
+      <g class="forge-smoke">
+        <circle cx="58" cy="10" r="4" fill="rgba(180,170,200,0.6)"/>
+        <circle cx="56" cy="4"  r="3.5" fill="rgba(180,170,200,0.5)"/>
+      </g>
+      <!-- Chimney -->
+      <rect x="52" y="18" width="10" height="20" rx="1.5" fill="#7c5c3a"/>
+      <rect x="50" y="16" width="14" height="4"  rx="1.5" fill="#5c3c20"/>
+      <!-- Walls -->
+      <rect x="6" y="42" width="62" height="38" rx="3" fill="#f5e6d0"/>
+      <!-- Stone rows -->
+      <line x1="6"  y1="58" x2="68" y2="58" stroke="#e0cfb8" stroke-width="1"/>
+      <line x1="6"  y1="70" x2="68" y2="70" stroke="#e0cfb8" stroke-width="1"/>
+      <!-- Roof -->
+      <path d="M 2 44 L 38 14 L 74 44 Z" fill="#b45309"/>
+      <path d="M 2 44 L 38 14 L 74 44" fill="none" stroke="#92400e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 2 48 L 38 18 L 74 48" fill="none" stroke="#d97706" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Window -->
+      <rect x="10" y="46" width="18" height="13" rx="2" fill="#b8e4f7" stroke="#7c5c3a" stroke-width="1.5"/>
+      <line x1="19" y1="46" x2="19" y2="59" stroke="#7c5c3a" stroke-width="1"/>
+      <line x1="10" y1="52" x2="28" y2="52" stroke="#7c5c3a" stroke-width="1"/>
+      <!-- Door -->
+      <path d="M 30 80 L 30 64 Q 30 57 38 57 Q 46 57 46 64 L 46 80 Z" fill="#7c5c3a"/>
+      <path d="M 32 80 L 32 65 Q 32 59 38 59 Q 44 59 44 65 L 44 80 Z" fill="#5c3c20"/>
+      <circle cx="42" cy="72" r="1.5" fill="#fbbf24"/>
+      <!-- Sign with jewel icon -->
+      <rect x="24" y="40" width="30" height="14" rx="2.5" fill="#4c1d95"/>
+      <rect x="24" y="40" width="30" height="14" rx="2.5" fill="none" stroke="#a78bfa" stroke-width="1"/>
+      <text x="39" y="51" text-anchor="middle" font-size="6" fill="#e9d5ff" font-family="serif" font-weight="bold">SCHMUCK</text>
+    </svg>
+  </div>
+
   <div class="weaving-building" id="weavingBuilding" onclick="window.openWeaving()">
     <svg viewBox="0 0 90 110" xmlns="http://www.w3.org/2000/svg" overflow="visible">
       <g class="weaving-smoke">
@@ -1341,6 +1433,30 @@
       </div>
     </div>
     <div id="modalBeehiveAction"></div>
+  </div>
+
+  <!-- MINE MODAL -->
+  <div class="modal-card" id="modalMine" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="animal-card-header">
+      <div class="animal-avatar" style="font-size:28px;">⛏️</div>
+      <div class="animal-info">
+        <div class="animal-name" style="font-family:'Dancing Script',cursive;font-size:24px;font-weight:700;color:var(--text-dark);border:none;background:none;padding:0;">Mine</div>
+        <div class="animal-species">5 Schächte · 30 Min pro Erz</div>
+      </div>
+    </div>
+    <div id="modalMineContent"></div>
+  </div>
+
+  <!-- SCHMUCKWERKSTATT MODAL -->
+  <div class="modal-card" id="modalForge" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="modal-title">Schmuckwerkstatt 💎</div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" id="tabForgeRecipes" onclick="window.renderForge('recipes')">📜 Rezepte</button>
+      <button class="shop-tab" id="tabForgeSlots" onclick="window.renderForge('slots')">🔨 Werkbank</button>
+    </div>
+    <div class="item-list" id="forgeContent"></div>
   </div>
 
   <div class="modal-card" id="modalShop" onclick="event.stopPropagation()">
@@ -1739,6 +1855,36 @@
 
   const bedPrices = [0, 500, 2500, 10000, 50000, 100000, 125000, 150000, 175000, 200000, 225000, 250000];
   const ANIMAL_PRODUCTION_TIME = 3600;
+  const MINE_SLOT_TIME = 1800; // 30 Minuten
+
+  // ── ERZ & SCHMUCK DEFINITIONEN ──
+  const oreTypes = {
+    kupfer:   { id:'kupfer',   name:'Kupfer',   icon:'🟤', weight:45, rarity:'Häufig',     rarityColor:'#22c55e' },
+    eisen:    { id:'eisen',    name:'Eisen',    icon:'⚙️',  weight:28, rarity:'Gewöhnlich', rarityColor:'#3b82f6' },
+    silber:   { id:'silber',   name:'Silber',   icon:'🥈', weight:15, rarity:'Selten',     rarityColor:'#a855f7' },
+    gold:     { id:'gold',     name:'Gold',     icon:'🥇', weight:8,  rarity:'Episch',     rarityColor:'#f97316' },
+    amethyst: { id:'amethyst', name:'Amethyst', icon:'💜', weight:3,  rarity:'Episch',     rarityColor:'#f97316' },
+    smaragd:  { id:'smaragd',  name:'Smaragd', icon:'💚', weight:1,  rarity:'Legendär',   rarityColor:'#eab308' },
+  };
+  const oreSellPrices = { kupfer:80, eisen:150, silber:400, gold:900, amethyst:2000, smaragd:3000 };
+  const jewelryRecipes = {
+    kupferarmband:        { id:'kupferarmband',        name:'Kupferarmband',          icon:'📿', time:900,  sellPrice:700,   equippable:false, req:{ kupfer:3 } },
+    eisenring:            { id:'eisenring',            name:'Eisenring',              icon:'💍', time:1200, sellPrice:900,   equippable:false, req:{ eisen:2 } },
+    kupfersilberkette:    { id:'kupfersilberkette',    name:'Kupfer-Silber-Kette',    icon:'📿', time:1500, sellPrice:1700,  equippable:false, req:{ kupfer:2, silber:1 } },
+    silberring:           { id:'silberring',           name:'Silberring',             icon:'💍', time:1800, sellPrice:2400,  equippable:false, req:{ silber:2 } },
+    eisengoldanhaenger:   { id:'eisengoldanhaenger',   name:'Eisen-Gold-Anhänger',    icon:'✨', time:2100, sellPrice:3200,  equippable:false, req:{ eisen:1, gold:1 } },
+    goldring:             { id:'goldring',             name:'Goldring',               icon:'💍', time:2400, sellPrice:5400,  equippable:false, req:{ gold:2 } },
+    silberamethystohrring:{ id:'silberamethystohrring',name:'Silber-Amethyst-Ohrring',icon:'💜', time:2700, sellPrice:8500,  equippable:false, req:{ silber:2, amethyst:1 } },
+    amethystbrosche:      { id:'amethystbrosche',      name:'Amethyst-Brosche',       icon:'🔮', time:3000, sellPrice:15000, equippable:true,  req:{ amethyst:2, gold:1 } },
+    goldsmaragdhalskette: { id:'goldsmaragdhalskette', name:'Gold-Smaragd-Halskette', icon:'📿', time:3300, sellPrice:21000, equippable:false, req:{ gold:1, smaragd:2 } },
+    koenigskrone:         { id:'koenigskrone',         name:'Königskrone',            icon:'👑', time:3600, sellPrice:18000, equippable:true,  req:{ gold:1, amethyst:1, smaragd:1 } },
+  };
+  function rollOre() {
+    const table = Object.values(oreTypes);
+    let r = Math.random() * 100;
+    for (const e of table) { r -= e.weight; if (r <= 0) return e.id; }
+    return 'kupfer';
+  }
 
   // ── FARM STATE ──
   window.selectedAnimalId = null;
@@ -1750,6 +1896,8 @@
   let unlockedBeds = 1;
   let beehive = { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
   let loom = { slots: Array(5).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
+  let mineSlots = Array(5).fill(null).map(() => ({ state: 'empty', ore: null, startedAt: 0 }));
+  let forgeSlots = Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 }));
 
   let inventory = {
     seeds:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0 },
@@ -1757,7 +1905,9 @@
     items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0 },
     bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0 },
     tailoring:   { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0 },
-    accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0 }
+    accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0 },
+    ores:        { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0 },
+    jewelry:     { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0 }
   };
   window.inventory = inventory;
 
@@ -1767,7 +1917,7 @@
 
   async function saveFarmData() {
     if (!userKey || isVisitMode) return;
-    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive };
+    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots };
     await set(ref(db, `farm/${userKey}`), data);
   }
   window.saveFarmData = saveFarmData;
@@ -1810,8 +1960,20 @@
           inventory.bakery      = { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, ...(data.inventory?.bakery || {}) };
           inventory.tailoring   = { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0, ...(data.inventory?.tailoring || {}) };
           inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) };
+          inventory.ores        = { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0, ...(data.inventory?.ores || {}) };
+          inventory.jewelry     = { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0, ...(data.inventory?.jewelry || {}) };
           unlockedBeds = data.unlockedBeds || 1;
           beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
+          if (Array.isArray(data.mineSlots) && data.mineSlots.length === 5) {
+            mineSlots = data.mineSlots;
+          } else {
+            mineSlots = Array(5).fill(null).map(() => ({ state: 'empty', ore: null, startedAt: 0 }));
+          }
+          if (Array.isArray(data.forgeSlots) && data.forgeSlots.length === 3) {
+            forgeSlots = data.forgeSlots;
+          } else {
+            forgeSlots = Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 }));
+          }
 
           if (beehive.level > 0 && !beehive.isProducing && !beehive.rewardReady) {
               beehive.isProducing = true;
@@ -2440,6 +2602,41 @@
         if (existingWeavingBubble) existingWeavingBubble.remove();
     }
 
+    // ── MINE BUILDING UPDATE ──
+    const mineEl = document.getElementById('mineBuilding');
+    const mineHasReady = mineSlots.some(s => s.state === 'ready');
+    let existingMineBubble = mineEl.querySelector('.reward-bubble');
+    if (mineHasReady) {
+        if (!existingMineBubble) {
+            const b = document.createElement('div');
+            b.className = 'reward-bubble';
+            b.style.cssText = 'top:-35px;z-index:60;';
+            b.textContent = '⛏️';
+            mineEl.appendChild(b);
+        }
+    } else {
+        if (existingMineBubble) existingMineBubble.remove();
+    }
+
+    // ── FORGE BUILDING UPDATE ──
+    const forgeEl = document.getElementById('forgeBuilding');
+    const forgeIsActive = forgeSlots.some(s => s.state === 'forging');
+    const forgeHasReady = forgeSlots.some(s => s.state === 'ready');
+    if (forgeIsActive) forgeEl.classList.add('is-forging');
+    else forgeEl.classList.remove('is-forging');
+    let existingForgeBubble = forgeEl.querySelector('.reward-bubble');
+    if (forgeHasReady) {
+        if (!existingForgeBubble) {
+            const b = document.createElement('div');
+            b.className = 'reward-bubble';
+            b.style.cssText = 'top:-45px;z-index:60;';
+            b.textContent = '💍';
+            forgeEl.appendChild(b);
+        }
+    } else {
+        if (existingForgeBubble) existingForgeBubble.remove();
+    }
+
     const bedsContainer = document.getElementById('bedsContainer');
     const currentBeds = bedsContainer.querySelectorAll('.bed').length;
     const expectedBeds = unlockedBeds;
@@ -2881,7 +3078,9 @@
     if ((inventory.items.feather  || 0) > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🪶</span><div><span class="item-name">Feder</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.feather}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'feather', 250)">Verkaufen (250 🪙)</button></div>`; }
     if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (400 🪙)</button></div>`; }
     if ((inventory.items.truffle  || 0) > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (1200 🪙)</button></div>`; }
-    
+    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><div><span class="item-name">${o.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('ores','${key}',${oreSellPrices[key]})">Verkaufen (${oreSellPrices[key]} 🪙)</button></div>`; } });
+    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><span class="item-name">${r.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('jewelry','${key}',${r.sellPrice})">Verkaufen (${r.sellPrice.toLocaleString('de-DE')} 🪙)</button></div>`; } });
+
     if (!hasItems) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast nichts zu verkaufen.<br>Ernte Pflanzen oder sammle Items!</div>`;
     window.showSpecificModal('modalSell');
   }
@@ -2903,6 +3102,8 @@
     else if (itemId === 'feather')  { icon = '🪶'; name = 'Feder'; }
     else if (itemId === 'goatmilk') { icon = '🥛'; name = 'Ziegenmilch'; }
     else if (itemId === 'truffle')  { icon = '🍄'; name = 'Trüffel'; }
+    else if (category === 'ores')    { icon = oreTypes[itemId].icon; name = oreTypes[itemId].name; }
+    else if (category === 'jewelry') { icon = jewelryRecipes[itemId].icon; name = jewelryRecipes[itemId].name; }
 
     const stock = inventory[category][itemId] || 0;
     pendingSell = { category, itemId, price, stock };
@@ -2982,7 +3183,9 @@
     let bakeryHtml = '<div class="section-title">🍩 Backwaren</div><div class="item-list">'; let hasBakery = false; Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasBakery = true; const item = bakeryRecipes[key]; bakeryHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.bakery[key]}x</div></div>`; } }); if(!hasBakery) bakeryHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Backwaren vorhanden.</div>`; bakeryHtml += '</div>';
     let tailoringHtml = '<div class="section-title">🧵 Textilien</div><div class="item-list">'; let hasTailoring = false; Object.keys(inventory.tailoring).forEach(key => { if (inventory.tailoring[key] > 0) { hasTailoring = true; const item = weavingRecipes[key]; tailoringHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.tailoring[key]}x</div></div>`; } }); if(!hasTailoring) tailoringHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Textilien vorhanden.</div>`; tailoringHtml += '</div>';
     let accessoriesHtml = '<div class="section-title">👒 Accessoires</div><div class="item-list">'; let hasAccessories = false; if (inventory.accessories) { Object.keys(inventory.accessories).forEach(key => { if (inventory.accessories[key] > 0) { hasAccessories = true; const item = weavingRecipes[key]; accessoriesHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item ? item.icon : '✨'}</span><span class="item-name">${item ? item.name : key}</span></div><div class="item-count">${inventory.accessories[key]}x</div></div>`; } }); } if(!hasAccessories) accessoriesHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Accessoires vorhanden.</div>`; accessoriesHtml += '</div>';
-    container.innerHTML = seedsHtml + cropsHtml + itemsHtml + bakeryHtml + tailoringHtml + accessoriesHtml; window.showSpecificModal('modalInventory');
+    let oresHtml = '<div class="section-title">⛏️ Erze</div><div class="item-list">'; let hasOres = false; Object.keys(inventory.ores || {}).forEach(key => { if ((inventory.ores[key] || 0) > 0) { hasOres = true; const o = oreTypes[key]; oresHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><span class="item-name">${o.name}</span></div><div class="item-count">${inventory.ores[key]}x</div></div>`; } }); if(!hasOres) oresHtml += `<div style="font-size:12px;color:var(--text-mid);">Keine Erze vorhanden.</div>`; oresHtml += '</div>';
+    let jewelryHtml = '<div class="section-title">💎 Schmuck</div><div class="item-list">'; let hasJewelry = false; Object.keys(inventory.jewelry || {}).forEach(key => { if ((inventory.jewelry[key] || 0) > 0) { hasJewelry = true; const r = jewelryRecipes[key]; jewelryHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><span class="item-name">${r.name}</span></div><div class="item-count">${inventory.jewelry[key]}x</div></div>`; } }); if(!hasJewelry) jewelryHtml += `<div style="font-size:12px;color:var(--text-mid);">Kein Schmuck vorhanden.</div>`; jewelryHtml += '</div>';
+    container.innerHTML = seedsHtml + cropsHtml + itemsHtml + bakeryHtml + tailoringHtml + accessoriesHtml + oresHtml + jewelryHtml; window.showSpecificModal('modalInventory');
   }
 
   // ── WEBEREI LOGIK MIT 2 SLOTS ──
@@ -3085,6 +3288,109 @@
     window.renderWeaving('looms');
     updateFarmDOM();
   }
+
+  // ── SCHMUCKWERKSTATT LOGIK ──
+  window.openForge = function() {
+    if (isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; }
+    window.renderForge('recipes');
+    window.showSpecificModal('modalForge');
+  };
+
+  window.renderForge = function(tabType) {
+    document.getElementById('tabForgeRecipes').classList.toggle('active', tabType === 'recipes');
+    document.getElementById('tabForgeSlots').classList.toggle('active', tabType === 'slots');
+    const content = document.getElementById('forgeContent');
+    const freeSlots = forgeSlots.filter(s => s.state === 'empty').length;
+
+    if (tabType === 'recipes') {
+      const oreStockHtml = Object.values(oreTypes).map(o =>
+        `<span style="font-size:11px;margin-right:8px;">${o.icon} <b>${inventory.ores[o.id] || 0}</b></span>`
+      ).join('');
+      let html = `<div style="background:rgba(0,0,0,0.03);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:11px;">${oreStockHtml}</div>`;
+      html += `<div style="text-align:center;color:var(--text-mid);margin-bottom:10px;font-weight:bold;font-size:12px;">Freie Werkbank-Slots: ${freeSlots}/3</div>`;
+      Object.values(jewelryRecipes).forEach(r => {
+        let canForge = freeSlots > 0;
+        let reqHtml = '';
+        for (const [oreId, needed] of Object.entries(r.req)) {
+          const have = inventory.ores[oreId] || 0;
+          if (have < needed) canForge = false;
+          const color = have >= needed ? 'var(--grass-mid)' : 'var(--rose)';
+          reqHtml += `<span style="font-size:11px;color:${color};font-weight:600;margin-right:6px;">${needed}× ${oreTypes[oreId].icon} ${oreTypes[oreId].name} (${have}/${needed})</span>`;
+        }
+        const equippableTag = r.equippable ? `<span style="font-size:9px;background:#7c3aed;color:#fff;border-radius:6px;padding:1px 5px;margin-left:4px;">Ausrüstbar</span>` : '';
+        html += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div>
+          <div class="item-name">${r.name}${equippableTag}</div>
+          <div style="margin-top:4px;">${reqHtml}</div>
+          <div style="font-size:10px;color:var(--text-mid);margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 ${r.sellPrice.toLocaleString('de-DE')} 🪙</div>
+        </div></div><button class="btn-generic btn-buy" onclick="window.startForging('${r.id}')" ${canForge ? '' : 'disabled'}>${freeSlots === 0 ? 'Voll' : 'Schmieden'}</button></div>`;
+      });
+      content.innerHTML = html;
+    } else {
+      let html = '';
+      forgeSlots.forEach((slot, i) => {
+        if (slot.state === 'empty') {
+          html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px dashed var(--ui-card-border);border-radius:10px;margin-bottom:6px;font-size:12px;color:var(--text-mid);font-weight:600;">🔲 Werkbank ${i+1}: Leer</div>`;
+        } else if (slot.state === 'ready') {
+          const r = jewelryRecipes[slot.item];
+          html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid #22c55e;border-radius:10px;margin-bottom:6px;background:rgba(34,197,94,0.05);">
+            <span style="font-size:22px;animation:popIn 0.5s;">${r.icon}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text-dark);flex:1;">${r.name} fertig!</span>
+            <button class="btn-generic" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;padding:6px 10px;font-size:11px;" onclick="window.collectForge(${i})">Abholen</button>
+          </div>`;
+        } else {
+          const r = jewelryRecipes[slot.item];
+          const elapsedSec = Math.floor((Date.now() - slot.startedAt) / 1000);
+          const pct = Math.min(100, (elapsedSec / r.time) * 100);
+          const rem = Math.max(0, r.time - elapsedSec);
+          const m = Math.floor(rem / 60); const s = rem % 60;
+          html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ui-card-border);border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,0.6);">
+            <span style="font-size:22px;animation:pulse 2s infinite;">🔥</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;font-weight:700;color:var(--text-dark);">${r.icon} ${r.name}</div>
+              <div style="width:100%;height:5px;background:rgba(0,0,0,0.1);border-radius:4px;margin-top:4px;overflow:hidden;">
+                <div id="forgeProgressBar-${i}" style="height:100%;background:#d97706;width:${pct}%;transition:width 1s linear;"></div>
+              </div>
+            </div>
+            <div id="forgeTimer-${i}" style="font-size:13px;font-weight:bold;color:#d97706;font-variant-numeric:tabular-nums;white-space:nowrap;">${m<10?'0':''}${m}:${s<10?'0':''}${s}</div>
+          </div>`;
+        }
+      });
+      content.innerHTML = html || '<div style="text-align:center;padding:20px;color:var(--text-mid);">Alle Werkbänke leer.</div>';
+    }
+  };
+
+  window.startForging = async function(recipeId) {
+    if (isVisitMode) return;
+    const freeIndex = forgeSlots.findIndex(s => s.state === 'empty');
+    if (freeIndex === -1) return;
+    const r = jewelryRecipes[recipeId];
+    for (const [oreId, needed] of Object.entries(r.req)) {
+      if ((inventory.ores[oreId] || 0) < needed) { window.showToast('Nicht genug Erze!'); return; }
+    }
+    for (const [oreId, needed] of Object.entries(r.req)) {
+      inventory.ores[oreId] -= needed;
+    }
+    forgeSlots[freeIndex] = { state: 'forging', item: recipeId, startedAt: Date.now() };
+    await saveFarmData();
+    updateFarmDOM();
+    window.renderForge('slots');
+    document.getElementById('tabForgeSlots').classList.add('active');
+    document.getElementById('tabForgeRecipes').classList.remove('active');
+    window.showToast('Schmieden gestartet! 🔥');
+  };
+
+  window.collectForge = async function(index) {
+    const slot = forgeSlots[index];
+    if (slot.state !== 'ready') return;
+    const r = jewelryRecipes[slot.item];
+    inventory.jewelry[slot.item] = (inventory.jewelry[slot.item] || 0) + 1;
+    forgeSlots[index] = { state: 'empty', item: null, startedAt: 0 };
+    await saveFarmData();
+    window.showFloatingNumber('+1 ' + r.icon, '#d97706');
+    window.showToast(r.name + ' fertig! ' + r.icon);
+    window.renderForge('slots');
+    updateFarmDOM();
+  };
 
   // ── TIMERS & LOOP ──
   function updateBedsVisuals() {
@@ -3209,13 +3515,60 @@
             if (document.getElementById('modalBeehive').classList.contains('active')) { window.openBeehive(); }
         } else {
             if (document.getElementById('modalBeehive').classList.contains('active')) {
-                const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; 
-                const m = Math.floor(rem / 60); const s = rem % 60; 
-                const timerEl = document.getElementById('beehiveTimerDisplay'); 
-                if (timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; 
+                const rem = ANIMAL_PRODUCTION_TIME - elapsedSec;
+                const m = Math.floor(rem / 60); const s = rem % 60;
+                const timerEl = document.getElementById('beehiveTimerDisplay');
+                if (timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
             }
         }
     }
+
+    // ── MINE TIMER ──
+    let mineChanged = false;
+    mineSlots.forEach((slot, i) => {
+        if (slot.state === 'mining') {
+            const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
+            if (elapsedSec >= MINE_SLOT_TIME) {
+                slot.state = 'ready';
+                mineChanged = true;
+                if (document.getElementById('modalMine').classList.contains('active')) window.openMine();
+            } else {
+                const pBar = document.getElementById(`mineProgressBar-${i}`);
+                if (pBar) {
+                    pBar.style.width = Math.min(100, (elapsedSec / MINE_SLOT_TIME) * 100) + '%';
+                    const rem = MINE_SLOT_TIME - elapsedSec;
+                    const m = Math.floor(rem / 60); const s = rem % 60;
+                    const timerEl = document.getElementById(`mineTimer-${i}`);
+                    if (timerEl) timerEl.textContent = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+                }
+            }
+        }
+    });
+    if (mineChanged) { saveFarmData(); updateFarmDOM(); }
+
+    // ── FORGE TIMER ──
+    let forgeChanged = false;
+    forgeSlots.forEach((slot, i) => {
+        if (slot.state === 'forging') {
+            const r = jewelryRecipes[slot.item];
+            const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
+            if (elapsedSec >= r.time) {
+                slot.state = 'ready';
+                forgeChanged = true;
+                if (document.getElementById('modalForge').classList.contains('active') && document.getElementById('tabForgeSlots').classList.contains('active')) window.renderForge('slots');
+            } else {
+                const pBar = document.getElementById(`forgeProgressBar-${i}`);
+                if (pBar) {
+                    pBar.style.width = Math.min(100, (elapsedSec / r.time) * 100) + '%';
+                    const rem = r.time - elapsedSec;
+                    const m = Math.floor(rem / 60); const s = rem % 60;
+                    const timerEl = document.getElementById(`forgeTimer-${i}`);
+                    if (timerEl) timerEl.textContent = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+                }
+            }
+        }
+    });
+    if (forgeChanged) { saveFarmData(); updateFarmDOM(); }
 
     animals.forEach(a => {
         if(a.isProducing && !a.rewardReady) {
@@ -3405,6 +3758,85 @@
   }
 
 
+  // ── MINE LOGIK ──
+  window.openMine = function() {
+    const content = document.getElementById('modalMineContent');
+    const rarityTable = Object.values(oreTypes).map(o =>
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:16px;">${o.icon}</span>
+        <span style="flex:1;font-size:12px;font-weight:600;color:var(--text-dark);">${o.name}</span>
+        <span style="font-size:11px;font-weight:700;padding:1px 6px;border-radius:8px;background:${o.rarityColor}22;color:${o.rarityColor};">${o.rarity}</span>
+        <span style="font-size:11px;color:var(--text-mid);min-width:32px;text-align:right;">${o.weight}%</span>
+      </div>`
+    ).join('');
+
+    let slotsHtml = '';
+    mineSlots.forEach((slot, i) => {
+      if (slot.state === 'empty') {
+        const disabled = isVisitMode ? 'disabled' : '';
+        slotsHtml += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px dashed var(--ui-card-border);border-radius:10px;margin-bottom:6px;">
+          <span style="font-size:18px;">⛏️</span>
+          <span style="flex:1;font-size:12px;color:var(--text-mid);font-weight:600;">Schacht ${i+1}: Leer</span>
+          <button class="btn-generic btn-buy" style="padding:6px 12px;font-size:11px;" onclick="window.startMining(${i})" ${disabled}>Graben starten</button>
+        </div>`;
+      } else if (slot.state === 'mining') {
+        const elapsedSec = Math.floor((Date.now() - slot.startedAt) / 1000);
+        const rem = Math.max(0, MINE_SLOT_TIME - elapsedSec);
+        const m = Math.floor(rem / 60); const s = rem % 60;
+        const pct = Math.min(100, (elapsedSec / MINE_SLOT_TIME) * 100);
+        slotsHtml += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ui-card-border);border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,0.5);">
+          <span style="font-size:18px;animation:pulse 2s infinite;">⛏️</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:700;color:var(--text-dark);">Schacht ${i+1}: Gräbt...</div>
+            <div style="width:100%;height:5px;background:rgba(0,0,0,0.1);border-radius:4px;margin-top:4px;overflow:hidden;">
+              <div id="mineProgressBar-${i}" style="height:100%;background:#d97706;width:${pct}%;transition:width 1s linear;"></div>
+            </div>
+          </div>
+          <div id="mineTimer-${i}" style="font-size:13px;font-weight:bold;color:#d97706;font-variant-numeric:tabular-nums;white-space:nowrap;">${m<10?'0':''}${m}:${s<10?'0':''}${s}</div>
+        </div>`;
+      } else if (slot.state === 'ready') {
+        const ore = oreTypes[slot.ore];
+        slotsHtml += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid #22c55e;border-radius:10px;margin-bottom:6px;background:rgba(34,197,94,0.05);">
+          <span style="font-size:22px;">${ore.icon}</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:var(--text-dark);">Schacht ${i+1}: Bereit!</div>
+            <div style="font-size:11px;color:${ore.rarityColor};font-weight:700;">${ore.rarity} · ${ore.name}</div>
+          </div>
+          <button class="btn-generic" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;padding:6px 10px;font-size:11px;" onclick="window.collectMineSlot(${i})">Abholen</button>
+        </div>`;
+      }
+    });
+
+    content.innerHTML = `
+      <div style="margin-bottom:10px;">${slotsHtml}</div>
+      <div style="background:rgba(0,0,0,0.03);border-radius:12px;padding:10px 12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-mid);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Mögliche Erze (Wahrscheinlichkeit)</div>
+        ${rarityTable}
+      </div>`;
+    window.showSpecificModal('modalMine');
+  };
+
+  window.startMining = async function(index) {
+    if (isVisitMode || mineSlots[index].state !== 'empty') return;
+    mineSlots[index] = { state: 'mining', ore: rollOre(), startedAt: Date.now() };
+    await saveFarmData();
+    updateFarmDOM();
+    window.openMine();
+  };
+
+  window.collectMineSlot = async function(index) {
+    const slot = mineSlots[index];
+    if (slot.state !== 'ready') return;
+    const oreId = slot.ore;
+    inventory.ores[oreId] = (inventory.ores[oreId] || 0) + 1;
+    mineSlots[index] = { state: 'empty', ore: null, startedAt: 0 };
+    await saveFarmData();
+    window.showFloatingNumber(`+1 ${oreTypes[oreId].icon}`, '#d97706');
+    window.showToast(`⛏️ ${oreTypes[oreId].name} gefunden! (${oreTypes[oreId].rarity})`);
+    updateFarmDOM();
+    window.openMine();
+  };
+
   // ── ANIMAL LOGIC ──
   function getAnimalFood(species) {
     if (species === 'cat') return { foodType: 'milk', isItem: true };
@@ -3510,7 +3942,7 @@
     Object.keys(accessorySVGs).forEach(itemId => {
       const isEquipped = equippedItem === itemId;
       const inInventory = inventory.accessories && inventory.accessories[itemId] > 0;
-      
+
       if (inInventory || isEquipped) {
         const activeClass = isEquipped ? 'equipped' : '';
         const count = inventory.accessories[itemId] || 0;
@@ -3518,6 +3950,15 @@
         gridHtml += `<div class="wardrobe-item ${activeClass}" onclick="window.equipAccessory(${animalId}, '${itemId}')" style="position:relative;">
           ${accessoryEmojis[itemId] || '✨'}${badge}
         </div>`;
+      }
+    });
+    Object.values(jewelryRecipes).filter(r => r.equippable).forEach(r => {
+      const isEquipped = equippedItem === r.id;
+      const count = inventory.jewelry[r.id] || 0;
+      if (count > 0 || isEquipped) {
+        const activeClass = isEquipped ? 'equipped' : '';
+        const badge = count > 0 ? `<div style="position:absolute;top:2px;right:4px;font-size:10px;font-weight:800;color:#7c3aed;line-height:1;">${count}</div>` : '';
+        gridHtml += `<div class="wardrobe-item ${activeClass}" onclick="window.equipAccessory(${animalId}, '${r.id}')" style="position:relative;">${r.icon}${badge}</div>`;
       }
     });
 
@@ -3537,12 +3978,19 @@
     if (currentlyEquipped === itemId) return;
 
     if (currentlyEquipped) {
-      inventory.accessories[currentlyEquipped] = (inventory.accessories[currentlyEquipped] || 0) + 1;
+      if (jewelryRecipes[currentlyEquipped]) {
+        inventory.jewelry[currentlyEquipped] = (inventory.jewelry[currentlyEquipped] || 0) + 1;
+      } else {
+        inventory.accessories[currentlyEquipped] = (inventory.accessories[currentlyEquipped] || 0) + 1;
+      }
     }
 
     if (itemId) {
-      if (inventory.accessories[itemId] > 0) {
-        inventory.accessories[itemId]--;
+      const isJewelry = !!jewelryRecipes[itemId];
+      const stock = isJewelry ? (inventory.jewelry[itemId] || 0) : (inventory.accessories[itemId] || 0);
+      if (stock > 0) {
+        if (isJewelry) inventory.jewelry[itemId]--;
+        else inventory.accessories[itemId]--;
         a.equipped.head = itemId;
       } else {
         window.showToast('Item nicht im Inventar!');
@@ -3764,10 +4212,14 @@
         crops:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.crops  || {}) },
         items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, ...(data.inventory?.items || {}) },
         bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, ...(data.inventory?.bakery || {}) },
-        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) }
+        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) },
+        ores:        { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0, ...(data.inventory?.ores || {}) },
+        jewelry:     { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0, ...(data.inventory?.jewelry || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
       beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
+      mineSlots = Array.isArray(data.mineSlots) && data.mineSlots.length === 5 ? data.mineSlots : Array(5).fill(null).map(() => ({ state: 'empty', ore: null, startedAt: 0 }));
+      forgeSlots = Array.isArray(data.forgeSlots) && data.forgeSlots.length === 3 ? data.forgeSlots : Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 }));
 
       if (data.beds) {
         beds = data.beds;
@@ -3820,10 +4272,14 @@
         crops:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.crops  || {}) },
         items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, ...(data.inventory?.items || {}) },
         bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, ...(data.inventory?.bakery || {}) },
-        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) }
+        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) },
+        ores:        { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0, ...(data.inventory?.ores || {}) },
+        jewelry:     { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0, ...(data.inventory?.jewelry || {}) }
       };
       unlockedBeds = data.unlockedBeds || 1;
       beehive = data.beehive || { level: 0, isProducing: false, fedAt: 0, rewardReady: false };
+      mineSlots = Array.isArray(data.mineSlots) && data.mineSlots.length === 5 ? data.mineSlots : Array(5).fill(null).map(() => ({ state: 'empty', ore: null, startedAt: 0 }));
+      forgeSlots = Array.isArray(data.forgeSlots) && data.forgeSlots.length === 3 ? data.forgeSlots : Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 }));
 
       if (data.beds) {
         beds = data.beds;
