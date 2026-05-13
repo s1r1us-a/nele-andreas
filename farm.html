@@ -3458,14 +3458,16 @@
         mainActionHtml = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; 
     } else { 
         let foodNeed = ''; 
-        if(a.species === 'rabbit') foodNeed = 'carrot'; 
-        if(a.species === 'chicken') foodNeed = 'wheat'; 
-        if(a.species === 'cow') foodNeed = 'wheat'; 
-        if(a.species === 'cat') foodNeed = 'milk'; 
+        if(a.species === 'rabbit') foodNeed = 'carrot';
+        if(a.species === 'chicken') foodNeed = 'wheat';
+        if(a.species === 'cow') foodNeed = 'wheat';
+        if(a.species === 'cat') foodNeed = 'milk';
         if(a.species === 'sheep') foodNeed = 'wheat';
         if(a.species === 'duck')  foodNeed = 'wheat';
         if(a.species === 'goat')  foodNeed = 'carrot';
         if(a.species === 'pig')   foodNeed = 'lettuce';
+        if(a.species === 'horse') foodNeed = 'oats';
+        if(a.species === 'dog')   foodNeed = 'carrot';
 
         if(foodNeed === 'milk') { 
             const count = inventory.items.milk || 0; 
