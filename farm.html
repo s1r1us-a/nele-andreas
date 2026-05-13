@@ -4068,6 +4068,7 @@
   let tradeOffer = [];         // [{ category, itemId, qty, label } | { coins, qty }]
   let tradeRequest = [];       // wie tradeOffer
   let pendingTradeId = null;   // ID des aktuell zu bestätigenden Handels
+  let isSending = false;
 
   function getOtherKey() { return userKey === 'nele' ? 'andreas' : 'nele'; }
   function getOtherName() { return userKey === 'nele' ? 'Andreas' : 'Nele'; }
@@ -4296,7 +4297,7 @@
     return `
       ${renderPanel('gift', '🎁 Für ' + otherName, 'trade-panel-offer', activeCat)}
       <input id="giftMessage" type="text" maxlength="60" placeholder="💬 Optionale Nachricht…" class="trade-msg-input" style="margin-top:4px;">
-      <button class="trade-send-btn green" onclick="window.sendGift()">🎁 Senden an ${otherName}</button>`;
+      <button id="giftSendBtn" class="trade-send-btn green" onclick="window.sendGift()">🎁 Senden an ${otherName}</button>`;
   }
 
   function renderTradeTab() {
@@ -4304,7 +4305,7 @@
     return `
       ${renderPanel('offer', '✅ Ich biete', 'trade-panel-offer', offerActiveCat)}
       ${renderPanel('request', '❓ Ich möchte von ' + otherName, 'trade-panel-request', requestActiveCat, true)}
-      <button class="trade-send-btn" onclick="window.sendTrade()">🤝 Handelsangebot senden</button>`;
+      <button id="tradeSendBtn" class="trade-send-btn" onclick="window.sendTrade()">🤝 Handelsangebot senden</button>`;
   }
 
   function renderInboxTab() {
@@ -4352,19 +4353,27 @@
   };
 
   window.sendGift = async function() {
+    if (isSending) return;
     const items = qtysToArray(giftQtys);
     if (!items.length) { window.showToast('Wähle zuerst etwas aus!'); return; }
     for (const b of items) {
       if (getInventoryQty(b.category, b.itemId) < b.qty) { window.showToast('Nicht genug ' + b.label + ' im Inventar!'); return; }
     }
-    const msg = document.getElementById('giftMessage')?.value?.trim() || '';
-    const gift = { fromUser: userKey, fromName: currentUser, items: items.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty })), sentAt: Date.now(), message: msg };
-    for (const b of items) { inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty; }
-    await saveFarmData();
-    await push(ref(db, `gifts/${getOtherKey()}/pending`), gift);
-    giftQtys = {};
-    window.showToast('🎁 Geschenk gesendet an ' + getOtherName() + '!');
-    window.renderTradeContent();
+    isSending = true;
+    const btn = document.getElementById('giftSendBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Wird gesendet…'; }
+    try {
+      const msg = document.getElementById('giftMessage')?.value?.trim() || '';
+      const gift = { fromUser: userKey, fromName: currentUser, items: items.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty })), sentAt: Date.now(), message: msg };
+      for (const b of items) { inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty; }
+      await saveFarmData();
+      await push(ref(db, `gifts/${getOtherKey()}/pending`), gift);
+      giftQtys = {};
+      window.showToast('🎁 Geschenk gesendet an ' + getOtherName() + '!');
+      window.renderTradeContent();
+    } finally {
+      isSending = false;
+    }
   };
 
   window.acceptGift = async function(giftId) {
@@ -4380,6 +4389,7 @@
   };
 
   window.sendTrade = async function() {
+    if (isSending) return;
     const offerItems = qtysToArray(offerQtys);
     const requestItems = qtysToArray(requestQtys);
     if (!offerItems.length && offerCoins <= 0) { window.showToast('Füge etwas zum Angebot hinzu!'); return; }
@@ -4388,20 +4398,27 @@
       if (getInventoryQty(b.category, b.itemId) < b.qty) { window.showToast('Nicht genug ' + b.label + '!'); return; }
     }
     if (offerCoins > 0 && currentCoins < offerCoins) { window.showToast('Nicht genug Münzen!'); return; }
-    for (const b of offerItems) {
-      inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty;
+    isSending = true;
+    const btn = document.getElementById('tradeSendBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Wird gesendet…'; }
+    try {
+      for (const b of offerItems) {
+        inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty;
+      }
+      if (offerCoins > 0) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - offerCoins); }
+      await saveFarmData();
+      const offerArr = offerItems.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty }));
+      if (offerCoins > 0) offerArr.push({ coins: offerCoins });
+      const requestArr = requestItems.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty }));
+      if (requestCoins > 0) requestArr.push({ coins: requestCoins });
+      const trade = { fromUser: userKey, fromName: currentUser, toUser: getOtherKey(), offer: offerArr, request: requestArr, createdAt: Date.now(), status: 'pending' };
+      await push(ref(db, 'trades'), trade);
+      offerQtys = {}; requestQtys = {}; offerCoins = 0; requestCoins = 0;
+      window.showToast('🤝 Handelsangebot gesendet!');
+      window.renderTradeContent();
+    } finally {
+      isSending = false;
     }
-    if (offerCoins > 0) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - offerCoins); }
-    await saveFarmData();
-    const offerArr = offerItems.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty }));
-    if (offerCoins > 0) offerArr.push({ coins: offerCoins });
-    const requestArr = requestItems.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty }));
-    if (requestCoins > 0) requestArr.push({ coins: requestCoins });
-    const trade = { fromUser: userKey, fromName: currentUser, toUser: getOtherKey(), offer: offerArr, request: requestArr, createdAt: Date.now(), status: 'pending' };
-    await push(ref(db, 'trades'), trade);
-    offerQtys = {}; requestQtys = {}; offerCoins = 0; requestCoins = 0;
-    window.showToast('🤝 Handelsangebot gesendet!');
-    window.renderTradeContent();
   };
 
   window.openTradeConfirm = function(tradeId) {
