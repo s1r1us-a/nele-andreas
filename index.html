@@ -832,6 +832,23 @@
   // Auth state handled by Firebase module below
   window.currentUser = null;
 
+  // Handelshaus-Badge – Modul-Scope damit Listener bei Re-Auth korrekt ersetzt werden
+  let _indexGiftCount = 0;
+  let _indexTradeCount = 0;
+  let _unsubGifts = null;
+  let _unsubTrades = null;
+  function _updateFarmBadge() {
+    const total = _indexGiftCount + _indexTradeCount;
+    const badge = document.getElementById('farmTradeBadge');
+    if (!badge) return;
+    if (total > 0) {
+      badge.style.display = 'block';
+      badge.textContent = total === 1 ? '🎁 1 Neu' : '🎁 ' + total + ' Neu';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   // Petals
   var petalEmojis = ['🌸','🌷','🌺','💮','🌼','💐','🩷','💕'];
   var pc = document.getElementById('petals');
@@ -869,7 +886,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, runTransaction, onValue, set, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1027,27 +1044,18 @@
         }
       });
 
-      // Handelshaus-Badge: Geschenke und Handelsangebote live hören
-      let _indexGiftCount = 0;
-      let _indexTradeCount = 0;
-      function _updateFarmBadge() {
-        const total = _indexGiftCount + _indexTradeCount;
-        const badge = document.getElementById('farmTradeBadge');
-        if (!badge) return;
-        if (total > 0) {
-          badge.style.display = 'block';
-          badge.textContent = total === 1 ? '🎁 1 Neu' : '🎁 ' + total + ' Neu';
-        } else {
-          badge.style.display = 'none';
-        }
-      }
-      onValue(ref(db, `gifts/${userKey}/pending`), snap => {
+      // Handelshaus-Badge: alte Listener zuerst abmelden, dann neu registrieren
+      if (_unsubGifts) { _unsubGifts(); _unsubGifts = null; }
+      if (_unsubTrades) { _unsubTrades(); _unsubTrades = null; }
+      _indexGiftCount = 0; _indexTradeCount = 0;
+      _unsubGifts = onValue(ref(db, `gifts/${userKey}/pending`), snap => {
         _indexGiftCount = snap.exists() ? Object.keys(snap.val()).length : 0;
         _updateFarmBadge();
       });
-      onValue(ref(db, 'trades'), snap => {
+      // Gefilterte Query: nur Trades an den aktuellen User (spart Datentransfer)
+      _unsubTrades = onValue(query(ref(db, 'trades'), orderByChild('toUser'), equalTo(userKey)), snap => {
         const all = snap.exists() ? snap.val() : {};
-        _indexTradeCount = Object.values(all).filter(t => t.toUser === userKey && t.status === 'pending').length;
+        _indexTradeCount = Object.values(all).filter(t => t.status === 'pending').length;
         _updateFarmBadge();
       });
 
@@ -1278,15 +1286,24 @@
       runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
     }
 
-    // Coin für jeden Klick
+    // Coin für jeden Klick – lokal akkumulieren, Firebase max 1×/2s schreiben
     {
       const userKey = user.toLowerCase();
       const coinAmount = isBoosterActive(activeBoosterCoin) ? 2 : 1;
-      runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+coinAmount)
-        .catch(err => console.error('Coin-Fehler:', err));
-      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0)+coinAmount)
-        .catch(err => console.error('Stats-Fehler:', err));
       spawnCoin(e.clientX, e.clientY, coinAmount);
+      if (!window._pendingCoins) window._pendingCoins = {};
+      if (!window._pendingCoins[userKey]) window._pendingCoins[userKey] = 0;
+      window._pendingCoins[userKey] += coinAmount;
+      clearTimeout(window._coinFlushTimer);
+      window._coinFlushTimer = setTimeout(() => {
+        const amount = window._pendingCoins[userKey] || 0;
+        if (amount <= 0) return;
+        window._pendingCoins[userKey] = 0;
+        runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+amount)
+          .catch(err => console.error('Coin-Fehler:', err));
+        runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0)+amount)
+          .catch(err => console.error('Stats-Fehler:', err));
+      }, 2000);
     }
 
     const now = Date.now();
