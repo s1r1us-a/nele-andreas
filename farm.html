@@ -623,6 +623,11 @@
     
     .item-list { display: flex; flex-direction: column; gap: 8px; }
     .item-row { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.6); border: 1.5px solid var(--ui-card-border); border-radius: 12px; padding: 8px 12px; }
+    .item-row.is-favorite { background: rgba(255,215,0,0.07); border-color: rgba(255,180,0,0.35); }
+    .fav-btn { background: none; border: none; font-size: 19px; cursor: pointer; padding: 2px 4px; touch-action: manipulation; transition: transform 0.15s; line-height: 1; flex-shrink: 0; }
+    .fav-btn:active { transform: scale(1.35); }
+    .recipe-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .fav-divider { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-mid); opacity: 0.5; padding: 4px 0 2px; letter-spacing: 0.5px; }
     .item-info { display: flex; align-items: center; gap: 10px; }
     .item-icon { font-size: 22px; }
     .item-name { font-weight: 700; color: var(--text-dark); font-size: 14px; }
@@ -1444,6 +1449,17 @@
   let currentCoins = 0;
   let isVisitMode = false;
   let ownUserKey = null;
+  let bakeryFavorites = new Set(JSON.parse(localStorage.getItem('bakeryFavs') || '[]'));
+  let weavingFavorites = new Set(JSON.parse(localStorage.getItem('weavingFavs') || '[]'));
+
+  window.toggleFavorite = function(type, id) {
+    const favs = type === 'bakery' ? bakeryFavorites : weavingFavorites;
+    const key  = type === 'bakery' ? 'bakeryFavs'   : 'weavingFavs';
+    if (favs.has(id)) favs.delete(id); else favs.add(id);
+    localStorage.setItem(key, JSON.stringify([...favs]));
+    if (type === 'bakery') window.renderBakery('recipes');
+    else window.renderWeaving('recipes');
+  };
   let visitUnsubscribe = null;
   function farmName(name) { return name === 'Andreas' ? "Andreas' Farm" : name + "s Farm"; }
 
@@ -2555,37 +2571,39 @@
         let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Ofen-Slots: ${freeSlots}/5</div>`;
         content.innerHTML = headerHtml;
 
-        Object.values(bakeryRecipes).forEach(r => {
+        const allBakery = Object.values(bakeryRecipes);
+        const sortedBakery = [...allBakery.filter(r => bakeryFavorites.has(r.id)), ...allBakery.filter(r => !bakeryFavorites.has(r.id))];
+        let shownDivider = bakeryFavorites.size === 0 || bakeryFavorites.size === allBakery.length;
+        sortedBakery.forEach(r => {
+            if (!shownDivider && !bakeryFavorites.has(r.id)) {
+                content.innerHTML += `<div class="fav-divider">─── Alle Rezepte ───</div>`;
+                shownDivider = true;
+            }
             let canBake = true; let reqHtml = '';
             for (let cat in r.req) {
                 for (let item in r.req[cat]) {
-                    let needed = r.req[cat][item]; 
-                    let have = inventory[cat][item] || 0; 
-
+                    let needed = r.req[cat][item];
+                    let have = inventory[cat][item] || 0;
                     let itemName = item;
                     if(cat === 'crops') itemName = shopItems[item].name;
                     else if(cat === 'bakery') itemName = bakeryRecipes[item].name;
                     else if(item === 'egg') itemName = 'Ei';
                     else if(item === 'milk') itemName = 'Kuhmilch';
                     else if(item === 'honey') itemName = 'Honig';
-
                     let usedHave = have;
                     if (item === 'milk' && have < needed) {
                         let oatHave = inventory.bakery.oatmilk || 0;
-                        if (oatHave >= needed) {
-                            usedHave = oatHave;
-                            itemName = 'Hafermilch';
-                        }
+                        if (oatHave >= needed) { usedHave = oatHave; itemName = 'Hafermilch'; }
                     }
-
                     if (usedHave < needed) canBake = false;
                     let color = usedHave >= needed ? 'var(--grass-mid)' : 'var(--rose)';
                     reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName} (${usedHave}/${needed} vorhanden)</span>`;
                 }
             }
+            const isFav = bakeryFavorites.has(r.id);
             let btnState = canBake && freeSlots > 0 ? '' : 'disabled';
             let btnText = freeSlots === 0 ? 'Ofen voll' : 'Backen';
-            content.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button></div>`;
+            content.innerHTML += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
         });
     } else {
         document.getElementById('tabOven').classList.add('active');
@@ -2986,7 +3004,14 @@
       let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Webstuhl-Slots: ${freeSlots}/5</div>`;
       content.innerHTML = headerHtml;
 
-      Object.values(weavingRecipes).forEach(r => {
+      const allWeaving = Object.values(weavingRecipes);
+      const sortedWeaving = [...allWeaving.filter(r => weavingFavorites.has(r.id)), ...allWeaving.filter(r => !weavingFavorites.has(r.id))];
+      let shownWeavingDivider = weavingFavorites.size === 0 || weavingFavorites.size === allWeaving.length;
+      sortedWeaving.forEach(r => {
+        if (!shownWeavingDivider && !weavingFavorites.has(r.id)) {
+          content.innerHTML += `<div class="fav-divider">─── Alle Rezepte ───</div>`;
+          shownWeavingDivider = true;
+        }
         let canWeave = true; let reqHtml = '';
         for (let cat in r.req) {
           for (let item in r.req[cat]) {
@@ -3003,14 +3028,16 @@
             else if (item === 'feather')  itemName = 'Feder';
             else if (item === 'goatmilk') itemName = 'Ziegenmilch';
             else if (item === 'truffle')  itemName = 'Trüffel';
+            else if (item === 'horseshoe') itemName = 'Hufeisen';
             if (have < needed) canWeave = false;
             let color = have >= needed ? 'var(--grass-mid)' : 'var(--rose)';
             reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName} (${have}/${needed} vorhanden)</span>`;
           }
         }
+        const isFav = weavingFavorites.has(r.id);
         let btnState = canWeave && freeSlots > 0 ? '' : 'disabled';
         let btnText = freeSlots === 0 ? 'Voll' : 'Weben';
-        content.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button></div>`;
+        content.innerHTML += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
       });
     } else {
       document.getElementById('tabWeavingLooms').classList.add('active');
