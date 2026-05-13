@@ -1086,6 +1086,8 @@
     <input class="edit-input" type="text" id="editTitleInput" maxlength="60" placeholder="Titel des Moments…">
     <label class="edit-field-label">✍️ Text</label>
     <textarea class="edit-textarea" id="editTextInput" maxlength="500" placeholder="Beschreibe diesen besonderen Moment…"></textarea>
+    <label class="edit-field-label">📅 Datum & Uhrzeit</label>
+    <input class="edit-input" type="datetime-local" id="editMomentDate">
     <div class="edit-error" id="editError"></div>
     <div class="edit-btns">
       <button class="edit-cancel" id="editCancel">Abbrechen</button>
@@ -1553,10 +1555,19 @@
   // ---- BEARBEITEN ----
   const editOverlay = document.getElementById('editOverlay');
 
+  function toDatetimeLocal(date) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
   document.getElementById('detailEdit').addEventListener('click', () => {
     if (!currentMoment) return;
     document.getElementById('editTitleInput').value = currentMoment.title || '';
     document.getElementById('editTextInput').value  = currentMoment.text  || '';
+    const dtField = document.getElementById('editMomentDate');
+    const baseMs = currentMoment.momentDate || currentMoment.timestamp || Date.now();
+    dtField.value = toDatetimeLocal(new Date(baseMs));
+    dtField.max = toDatetimeLocal(new Date());
     document.getElementById('editError').textContent = '';
     detailOverlay.classList.remove('open');
     editOverlay.classList.add('open');
@@ -1570,10 +1581,23 @@
     const title = document.getElementById('editTitleInput').value.trim();
     const text  = document.getElementById('editTextInput').value.trim();
     if (!text) { document.getElementById('editError').textContent = 'Bitte einen Text eingeben.'; return; }
+    const dtVal = document.getElementById('editMomentDate').value;
+    const selectedDt = dtVal ? new Date(dtVal) : null;
+    if (!selectedDt || isNaN(selectedDt.getTime())) {
+      document.getElementById('editError').textContent = 'Bitte ein gültiges Datum wählen.';
+      return;
+    }
+    if (selectedDt.getTime() > Date.now()) {
+      document.getElementById('editError').textContent = 'Datum darf nicht in der Zukunft liegen.';
+      return;
+    }
+    const momentDate = selectedDt.getTime();
+    const date = selectedDt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const time = selectedDt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     const btn = document.getElementById('editSave');
     btn.textContent = '…'; btn.disabled = true;
     try {
-      await update(ref(db, `saved_moments/${currentMoment.timestamp}`), { title, text });
+      await update(ref(db, `saved_moments/${currentMoment.timestamp}`), { title, text, momentDate, date, time });
       editOverlay.classList.remove('open');
       currentMoment = null;
     } catch {
