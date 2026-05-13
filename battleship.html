@@ -140,7 +140,8 @@
   .ship-item { display:flex; align-items:center; gap:10px; padding:9px 14px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,107,157,0.15); border-radius:12px; cursor:pointer; transition:all .2s; }
   .ship-item:hover:not(.placed) { border-color:rgba(255,107,157,0.4); background:rgba(255,107,157,0.06); }
   .ship-item.selected { border-color:var(--ocean); background:rgba(14,165,233,0.1); box-shadow:0 0 16px rgba(14,165,233,0.15); }
-  .ship-item.placed { opacity:.4; pointer-events:none; }
+  .ship-item.placed { opacity:.55; }
+  .ship-item.placed:hover { opacity:.85; border-color:rgba(255,107,157,0.35); }
   .ship-cells-preview { display:flex; gap:2px; }
   .ship-cell-dot { width:12px; height:12px; border-radius:2px; background:rgba(14,165,233,0.7); box-shadow:0 0 4px rgba(14,165,233,0.5); }
   .ship-item-name { font-size:13px; font-weight:700; color:var(--text); flex:1; }
@@ -313,11 +314,12 @@
   .gc.last-shot { outline:2.5px solid rgba(255,255,255,1) !important; outline-offset:-2px; filter:drop-shadow(0 0 4px rgba(255,255,255,0.55)); }
 
   /* A6 — SHIP SHAPES via clip-path on own grid */
-  .gc.ship[data-pos="bow"][data-orient="h"]   { clip-path: polygon(0 8%, 70% 8%, 100% 50%, 70% 92%, 0 92%); }
-  .gc.ship[data-pos="stern"][data-orient="h"] { clip-path: polygon(0 18%, 100% 8%, 100% 92%, 0 82%); }
+  /* For h-orient: idx=0 is leftmost (bow), idx=last is rightmost (stern) */
+  .gc.ship[data-pos="bow"][data-orient="h"]   { clip-path: polygon(30% 8%, 100% 8%, 100% 92%, 30% 92%, 0 50%); }
+  .gc.ship[data-pos="stern"][data-orient="h"] { clip-path: polygon(0 8%, 85% 18%, 85% 82%, 0 92%); }
   .gc.ship[data-pos="mid"][data-orient="h"]   { clip-path: polygon(0 8%, 100% 8%, 100% 92%, 0 92%); }
   .gc.ship[data-pos="bow"][data-orient="v"]   { clip-path: polygon(50% 0, 92% 30%, 92% 100%, 8% 100%, 8% 30%); }
-  .gc.ship[data-pos="stern"][data-orient="v"] { clip-path: polygon(8% 0, 92% 0, 92% 100%, 50% 82%, 8% 100%); }
+  .gc.ship[data-pos="stern"][data-orient="v"] { clip-path: polygon(8% 0, 92% 0, 92% 100%, 8% 100%); }
   .gc.ship[data-pos="mid"][data-orient="v"]   { clip-path: polygon(8% 0, 92% 0, 92% 100%, 8% 100%); }
   .gc.ship[data-pos="single"] { clip-path: polygon(20% 8%, 80% 8%, 100% 50%, 80% 92%, 20% 92%, 0 50%); }
   .gc.ship { background:linear-gradient(180deg, rgba(90,150,235,0.78), rgba(38,88,180,0.72)) !important; }
@@ -468,16 +470,19 @@
     </div>
 
     <button class="btn-secondary" id="surrenderBtn" style="margin-top:14px;max-width:200px;">🏳️ Aufgeben</button>
+    <button class="btn-primary" id="newGameBtn" style="display:none;margin-top:14px;max-width:240px;">Nochmal spielen 🌊</button>
   </div>
 </div>
 
 <div class="result-overlay" id="resultOverlay">
-  <div class="result-card">
+  <div class="result-card" style="position:relative;">
+    <button id="closeResultBtn" aria-label="Schließen" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:var(--text-mid);font-size:22px;font-weight:700;cursor:pointer;line-height:1;padding:4px 8px;border-radius:50%;transition:color .2s,background .2s;">✕</button>
     <span class="result-emoji" id="resultEmoji">🏆</span>
     <div class="result-title" id="resultTitle">Gewonnen!</div>
     <div class="result-sub" id="resultSub"></div>
     <div class="result-coins" id="resultCoins"></div>
     <button class="btn-again" id="playAgainBtn">Nochmal spielen 🌊</button>
+    <button class="btn-secondary" id="viewBoardBtn" style="margin-top:8px;">Spielfeld ansehen 🔍</button>
   </div>
 </div>
 
@@ -684,7 +689,21 @@ function rebuildShipList() {
       <span class="ship-item-size">${def.size}</span>
       ${placed ? '<span class="ship-check">✓</span>' : ''}
     `;
-    if (!placed) item.addEventListener('click', () => { selectedShip = def.id; rebuildShipList(); renderPlacement(); });
+    item.addEventListener('click', () => {
+      if (placed) {
+        const existing = placedShips.find(s => s.id === def.id);
+        if (existing) {
+          placedShips = placedShips.filter(s => s.id !== def.id);
+          placementDir = existing.dir;
+          document.getElementById('dirLabel').textContent = placementDir === 'h' ? 'Horizontal' : 'Vertikal';
+          document.getElementById('readyBtn').disabled = true;
+          document.getElementById('placementSub').textContent = 'Schiff aufgenommen – wo soll es hin?';
+        }
+      }
+      selectedShip = def.id;
+      rebuildShipList();
+      renderPlacement();
+    });
     el.appendChild(item);
   }
 }
@@ -735,11 +754,32 @@ function renderPlacement() {
   }
 }
 
+function pickUpShipAt(r, c) {
+  const hit = placedShips.find(s => cells(s).some(({r:sr,c:sc}) => sr===r && sc===c));
+  if (!hit) return false;
+  placedShips = placedShips.filter(s => s.id !== hit.id);
+  selectedShip = hit.id;
+  placementDir = hit.dir;
+  document.getElementById('dirLabel').textContent = placementDir === 'h' ? 'Horizontal' : 'Vertikal';
+  hoverR = r; hoverC = c;
+  document.getElementById('readyBtn').disabled = true;
+  document.getElementById('placementSub').textContent = 'Schiff aufgenommen – wo soll es hin?';
+  rebuildShipList();
+  renderPlacement();
+  return true;
+}
+
 function placeAt(r, c) {
-  if (!selectedShip) { showToast('Wähle zuerst ein Schiff!'); return; }
+  if (!selectedShip) {
+    if (pickUpShipAt(r, c)) return;
+    showToast('Wähle zuerst ein Schiff!'); return;
+  }
   const def = SHIPS.find(d => d.id === selectedShip);
   const ship = {id: def.id, r, c, size: def.size, dir: placementDir};
-  if (!validPlacement(placedShips, ship)) { showToast('Hier passt das Schiff nicht! 🚫'); return; }
+  if (!validPlacement(placedShips, ship)) {
+    if (pickUpShipAt(r, c)) return;
+    showToast('Hier passt das Schiff nicht! 🚫'); return;
+  }
   placedShips = placedShips.filter(s => s.id !== selectedShip);
   placedShips.push(ship);
   const next = SHIPS.find(d => !placedShips.some(s => s.id === d.id));
@@ -898,6 +938,7 @@ function renderGame(state) {
   document.getElementById('statusN').textContent = state.currentTurn==='Nele'    && state.status==='running' ? '🎯 Am Zug' : '';
 
   document.getElementById('surrenderBtn').style.display = state.status === 'running' ? 'block' : 'none';
+  document.getElementById('newGameBtn').style.display   = state.status === 'finished' ? 'block' : 'none';
   renderMyFleetTracker(myShipsData, oppShotsData);
   renderFleetTracker(oppShipsData, myShotsData);
 }
@@ -1364,6 +1405,13 @@ document.getElementById('declineBtn').addEventListener('click', declineGame);
 document.getElementById('readyBtn').addEventListener('click', setReady);
 document.getElementById('surrenderBtn').addEventListener('click', surrender);
 document.getElementById('playAgainBtn').addEventListener('click', playAgain);
+document.getElementById('newGameBtn').addEventListener('click', playAgain);
+document.getElementById('closeResultBtn').addEventListener('click', () => {
+  document.getElementById('resultOverlay').classList.remove('open');
+});
+document.getElementById('viewBoardBtn').addEventListener('click', () => {
+  document.getElementById('resultOverlay').classList.remove('open');
+});
 document.getElementById('rotateBtn').addEventListener('click', () => {
   placementDir = placementDir === 'h' ? 'v' : 'h';
   document.getElementById('dirLabel').textContent = placementDir === 'h' ? 'Horizontal' : 'Vertikal';
