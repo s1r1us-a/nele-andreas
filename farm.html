@@ -478,7 +478,7 @@
     .beehive-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
 
     /* ── HANDELSHAUS ── */
-    .tradehouse-building { position: absolute; top: 28%; left: 78%; width: 72px; height: 95px; cursor: pointer; z-index: 39; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); display: flex; flex-direction: column; align-items: center; }
+    .tradehouse-building { position: absolute; top: 28%; left: 5%; width: 70px; height: 78px; cursor: pointer; z-index: 39; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); display: flex; flex-direction: column; align-items: center; }
     .tradehouse-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .night-mode .tradehouse-building { filter: brightness(0.7) drop-shadow(0 8px 6px rgba(0,0,0,0.25)); }
     .sunset-mode .tradehouse-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -1106,23 +1106,43 @@
 
   <div class="tradehouse-building" id="tradeHouseBuilding" onclick="window.openTradeHouse()">
     <div id="tradeHouseBadge" class="tradehouse-badge" style="display:none"></div>
-    <svg viewBox="0 0 72 80" xmlns="http://www.w3.org/2000/svg" width="72" height="80">
-      <rect x="8" y="38" width="56" height="38" rx="3" fill="#e8d5b0"/>
-      <rect x="8" y="38" width="56" height="6" rx="2" fill="#c8a870"/>
-      <polygon points="4,38 36,12 68,38" fill="#c0392b"/>
-      <polygon points="8,38 36,16 64,38" fill="#e74c3c"/>
-      <rect x="24" y="18" width="16" height="4" rx="1" fill="#f39c12"/>
-      <rect x="22" y="56" width="28" height="20" rx="2" fill="#8b6914"/>
-      <rect x="22" y="56" width="28" height="20" rx="2" fill="none" stroke="#6b4f0a" stroke-width="1"/>
-      <circle cx="36" cy="66" r="2" fill="#f39c12"/>
-      <rect x="12" y="44" width="14" height="18" rx="2" fill="#5dade2" opacity="0.8"/>
-      <rect x="46" y="44" width="14" height="18" rx="2" fill="#5dade2" opacity="0.8"/>
-      <line x1="12" y1="53" x2="26" y2="53" stroke="#2980b9" stroke-width="1" opacity="0.6"/>
-      <line x1="19" y1="44" x2="19" y2="62" stroke="#2980b9" stroke-width="1" opacity="0.6"/>
-      <line x1="46" y1="53" x2="60" y2="53" stroke="#2980b9" stroke-width="1" opacity="0.6"/>
-      <line x1="53" y1="44" x2="53" y2="62" stroke="#2980b9" stroke-width="1" opacity="0.6"/>
-      <text x="36" y="36" text-anchor="middle" font-size="7" fill="#8b6914" font-family="sans-serif" font-weight="bold">HANDEL</text>
-      <text x="36" y="44" text-anchor="middle" font-size="12">🤝</text>
+    <svg viewBox="0 0 70 78" xmlns="http://www.w3.org/2000/svg" width="70" height="78">
+      <!-- Walls -->
+      <rect x="5" y="31" width="60" height="47" rx="3" fill="#ede8d8"/>
+      <line x1="5" y1="43" x2="65" y2="43" stroke="#d4c8b0" stroke-width="1"/>
+      <line x1="5" y1="55" x2="65" y2="55" stroke="#d4c8b0" stroke-width="1"/>
+      <line x1="5" y1="67" x2="65" y2="67" stroke="#d4c8b0" stroke-width="1"/>
+      <!-- Roof – deep guild-hall blue -->
+      <polygon points="2,32 35,6 68,32" fill="#1e3a7a"/>
+      <polygon points="5,32 35,9 65,32" fill="#2a52a8"/>
+      <rect x="2" y="30" width="66" height="4" rx="1.5" fill="#142860"/>
+      <line x1="3" y1="34" x2="67" y2="34" stroke="#e8a020" stroke-width="1.5"/>
+      <!-- Gold pennant flag -->
+      <line x1="35" y1="6" x2="35" y2="0" stroke="#142860" stroke-width="1.5" stroke-linecap="round"/>
+      <polygon points="35,0 47,3 35,6" fill="#e8a020"/>
+      <!-- Left window -->
+      <rect x="8" y="36" width="17" height="13" rx="1.5" fill="#c0dff8"/>
+      <rect x="8" y="36" width="17" height="13" rx="1.5" fill="none" stroke="#6aacde" stroke-width="0.8"/>
+      <line x1="16.5" y1="36" x2="16.5" y2="49" stroke="#6aacde" stroke-width="0.7"/>
+      <line x1="8" y1="42.5" x2="25" y2="42.5" stroke="#6aacde" stroke-width="0.7"/>
+      <!-- Right window -->
+      <rect x="45" y="36" width="17" height="13" rx="1.5" fill="#c0dff8"/>
+      <rect x="45" y="36" width="17" height="13" rx="1.5" fill="none" stroke="#6aacde" stroke-width="0.8"/>
+      <line x1="53.5" y1="36" x2="53.5" y2="49" stroke="#6aacde" stroke-width="0.7"/>
+      <line x1="45" y1="42.5" x2="62" y2="42.5" stroke="#6aacde" stroke-width="0.7"/>
+      <!-- Market sign board -->
+      <rect x="13" y="51" width="44" height="13" rx="2.5" fill="#142860"/>
+      <rect x="13" y="51" width="44" height="13" rx="2.5" fill="none" stroke="#e8a020" stroke-width="1"/>
+      <rect x="15" y="53" width="40" height="9" rx="1.5" fill="none" stroke="#e8a020" stroke-width="0.5" opacity="0.5"/>
+      <text x="35" y="61" text-anchor="middle" font-size="6" fill="#ffd060" font-family="serif" font-weight="bold" letter-spacing="1">MARKT</text>
+      <!-- Arched door -->
+      <path d="M26,78 L26,66 Q26,59 35,59 Q44,59 44,66 L44,78 Z" fill="#7a5210"/>
+      <path d="M26,65 Q26,59 35,59 Q44,59 44,65" fill="#8f6420"/>
+      <line x1="35" y1="59" x2="35" y2="78" stroke="#5a3c0e" stroke-width="0.8"/>
+      <line x1="26" y1="69" x2="44" y2="69" stroke="#5a3c0e" stroke-width="0.8"/>
+      <circle cx="37" cy="71" r="1.5" fill="#e8a020"/>
+      <!-- Step -->
+      <rect x="22" y="76" width="26" height="2.5" rx="1" fill="#c8b890"/>
     </svg>
   </div>
 
