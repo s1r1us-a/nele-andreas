@@ -1301,6 +1301,22 @@
     else if (floatingCards.length && !listMode) startDrift();
   });
 
+  // Sortier-Schlüssel: Event-Datum bevorzugen, sonst aus angezeigtem date/time parsen,
+  // erst zuletzt auf Erstellungs-Timestamp zurückfallen.
+  function getMomentSortMs(m) {
+    if (typeof m.momentDate === 'number' && !isNaN(m.momentDate)) return m.momentDate;
+    if (m.date) {
+      const parts = m.date.split('.').map(s => parseInt(s, 10));
+      if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+        const [d, mo, y] = parts;
+        const [h, mi] = (m.time || '').split(':').map(s => parseInt(s, 10));
+        const t = new Date(y, mo - 1, d, isNaN(h) ? 0 : h, isNaN(mi) ? 0 : mi).getTime();
+        if (!isNaN(t)) return t;
+      }
+    }
+    return m.timestamp || 0;
+  }
+
   function renderMoments(data) {
     listMode = false;
     document.getElementById('listModeBtn').classList.remove('active');
@@ -1315,7 +1331,7 @@
       return;
     }
 
-    const moments = Object.values(data).sort((a, b) => (a.momentDate || a.timestamp) - (b.momentDate || b.timestamp));
+    const moments = Object.values(data).sort((a, b) => getMomentSortMs(a) - getMomentSortMs(b));
     if (moments.length === 0) {
       document.getElementById('emptyState').classList.add('visible');
       document.getElementById('countBadge').classList.remove('visible');
@@ -1375,7 +1391,7 @@
       bubble.addEventListener('click', () => openDetail(m, bubble));
       canvas.appendChild(bubble);
 
-      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp, momentDate: m.momentDate || m.timestamp });
+      floatingCards.push({ el: bubble, x, y, vx, vy, rot, vrot, w: cardW, h: cardH, topBound: headerH, timestamp: m.timestamp, momentDate: getMomentSortMs(m) });
     });
 
     startDrift();
