@@ -1636,14 +1636,13 @@
   let currentCoins = 0;
   let isVisitMode = false;
   let ownUserKey = null;
-  let bakeryFavorites = new Set(JSON.parse(localStorage.getItem('bakeryFavs') || '[]'));
-  let weavingFavorites = new Set(JSON.parse(localStorage.getItem('weavingFavs') || '[]'));
+  let bakeryFavorites = new Set();
+  let weavingFavorites = new Set();
 
   window.toggleFavorite = function(type, id) {
     const favs = type === 'bakery' ? bakeryFavorites : weavingFavorites;
-    const key  = type === 'bakery' ? 'bakeryFavs'   : 'weavingFavs';
     if (favs.has(id)) favs.delete(id); else favs.add(id);
-    localStorage.setItem(key, JSON.stringify([...favs]));
+    saveFarmData();
     if (type === 'bakery') window.renderBakery('recipes');
     else window.renderWeaving('recipes');
   };
@@ -1988,7 +1987,8 @@
 
   async function saveFarmData() {
     if (!userKey || isVisitMode) return;
-    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots };
+    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots,
+      bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites] };
     await set(ref(db, `farm/${userKey}`), data);
   }
   window.saveFarmData = saveFarmData;
@@ -2045,6 +2045,8 @@
           } else {
             forgeSlots = Array(3).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 }));
           }
+          bakeryFavorites = new Set(Array.isArray(data.bakeryFavs) ? data.bakeryFavs : []);
+          weavingFavorites = new Set(Array.isArray(data.weavingFavs) ? data.weavingFavs : []);
 
           if (beehive.level > 0 && !beehive.isProducing && !beehive.rewardReady) {
               beehive.isProducing = true;
