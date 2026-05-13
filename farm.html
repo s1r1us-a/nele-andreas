@@ -523,6 +523,37 @@
     .trade-empty-state div:first-child { font-size: 36px; margin-bottom: 8px; }
     .trade-empty-state div:last-child { font-size: 13px; }
 
+    /* ── TRADE STEPPER SYSTEM ── */
+    .trade-panel { border-radius: 16px; padding: 12px; margin-bottom: 12px; }
+    .trade-panel-offer { background: rgba(16,185,129,0.07); border: 1.5px solid rgba(16,185,129,0.18); }
+    .trade-panel-request { background: rgba(139,92,246,0.07); border: 1.5px solid rgba(139,92,246,0.18); }
+    .trade-panel-header { font-size: 13px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .trade-panel-offer .trade-panel-header { color: #059669; }
+    .trade-panel-request .trade-panel-header { color: #7c3aed; }
+    .trade-cat-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+    .trade-cat-tab { padding: 4px 10px; border: none; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; background: rgba(0,0,0,0.06); color: var(--text-mid); transition: all 0.15s; }
+    .trade-cat-tab.active { background: rgba(0,0,0,0.15); color: var(--text-dark); }
+    .trade-item-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 10px; margin-bottom: 3px; transition: background 0.15s; }
+    .trade-item-row.selected { background: rgba(255,255,255,0.7); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .trade-item-label { flex: 1; font-size: 13px; font-weight: 500; }
+    .trade-item-stock { font-size: 11px; color: var(--text-mid); min-width: 28px; text-align: right; }
+    .trade-stepper { display: flex; align-items: center; gap: 3px; }
+    .trade-stepper-btn { width: 26px; height: 26px; border: none; border-radius: 7px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; line-height: 1; }
+    .trade-stepper-btn:active { transform: scale(0.88); }
+    .trade-stepper-btn.minus { background: rgba(0,0,0,0.08); color: #6b7280; }
+    .trade-stepper-btn.minus.active-minus { background: #fee2e2; color: #ef4444; }
+    .trade-stepper-btn.plus-offer { background: #10b981; color: #fff; }
+    .trade-stepper-btn.plus-request { background: #8b5cf6; color: #fff; }
+    .trade-stepper-val { min-width: 28px; text-align: center; font-size: 14px; font-weight: 700; color: var(--text-dark); }
+    .trade-selected-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; min-height: 0; }
+    .trade-chip { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.9); border-radius: 20px; padding: 3px 8px 3px 6px; font-size: 12px; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+    .trade-chip-remove { background: none; border: none; font-size: 13px; color: #9ca3af; cursor: pointer; padding: 0; line-height: 1; margin-left: 2px; }
+    .trade-coin-chip { background: rgba(251,191,36,0.2); border: 1.5px solid rgba(251,191,36,0.4); }
+    .trade-coin-panel { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; padding: 6px 8px; background: rgba(251,191,36,0.12); border-radius: 10px; }
+    .trade-coin-panel span { font-size: 12px; color: var(--text-mid); flex: 1; }
+    .trade-coin-panel input { width: 60px; padding: 4px 6px; border: 1.5px solid rgba(251,191,36,0.5); border-radius: 7px; font-size: 13px; font-weight: 700; text-align: center; background: #fff; }
+    .trade-coin-panel button { padding: 4px 10px; border: none; border-radius: 7px; background: #f59e0b; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
+
     /* ── WEBEREI (Fachwerkhaus) ── */
     .weaving-building { position: absolute; top: 25%; left: 62%; width: 86px; height: 105px; cursor: pointer; z-index: 40; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .weaving-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -4095,73 +4126,164 @@
     }
   };
 
-  window._giftAdd = function(cat, id) {
-    const qtyEl = document.getElementById('qty_' + cat + '_' + id);
-    const qty = Math.min(parseInt(qtyEl?.value) || 1, getInventoryQty(cat, id));
-    if (qty <= 0) return;
-    const existing = giftBasket.find(b => b.category === cat && b.itemId === id);
-    if (existing) existing.qty += qty; else giftBasket.push({ category: cat, itemId: id, qty, label: getItemLabel(cat, id) });
-    window.renderTradeContent();
-  };
-  window._offerAdd = function(cat, id) {
-    const qtyEl = document.getElementById('qty_' + cat + '_' + id);
-    const qty = Math.min(parseInt(qtyEl?.value) || 1, getInventoryQty(cat, id));
-    if (qty <= 0) return;
-    const existing = tradeOffer.find(b => b.category === cat && b.itemId === id);
-    if (existing) existing.qty += qty; else tradeOffer.push({ category: cat, itemId: id, qty, label: getItemLabel(cat, id) });
-    window.renderTradeContent();
-  };
-  window._requestAdd = function(cat, id) {
-    const qtyEl = document.getElementById('qty_' + cat + '_' + id);
-    const qty = Math.min(parseInt(qtyEl?.value) || 1, getInventoryQty(cat, id));
-    if (qty <= 0) return;
-    const existing = tradeRequest.find(b => b.category === cat && b.itemId === id);
-    if (existing) existing.qty += qty; else tradeRequest.push({ category: cat, itemId: id, qty, label: getItemLabel(cat, id) });
-    window.renderTradeContent();
+  // ── TRADE: neue State-Struktur mit Steppern ──
+  // Statt Arrays: Objekte { 'cat__id': qty }
+  let giftQtys = {};   // { 'crops__carrot': 3 }
+  let offerQtys = {};
+  let requestQtys = {};
+  let offerCoins = 0;
+  let requestCoins = 0;
+  let giftActiveCat = 'crops';
+  let offerActiveCat = 'crops';
+  let requestActiveCat = 'crops';
+
+  const TRADE_CATS = [
+    { key: 'seeds',       label: '🌱',  items: () => Object.keys(shopItems) },
+    { key: 'crops',       label: '🧺',  items: () => Object.keys(shopItems) },
+    { key: 'items',       label: '📦',  items: () => ['fertilizer','honey','egg','milk','wool','diamond','firefly','feather','goatmilk','truffle','horseshoe'] },
+    { key: 'bakery',      label: '🍞',  items: () => Object.keys(bakeryRecipes) },
+    { key: 'accessories', label: '🎀',  items: () => Object.keys(weavingRecipes) }
+  ];
+  const CAT_NAMES = { seeds:'Samen', crops:'Ernte', items:'Items', bakery:'Bäckerei', accessories:'Weberei' };
+
+  function getQty(qtys, cat, id) { return qtys[cat + '__' + id] || 0; }
+  function setQty(qtys, cat, id, val) {
+    const k = cat + '__' + id;
+    if (val <= 0) delete qtys[k]; else qtys[k] = val;
+  }
+  function qtysToArray(qtys) {
+    return Object.entries(qtys).map(([k, qty]) => {
+      const [cat, ...rest] = k.split('__'); const id = rest.join('__');
+      return { category: cat, itemId: id, qty, label: getItemLabel(cat, id) };
+    });
+  }
+
+  window._tradeStep = function(section, cat, id, delta) {
+    const qtys = section === 'gift' ? giftQtys : section === 'offer' ? offerQtys : requestQtys;
+    const cur = getQty(qtys, cat, id);
+    let next = cur + delta;
+    if (next < 0) next = 0;
+    if (section !== 'request') {
+      const maxQty = getInventoryQty(cat, id);
+      if (next > maxQty) { window.showToast('Nur ' + maxQty + 'x vorhanden!'); return; }
+    }
+    setQty(qtys, cat, id, next);
+    // Nur die betroffene Zeile + Chips updaten, kein komplettes Re-render
+    const valEl = document.getElementById(`sv_${section}_${cat}_${id}`);
+    const rowEl = document.getElementById(`sr_${section}_${cat}_${id}`);
+    const minusEl = document.getElementById(`sm_${section}_${cat}_${id}`);
+    if (valEl) valEl.textContent = next || '';
+    if (rowEl) rowEl.classList.toggle('selected', next > 0);
+    if (minusEl) minusEl.classList.toggle('active-minus', next > 0);
+    _updateChips(section);
   };
 
-  function buildBasketHtml(basket, which) {
-    if (!basket.length) return `<div class="trade-basket"><div class="trade-basket-empty">Noch nichts ausgewählt</div></div>`;
-    let html = '<div class="trade-basket">';
-    basket.forEach((b, i) => {
-      const label = b.category === 'coins' ? '🪙 ' + b.qty + ' Münzen' : b.label + ' × ' + b.qty;
-      html += `<div class="trade-basket-item"><span>${label}</span><button class="trade-basket-remove" onclick="window._removeBasketItem('${which}',${i})">✕</button></div>`;
+  window._tradeSwitchCat = function(section, cat) {
+    if (section === 'gift') giftActiveCat = cat;
+    else if (section === 'offer') offerActiveCat = cat;
+    else requestActiveCat = cat;
+    const panelId = 'trade-items-' + section;
+    const tabsId = 'trade-cattabs-' + section;
+    const panel = document.getElementById(panelId);
+    const tabs = document.getElementById(tabsId);
+    if (panel) panel.innerHTML = buildItemRows(section, cat);
+    if (tabs) tabs.querySelectorAll('.trade-cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+  };
+
+  function _updateChips(section) {
+    const el = document.getElementById('trade-chips-' + section);
+    if (!el) return;
+    const qtys = section === 'gift' ? giftQtys : section === 'offer' ? offerQtys : requestQtys;
+    const coins = section === 'offer' ? offerCoins : section === 'request' ? requestCoins : 0;
+    let html = '';
+    if (coins > 0) html += `<div class="trade-chip trade-coin-chip">🪙 ${coins.toLocaleString('de-DE')} <button class="trade-chip-remove" onclick="window._clearCoins('${section}')">✕</button></div>`;
+    Object.entries(qtys).forEach(([k, qty]) => {
+      const [cat, ...rest] = k.split('__'); const id = rest.join('__');
+      html += `<div class="trade-chip">${getItemLabel(cat, id)} ×${qty} <button class="trade-chip-remove" onclick="window._tradeStep('${section}','${cat}','${id}',${-qty})">✕</button></div>`;
     });
-    return html + '</div>';
+    el.innerHTML = html;
+  }
+
+  window._clearCoins = function(section) {
+    if (section === 'offer') offerCoins = 0;
+    else if (section === 'request') requestCoins = 0;
+    _updateChips(section);
+    const el = document.getElementById('coin-input-' + section);
+    if (el) el.value = '';
+  };
+
+  window._addCoins = function(section) {
+    const el = document.getElementById('coin-input-' + section);
+    const val = parseInt(el?.value) || 0;
+    if (val <= 0) return;
+    if (section === 'offer' && val > currentCoins) { window.showToast('Nicht genug Münzen!'); return; }
+    if (section === 'offer') offerCoins = val;
+    else requestCoins = val;
+    _updateChips(section);
+  };
+
+  function buildCatTabs(section, activeCat, showAll) {
+    const cats = showAll ? TRADE_CATS : TRADE_CATS.filter(c => c.items().some(id => getInventoryQty(c.key, id) > 0));
+    if (!cats.length) return '';
+    return cats.map(c => `<button class="trade-cat-tab ${c.key === activeCat ? 'active' : ''}" data-cat="${c.key}" onclick="window._tradeSwitchCat('${section}','${c.key}')">${c.label} ${CAT_NAMES[c.key]}</button>`).join('');
+  }
+
+  function buildItemRows(section, cat, showAll = false) {
+    const qtys = section === 'gift' ? giftQtys : section === 'offer' ? offerQtys : requestQtys;
+    const plusCls = (section === 'request') ? 'plus-request' : 'plus-offer';
+    const catDef = TRADE_CATS.find(c => c.key === cat);
+    if (!catDef) return '';
+    const items = showAll ? catDef.items() : catDef.items().filter(id => getInventoryQty(cat, id) > 0);
+    if (!items.length) return `<div style="padding:10px;font-size:12px;color:var(--text-mid);">Kein ${CAT_NAMES[cat]} vorhanden.</div>`;
+    return items.map(id => {
+      const qty = getQty(qtys, cat, id);
+      const stock = getInventoryQty(cat, id);
+      const stockLabel = showAll ? '' : `<span class="trade-item-stock">${stock}x</span>`;
+      return `<div class="trade-item-row ${qty > 0 ? 'selected' : ''}" id="sr_${section}_${cat}_${id}">
+        <span class="trade-item-label">${getItemLabel(cat, id)}</span>
+        ${stockLabel}
+        <div class="trade-stepper">
+          <button class="trade-stepper-btn minus ${qty > 0 ? 'active-minus' : ''}" id="sm_${section}_${cat}_${id}" onclick="window._tradeStep('${section}','${cat}','${id}',-1)">−</button>
+          <span class="trade-stepper-val" id="sv_${section}_${cat}_${id}">${qty || ''}</span>
+          <button class="trade-stepper-btn ${plusCls}" onclick="window._tradeStep('${section}','${cat}','${id}',1)">+</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderPanel(section, title, panelClass, activeCat, showAll = false) {
+    const coins = section === 'offer' ? offerCoins : section === 'request' ? requestCoins : 0;
+    const coinSection = section !== 'gift' ? `
+      <div class="trade-coin-panel">
+        <span>🪙 Münzen</span>
+        <input id="coin-input-${section}" type="number" min="0" placeholder="0" value="${coins || ''}">
+        <button onclick="window._addCoins('${section}')">Setzen</button>
+      </div>` : '';
+    return `<div class="trade-panel ${panelClass}">
+      <div class="trade-panel-header"><span>${title}</span></div>
+      ${coinSection}
+      <div class="trade-cat-tabs" id="trade-cattabs-${section}">${buildCatTabs(section, activeCat, showAll)}</div>
+      <div id="trade-items-${section}">${buildItemRows(section, activeCat, showAll)}</div>
+      <div class="trade-selected-chips" id="trade-chips-${section}"></div>
+    </div>`;
   }
 
   function renderSendTab() {
     const otherName = getOtherName();
+    const activeCat = giftActiveCat;
+    const hasItems = TRADE_CATS.some(c => c.items().some(id => getInventoryQty(c.key, id) > 0));
+    if (!hasItems) return `<div class="trade-empty-state"><div>🌾</div><div>Kein Inventar zum Verschenken</div></div>`;
     return `
-      <div class="trade-section-title">Inventar auswählen</div>
-      ${renderTradeItemPicker('_giftAdd')}
-      <div class="trade-section-title">🎁 Geschenk-Korb</div>
-      ${buildBasketHtml(giftBasket, 'gift')}
-      <input id="giftMessage" type="text" maxlength="60" placeholder="💬 Optionale Nachricht…" class="trade-msg-input">
+      ${renderPanel('gift', '🎁 Für ' + otherName, 'trade-panel-offer', activeCat)}
+      <input id="giftMessage" type="text" maxlength="60" placeholder="💬 Optionale Nachricht…" class="trade-msg-input" style="margin-top:4px;">
       <button class="trade-send-btn green" onclick="window.sendGift()">🎁 Senden an ${otherName}</button>`;
   }
 
   function renderTradeTab() {
     const otherName = getOtherName();
     return `
-      <div class="trade-section-title">✅ Ich biete an</div>
-      <div class="trade-coin-row">
-        <span>🪙 Münzen anbieten</span>
-        <input id="offerCoins" type="number" min="0" placeholder="0">
-        <button class="trade-coin-add" onclick="window._addCoins('offer')">+</button>
-      </div>
-      ${renderTradeItemPicker('_offerAdd')}
-      <div class="trade-section-title">Mein Angebot</div>
-      ${buildBasketHtml(tradeOffer, 'offer')}
-      <div class="trade-section-title" style="margin-top:4px;">❓ Ich möchte von ${otherName}</div>
-      <div class="trade-coin-row">
-        <span>🪙 Münzen wünschen</span>
-        <input id="requestCoins" type="number" min="0" placeholder="0">
-        <button class="trade-coin-add" onclick="window._addCoins('request')">+</button>
-      </div>
-      ${renderTradeItemPicker('_requestAdd', true)}
-      <div class="trade-section-title">Mein Wunsch</div>
-      ${buildBasketHtml(tradeRequest, 'request')}
+      ${renderPanel('offer', '✅ Ich biete', 'trade-panel-offer', offerActiveCat)}
+      ${renderPanel('request', '❓ Ich möchte von ' + otherName, 'trade-panel-request', requestActiveCat, true)}
       <button class="trade-send-btn" onclick="window.sendTrade()">🤝 Handelsangebot senden</button>`;
   }
 
@@ -4173,24 +4295,19 @@
     }
     let html = '';
     myGifts.forEach(([id, g]) => {
-      const itemList = (g.items || []).map(it => getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join(' · ');
+      const itemList = (g.items || []).map(it => getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
       html += `<div class="trade-inbox-card trade-inbox-gift">
         <div class="trade-inbox-title">🎁 Geschenk von ${g.fromName}</div>
         <div class="trade-inbox-detail">${itemList}${g.message ? '<br><em>„' + g.message + '"</em>' : ''}</div>
-        <div class="trade-inbox-actions">
-          <button class="trade-inbox-accept" onclick="window.acceptGift('${id}')">✅ Annehmen</button>
-        </div>
+        <div class="trade-inbox-actions"><button class="trade-inbox-accept" onclick="window.acceptGift('${id}')">✅ Annehmen</button></div>
       </div>`;
     });
     myTrades.forEach(([id, t]) => {
-      const offerList = (t.offer || []).map(it => it.coins ? '🪙 ' + it.coins + ' Münzen' : getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join(' · ');
-      const reqList  = (t.request || []).map(it => it.coins ? '🪙 ' + it.coins + ' Münzen' : getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join(' · ');
+      const offerList = (t.offer || []).map(it => it.coins ? '🪙 ' + it.coins : getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
+      const reqList  = (t.request || []).map(it => it.coins ? '🪙 ' + it.coins : getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
       html += `<div class="trade-inbox-card">
         <div class="trade-inbox-title">🤝 Angebot von ${t.fromName}</div>
-        <div class="trade-inbox-detail">
-          <strong>Bekomme:</strong> ${offerList}<br>
-          <strong>Gebe:</strong> ${reqList}
-        </div>
+        <div class="trade-inbox-detail"><strong>Bekomme:</strong> ${offerList}<br><strong>Gebe:</strong> ${reqList}</div>
         <div class="trade-inbox-actions">
           <button class="trade-inbox-accept" onclick="window.openTradeConfirm('${id}')">✅ Prüfen</button>
           <button class="trade-inbox-decline" onclick="window.declineTrade('${id}')">❌ Ablehnen</button>
@@ -4200,27 +4317,13 @@
     return html;
   }
 
-  window._removeBasketItem = function(which, idx) {
-    if (which === 'gift') giftBasket.splice(idx, 1);
-    else if (which === 'offer') tradeOffer.splice(idx, 1);
-    else if (which === 'request') tradeRequest.splice(idx, 1);
-    window.renderTradeContent();
-  };
-
-  window._addCoins = function(which) {
-    const inputId = which === 'offer' ? 'offerCoins' : 'requestCoins';
-    const val = parseInt(document.getElementById(inputId)?.value) || 0;
-    if (val <= 0) return;
-    if (which === 'offer' && val > currentCoins) { window.showToast('Nicht genug Münzen!'); return; }
-    const arr = which === 'offer' ? tradeOffer : tradeRequest;
-    const existing = arr.find(b => b.category === 'coins');
-    if (existing) existing.qty += val; else arr.push({ category: 'coins', qty: val });
-    window.renderTradeContent();
-  };
+  window._removeBasketItem = function() {}; // legacy – nicht mehr gebraucht
 
   window.openTradeHouse = function() {
     if (!currentUser) return;
-    giftBasket = []; tradeOffer = []; tradeRequest = [];
+    giftQtys = {}; offerQtys = {}; requestQtys = {};
+    offerCoins = 0; requestCoins = 0;
+    giftActiveCat = 'crops'; offerActiveCat = 'crops'; requestActiveCat = 'crops';
     currentTradeTabState = 'send';
     document.querySelectorAll('.trade-tab').forEach((el, i) => el.classList.toggle('active', i === 0));
     window.renderTradeContent();
@@ -4229,16 +4332,17 @@
   };
 
   window.sendGift = async function() {
-    if (!giftBasket.length) { window.showToast('Wähle zuerst etwas aus!'); return; }
-    for (const b of giftBasket) {
+    const items = qtysToArray(giftQtys);
+    if (!items.length) { window.showToast('Wähle zuerst etwas aus!'); return; }
+    for (const b of items) {
       if (getInventoryQty(b.category, b.itemId) < b.qty) { window.showToast('Nicht genug ' + b.label + ' im Inventar!'); return; }
     }
     const msg = document.getElementById('giftMessage')?.value?.trim() || '';
-    const gift = { fromUser: userKey, fromName: currentUser, items: giftBasket.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty })), sentAt: Date.now(), message: msg };
-    for (const b of giftBasket) { inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty; }
+    const gift = { fromUser: userKey, fromName: currentUser, items: items.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty })), sentAt: Date.now(), message: msg };
+    for (const b of items) { inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty; }
     await saveFarmData();
     await push(ref(db, `gifts/${getOtherKey()}/pending`), gift);
-    giftBasket = [];
+    giftQtys = {};
     window.showToast('🎁 Geschenk gesendet an ' + getOtherName() + '!');
     window.renderTradeContent();
   };
@@ -4256,20 +4360,26 @@
   };
 
   window.sendTrade = async function() {
-    if (!tradeOffer.length) { window.showToast('Füge etwas zum Angebot hinzu!'); return; }
-    if (!tradeRequest.length) { window.showToast('Was möchtest du dafür?'); return; }
-    for (const b of tradeOffer) {
-      if (b.category === 'coins') { if (currentCoins < b.qty) { window.showToast('Nicht genug Münzen!'); return; } }
-      else { if (getInventoryQty(b.category, b.itemId) < b.qty) { window.showToast('Nicht genug ' + b.label + '!'); return; } }
+    const offerItems = qtysToArray(offerQtys);
+    const requestItems = qtysToArray(requestQtys);
+    if (!offerItems.length && offerCoins <= 0) { window.showToast('Füge etwas zum Angebot hinzu!'); return; }
+    if (!requestItems.length && requestCoins <= 0) { window.showToast('Was möchtest du dafür?'); return; }
+    for (const b of offerItems) {
+      if (getInventoryQty(b.category, b.itemId) < b.qty) { window.showToast('Nicht genug ' + b.label + '!'); return; }
     }
-    for (const b of tradeOffer) {
-      if (b.category === 'coins') { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - b.qty); }
-      else { inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty; }
+    if (offerCoins > 0 && currentCoins < offerCoins) { window.showToast('Nicht genug Münzen!'); return; }
+    for (const b of offerItems) {
+      inventory[b.category][b.itemId] = (inventory[b.category][b.itemId] || 0) - b.qty;
     }
+    if (offerCoins > 0) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - offerCoins); }
     await saveFarmData();
-    const trade = { fromUser: userKey, fromName: currentUser, toUser: getOtherKey(), offer: tradeOffer.map(b => b.category === 'coins' ? { coins: b.qty } : { category: b.category, itemId: b.itemId, qty: b.qty }), request: tradeRequest.map(b => b.category === 'coins' ? { coins: b.qty } : { category: b.category, itemId: b.itemId, qty: b.qty }), createdAt: Date.now(), status: 'pending' };
+    const offerArr = offerItems.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty }));
+    if (offerCoins > 0) offerArr.push({ coins: offerCoins });
+    const requestArr = requestItems.map(b => ({ category: b.category, itemId: b.itemId, qty: b.qty }));
+    if (requestCoins > 0) requestArr.push({ coins: requestCoins });
+    const trade = { fromUser: userKey, fromName: currentUser, toUser: getOtherKey(), offer: offerArr, request: requestArr, createdAt: Date.now(), status: 'pending' };
     await push(ref(db, 'trades'), trade);
-    tradeOffer = []; tradeRequest = [];
+    offerQtys = {}; requestQtys = {}; offerCoins = 0; requestCoins = 0;
     window.showToast('🤝 Handelsangebot gesendet!');
     window.renderTradeContent();
   };
