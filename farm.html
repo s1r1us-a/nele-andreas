@@ -4076,6 +4076,50 @@
     return map[species] ? { foodType: map[species], isItem: false } : null;
   }
 
+  const DOG_FIND_POOL = [
+    { w: 20, type: 'coins', min: 50,  max: 150,  icon: '🪙', name: 'Münzen' },
+    { w: 10, type: 'item', key: 'egg',         icon: '🥚', name: 'Ei' },
+    { w: 10, type: 'item', key: 'fertilizer',  icon: '🪴', name: 'Dünger' },
+    { w: 10, type: 'crop', key: 'carrot',      icon: '🥕', name: 'Karotte' },
+    { w: 10, type: 'crop', key: 'wheat',       icon: '🌾', name: 'Weizen' },
+    { w:  6, type: 'item', key: 'honey',       icon: '🍯', name: 'Honig' },
+    { w:  6, type: 'item', key: 'feather',     icon: '🪶', name: 'Feder' },
+    { w:  6, type: 'item', key: 'wool',        icon: '🧶', name: 'Wolle' },
+    { w:  6, type: 'item', key: 'goatmilk',    icon: '🥛', name: 'Ziegenmilch' },
+    { w:  6, type: 'crop', key: 'oats',        icon: '🌿', name: 'Hafer' },
+    { w:  3, type: 'item', key: 'diamond',     icon: '💎', name: 'Diamant' },
+    { w:  2, type: 'item', key: 'horseshoe',   icon: '🧲', name: 'Hufeisen' },
+    { w:  2, type: 'item', key: 'truffle',     icon: '🍄', name: 'Trüffel' },
+    { w:  2, type: 'item', key: 'firefly',     icon: '🫙', name: 'Glühwürmchen' },
+    { w:  1, type: 'ore',  key: 'gold',        icon: '🥇', name: 'Goldnugget' },
+  ];
+
+  function pickDogFind() {
+    const total = DOG_FIND_POOL.reduce((s, p) => s + p.w, 0);
+    let r = Math.random() * total;
+    for (const p of DOG_FIND_POOL) { if ((r -= p.w) <= 0) return p; }
+    return DOG_FIND_POOL[0];
+  }
+
+  async function applyDogFind() {
+    const find = pickDogFind();
+    if (find.type === 'coins') {
+      const amount = Math.floor(find.min + Math.random() * (find.max - find.min + 1));
+      await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + amount);
+      window.showToast(`🐕 Fundsache: ${amount} 🪙`);
+    } else if (find.type === 'item') {
+      inventory.items[find.key] = (inventory.items[find.key] || 0) + 1;
+      window.showToast(`🐕 Fundsache: ${find.icon} ${find.name}!`);
+    } else if (find.type === 'crop') {
+      inventory.crops[find.key] = (inventory.crops[find.key] || 0) + 1;
+      window.showToast(`🐕 Fundsache: ${find.icon} ${find.name}!`);
+    } else if (find.type === 'ore') {
+      if (!inventory.ores) inventory.ores = {};
+      inventory.ores[find.key] = (inventory.ores[find.key] || 0) + 1;
+      window.showToast(`🐕 Fundsache: ${find.icon} ${find.name}!`);
+    }
+  }
+
   window.openAnimalStats = function(id) { 
     selectedAnimalId = id; 
     const a = animals.find(anim => anim.id === id); 
@@ -4113,6 +4157,7 @@
         if(a.species === 'goat')  rewardIcon = '🥛';
         if(a.species === 'pig')   rewardIcon = '🍄';
         if(a.species === 'horse') rewardIcon = '🧲';
+        if(a.species === 'dog')   rewardIcon = '🎁';
         mainActionHtml = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`;
     } else if (a.isProducing) { 
         const elapsedSec = Math.floor((Date.now() - a.fedAt) / 1000); 
@@ -4270,6 +4315,7 @@
       else if (a.species === 'goat')  { inventory.items.goatmilk++;window.showToast(`🥛 Ziegenmilch erhalten!`); }
       else if (a.species === 'pig')   { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
       else if (a.species === 'horse') { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
+      else if (a.species === 'dog')   { await applyDogFind(); }
       await saveFarmData(); updateFarmDOM(); window.openAnimalStats(a.id);
   }
   window.updateName = async function(newName) { if (!selectedAnimalId || isVisitMode) return; animals.find(anim => anim.id === selectedAnimalId).name = newName; if(newName.trim()) { window.showToast('Name gespeichert!'); await saveFarmData(); } }
@@ -4321,7 +4367,7 @@
       return 0;
     });
 
-    const rewardIcons = { rabbit:'🪴', chicken:'🥚', cow:'🥛', cat:'💎', sheep:'🧶', duck:'🪶', goat:'🥛', pig:'🍄', horse:'🧲' };
+    const rewardIcons = { rabbit:'🪴', chicken:'🥚', cow:'🥛', cat:'💎', sheep:'🧶', duck:'🪶', goat:'🥛', pig:'🍄', horse:'🧲', dog:'🎁' };
 
     listEl.innerHTML = sorted.map(a => {
       let cardClass = '', statusHtml = '', actionHtml = '';
@@ -4403,6 +4449,7 @@
     else if (a.species === 'goat')   { inventory.items.goatmilk++;   window.showToast(`🥛 Ziegenmilch erhalten!`); }
     else if (a.species === 'pig')    { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
     else if (a.species === 'horse')  { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
+    else if (a.species === 'dog')    { await applyDogFind(); }
     await saveFarmData();
     updateFarmDOM();
     const activeTab = document.querySelector('.stall-tab.active');
