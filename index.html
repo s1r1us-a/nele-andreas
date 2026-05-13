@@ -739,7 +739,10 @@
     <div id="quizNewBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #f59e0b, #d97706); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(245,158,11,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap;">✨ Neu!</div>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
-  <a href="farm.html" style="display: block; width: 100%; background: linear-gradient(135deg, #7ec850 0%, #5ba830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(126,200,80,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐔 Meine Farm</a>
+  <div style="position: relative;">
+    <a href="farm.html" id="farmBtn" style="display: block; width: 100%; background: linear-gradient(135deg, #7ec850 0%, #5ba830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(126,200,80,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐔 Meine Farm</a>
+    <div id="farmTradeBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #ef4444, #dc2626); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(239,68,68,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap; pointer-events:none;"></div>
+  </div>
   <div style="position: relative; width: 100%; margin-top: 16px;">
     <a href="ourhome.html" style="display: block; width: 100%; background: linear-gradient(135deg, #f9a8d4 0%, #ec4899 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(236,72,153,0.4); transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🏠 Our Home</a>
     <a href="marienkaefer.html" style="display: block; width: 100%; background: linear-gradient(135deg, #e53e3e 0%, #9b1c1c 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(229,62,62,0.4); transition: all 0.2s ease; margin-top: 16px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐞 Marienkäfer</a>
@@ -1022,6 +1025,30 @@
         } else {
           banner.style.display = 'none';
         }
+      });
+
+      // Handelshaus-Badge: Geschenke und Handelsangebote live hören
+      let _indexGiftCount = 0;
+      let _indexTradeCount = 0;
+      function _updateFarmBadge() {
+        const total = _indexGiftCount + _indexTradeCount;
+        const badge = document.getElementById('farmTradeBadge');
+        if (!badge) return;
+        if (total > 0) {
+          badge.style.display = 'block';
+          badge.textContent = total === 1 ? '🎁 1 Neu' : '🎁 ' + total + ' Neu';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+      onValue(ref(db, `gifts/${userKey}/pending`), snap => {
+        _indexGiftCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+        _updateFarmBadge();
+      });
+      onValue(ref(db, 'trades'), snap => {
+        const all = snap.exists() ? snap.val() : {};
+        _indexTradeCount = Object.values(all).filter(t => t.toUser === userKey && t.status === 'pending').length;
+        _updateFarmBadge();
       });
 
       // Booster live hören
