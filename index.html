@@ -1286,15 +1286,24 @@
       runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
     }
 
-    // Coin für jeden Klick
+    // Coin für jeden Klick – lokal akkumulieren, Firebase max 1×/2s schreiben
     {
       const userKey = user.toLowerCase();
       const coinAmount = isBoosterActive(activeBoosterCoin) ? 2 : 1;
-      runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+coinAmount)
-        .catch(err => console.error('Coin-Fehler:', err));
-      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0)+coinAmount)
-        .catch(err => console.error('Stats-Fehler:', err));
       spawnCoin(e.clientX, e.clientY, coinAmount);
+      if (!window._pendingCoins) window._pendingCoins = {};
+      if (!window._pendingCoins[userKey]) window._pendingCoins[userKey] = 0;
+      window._pendingCoins[userKey] += coinAmount;
+      clearTimeout(window._coinFlushTimer);
+      window._coinFlushTimer = setTimeout(() => {
+        const amount = window._pendingCoins[userKey] || 0;
+        if (amount <= 0) return;
+        window._pendingCoins[userKey] = 0;
+        runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+amount)
+          .catch(err => console.error('Coin-Fehler:', err));
+        runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0)+amount)
+          .catch(err => console.error('Stats-Fehler:', err));
+      }, 2000);
     }
 
     const now = Date.now();
