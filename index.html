@@ -870,7 +870,7 @@
   }
 
   window._activeFx = 0;
-  window._fxMax = 40;
+  window._fxMax = 10;
   function spawnHeart(x, y) {
     if (window._activeFx >= window._fxMax) return;
     window._activeFx++;
@@ -892,14 +892,7 @@
     var now = Date.now();
     if (now - _lastImgFrameClick < 120) return;
     _lastImgFrameClick = now;
-    var count = window._activeFx > 20 ? 2 : 6;
-    for (var i = 0; i < count; i++) {
-      (function(i) {
-        setTimeout(function() {
-          spawnHeart(e.clientX + (Math.random()-0.5)*80, e.clientY + (Math.random()-0.5)*80);
-        }, i * 80);
-      })(i);
-    }
+    spawnHeart(e.clientX, e.clientY);
   };
 </script>
 
@@ -1299,25 +1292,14 @@
     document.body.appendChild(txt);
     setTimeout(() => txt.remove(), 2000);
 
-    // Bei viel Last weniger Coins zeichnen (Spiel-Logik bleibt unverändert)
-    const allOffsets = [
-      { x: -28, y: 0,  delay: 0 },
-      { x:  28, y: 0,  delay: 80 },
-      { x: -10, y: -8, delay: 40 },
-      { x:  10, y: -8, delay: 120 },
-    ];
-    const offsets = window._activeFx > 20 ? allOffsets.slice(0, 2) : allOffsets;
-    offsets.forEach(o => {
-      setTimeout(() => {
-        const c = document.createElement('div');
-        c.className = 'click-coin';
-        c.textContent = '🪙';
-        c.style.left = (cx + o.x - 16) + 'px';
-        c.style.top  = (cy + o.y - 16) + 'px';
-        document.body.appendChild(c);
-        setTimeout(() => c.remove(), 2000);
-      }, o.delay);
-    });
+    // Ein einzelnes Coin-Emoji reicht – Performance-Optimierung
+    const c = document.createElement('div');
+    c.className = 'click-coin';
+    c.textContent = '🪙';
+    c.style.left = (cx - 16) + 'px';
+    c.style.top  = (cy - 16) + 'px';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2000);
   }
 
   document.getElementById('heartBtn').addEventListener('click', e => {
