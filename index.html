@@ -1203,7 +1203,6 @@
     }
   }
 
-  let sessionClickCount = 0;
 
   function spawnCoin(x, y, amount = 1) {
     // Button-Mitte als Ursprung berechnen
@@ -1252,9 +1251,8 @@
       runTransaction(user === 'Andreas' ? andreasRefToday : neleRefToday, c => (c||0)+1);
     }
 
-    // Coin alle 10 Klicks
-    sessionClickCount++;
-    if (sessionClickCount % 5 === 0) {
+    // Coin für jeden Klick
+    {
       const userKey = user.toLowerCase();
       const coinAmount = isBoosterActive(activeBoosterCoin) ? 2 : 1;
       runTransaction(ref(db, `coins/${userKey}`), c => (c||0)+coinAmount)
