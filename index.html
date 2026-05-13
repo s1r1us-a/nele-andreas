@@ -1283,15 +1283,6 @@
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
 
-    // "+1 🪙" Text in der Mitte
-    const txt = document.createElement('div');
-    txt.className = 'coin-reward-text';
-    txt.textContent = `+${amount} 🪙`;
-    txt.style.left = (cx - 30) + 'px';
-    txt.style.top  = (cy - 10) + 'px';
-    document.body.appendChild(txt);
-    setTimeout(() => txt.remove(), 2000);
-
     // Ein einzelnes Coin-Emoji reicht – Performance-Optimierung
     const c = document.createElement('div');
     c.className = 'click-coin';
@@ -1334,7 +1325,6 @@
     heartCount.classList.remove('bump');
     void heartCount.offsetWidth;
     heartCount.classList.add('bump');
-    spawnHeart(e.clientX, e.clientY);
 
     clearTimeout(window._flushTimer);
     window._flushTimer = setTimeout(() => {
