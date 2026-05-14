@@ -1122,13 +1122,16 @@
         0 3px 0 #5a341a,
         0 5px 8px rgba(0,0,0,0.25) !important;
     }
-    /* Holzmaserung auf dem Rahmen */
+    /* .bed positionierungs-context für ::before/::after */
+    .bed { position: relative; }
+    /* Holzmaserung auf dem Rahmen (subtil) */
     .bed::before {
-      content: ''; position: absolute; inset: -3px; pointer-events: none;
-      border-radius: 8px;
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      border-radius: 4px;
       background:
-        repeating-linear-gradient(90deg, transparent 0, transparent 8px, rgba(0,0,0,0.08) 8px, rgba(0,0,0,0.08) 9px);
+        repeating-linear-gradient(90deg, transparent 0, transparent 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 11px);
       mix-blend-mode: multiply;
+      z-index: 0;
     }
     .bed-slot[data-state="ready"] .plant-anim {
       animation: windSway 3s ease-in-out infinite, ripeGlow 2s ease-in-out infinite !important;
