@@ -4845,15 +4845,18 @@
         if (currentState !== slot.state || currentItem !== String(slot.item)) {
             if (slot.state === 'empty') { 
                 domSlot.innerHTML = ''; 
-            } else if (slot.state === 'ready') { 
-                domSlot.innerHTML = `<div class="plant-anim">${shopItems[slot.item].icon}</div>`; 
+            } else if (slot.state === 'ready') {
+                const readyDef = shopItems[slot.item];
+                if (!readyDef) continue;
+                domSlot.innerHTML = `<div class="plant-anim">${readyDef.icon}</div>`;
             } else if (slot.state === 'growing') {
-                const itemDef = shopItems[slot.item]; const elapsedSec = Math.floor((now - slot.plantedAt) / 1000);
-                if (elapsedSec >= itemDef.growTime) { 
-                    slot.state = 'ready'; domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`; 
-                } else { 
-                    const percent = Math.min(100, ((elapsedSec / itemDef.growTime) * 100)); 
-                    domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: ${percent}%"></div></div>`; 
+                const itemDef = shopItems[slot.item]; if (!itemDef || !itemDef.growTime) continue;
+                const elapsedSec = Math.floor((now - slot.plantedAt) / 1000);
+                if (elapsedSec >= itemDef.growTime) {
+                    slot.state = 'ready'; domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`;
+                } else {
+                    const percent = Math.min(100, ((elapsedSec / itemDef.growTime) * 100));
+                    domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: ${percent}%"></div></div>`;
                 }
             }
             domSlot.setAttribute('data-state', slot.state);
@@ -4871,7 +4874,8 @@
       for(let s=0; s<4; s++) {
         const slot = beds[b][s];
         if (slot.state === 'growing') {
-          const itemDef = shopItems[slot.item]; const elapsedSec = Math.floor((now - slot.plantedAt) / 1000); const remainingSec = itemDef.growTime - elapsedSec; const domSlot = document.getElementById(`slot-${b}-${s}`);
+          const itemDef = shopItems[slot.item]; if (!itemDef || !itemDef.growTime) continue;
+          const elapsedSec = Math.floor((now - slot.plantedAt) / 1000); const remainingSec = itemDef.growTime - elapsedSec; const domSlot = document.getElementById(`slot-${b}-${s}`);
           if(!domSlot) continue;
           if (remainingSec <= 0) { 
               slot.state = 'ready'; 
@@ -4892,7 +4896,7 @@
         let bakeryChanged = false;
         oven.slots.forEach((slot, index) => {
             if (slot.state === 'baking') {
-                const r = bakeryRecipes[slot.item]; 
+                const r = bakeryRecipes[slot.item]; if (!r || !r.time) return;
                 const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
                 if (elapsedSec >= r.time) { 
                     slot.state = 'ready'; 
@@ -4913,6 +4917,7 @@
             }
         });
         if(bakeryChanged) {
+            saveFarmData();
             updateFarmDOM();
         }
     }
@@ -4921,7 +4926,7 @@
         let loomChanged = false;
         loom.slots.forEach((slot, index) => {
             if (slot.state === 'weaving') {
-                const r = weavingRecipes[slot.item];
+                const r = weavingRecipes[slot.item]; if (!r || !r.time) return;
                 const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
                 if (elapsedSec >= r.time) {
                     slot.state = 'ready';
@@ -4990,7 +4995,7 @@
     let forgeChanged = false;
     forgeSlots.forEach((slot, i) => {
         if (slot.state === 'forging') {
-            const r = jewelryRecipes[slot.item];
+            const r = jewelryRecipes[slot.item]; if (!r || !r.time) return;
             const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
             if (elapsedSec >= r.time) {
                 slot.state = 'ready';
@@ -5033,7 +5038,7 @@
     const slot = beds[bedIndex][slotIndex];
     if (slot.state === 'empty') { currentTargetSlot = { b: bedIndex, s: slotIndex }; window.openFieldSeedMenu(); } 
     else if (slot.state === 'growing') { window.openPlantStatus(bedIndex, slotIndex); } 
-    else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; inventory.crops[itemId]++; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); }
+    else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; if (!itemDef) return; inventory.crops[itemId] = (inventory.crops[itemId] || 0) + 1; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); }
   }
 
   window.harvestAll = async function() {
@@ -5061,11 +5066,12 @@
     }
   }
 
-  window.openPlantStatus = function(bedIndex, slotIndex) { 
-      currentStatusSlot = { b: bedIndex, s: slotIndex }; 
-      const slot = beds[bedIndex][slotIndex]; 
-      const itemDef = shopItems[slot.item]; 
-      document.getElementById('statusPlantIcon').textContent = itemDef.icon; 
+  window.openPlantStatus = function(bedIndex, slotIndex) {
+      currentStatusSlot = { b: bedIndex, s: slotIndex };
+      const slot = beds[bedIndex][slotIndex];
+      const itemDef = shopItems[slot.item];
+      if (!itemDef) return;
+      document.getElementById('statusPlantIcon').textContent = itemDef.icon;
       document.getElementById('statusPlantName').textContent = itemDef.name; 
       const elapsedSec = Math.floor((Date.now() - slot.plantedAt) / 1000); 
       const remainingSec = Math.max(0, itemDef.growTime - elapsedSec); 
