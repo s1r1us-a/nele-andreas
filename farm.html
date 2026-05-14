@@ -3695,14 +3695,16 @@
   }
 
   function getSpeciesZoneBounds(species) {
-    // yMin braucht extra Puffer: der Zone-Zaun hat translateY(-18px) und das
-    // Tier-Wrapper margin-top:-50px, sonst pokt der Tier-Kopf durch den Zaun.
+    // Puffer hält Kopf (oben) und Füße/Schatten (unten) deutlich vom Zaun weg.
+    // Größere Tiere (Kuh, Pferd) brauchen den Abstand wegen Scale + transform-origin bottom.
+    const TOP_PAD = 22;
+    const BOTTOM_PAD = 16;
     const list = getPresentSpecies();
     const idx  = list.indexOf(species);
-    if (idx === -1) return { yMin: ZONE_START + 14, yMax: ZONE_START + ZONE_HEIGHT - 6 };
+    if (idx === -1) return { yMin: ZONE_START + TOP_PAD, yMax: ZONE_START + ZONE_HEIGHT - BOTTOM_PAD };
     return {
-      yMin: ZONE_START + idx * ZONE_HEIGHT + 14,
-      yMax: ZONE_START + (idx + 1) * ZONE_HEIGHT - 6
+      yMin: ZONE_START + idx * ZONE_HEIGHT + TOP_PAD,
+      yMax: ZONE_START + (idx + 1) * ZONE_HEIGHT - BOTTOM_PAD
     };
   }
 
@@ -5953,11 +5955,8 @@
       else animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
       animals.forEach(a => {
         const zb = getSpeciesZoneBounds(a.species);
-        if (a.y < zb.yMin || a.y > zb.yMax) {
-          a.y = zb.yMin + Math.random() * (zb.yMax - zb.yMin);
-        }
-        if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
-        if (a.x > 95) a.x = 80 + Math.random() * 15;
+        a.y = Math.max(zb.yMin, Math.min(zb.yMax, typeof a.y === 'number' ? a.y : zb.yMin));
+        a.x = Math.max(5, Math.min(95, typeof a.x === 'number' ? a.x : 50));
       });
 
       const dataOven = data.oven;
