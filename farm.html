@@ -5951,6 +5951,14 @@
       if (!rawAnimals || rawAnimals === 0) animals = [];
       else if (Array.isArray(rawAnimals)) animals = rawAnimals.filter(a => a !== null && typeof a === 'object');
       else animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object');
+      animals.forEach(a => {
+        const zb = getSpeciesZoneBounds(a.species);
+        if (a.y < zb.yMin || a.y > zb.yMax) {
+          a.y = zb.yMin + Math.random() * (zb.yMax - zb.yMin);
+        }
+        if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
+        if (a.x > 95) a.x = 80 + Math.random() * 15;
+      });
 
       const dataOven = data.oven;
       if (dataOven) {
