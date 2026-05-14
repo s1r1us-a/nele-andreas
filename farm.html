@@ -5159,7 +5159,20 @@
     window.showSpecificModal('modalField');
   }
   window.plantSeed = async function(itemId) { if (inventory.seeds[itemId] > 0 && currentTargetSlot) { const b = currentTargetSlot.b; const s = currentTargetSlot.s; inventory.seeds[itemId]--; beds[b][s] = { state: 'growing', item: itemId, plantedAt: Date.now() }; document.getElementById(`slot-${b}-${s}`).innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: 0%"></div></div>`; await saveFarmData(); window.closeAllModals(); window.showToast(`Samen gepflanzt! 🌱`); } }
-  window.plantAllSeeds = async function(itemId) {
+  window.plantAllSeeds = function(itemId) {
+    if (isVisitMode) return;
+    if (!inventory.seeds[itemId] || inventory.seeds[itemId] <= 0) { window.showToast('Keine Samen vorhanden! 🌱'); return; }
+    const emptySlots = window.countEmptySlots();
+    if (emptySlots <= 0) { window.showToast('Keine freien Felder! 🌱'); return; }
+    const item = shopItems[itemId];
+    const canPlant = Math.min(inventory.seeds[itemId], emptySlots);
+    document.getElementById('confirmTitle').textContent = "Wirklich alles pflanzen?";
+    document.getElementById('confirmText').innerHTML = `Du pflanzt <b>${canPlant}x ${item.icon} ${item.name}</b> auf alle freien Felder.`;
+    document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" style="background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.doPlantAllSeeds('${itemId}')">Ja, pflanzen! 🌱</button><button class="btn-generic btn-cancel" onclick="window.openFieldSeedMenu()">Abbrechen</button>`;
+    window.showSpecificModal('modalConfirm');
+  }
+  window.doPlantAllSeeds = async function(itemId) {
+    if (isVisitMode) return;
     if (!inventory.seeds[itemId] || inventory.seeds[itemId] <= 0) { window.showToast('Keine Samen vorhanden! 🌱'); return; }
     let planted = 0;
     const now = Date.now();
@@ -5701,6 +5714,7 @@
     document.getElementById('btnShop').style.display = 'none';
     document.getElementById('btnInventory').style.display = 'none';
     document.getElementById('btnSell').style.display = 'none';
+    document.getElementById('btnHarvestAll').style.display = 'none';
     document.getElementById('btnVisit').style.display = 'none';
     document.getElementById('btnStall').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
@@ -5768,6 +5782,7 @@
     document.getElementById('btnShop').style.display = '';
     document.getElementById('btnInventory').style.display = '';
     document.getElementById('btnSell').style.display = '';
+    document.getElementById('btnHarvestAll').style.display = '';
     document.getElementById('btnVisit').style.display = 'flex';
     document.getElementById('btnStall').style.display = '';
     document.getElementById('topbarCoins').style.display = '';
