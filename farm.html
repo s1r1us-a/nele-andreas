@@ -1656,6 +1656,7 @@
     <button class="topbar-btn" id="btnInventory" onclick="openInventory()">🎒 <span>Inventar</span></button>
     <button class="topbar-btn" id="btnSell" onclick="openSell()">💰 <span>Verkauf</span></button>
     <button class="topbar-btn" id="btnHarvestAll" onclick="window.harvestAll()">🌾 <span>Alles ernten</span></button>
+    <button class="topbar-btn" id="btnFertilizeAll" onclick="window.fertilizeAll()">🪴 <span>Alles düngen</span></button>
     <div class="topbar-btn-wrap">
       <button class="topbar-btn" id="btnStall" onclick="window.openStall()">🐾 <span>Stall</span></button>
       <span id="stallBadge"></span>
@@ -5088,6 +5089,61 @@
     }
   }
 
+  window.fertilizeAll = function() {
+    if (isVisitMode) return;
+    let growingCount = 0;
+    for (let b = 0; b < unlockedBeds; b++) {
+      if (!beds[b]) continue;
+      for (let s = 0; s < beds[b].length; s++) {
+        const slot = beds[b][s];
+        if (slot && slot.state === 'growing') {
+          const itemDef = shopItems[slot.item];
+          if (!itemDef) continue;
+          const elapsedSec = Math.floor((Date.now() - slot.plantedAt) / 1000);
+          if (elapsedSec < itemDef.growTime) growingCount++;
+        }
+      }
+    }
+    if (growingCount <= 0) { window.showToast('Keine wachsenden Pflanzen zum Düngen. 🌱'); return; }
+    if (inventory.items.fertilizer <= 0) { window.showToast('Du hast keinen Dünger! 🪴'); return; }
+    const willUse = Math.min(inventory.items.fertilizer, growingCount);
+    document.getElementById('confirmTitle').textContent = "Alles düngen? 🪴";
+    document.getElementById('confirmText').innerHTML = `Du verwendest <b>${willUse}x Dünger</b> für <b>${willUse}</b> Pflanze${willUse > 1 ? 'n' : ''}, um die Wachstumszeit zu halbieren.<br><span style="font-size:12px; color:var(--text-mid);">Auf Lager: ${inventory.items.fertilizer}x · Wachsend: ${growingCount}</span>`;
+    document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-fert" onclick="window.doFertilizeAll()" style="margin-top:0;">Ja, alles düngen! 🪴</button><button class="btn-generic btn-cancel" onclick="window.closeAllModals()">Abbrechen</button>`;
+    window.showSpecificModal('modalConfirm');
+  }
+
+  window.doFertilizeAll = async function() {
+    if (isVisitMode) return;
+    let used = 0;
+    const now = Date.now();
+    for (let b = 0; b < unlockedBeds && inventory.items.fertilizer > 0; b++) {
+      if (!beds[b]) continue;
+      for (let s = 0; s < beds[b].length && inventory.items.fertilizer > 0; s++) {
+        const slot = beds[b][s];
+        if (!slot || slot.state !== 'growing') continue;
+        const itemDef = shopItems[slot.item];
+        if (!itemDef) continue;
+        const elapsedMs = now - slot.plantedAt;
+        const totalMs = itemDef.growTime * 1000;
+        const remainingMs = totalMs - elapsedMs;
+        if (remainingMs <= 0) continue;
+        const newRemainingMs = remainingMs / 2;
+        slot.plantedAt = now - (totalMs - newRemainingMs);
+        inventory.items.fertilizer--;
+        used++;
+      }
+    }
+    if (used > 0) {
+      await saveFarmData();
+      window.closeAllModals();
+      window.showToast(`🪴 ${used} Pflanze${used > 1 ? 'n' : ''} gedüngt!`);
+    } else {
+      window.closeAllModals();
+      window.showToast('Keine Pflanzen zum Düngen. 🌱');
+    }
+  }
+
   window.openPlantStatus = function(bedIndex, slotIndex) {
       currentStatusSlot = { b: bedIndex, s: slotIndex };
       const slot = beds[bedIndex][slotIndex];
@@ -5715,6 +5771,7 @@
     document.getElementById('btnInventory').style.display = 'none';
     document.getElementById('btnSell').style.display = 'none';
     document.getElementById('btnHarvestAll').style.display = 'none';
+    document.getElementById('btnFertilizeAll').style.display = 'none';
     document.getElementById('btnVisit').style.display = 'none';
     document.getElementById('btnStall').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
@@ -5783,6 +5840,7 @@
     document.getElementById('btnInventory').style.display = '';
     document.getElementById('btnSell').style.display = '';
     document.getElementById('btnHarvestAll').style.display = '';
+    document.getElementById('btnFertilizeAll').style.display = '';
     document.getElementById('btnVisit').style.display = 'flex';
     document.getElementById('btnStall').style.display = '';
     document.getElementById('topbarCoins').style.display = '';
