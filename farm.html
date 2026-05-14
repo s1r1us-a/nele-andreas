@@ -653,7 +653,8 @@
     .growth-bar { height: 100%; background: linear-gradient(90deg, #7ec850, #9be860); width: 0%; border-radius: 4px; transition: width 1s linear; }
 
     /* ── ANIMAL CONTAINER, ANIMATIONS & REWARD BUBBLE ── */
-    .animal-wrapper { position: absolute; left: 0; top: 0; transform-origin: bottom center; transition: transform 2s ease-in-out, filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+    .animal-wrapper { position: absolute; left: 0; top: 0; transform-origin: bottom center; transition: filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+    .animal-wrapper.is-walking { transition: transform 2s ease-in-out, filter 2s ease; }
     .animal-wrapper:active { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
     .rabbit { width: 40px; height: auto; position: relative; }
     .facing-left .rabbit { transform: scaleX(-1); }
@@ -3851,12 +3852,8 @@
       el.className = 'animal-wrapper';
       el.onclick = () => window.openAnimalStats(a.id);
       el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml;
-      // Skip transform transition for initial placement (avoid glide-in from origin)
-      el.style.transition = 'none';
       space.appendChild(el);
       a._el = el;
-      // Restore CSS-driven transition on next frame
-      requestAnimationFrame(() => { el.style.transition = ''; });
     } else {
       const currentProducing = el.getAttribute('data-producing') === 'true';
       const currentReady = el.getAttribute('data-ready') === 'true';
