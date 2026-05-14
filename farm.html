@@ -1201,6 +1201,238 @@
     body.low-fx .beehive-building::before { display: none; }
     body.low-fx .bakery-roof::before { display: none; }
     body.low-fx .bed::before { display: none; }
+
+    /* ════════════════════════════════════════════════════════════
+       MODAL REFRESH v2 — Bottom-Sheet + Sticky-Footer
+       Additiv: bestehende Modale bleiben funktional;
+       neue Optik per Cascade + opt-in Klassen.
+       ════════════════════════════════════════════════════════════ */
+
+    /* Overlay: stärkerer Blur + leicht warmer Tint */
+    .modal-overlay {
+      background: rgba(40, 20, 30, 0.42) !important;
+      backdrop-filter: blur(8px) saturate(1.15) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(1.15) !important;
+    }
+
+    /* Modal-Card Polish (Desktop) */
+    .modal-card {
+      box-shadow:
+        0 20px 60px rgba(40, 20, 30, 0.22),
+        0 2px 8px rgba(0,0,0,0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+      border: 1.5px solid rgba(232, 115, 138, 0.22) !important;
+    }
+
+    /* Close-Button: größer, weicher, klar tappbar */
+    .close-btn {
+      width: 34px !important; height: 34px !important;
+      top: 12px !important; right: 12px !important;
+      font-size: 17px !important;
+      background: linear-gradient(135deg, #fde8ed, #fce0e7) !important;
+      box-shadow: 0 2px 8px rgba(232,115,138,0.25), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+      transition: transform 0.15s, box-shadow 0.15s !important;
+      z-index: 5;
+    }
+    .close-btn:hover { transform: scale(1.08); }
+    .close-btn:active { transform: scale(0.92); }
+
+    /* Title-Polish — sanft animierter Gradient */
+    .modal-title {
+      background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%, var(--rose-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Pill-Tabs (Tradehouse, Bakery, Forge — alle die diese Klassen nutzen) */
+    .trade-tabs {
+      background: rgba(0, 0, 0, 0.05) !important;
+      border-radius: 999px !important;
+      padding: 4px !important;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .trade-tab {
+      border-radius: 999px !important;
+      padding: 9px 8px !important;
+      transition: all 0.2s !important;
+      color: var(--text-mid) !important;
+      font-weight: 700 !important;
+    }
+    .trade-tab.active {
+      background: linear-gradient(135deg, #fff 0%, #fce8f0 100%) !important;
+      color: var(--rose) !important;
+      box-shadow: 0 3px 10px rgba(232, 115, 138, 0.22), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+      transform: translateY(-1px);
+    }
+    .shop-tabs {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 0 !important;
+      margin-bottom: 14px;
+    }
+    .shop-tab {
+      flex: 1;
+      border: none !important;
+      border-radius: 999px !important;
+      padding: 9px 10px !important;
+      background: transparent !important;
+      transition: all 0.2s !important;
+    }
+    .shop-tab.active {
+      background: linear-gradient(135deg, #fff 0%, #fce8f0 100%) !important;
+      box-shadow: 0 3px 10px rgba(232,115,138,0.22), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+    }
+
+    /* Item-Rows: weichere Optik */
+    .item-row {
+      background: rgba(255, 255, 255, 0.75) !important;
+      border: 1.5px solid rgba(0, 0, 0, 0.06) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .item-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-color: var(--rose-light) !important; }
+
+    /* Primär-Buttons: größerer Tap-Bereich + Highlight */
+    .btn-buy, .trade-send-btn, .trade-inbox-accept, .sell-confirm-yes, .sell-qty-yes {
+      min-height: 44px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── OPT-IN FLEX-LAYOUT (header/body/footer) ──
+       Aktiviert sich automatisch bei Modalen mit .has-footer Klasse */
+    .modal-card.has-footer {
+      padding: 0 !important;
+      display: none;
+      flex-direction: column;
+      overflow: hidden !important; /* body scrollt, nicht die Karte */
+      max-height: 88vh;
+      max-height: 88dvh;
+    }
+    .modal-overlay.active .modal-card.has-footer.active { display: flex; }
+
+    .modal-card-header {
+      flex-shrink: 0;
+      padding: 20px 20px 12px;
+      background: linear-gradient(180deg, rgba(255,248,240,0.96) 0%, rgba(255,248,240,0.86) 100%);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+    .modal-card-header .modal-title { margin-bottom: 12px; }
+    .modal-card-header .trade-tabs,
+    .modal-card-header .shop-tabs { margin-bottom: 0 !important; }
+
+    .modal-card-body {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 14px 20px 16px;
+      max-height: none !important; /* überschreibt evtl. inline 60vh */
+    }
+    .modal-card-body::-webkit-scrollbar { width: 6px; }
+    .modal-card-body::-webkit-scrollbar-thumb { background: rgba(232,115,138,0.3); border-radius: 3px; }
+
+    .modal-card-footer {
+      flex-shrink: 0;
+      padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+      background: linear-gradient(0deg, rgba(255, 248, 240, 0.98) 0%, rgba(255, 248, 240, 0.88) 100%);
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .modal-card-footer:empty { display: none; }
+    .modal-card-footer .trade-send-btn { margin-top: 0 !important; }
+
+    /* ── MOBILE BOTTOM-SHEET (≤ 540px) ── */
+    @media (max-width: 540px) {
+      .modal-overlay {
+        padding: 0 !important;
+        align-items: flex-end !important;
+      }
+      .modal-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: 92vh !important;
+        max-height: 92dvh !important;
+        border-radius: 24px 24px 0 0 !important;
+        border-bottom: none !important;
+        margin: 0;
+        /* Slide-up von unten */
+        transform: translateY(100%) !important;
+        transition: transform 0.32s cubic-bezier(0.32, 0.72, 0.24, 1) !important;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .modal-overlay.active .modal-card.active {
+        transform: translateY(0) !important;
+      }
+      /* Drag-Handle (visuell, kein echtes Dragging) */
+      .modal-card::before {
+        content: '';
+        position: absolute;
+        top: 8px; left: 50%;
+        transform: translateX(-50%);
+        width: 42px; height: 4px;
+        border-radius: 2px;
+        background: rgba(0, 0, 0, 0.18);
+        z-index: 4;
+        pointer-events: none;
+      }
+      /* Standard-Modal (ohne has-footer): mehr Platz, Drag-Handle mit Abstand */
+      .modal-card:not(.has-footer) {
+        padding-top: 26px !important;
+      }
+      .modal-card.has-footer { padding-bottom: env(safe-area-inset-bottom) !important; }
+      .modal-card.has-footer .modal-card-header { padding-top: 26px; }
+      /* Close-Button rechts oben — etwas mehr Platz vom Handle */
+      .close-btn {
+        width: 38px !important; height: 38px !important;
+        font-size: 19px !important;
+        top: 14px !important; right: 14px !important;
+      }
+      /* Modal-Title etwas kleiner für mehr Inhalt */
+      .modal-title { font-size: 22px !important; }
+    }
+
+    /* ── SUB-SHEETS (sell-qty, sell-confirm, send-confirm) ── */
+    .sell-confirm-overlay, .sell-qty-overlay {
+      background: rgba(40, 20, 30, 0.42) !important;
+      backdrop-filter: blur(8px) saturate(1.15) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(1.15) !important;
+      padding: 0 !important;
+    }
+    .sell-confirm-sheet, .sell-qty-sheet {
+      border-radius: 24px 24px 0 0 !important;
+      max-width: 460px !important;
+      padding: 26px 22px max(20px, env(safe-area-inset-bottom)) !important;
+      box-shadow: 0 -10px 50px rgba(40, 20, 30, 0.25), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+      position: relative;
+    }
+    .sell-confirm-sheet::before, .sell-qty-sheet::before {
+      content: '';
+      position: absolute;
+      top: 8px; left: 50%;
+      transform: translateX(-50%);
+      width: 42px; height: 4px;
+      border-radius: 2px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .sell-confirm-btns button, .sell-qty-yes, .sell-qty-no {
+      min-height: 50px !important;
+      font-size: 15px !important;
+    }
+
+    /* Low-FX-Modus */
+    body.low-fx .modal-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(40,20,30,0.6) !important; }
+    body.low-fx .sell-confirm-overlay, body.low-fx .sell-qty-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(40,20,30,0.6) !important; }
+    body.low-fx .modal-card { transition: transform 0.18s ease !important; }
+    @media (prefers-reduced-motion: reduce) {
+      .modal-card { transition: opacity 0.15s ease !important; transform: none !important; }
+      .modal-overlay.active .modal-card.active { transform: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -2108,15 +2340,18 @@
   </div>
 
   <!-- HANDELSHAUS MODAL -->
-  <div class="modal-card" id="modalTradeHouse" onclick="event.stopPropagation()" style="max-width:420px;width:95%;">
+  <div class="modal-card has-footer" id="modalTradeHouse" onclick="event.stopPropagation()" style="max-width:460px;width:95%;">
     <button class="close-btn" onclick="closeAllModals()">✕</button>
-    <div class="modal-title">🤝 Handelshaus</div>
-    <div class="trade-tabs" id="tradeTabs">
-      <button class="trade-tab active" onclick="window.switchTradeTab('send')">🎁 Schenken</button>
-      <button class="trade-tab" onclick="window.switchTradeTab('trade')">🤝 Handel</button>
-      <button class="trade-tab" onclick="window.switchTradeTab('inbox')">📬 Eingegangen <span id="inboxCount" style="background:#ef4444;color:#fff;border-radius:50%;padding:1px 5px;font-size:11px;margin-left:4px;display:none"></span></button>
+    <div class="modal-card-header">
+      <div class="modal-title">🤝 Handelshaus</div>
+      <div class="trade-tabs" id="tradeTabs">
+        <button class="trade-tab active" onclick="window.switchTradeTab('send')">🎁 Schenken</button>
+        <button class="trade-tab" onclick="window.switchTradeTab('trade')">🤝 Handel</button>
+        <button class="trade-tab" onclick="window.switchTradeTab('inbox')">📬 Eingegangen <span id="inboxCount" style="background:#ef4444;color:#fff;border-radius:50%;padding:1px 5px;font-size:11px;margin-left:4px;display:none"></span></button>
+      </div>
     </div>
-    <div id="tradeContent" style="max-height:60vh;overflow-y:auto;padding:4px 0;"></div>
+    <div class="modal-card-body" id="tradeContent"></div>
+    <div class="modal-card-footer" id="tradeFooter"></div>
   </div>
 
   <!-- HANDEL BESTÄTIGEN MODAL -->
@@ -5334,15 +5569,15 @@
   };
 
   window.renderTradeContent = function() {
-    const el = document.getElementById('tradeContent');
-    if (!el) return;
-    if (currentTradeTabState === 'send') {
-      el.innerHTML = renderSendTab();
-    } else if (currentTradeTabState === 'trade') {
-      el.innerHTML = renderTradeTab();
-    } else {
-      el.innerHTML = renderInboxTab();
-    }
+    const body = document.getElementById('tradeContent');
+    const footer = document.getElementById('tradeFooter');
+    if (!body) return;
+    let result;
+    if (currentTradeTabState === 'send') result = renderSendTab();
+    else if (currentTradeTabState === 'trade') result = renderTradeTab();
+    else result = renderInboxTab();
+    body.innerHTML = result.body || '';
+    if (footer) footer.innerHTML = result.footer || '';
   };
 
   // ── TRADE: neue State-Struktur mit Steppern ──
@@ -5491,26 +5726,30 @@
     const otherName = getOtherName();
     const activeCat = giftActiveCat;
     const hasItems = TRADE_CATS.some(c => c.items().some(id => getInventoryQty(c.key, id) > 0));
-    if (!hasItems) return `<div class="trade-empty-state"><div>🌾</div><div>Kein Inventar zum Verschenken</div></div>`;
-    return `
-      ${renderPanel('gift', '🎁 Für ' + otherName, 'trade-panel-offer', activeCat)}
-      <input id="giftMessage" type="text" maxlength="60" placeholder="💬 Optionale Nachricht…" class="trade-msg-input" style="margin-top:4px;">
-      <button id="giftSendBtn" class="trade-send-btn green" onclick="window.openGiftSendConfirm()">🎁 Senden an ${otherName}</button>`;
+    if (!hasItems) return { body: `<div class="trade-empty-state"><div>🌾</div><div>Kein Inventar zum Verschenken</div></div>`, footer: '' };
+    return {
+      body: `
+        ${renderPanel('gift', '🎁 Für ' + otherName, 'trade-panel-offer', activeCat)}
+        <input id="giftMessage" type="text" maxlength="60" placeholder="💬 Optionale Nachricht…" class="trade-msg-input" style="margin-top:4px;">`,
+      footer: `<button id="giftSendBtn" class="trade-send-btn green" onclick="window.openGiftSendConfirm()">🎁 Senden an ${otherName}</button>`
+    };
   }
 
   function renderTradeTab() {
     const otherName = getOtherName();
-    return `
-      ${renderPanel('offer', '✅ Ich biete', 'trade-panel-offer', offerActiveCat)}
-      ${renderPanel('request', '❓ Ich möchte von ' + otherName, 'trade-panel-request', requestActiveCat, true)}
-      <button id="tradeSendBtn" class="trade-send-btn" onclick="window.openTradeSendConfirm()">🤝 Handelsangebot senden</button>`;
+    return {
+      body: `
+        ${renderPanel('offer', '✅ Ich biete', 'trade-panel-offer', offerActiveCat)}
+        ${renderPanel('request', '❓ Ich möchte von ' + otherName, 'trade-panel-request', requestActiveCat, true)}`,
+      footer: `<button id="tradeSendBtn" class="trade-send-btn" onclick="window.openTradeSendConfirm()">🤝 Handelsangebot senden</button>`
+    };
   }
 
   function renderInboxTab() {
     const myTrades = Object.entries(pendingTrades).filter(([,t]) => t.toUser === userKey && t.status === 'pending');
     const myGifts = Object.entries(pendingGifts);
     if (!myGifts.length && !myTrades.length) {
-      return `<div class="trade-empty-state"><div>📭</div><div>Keine Nachrichten</div></div>`;
+      return { body: `<div class="trade-empty-state"><div>📭</div><div>Keine Nachrichten</div></div>`, footer: '' };
     }
     let html = '';
     myGifts.forEach(([id, g]) => {
@@ -5533,7 +5772,7 @@
         </div>
       </div>`;
     });
-    return html;
+    return { body: html, footer: '' };
   }
 
   window._removeBasketItem = function() {}; // legacy – nicht mehr gebraucht
