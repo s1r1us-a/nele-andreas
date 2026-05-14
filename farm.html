@@ -2981,7 +2981,6 @@
           merchant = (data.merchant && typeof data.merchant === 'object')
             ? { lastVisitDate: data.merchant.lastVisitDate || '', offerDate: data.merchant.offerDate || '', offer: Array.isArray(data.merchant.offer) ? data.merchant.offer : [] }
             : { lastVisitDate: '', offerDate: '', offer: [] };
-          refreshMerchant();
 
           if (beehive.level > 0 && !beehive.isProducing && !beehive.rewardReady) {
               beehive.isProducing = true;
@@ -3032,6 +3031,7 @@
           if (farmFirstLoad) saveFarmData();
         }
         farmFirstLoad = false;
+        refreshMerchant();
         updateFarmDOM();
       });
 
