@@ -489,7 +489,7 @@
     .tradehouse-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; z-index: 50; border: 2px solid #fff; }
 
     /* ── FAHRENDER HÄNDLER NPC ── */
-    .merchant-wrapper { position: absolute; top: 72%; left: 50%; width: 64px; height: 96px; margin-left: -32px; margin-top: -96px; cursor: pointer; z-index: 56; touch-action: manipulation; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.22)); animation: merchantBob 2.6s ease-in-out infinite; transition: filter 2s ease; }
+    .merchant-wrapper { position: absolute; top: 0; left: 50%; width: 64px; height: 96px; margin-left: -32px; cursor: pointer; z-index: 56; touch-action: manipulation; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.22)); animation: merchantBob 2.6s ease-in-out infinite; transition: filter 2s ease; }
     .merchant-wrapper:active { transform: scale(0.94); filter: drop-shadow(0 0 10px rgba(255,255,255,0.7)) drop-shadow(0 6px 6px rgba(0,0,0,0.22)); }
     .merchant-wrapper svg { display: block; width: 100%; height: 100%; overflow: visible; }
     .night-mode .merchant-wrapper { filter: brightness(0.72) drop-shadow(0 6px 6px rgba(0,0,0,0.3)); }
@@ -4278,7 +4278,21 @@
       el.dataset.rendered = '1';
     }
     el.style.display = 'block';
+    positionMerchant();
   }
+
+  function positionMerchant() {
+    const el = document.getElementById('merchantNPC');
+    const beds = document.getElementById('bedsContainer');
+    const fw = document.getElementById('farmWorld');
+    if (!el || !beds || !fw) return;
+    const bedsRect = beds.getBoundingClientRect();
+    const fwRect = fw.getBoundingClientRect();
+    const bottomPx = bedsRect.bottom - fwRect.top + fw.scrollTop;
+    el.style.top = (bottomPx + 14) + 'px';
+  }
+
+  window.addEventListener('resize', () => { if (document.getElementById('merchantNPC')?.style.display === 'block') positionMerchant(); });
 
   function getMerchantSVG() {
     return `
