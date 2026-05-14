@@ -1086,15 +1086,33 @@
       filter: brightness(0.65) drop-shadow(0 0 8px rgba(255,140,60,0.3)) drop-shadow(0 8px 6px rgba(0,0,0,0.35)) !important;
     }
 
-    /* Bienen-Partikel beim Beehive */
-    .beehive-building::before {
-      content: '🐝';
-      position: absolute; top: -8px; right: -4px; font-size: 9px;
-      animation: beeBuzz 2.4s ease-in-out infinite;
-      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
-      pointer-events: none; opacity: 0.85;
+    /* Bienen am Bienenstock (SVG-Bienen werden animiert) */
+    @keyframes hiveBeeFly1 {
+      0%,100% { transform: translate(38px, 26px); }
+      25%     { transform: translate(46px, 16px) rotate(8deg); }
+      50%     { transform: translate(54px, 22px) rotate(-4deg); }
+      75%     { transform: translate(44px, 32px) rotate(6deg); }
     }
-    body.night-mode .beehive-building::before { opacity: 0; }
+    @keyframes hiveBeeFly2 {
+      0%,100% { transform: translate(12px, 38px); }
+      30%     { transform: translate(2px, 32px) rotate(-10deg); }
+      60%     { transform: translate(-2px, 42px) rotate(6deg); }
+    }
+    @keyframes hiveBeeFly3 {
+      0%,100% { transform: translate(28px, 14px); }
+      20%     { transform: translate(32px, 2px) rotate(4deg); }
+      55%     { transform: translate(22px, 0px) rotate(-6deg); }
+      80%     { transform: translate(36px, 6px) rotate(8deg); }
+    }
+    .hive-bee { transform-box: fill-box; transform-origin: center; }
+    .hive-bee-1 { animation: hiveBeeFly1 3.2s ease-in-out infinite; }
+    .hive-bee-2 { animation: hiveBeeFly2 2.6s ease-in-out infinite 0.4s; }
+    .hive-bee-3 { animation: hiveBeeFly3 4s ease-in-out infinite 1.2s; }
+    body.night-mode .hive-bee { opacity: 0.25; animation: none; transform: translate(38px, 26px); }
+    body.low-fx .hive-bee { animation: none; }
+    body.low-fx .hive-bee-1 { transform: translate(38px, 26px); }
+    body.low-fx .hive-bee-2 { transform: translate(12px, 38px); }
+    body.low-fx .hive-bee-3 { transform: translate(28px, 14px); }
 
     /* ── TIERE: Schatten + Glanz ── */
     .animal-wrapper {
@@ -1522,12 +1540,7 @@
       <rect x="45" y="36" width="17" height="13" rx="1.5" fill="none" stroke="#6aacde" stroke-width="0.8"/>
       <line x1="53.5" y1="36" x2="53.5" y2="49" stroke="#6aacde" stroke-width="0.7"/>
       <line x1="45" y1="42.5" x2="62" y2="42.5" stroke="#6aacde" stroke-width="0.7"/>
-      <!-- Market sign board -->
-      <rect x="13" y="51" width="44" height="13" rx="2.5" fill="#142860"/>
-      <rect x="13" y="51" width="44" height="13" rx="2.5" fill="none" stroke="#e8a020" stroke-width="1"/>
-      <rect x="15" y="53" width="40" height="9" rx="1.5" fill="none" stroke="#e8a020" stroke-width="0.5" opacity="0.5"/>
-      <text x="35" y="61" text-anchor="middle" font-size="6" fill="#ffd060" font-family="serif" font-weight="bold" letter-spacing="1">MARKT</text>
-      <!-- Arched door -->
+      <!-- Arched door (vor dem Schild zeichnen) -->
       <path d="M26,78 L26,66 Q26,59 35,59 Q44,59 44,66 L44,78 Z" fill="#7a5210"/>
       <path d="M26,65 Q26,59 35,59 Q44,59 44,65" fill="#8f6420"/>
       <line x1="35" y1="59" x2="35" y2="78" stroke="#5a3c0e" stroke-width="0.8"/>
@@ -1535,6 +1548,11 @@
       <circle cx="37" cy="71" r="1.5" fill="#e8a020"/>
       <!-- Step -->
       <rect x="22" y="76" width="26" height="2.5" rx="1" fill="#c8b890"/>
+      <!-- Market sign board (über der Tür, danach gezeichnet → liegt oben) -->
+      <rect x="11" y="50" width="48" height="11" rx="2.5" fill="#142860"/>
+      <rect x="11" y="50" width="48" height="11" rx="2.5" fill="none" stroke="#e8a020" stroke-width="1"/>
+      <rect x="13" y="51.5" width="44" height="8" rx="1.2" fill="none" stroke="#e8a020" stroke-width="0.5" opacity="0.5"/>
+      <text x="35" y="58" text-anchor="middle" font-size="6.4" fill="#ffd060" font-family="serif" font-weight="bold" letter-spacing="1">MARKT</text>
     </svg>
   </div>
 
@@ -1628,12 +1646,17 @@
         <path d="M 4.5 -2 L 3 -1 L 4.5 0 Z" fill="#9ca3af"/>
       </g>
 
-      <!-- Hanging "MINE" sign -->
-      <line x1="55" y1="20" x2="55" y2="26" stroke="#4a2406" stroke-width="0.9"/>
-      <line x1="67" y1="20" x2="67" y2="26" stroke="#4a2406" stroke-width="0.9"/>
-      <rect x="50" y="26" width="22" height="12" rx="2.5" fill="#7a3e0c" stroke="#4a2406" stroke-width="0.8"/>
-      <rect x="51.2" y="27.2" width="19.6" height="9.6" rx="1.5" fill="#9c5418"/>
-      <text x="61" y="34" text-anchor="middle" font-size="5.6" fill="#fde68a" font-family="serif" font-weight="bold">MINE</text>
+      <!-- Hanging "MINE" sign — hängt von einem Holzausleger am rechten Pfosten -->
+      <!-- Ausleger -->
+      <rect x="56" y="42" width="16" height="2.2" rx="0.5" fill="#7a3e0c"/>
+      <rect x="56" y="42" width="16" height="0.8" fill="#9c5418"/>
+      <!-- Kettchen -->
+      <line x1="60" y1="44" x2="60" y2="49" stroke="#3a1f08" stroke-width="0.7"/>
+      <line x1="68" y1="44" x2="68" y2="49" stroke="#3a1f08" stroke-width="0.7"/>
+      <!-- Schild -->
+      <rect x="55" y="49" width="18" height="11" rx="2" fill="#7a3e0c" stroke="#4a2406" stroke-width="0.8"/>
+      <rect x="56.2" y="50.2" width="15.6" height="8.6" rx="1.2" fill="#9c5418"/>
+      <text x="64" y="56.4" text-anchor="middle" font-size="5.2" fill="#fde68a" font-family="serif" font-weight="bold" letter-spacing="0.3">MINE</text>
     </svg>
   </div>
 
@@ -1743,12 +1766,7 @@
       <ellipse cx="29" cy="68" rx="4" ry="1.4" fill="rgba(255,255,255,0.18)"/>
       <ellipse cx="65" cy="68" rx="3.5" ry="1.2" fill="rgba(255,255,255,0.15)"/>
 
-      <!-- Sign band -->
-      <rect x="16" y="82" width="58" height="11" fill="#4c1d95"/>
-      <rect x="16" y="82" width="58" height="11" fill="none" stroke="#fbbf24" stroke-width="1.2"/>
-      <text x="45" y="90.5" text-anchor="middle" font-size="6.8" fill="#fde68a" font-family="serif" font-weight="bold" letter-spacing="0.5">SCHMUCK</text>
-
-      <!-- Arched door -->
+      <!-- Arched door (vor dem Schild zeichnen) -->
       <path d="M 34 105 L 34 96 Q 34 88 45 88 Q 56 88 56 96 L 56 105 Z" fill="#1e0a3c"/>
       <path d="M 36 105 L 36 97 Q 36 90 45 90 Q 54 90 54 97 L 54 105 Z" fill="#0f0524"/>
       <path d="M 34 105 L 34 96 Q 34 88 45 88 Q 56 88 56 96 L 56 105" fill="none" stroke="#fbbf24" stroke-width="1.1"/>
@@ -1756,6 +1774,11 @@
       <!-- Doorknob -->
       <circle cx="52" cy="98" r="1.6" fill="#fbbf24"/>
       <circle cx="51.6" cy="97.6" r="0.6" fill="#fef3c7"/>
+
+      <!-- Sign band (über der Tür, danach gezeichnet → liegt oben) -->
+      <rect x="14" y="81" width="62" height="10" rx="1.2" fill="#4c1d95"/>
+      <rect x="14" y="81" width="62" height="10" rx="1.2" fill="none" stroke="#fbbf24" stroke-width="1.2"/>
+      <text x="45" y="88.4" text-anchor="middle" font-size="6.8" fill="#fde68a" font-family="serif" font-weight="bold" letter-spacing="0.6">SCHMUCK</text>
 
       <!-- Floating sparkle stars around the building -->
       <polygon points="3,40 4.1,43 7,43 4.7,44.8 5.7,47.7 3,46 0.3,47.7 1.3,44.8 -1,43 1.9,43" fill="#fbbf24" opacity="0.85"/>
@@ -3016,34 +3039,91 @@
   function getBeehiveSVG() {
     return `
     <div style="position:relative; width:100%; height:100%;">
-      <svg viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
-        <path d="M 14 56 L 38 56 L 40 60 L 12 60 Z" fill="#d4a061"/>
-        <path d="M 16 50 L 36 50 L 38 56 L 14 56 Z" fill="#c8975a"/>
-        <path d="M 18 44 L 34 44 L 36 50 L 16 50 Z" fill="#d4a061"/>
-        <path d="M 20 38 L 32 38 L 34 44 L 18 44 Z" fill="#c8975a"/>
-        <path d="M 22 34 L 30 34 L 32 38 L 20 38 Z" fill="#d4a061"/>
-        <circle cx="26" cy="50" r="4" fill="#4a2030"/>
-        
-        <g class="ear-left">
-          <ellipse cx="12" cy="28" rx="5" ry="4" fill="#fbbf24"/>
-          <path d="M 8 26 L 16 26 M 7 28 L 17 28 M 8 30 L 16 30" stroke="#4a2030" stroke-width="1.5"/>
-          <ellipse cx="10" cy="24" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(-30 10 24)"/>
-          <ellipse cx="14" cy="24" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(30 14 24)"/>
+      <svg viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%; overflow:visible;">
+        <!-- Bodenschatten -->
+        <ellipse cx="26" cy="61" rx="20" ry="2.5" fill="rgba(0,0,0,0.22)"/>
+
+        <!-- Landeplattform -->
+        <rect x="6" y="56" width="40" height="4" rx="1" fill="#8e5a32"/>
+        <rect x="6" y="56" width="40" height="1.2" fill="#a87044"/>
+        <line x1="14" y1="56" x2="14" y2="60" stroke="#5a3520" stroke-width="0.3" opacity="0.6"/>
+        <line x1="26" y1="56" x2="26" y2="60" stroke="#5a3520" stroke-width="0.3" opacity="0.6"/>
+        <line x1="38" y1="56" x2="38" y2="60" stroke="#5a3520" stroke-width="0.3" opacity="0.6"/>
+
+        <!-- Bottom Super -->
+        <rect x="10" y="44" width="32" height="12" rx="1.2" fill="#d4a061" stroke="#6b4020" stroke-width="0.8"/>
+        <rect x="10" y="44" width="32" height="2" fill="#a87044" opacity="0.5"/>
+        <line x1="10" y1="48" x2="42" y2="48" stroke="#6b4020" stroke-width="0.4" opacity="0.6"/>
+        <line x1="10" y1="52" x2="42" y2="52" stroke="#6b4020" stroke-width="0.4" opacity="0.6"/>
+        <line x1="16" y1="44" x2="16" y2="56" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="22" y1="44" x2="22" y2="56" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="28" y1="44" x2="28" y2="56" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="34" y1="44" x2="34" y2="56" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <!-- Eingangsschlitz -->
+        <rect x="20" y="53.4" width="12" height="2.2" rx="0.8" fill="#2a1408"/>
+        <rect x="20" y="53.4" width="12" height="0.6" fill="#0a0402"/>
+
+        <!-- Middle Super -->
+        <rect x="9" y="32" width="34" height="12" rx="1.2" fill="#c8975a" stroke="#6b4020" stroke-width="0.8"/>
+        <rect x="9" y="32" width="34" height="2" fill="#a87044" opacity="0.5"/>
+        <line x1="9" y1="36" x2="43" y2="36" stroke="#6b4020" stroke-width="0.4" opacity="0.6"/>
+        <line x1="9" y1="40" x2="43" y2="40" stroke="#6b4020" stroke-width="0.4" opacity="0.6"/>
+        <line x1="15" y1="32" x2="15" y2="44" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="21" y1="32" x2="21" y2="44" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="27" y1="32" x2="27" y2="44" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="33" y1="32" x2="33" y2="44" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+        <line x1="37" y1="32" x2="37" y2="44" stroke="#5a3520" stroke-width="0.3" opacity="0.45"/>
+
+        <!-- Top Super mit sichtbarer Honigwabe -->
+        <rect x="8" y="20" width="36" height="12" rx="1.2" fill="#d4a061" stroke="#6b4020" stroke-width="0.8"/>
+        <rect x="8" y="20" width="36" height="2" fill="#a87044" opacity="0.5"/>
+        <line x1="8" y1="24" x2="44" y2="24" stroke="#6b4020" stroke-width="0.4" opacity="0.6"/>
+        <!-- Wabenfenster -->
+        <rect x="18" y="23.5" width="16" height="6.5" rx="0.6" fill="#fbbf24" stroke="#92400e" stroke-width="0.4"/>
+        <polygon points="20.5,25 22.5,25 23.5,26 22.5,27 20.5,27 19.5,26" fill="#fcd34d" stroke="#92400e" stroke-width="0.2"/>
+        <polygon points="24,25 26,25 27,26 26,27 24,27 23,26" fill="#fde68a" stroke="#92400e" stroke-width="0.2"/>
+        <polygon points="27.5,25 29.5,25 30.5,26 29.5,27 27.5,27 26.5,26" fill="#fcd34d" stroke="#92400e" stroke-width="0.2"/>
+        <polygon points="20.5,27.5 22.5,27.5 23.5,28.5 22.5,29.5 20.5,29.5 19.5,28.5" fill="#fde68a" stroke="#92400e" stroke-width="0.2"/>
+        <polygon points="24,27.5 26,27.5 27,28.5 26,29.5 24,29.5 23,28.5" fill="#fcd34d" stroke="#92400e" stroke-width="0.2"/>
+        <polygon points="27.5,27.5 29.5,27.5 30.5,28.5 29.5,29.5 27.5,29.5 26.5,28.5" fill="#fde68a" stroke="#92400e" stroke-width="0.2"/>
+        <!-- Honigtropfen-Glanz -->
+        <circle cx="25" cy="26.5" r="0.4" fill="#fff8dc"/>
+
+        <!-- Spitzdach -->
+        <polygon points="4,21 26,8 48,21" fill="#7a3e0c"/>
+        <polygon points="6,20.5 26,10 46,20.5" fill="#9c5418"/>
+        <rect x="4" y="20" width="44" height="2.4" rx="0.5" fill="#5a2c08"/>
+        <!-- Dachfirst-Highlight -->
+        <line x1="6" y1="20.2" x2="46" y2="20.2" stroke="#bd6f2a" stroke-width="0.5" opacity="0.6"/>
+        <!-- Dachziegel-Streifen -->
+        <line x1="10" y1="16" x2="42" y2="16" stroke="#5a2c08" stroke-width="0.3" opacity="0.5"/>
+        <line x1="13" y1="13" x2="39" y2="13" stroke="#5a2c08" stroke-width="0.3" opacity="0.4"/>
+
+        <!-- Finial (kleine Honig-Kugel auf dem Dach) -->
+        <rect x="25.2" y="5" width="1.6" height="4" fill="#5a2c08"/>
+        <circle cx="26" cy="4.5" r="1.6" fill="#fbbf24" stroke="#92400e" stroke-width="0.3"/>
+        <circle cx="25.6" cy="4.1" r="0.5" fill="#fef3c7"/>
+
+        <!-- Fliegende Bienen -->
+        <g class="hive-bee hive-bee-1">
+          <ellipse cx="0" cy="0" rx="1.8" ry="1.2" fill="#fde047" stroke="#1a1a1a" stroke-width="0.2"/>
+          <line x1="-1.2" y1="-0.3" x2="1.2" y2="-0.3" stroke="#1a1a1a" stroke-width="0.45"/>
+          <line x1="-1.2" y1="0.5" x2="1.2" y2="0.5" stroke="#1a1a1a" stroke-width="0.45"/>
+          <ellipse cx="-0.4" cy="-1" rx="1.2" ry="0.7" fill="#e0f2fe" opacity="0.85"/>
+          <ellipse cx="0.6" cy="-1" rx="1" ry="0.6" fill="#e0f2fe" opacity="0.85"/>
         </g>
-        <g class="ear-right">
-          <ellipse cx="40" cy="30" rx="5" ry="4" fill="#fbbf24"/>
-          <path d="M 36 28 L 44 28 M 35 30 L 45 30 M 36 32 L 44 32" stroke="#4a2030" stroke-width="1.5"/>
-          <ellipse cx="38" cy="26" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(-30 38 26)"/>
-          <ellipse cx="42" cy="26" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(30 42 26)"/>
+        <g class="hive-bee hive-bee-2">
+          <ellipse cx="0" cy="0" rx="1.5" ry="1" fill="#fde047" stroke="#1a1a1a" stroke-width="0.2"/>
+          <line x1="-1" y1="-0.2" x2="1" y2="-0.2" stroke="#1a1a1a" stroke-width="0.4"/>
+          <line x1="-1" y1="0.4" x2="1" y2="0.4" stroke="#1a1a1a" stroke-width="0.4"/>
+          <ellipse cx="0" cy="-0.9" rx="1" ry="0.6" fill="#e0f2fe" opacity="0.85"/>
         </g>
-        <g class="tail">
-          <ellipse cx="26" cy="16" rx="5" ry="4" fill="#fbbf24"/>
-          <path d="M 22 14 L 30 14 M 21 16 L 31 16 M 22 18 L 30 18" stroke="#4a2030" stroke-width="1.5"/>
-          <ellipse cx="24" cy="12" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(-30 24 12)"/>
-          <ellipse cx="28" cy="12" rx="2.5" ry="4" fill="#b8e4f7" opacity="0.8" transform="rotate(30 28 12)"/>
+        <g class="hive-bee hive-bee-3">
+          <ellipse cx="0" cy="0" rx="1.6" ry="1.1" fill="#fde047" stroke="#1a1a1a" stroke-width="0.2"/>
+          <line x1="-1.1" y1="-0.2" x2="1.1" y2="-0.2" stroke="#1a1a1a" stroke-width="0.4"/>
+          <ellipse cx="-0.3" cy="-0.9" rx="1" ry="0.6" fill="#e0f2fe" opacity="0.85"/>
         </g>
       </svg>
-      <div class="rabbit-shadow" style="bottom:-5px;"></div>
     </div>`;
   }
 
