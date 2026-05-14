@@ -4913,6 +4913,7 @@
             }
         });
         if(bakeryChanged) {
+            saveFarmData();
             updateFarmDOM();
         }
     }
@@ -5033,7 +5034,7 @@
     const slot = beds[bedIndex][slotIndex];
     if (slot.state === 'empty') { currentTargetSlot = { b: bedIndex, s: slotIndex }; window.openFieldSeedMenu(); } 
     else if (slot.state === 'growing') { window.openPlantStatus(bedIndex, slotIndex); } 
-    else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; inventory.crops[itemId]++; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); }
+    else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; inventory.crops[itemId] = (inventory.crops[itemId] || 0) + 1; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); }
   }
 
   window.harvestAll = async function() {
