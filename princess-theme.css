@@ -1,0 +1,433 @@
+/* ============================================================ */
+/*  PRINZESSCHEN THEME  👑                                       */
+/*  Max Barbie / Glitzer / Krönchen-Mode                         */
+/*  Aktiv wenn  html[data-theme="prinzesschen"]                  */
+/* ============================================================ */
+
+@keyframes princessHoloFlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+@keyframes princessBorderShift {
+  0%   { border-color: rgba(255,20,147,0.85);  box-shadow: 0 6px 30px rgba(255,20,147,0.40), 0 0 50px rgba(255,138,198,0.30), inset 0 0 14px rgba(255,255,255,0.55); }
+  20%  { border-color: rgba(233,30,99,0.85);   box-shadow: 0 6px 30px rgba(233,30,99,0.40),  0 0 50px rgba(255,105,180,0.30), inset 0 0 14px rgba(255,255,255,0.55); }
+  40%  { border-color: rgba(192,132,252,0.85); box-shadow: 0 6px 30px rgba(192,132,252,0.40),0 0 50px rgba(216,180,254,0.30), inset 0 0 14px rgba(255,255,255,0.55); }
+  60%  { border-color: rgba(251,191,36,0.85);  box-shadow: 0 6px 30px rgba(251,191,36,0.40), 0 0 50px rgba(253,224,71,0.30),  inset 0 0 14px rgba(255,255,255,0.55); }
+  80%  { border-color: rgba(255,138,198,0.85); box-shadow: 0 6px 30px rgba(255,138,198,0.40),0 0 50px rgba(255,182,225,0.30), inset 0 0 14px rgba(255,255,255,0.55); }
+  100% { border-color: rgba(255,20,147,0.85);  box-shadow: 0 6px 30px rgba(255,20,147,0.40), 0 0 50px rgba(255,138,198,0.30), inset 0 0 14px rgba(255,255,255,0.55); }
+}
+@keyframes princessGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 4px 22px rgba(255,20,147,0.65), 0 0 50px rgba(255,138,198,0.45), inset 0 0 14px rgba(255,255,255,0.5); }
+  50%      { box-shadow: 0 0 0 3px rgba(255,255,255,0.85), 0 6px 32px rgba(233,30,99,0.85),  0 0 75px rgba(255,20,147,0.55),  inset 0 0 18px rgba(255,255,255,0.7); }
+}
+@keyframes princessHeartbeat {
+  0%, 100% { transform: scale(1); }
+  25%      { transform: scale(1.04); }
+  50%      { transform: scale(1.02); }
+  75%      { transform: scale(1.05); }
+}
+@keyframes princessShine {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%)  skewX(-20deg); }
+}
+@keyframes princessWiggle {
+  0%, 100% { transform: scale(1.06) rotate(-1deg); }
+  25%      { transform: scale(1.06) rotate(2deg); }
+  50%      { transform: scale(1.07) rotate(-2deg); }
+  75%      { transform: scale(1.06) rotate(1.5deg); }
+}
+@keyframes princessCornerSparkle {
+  0%, 100% { transform: scale(0.85) rotate(-12deg); opacity: 0.75; }
+  50%      { transform: scale(1.3)  rotate(18deg);  opacity: 1; }
+}
+@keyframes princessCrownSpin {
+  0%   { transform: rotate(-12deg) scale(1); }
+  50%  { transform: rotate(12deg)  scale(1.15); }
+  100% { transform: rotate(-12deg) scale(1); }
+}
+@keyframes princessBgPulse {
+  0%   { opacity: 0.65; filter: hue-rotate(-10deg) saturate(1.2); transform: translate(-2%, -1%) scale(1); }
+  50%  { opacity: 1;    filter: hue-rotate(15deg)  saturate(1.5); transform: translate(2%,  1%)  scale(1.05); }
+  100% { opacity: 0.65; filter: hue-rotate(-10deg) saturate(1.2); transform: translate(-2%, -1%) scale(1); }
+}
+@keyframes princessGlitterDrift {
+  0%   { background-position: 0px 0px, 20px 30px, 50px 10px, 80px 60px, 10px 90px; }
+  100% { background-position: 100px 80px, 120px 110px, 150px 90px, 180px 140px, 110px 170px; }
+}
+@keyframes princessTextFlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+@keyframes princessCoinPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(255,20,147,0.5), 0 0 24px rgba(255,138,198,0.3); }
+  50%      { box-shadow: 0 0 20px rgba(255,20,147,0.85), 0 0 44px rgba(233,30,99,0.5); }
+}
+
+/* ---------- Page background overlays ---------- */
+html[data-theme="prinzesschen"] .bg-gradient {
+  background:
+    radial-gradient(ellipse at 18% 20%, rgba(255,20,147,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 22%, rgba(192,132,252,0.45) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 60%, rgba(251,191,36,0.30) 0%, transparent 60%),
+    radial-gradient(ellipse at 18% 85%, rgba(255,138,198,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(233,30,99,0.45) 0%, transparent 55%),
+    linear-gradient(160deg, #ffe4f3 0%, #ffd6ec 25%, #ffc1de 50%, #f9d6ff 75%, #fff0f8 100%) !important;
+}
+html[data-theme="prinzesschen"] .bg-gradient::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 25% 20%, rgba(255,20,147,0.32), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 75% 25%, rgba(251,191,36,0.28), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(255,138,198,0.32), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 20% 85%, rgba(192,132,252,0.30), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, rgba(233,30,99,0.30), transparent 70%);
+  animation: princessBgPulse 9s ease-in-out infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+html[data-theme="prinzesschen"] .bg-gradient::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,0.95), transparent 60%),
+    radial-gradient(1.5px 1.5px at 30% 70%, rgba(251,191,36,0.95), transparent 60%),
+    radial-gradient(2px 2px at 55% 35%, rgba(255,255,255,0.85), transparent 60%),
+    radial-gradient(1.5px 1.5px at 78% 60%, rgba(255,20,147,0.9), transparent 60%),
+    radial-gradient(2.5px 2.5px at 90% 18%, rgba(255,255,255,0.95), transparent 60%);
+  background-size: 220px 220px, 240px 240px, 260px 260px, 200px 200px, 230px 230px;
+  animation: princessGlitterDrift 22s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+}
+
+/* ---------- Cards & Surfaces ---------- */
+html[data-theme="prinzesschen"] .theme-card,
+html[data-theme="prinzesschen"] .lootbox-card,
+html[data-theme="prinzesschen"] .confirm-card,
+html[data-theme="prinzesschen"] .reward-card,
+html[data-theme="prinzesschen"] .modal-card,
+html[data-theme="prinzesschen"] .moment-modal-card,
+html[data-theme="prinzesschen"] .booster-confirm-card,
+html[data-theme="prinzesschen"] .quote-card,
+html[data-theme="prinzesschen"] .stat-card,
+html[data-theme="prinzesschen"] .vg-card,
+html[data-theme="prinzesschen"] .scard,
+html[data-theme="prinzesschen"] .icard,
+html[data-theme="prinzesschen"] .quiz-card,
+html[data-theme="prinzesschen"] .quiz-panel,
+html[data-theme="prinzesschen"] .quiz-hs-item,
+html[data-theme="prinzesschen"] .stat-item,
+html[data-theme="prinzesschen"] .legend-item {
+  border-width: 2px;
+  animation: princessBorderShift 7s linear infinite;
+  background: rgba(255,240,248,0.92) !important;
+}
+html[data-theme="prinzesschen"] .coin-display {
+  border: 2px solid rgba(255,20,147,0.6) !important;
+  background: linear-gradient(135deg, #fff0f8, #ffe4f3) !important;
+  animation: princessCoinPulse 2.4s ease-in-out infinite;
+}
+html[data-theme="prinzesschen"] .top-bar {
+  border-bottom: 2px solid rgba(255,20,147,0.35);
+  box-shadow: 0 2px 22px rgba(255,20,147,0.20), 0 0 40px rgba(255,138,198,0.18);
+}
+
+/* ---------- Headlines: Pink → Gold gradient text ---------- */
+html[data-theme="prinzesschen"] .page-title,
+html[data-theme="prinzesschen"] .modal-title,
+html[data-theme="prinzesschen"] .modal-subtitle,
+html[data-theme="prinzesschen"] .lootbox-name,
+html[data-theme="prinzesschen"] .reward-title,
+html[data-theme="prinzesschen"] .confirm-title,
+html[data-theme="prinzesschen"] .theme-name,
+html[data-theme="prinzesschen"] .card-title,
+html[data-theme="prinzesschen"] .section-title,
+html[data-theme="prinzesschen"] .profile-title,
+html[data-theme="prinzesschen"] .profile-subtitle,
+html[data-theme="prinzesschen"] .stats-title,
+html[data-theme="prinzesschen"] .stats-today-title,
+html[data-theme="prinzesschen"] .header-title,
+html[data-theme="prinzesschen"] .top-title,
+html[data-theme="prinzesschen"] .vg-section-title,
+html[data-theme="prinzesschen"] .quiz-card-title,
+html[data-theme="prinzesschen"] .quiz-modal-title,
+html[data-theme="prinzesschen"] .quiz-hs-title,
+html[data-theme="prinzesschen"] .game-invite-title,
+html[data-theme="prinzesschen"] .booster-confirm-title,
+html[data-theme="prinzesschen"] .moment-modal-title,
+html[data-theme="prinzesschen"] .dl-title {
+  background: linear-gradient(90deg, #ff1493, #e91e63, #c084fc, #fbbf24, #ff1493) !important;
+  background-size: 300% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: princessTextFlow 5s linear infinite;
+  filter: drop-shadow(0 2px 8px rgba(255,20,147,0.35));
+}
+
+/* ---------- Premium tag ---------- */
+html[data-theme="prinzesschen"] .premium-tag {
+  background: linear-gradient(90deg, #ff1493, #e91e63, #c084fc, #fbbf24, #ff1493) !important;
+  background-size: 300% 100% !important;
+  animation: princessTextFlow 4s linear infinite;
+  color: #fff !important;
+  box-shadow: 0 2px 12px rgba(255,20,147,0.6);
+}
+
+/* ---------- The big button show ---------- */
+html[data-theme="prinzesschen"] .btn-buy:not(:disabled),
+html[data-theme="prinzesschen"] .btn-activate,
+html[data-theme="prinzesschen"] .login-btn,
+html[data-theme="prinzesschen"] .confirm-yes,
+html[data-theme="prinzesschen"] .reward-close,
+html[data-theme="prinzesschen"] .btn-open-box:not(:disabled),
+html[data-theme="prinzesschen"] .play-quiz-btn,
+html[data-theme="prinzesschen"] .quiz-save-btn,
+html[data-theme="prinzesschen"] .save-moment-btn,
+html[data-theme="prinzesschen"] .moment-save-btn,
+html[data-theme="prinzesschen"] .booster-activate-btn,
+html[data-theme="prinzesschen"] .visit-other-btn,
+html[data-theme="prinzesschen"] .account-btn,
+html[data-theme="prinzesschen"] .comment-send-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ff1493 0%, #ff8ac6 30%, #c084fc 60%, #fbbf24 100%) !important;
+  background-size: 300% 300% !important;
+  border: 2px solid #fff !important;
+  outline: 1.5px solid #ff1493;
+  outline-offset: 2px;
+  color: #fff !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px;
+  text-shadow: 0 1px 2px rgba(122,24,86,0.6), 0 0 10px rgba(255,255,255,0.85);
+  animation: princessHoloFlow 4s linear infinite, princessGlow 2.6s ease-in-out infinite;
+}
+html[data-theme="prinzesschen"] .btn-buy:not(:disabled)::before,
+html[data-theme="prinzesschen"] .btn-activate::before,
+html[data-theme="prinzesschen"] .login-btn::before,
+html[data-theme="prinzesschen"] .confirm-yes::before,
+html[data-theme="prinzesschen"] .reward-close::before,
+html[data-theme="prinzesschen"] .btn-open-box:not(:disabled)::before,
+html[data-theme="prinzesschen"] .play-quiz-btn::before,
+html[data-theme="prinzesschen"] .quiz-save-btn::before,
+html[data-theme="prinzesschen"] .save-moment-btn::before,
+html[data-theme="prinzesschen"] .moment-save-btn::before,
+html[data-theme="prinzesschen"] .booster-activate-btn::before,
+html[data-theme="prinzesschen"] .visit-other-btn::before,
+html[data-theme="prinzesschen"] .account-btn::before,
+html[data-theme="prinzesschen"] .comment-send-btn::before {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 35%;
+  background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.85) 50%, transparent 100%);
+  animation: princessShine 2.6s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+html[data-theme="prinzesschen"] .btn-buy:not(:disabled)::after,
+html[data-theme="prinzesschen"] .confirm-yes::after,
+html[data-theme="prinzesschen"] .btn-open-box:not(:disabled)::after,
+html[data-theme="prinzesschen"] .play-quiz-btn::after,
+html[data-theme="prinzesschen"] .save-moment-btn::after,
+html[data-theme="prinzesschen"] .moment-save-btn::after,
+html[data-theme="prinzesschen"] .booster-activate-btn::after {
+  content: '👑';
+  position: absolute; top: 2px; right: 8px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 6px rgba(251,191,36,0.95));
+  animation: princessCrownSpin 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+html[data-theme="prinzesschen"] .btn-activate::after,
+html[data-theme="prinzesschen"] .login-btn::after,
+html[data-theme="prinzesschen"] .reward-close::after,
+html[data-theme="prinzesschen"] .visit-other-btn::after,
+html[data-theme="prinzesschen"] .account-btn::after,
+html[data-theme="prinzesschen"] .comment-send-btn::after,
+html[data-theme="prinzesschen"] .quiz-save-btn::after {
+  content: '💖';
+  position: absolute; top: 2px; right: 8px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 6px rgba(255,20,147,0.95));
+  animation: princessCornerSparkle 1.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+html[data-theme="prinzesschen"] .btn-buy:not(:disabled),
+html[data-theme="prinzesschen"] .confirm-yes,
+html[data-theme="prinzesschen"] .btn-open-box:not(:disabled),
+html[data-theme="prinzesschen"] .play-quiz-btn,
+html[data-theme="prinzesschen"] .save-moment-btn,
+html[data-theme="prinzesschen"] .moment-save-btn {
+  animation: princessHoloFlow 4s linear infinite, princessGlow 2.6s ease-in-out infinite, princessHeartbeat 1.6s ease-in-out infinite;
+}
+html[data-theme="prinzesschen"] .btn-buy:not(:disabled):hover,
+html[data-theme="prinzesschen"] .btn-activate:hover,
+html[data-theme="prinzesschen"] .login-btn:hover,
+html[data-theme="prinzesschen"] .confirm-yes:hover,
+html[data-theme="prinzesschen"] .reward-close:hover,
+html[data-theme="prinzesschen"] .btn-open-box:not(:disabled):hover,
+html[data-theme="prinzesschen"] .play-quiz-btn:hover,
+html[data-theme="prinzesschen"] .quiz-save-btn:hover,
+html[data-theme="prinzesschen"] .save-moment-btn:hover,
+html[data-theme="prinzesschen"] .moment-save-btn:hover,
+html[data-theme="prinzesschen"] .booster-activate-btn:hover,
+html[data-theme="prinzesschen"] .visit-other-btn:hover,
+html[data-theme="prinzesschen"] .account-btn:hover,
+html[data-theme="prinzesschen"] .comment-send-btn:hover {
+  animation: princessHoloFlow 2s linear infinite, princessGlow 1.4s ease-in-out infinite, princessWiggle 0.5s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 8px 38px rgba(255,20,147,0.95), 0 0 70px rgba(233,30,99,0.6), inset 0 0 20px rgba(255,255,255,0.75) !important;
+  filter: brightness(1.08) saturate(1.2);
+}
+html[data-theme="prinzesschen"] .btn-buy:not(:disabled):active,
+html[data-theme="prinzesschen"] .btn-activate:active,
+html[data-theme="prinzesschen"] .login-btn:active,
+html[data-theme="prinzesschen"] .confirm-yes:active,
+html[data-theme="prinzesschen"] .reward-close:active,
+html[data-theme="prinzesschen"] .btn-open-box:not(:disabled):active,
+html[data-theme="prinzesschen"] .play-quiz-btn:active,
+html[data-theme="prinzesschen"] .quiz-save-btn:active,
+html[data-theme="prinzesschen"] .save-moment-btn:active,
+html[data-theme="prinzesschen"] .moment-save-btn:active,
+html[data-theme="prinzesschen"] .booster-activate-btn:active,
+html[data-theme="prinzesschen"] .visit-other-btn:active,
+html[data-theme="prinzesschen"] .account-btn:active,
+html[data-theme="prinzesschen"] .comment-send-btn:active {
+  transform: scale(0.96);
+}
+html[data-theme="prinzesschen"] .btn-activate.is-active {
+  background: linear-gradient(135deg, #fbbf24 0%, #fde68a 50%, #ff1493 100%) !important;
+  animation: princessHoloFlow 5s linear infinite;
+}
+
+/* ---------- Quiz-Antwort-Buttons: holo + hover-wiggle ---------- */
+html[data-theme="prinzesschen"] .quiz-opt-btns button,
+html[data-theme="prinzesschen"] .quiz-correct-btn {
+  border: 2px solid rgba(255,20,147,0.55) !important;
+  background: linear-gradient(135deg, #fff0f8, #ffe4f3) !important;
+  color: #7a1856 !important;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+html[data-theme="prinzesschen"] .quiz-opt-btns button:hover,
+html[data-theme="prinzesschen"] .quiz-correct-btn:hover {
+  animation: princessWiggle 0.5s ease-in-out infinite;
+  border-color: #ff1493 !important;
+  box-shadow: 0 4px 22px rgba(255,20,147,0.55);
+}
+
+/* ---------- Outline / Secondary buttons ---------- */
+html[data-theme="prinzesschen"] .btn-preview,
+html[data-theme="prinzesschen"] .confirm-no,
+html[data-theme="prinzesschen"] .moment-cancel-btn,
+html[data-theme="prinzesschen"] .back-btn,
+html[data-theme="prinzesschen"] .forgot-btn,
+html[data-theme="prinzesschen"] .top-bar-btn,
+html[data-theme="prinzesschen"] .quiz-tab,
+html[data-theme="prinzesschen"] .ftab,
+html[data-theme="prinzesschen"] .lbtn {
+  background: rgba(255,240,248,0.85) !important;
+  border: 2px solid #ff1493 !important;
+  color: #c2185b !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 2px 12px rgba(255,20,147,0.35);
+  transition: all 0.2s ease;
+}
+html[data-theme="prinzesschen"] .btn-preview:hover,
+html[data-theme="prinzesschen"] .confirm-no:hover,
+html[data-theme="prinzesschen"] .moment-cancel-btn:hover,
+html[data-theme="prinzesschen"] .back-btn:hover,
+html[data-theme="prinzesschen"] .forgot-btn:hover,
+html[data-theme="prinzesschen"] .top-bar-btn:hover,
+html[data-theme="prinzesschen"] .quiz-tab:hover,
+html[data-theme="prinzesschen"] .ftab:hover,
+html[data-theme="prinzesschen"] .lbtn:hover {
+  background: #fff0f8 !important;
+  color: #ff1493 !important;
+  border-color: #e91e63 !important;
+  transform: scale(1.04) rotate(-1deg);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.95), 0 4px 22px rgba(255,20,147,0.6);
+}
+
+/* ---------- Heart button (Profil) ---------- */
+html[data-theme="prinzesschen"] .heart-btn {
+  filter: drop-shadow(0 0 8px rgba(255,20,147,0.65)) saturate(1.3);
+}
+html[data-theme="prinzesschen"] .heart-btn:hover {
+  animation: princessHeartbeat 1s ease-in-out infinite;
+}
+
+/* ---------- Owned badge ---------- */
+html[data-theme="prinzesschen"] .owned-badge,
+html[data-theme="prinzesschen"] .user-badge,
+html[data-theme="prinzesschen"] .readonly-badge,
+html[data-theme="prinzesschen"] .active-badge-pill,
+html[data-theme="prinzesschen"] .badge-pill {
+  background: rgba(255,20,147,0.12) !important;
+  border-color: rgba(255,20,147,0.45) !important;
+  color: #c2185b !important;
+}
+
+/* ---------- Toast ---------- */
+html[data-theme="prinzesschen"] .toast {
+  background: linear-gradient(135deg, #ff1493, #c084fc) !important;
+  box-shadow: 0 6px 26px rgba(255,20,147,0.55);
+  color: #fff !important;
+  font-weight: 700;
+}
+
+/* ============================================================ */
+/*  MOBILE-DROSSELUNG  (max-width: 600px)                        */
+/*  Animationen verlangsamt + Heartbeat aus, Glitzer reduziert   */
+/* ============================================================ */
+@media (max-width: 600px) {
+  html[data-theme="prinzesschen"] .bg-gradient::before {
+    animation-duration: 35s;
+    opacity: 0.55;
+  }
+  html[data-theme="prinzesschen"] .bg-gradient::after {
+    animation-duration: 14s;
+  }
+  html[data-theme="prinzesschen"] .btn-buy:not(:disabled),
+  html[data-theme="prinzesschen"] .btn-activate,
+  html[data-theme="prinzesschen"] .login-btn,
+  html[data-theme="prinzesschen"] .confirm-yes,
+  html[data-theme="prinzesschen"] .reward-close,
+  html[data-theme="prinzesschen"] .btn-open-box:not(:disabled),
+  html[data-theme="prinzesschen"] .play-quiz-btn,
+  html[data-theme="prinzesschen"] .quiz-save-btn,
+  html[data-theme="prinzesschen"] .save-moment-btn,
+  html[data-theme="prinzesschen"] .moment-save-btn,
+  html[data-theme="prinzesschen"] .booster-activate-btn,
+  html[data-theme="prinzesschen"] .visit-other-btn,
+  html[data-theme="prinzesschen"] .account-btn,
+  html[data-theme="prinzesschen"] .comment-send-btn {
+    animation: princessHoloFlow 6s linear infinite, princessGlow 3.4s ease-in-out infinite;
+  }
+  html[data-theme="prinzesschen"] .btn-buy:not(:disabled)::after,
+  html[data-theme="prinzesschen"] .confirm-yes::after,
+  html[data-theme="prinzesschen"] .btn-open-box:not(:disabled)::after,
+  html[data-theme="prinzesschen"] .play-quiz-btn::after,
+  html[data-theme="prinzesschen"] .save-moment-btn::after,
+  html[data-theme="prinzesschen"] .moment-save-btn::after,
+  html[data-theme="prinzesschen"] .booster-activate-btn::after {
+    animation: none;
+    transform: rotate(0deg);
+  }
+}
+
+/* ============================================================ */
+/*  ACCESSIBILITY: reduced-motion                                */
+/* ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="prinzesschen"] *,
+  html[data-theme="prinzesschen"] *::before,
+  html[data-theme="prinzesschen"] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
