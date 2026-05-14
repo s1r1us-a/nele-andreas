@@ -3373,32 +3373,67 @@
     }
     else if (species === 'horse') {
       baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
-        <g class="tail"><path d="M 8 42 Q 2 46 4 52 Q 6 56 8 54" fill="none" stroke="#7c4a1e" stroke-width="3" stroke-linecap="round"/><path d="M 8 42 Q 1 48 3 55" fill="none" stroke="#5a3010" stroke-width="1.5" stroke-linecap="round"/></g>
-        <rect x="12" y="50" width="5" height="13" rx="2" fill="#a0622a"/>
-        <rect x="20" y="50" width="5" height="13" rx="2" fill="#a0622a"/>
-        <rect x="29" y="50" width="5" height="13" rx="2" fill="#b8722e"/>
-        <rect x="37" y="50" width="5" height="13" rx="2" fill="#b8722e"/>
-        <rect x="12" y="60" width="5" height="3" rx="1" fill="#2d1a0a"/>
-        <rect x="20" y="60" width="5" height="3" rx="1" fill="#2d1a0a"/>
-        <rect x="29" y="60" width="5" height="3" rx="1" fill="#2d1a0a"/>
-        <rect x="37" y="60" width="5" height="3" rx="1" fill="#2d1a0a"/>
-        <ellipse cx="27" cy="44" rx="18" ry="11" fill="#c07830"/>
-        <ellipse cx="38" cy="30" rx="8" ry="10" fill="#c07830"/>
-        <path d="M 34 14 Q 36 8 40 10 Q 42 14 38 20 Q 36 18 34 14 Z" fill="#8b4c10"/>
-        <path d="M 38 20 Q 36 26 32 28 Q 30 24 32 20 Z" fill="#7a3a08" opacity="0.8"/>
-        <path d="M 30 14 Q 32 6 36 6 Q 38 10 36 16 Q 33 16 30 14 Z" fill="#9a5820"/>
-        <path d="M 36 8 Q 38 4 42 6 Q 44 10 42 14" fill="none" stroke="#7a3a08" stroke-width="2.5" stroke-linecap="round"/>
-        <ellipse cx="36" cy="22" rx="9" ry="8" fill="#c07830"/>
-        <ellipse cx="31" cy="20" rx="2.5" ry="1.5" fill="#d4924a" opacity="0.6"/>
-        <ellipse cx="44" cy="26" rx="5" ry="3.5" fill="#b06820"/>
-        <ellipse cx="44" cy="24" rx="3" ry="1.5" fill="#d4924a" opacity="0.5"/>
-        <ellipse cx="44" cy="27" rx="1.2" ry="1.6" fill="#1a0a00"/>
-        <ellipse cx="46" cy="27" rx="1.2" ry="1.6" fill="#1a0a00"/>
-        <circle cx="33" cy="20" r="2" fill="#1a0a00"/>
-        <circle cx="40" cy="18" r="2" fill="#1a0a00"/>
-        <circle cx="33.7" cy="19.3" r="0.8" fill="#ffffff"/>
-        <circle cx="40.7" cy="17.3" r="0.8" fill="#ffffff"/>
-        <path d="M 36 28 Q 38 30 40 28" fill="none" stroke="#7a3a08" stroke-width="1.2" stroke-linecap="round"/>
+        <defs>
+          <radialGradient id="gradHorseBody" cx="40%" cy="25%" r="90%"><stop offset="0%" stop-color="#e8a868"/><stop offset="55%" stop-color="#a86230"/><stop offset="100%" stop-color="#4a1f04"/></radialGradient>
+          <radialGradient id="gradHorseHead" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#e8a868"/><stop offset="60%" stop-color="#a86230"/><stop offset="100%" stop-color="#4a1f04"/></radialGradient>
+          <linearGradient id="gradHorseBelly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5cf98"/><stop offset="100%" stop-color="#c89060"/></linearGradient>
+          <linearGradient id="gradHorseMane" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#3a1808"/><stop offset="55%" stop-color="#1a0a00"/><stop offset="100%" stop-color="#080300"/></linearGradient>
+          <radialGradient id="gradHorseMuzzle" cx="40%" cy="35%" r="80%"><stop offset="0%" stop-color="#f0c8a0"/><stop offset="100%" stop-color="#9a5a30"/></radialGradient>
+          <radialGradient id="gradHorseHoof" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#3a2818"/><stop offset="100%" stop-color="#0a0500"/></radialGradient>
+          <radialGradient id="gradHorseEye" cx="50%" cy="35%" r="70%"><stop offset="0%" stop-color="#7a4a20"/><stop offset="50%" stop-color="#2a1408"/><stop offset="100%" stop-color="#080300"/></radialGradient>
+          <radialGradient id="gradHorseStar" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f0d8b0"/></radialGradient>
+        </defs>
+        <g class="tail">
+          <path d="M 11 40 Q 3 38 1 48 Q 0 56 4 58 Q 7 54 6 50 Q 6 46 9 44 Q 12 43 14 45 Z" fill="url(#gradHorseMane)" stroke="#080300" stroke-width="0.4"/>
+          <path d="M 3 44 Q 2 50 4 56" fill="none" stroke="#080300" stroke-width="0.5" opacity="0.6" stroke-linecap="round"/>
+          <path d="M 5 42 Q 4 49 6 55" fill="none" stroke="#080300" stroke-width="0.5" opacity="0.55" stroke-linecap="round"/>
+          <path d="M 8 41 Q 7 48 9 54" fill="none" stroke="#080300" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+          <path d="M 10 42 Q 10 47 11 52" fill="none" stroke="#080300" stroke-width="0.4" opacity="0.4" stroke-linecap="round"/>
+        </g>
+        <path d="M 12 44 Q 11 54 12 61 Q 14 63 17 62.5 Q 18.5 55 17.5 44 Z" fill="url(#gradHorseBody)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 13 50 Q 14 54 13 58" fill="none" stroke="#4a1f04" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+        <ellipse cx="14.7" cy="62.6" rx="3.3" ry="1.6" fill="url(#gradHorseHoof)" stroke="#080300" stroke-width="0.3"/>
+        <ellipse cx="14.7" cy="62" rx="2.2" ry="0.9" fill="#1a0805" opacity="0.8"/>
+        <path d="M 38 44 Q 37 54 38 61 Q 40 63 43 62.5 Q 44.5 55 43.5 44 Z" fill="url(#gradHorseBody)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 39 50 Q 40 54 39 58" fill="none" stroke="#4a1f04" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+        <ellipse cx="40.7" cy="62.6" rx="3.3" ry="1.6" fill="url(#gradHorseHoof)" stroke="#080300" stroke-width="0.3"/>
+        <ellipse cx="40.7" cy="62" rx="2.2" ry="0.9" fill="#1a0805" opacity="0.8"/>
+        <path d="M 10 42 Q 10 33 18 31 Q 26 29 33 31 Q 42 32 45 39 Q 47 46 43 51 Q 34 54 23 53 Q 12 53 10 42 Z" fill="url(#gradHorseBody)" stroke="#4a1f04" stroke-width="0.5"/>
+        <path d="M 13 46 Q 26 54 44 47 Q 43 51 26 54 Q 12 53 13 46 Z" fill="url(#gradHorseBelly)" opacity="0.95"/>
+        <path d="M 17 36 Q 19 37 18 40" fill="none" stroke="#5a2a08" stroke-width="0.5" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 24 34 Q 26 35 25 38" fill="none" stroke="#5a2a08" stroke-width="0.5" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 33 34 Q 35 35 34 38" fill="none" stroke="#5a2a08" stroke-width="0.5" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 20 43 Q 19 53 20 61 Q 22 63 25 62.5 Q 26.5 54 25.5 43 Z" fill="url(#gradHorseBody)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 21 49 Q 22 53 21 57" fill="none" stroke="#4a1f04" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+        <ellipse cx="22.7" cy="62.6" rx="3.2" ry="1.55" fill="url(#gradHorseHoof)" stroke="#080300" stroke-width="0.3"/>
+        <ellipse cx="22.7" cy="62" rx="2.1" ry="0.9" fill="#1a0805" opacity="0.8"/>
+        <path d="M 30 43 Q 29 53 30 61 Q 32 63 35 62.5 Q 36.5 54 35.5 43 Z" fill="url(#gradHorseBody)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 31 49 Q 32 53 31 57" fill="none" stroke="#4a1f04" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+        <ellipse cx="32.7" cy="62.6" rx="3.2" ry="1.55" fill="url(#gradHorseHoof)" stroke="#080300" stroke-width="0.3"/>
+        <ellipse cx="32.7" cy="62" rx="2.1" ry="0.9" fill="#1a0805" opacity="0.8"/>
+        <path d="M 29 38 Q 29 26 35 22 Q 42 22 43 30 Q 43 39 37 41 Q 30 41 29 38 Z" fill="url(#gradHorseBody)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 30 18 Q 27 24 27 32 Q 27 39 31 41 Q 33 38 32 32 Q 32 24 34 19 Z" fill="url(#gradHorseMane)" stroke="#080300" stroke-width="0.4"/>
+        <path d="M 29 22 Q 28 30 30 37" fill="none" stroke="#080300" stroke-width="0.4" opacity="0.6" stroke-linecap="round"/>
+        <path d="M 31 20 Q 30 28 32 35" fill="none" stroke="#080300" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+        <path d="M 30 16 Q 33 12 40 13 Q 47 17 47 23 Q 48 27 45 29 Q 41 30 37 29 Q 32 28 30 22 Z" fill="url(#gradHorseHead)" stroke="#4a1f04" stroke-width="0.5"/>
+        <path d="M 35 10 Q 33 6 36 5 Q 39 6 39 11 Q 38 13 36 12 Z" fill="url(#gradHorseMane)" stroke="#080300" stroke-width="0.4"/>
+        <path d="M 36 7 Q 35 10 36 12" fill="none" stroke="#080300" stroke-width="0.3" opacity="0.5" stroke-linecap="round"/>
+        <path d="M 32 12 Q 30 5 33 4 Q 36 5 36 11 Q 35 13 32 12 Z" fill="url(#gradHorseHead)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 33 10 Q 32 7 33 5 Q 34 7 34.5 10 Z" fill="#4a1f04" opacity="0.65"/>
+        <path d="M 40 12 Q 38 4 41 4 Q 45 5 44 11 Q 43 13 41 12 Z" fill="url(#gradHorseHead)" stroke="#4a1f04" stroke-width="0.4"/>
+        <path d="M 41 10 Q 41 7 42 5 Q 43 7 43 10 Z" fill="#4a1f04" opacity="0.65"/>
+        <ellipse cx="44" cy="26" rx="6" ry="4" fill="url(#gradHorseMuzzle)" stroke="#4a1f04" stroke-width="0.4"/>
+        <ellipse cx="44" cy="24.5" rx="3.8" ry="1.5" fill="#fbe0b8" opacity="0.6"/>
+        <ellipse cx="42.5" cy="27" rx="0.85" ry="1.4" fill="#1a0500"/>
+        <ellipse cx="45.5" cy="27" rx="0.85" ry="1.4" fill="#1a0500"/>
+        <path d="M 41 29.2 Q 44 30.5 47 29.2" fill="none" stroke="#3a1808" stroke-width="0.6" stroke-linecap="round"/>
+        <path d="M 37.5 15.5 L 38 16.6 L 39.2 16.8 L 38.4 17.6 L 38.6 18.8 L 37.5 18.2 L 36.4 18.8 L 36.6 17.6 L 35.8 16.8 L 37 16.6 Z" fill="url(#gradHorseStar)" stroke="#d8b888" stroke-width="0.2"/>
+        <ellipse cx="38" cy="21" rx="1.7" ry="2.1" fill="url(#gradHorseEye)" stroke="#1a0500" stroke-width="0.3"/>
+        <ellipse cx="38" cy="20.7" rx="1.2" ry="1.6" fill="#3a1a08"/>
+        <circle cx="38.4" cy="20.4" r="0.65" fill="#ffffff" opacity="0.95"/>
+        <circle cx="37.8" cy="21.5" r="0.3" fill="#ffffff" opacity="0.7"/>
+        <path d="M 36.7 19.5 Q 36 19 35.5 19.2" fill="none" stroke="#1a0500" stroke-width="0.4" stroke-linecap="round"/>
+        <ellipse cx="39.5" cy="24.5" rx="2.2" ry="1.2" fill="#d88860" opacity="0.4"/>
       </svg>`;
     }
     else if (species === 'dog') {
@@ -3911,7 +3946,7 @@
     if (a.species === 'cow') sizeMod = 1.28;
     else if (a.species === 'sheep') sizeMod = 0.96;
     else if (a.species === 'chicken' || a.species === 'cat') sizeMod = 0.68;
-    else if (a.species === 'pig')  sizeMod = 1.16;
+    else if (a.species === 'pig')  sizeMod = 0.98;
     else if (a.species === 'goat') sizeMod = 1.0;
     else if (a.species === 'duck')  sizeMod = 0.72;
     else if (a.species === 'horse') sizeMod = 1.35;
