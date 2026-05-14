@@ -23,7 +23,8 @@
   html[data-theme="cosmic"] .bg::after,
   html[data-theme="royal"] .bg::after,
   html[data-theme="rainbow"] .bg::after,
-  html[data-theme="neon"] .bg::after { content:''; position:absolute; inset:0; pointer-events:none; }
+  html[data-theme="neon"] .bg::after,
+  html[data-theme="prinzesschen"] .bg::after { content:''; position:absolute; inset:0; pointer-events:none; }
   html[data-theme="aurora"] .bg::after { background: radial-gradient(ellipse at 30% 0%, rgba(94,234,212,0.18), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(192,132,252,0.18), transparent 55%); animation: bgAuroraStats 14s ease-in-out infinite alternate; mix-blend-mode: screen; }
   @keyframes bgAuroraStats { 0%{transform:translateX(-6%) translateY(-3%);opacity:0.7} 100%{transform:translateX(6%) translateY(3%);opacity:1} }
   html[data-theme="cosmic"] .bg::after { background: radial-gradient(2px 2px at 15% 25%, rgba(255,255,255,0.9), transparent 60%), radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.7), transparent 60%), radial-gradient(2px 2px at 60% 40%, rgba(252,211,77,0.8), transparent 60%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.8), transparent 60%), radial-gradient(1.5px 1.5px at 90% 20%, rgba(165,180,252,0.9), transparent 60%); animation: bgCosmicStats 4s ease-in-out infinite alternate; }
@@ -36,6 +37,10 @@
   @keyframes bgNeonStats { 0%{opacity:0.5; filter: hue-rotate(0deg) saturate(1.1)} 50%{filter: hue-rotate(35deg) saturate(1.4)} 100%{opacity:1; filter: hue-rotate(-25deg) saturate(1.5)} }
   html[data-theme="neon"] .bg::before { content:''; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0, transparent 39px, rgba(34,211,238,0.07) 39px, rgba(34,211,238,0.07) 40px), repeating-linear-gradient(0deg, transparent 0, transparent 39px, rgba(240,171,252,0.07) 39px, rgba(240,171,252,0.07) 40px); background-size: 40px 40px, 40px 40px; animation: bgNeonGridStats 6s linear infinite; pointer-events: none; z-index: 0; }
   @keyframes bgNeonGridStats { 0%{background-position:0 0,0 0} 100%{background-position:40px 40px,-40px -40px} }
+  html[data-theme="prinzesschen"] .bg::after { background: radial-gradient(ellipse 60% 50% at 25% 20%, rgba(255,20,147,0.30), transparent 70%), radial-gradient(ellipse 55% 50% at 75% 25%, rgba(251,191,36,0.25), transparent 70%), radial-gradient(ellipse 65% 55% at 50% 65%, rgba(255,138,198,0.30), transparent 70%), radial-gradient(ellipse 55% 50% at 20% 85%, rgba(192,132,252,0.28), transparent 70%), radial-gradient(ellipse 55% 50% at 80% 85%, rgba(233,30,99,0.28), transparent 70%); animation: bgPrincessStats 9s ease-in-out infinite alternate; mix-blend-mode: screen; }
+  @keyframes bgPrincessStats { 0%{filter:hue-rotate(-10deg) saturate(1.2);opacity:0.7;transform:translate(-2%,-1%) scale(1)} 100%{filter:hue-rotate(15deg) saturate(1.5);opacity:1;transform:translate(2%,1%) scale(1.04)} }
+  html[data-theme="prinzesschen"] .bg::before { content:''; position:absolute; inset:0; background: radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,0.95), transparent 60%), radial-gradient(1.5px 1.5px at 30% 70%, rgba(251,191,36,0.95), transparent 60%), radial-gradient(2px 2px at 55% 35%, rgba(255,255,255,0.85), transparent 60%), radial-gradient(1.5px 1.5px at 78% 60%, rgba(255,20,147,0.9), transparent 60%), radial-gradient(2.5px 2.5px at 90% 18%, rgba(255,255,255,0.95), transparent 60%); background-size: 220px 220px, 240px 240px, 260px 260px, 200px 200px, 230px 230px; animation: bgPrincessGlitterStats 22s linear infinite; pointer-events: none; z-index: 0; opacity: 0.85; }
+  @keyframes bgPrincessGlitterStats { 0%{background-position:0 0, 20px 30px, 50px 10px, 80px 60px, 10px 90px} 100%{background-position:100px 80px, 120px 110px, 150px 90px, 180px 140px, 110px 170px} }
 
   /* TOP BAR */
   .top-bar { position:fixed; top:0; left:0; right:0; z-index:99999; display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--ui-topbar-bg); border-bottom:1px solid var(--ui-topbar-border); box-shadow:0 2px 12px rgba(232,115,138,0.08); transition:background 0.4s ease, border-color 0.4s ease; }
@@ -354,6 +359,57 @@
     border-color: rgba(240,171,252,0.4) !important;
     box-shadow: 0 0 14px rgba(240,171,252,0.2), inset 0 0 14px rgba(34,211,238,0.1);
   }
+
+  /* PRINZESSCHEN 👑 */
+  @keyframes premiumPrincessBorder {
+    0%   { border-color: rgba(255,20,147,0.85);  box-shadow: 0 6px 30px rgba(255,20,147,0.4), 0 0 50px rgba(255,138,198,0.3); }
+    20%  { border-color: rgba(233,30,99,0.85);   box-shadow: 0 6px 30px rgba(233,30,99,0.4),  0 0 50px rgba(255,105,180,0.3); }
+    40%  { border-color: rgba(192,132,252,0.85); box-shadow: 0 6px 30px rgba(192,132,252,0.4),0 0 50px rgba(216,180,254,0.3); }
+    60%  { border-color: rgba(251,191,36,0.85);  box-shadow: 0 6px 30px rgba(251,191,36,0.4), 0 0 50px rgba(253,224,71,0.3); }
+    80%  { border-color: rgba(255,138,198,0.85); box-shadow: 0 6px 30px rgba(255,138,198,0.4),0 0 50px rgba(255,182,225,0.3); }
+    100% { border-color: rgba(255,20,147,0.85);  box-shadow: 0 6px 30px rgba(255,20,147,0.4), 0 0 50px rgba(255,138,198,0.3); }
+  }
+  @keyframes premiumPrincessFlow { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+  html[data-theme="prinzesschen"] .card,
+  html[data-theme="prinzesschen"] .funfact {
+    border-width: 2px;
+    animation: premiumPrincessBorder 7s linear infinite;
+    background: rgba(255,240,248,0.92) !important;
+  }
+  html[data-theme="prinzesschen"] .ftab.active {
+    background: linear-gradient(135deg, #ff1493, #ff8ac6, #c084fc, #fbbf24) !important;
+    background-size: 300% 300% !important;
+    animation: premiumPrincessFlow 4s linear infinite;
+    color: #fff !important;
+    border-color: #fff !important;
+    box-shadow: 0 0 0 2px rgba(255,20,147,0.5), 0 4px 18px rgba(255,20,147,0.5);
+  }
+  html[data-theme="prinzesschen"] .page-title,
+  html[data-theme="prinzesschen"] .top-title {
+    background: linear-gradient(90deg, #ff1493, #e91e63, #c084fc, #fbbf24, #ff1493) !important;
+    background-size: 300% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    animation: premiumPrincessFlow 5s linear infinite;
+    filter: drop-shadow(0 2px 10px rgba(255,20,147,0.4));
+  }
+  html[data-theme="prinzesschen"] .bar-a,
+  html[data-theme="prinzesschen"] .winbar-a,
+  html[data-theme="prinzesschen"] .stat-bar-andreas {
+    background: linear-gradient(90deg, #ff1493, #e91e63, #ff8ac6) !important;
+    box-shadow: 0 0 8px rgba(255,20,147,0.5);
+  }
+  html[data-theme="prinzesschen"] .bar-n,
+  html[data-theme="prinzesschen"] .winbar-n,
+  html[data-theme="prinzesschen"] .stat-bar-nele {
+    background: linear-gradient(90deg, #c084fc, #fbbf24) !important;
+    box-shadow: 0 0 8px rgba(192,132,252,0.5);
+  }
+  html[data-theme="prinzesschen"] .top-bar {
+    border-bottom: 2px solid rgba(255,20,147,0.35);
+    box-shadow: 0 2px 22px rgba(255,20,147,0.20), 0 0 40px rgba(255,138,198,0.18);
+  }
 </style>
 </head>
 <body>
@@ -532,7 +588,8 @@
     cosmic:'radial-gradient(ellipse at 25% 25%, rgba(129,140,248,0.32) 0%, transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(167,139,250,0.28) 0%, transparent 55%), radial-gradient(ellipse at 60% 40%, rgba(252,211,77,0.1) 0%, transparent 30%), linear-gradient(160deg, #050214 0%, #0d0828 50%, #1a0f3d 100%)',
     royal:'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,158,11,0.18) 0%, transparent 50%), linear-gradient(160deg, #0a0a0a 0%, #1a1610 40%, #14110a 70%, #0a0a0a 100%)',
     rainbow:'radial-gradient(ellipse at 15% 15%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 22%, rgba(255,215,0,0.50) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(0,230,118,0.45) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(41,98,255,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(213,0,249,0.55) 0%, transparent 55%), linear-gradient(160deg, #ffe0ee 0%, #fff2c9 25%, #c9ffd9 50%, #c9dcff 75%, #efc9ff 100%)',
-    neon:'radial-gradient(ellipse at 18% 22%, rgba(240,171,252,0.70) 0%, transparent 55%), radial-gradient(ellipse at 82% 78%, rgba(34,211,238,0.70) 0%, transparent 55%), radial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.45) 0%, transparent 60%), linear-gradient(160deg, #1a0540 0%, #2d0a5c 50%, #3a0f6c 100%)'
+    neon:'radial-gradient(ellipse at 18% 22%, rgba(240,171,252,0.70) 0%, transparent 55%), radial-gradient(ellipse at 82% 78%, rgba(34,211,238,0.70) 0%, transparent 55%), radial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.45) 0%, transparent 60%), linear-gradient(160deg, #1a0540 0%, #2d0a5c 50%, #3a0f6c 100%)',
+    prinzesschen:'radial-gradient(ellipse at 18% 20%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,132,252,0.45) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(251,191,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(255,138,198,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(233,30,99,0.45) 0%, transparent 55%), linear-gradient(160deg, #ffe4f3 0%, #ffd6ec 25%, #ffc1de 50%, #f9d6ff 75%, #fff0f8 100%)'
   };
   const _THEME_VARS = {
     sakura:{rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565'},
@@ -548,7 +605,8 @@
     cosmic:{rose:'#818cf8','rose-light':'#a5b4fc','rose-pale':'#1e1b4b',cream:'#050214',gold:'#fcd34d',warm:'#1e1b4b','text-dark':'#e0e7ff','text-mid':'#a5b4fc'},
     royal:{rose:'#fbbf24','rose-light':'#fde68a','rose-pale':'#2a2415',cream:'#0a0a0a',gold:'#f59e0b',warm:'#1c1c14','text-dark':'#fef3c7','text-mid':'#fcd34d'},
     rainbow:{rose:'#ec4899','rose-light':'#f472b6','rose-pale':'#fdf2f8',cream:'#fafaff',gold:'#8b5cf6',warm:'#f5f3ff','text-dark':'#2e1a4a','text-mid':'#6d28d9'},
-    neon:{rose:'#f0abfc','rose-light':'#f9a8d4','rose-pale':'#1a0a2e',cream:'#07051a',gold:'#22d3ee',warm:'#1a0a2e','text-dark':'#fae8ff','text-mid':'#f0abfc'}
+    neon:{rose:'#f0abfc','rose-light':'#f9a8d4','rose-pale':'#1a0a2e',cream:'#07051a',gold:'#22d3ee',warm:'#1a0a2e','text-dark':'#fae8ff','text-mid':'#f0abfc'},
+    prinzesschen:{rose:'#ff1493','rose-light':'#ff8ac6','rose-pale':'#ffe4f3',cream:'#fff0f8',gold:'#d4af37',warm:'#ffd6ec','text-dark':'#7a1856','text-mid':'#c2185b'}
   };
   const _DARK_UI = {
     midnight: {
