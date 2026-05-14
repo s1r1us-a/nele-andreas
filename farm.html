@@ -83,9 +83,8 @@
 
     /* ── TOP BAR ── */
     .topbar { padding: max(8px, env(safe-area-inset-top)) 12px 8px; background: rgba(255,248,240,0.95); border-bottom: 1.5px solid var(--ui-card-border); display: none; align-items: center; justify-content: space-between; z-index: 100; gap: 6px; }
-    .topbar-title { display: flex; align-items: center; gap: 6px; text-decoration: none; }
-    .back-arrow { font-size: 16px; font-weight: bold; color: var(--rose); }
-    .topbar-text { font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
+    .topbar-title { display: flex; align-items: center; gap: 0; text-decoration: none; padding: 4px 6px; }
+    .back-arrow { font-size: 22px; font-weight: bold; color: var(--rose); line-height: 1; }
     .topbar-center { display: flex; gap: 6px; flex: 1; justify-content: center; }
     .topbar-btn { background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border); border-radius: 10px; padding: 6px 8px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-dark); cursor: pointer; touch-action: manipulation; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
     .topbar-btn:active { transform: scale(0.95); }
@@ -488,38 +487,6 @@
     .sunset-mode .tradehouse-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .tradehouse-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; z-index: 50; border: 2px solid #fff; }
 
-    /* ── FAHRENDER HÄNDLER NPC ── */
-    .merchant-wrapper { position: absolute; top: 0; left: 50%; width: 64px; height: 96px; margin-left: -32px; cursor: pointer; z-index: 56; touch-action: manipulation; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.22)); animation: merchantBob 2.6s ease-in-out infinite; transition: filter 2s ease; }
-    .merchant-wrapper:active { transform: scale(0.94); filter: drop-shadow(0 0 10px rgba(255,255,255,0.7)) drop-shadow(0 6px 6px rgba(0,0,0,0.22)); }
-    .merchant-wrapper svg { display: block; width: 100%; height: 100%; overflow: visible; }
-    .night-mode .merchant-wrapper { filter: brightness(0.72) drop-shadow(0 6px 6px rgba(0,0,0,0.3)); }
-    .sunset-mode .merchant-wrapper { filter: sepia(0.18) drop-shadow(0 6px 6px rgba(0,0,0,0.22)); }
-    @keyframes merchantBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-    .merchant-bubble { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #fbbf24; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.18); animation: bubbleBounce 1.6s infinite ease-in-out; pointer-events: none; z-index: 60; }
-    .merchant-bubble::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #fff transparent transparent transparent; }
-    .merchant-bubble::before { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid; border-color: #fbbf24 transparent transparent transparent; }
-
-    /* ── HÄNDLER MODAL ── */
-    .merchant-greeting { text-align: center; font-size: 13px; color: var(--text-mid); margin-bottom: 14px; line-height: 1.5; padding: 0 6px; }
-    .merchant-offer-row { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, rgba(251,191,36,0.10), rgba(249,115,22,0.05)); border: 1.5px solid rgba(251,191,36,0.35); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
-    .merchant-offer-row.insufficient { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); opacity: 0.7; }
-    .merchant-offer-icon { font-size: 28px; flex-shrink: 0; width: 36px; text-align: center; }
-    .merchant-offer-info { flex: 1; min-width: 0; }
-    .merchant-offer-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
-    .merchant-offer-meta { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
-    .merchant-offer-price { font-size: 13px; font-weight: 700; color: #d97706; margin-top: 3px; }
-    .merchant-offer-price .price-strike { text-decoration: line-through; color: var(--text-mid); font-weight: 500; margin-right: 4px; font-size: 11px; }
-    .merchant-offer-price .price-2x { display: inline-block; background: #fbbf24; color: #fff; font-size: 10px; padding: 1px 5px; border-radius: 6px; margin-left: 4px; vertical-align: middle; font-weight: 800; letter-spacing: 0.3px; }
-    .merchant-actions { display: flex; gap: 8px; margin-top: 14px; }
-    .merchant-actions button { flex: 1; padding: 11px; border: none; border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; touch-action: manipulation; transition: transform 0.1s, opacity 0.15s; }
-    .merchant-actions button:active { transform: scale(0.96); }
-    .merchant-actions .merchant-sell { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 3px 8px rgba(16,185,129,0.3); }
-    .merchant-actions .merchant-sell:disabled { background: #d1d5db; color: #6b7280; box-shadow: none; cursor: not-allowed; opacity: 0.75; }
-    .merchant-actions .merchant-dismiss { background: #fef2f2; color: #ef4444; }
-    .merchant-total-preview { text-align: center; font-size: 16px; font-weight: 800; color: #d97706; margin: 6px 0 2px; }
-    .merchant-timer { text-align: center; font-size: 12px; color: var(--text-mid); margin: 4px 0 2px; }
-    .merchant-timer b { color: var(--text-dark); font-variant-numeric: tabular-nums; }
-
     /* ── HANDELSHAUS MODAL ── */
     .trade-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: rgba(0,0,0,0.04); border-radius: 14px; padding: 4px; }
     .trade-tab { flex: 1; padding: 8px 6px; border: none; border-radius: 10px; background: transparent; color: var(--text-mid); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
@@ -596,12 +563,8 @@
     .weaving-building svg { display: block; width: 100%; height: 100%; overflow: visible; }
     .night-mode .weaving-building { filter: brightness(0.7) drop-shadow(0 8px 6px rgba(0,0,0,0.25)); }
     .sunset-mode .weaving-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
-    .weaving-smoke { opacity: 0; pointer-events: none; }
+    .weaving-smoke { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
     .is-weaving .weaving-smoke { opacity: 1; }
-    .weaving-smoke circle { animation: weavePuff 3s ease-out infinite; }
-    .weaving-smoke circle:nth-child(2) { animation-delay: 1s; }
-    .weaving-smoke circle:nth-child(3) { animation-delay: 2s; }
-    @keyframes weavePuff { 0% { transform: translateY(0) scale(0.4); opacity: 0.6; } 100% { transform: translateY(-22px) scale(2); opacity: 0; } }
 
     /* ── MINE ── */
     .mine-building { position: absolute; top: 28%; left: 5%; width: 70px; height: 78px; cursor: pointer; z-index: 39; transition: transform 0.2s, filter 2s ease; touch-action: manipulation; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
@@ -614,10 +577,8 @@
     .forge-building:active { transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .night-mode .forge-building { filter: brightness(0.7) drop-shadow(0 8px 6px rgba(0,0,0,0.25)); }
     .sunset-mode .forge-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
-    .forge-smoke { opacity: 0; pointer-events: none; }
+    .forge-smoke { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
     .is-forging .forge-smoke { opacity: 1; }
-    .forge-smoke circle { animation: weavePuff 3s ease-out infinite; }
-    .forge-smoke circle:nth-child(2) { animation-delay: 1s; }
 
     /* ── HANDELSPOSTEN NEU RECHTS ── */
     .tradehouse-building { left: auto !important; right: 5%; }
@@ -680,7 +641,7 @@
 
     /* SVG Styles */
     .rabbit-body { fill: url(#gradRabbit); } .rabbit-belly { fill: #ede5de; } .rabbit-ear-inner { fill: #f0b8c8; } .rabbit-eye { fill: #4a2030; } .rabbit-nose { fill: #e87090; }
-    .ear-left { transform-origin: 50% 100%; animation: earWiggle 1.8s ease-in-out infinite; } .ear-right { transform-origin: 50% 100%; animation: earWiggle 1.8s ease-in-out infinite 0.3s; }
+    .ear-left { transform-origin: 50% 100%; animation: earWiggle 1.8s ease-in-out infinite; animation-delay: var(--ear-delay, 0s); } .ear-right { transform-origin: 50% 100%; animation: earWiggle 1.8s ease-in-out infinite; animation-delay: calc(var(--ear-delay, 0s) + 0.3s); }
     @keyframes earWiggle { 0%, 80%, 100% { transform: rotate(0deg); } 85% { transform: rotate(-8deg); } 92% { transform: rotate(5deg); } }
     .tail { animation: tailBob 1.1s ease-in-out infinite; transform-origin: center; } @keyframes tailBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
@@ -1609,18 +1570,6 @@
   </div>
 </div>
 
-<div class="sell-confirm-overlay" id="merchantDismissOverlay" onclick="window.closeMerchantDismiss()">
-  <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
-    <div class="sell-confirm-icon">🎩</div>
-    <div class="sell-confirm-title">Händler wirklich wegschicken?</div>
-    <div class="sell-confirm-sub">Er kommt erst morgen wieder vorbei.</div>
-    <div class="sell-confirm-btns">
-      <button class="sell-confirm-no" onclick="window.closeMerchantDismiss()">Abbrechen</button>
-      <button class="sell-confirm-yes" onclick="window._doDismissMerchant()">Wegschicken ✓</button>
-    </div>
-  </div>
-</div>
-
 <div class="sell-confirm-overlay" id="sendConfirmOverlay" onclick="window.closeSendConfirm()">
   <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
     <div class="sell-confirm-icon" id="sendConfirmIcon">🎁</div>
@@ -1648,9 +1597,8 @@
 </div>
 
 <div class="topbar" id="topBar">
-  <a href="index.html" class="topbar-title">
+  <a href="index.html" class="topbar-title" aria-label="Zurück">
     <span class="back-arrow">←</span>
-    <span class="topbar-text" id="farmTitle">Farm</span>
   </a>
   <div class="topbar-center" id="topbarCenter">
     <button class="topbar-btn" id="btnShop" onclick="openShop()">🏪 <span>Shop</span></button>
@@ -2073,9 +2021,21 @@
 
       <!-- Chimney smoke -->
       <g class="forge-smoke">
-        <circle cx="74" cy="34" r="4.5" fill="rgba(220,205,235,0.65)"/>
-        <circle cx="72" cy="26" r="4" fill="rgba(220,205,235,0.5)"/>
-        <circle cx="76" cy="19" r="3" fill="rgba(220,205,235,0.4)"/>
+        <circle cx="74" cy="40" r="4" fill="rgba(220,205,235,0.85)">
+          <animate attributeName="cy" from="40" to="6" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="3" to="8" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.95" to="0" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="72" cy="40" r="3.5" fill="rgba(220,205,235,0.8)">
+          <animate attributeName="cy" from="40" to="4" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2.5" to="7" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.9" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="76" cy="40" r="3" fill="rgba(220,205,235,0.75)">
+          <animate attributeName="cy" from="40" to="2" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2" to="6.5" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.85" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+        </circle>
       </g>
 
       <!-- Small chimney -->
@@ -2174,9 +2134,21 @@
   <div class="weaving-building" id="weavingBuilding" onclick="window.openWeaving()">
     <svg viewBox="0 0 90 110" xmlns="http://www.w3.org/2000/svg" overflow="visible">
       <g class="weaving-smoke">
-        <circle cx="73" cy="18" r="4" fill="rgba(180,170,200,0.6)"/>
-        <circle cx="71" cy="12" r="3.5" fill="rgba(180,170,200,0.5)"/>
-        <circle cx="75" cy="6" r="3" fill="rgba(180,170,200,0.4)"/>
+        <circle cx="73" cy="18" r="4" fill="rgba(180,170,200,0.85)">
+          <animate attributeName="cy" from="18" to="-12" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="3" to="8" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.95" to="0" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="71" cy="18" r="3.5" fill="rgba(180,170,200,0.8)">
+          <animate attributeName="cy" from="18" to="-14" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2.5" to="7" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.9" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="75" cy="18" r="3" fill="rgba(180,170,200,0.75)">
+          <animate attributeName="cy" from="18" to="-16" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2" to="6.5" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.85" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+        </circle>
       </g>
       
       <rect x="67" y="20" width="12" height="24" rx="1.5" fill="#7a6255"/>
@@ -2292,9 +2264,6 @@
 
   <div class="beds-container" id="bedsContainer"></div>
   <div id="animalSpace"></div>
-
-  <!-- FAHRENDER HÄNDLER NPC -->
-  <div class="merchant-wrapper" id="merchantNPC" style="display:none; top:-9999px;" onclick="window.openMerchant()"></div>
 
   <!-- BLUMEN -->
   <div class="flower" style="top:41%; left:10%; animation-delay:0s;">
@@ -2460,20 +2429,6 @@
     <div class="modal-title">Marktstand 💰</div>
     <p style="text-align: center; font-size: 13px; color: var(--text-mid); margin-bottom: 12px;">Verkaufe Ernte und Waren mit Gewinn!</p>
     <div class="item-list" id="sellList"></div>
-  </div>
-
-  <!-- FAHRENDER HÄNDLER MODAL -->
-  <div class="modal-card" id="modalMerchant" onclick="event.stopPropagation()">
-    <button class="close-btn" onclick="closeAllModals()">✕</button>
-    <div class="modal-title">🎩 Fahrender Händler</div>
-    <div class="merchant-greeting" id="merchantGreeting">„Guten Tag! Ich bin nur heute hier und biete den <b>doppelten Preis</b> für diese drei Waren!"</div>
-    <div id="merchantOfferList"></div>
-    <div class="merchant-total-preview" id="merchantTotalPreview">+0 🪙</div>
-    <div class="merchant-timer" id="merchantTimer">⏳ Neue Angebote in <b id="merchantTimerVal">–</b></div>
-    <div class="merchant-actions">
-      <button class="merchant-dismiss" onclick="window.dismissMerchant()">Heute nicht</button>
-      <button class="merchant-sell" id="merchantSellBtn" onclick="window.confirmMerchantSell()">Verkaufen ✓</button>
-    </div>
   </div>
 
   <div class="modal-card" id="modalField" onclick="event.stopPropagation()">
@@ -2915,11 +2870,9 @@
   let beds = Array(12).fill(null).map(() => Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = [];
 
-  let merchant = { lastVisitDate: '', offerDate: '', offer: [] };
-
   async function saveFarmData() {
     if (!userKey || isVisitMode) return;
-    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots, merchant,
+    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots,
       bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites] };
     await set(ref(db, `farm/${userKey}`), data);
   }
@@ -2951,6 +2904,7 @@
       const farmTitle = document.getElementById('farmTitle');
       if (farmTitle) farmTitle.textContent = farmName(currentUser);
 
+
       let farmFirstLoad = true;
       onValue(ref(db, `farm/${userKey}`), (snap) => {
         if (isVisitMode) return;
@@ -2979,9 +2933,6 @@
           }
           bakeryFavorites = new Set(Array.isArray(data.bakeryFavs) ? data.bakeryFavs : []);
           weavingFavorites = new Set(Array.isArray(data.weavingFavs) ? data.weavingFavs : []);
-          merchant = (data.merchant && typeof data.merchant === 'object')
-            ? { lastVisitDate: data.merchant.lastVisitDate || '', offerDate: data.merchant.offerDate || '', offer: Array.isArray(data.merchant.offer) ? data.merchant.offer : [] }
-            : { lastVisitDate: '', offerDate: '', offer: [] };
 
           if (beehive.level > 0 && !beehive.isProducing && !beehive.rewardReady) {
               beehive.isProducing = true;
@@ -3036,7 +2987,6 @@
           if (farmFirstLoad) saveFarmData();
         }
         farmFirstLoad = false;
-        refreshMerchant();
         updateFarmDOM();
       });
 
@@ -3887,8 +3837,6 @@
       badge.textContent = readyCount;
       readyCount > 0 ? badge.classList.add('visible') : badge.classList.remove('visible');
     }
-
-    renderMerchant();
   }
 
   function renderAnimalDOM(a) {
@@ -3916,6 +3864,10 @@
       el.className = 'animal-wrapper';
       el.onclick = () => window.openAnimalStats(a.id);
       el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml;
+      const seedSrc = String(a.id == null ? Math.random() : a.id);
+      let seed = 7;
+      for (let i = 0; i < seedSrc.length; i++) seed = (seed * 31 + seedSrc.charCodeAt(i)) >>> 0;
+      el.style.setProperty('--ear-delay', ((seed % 1800) / 1000).toFixed(2) + 's');
       space.appendChild(el);
       a._el = el;
     } else {
@@ -4302,24 +4254,46 @@
 
   window.openSell = function() {
     const list = document.getElementById('sellList'); list.innerHTML = ''; let hasItems = false;
-    Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
-    Object.keys(inventory.accessories).forEach(key => { if (inventory.accessories[key] > 0) { hasItems = true; const item = weavingRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.accessories[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('accessories', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
-    Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
-    
-    if (inventory.items.honey > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 250)">Verkaufen (250 🪙)</button></div>`; }
-    if (inventory.items.wool > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><div><span class="item-name">Wolle</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.wool}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'wool', 600)">Verkaufen (600 🪙)</button></div>`; }
-    if (inventory.items.egg > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><div><span class="item-name">Ei</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.egg}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'egg', 200)">Verkaufen (200 🪙)</button></div>`; }
-    if (inventory.items.diamond > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (1100 🪙)</button></div>`; }
-    if (inventory.items.milk > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Milch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (300 🪙)</button></div>`; }
-    if (inventory.items.fertilizer > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (60 🪙)</button></div>`; }
-    if (inventory.items.firefly  > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><div><span class="item-name">Glühwürmchen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.firefly}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'firefly', 10)">Verkaufen (10 🪙)</button></div>`; }
-    if ((inventory.items.feather  || 0) > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🪶</span><div><span class="item-name">Feder</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.feather}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'feather', 250)">Verkaufen (250 🪙)</button></div>`; }
-    if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (400 🪙)</button></div>`; }
-    if ((inventory.items.truffle  || 0) > 0) { hasItems = true; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (1200 🪙)</button></div>`; }
-    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><div><span class="item-name">${o.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('ores','${key}',${oreSellPrices[key]})">Verkaufen (${oreSellPrices[key]} 🪙)</button></div>`; } });
-    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><span class="item-name">${r.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('jewelry','${key}',${r.sellPrice})">Verkaufen (${r.sellPrice.toLocaleString('de-DE')} 🪙)</button></div>`; } });
+    let html = '';
 
-    if (!hasItems) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast nichts zu verkaufen.<br>Ernte Pflanzen oder sammle Items!</div>`;
+    let cropsRows = '';
+    Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; cropsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    if (cropsRows) html += `<div class="section-title">🧺 Ernte</div><div class="item-list">${cropsRows}</div>`;
+
+    let itemsRows = '';
+    if (inventory.items.honey > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 250)">Verkaufen (250 🪙)</button></div>`; }
+    if (inventory.items.wool > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><div><span class="item-name">Wolle</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.wool}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'wool', 600)">Verkaufen (600 🪙)</button></div>`; }
+    if (inventory.items.egg > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><div><span class="item-name">Ei</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.egg}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'egg', 200)">Verkaufen (200 🪙)</button></div>`; }
+    if (inventory.items.milk > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Kuhmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (300 🪙)</button></div>`; }
+    if (inventory.items.diamond > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (1100 🪙)</button></div>`; }
+    if (inventory.items.fertilizer > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (60 🪙)</button></div>`; }
+    if (inventory.items.firefly > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><div><span class="item-name">Glühwürmchen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.firefly}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'firefly', 10)">Verkaufen (10 🪙)</button></div>`; }
+    if ((inventory.items.feather || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪶</span><div><span class="item-name">Feder</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.feather}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'feather', 250)">Verkaufen (250 🪙)</button></div>`; }
+    if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (400 🪙)</button></div>`; }
+    if ((inventory.items.truffle || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (1200 🪙)</button></div>`; }
+    if (itemsRows) html += `<div class="section-title">🎒 Tierprodukte & Items</div><div class="item-list">${itemsRows}</div>`;
+
+    let bakeryRows = '';
+    Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; bakeryRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    if (bakeryRows) html += `<div class="section-title">🍩 Backwaren</div><div class="item-list">${bakeryRows}</div>`;
+
+    let accRows = '';
+    Object.keys(inventory.accessories || {}).forEach(key => { if (inventory.accessories[key] > 0) { hasItems = true; const item = weavingRecipes[key]; accRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.accessories[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('accessories', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    if (accRows) html += `<div class="section-title">👒 Accessoires</div><div class="item-list">${accRows}</div>`;
+
+    let oresRows = '';
+    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; oresRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><div><span class="item-name">${o.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('ores','${key}',${oreSellPrices[key]})">Verkaufen (${oreSellPrices[key]} 🪙)</button></div>`; } });
+    if (oresRows) html += `<div class="section-title">⛏️ Erze</div><div class="item-list">${oresRows}</div>`;
+
+    let jewRows = '';
+    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; jewRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><span class="item-name">${r.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('jewelry','${key}',${r.sellPrice})">Verkaufen (${r.sellPrice.toLocaleString('de-DE')} 🪙)</button></div>`; } });
+    if (jewRows) html += `<div class="section-title">💎 Schmuck</div><div class="item-list">${jewRows}</div>`;
+
+    if (!hasItems) {
+      list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast nichts zu verkaufen.<br>Ernte Pflanzen oder sammle Items!</div>`;
+    } else {
+      list.innerHTML = html;
+    }
     window.showSpecificModal('modalSell');
   }
 
@@ -4401,295 +4375,6 @@
   window.closeSellQty = function() { pendingSell = null; document.getElementById('sellQtyOverlay').classList.remove('show'); }
   window.confirmSell = async function() {}
   window.closeSellConfirm = function() { document.getElementById('sellConfirmOverlay').classList.remove('show'); }
-
-  // ══════════════════════════════════════════════════════════
-  // ── FAHRENDER HÄNDLER ─────────────────────────────────────
-  // ══════════════════════════════════════════════════════════
-  const MERCHANT_CATEGORIES = [
-    { category: 'bakery',      recipes: () => bakeryRecipes },
-    { category: 'accessories', recipes: () => weavingRecipes },
-    { category: 'jewelry',     recipes: () => jewelryRecipes }
-  ];
-
-  function getMerchantRecipe(category, id) {
-    if (category === 'bakery')      return bakeryRecipes[id];
-    if (category === 'accessories') return weavingRecipes[id];
-    if (category === 'jewelry')     return jewelryRecipes[id];
-    return null;
-  }
-
-  function todayStr() { return new Date().toDateString(); }
-
-  function generateMerchantOffer() {
-    const pool = [];
-    MERCHANT_CATEGORIES.forEach(c => {
-      Object.keys(c.recipes()).forEach(id => pool.push({ category: c.category, id }));
-    });
-    // Drei verschiedene zufällig ziehen
-    const offer = [];
-    const used = new Set();
-    while (offer.length < 3 && pool.length > 0) {
-      const idx = Math.floor(Math.random() * pool.length);
-      const pick = pool[idx];
-      const key = pick.category + ':' + pick.id;
-      if (!used.has(key)) {
-        used.add(key);
-        offer.push({ category: pick.category, id: pick.id, qty: 1 + Math.floor(Math.random() * 3) });
-      }
-      pool.splice(idx, 1);
-    }
-    return offer;
-  }
-
-  function refreshMerchant() {
-    const today = todayStr();
-    let changed = false;
-    if (merchant.offerDate !== today || !Array.isArray(merchant.offer) || merchant.offer.length !== 3) {
-      merchant.offer = generateMerchantOffer();
-      merchant.offerDate = today;
-      changed = true;
-    }
-    renderMerchant();
-    if (changed && userKey && !isVisitMode) saveFarmData();
-  }
-
-  function renderMerchant() {
-    const el = document.getElementById('merchantNPC');
-    if (!el) return;
-    const today = todayStr();
-    const visibleToday = merchant.lastVisitDate !== today && !isVisitMode;
-    if (!visibleToday) {
-      el.style.display = 'none';
-      el.style.top = '-9999px';
-      return;
-    }
-    if (!el.dataset.rendered) {
-      el.innerHTML = getMerchantSVG() + '<div class="merchant-bubble">💰</div>';
-      el.dataset.rendered = '1';
-    }
-    el.style.display = 'block';
-    positionMerchant();
-  }
-
-  function positionMerchant() {
-    const el = document.getElementById('merchantNPC');
-    const beds = document.getElementById('bedsContainer');
-    const fw = document.getElementById('farmWorld');
-    if (!el || !beds || !fw) return;
-    const bedsRect = beds.getBoundingClientRect();
-    const fwRect = fw.getBoundingClientRect();
-    const bottomPx = bedsRect.bottom - fwRect.top + fw.scrollTop;
-    el.style.top = (bottomPx + 14) + 'px';
-  }
-
-  window.addEventListener('resize', () => { if (document.getElementById('merchantNPC')?.style.display === 'block') positionMerchant(); });
-
-  function getMerchantSVG() {
-    return `
-<svg viewBox="0 0 60 96" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="merchCoat" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#7a4a2a"/>
-      <stop offset="1" stop-color="#5a3520"/>
-    </linearGradient>
-    <linearGradient id="merchHat" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4a2818"/>
-      <stop offset="1" stop-color="#2e160c"/>
-    </linearGradient>
-    <linearGradient id="merchPouch" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#d97706"/>
-      <stop offset="1" stop-color="#92400e"/>
-    </linearGradient>
-  </defs>
-  <!-- Schatten -->
-  <ellipse cx="30" cy="93" rx="14" ry="2.6" fill="rgba(0,0,0,0.22)"/>
-  <!-- Stiefel -->
-  <ellipse cx="23" cy="89" rx="6" ry="4" fill="#1f1410"/>
-  <ellipse cx="37" cy="89" rx="6" ry="4" fill="#1f1410"/>
-  <rect x="18" y="83" width="10" height="7" rx="2" fill="#2a1812"/>
-  <rect x="32" y="83" width="10" height="7" rx="2" fill="#2a1812"/>
-  <!-- Hose -->
-  <path d="M19 64 L18 84 L29 84 L30 64 Z" fill="#3a2a1a"/>
-  <path d="M30 64 L31 84 L42 84 L41 64 Z" fill="#3a2a1a"/>
-  <!-- Mantel / Oberkörper -->
-  <path d="M16 44 Q12 60 18 70 L42 70 Q48 60 44 44 Q42 38 30 38 Q18 38 16 44 Z" fill="url(#merchCoat)"/>
-  <!-- Innenseite Mantel (Kragen-V) -->
-  <path d="M25 38 L30 56 L35 38 Z" fill="#c9a36a"/>
-  <!-- Hemd-Kragen -->
-  <path d="M27 40 L30 48 L33 40 Z" fill="#f5e3c2"/>
-  <!-- Gürtel -->
-  <rect x="16" y="62" width="28" height="5" fill="#3b2410"/>
-  <rect x="28" y="62" width="4" height="5" fill="#fbbf24"/>
-  <rect x="28.7" y="63" width="2.6" height="3" fill="#92400e"/>
-  <!-- Knöpfe Mantel -->
-  <circle cx="30" cy="50" r="1.2" fill="#fbbf24"/>
-  <circle cx="30" cy="56" r="1.2" fill="#fbbf24"/>
-  <circle cx="30" cy="62" r="1.2" fill="#fbbf24"/>
-  <!-- Arme -->
-  <path d="M16 44 Q10 54 12 66 Q14 70 18 68 Q20 58 20 48 Z" fill="url(#merchCoat)"/>
-  <path d="M44 44 Q50 54 48 66 Q46 70 42 68 Q40 58 40 48 Z" fill="url(#merchCoat)"/>
-  <!-- Hände -->
-  <circle cx="14" cy="68" r="3" fill="#e8b88a"/>
-  <circle cx="46" cy="68" r="3" fill="#e8b88a"/>
-  <!-- Geldbeutel rechts -->
-  <ellipse cx="48" cy="72" rx="5.5" ry="6" fill="url(#merchPouch)"/>
-  <path d="M44 69 Q48 64 52 69" stroke="#5a3010" stroke-width="1.2" fill="none"/>
-  <text x="48" y="75" text-anchor="middle" font-size="6" font-weight="bold" fill="#fde68a">$</text>
-  <!-- Hals -->
-  <rect x="27" y="33" width="6" height="6" fill="#d9a679"/>
-  <!-- Kopf -->
-  <ellipse cx="30" cy="28" rx="9" ry="10" fill="#e8b88a"/>
-  <!-- Ohren -->
-  <ellipse cx="21" cy="28" rx="1.6" ry="2.4" fill="#d9a679"/>
-  <ellipse cx="39" cy="28" rx="1.6" ry="2.4" fill="#d9a679"/>
-  <!-- Augen -->
-  <ellipse cx="26.5" cy="27" rx="1.1" ry="1.4" fill="#1f2937"/>
-  <ellipse cx="33.5" cy="27" rx="1.1" ry="1.4" fill="#1f2937"/>
-  <circle cx="26.8" cy="26.6" r="0.4" fill="#fff"/>
-  <circle cx="33.8" cy="26.6" r="0.4" fill="#fff"/>
-  <!-- Augenbrauen -->
-  <path d="M24 23.5 Q26.5 22.5 29 23.5" stroke="#3a2410" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-  <path d="M31 23.5 Q33.5 22.5 36 23.5" stroke="#3a2410" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-  <!-- Nase -->
-  <path d="M30 28 Q29 31 30 32 Q31 31 30 28" fill="#c89878"/>
-  <!-- Schnurrbart -->
-  <path d="M25 33 Q28 34 30 33 Q32 34 35 33 Q33 35 30 35 Q27 35 25 33 Z" fill="#3a2410"/>
-  <!-- Bart -->
-  <path d="M22 33 Q24 40 30 41 Q36 40 38 33 Q36 38 30 39 Q24 38 22 33 Z" fill="#3a2410"/>
-  <!-- Mund -->
-  <path d="M28 36 Q30 37 32 36" stroke="#5a2010" stroke-width="0.8" fill="none" stroke-linecap="round"/>
-  <!-- Hut: Krempe -->
-  <ellipse cx="30" cy="19" rx="15" ry="3.2" fill="url(#merchHat)"/>
-  <!-- Hut: Kopfteil -->
-  <path d="M22 19 Q22 10 30 8 Q38 10 38 19 Z" fill="url(#merchHat)"/>
-  <!-- Hut: Band -->
-  <rect x="22" y="17" width="16" height="2.4" fill="#92400e"/>
-  <rect x="29" y="17" width="3" height="2.4" fill="#fbbf24"/>
-  <!-- Feder am Hut -->
-  <path d="M37 16 Q42 10 40 6 Q39 11 36 14 Z" fill="#dc2626"/>
-</svg>`;
-  }
-
-  let merchantPendingPlan = null;
-
-  function buildMerchantPlan() {
-    let total = 0;
-    let canSellAll = true;
-    let anyInStock = false;
-    const items = merchant.offer.map(o => {
-      const recipe = getMerchantRecipe(o.category, o.id);
-      if (!recipe) return null;
-      const stock = (inventory[o.category] && inventory[o.category][o.id]) || 0;
-      const want = o.qty;
-      const will = Math.min(stock, want);
-      if (will > 0) anyInStock = true;
-      if (will < want) canSellAll = false;
-      const pricePerUnit = recipe.sellPrice * 2;
-      total += will * pricePerUnit;
-      return { ...o, recipe, stock, want, will, pricePerUnit, single: recipe.sellPrice };
-    }).filter(Boolean);
-    return { items, total, canSellAll, anyInStock };
-  }
-
-  window.openMerchant = function() {
-    if (isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; }
-    const today = todayStr();
-    if (merchant.lastVisitDate === today) {
-      window.showToast('Der Händler ist heute schon weg ✋');
-      return;
-    }
-    if (!Array.isArray(merchant.offer) || merchant.offer.length === 0) refreshMerchant();
-    const plan = buildMerchantPlan();
-    merchantPendingPlan = plan;
-    const list = document.getElementById('merchantOfferList');
-    list.innerHTML = plan.items.map(it => {
-      const enough = it.stock >= it.want;
-      return `<div class="merchant-offer-row${enough ? '' : ' insufficient'}">
-        <div class="merchant-offer-icon">${it.recipe.icon}</div>
-        <div class="merchant-offer-info">
-          <div class="merchant-offer-name">${it.recipe.name}</div>
-          <div class="merchant-offer-meta">Sucht: <b>${it.want}×</b> · Auf Lager: ${it.stock}</div>
-          <div class="merchant-offer-price"><span class="price-strike">${it.single} 🪙</span>${it.pricePerUnit.toLocaleString('de-DE')} 🪙<span class="price-2x">2×</span></div>
-        </div>
-      </div>`;
-    }).join('');
-    const preview = document.getElementById('merchantTotalPreview');
-    preview.textContent = '+' + plan.total.toLocaleString('de-DE') + ' 🪙';
-    const sellBtn = document.getElementById('merchantSellBtn');
-    sellBtn.disabled = !plan.anyInStock;
-    sellBtn.textContent = plan.canSellAll ? 'Alles verkaufen ✓' : (plan.anyInStock ? 'Verfügbares verkaufen ✓' : 'Nichts auf Lager');
-    window.showSpecificModal('modalMerchant');
-    updateMerchantTimer();
-    clearInterval(window._merchantTimerInt);
-    window._merchantTimerInt = setInterval(() => {
-      const overlay = document.getElementById('modalOverlay');
-      const card = document.getElementById('modalMerchant');
-      if (!overlay?.classList.contains('active') || !card?.classList.contains('active')) {
-        clearInterval(window._merchantTimerInt);
-        return;
-      }
-      updateMerchantTimer();
-    }, 1000);
-  }
-
-  function updateMerchantTimer() {
-    const valEl = document.getElementById('merchantTimerVal');
-    if (!valEl) return;
-    const now = new Date();
-    const next = new Date(now);
-    next.setHours(24, 0, 0, 0);
-    let ms = next - now;
-    if (ms < 0) ms = 0;
-    const totalSec = Math.floor(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-    const pad = n => String(n).padStart(2, '0');
-    valEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
-  }
-
-  window.confirmMerchantSell = async function() {
-    const plan = merchantPendingPlan || buildMerchantPlan();
-    if (!plan.anyInStock) return;
-    let total = 0;
-    for (const it of plan.items) {
-      if (it.will <= 0) continue;
-      if ((inventory[it.category][it.id] || 0) >= it.will) {
-        inventory[it.category][it.id] -= it.will;
-        total += it.will * it.pricePerUnit;
-      }
-    }
-    if (total <= 0) return;
-    merchant.lastVisitDate = todayStr();
-    merchantPendingPlan = null;
-    await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
-    runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
-    await saveFarmData();
-    window.closeAllModals();
-    renderMerchant();
-    window.showFloatingNumber('+' + total.toLocaleString('de-DE') + ' 🪙', '#22c55e');
-    window.showToast('Der Händler zieht weiter 🎩');
-  }
-
-  window.dismissMerchant = function() {
-    document.getElementById('merchantDismissOverlay').classList.add('show');
-  }
-
-  window.closeMerchantDismiss = function() {
-    document.getElementById('merchantDismissOverlay').classList.remove('show');
-  }
-
-  window._doDismissMerchant = async function() {
-    document.getElementById('merchantDismissOverlay').classList.remove('show');
-    merchant.lastVisitDate = todayStr();
-    merchantPendingPlan = null;
-    window.closeAllModals();
-    renderMerchant();
-    if (userKey && !isVisitMode) await saveFarmData();
-  }
-
-  // Tageswechsel-Check im selben Takt wie checkDayNight
-  setInterval(() => { if (userKey && !isVisitMode) refreshMerchant(); }, 60000);
 
   window.openInventory = function() {
     const container = document.getElementById('inventoryContent'); container.innerHTML = '';
@@ -5175,6 +4860,22 @@
     return growingCount;
   }
 
+  window.countGrowingPlantsInBed = function(b) {
+    let growingCount = 0;
+    const now = Date.now();
+    if (b < 0 || b >= unlockedBeds || !beds[b]) return 0;
+    for (let s = 0; s < beds[b].length; s++) {
+      const slot = beds[b][s];
+      if (slot && slot.state === 'growing') {
+        const itemDef = shopItems[slot.item];
+        if (!itemDef) continue;
+        const elapsedSec = Math.floor((now - slot.plantedAt) / 1000);
+        if (elapsedSec < itemDef.growTime) growingCount++;
+      }
+    }
+    return growingCount;
+  }
+
   window.fertilizeAll = function() {
     if (isVisitMode) return;
     const growingCount = window.countGrowingPlants();
@@ -5186,6 +4887,55 @@
     document.getElementById('confirmText').innerHTML = `Du verwendest <b>${willUse}x Dünger</b> für <b>${willUse}</b> Pflanze${willUse > 1 ? 'n' : ''}, um die Wachstumszeit zu halbieren.<br><span style="font-size:12px; color:var(--text-mid);">Auf Lager: ${inventory.items.fertilizer}x · Wachsend: ${growingCount}</span>`;
     document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-fert" onclick="window.doFertilizeAll()" style="margin-top:0;">Ja, alles düngen! 🪴</button><button class="btn-generic btn-cancel" onclick="${backCall}">Abbrechen</button>`;
     window.showSpecificModal('modalConfirm');
+  }
+
+  window.fertilizeBed = function() {
+    if (isVisitMode) return;
+    if (!currentStatusSlot) return;
+    const b = currentStatusSlot.b;
+    const growingCount = window.countGrowingPlantsInBed(b);
+    if (growingCount <= 0) { window.showToast('Keine wachsenden Pflanzen in diesem Beet. 🌱'); return; }
+    if (inventory.items.fertilizer <= 0) { window.showToast('Du hast keinen Dünger! 🪴'); return; }
+    const willUse = Math.min(inventory.items.fertilizer, growingCount);
+    const backCall = `window.openPlantStatus(${currentStatusSlot.b}, ${currentStatusSlot.s})`;
+    document.getElementById('confirmTitle').textContent = "Beet düngen? 🪴";
+    document.getElementById('confirmText').innerHTML = `Du verwendest <b>${willUse}x Dünger</b> für <b>${willUse}</b> Pflanze${willUse > 1 ? 'n' : ''} in diesem Beet, um die Wachstumszeit zu halbieren.<br><span style="font-size:12px; color:var(--text-mid);">Auf Lager: ${inventory.items.fertilizer}x · Im Beet wachsend: ${growingCount}</span>`;
+    document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-fert" onclick="window.doFertilizeBed()" style="margin-top:0; background:linear-gradient(135deg,#3b82f6,#2563eb);">Ja, Beet düngen! 🪴</button><button class="btn-generic btn-cancel" onclick="${backCall}">Abbrechen</button>`;
+    window.showSpecificModal('modalConfirm');
+  }
+
+  window.doFertilizeBed = async function() {
+    if (isVisitMode) return;
+    if (!currentStatusSlot) return;
+    const b = currentStatusSlot.b;
+    if (!beds[b]) return;
+    let used = 0;
+    const now = Date.now();
+    for (let s = 0; s < beds[b].length && inventory.items.fertilizer > 0; s++) {
+      const slot = beds[b][s];
+      if (!slot || slot.state !== 'growing') continue;
+      const itemDef = shopItems[slot.item];
+      if (!itemDef) continue;
+      const elapsedMs = now - slot.plantedAt;
+      const totalMs = itemDef.growTime * 1000;
+      const remainingMs = totalMs - elapsedMs;
+      if (remainingMs <= 0) continue;
+      const newRemainingMs = remainingMs / 2;
+      slot.plantedAt = now - (totalMs - newRemainingMs);
+      inventory.items.fertilizer--;
+      used++;
+    }
+    if (used > 0) {
+      await saveFarmData();
+      if (currentStatusSlot && beds[currentStatusSlot.b] && beds[currentStatusSlot.b][currentStatusSlot.s] && beds[currentStatusSlot.b][currentStatusSlot.s].state === 'growing') {
+        window.openPlantStatus(currentStatusSlot.b, currentStatusSlot.s);
+      } else {
+        window.closeAllModals();
+      }
+      window.showToast(`🪴 ${used} Pflanze${used > 1 ? 'n' : ''} im Beet gedüngt!`);
+    } else {
+      window.showToast('Nichts zu düngen in diesem Beet. 🌱');
+    }
   }
 
   window.doFertilizeAll = async function() {
@@ -5238,8 +4988,10 @@
       const fertBtnContainer = document.getElementById('statusFertilizerBtnContainer');
       if (inventory.items.fertilizer > 0) {
           const growingCount = window.countGrowingPlants();
+          const bedGrowingCount = window.countGrowingPlantsInBed(bedIndex);
+          const bedBtn = bedGrowingCount > 1 ? `<button class="btn-generic btn-fert" onclick="window.fertilizeBed()" style="background:linear-gradient(135deg,#3b82f6,#2563eb);">🪴 Beet düngen (${Math.min(inventory.items.fertilizer, bedGrowingCount)}x)</button>` : '';
           const allBtn = growingCount > 1 ? `<button class="btn-generic btn-fert" onclick="window.fertilizeAll()" style="background:linear-gradient(135deg,#16a34a,#15803d);">🪴 Alles düngen (${Math.min(inventory.items.fertilizer, growingCount)}x)</button>` : '';
-          fertBtnContainer.innerHTML = `<button class="btn-generic btn-fert" onclick="window.confirmFertilizer()">🪴 Dünger verwenden (${inventory.items.fertilizer}x)</button>${allBtn}`;
+          fertBtnContainer.innerHTML = `<button class="btn-generic btn-fert" onclick="window.confirmFertilizer()">🪴 Dünger verwenden (${inventory.items.fertilizer}x)</button>${bedBtn}${allBtn}`;
       } else {
           fertBtnContainer.innerHTML = '';
       }
@@ -5914,7 +5666,7 @@
     document.getElementById('btnStall').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
 
-    document.getElementById('farmTitle').textContent = farmName(otherUser);
+    const _ftVisit = document.getElementById('farmTitle'); if (_ftVisit) _ftVisit.textContent = farmName(otherUser);
     document.getElementById('visitBannerText').textContent = '👀 Du besuchst ' + farmName(otherUser);
     document.getElementById('visitBanner').classList.add('show');
 
@@ -5991,7 +5743,7 @@
     document.getElementById('topbarCoins').style.display = '';
     document.getElementById('visitBanner').classList.remove('show');
 
-    document.getElementById('farmTitle').textContent = farmName(currentUser);
+    const _ftBack = document.getElementById('farmTitle'); if (_ftBack) _ftBack.textContent = farmName(currentUser);
 
     get(ref(db, `farm/${ownUserKey}`)).then(snap => {
       const data = snap.val() || {};
