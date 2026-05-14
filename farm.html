@@ -1606,6 +1606,18 @@
   </div>
 </div>
 
+<div class="sell-confirm-overlay" id="merchantDismissOverlay" onclick="window.closeMerchantDismiss()">
+  <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
+    <div class="sell-confirm-icon">🎩</div>
+    <div class="sell-confirm-title">Händler wirklich wegschicken?</div>
+    <div class="sell-confirm-sub">Er kommt erst morgen wieder vorbei.</div>
+    <div class="sell-confirm-btns">
+      <button class="sell-confirm-no" onclick="window.closeMerchantDismiss()">Abbrechen</button>
+      <button class="sell-confirm-yes" onclick="window._doDismissMerchant()">Wegschicken ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="sell-confirm-overlay" id="sendConfirmOverlay" onclick="window.closeSendConfirm()">
   <div class="sell-confirm-sheet" onclick="event.stopPropagation()">
     <div class="sell-confirm-icon" id="sendConfirmIcon">🎁</div>
@@ -2279,7 +2291,7 @@
   <div id="animalSpace"></div>
 
   <!-- FAHRENDER HÄNDLER NPC -->
-  <div class="merchant-wrapper" id="merchantNPC" style="display:none;" onclick="window.openMerchant()"></div>
+  <div class="merchant-wrapper" id="merchantNPC" style="display:none; top:-9999px;" onclick="window.openMerchant()"></div>
 
   <!-- BLUMEN -->
   <div class="flower" style="top:41%; left:10%; animation-delay:0s;">
@@ -4272,7 +4284,11 @@
     if (!el) return;
     const today = todayStr();
     const visibleToday = merchant.lastVisitDate !== today && !isVisitMode;
-    if (!visibleToday) { el.style.display = 'none'; return; }
+    if (!visibleToday) {
+      el.style.display = 'none';
+      el.style.top = '-9999px';
+      return;
+    }
     if (!el.dataset.rendered) {
       el.innerHTML = getMerchantSVG() + '<div class="merchant-bubble">💰</div>';
       el.dataset.rendered = '1';
@@ -4454,7 +4470,16 @@
     window.showToast('Der Händler zieht weiter 🎩');
   }
 
-  window.dismissMerchant = async function() {
+  window.dismissMerchant = function() {
+    document.getElementById('merchantDismissOverlay').classList.add('show');
+  }
+
+  window.closeMerchantDismiss = function() {
+    document.getElementById('merchantDismissOverlay').classList.remove('show');
+  }
+
+  window._doDismissMerchant = async function() {
+    document.getElementById('merchantDismissOverlay').classList.remove('show');
     merchant.lastVisitDate = todayStr();
     merchantPendingPlan = null;
     window.closeAllModals();
