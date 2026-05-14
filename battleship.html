@@ -266,7 +266,24 @@
   /* RESULT */
   .result-overlay { position:fixed; inset:0; z-index:99999; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); }
   .result-overlay.open { display:flex; }
-  .result-card { background:rgba(14,3,26,0.98); border:1.5px solid rgba(255,107,157,0.3); border-radius:32px; padding:44px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 20px 80px rgba(255,107,157,0.15),0 0 60px rgba(0,0,0,0.6); animation:resultPop .5s cubic-bezier(.22,1,.36,1); }
+  .result-card { background:rgba(14,3,26,0.98); border:1.5px solid rgba(255,107,157,0.3); border-radius:32px; padding:44px 28px 28px; max-width:400px; width:92%; max-height:92vh; overflow-y:auto; text-align:center; box-shadow:0 20px 80px rgba(255,107,157,0.15),0 0 60px rgba(0,0,0,0.6); animation:resultPop .5s cubic-bezier(.22,1,.36,1); }
+  .result-coins + .result-board-label { margin-top:4px; }
+  .result-board-label { font-size:13px; color:var(--text-mid); font-weight:600; margin-bottom:8px; }
+  .result-board-label span { color:var(--text); }
+  .result-board { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; max-width:300px; margin:0 auto 10px; padding:6px; background:rgba(8,20,40,0.6); border:1px solid rgba(100,150,255,0.2); border-radius:10px; }
+  .result-board .gc { aspect-ratio:1; min-width:0; min-height:0; width:auto; height:auto; background:rgba(20,50,90,0.55); border:1px solid rgba(80,140,220,0.25); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:10px; line-height:1; box-shadow:none; animation:none !important; }
+  .result-board .gc.hit { background:radial-gradient(circle,#ffd166 0%,#ef476f 70%) !important; box-shadow:0 0 6px rgba(239,71,111,.6) !important; }
+  .result-board .gc.miss { background:rgba(20,40,70,0.7) !important; color:rgba(220,230,255,0.55); }
+  .result-board .gc.miss::before { content:"✕"; font-size:10px; }
+  .result-board .gc.sunk { background:linear-gradient(135deg,#3a0d1a,#1a0510) !important; color:#ff7a90; box-shadow:0 0 8px rgba(255,80,120,.5) !important; }
+  .result-board .gc.sunk::before { content:"☠"; font-size:10px; }
+  .result-board .gc.ship-reveal { background:rgba(48,100,200,0.55) !important; border-color:rgba(120,170,255,0.5) !important; }
+  .result-board-legend { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--text-mid); margin-bottom:18px; }
+  .result-board-legend span { display:inline-flex; align-items:center; gap:5px; }
+  .result-board-legend .lg { display:inline-block; width:12px; height:12px; border-radius:3px; }
+  .result-board-legend .lg-hit { background:radial-gradient(circle,#ffd166 0%,#ef476f 70%); }
+  .result-board-legend .lg-miss { background:rgba(20,40,70,0.9); border:1px solid rgba(120,150,200,0.4); }
+  .result-board-legend .lg-ship { background:rgba(48,100,200,0.7); border:1px solid rgba(120,170,255,0.6); }
   @keyframes resultPop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
   .result-emoji { font-size:72px; display:block; margin-bottom:12px; filter:drop-shadow(0 0 24px rgba(255,200,50,0.5)); }
   .result-title { font-family:'Dancing Script',cursive; font-size:36px; font-weight:700; color:var(--text); margin-bottom:8px; }
@@ -481,8 +498,14 @@
     <div class="result-title" id="resultTitle">Gewonnen!</div>
     <div class="result-sub" id="resultSub"></div>
     <div class="result-coins" id="resultCoins"></div>
+    <div class="result-board-label">Spielfeld von <span id="resultBoardOwner"></span></div>
+    <div class="result-board" id="resultBoard"></div>
+    <div class="result-board-legend">
+      <span><i class="lg lg-hit"></i> Treffer</span>
+      <span><i class="lg lg-miss"></i> Daneben</span>
+      <span><i class="lg lg-ship"></i> Unentdeckt</span>
+    </div>
     <button class="btn-again" id="playAgainBtn">Nochmal spielen 🌊</button>
-    <button class="btn-secondary" id="viewBoardBtn" style="margin-top:8px;">Spielfeld ansehen 🔍</button>
   </div>
 </div>
 
@@ -1243,9 +1266,34 @@ function showResult(state) {
     document.getElementById('resultCoins').textContent = win
       ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
       : `-${bet.toLocaleString('de-DE')} 🪙`;
+    renderResultBoard(state);
     o.classList.add('open');
     if (win) spawnKonfetti();
   }, 850);
+}
+
+function renderResultBoard(state) {
+  const boardEl = document.getElementById('resultBoard');
+  const ownerEl = document.getElementById('resultBoardOwner');
+  if (!boardEl || !state) return;
+  const myK  = pkey(currentUser);
+  const oppK = pkey(other(currentUser));
+  const oppShips = state[oppK + 'Ships'] || [];
+  const myShots  = state[myK  + 'Shots'] || emptyGrid();
+  if (ownerEl) ownerEl.textContent = other(currentUser);
+  buildGrid(boardEl, (div, r, c) => {
+    const shot = myShots[r][c];
+    if      (shot === 1) div.classList.add('hit');
+    else if (shot === 2) div.classList.add('miss');
+  });
+  markSunk(oppShips, myShots, boardEl);
+  for (const s of oppShips) {
+    for (const {r, c} of cells(s)) {
+      const d = gc(boardEl, r, c);
+      if (d && !d.classList.contains('hit') && !d.classList.contains('sunk'))
+        d.classList.add('ship-reveal');
+    }
+  }
 }
 
 function spawnFinalBlow() {
@@ -1414,9 +1462,6 @@ document.getElementById('surrenderBtn').addEventListener('click', surrender);
 document.getElementById('playAgainBtn').addEventListener('click', playAgain);
 document.getElementById('newGameBtn').addEventListener('click', playAgain);
 document.getElementById('closeResultBtn').addEventListener('click', () => {
-  document.getElementById('resultOverlay').classList.remove('open');
-});
-document.getElementById('viewBoardBtn').addEventListener('click', () => {
   document.getElementById('resultOverlay').classList.remove('open');
 });
 document.getElementById('rotateBtn').addEventListener('click', () => {
