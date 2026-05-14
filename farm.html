@@ -3453,37 +3453,101 @@
     }
     else if (species === 'dog') {
       baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
-        <g class="tail"><path d="M 8 38 Q 2 34 4 26 Q 8 28 8 38 Z" fill="#d4a55a" stroke="#b88030" stroke-width="0.8"/></g>
-        <rect x="14" y="50" width="5" height="12" rx="2" fill="#c8924a"/>
-        <rect x="22" y="50" width="5" height="12" rx="2" fill="#c8924a"/>
-        <rect x="30" y="50" width="5" height="12" rx="2" fill="#d4a05a"/>
-        <rect x="38" y="50" width="5" height="12" rx="2" fill="#d4a05a"/>
-        <rect x="14" y="59" width="5" height="3" rx="1" fill="#2d1a00"/>
-        <rect x="22" y="59" width="5" height="3" rx="1" fill="#2d1a00"/>
-        <rect x="30" y="59" width="5" height="3" rx="1" fill="#2d1a00"/>
-        <rect x="38" y="59" width="5" height="3" rx="1" fill="#2d1a00"/>
-        <ellipse cx="26" cy="44" rx="16" ry="11" fill="#d4a55a"/>
-        <ellipse cx="36" cy="28" rx="11" ry="9" fill="#d4a55a"/>
-        <ellipse cx="26" cy="24" rx="5" ry="8" fill="#c89040" transform="rotate(-20 26 24)"/>
-        <ellipse cx="27" cy="25" rx="3" ry="6" fill="#b87828" opacity="0.7" transform="rotate(-20 27 25)"/>
-        <ellipse cx="46" cy="24" rx="5" ry="8" fill="#c89040" transform="rotate(20 46 24)"/>
-        <ellipse cx="45" cy="25" rx="3" ry="6" fill="#b87828" opacity="0.7" transform="rotate(20 45 25)"/>
-        <ellipse cx="36" cy="26" rx="9" ry="7" fill="#d4a55a"/>
-        <ellipse cx="30" cy="22" rx="3" ry="2" fill="#e8c070" opacity="0.6"/>
-        <ellipse cx="44" cy="32" rx="5.5" ry="3.5" fill="#c89040"/>
-        <ellipse cx="44" cy="30" rx="3" ry="1.5" fill="#e8c070" opacity="0.5"/>
-        <ellipse cx="43" cy="32" rx="1.2" ry="1.6" fill="#1a0a00"/>
-        <ellipse cx="46" cy="32" rx="1.2" ry="1.6" fill="#1a0a00"/>
-        <circle cx="31" cy="24" r="2" fill="#1a0a00"/>
-        <circle cx="40" cy="22" r="2" fill="#1a0a00"/>
-        <circle cx="31.7" cy="23.3" r="0.8" fill="#ffffff"/>
-        <circle cx="40.7" cy="21.3" r="0.8" fill="#ffffff"/>
-        <line x1="26" y1="29" x2="32" y2="30" stroke="#e8c888" stroke-width="1" stroke-linecap="round"/>
-        <line x1="26" y1="31" x2="32" y2="31" stroke="#e8c888" stroke-width="1" stroke-linecap="round"/>
-        <line x1="50" y1="29" x2="44" y2="30" stroke="#e8c888" stroke-width="1" stroke-linecap="round"/>
-        <line x1="50" y1="31" x2="44" y2="31" stroke="#e8c888" stroke-width="1" stroke-linecap="round"/>
-        <path d="M 38 33 Q 40 35.5 42 33.5" fill="none" stroke="#8a4a20" stroke-width="1.2" stroke-linecap="round"/>
-        <ellipse cx="40" cy="35" rx="2" ry="1.2" fill="#e87060"/>
+        <defs>
+          <radialGradient id="gradDogBody" cx="40%" cy="25%" r="85%"><stop offset="0%" stop-color="#fbd890"/><stop offset="55%" stop-color="#dc9848"/><stop offset="100%" stop-color="#8a4a14"/></radialGradient>
+          <radialGradient id="gradDogHead" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#fbd890"/><stop offset="60%" stop-color="#dc9848"/><stop offset="100%" stop-color="#7a3a08"/></radialGradient>
+          <linearGradient id="gradDogBelly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff5d8"/><stop offset="100%" stop-color="#f0d8a8"/></linearGradient>
+          <radialGradient id="gradDogEar" cx="50%" cy="15%" r="95%"><stop offset="0%" stop-color="#a8621c"/><stop offset="55%" stop-color="#783808"/><stop offset="100%" stop-color="#3a1a00"/></radialGradient>
+          <radialGradient id="gradDogSnout" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#fff5d8"/><stop offset="100%" stop-color="#e8c890"/></radialGradient>
+          <radialGradient id="gradDogNose" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#6a4a3c"/><stop offset="55%" stop-color="#2a1810"/><stop offset="100%" stop-color="#080808"/></radialGradient>
+          <radialGradient id="gradDogTongue" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#ffb8c4"/><stop offset="100%" stop-color="#d05878"/></radialGradient>
+          <radialGradient id="gradDogEye" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="#8a5a30"/><stop offset="55%" stop-color="#3a1a08"/><stop offset="100%" stop-color="#0a0500"/></radialGradient>
+          <radialGradient id="gradDogPaw" cx="50%" cy="35%" r="70%"><stop offset="0%" stop-color="#4a2818"/><stop offset="100%" stop-color="#1a0a05"/></radialGradient>
+          <radialGradient id="gradDogCollar" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#e85060"/><stop offset="100%" stop-color="#8a1a28"/></radialGradient>
+        </defs>
+        <g class="tail">
+          <path d="M 11 40 Q 3 36 3 24 Q 6 16 13 17 Q 17 20 15 26 Q 12 31 11 39 Z" fill="url(#gradDogBody)" stroke="#6a3a08" stroke-width="0.5"/>
+          <path d="M 5 19 Q 9 15 13 18 Q 12 22 7 22 Z" fill="#fff5d8" opacity="0.85"/>
+          <path d="M 4 26 Q 7 26 10 28" fill="none" stroke="#6a3a08" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+          <path d="M 4 31 Q 7 31 11 33" fill="none" stroke="#6a3a08" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+          <path d="M 6 36 Q 9 36 12 38" fill="none" stroke="#6a3a08" stroke-width="0.5" opacity="0.45" stroke-linecap="round"/>
+        </g>
+        <path d="M 14 44 Q 12 53 13 60 Q 15 62.5 18.5 62 Q 20 56 19 46 Z" fill="url(#gradDogBody)" stroke="#6a3a08" stroke-width="0.5"/>
+        <path d="M 14 50 Q 15 53 14 56" fill="none" stroke="#6a3a08" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+        <ellipse cx="16.3" cy="61.7" rx="3.2" ry="1.9" fill="url(#gradDogPaw)" stroke="#0a0500" stroke-width="0.3"/>
+        <ellipse cx="16.3" cy="61.3" rx="2" ry="1.1" fill="#5a3220" opacity="0.7"/>
+        <circle cx="14.7" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <circle cx="16.3" cy="61.4" r="0.55" fill="#1a0a05"/>
+        <circle cx="17.9" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <path d="M 30 44 Q 29 53 31 60 Q 33 62.5 36 62 Q 37 56 36 46 Z" fill="url(#gradDogBody)" stroke="#6a3a08" stroke-width="0.5"/>
+        <path d="M 30.5 50 Q 31 53 30.5 56" fill="none" stroke="#6a3a08" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+        <ellipse cx="33.3" cy="61.7" rx="3.2" ry="1.9" fill="url(#gradDogPaw)" stroke="#0a0500" stroke-width="0.3"/>
+        <ellipse cx="33.3" cy="61.3" rx="2" ry="1.1" fill="#5a3220" opacity="0.7"/>
+        <circle cx="31.7" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <circle cx="33.3" cy="61.4" r="0.55" fill="#1a0a05"/>
+        <circle cx="34.9" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <path d="M 11 42 Q 11 32 18 30 Q 24 28 30 30 Q 40 31 44 38 Q 46 44 44 49 Q 41 53 36 53 Q 24 55 16 53 Q 10 51 11 42 Z" fill="url(#gradDogBody)" stroke="#6a3a08" stroke-width="0.5"/>
+        <path d="M 14 46 Q 26 54 42 47 Q 41 51 26 54 Q 13 53 14 46 Z" fill="url(#gradDogBelly)" opacity="0.95"/>
+        <path d="M 18 36 Q 20 37 19 40" fill="none" stroke="#7a3a08" stroke-width="0.6" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 24 34 Q 26 35 25 38" fill="none" stroke="#7a3a08" stroke-width="0.6" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 33 35 Q 35 36 34 39" fill="none" stroke="#7a3a08" stroke-width="0.6" opacity="0.45" stroke-linecap="round"/>
+        <path d="M 21 44 Q 19 53 21 60 Q 23 62.5 26 62 Q 27 55 26 45 Z" fill="url(#gradDogBody)" stroke="#6a3a08" stroke-width="0.4"/>
+        <ellipse cx="23.5" cy="61.7" rx="3.1" ry="1.9" fill="url(#gradDogPaw)" stroke="#0a0500" stroke-width="0.3"/>
+        <ellipse cx="23.5" cy="61.3" rx="2" ry="1.1" fill="#5a3220" opacity="0.7"/>
+        <circle cx="22" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <circle cx="23.5" cy="61.4" r="0.55" fill="#1a0a05"/>
+        <circle cx="25" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <path d="M 38 44 Q 37 53 39 60 Q 41 62.5 44 62 Q 45 55 43 45 Z" fill="url(#gradDogBody)" stroke="#6a3a08" stroke-width="0.4"/>
+        <ellipse cx="41.5" cy="61.7" rx="3.1" ry="1.9" fill="url(#gradDogPaw)" stroke="#0a0500" stroke-width="0.3"/>
+        <ellipse cx="41.5" cy="61.3" rx="2" ry="1.1" fill="#5a3220" opacity="0.7"/>
+        <circle cx="40" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <circle cx="41.5" cy="61.4" r="0.55" fill="#1a0a05"/>
+        <circle cx="43" cy="61.7" r="0.55" fill="#1a0a05"/>
+        <path d="M 36 36 Q 41 39 41 47 Q 38 49 35 47 Q 34 41 36 36 Z" fill="url(#gradDogBelly)" opacity="0.9"/>
+        <path d="M 30 50 Q 36 53 44 50 Q 44 53 36 53 Q 30 52 30 50 Z" fill="url(#gradDogCollar)" stroke="#5a1018" stroke-width="0.4"/>
+        <path d="M 30 50 Q 36 51 44 50" fill="none" stroke="#fbcfd8" stroke-width="0.4" opacity="0.6"/>
+        <circle cx="37" cy="52.5" r="1.4" fill="#fbbf24" stroke="#7a5808" stroke-width="0.4"/>
+        <circle cx="36.7" cy="52.1" r="0.5" fill="#fff0a8"/>
+        <g class="ear-left">
+          <path d="M 27 18 Q 21 15 21 26 Q 22 35 29 34 Q 32 26 31 18 Z" fill="url(#gradDogEar)" stroke="#3a1a00" stroke-width="0.4"/>
+          <path d="M 24 23 Q 23 28 25 33" fill="none" stroke="#1a0500" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+          <path d="M 27 32 Q 25 33 23 32" fill="none" stroke="#1a0500" stroke-width="0.5" opacity="0.4" stroke-linecap="round"/>
+        </g>
+        <g class="ear-right">
+          <path d="M 45 18 Q 51 15 51 26 Q 50 35 43 34 Q 40 26 41 18 Z" fill="url(#gradDogEar)" stroke="#3a1a00" stroke-width="0.4"/>
+          <path d="M 48 23 Q 49 28 47 33" fill="none" stroke="#1a0500" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+          <path d="M 45 32 Q 47 33 49 32" fill="none" stroke="#1a0500" stroke-width="0.5" opacity="0.4" stroke-linecap="round"/>
+        </g>
+        <path d="M 26 22 Q 26 13 36 12 Q 46 13 48 22 Q 48 29 44 32 Q 36 35 30 33 Q 26 30 26 22 Z" fill="url(#gradDogHead)" stroke="#6a3a08" stroke-width="0.5"/>
+        <path d="M 36 13 Q 35 18 36 22 Q 37 18 36 13 Z" fill="#fff5d8" opacity="0.55"/>
+        <ellipse cx="37" cy="28" rx="6.5" ry="4.8" fill="url(#gradDogSnout)" stroke="#a07840" stroke-width="0.35"/>
+        <ellipse cx="37" cy="29.5" rx="5" ry="2.2" fill="#fbdfa8" opacity="0.6"/>
+        <ellipse cx="30" cy="18" rx="1.6" ry="0.8" fill="#fff5d8" opacity="0.55"/>
+        <ellipse cx="42" cy="18" rx="1.6" ry="0.8" fill="#fff5d8" opacity="0.55"/>
+        <ellipse cx="31.5" cy="22.2" rx="1.9" ry="2.3" fill="#ffffff"/>
+        <ellipse cx="31.5" cy="22.2" rx="1.6" ry="2" fill="url(#gradDogEye)"/>
+        <circle cx="32.1" cy="21.5" r="0.55" fill="#ffffff"/>
+        <circle cx="31.1" cy="22.9" r="0.28" fill="#ffffff" opacity="0.8"/>
+        <ellipse cx="42.5" cy="22.2" rx="1.9" ry="2.3" fill="#ffffff"/>
+        <ellipse cx="42.5" cy="22.2" rx="1.6" ry="2" fill="url(#gradDogEye)"/>
+        <circle cx="43.1" cy="21.5" r="0.55" fill="#ffffff"/>
+        <circle cx="42.1" cy="22.9" r="0.28" fill="#ffffff" opacity="0.8"/>
+        <path d="M 29.7 19.5 Q 31.5 18.8 33.3 19.5" fill="none" stroke="#5a3010" stroke-width="0.4" stroke-linecap="round" opacity="0.7"/>
+        <path d="M 40.7 19.5 Q 42.5 18.8 44.3 19.5" fill="none" stroke="#5a3010" stroke-width="0.4" stroke-linecap="round" opacity="0.7"/>
+        <path d="M 34.7 25.3 Q 37 24.5 39.3 25.3 Q 39 27.3 37 27.9 Q 35 27.3 34.7 25.3 Z" fill="url(#gradDogNose)" stroke="#000" stroke-width="0.35"/>
+        <ellipse cx="36.1" cy="25.4" rx="0.55" ry="0.32" fill="#9a7868" opacity="0.7"/>
+        <ellipse cx="37.9" cy="25.4" rx="0.45" ry="0.26" fill="#9a7868" opacity="0.55"/>
+        <path d="M 36.3 26.6 Q 37 26.4 37.7 26.6" fill="none" stroke="#000" stroke-width="0.3" stroke-linecap="round" opacity="0.7"/>
+        <path d="M 37 27.9 L 37 29.5" stroke="#2a1408" stroke-width="0.55" stroke-linecap="round"/>
+        <path d="M 37 29.5 Q 35 31 33 30" fill="none" stroke="#2a1408" stroke-width="0.65" stroke-linecap="round"/>
+        <path d="M 37 29.5 Q 39 31 41 30" fill="none" stroke="#2a1408" stroke-width="0.65" stroke-linecap="round"/>
+        <path d="M 35 30 Q 37 33 39 30 Q 38.5 32.2 37 33.3 Q 35.5 32.2 35 30 Z" fill="url(#gradDogTongue)" stroke="#a04060" stroke-width="0.35"/>
+        <path d="M 37 30.5 L 37 32.8" stroke="#a04060" stroke-width="0.4" stroke-linecap="round" opacity="0.7"/>
+        <ellipse cx="36.6" cy="31.2" rx="0.5" ry="0.3" fill="#ffd0d8" opacity="0.7"/>
+        <ellipse cx="29.2" cy="27" rx="1.5" ry="0.95" fill="#f5a098" opacity="0.45"/>
+        <ellipse cx="44.8" cy="27" rx="1.5" ry="0.95" fill="#f5a098" opacity="0.45"/>
+        <path d="M 26.5 18 Q 25 19 26 21" fill="none" stroke="#fff5d8" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
+        <path d="M 47.5 18 Q 49 19 48 21" fill="none" stroke="#fff5d8" stroke-width="0.4" opacity="0.5" stroke-linecap="round"/>
       </svg>`;
     }
     else {
