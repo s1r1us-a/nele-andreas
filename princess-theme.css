@@ -431,3 +431,446 @@ html[data-theme="prinzesschen"] .toast {
     transition: none !important;
   }
 }
+
+/* ============================================================ */
+/*  SCHATTENFÜRSTIN THEME  🖤                                    */
+/*  Gothic / Mondlicht / Silberfiligran / Schwarzer Samt         */
+/*  Aktiv wenn  html[data-theme="schattenfuerstin"]              */
+/* ============================================================ */
+
+@keyframes gothicTextFlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+@keyframes gothicBorderShift {
+  0%   { border-color: rgba(167,139,217,0.80); box-shadow: 0 6px 30px rgba(76,29,107,0.45),  0 0 50px rgba(167,139,217,0.25), inset 0 0 14px rgba(192,192,192,0.18); }
+  25%  { border-color: rgba(192,192,192,0.85); box-shadow: 0 6px 30px rgba(192,192,192,0.30), 0 0 50px rgba(160,168,192,0.25), inset 0 0 14px rgba(232,230,240,0.22); }
+  50%  { border-color: rgba(76,29,107,0.85);   box-shadow: 0 6px 30px rgba(76,29,107,0.50),  0 0 50px rgba(45,27,61,0.40),    inset 0 0 14px rgba(192,192,192,0.20); }
+  75%  { border-color: rgba(160,168,192,0.80); box-shadow: 0 6px 30px rgba(160,168,192,0.30), 0 0 50px rgba(167,139,217,0.30), inset 0 0 14px rgba(192,192,192,0.22); }
+  100% { border-color: rgba(167,139,217,0.80); box-shadow: 0 6px 30px rgba(76,29,107,0.45),  0 0 50px rgba(167,139,217,0.25), inset 0 0 14px rgba(192,192,192,0.18); }
+}
+@keyframes gothicMoonGlow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(192,192,192,0.40), 0 4px 22px rgba(76,29,107,0.55), 0 0 55px rgba(167,139,217,0.35), inset 0 0 14px rgba(192,192,192,0.25); }
+  50%      { box-shadow: 0 0 0 2px rgba(192,192,192,0.65), 0 6px 32px rgba(76,29,107,0.80), 0 0 80px rgba(167,139,217,0.50), inset 0 0 20px rgba(232,230,240,0.40); }
+}
+@keyframes gothicBreathing {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.025); }
+}
+@keyframes gothicSilverSheen {
+  0%   { transform: translateX(-130%) skewX(-20deg); }
+  100% { transform: translateX(230%)  skewX(-20deg); }
+}
+@keyframes gothicSway {
+  0%, 100% { transform: scale(1.04) rotate(-0.8deg); }
+  50%      { transform: scale(1.05) rotate(0.8deg); }
+}
+@keyframes gothicFiligree {
+  0%, 100% { transform: scale(0.9) rotate(-8deg); opacity: 0.6; }
+  50%      { transform: scale(1.15) rotate(10deg); opacity: 0.95; }
+}
+@keyframes gothicTiaraDrift {
+  0%   { transform: rotate(-10deg) scale(1); }
+  50%  { transform: rotate(10deg)  scale(1.08); }
+  100% { transform: rotate(-10deg) scale(1); }
+}
+@keyframes gothicMistPulse {
+  0%   { opacity: 0.55; filter: hue-rotate(-5deg) saturate(1.1); transform: translate(-2%, -1%) scale(1); }
+  50%  { opacity: 1;    filter: hue-rotate(10deg) saturate(1.35); transform: translate(2%,  1%)  scale(1.04); }
+  100% { opacity: 0.55; filter: hue-rotate(-5deg) saturate(1.1); transform: translate(-2%, -1%) scale(1); }
+}
+@keyframes gothicAshDrift {
+  0%   { background-position: 0px 0px, 20px 30px, 50px 10px, 80px 60px, 10px 90px; }
+  100% { background-position: 90px 110px, 110px 140px, 140px 120px, 170px 170px, 100px 200px; }
+}
+@keyframes gothicCandleFlicker {
+  0%   { box-shadow: 0 0 14px rgba(184,134,11,0.45), 0 0 28px rgba(76,29,107,0.30); }
+  7%   { box-shadow: 0 0 20px rgba(184,134,11,0.70), 0 0 40px rgba(76,29,107,0.40); }
+  12%  { box-shadow: 0 0 10px rgba(184,134,11,0.30), 0 0 22px rgba(76,29,107,0.25); }
+  22%  { box-shadow: 0 0 22px rgba(184,134,11,0.80), 0 0 44px rgba(167,139,217,0.45); }
+  30%  { box-shadow: 0 0 12px rgba(184,134,11,0.40), 0 0 26px rgba(76,29,107,0.30); }
+  55%  { box-shadow: 0 0 24px rgba(184,134,11,0.85), 0 0 50px rgba(167,139,217,0.50); }
+  78%  { box-shadow: 0 0 14px rgba(184,134,11,0.45), 0 0 30px rgba(76,29,107,0.32); }
+  100% { box-shadow: 0 0 18px rgba(184,134,11,0.60), 0 0 36px rgba(167,139,217,0.40); }
+}
+@keyframes gothicMoonbeamSweep {
+  0%   { transform: translate(-60%, -60%) rotate(25deg); opacity: 0; }
+  20%  { opacity: 0.22; }
+  50%  { opacity: 0.28; }
+  80%  { opacity: 0.18; }
+  100% { transform: translate(60%, 60%) rotate(25deg); opacity: 0; }
+}
+
+/* ---------- Page background overlays ---------- */
+html[data-theme="schattenfuerstin"] .bg-gradient {
+  background:
+    radial-gradient(ellipse at 18% 20%, rgba(76,29,107,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 22%, rgba(192,192,192,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 60%, rgba(167,139,217,0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 18% 85%, rgba(92,26,46,0.30) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(10,10,15,0.80) 0%, transparent 55%),
+    linear-gradient(160deg, #0a0a0f 0%, #15101f 25%, #1a1226 50%, #100c1a 75%, #0a0a0f 100%) !important;
+}
+html[data-theme="schattenfuerstin"] .bg-gradient::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 25% 20%, rgba(76,29,107,0.42), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 75% 25%, rgba(167,139,217,0.28), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(45,27,61,0.55), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 20% 85%, rgba(92,26,46,0.30), transparent 75%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, rgba(192,192,192,0.12), transparent 70%);
+  animation: gothicMistPulse 12s ease-in-out infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+html[data-theme="schattenfuerstin"] .bg-gradient::before {
+  content: '';
+  position: absolute; inset: -20%;
+  background:
+    /* Aschepartikel + Mondsplitter */
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(232,230,240,0.85), transparent 60%),
+    radial-gradient(1px 1px   at 30% 70%, rgba(192,192,192,0.85), transparent 60%),
+    radial-gradient(2px 2px   at 55% 35%, rgba(232,230,240,0.65), transparent 60%),
+    radial-gradient(1.5px 1.5px at 78% 60%, rgba(167,139,217,0.75), transparent 60%),
+    radial-gradient(2px 2px   at 90% 18%, rgba(192,192,192,0.80), transparent 60%),
+    /* Mondstrahl diagonal */
+    linear-gradient(115deg, transparent 40%, rgba(232,230,240,0.10) 48%, rgba(232,230,240,0.18) 50%, rgba(232,230,240,0.10) 52%, transparent 60%);
+  background-size: 240px 240px, 260px 260px, 280px 280px, 220px 220px, 250px 250px, 100% 100%;
+  animation: gothicAshDrift 35s linear infinite, gothicMoonbeamSweep 45s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.75;
+}
+
+/* ---------- Cards & Surfaces ---------- */
+html[data-theme="schattenfuerstin"] .theme-card,
+html[data-theme="schattenfuerstin"] .lootbox-card,
+html[data-theme="schattenfuerstin"] .confirm-card,
+html[data-theme="schattenfuerstin"] .reward-card,
+html[data-theme="schattenfuerstin"] .modal-card,
+html[data-theme="schattenfuerstin"] .moment-modal-card,
+html[data-theme="schattenfuerstin"] .booster-confirm-card,
+html[data-theme="schattenfuerstin"] .quote-card,
+html[data-theme="schattenfuerstin"] .stat-card,
+html[data-theme="schattenfuerstin"] .vg-card,
+html[data-theme="schattenfuerstin"] .scard,
+html[data-theme="schattenfuerstin"] .icard,
+html[data-theme="schattenfuerstin"] .quiz-card,
+html[data-theme="schattenfuerstin"] .quiz-panel,
+html[data-theme="schattenfuerstin"] .quiz-hs-item,
+html[data-theme="schattenfuerstin"] .stat-item,
+html[data-theme="schattenfuerstin"] .legend-item {
+  border-width: 2px;
+  animation: gothicBorderShift 10s linear infinite;
+  background: rgba(15,12,22,0.92) !important;
+  color: #e8e6f0;
+}
+html[data-theme="schattenfuerstin"] .coin-display {
+  border: 2px solid rgba(192,192,192,0.55) !important;
+  background: linear-gradient(135deg, #100c1a, #1a1226) !important;
+  color: #e8e6f0 !important;
+  animation: gothicCandleFlicker 3.6s ease-in-out infinite;
+}
+html[data-theme="schattenfuerstin"] .top-bar {
+  border-bottom: 2px solid rgba(167,139,217,0.40);
+  box-shadow: 0 2px 22px rgba(76,29,107,0.45), 0 0 40px rgba(192,192,192,0.12);
+}
+
+/* ---------- Headlines: Silber-Lila Gradient Text (graviert) ---------- */
+html[data-theme="schattenfuerstin"] .page-title,
+html[data-theme="schattenfuerstin"] .modal-title,
+html[data-theme="schattenfuerstin"] .modal-subtitle,
+html[data-theme="schattenfuerstin"] .lootbox-name,
+html[data-theme="schattenfuerstin"] .reward-title,
+html[data-theme="schattenfuerstin"] .confirm-title,
+html[data-theme="schattenfuerstin"] .theme-name,
+html[data-theme="schattenfuerstin"] .card-title,
+html[data-theme="schattenfuerstin"] .section-title,
+html[data-theme="schattenfuerstin"] .profile-title,
+html[data-theme="schattenfuerstin"] .profile-subtitle,
+html[data-theme="schattenfuerstin"] .stats-title,
+html[data-theme="schattenfuerstin"] .stats-today-title,
+html[data-theme="schattenfuerstin"] .header-title,
+html[data-theme="schattenfuerstin"] .top-title,
+html[data-theme="schattenfuerstin"] .vg-section-title,
+html[data-theme="schattenfuerstin"] .quiz-card-title,
+html[data-theme="schattenfuerstin"] .quiz-modal-title,
+html[data-theme="schattenfuerstin"] .quiz-hs-title,
+html[data-theme="schattenfuerstin"] .game-invite-title,
+html[data-theme="schattenfuerstin"] .booster-confirm-title,
+html[data-theme="schattenfuerstin"] .moment-modal-title,
+html[data-theme="schattenfuerstin"] .dl-title {
+  background: linear-gradient(90deg, #c0c0c0, #a78bd9, #e8e6f0, #4c1d6b, #c0c0c0) !important;
+  background-size: 300% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: gothicTextFlow 8s linear infinite;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.85)) drop-shadow(0 0 8px rgba(167,139,217,0.40)) drop-shadow(0 0 2px rgba(192,192,192,0.55));
+}
+
+/* ---------- Premium tag ---------- */
+html[data-theme="schattenfuerstin"] .premium-tag {
+  background: linear-gradient(90deg, #4c1d6b, #a78bd9, #c0c0c0, #2d1b3d, #4c1d6b) !important;
+  background-size: 300% 100% !important;
+  animation: gothicTextFlow 6s linear infinite;
+  color: #e8e6f0 !important;
+  box-shadow: 0 2px 12px rgba(76,29,107,0.65), inset 0 0 8px rgba(192,192,192,0.25);
+}
+
+/* ---------- The big button show ---------- */
+html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled),
+html[data-theme="schattenfuerstin"] .btn-activate,
+html[data-theme="schattenfuerstin"] .login-btn,
+html[data-theme="schattenfuerstin"] .confirm-yes,
+html[data-theme="schattenfuerstin"] .reward-close,
+html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled),
+html[data-theme="schattenfuerstin"] .play-quiz-btn,
+html[data-theme="schattenfuerstin"] .quiz-save-btn,
+html[data-theme="schattenfuerstin"] .save-moment-btn,
+html[data-theme="schattenfuerstin"] .moment-save-btn,
+html[data-theme="schattenfuerstin"] .booster-activate-btn,
+html[data-theme="schattenfuerstin"] .visit-other-btn,
+html[data-theme="schattenfuerstin"] .account-btn,
+html[data-theme="schattenfuerstin"] .comment-send-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1226 0%, #2d1b3d 30%, #4c1d6b 60%, #6b5b8a 85%, #c0c0c0 100%) !important;
+  background-size: 300% 300% !important;
+  border: 2px solid rgba(192,192,192,0.75) !important;
+  outline: 1.5px solid rgba(167,139,217,0.55);
+  outline-offset: 2px;
+  color: #e8e6f0 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.85), 0 0 8px rgba(167,139,217,0.55);
+  animation: gothicTextFlow 6s linear infinite, gothicMoonGlow 3.4s ease-in-out infinite;
+}
+html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled)::before,
+html[data-theme="schattenfuerstin"] .btn-activate::before,
+html[data-theme="schattenfuerstin"] .login-btn::before,
+html[data-theme="schattenfuerstin"] .confirm-yes::before,
+html[data-theme="schattenfuerstin"] .reward-close::before,
+html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled)::before,
+html[data-theme="schattenfuerstin"] .play-quiz-btn::before,
+html[data-theme="schattenfuerstin"] .quiz-save-btn::before,
+html[data-theme="schattenfuerstin"] .save-moment-btn::before,
+html[data-theme="schattenfuerstin"] .moment-save-btn::before,
+html[data-theme="schattenfuerstin"] .booster-activate-btn::before,
+html[data-theme="schattenfuerstin"] .visit-other-btn::before,
+html[data-theme="schattenfuerstin"] .account-btn::before,
+html[data-theme="schattenfuerstin"] .comment-send-btn::before {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 28%;
+  background: linear-gradient(115deg, transparent 0%, rgba(232,230,240,0.55) 45%, rgba(255,255,255,0.75) 50%, rgba(232,230,240,0.55) 55%, transparent 100%);
+  animation: gothicSilverSheen 6s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled)::after,
+html[data-theme="schattenfuerstin"] .confirm-yes::after,
+html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled)::after,
+html[data-theme="schattenfuerstin"] .play-quiz-btn::after,
+html[data-theme="schattenfuerstin"] .save-moment-btn::after,
+html[data-theme="schattenfuerstin"] .moment-save-btn::after,
+html[data-theme="schattenfuerstin"] .booster-activate-btn::after {
+  content: '🥀';
+  position: absolute; top: 2px; right: 8px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 6px rgba(167,139,217,0.85));
+  animation: gothicTiaraDrift 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+html[data-theme="schattenfuerstin"] .btn-activate::after,
+html[data-theme="schattenfuerstin"] .login-btn::after,
+html[data-theme="schattenfuerstin"] .reward-close::after,
+html[data-theme="schattenfuerstin"] .visit-other-btn::after,
+html[data-theme="schattenfuerstin"] .account-btn::after,
+html[data-theme="schattenfuerstin"] .comment-send-btn::after,
+html[data-theme="schattenfuerstin"] .quiz-save-btn::after {
+  content: '🖤';
+  position: absolute; top: 2px; right: 8px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 6px rgba(192,192,192,0.85));
+  animation: gothicFiligree 5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled),
+html[data-theme="schattenfuerstin"] .confirm-yes,
+html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled),
+html[data-theme="schattenfuerstin"] .play-quiz-btn,
+html[data-theme="schattenfuerstin"] .save-moment-btn,
+html[data-theme="schattenfuerstin"] .moment-save-btn {
+  animation: gothicTextFlow 6s linear infinite, gothicMoonGlow 3.4s ease-in-out infinite, gothicBreathing 4s ease-in-out infinite;
+}
+html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled):hover,
+html[data-theme="schattenfuerstin"] .btn-activate:hover,
+html[data-theme="schattenfuerstin"] .login-btn:hover,
+html[data-theme="schattenfuerstin"] .confirm-yes:hover,
+html[data-theme="schattenfuerstin"] .reward-close:hover,
+html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled):hover,
+html[data-theme="schattenfuerstin"] .play-quiz-btn:hover,
+html[data-theme="schattenfuerstin"] .quiz-save-btn:hover,
+html[data-theme="schattenfuerstin"] .save-moment-btn:hover,
+html[data-theme="schattenfuerstin"] .moment-save-btn:hover,
+html[data-theme="schattenfuerstin"] .booster-activate-btn:hover,
+html[data-theme="schattenfuerstin"] .visit-other-btn:hover,
+html[data-theme="schattenfuerstin"] .account-btn:hover,
+html[data-theme="schattenfuerstin"] .comment-send-btn:hover {
+  animation: gothicTextFlow 3s linear infinite, gothicMoonGlow 1.8s ease-in-out infinite, gothicSway 3s ease-in-out infinite;
+  box-shadow: 0 0 0 2px rgba(192,192,192,0.85), 0 8px 38px rgba(76,29,107,0.85), 0 0 70px rgba(167,139,217,0.55), inset 0 0 20px rgba(232,230,240,0.35) !important;
+  filter: brightness(1.10) saturate(1.15);
+}
+html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled):active,
+html[data-theme="schattenfuerstin"] .btn-activate:active,
+html[data-theme="schattenfuerstin"] .login-btn:active,
+html[data-theme="schattenfuerstin"] .confirm-yes:active,
+html[data-theme="schattenfuerstin"] .reward-close:active,
+html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled):active,
+html[data-theme="schattenfuerstin"] .play-quiz-btn:active,
+html[data-theme="schattenfuerstin"] .quiz-save-btn:active,
+html[data-theme="schattenfuerstin"] .save-moment-btn:active,
+html[data-theme="schattenfuerstin"] .moment-save-btn:active,
+html[data-theme="schattenfuerstin"] .booster-activate-btn:active,
+html[data-theme="schattenfuerstin"] .visit-other-btn:active,
+html[data-theme="schattenfuerstin"] .account-btn:active,
+html[data-theme="schattenfuerstin"] .comment-send-btn:active {
+  transform: scale(0.96);
+}
+html[data-theme="schattenfuerstin"] .btn-activate.is-active {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a78bd9 50%, #4c1d6b 100%) !important;
+  animation: gothicTextFlow 7s linear infinite;
+}
+
+/* ---------- Quiz-Antwort-Buttons: silbern + Sway-Hover ---------- */
+html[data-theme="schattenfuerstin"] .quiz-opt-btns button,
+html[data-theme="schattenfuerstin"] .quiz-correct-btn {
+  border: 2px solid rgba(167,139,217,0.55) !important;
+  background: linear-gradient(135deg, #1a1226, #100c1a) !important;
+  color: #e8e6f0 !important;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+html[data-theme="schattenfuerstin"] .quiz-opt-btns button:hover,
+html[data-theme="schattenfuerstin"] .quiz-correct-btn:hover {
+  animation: gothicSway 3s ease-in-out infinite;
+  border-color: #c0c0c0 !important;
+  box-shadow: 0 4px 22px rgba(76,29,107,0.65);
+}
+
+/* ---------- Outline / Secondary buttons ---------- */
+html[data-theme="schattenfuerstin"] .btn-preview,
+html[data-theme="schattenfuerstin"] .confirm-no,
+html[data-theme="schattenfuerstin"] .moment-cancel-btn,
+html[data-theme="schattenfuerstin"] .back-btn,
+html[data-theme="schattenfuerstin"] .forgot-btn,
+html[data-theme="schattenfuerstin"] .top-bar-btn,
+html[data-theme="schattenfuerstin"] .quiz-tab,
+html[data-theme="schattenfuerstin"] .ftab,
+html[data-theme="schattenfuerstin"] .lbtn {
+  background: rgba(20,16,30,0.85) !important;
+  border: 2px solid #a78bd9 !important;
+  color: #e8e6f0 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 2px rgba(192,192,192,0.20), 0 2px 12px rgba(76,29,107,0.45);
+  transition: all 0.2s ease;
+}
+html[data-theme="schattenfuerstin"] .btn-preview:hover,
+html[data-theme="schattenfuerstin"] .confirm-no:hover,
+html[data-theme="schattenfuerstin"] .moment-cancel-btn:hover,
+html[data-theme="schattenfuerstin"] .back-btn:hover,
+html[data-theme="schattenfuerstin"] .forgot-btn:hover,
+html[data-theme="schattenfuerstin"] .top-bar-btn:hover,
+html[data-theme="schattenfuerstin"] .quiz-tab:hover,
+html[data-theme="schattenfuerstin"] .ftab:hover,
+html[data-theme="schattenfuerstin"] .lbtn:hover {
+  background: #1a1226 !important;
+  color: #c0c0c0 !important;
+  border-color: #c0c0c0 !important;
+  transform: scale(1.04) rotate(-0.6deg);
+  box-shadow: 0 0 0 2px rgba(192,192,192,0.45), 0 4px 22px rgba(76,29,107,0.75);
+}
+
+/* ---------- Heart button (Profil) ---------- */
+html[data-theme="schattenfuerstin"] .heart-btn {
+  filter: drop-shadow(0 0 8px rgba(167,139,217,0.65)) saturate(1.1) hue-rotate(220deg);
+}
+html[data-theme="schattenfuerstin"] .heart-btn:hover {
+  animation: gothicBreathing 2s ease-in-out infinite;
+}
+
+/* ---------- Owned badge ---------- */
+html[data-theme="schattenfuerstin"] .owned-badge,
+html[data-theme="schattenfuerstin"] .user-badge,
+html[data-theme="schattenfuerstin"] .readonly-badge,
+html[data-theme="schattenfuerstin"] .active-badge-pill,
+html[data-theme="schattenfuerstin"] .badge-pill {
+  background: rgba(167,139,217,0.15) !important;
+  border-color: rgba(192,192,192,0.50) !important;
+  color: #e8e6f0 !important;
+}
+
+/* ---------- Toast ---------- */
+html[data-theme="schattenfuerstin"] .toast {
+  background: linear-gradient(135deg, #2d1b3d, #4c1d6b) !important;
+  border: 1px solid rgba(192,192,192,0.40);
+  box-shadow: 0 6px 26px rgba(76,29,107,0.70);
+  color: #e8e6f0 !important;
+  font-weight: 700;
+}
+
+/* ============================================================ */
+/*  MOBILE-DROSSELUNG  (max-width: 600px)                        */
+/* ============================================================ */
+@media (max-width: 600px) {
+  html[data-theme="schattenfuerstin"] .bg-gradient::before {
+    animation-duration: 50s, 60s;
+    opacity: 0.50;
+  }
+  html[data-theme="schattenfuerstin"] .bg-gradient::after {
+    animation-duration: 18s;
+  }
+  html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled),
+  html[data-theme="schattenfuerstin"] .btn-activate,
+  html[data-theme="schattenfuerstin"] .login-btn,
+  html[data-theme="schattenfuerstin"] .confirm-yes,
+  html[data-theme="schattenfuerstin"] .reward-close,
+  html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled),
+  html[data-theme="schattenfuerstin"] .play-quiz-btn,
+  html[data-theme="schattenfuerstin"] .quiz-save-btn,
+  html[data-theme="schattenfuerstin"] .save-moment-btn,
+  html[data-theme="schattenfuerstin"] .moment-save-btn,
+  html[data-theme="schattenfuerstin"] .booster-activate-btn,
+  html[data-theme="schattenfuerstin"] .visit-other-btn,
+  html[data-theme="schattenfuerstin"] .account-btn,
+  html[data-theme="schattenfuerstin"] .comment-send-btn {
+    animation: gothicTextFlow 8s linear infinite, gothicMoonGlow 4.4s ease-in-out infinite;
+  }
+  html[data-theme="schattenfuerstin"] .btn-buy:not(:disabled)::after,
+  html[data-theme="schattenfuerstin"] .confirm-yes::after,
+  html[data-theme="schattenfuerstin"] .btn-open-box:not(:disabled)::after,
+  html[data-theme="schattenfuerstin"] .play-quiz-btn::after,
+  html[data-theme="schattenfuerstin"] .save-moment-btn::after,
+  html[data-theme="schattenfuerstin"] .moment-save-btn::after,
+  html[data-theme="schattenfuerstin"] .booster-activate-btn::after {
+    animation: none;
+    transform: rotate(0deg);
+  }
+}
+
+/* ============================================================ */
+/*  ACCESSIBILITY: reduced-motion                                */
+/* ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="schattenfuerstin"] *,
+  html[data-theme="schattenfuerstin"] *::before,
+  html[data-theme="schattenfuerstin"] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
