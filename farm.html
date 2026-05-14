@@ -517,6 +517,8 @@
     .merchant-actions .merchant-sell:disabled { background: #d1d5db; color: #6b7280; box-shadow: none; cursor: not-allowed; opacity: 0.75; }
     .merchant-actions .merchant-dismiss { background: #fef2f2; color: #ef4444; }
     .merchant-total-preview { text-align: center; font-size: 16px; font-weight: 800; color: #d97706; margin: 6px 0 2px; }
+    .merchant-timer { text-align: center; font-size: 12px; color: var(--text-mid); margin: 4px 0 2px; }
+    .merchant-timer b { color: var(--text-dark); font-variant-numeric: tabular-nums; }
 
     /* ── HANDELSHAUS MODAL ── */
     .trade-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: rgba(0,0,0,0.04); border-radius: 14px; padding: 4px; }
@@ -2466,6 +2468,7 @@
     <div class="merchant-greeting" id="merchantGreeting">„Guten Tag! Ich bin nur heute hier und biete den <b>doppelten Preis</b> für diese drei Waren!"</div>
     <div id="merchantOfferList"></div>
     <div class="merchant-total-preview" id="merchantTotalPreview">+0 🪙</div>
+    <div class="merchant-timer" id="merchantTimer">⏳ Neue Angebote in <b id="merchantTimerVal">–</b></div>
     <div class="merchant-actions">
       <button class="merchant-dismiss" onclick="window.dismissMerchant()">Heute nicht</button>
       <button class="merchant-sell" id="merchantSellBtn" onclick="window.confirmMerchantSell()">Verkaufen ✓</button>
@@ -4445,6 +4448,33 @@
     sellBtn.disabled = !plan.anyInStock;
     sellBtn.textContent = plan.canSellAll ? 'Alles verkaufen ✓' : (plan.anyInStock ? 'Verfügbares verkaufen ✓' : 'Nichts auf Lager');
     window.showSpecificModal('modalMerchant');
+    updateMerchantTimer();
+    clearInterval(window._merchantTimerInt);
+    window._merchantTimerInt = setInterval(() => {
+      const overlay = document.getElementById('modalOverlay');
+      const card = document.getElementById('modalMerchant');
+      if (!overlay?.classList.contains('active') || !card?.classList.contains('active')) {
+        clearInterval(window._merchantTimerInt);
+        return;
+      }
+      updateMerchantTimer();
+    }, 1000);
+  }
+
+  function updateMerchantTimer() {
+    const valEl = document.getElementById('merchantTimerVal');
+    if (!valEl) return;
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(24, 0, 0, 0);
+    let ms = next - now;
+    if (ms < 0) ms = 0;
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const pad = n => String(n).padStart(2, '0');
+    valEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
   }
 
   window.confirmMerchantSell = async function() {
