@@ -848,6 +848,338 @@
       color: white;
       box-shadow: 0 4px 14px rgba(168,85,247,0.3);
     }
+
+    /* ════════════════════════════════════════════════════════════
+       GRAPHICS OVERHAUL v1 — Polish & Tiefe
+       Additive CSS: nutzt Pseudo-Elemente und neue Klassen.
+       Game-Mechanik bleibt unverändert.
+       ════════════════════════════════════════════════════════════ */
+
+    :root {
+      --light-overlay: transparent;
+      --bldg-shadow: rgba(0,0,0,0.22);
+      --oven-glow-1: #ffb347;
+      --oven-glow-2: #ff6b1a;
+      --window-night: rgba(255, 214, 130, 0.95);
+    }
+    body.sunset-mode { --light-overlay: radial-gradient(ellipse at 80% 30%, rgba(255,140,80,0.18), transparent 60%); --bldg-shadow: rgba(60,20,40,0.28); }
+    body.sunrise-mode { --light-overlay: radial-gradient(ellipse at 20% 30%, rgba(255,200,140,0.18), transparent 60%); --bldg-shadow: rgba(60,30,50,0.22); }
+    body.night-mode { --light-overlay: radial-gradient(ellipse at 50% 0%, rgba(120,140,220,0.20), transparent 70%); --bldg-shadow: rgba(0,0,0,0.45); }
+
+    /* World-Light Overlay über der Welt (unter UI, über allem in der Welt) */
+    .world-light {
+      position: absolute; inset: 0; pointer-events: none;
+      background: var(--light-overlay);
+      mix-blend-mode: soft-light;
+      z-index: 60;
+      transition: background 2s ease;
+    }
+
+    /* Neue Keyframes */
+    @keyframes ovenFlicker {
+      0%, 100% { opacity: 0.85; filter: brightness(1) blur(0.5px); }
+      40% { opacity: 1; filter: brightness(1.18) blur(0.5px); }
+      70% { opacity: 0.9; filter: brightness(0.95) blur(0.5px); }
+    }
+    @keyframes riseFade {
+      0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+      15% { opacity: 0.85; }
+      100% { transform: translate(-50%, -55px) scale(2.2); opacity: 0; }
+    }
+    @keyframes leafDrift {
+      0% { transform: translate(0,0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.9; }
+      100% { transform: translate(40vw, 70vh) rotate(360deg); opacity: 0; }
+    }
+    @keyframes ripeGlow {
+      0%, 100% { filter: drop-shadow(0 0 2px rgba(255,210,80,0.4)); }
+      50% { filter: drop-shadow(0 0 8px rgba(255,210,80,0.9)); }
+    }
+    @keyframes waterShimmer {
+      0% { opacity: 0.9; transform: scale(0.6); }
+      100% { opacity: 0; transform: scale(1.4); }
+    }
+    @keyframes blinkEye {
+      0%, 96%, 100% { transform: scaleY(1); }
+      98% { transform: scaleY(0.1); }
+    }
+    @keyframes coinPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.18); filter: drop-shadow(0 0 6px rgba(212,160,97,0.7)); }
+    }
+    @keyframes signSway {
+      0%, 100% { transform: translateX(-50%) rotate(-3deg); }
+      50% { transform: translateX(-50%) rotate(3deg); }
+    }
+    @keyframes beeBuzz {
+      0% { transform: translate(0,0); }
+      25% { transform: translate(8px,-6px); }
+      50% { transform: translate(12px,2px); }
+      75% { transform: translate(4px,-4px); }
+      100% { transform: translate(0,0); }
+    }
+    @keyframes forgeGlow {
+      0%, 100% { opacity: 0.75; }
+      50% { opacity: 1; }
+    }
+
+    /* ── BACKHAUS REWORK ── Flaggschiff
+       Bestehende .bakery-* Markup wird via Pseudo-Elementen
+       und neuer Layer in ein charmantes Fachwerkhaus verwandelt. */
+
+    .bakery-building {
+      filter: drop-shadow(0 10px 8px rgba(60,30,15,0.28));
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), filter 2s ease;
+    }
+    .bakery-building:hover { transform: translateX(-50%) translateY(-3px); }
+    .bakery-building:active { transform: translateX(-50%) scale(0.95); }
+
+    /* Bodenschatten unter Backhaus */
+    .bakery-building::before {
+      content: ''; position: absolute; left: 50%; bottom: -8px;
+      width: 78%; height: 12px; transform: translateX(-50%);
+      background: radial-gradient(ellipse, var(--bldg-shadow) 0%, transparent 70%);
+      filter: blur(3px); z-index: 0; pointer-events: none;
+    }
+
+    /* Ziegeldach-Muster */
+    .bakery-roof {
+      border-bottom-color: #c4564f !important;
+      filter: drop-shadow(0 -1px 0 rgba(255,255,255,0.15) inset);
+    }
+    .bakery-roof::before {
+      content: ''; position: absolute; top: 8px; left: -32px; width: 64px; height: 28px;
+      background:
+        radial-gradient(circle at 5px 4px, #a83d3d 2px, transparent 2.5px) 0 0 / 10px 7px,
+        radial-gradient(circle at 5px 4px, #a83d3d 2px, transparent 2.5px) 5px 3.5px / 10px 7px;
+      opacity: 0.45; pointer-events: none;
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      transform: translateY(-2px);
+    }
+    .bakery-roof::after {
+      background: linear-gradient(180deg, #9a3a3a, #7a2828) !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+    }
+
+    /* Fachwerk-Wände auf bakery-base */
+    .bakery-base {
+      background:
+        linear-gradient(135deg, transparent 47%, #6b3a18 47%, #6b3a18 53%, transparent 53%) 0 0 / 16px 16px,
+        linear-gradient(45deg, transparent 47%, #6b3a18 47%, #6b3a18 53%, transparent 53%) 0 0 / 16px 16px,
+        linear-gradient(180deg, #f0d9b8 0%, #e8c89c 100%) !important;
+      background-blend-mode: normal, normal, normal !important;
+      border-top: 2px solid #6b3a18;
+      box-shadow: inset 0 -6px 12px rgba(80,40,15,0.18), inset 0 2px 0 rgba(255,255,255,0.2) !important;
+    }
+    /* Steinsockel unter dem Fachwerk */
+    .bakery-base::before {
+      content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+      height: 10px;
+      background:
+        radial-gradient(circle at 4px 5px, #8a7a6a 3px, transparent 3.5px) 0 0 / 12px 10px,
+        radial-gradient(circle at 4px 5px, #6b5d50 2.5px, transparent 3px) 6px 0 / 12px 10px,
+        linear-gradient(180deg, #9a8a7a, #6b5d50);
+      border-top: 1px solid #5a4d40;
+      border-radius: 0 0 6px 6px;
+      pointer-events: none;
+    }
+
+    /* Großes rundes Backofen-Fenster mit Feuerschein */
+    .bakery-base::after {
+      content: ''; position: absolute; bottom: 12px; right: 8px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: radial-gradient(circle, var(--oven-glow-1) 0%, var(--oven-glow-2) 55%, #5a1a05 100%);
+      box-shadow: 0 0 10px rgba(255,140,40,0.7), inset 0 0 4px rgba(255,220,120,0.8);
+      border: 2px solid #4a2010;
+      animation: ovenFlicker 1.8s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* Tür: dunkler Holzton + Türgriff */
+    .bakery-door {
+      background: linear-gradient(180deg, #8e5a32, #6b4020) !important;
+      box-shadow: inset 0 -3px 6px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.1);
+    }
+    .bakery-door::before {
+      content: ''; position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+      width: 1px; height: 18px; background: rgba(255,255,255,0.15);
+    }
+
+    /* Fenster: warmer Glow nachts */
+    body.night-mode .bakery-window {
+      background: var(--window-night) !important;
+      box-shadow: inset 0 0 8px rgba(255,180,60,0.9), 0 0 8px rgba(255,200,100,0.5) !important;
+    }
+    body.night-mode .bakery-base::after {
+      animation-duration: 1.4s;
+      box-shadow: 0 0 14px rgba(255,140,40,0.9), inset 0 0 4px rgba(255,220,120,0.9);
+    }
+
+    /* Brot-Schild über der Tür: sanft schwingend */
+    .bakery-sign {
+      background: linear-gradient(180deg, #e0b070, #b88a4a) !important;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+      animation: signSway 6s ease-in-out infinite;
+      transform-origin: top center;
+    }
+
+    /* Schornstein: Stein-Muster */
+    .bakery-chimney {
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.15), transparent 20%, transparent 80%, rgba(0,0,0,0.25)),
+        repeating-linear-gradient(0deg, #6b4020 0, #6b4020 5px, #5a341a 5px, #5a341a 6px),
+        #704224 !important;
+      box-shadow: inset -3px 0 0 rgba(0,0,0,0.25), 0 2px 3px rgba(0,0,0,0.2) !important;
+    }
+    /* Verbesserte Rauch-Puffs: weicher, mehrere Stufen */
+    .bakery-chimney::before {
+      width: 11px !important; height: 11px !important;
+      background: radial-gradient(circle, rgba(240,240,240,0.85), rgba(200,200,200,0.3) 60%, transparent) !important;
+      filter: blur(1px);
+      animation: riseFade 3.4s ease-out infinite !important;
+    }
+    .bakery-chimney::after {
+      width: 8px !important; height: 8px !important;
+      background: radial-gradient(circle, rgba(230,230,230,0.7), rgba(180,180,180,0.2) 60%, transparent) !important;
+      filter: blur(1.2px);
+      animation: riseFade 3.4s ease-out 1.7s infinite !important;
+    }
+    .is-baking .bakery-chimney::before { background: radial-gradient(circle, rgba(120,120,120,0.9), rgba(80,80,80,0.4) 60%, transparent) !important; animation-duration: 1.8s !important; }
+    .is-baking .bakery-chimney::after { background: radial-gradient(circle, rgba(140,140,140,0.8), rgba(90,90,90,0.3) 60%, transparent) !important; animation-duration: 1.8s !important; }
+
+    /* Mehlsack-Deko vor dem Backhaus (positioniert per zusätzlichem Div) */
+    .bakery-decor {
+      position: absolute; bottom: -2px; left: -10px;
+      width: 14px; height: 14px;
+      background: radial-gradient(ellipse at 40% 30%, #fff 0%, #e8dcc0 60%, #c8b89a 100%);
+      border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.2), inset -2px -2px 0 rgba(0,0,0,0.08);
+      z-index: 5;
+    }
+    .bakery-decor::after {
+      content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+      width: 6px; height: 1px; background: #8e6f3a; border-radius: 2px;
+    }
+
+    /* ── GEBÄUDE GLOBAL: Bodenschatten + Hover ── */
+    .beehive-building, .weaving-building, .forge-building, .tradehouse-building, .mine-building {
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), filter 2s ease !important;
+    }
+    .beehive-building:hover, .weaving-building:hover, .forge-building:hover, .tradehouse-building:hover, .mine-building:hover {
+      transform: translateY(-3px) scale(1.02);
+    }
+    .beehive-building::after, .weaving-building::after, .forge-building::after, .tradehouse-building::after, .mine-building::after {
+      content: ''; position: absolute; left: 50%; bottom: -6px;
+      width: 75%; height: 10px; transform: translateX(-50%);
+      background: radial-gradient(ellipse, var(--bldg-shadow) 0%, transparent 70%);
+      filter: blur(3px); z-index: -1; pointer-events: none;
+    }
+
+    /* Nachts: warmes Fensterlicht über Gebäuden */
+    body.night-mode .tradehouse-building,
+    body.night-mode .weaving-building,
+    body.night-mode .forge-building {
+      filter: brightness(0.75) drop-shadow(0 0 10px rgba(255,200,100,0.25)) drop-shadow(0 8px 6px rgba(0,0,0,0.35)) !important;
+    }
+    body.night-mode .mine-building {
+      filter: brightness(0.65) drop-shadow(0 0 8px rgba(255,140,60,0.3)) drop-shadow(0 8px 6px rgba(0,0,0,0.35)) !important;
+    }
+
+    /* Bienen-Partikel beim Beehive */
+    .beehive-building::before {
+      content: '🐝';
+      position: absolute; top: -8px; right: -4px; font-size: 9px;
+      animation: beeBuzz 2.4s ease-in-out infinite;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+      pointer-events: none; opacity: 0.85;
+    }
+    body.night-mode .beehive-building::before { opacity: 0; }
+
+    /* ── TIERE: Schatten + Glanz ── */
+    .animal-wrapper {
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18)) drop-shadow(0 1px 0 rgba(255,255,255,0.08));
+    }
+    .animal-wrapper::after {
+      content: ''; position: absolute; left: 50%; bottom: -2px;
+      width: 28px; height: 6px; transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(0,0,0,0.28) 0%, transparent 70%);
+      filter: blur(2px); z-index: -1; pointer-events: none;
+      transition: all 0.4s ease;
+    }
+
+    /* ── BEDS: Hochbeet-Look ── */
+    .bed {
+      background:
+        radial-gradient(circle at 20% 30%, rgba(60,30,10,0.25) 1px, transparent 1.5px) 0 0 / 8px 8px,
+        radial-gradient(circle at 70% 60%, rgba(60,30,10,0.2) 1px, transparent 1.5px) 4px 4px / 10px 10px,
+        linear-gradient(135deg, #a06030 0%, #8e5a32 50%, #7a4825 100%) !important;
+      border: 3px solid #6b4020 !important;
+      border-radius: 8px !important;
+      box-shadow:
+        inset 0 3px 6px rgba(0,0,0,0.3),
+        inset 0 -2px 0 rgba(0,0,0,0.2),
+        0 3px 0 #5a341a,
+        0 5px 8px rgba(0,0,0,0.25) !important;
+    }
+    /* Holzmaserung auf dem Rahmen */
+    .bed::before {
+      content: ''; position: absolute; inset: -3px; pointer-events: none;
+      border-radius: 8px;
+      background:
+        repeating-linear-gradient(90deg, transparent 0, transparent 8px, rgba(0,0,0,0.08) 8px, rgba(0,0,0,0.08) 9px);
+      mix-blend-mode: multiply;
+    }
+    .bed-slot[data-state="ready"] .plant-anim {
+      animation: windSway 3s ease-in-out infinite, ripeGlow 2s ease-in-out infinite !important;
+    }
+    /* Wachstumsbar: weicher Verlauf + Glanz */
+    .growth-bar {
+      background: linear-gradient(90deg, #5fa838 0%, #8edc55 50%, #b8f078 100%) !important;
+      box-shadow: 0 0 4px rgba(143,220,85,0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    }
+
+    /* ── UI POLISH ── */
+    .topbar-coins {
+      box-shadow: 0 2px 8px rgba(212,160,97,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+      font-variant-numeric: tabular-nums;
+    }
+    .topbar-coins.coin-pulse #globalCoins { animation: coinPulse 0.5s ease; display: inline-block; }
+    #globalCoins { font-variant-numeric: tabular-nums; display: inline-block; }
+
+    .topbar-btn {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,248,240,0.92)) !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+      transition: transform 0.15s, box-shadow 0.15s !important;
+    }
+    .topbar-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.7) !important; }
+    .topbar-btn:active { transform: scale(0.95) !important; }
+
+    /* Glassmorphism für Modal-Sheets (sanft, nicht aggressiv) */
+    .sell-qty-sheet, .sell-confirm-sheet {
+      backdrop-filter: blur(14px) saturate(1.3);
+      -webkit-backdrop-filter: blur(14px) saturate(1.3);
+      background: rgba(255,248,240,0.88) !important;
+      box-shadow: 0 12px 50px rgba(232,115,138,0.18), inset 0 1px 0 rgba(255,255,255,0.6) !important;
+    }
+    @supports not (backdrop-filter: blur(4px)) {
+      .sell-qty-sheet, .sell-confirm-sheet { background: rgba(255,248,240,0.98) !important; }
+    }
+
+    /* ── LOW-FX MODE ── (ältere Geräte / reduced-motion)
+       Effekte runter; Spiel bleibt voll spielbar. */
+    @media (prefers-reduced-motion: reduce) {
+      body { --light-overlay: transparent; }
+      .bakery-base::after, .bakery-sign, .bakery-chimney::before, .bakery-chimney::after,
+      .beehive-building::before { animation: none !important; }
+      .world-light { display: none; }
+    }
+    body.low-fx .world-light { display: none; }
+    body.low-fx .bakery-base::after { animation: none; opacity: 0.85; }
+    body.low-fx .bakery-sign { animation: none; }
+    body.low-fx .beehive-building::before { display: none; }
+    body.low-fx .bakery-roof::before { display: none; }
+    body.low-fx .bed::before { display: none; }
   </style>
 </head>
 <body>
@@ -1156,6 +1488,7 @@
       <div class="bakery-door"></div>
       <div class="bakery-window"></div>
     </div>
+    <div class="bakery-decor"></div>
   </div>
 
   <div class="beehive-building" id="beehiveBuilding" style="display: none;" onclick="window.openBeehive()"></div>
@@ -1611,6 +1944,9 @@
 
   <!-- VOGEL-CONTAINER -->
   <div id="birdContainer"></div>
+
+  <!-- ATMOSPHÄRE-LICHT-OVERLAY (Graphics Overhaul v1) -->
+  <div class="world-light" aria-hidden="true"></div>
 </div>
 
 <!-- SCROLL-HINWEIS (außerhalb von farmWorld, fixed) -->
@@ -1771,6 +2107,18 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script>
+  // Graphics Overhaul v1 — Low-FX Detection (vor Modul-Script)
+  try {
+    const cores = navigator.hardwareConcurrency || 8;
+    const mem = navigator.deviceMemory || 4;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (cores <= 2 || mem <= 1 || reduceMotion) {
+      document.body && document.body.classList.add('low-fx');
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('low-fx'));
+    }
+  } catch(e) {}
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, onValue, runTransaction, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
