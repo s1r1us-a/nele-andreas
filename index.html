@@ -1301,46 +1301,25 @@
     const momentBoost  = isBoosterActive(activeBoosterMoments) ? 2 : 1;
     const coinAmount   = isBoosterActive(activeBoosterCoin)    ? 2 : 1;
     const now          = Date.now();
+    const lastClick    = { name: user, time: now };
 
-    // Alles lokal akkumulieren – Firebase max 1×/2s schreiben
-    if (!window._pending) window._pending = {};
-    const p = window._pending;
-    p.moments     = (p.moments     || 0) + momentBoost;
-    p.userMoments = (p.userMoments || 0) + momentBoost;
-    p.today       = (p.today       || 0) + momentBoost;
-    p.coins       = (p.coins       || 0) + coinAmount;
-    p.coinsEarned = (p.coinsEarned || 0) + coinAmount;
-    p.user        = user;
-    p.userKey     = userKey;
-    p.lastClick   = { name: user, time: now };
-
-    // Live-Anzeige sofort aktualisieren – Firebase-Write ist debounced (2s)
-    renderHeartCount();
-    renderCoinCount(true);
-    updateStats();
-    updateTodayStats();
     lastClickEl.textContent = 'Letzter Moment von ' + user + (user === 'Andreas' ? ' 🐾' : ' 🌸');
-
     spawnCoin(e.clientX, e.clientY, coinAmount);
     heartCount.classList.remove('bump');
     void heartCount.offsetWidth;
     heartCount.classList.add('bump');
 
-    clearTimeout(window._flushTimer);
-    window._flushTimer = setTimeout(() => {
-      const { moments, userMoments, today, coins, coinsEarned, user: u, userKey: uk, lastClick } = window._pending;
-      window._pending = {};
-      const uRef     = uk === 'andreas' ? andreasRef : neleRef;
-      const todayRef = uk === 'andreas' ? andreasRefToday : neleRefToday;
-      runTransaction(momentsRef, c => (c||0) + moments);
-      runTransaction(uRef,       c => (c||0) + userMoments);
-      runTransaction(todayRef,   c => (c||0) + today);
-      runTransaction(ref(db, `coins/${uk}`),             c => (c||0) + coins).catch(err => console.error('Coin-Fehler:', err));
-      runTransaction(ref(db, `stats/${uk}/coinsEarned`), c => (c||0) + coinsEarned).catch(err => console.error('Stats-Fehler:', err));
-      set(lastClickRef, lastClick);
-      const clickDate = getGermanDate(lastClick.time);
-      set(ref(db, `moments/clicks/${clickDate}/${lastClick.time}_${uk}`), { user: u, time: lastClick.time });
-    }, 2000);
+    // Sofort live nach Firebase schreiben – kein Debounce
+    const uRef     = userKey === 'andreas' ? andreasRef : neleRef;
+    const todayRef = userKey === 'andreas' ? andreasRefToday : neleRefToday;
+    runTransaction(momentsRef, c => (c||0) + momentBoost);
+    runTransaction(uRef,       c => (c||0) + momentBoost);
+    runTransaction(todayRef,   c => (c||0) + momentBoost);
+    runTransaction(ref(db, `coins/${userKey}`),             c => (c||0) + coinAmount).catch(err => console.error('Coin-Fehler:', err));
+    runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0) + coinAmount).catch(err => console.error('Stats-Fehler:', err));
+    set(lastClickRef, lastClick);
+    const clickDate = getGermanDate(now);
+    set(ref(db, `moments/clicks/${clickDate}/${now}_${userKey}`), { user, time: now });
   });
 
   // Theme anwenden
