@@ -640,7 +640,7 @@
 
     /* ── FARMING BEDS ── */
     .beds-container { position: absolute; top: 57%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 55; width: 230px; }
-    .bed { width: 50px; height: 50px; background: var(--brown); border: 2px dashed #6b4020; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 2px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); transition: all 0.3s, filter 2s ease; }
+    .bed { width: 70px; height: 50px; background: var(--brown); border: 2px dashed #6b4020; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 2px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); transition: all 0.3s, filter 2s ease; }
     .bed-slot { background: rgba(0,0,0,0.15); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; touch-action: manipulation; transition: background 0.2s; position: relative; }
     .bed-slot:active { background: rgba(0,0,0,0.25); }
     .plant-anim { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -2911,7 +2911,7 @@
   window.inventory = inventory;
 
   let oven = { slots: Array(5).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
-  let beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+  let beds = Array(12).fill(null).map(() => Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = [];
 
   let merchant = { lastVisitDate: '', offerDate: '', offer: [] };
@@ -2990,7 +2990,11 @@
 
           if (data.beds) {
             beds = data.beds;
-            while (beds.length < 12) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+            while (beds.length < 12) beds.push(Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+            for (let bi = 0; bi < beds.length; bi++) {
+              if (!Array.isArray(beds[bi])) beds[bi] = [];
+              while (beds[bi].length < 6) beds[bi].push({ state: 'empty', item: null, plantedAt: 0 });
+            }
           }
 
           const rawAnimals = data.animals;
@@ -3794,7 +3798,7 @@
       let bedsHtml = '';
       for(let b = 0; b < unlockedBeds; b++) {
         bedsHtml += `<div class="bed">`;
-        for(let s = 0; s < 4; s++) { bedsHtml += `<div class="bed-slot" id="slot-${b}-${s}" onclick="window.handleSlotClick(${b}, ${s})"></div>`; }
+        for(let s = 0; s < 6; s++) { bedsHtml += `<div class="bed-slot" id="slot-${b}-${s}" onclick="window.handleSlotClick(${b}, ${s})"></div>`; }
         bedsHtml += `</div>`;
       }
       bedsContainer.innerHTML = bedsHtml;
@@ -4852,7 +4856,7 @@
   function updateBedsVisuals() {
     const now = Date.now();
     for(let b=0; b<unlockedBeds; b++) {
-      for(let s=0; s<4; s++) {
+      for(let s=0; s<6; s++) {
         const slot = beds[b][s]; const domSlot = document.getElementById(`slot-${b}-${s}`); if(!domSlot) continue;
         
         const currentState = domSlot.getAttribute('data-state');
@@ -4887,7 +4891,7 @@
     const now = Date.now();
 
     for(let b=0; b<unlockedBeds; b++) {
-      for(let s=0; s<4; s++) {
+      for(let s=0; s<6; s++) {
         const slot = beds[b][s];
         if (slot.state === 'growing') {
           const itemDef = shopItems[slot.item]; if (!itemDef || !itemDef.growTime) continue;
@@ -5128,7 +5132,7 @@
   window.countEmptySlots = function() {
     let count = 0;
     for (let b = 0; b < unlockedBeds; b++) {
-      for (let s = 0; s < 4; s++) {
+      for (let s = 0; s < 6; s++) {
         if (beds[b] && beds[b][s] && beds[b][s].state === 'empty') count++;
       }
     }
@@ -5171,7 +5175,7 @@
     };
     tryPlant(startB, startS);
     for (let b = 0; b < unlockedBeds && inventory.seeds[itemId] > 0; b++) {
-      for (let s = 0; s < 4 && inventory.seeds[itemId] > 0; s++) {
+      for (let s = 0; s < 6 && inventory.seeds[itemId] > 0; s++) {
         if (b === startB && s === startS) continue;
         tryPlant(b, s);
       }
@@ -5723,9 +5727,13 @@
 
       if (data.beds) {
         beds = data.beds;
-        while (beds.length < 12) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        while (beds.length < 12) beds.push(Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        for (let bi = 0; bi < beds.length; bi++) {
+          if (!Array.isArray(beds[bi])) beds[bi] = [];
+          while (beds[bi].length < 6) beds[bi].push({ state: 'empty', item: null, plantedAt: 0 });
+        }
       } else {
-        beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        beds = Array(12).fill(null).map(() => Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       }
 
       const rawAnimals = data.animals;
@@ -5783,9 +5791,13 @@
 
       if (data.beds) {
         beds = data.beds;
-        while (beds.length < 12) beds.push(Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        while (beds.length < 12) beds.push(Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        for (let bi = 0; bi < beds.length; bi++) {
+          if (!Array.isArray(beds[bi])) beds[bi] = [];
+          while (beds[bi].length < 6) beds[bi].push({ state: 'empty', item: null, plantedAt: 0 });
+        }
       } else {
-        beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
+        beds = Array(12).fill(null).map(() => Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
       }
       const rawAnimals = data.animals;
       if (!rawAnimals || rawAnimals === 0) animals = [];
