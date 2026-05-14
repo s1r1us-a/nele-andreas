@@ -559,7 +559,10 @@ let gameState    = null;
 let gameListener = null;
 let isShooting   = false;
 let prevOppLastShot = undefined;
-let statsRecorded   = false;
+let lastStatsGameId = (() => {
+  try { const v = localStorage.getItem('bsLastStatsGameId'); return v ? Number(v) : null; }
+  catch (_) { return null; }
+})();
 
 let placedShips   = [];
 let selectedShip  = null;
@@ -1206,9 +1209,13 @@ async function finishGame(winner, bet) {
 }
 
 async function updateOwnStats(state) {
-  // Each player updates only their own stats — avoids cross-user Firebase write issues
-  if (statsRecorded || !state.bet) return;
-  statsRecorded = true;
+  // Each player updates only their own stats — avoids cross-user Firebase write issues.
+  // Tie de-dup to the game's createdAt so each finished game is counted exactly once,
+  // even across listener replays and page reloads.
+  if (!state || !state.bet || !state.createdAt) return;
+  if (state.createdAt === lastStatsGameId) return;
+  lastStatsGameId = state.createdAt;
+  try { localStorage.setItem('bsLastStatsGameId', String(state.createdAt)); } catch (_) {}
   const isWinner = state.winner === currentUser;
   const myK = pkey(currentUser);
   const paths = [
@@ -1309,7 +1316,7 @@ function handleGameState(state) {
 }
 
 function showLobby(mode, state = null) {
-  if (mode === 'create') { statsRecorded = false; sunkAnimated.clear(); prevOppLastShot = undefined; }
+  if (mode === 'create') { sunkAnimated.clear(); prevOppLastShot = undefined; }
   document.getElementById('lobbySection').style.display     = 'block';
   document.getElementById('placementSection').style.display = 'none';
   document.getElementById('gameSection').style.display      = 'none';
