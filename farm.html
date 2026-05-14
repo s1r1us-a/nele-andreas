@@ -653,7 +653,7 @@
     .growth-bar { height: 100%; background: linear-gradient(90deg, #7ec850, #9be860); width: 0%; border-radius: 4px; transition: width 1s linear; }
 
     /* ── ANIMAL CONTAINER, ANIMATIONS & REWARD BUBBLE ── */
-    .animal-wrapper { position: absolute; transform-origin: bottom center; transition: left 2s ease-in-out, top 2s ease-in-out, filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+    .animal-wrapper { position: absolute; left: 0; top: 0; transform-origin: bottom center; transition: transform 2s ease-in-out, filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
     .animal-wrapper:active { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
     .rabbit { width: 40px; height: auto; position: relative; }
     .facing-left .rabbit { transform: scaleX(-1); }
@@ -3839,13 +3839,18 @@
         rewardHtml = `<div class="reward-bubble">${rewardIcon}</div>`;
     }
 
-    if (!el) { 
-      el = document.createElement('div'); 
-      el.id = 'animal-' + a.id; 
-      el.className = 'animal-wrapper'; 
-      el.onclick = () => window.openAnimalStats(a.id); 
-      el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml; 
-      space.appendChild(el); 
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'animal-' + a.id;
+      el.className = 'animal-wrapper';
+      el.onclick = () => window.openAnimalStats(a.id);
+      el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml;
+      // Skip transform transition for initial placement (avoid glide-in from origin)
+      el.style.transition = 'none';
+      space.appendChild(el);
+      a._el = el;
+      // Restore CSS-driven transition on next frame
+      requestAnimationFrame(() => { el.style.transition = ''; });
     } else {
       const currentProducing = el.getAttribute('data-producing') === 'true';
       const currentReady = el.getAttribute('data-ready') === 'true';
@@ -3873,8 +3878,16 @@
     updateAnimalPos(a);
   }
 
+  // Cached container size for animal positioning (recomputed on resize)
+  let _farmWorldSize = { w: 0, h: 0 };
+  function _refreshFarmWorldSize() {
+    const fw = document.getElementById('farmWorld');
+    if (fw) { _farmWorldSize.w = fw.clientWidth; _farmWorldSize.h = fw.clientHeight; }
+  }
+
   function updateAnimalPos(a) {
-    const el = document.getElementById('animal-' + a.id); if (!el) return;
+    const el = a._el || document.getElementById('animal-' + a.id); if (!el) return;
+    if (!a._el) a._el = el;
     let sizeMod = 0.8;
     if (a.species === 'cow') sizeMod = 1.28;
     else if (a.species === 'sheep') sizeMod = 0.96;
@@ -3886,9 +3899,12 @@
     else if (a.species === 'dog')   sizeMod = 0.72;
 
     const scale = Math.min(1.24, 0.5 + ((a.y - 35) / 60) * 0.7) * sizeMod;
-    el.style.left = a.x + '%'; el.style.top = a.y + '%';
-    el.style.transform = `scale(${scale})`; el.style.zIndex = Math.floor(a.y);
-    
+    if (!_farmWorldSize.w) _refreshFarmWorldSize();
+    const xPx = (a.x / 100) * _farmWorldSize.w;
+    const yPx = (a.y / 100) * _farmWorldSize.h;
+    el.style.transform = `translate3d(${xPx}px, ${yPx}px, 0) scale(${scale})`;
+    el.style.zIndex = Math.floor(a.y);
+
     if (a.isWalking) {
       el.classList.add('is-walking');
       el.classList.remove('is-idle');
@@ -3896,7 +3912,7 @@
       el.classList.remove('is-walking');
       el.classList.add('is-idle');
     }
-    
+
     a.facingLeft ? el.classList.add('facing-left') : el.classList.remove('facing-left');
   }
 
@@ -5817,16 +5833,14 @@
           let inBeehive = (newX > 18 && newX < 32 && newY > 25 && newY < 40);
           
           let collision = false;
-          animals.forEach(other => {
-            if (a.id !== other.id) {
-              let dx = newX - other.x;
-              let dy = newY - other.y;
-              let distance = Math.sqrt(dx * dx + dy * dy);
-              if (distance < 10) { 
-                collision = true;
-              }
-            }
-          });
+          const MIN_DIST_SQ = 100; // 10 * 10
+          for (let i = 0, n = animals.length; i < n; i++) {
+            const other = animals[i];
+            if (a.id === other.id) continue;
+            const dx = newX - other.x;
+            const dy = newY - other.y;
+            if (dx * dx + dy * dy < MIN_DIST_SQ) { collision = true; break; }
+          }
 
           if (!inBeet && !inBakery && !inWeaving && !inBeehive && !collision) { 
             validMove = true; 
@@ -5848,9 +5862,12 @@
 
   window.addEventListener('resize', () => {
       if(currentUser) {
+          _refreshFarmWorldSize();
           document.getElementById('fenceContainer').innerHTML = '';
           const zd = document.getElementById('zoneDividers');
           if (zd) zd.innerHTML = '';
+          // Reposition all animals against the new container size
+          animals.forEach(a => updateAnimalPos(a));
           updateFarmDOM();
       }
   });
