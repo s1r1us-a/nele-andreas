@@ -5269,11 +5269,22 @@
     }
     return count;
   }
+  window.countEmptyBedSlots = function(b) {
+    let count = 0;
+    if (beds[b]) {
+      for (let s = 0; s < 6; s++) {
+        if (beds[b][s] && beds[b][s].state === 'empty') count++;
+      }
+    }
+    return count;
+  }
   window.openFieldSeedMenu = function() {
     const list = document.getElementById('fieldSeedList');
     list.innerHTML = '';
     let hasSeeds = false;
     const emptySlots = window.countEmptySlots();
+    const currentBed = currentTargetSlot ? currentTargetSlot.b : -1;
+    const bedEmptySlots = currentBed >= 0 ? window.countEmptyBedSlots(currentBed) : 0;
     Object.keys(inventory.seeds).forEach(key => {
       if (inventory.seeds[key] > 0) {
         hasSeeds = true;
@@ -5281,7 +5292,10 @@
         const stock = inventory.seeds[key];
         const canPlantAll = Math.min(stock, emptySlots);
         const allDisabled = canPlantAll <= 0 ? 'disabled' : '';
-        list.innerHTML += `<div class="item-row"><div class="item-info" style="cursor:pointer;" onclick="window.plantSeed('${key}')"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min · ${stock}x</span></div></div><div style="display:flex; flex-direction:column; gap:6px;"><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px;" onclick="window.plantSeed('${key}')">Pflanzen</button><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.plantAllSeeds('${key}')" ${allDisabled}>Alle (${canPlantAll}x)</button></div></div>`;
+        const canPlantBed = Math.min(stock, bedEmptySlots);
+        const bedDisabled = canPlantBed <= 0 ? 'disabled' : '';
+        const bedButton = currentBed >= 0 ? `<button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="window.plantBedSeeds('${key}')" ${bedDisabled}>Beet (${canPlantBed}x)</button>` : '';
+        list.innerHTML += `<div class="item-row"><div class="item-info" style="cursor:pointer;" onclick="window.plantSeed('${key}')"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min · ${stock}x</span></div></div><div style="display:flex; flex-direction:column; gap:6px;"><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px;" onclick="window.plantSeed('${key}')">Pflanzen</button>${bedButton}<button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.plantAllSeeds('${key}')" ${allDisabled}>Alle (${canPlantAll}x)</button></div></div>`;
       }
     });
     if (!hasSeeds) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast keine Samen.<br>Kaufe welche im Shop!</div>`;
@@ -5330,6 +5344,50 @@
       window.showToast(`${planted}x ${shopItems[itemId].icon} gepflanzt!`);
     } else {
       window.showToast('Keine freien Felder! 🌱');
+    }
+  }
+  window.plantBedSeeds = function(itemId) {
+    if (isVisitMode) return;
+    if (!currentTargetSlot) { window.showToast('Kein Beet gewählt! 🌱'); return; }
+    if (!inventory.seeds[itemId] || inventory.seeds[itemId] <= 0) { window.showToast('Keine Samen vorhanden! 🌱'); return; }
+    const bedEmptySlots = window.countEmptyBedSlots(currentTargetSlot.b);
+    if (bedEmptySlots <= 0) { window.showToast('Keine freien Felder im Beet! 🌱'); return; }
+    const item = shopItems[itemId];
+    const canPlant = Math.min(inventory.seeds[itemId], bedEmptySlots);
+    document.getElementById('confirmTitle').textContent = "Beet vollpflanzen?";
+    document.getElementById('confirmText').innerHTML = `Du pflanzt <b>${canPlant}x ${item.icon} ${item.name}</b> auf alle freien Felder dieses Beets.`;
+    document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" style="background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="window.doPlantBedSeeds('${itemId}')">Ja, Beet pflanzen! 🌱</button><button class="btn-generic btn-cancel" onclick="window.openFieldSeedMenu()">Abbrechen</button>`;
+    window.showSpecificModal('modalConfirm');
+  }
+  window.doPlantBedSeeds = async function(itemId) {
+    if (isVisitMode) return;
+    if (!currentTargetSlot) { window.showToast('Kein Beet gewählt! 🌱'); return; }
+    if (!inventory.seeds[itemId] || inventory.seeds[itemId] <= 0) { window.showToast('Keine Samen vorhanden! 🌱'); return; }
+    const b = currentTargetSlot.b;
+    const startS = currentTargetSlot.s;
+    let planted = 0;
+    const now = Date.now();
+    const tryPlant = (s) => {
+      if (!beds[b] || !beds[b][s]) return;
+      if (beds[b][s].state !== 'empty') return;
+      if (inventory.seeds[itemId] <= 0) return;
+      inventory.seeds[itemId]--;
+      beds[b][s] = { state: 'growing', item: itemId, plantedAt: now };
+      const domSlot = document.getElementById(`slot-${b}-${s}`);
+      if (domSlot) domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: 0%"></div></div>`;
+      planted++;
+    };
+    tryPlant(startS);
+    for (let s = 0; s < 6 && inventory.seeds[itemId] > 0; s++) {
+      if (s === startS) continue;
+      tryPlant(s);
+    }
+    if (planted > 0) {
+      await saveFarmData();
+      window.closeAllModals();
+      window.showToast(`${planted}x ${shopItems[itemId].icon} gepflanzt!`);
+    } else {
+      window.showToast('Keine freien Felder im Beet! 🌱');
     }
   }
 
