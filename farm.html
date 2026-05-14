@@ -747,8 +747,9 @@
     .stall-empty { text-align:center; color:var(--text-mid); padding:32px 16px; }
     .stall-empty-icon { font-size:40px; margin-bottom:8px; }
     .stall-empty-text { font-size:13px; font-weight:600; }
-    .topbar-btn-wrap { position:relative; }
-    #stallBadge { display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; font-size:10px; font-weight:800; min-width:16px; height:16px; border-radius:50%; align-items:center; justify-content:center; padding:0 3px; z-index:1; }
+    .topbar-btn-wrap { position:relative; display:flex; align-items:stretch; }
+    .topbar-btn-wrap > .topbar-btn { width:100%; }
+    #stallBadge { display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; font-size:10px; font-weight:800; min-width:16px; height:16px; border-radius:50%; align-items:center; justify-content:center; padding:0 3px; z-index:1; box-shadow:0 2px 6px rgba(239,68,68,0.4); }
     #stallBadge.visible { display:flex; }
 
     /* ── VISIT MODE BANNER ── */
@@ -1154,12 +1155,23 @@
     #globalCoins { font-variant-numeric: tabular-nums; display: inline-block; }
 
     .topbar-btn {
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,248,240,0.92)) !important;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7) !important;
-      transition: transform 0.15s, box-shadow 0.15s !important;
+      background: linear-gradient(180deg, #ffffff 0%, #fff3f6 100%) !important;
+      border: 1.5px solid rgba(232,115,138,0.25) !important;
+      border-radius: 12px !important;
+      padding: 7px 11px !important;
+      box-shadow: 0 2px 6px rgba(232,115,138,0.10), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+      transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease !important;
     }
-    .topbar-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.7) !important; }
-    .topbar-btn:active { transform: scale(0.95) !important; }
+    .topbar-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(232,115,138,0.45) !important;
+      background: linear-gradient(180deg, #ffffff 0%, #ffe8ee 100%) !important;
+      box-shadow: 0 4px 12px rgba(232,115,138,0.20), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+    }
+    .topbar-btn:active {
+      transform: scale(0.94) !important;
+      box-shadow: 0 1px 3px rgba(232,115,138,0.18), inset 0 1px 2px rgba(232,115,138,0.10) !important;
+    }
 
     /* Glassmorphism für Modal-Sheets (sanft, nicht aggressiv) */
     .sell-qty-sheet, .sell-confirm-sheet {
