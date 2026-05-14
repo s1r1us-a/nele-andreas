@@ -488,6 +488,36 @@
     .sunset-mode .tradehouse-building { filter: sepia(0.2) drop-shadow(0 8px 6px rgba(0,0,0,0.15)); }
     .tradehouse-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; z-index: 50; border: 2px solid #fff; }
 
+    /* ── FAHRENDER HÄNDLER NPC ── */
+    .merchant-wrapper { position: absolute; top: 72%; left: 50%; width: 64px; height: 96px; margin-left: -32px; margin-top: -96px; cursor: pointer; z-index: 56; touch-action: manipulation; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.22)); animation: merchantBob 2.6s ease-in-out infinite; transition: filter 2s ease; }
+    .merchant-wrapper:active { transform: scale(0.94); filter: drop-shadow(0 0 10px rgba(255,255,255,0.7)) drop-shadow(0 6px 6px rgba(0,0,0,0.22)); }
+    .merchant-wrapper svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .night-mode .merchant-wrapper { filter: brightness(0.72) drop-shadow(0 6px 6px rgba(0,0,0,0.3)); }
+    .sunset-mode .merchant-wrapper { filter: sepia(0.18) drop-shadow(0 6px 6px rgba(0,0,0,0.22)); }
+    @keyframes merchantBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+    .merchant-bubble { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #fbbf24; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.18); animation: bubbleBounce 1.6s infinite ease-in-out; pointer-events: none; z-index: 60; }
+    .merchant-bubble::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #fff transparent transparent transparent; }
+    .merchant-bubble::before { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid; border-color: #fbbf24 transparent transparent transparent; }
+
+    /* ── HÄNDLER MODAL ── */
+    .merchant-greeting { text-align: center; font-size: 13px; color: var(--text-mid); margin-bottom: 14px; line-height: 1.5; padding: 0 6px; }
+    .merchant-offer-row { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, rgba(251,191,36,0.10), rgba(249,115,22,0.05)); border: 1.5px solid rgba(251,191,36,0.35); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+    .merchant-offer-row.insufficient { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); opacity: 0.7; }
+    .merchant-offer-icon { font-size: 28px; flex-shrink: 0; width: 36px; text-align: center; }
+    .merchant-offer-info { flex: 1; min-width: 0; }
+    .merchant-offer-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+    .merchant-offer-meta { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+    .merchant-offer-price { font-size: 13px; font-weight: 700; color: #d97706; margin-top: 3px; }
+    .merchant-offer-price .price-strike { text-decoration: line-through; color: var(--text-mid); font-weight: 500; margin-right: 4px; font-size: 11px; }
+    .merchant-offer-price .price-2x { display: inline-block; background: #fbbf24; color: #fff; font-size: 10px; padding: 1px 5px; border-radius: 6px; margin-left: 4px; vertical-align: middle; font-weight: 800; letter-spacing: 0.3px; }
+    .merchant-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .merchant-actions button { flex: 1; padding: 11px; border: none; border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; touch-action: manipulation; transition: transform 0.1s, opacity 0.15s; }
+    .merchant-actions button:active { transform: scale(0.96); }
+    .merchant-actions .merchant-sell { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 3px 8px rgba(16,185,129,0.3); }
+    .merchant-actions .merchant-sell:disabled { background: #d1d5db; color: #6b7280; box-shadow: none; cursor: not-allowed; opacity: 0.75; }
+    .merchant-actions .merchant-dismiss { background: #fef2f2; color: #ef4444; }
+    .merchant-total-preview { text-align: center; font-size: 16px; font-weight: 800; color: #d97706; margin: 6px 0 2px; }
+
     /* ── HANDELSHAUS MODAL ── */
     .trade-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: rgba(0,0,0,0.04); border-radius: 14px; padding: 4px; }
     .trade-tab { flex: 1; padding: 8px 6px; border: none; border-radius: 10px; background: transparent; color: var(--text-mid); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
@@ -2248,6 +2278,9 @@
   <div class="beds-container" id="bedsContainer"></div>
   <div id="animalSpace"></div>
 
+  <!-- FAHRENDER HÄNDLER NPC -->
+  <div class="merchant-wrapper" id="merchantNPC" style="display:none;" onclick="window.openMerchant()"></div>
+
   <!-- BLUMEN -->
   <div class="flower" style="top:41%; left:10%; animation-delay:0s;">
     <svg width="14" height="18" viewBox="0 0 14 18" xmlns="http://www.w3.org/2000/svg">
@@ -2412,6 +2445,19 @@
     <div class="modal-title">Marktstand 💰</div>
     <p style="text-align: center; font-size: 13px; color: var(--text-mid); margin-bottom: 12px;">Verkaufe Ernte und Waren mit Gewinn!</p>
     <div class="item-list" id="sellList"></div>
+  </div>
+
+  <!-- FAHRENDER HÄNDLER MODAL -->
+  <div class="modal-card" id="modalMerchant" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="modal-title">🎩 Fahrender Händler</div>
+    <div class="merchant-greeting" id="merchantGreeting">„Guten Tag! Ich bin nur heute hier und biete den <b>doppelten Preis</b> für diese drei Waren!"</div>
+    <div id="merchantOfferList"></div>
+    <div class="merchant-total-preview" id="merchantTotalPreview">+0 🪙</div>
+    <div class="merchant-actions">
+      <button class="merchant-dismiss" onclick="window.dismissMerchant()">Heute nicht</button>
+      <button class="merchant-sell" id="merchantSellBtn" onclick="window.confirmMerchantSell()">Verkaufen ✓</button>
+    </div>
   </div>
 
   <div class="modal-card" id="modalField" onclick="event.stopPropagation()">
@@ -2851,11 +2897,13 @@
 
   let oven = { slots: Array(5).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
   let beds = Array(12).fill(null).map(() => Array(4).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
-  let animals = []; 
+  let animals = [];
+
+  let merchant = { lastVisitDate: '', offerDate: '', offer: [] };
 
   async function saveFarmData() {
     if (!userKey || isVisitMode) return;
-    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots,
+    const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots, merchant,
       bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites] };
     await set(ref(db, `farm/${userKey}`), data);
   }
@@ -2915,6 +2963,10 @@
           }
           bakeryFavorites = new Set(Array.isArray(data.bakeryFavs) ? data.bakeryFavs : []);
           weavingFavorites = new Set(Array.isArray(data.weavingFavs) ? data.weavingFavs : []);
+          merchant = (data.merchant && typeof data.merchant === 'object')
+            ? { lastVisitDate: data.merchant.lastVisitDate || '', offerDate: data.merchant.offerDate || '', offer: Array.isArray(data.merchant.offer) ? data.merchant.offer : [] }
+            : { lastVisitDate: '', offerDate: '', offer: [] };
+          refreshMerchant();
 
           if (beehive.level > 0 && !beehive.isProducing && !beehive.rewardReady) {
               beehive.isProducing = true;
@@ -3665,6 +3717,8 @@
       badge.textContent = readyCount;
       readyCount > 0 ? badge.classList.add('visible') : badge.classList.remove('visible');
     }
+
+    renderMerchant();
   }
 
   function renderAnimalDOM(a) {
@@ -4161,6 +4215,241 @@
   window.closeSellQty = function() { pendingSell = null; document.getElementById('sellQtyOverlay').classList.remove('show'); }
   window.confirmSell = async function() {}
   window.closeSellConfirm = function() { document.getElementById('sellConfirmOverlay').classList.remove('show'); }
+
+  // ══════════════════════════════════════════════════════════
+  // ── FAHRENDER HÄNDLER ─────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+  const MERCHANT_CATEGORIES = [
+    { category: 'bakery',      recipes: () => bakeryRecipes },
+    { category: 'accessories', recipes: () => weavingRecipes },
+    { category: 'jewelry',     recipes: () => jewelryRecipes }
+  ];
+
+  function getMerchantRecipe(category, id) {
+    if (category === 'bakery')      return bakeryRecipes[id];
+    if (category === 'accessories') return weavingRecipes[id];
+    if (category === 'jewelry')     return jewelryRecipes[id];
+    return null;
+  }
+
+  function todayStr() { return new Date().toDateString(); }
+
+  function generateMerchantOffer() {
+    const pool = [];
+    MERCHANT_CATEGORIES.forEach(c => {
+      Object.keys(c.recipes()).forEach(id => pool.push({ category: c.category, id }));
+    });
+    // Drei verschiedene zufällig ziehen
+    const offer = [];
+    const used = new Set();
+    while (offer.length < 3 && pool.length > 0) {
+      const idx = Math.floor(Math.random() * pool.length);
+      const pick = pool[idx];
+      const key = pick.category + ':' + pick.id;
+      if (!used.has(key)) {
+        used.add(key);
+        offer.push({ category: pick.category, id: pick.id, qty: 1 + Math.floor(Math.random() * 3) });
+      }
+      pool.splice(idx, 1);
+    }
+    return offer;
+  }
+
+  function refreshMerchant() {
+    const today = todayStr();
+    let changed = false;
+    if (merchant.offerDate !== today || !Array.isArray(merchant.offer) || merchant.offer.length !== 3) {
+      merchant.offer = generateMerchantOffer();
+      merchant.offerDate = today;
+      changed = true;
+    }
+    renderMerchant();
+    if (changed && userKey && !isVisitMode) saveFarmData();
+  }
+
+  function renderMerchant() {
+    const el = document.getElementById('merchantNPC');
+    if (!el) return;
+    const today = todayStr();
+    const visibleToday = merchant.lastVisitDate !== today && !isVisitMode;
+    if (!visibleToday) { el.style.display = 'none'; return; }
+    if (!el.dataset.rendered) {
+      el.innerHTML = getMerchantSVG() + '<div class="merchant-bubble">💰</div>';
+      el.dataset.rendered = '1';
+    }
+    el.style.display = 'block';
+  }
+
+  function getMerchantSVG() {
+    return `
+<svg viewBox="0 0 60 96" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="merchCoat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a4a2a"/>
+      <stop offset="1" stop-color="#5a3520"/>
+    </linearGradient>
+    <linearGradient id="merchHat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a2818"/>
+      <stop offset="1" stop-color="#2e160c"/>
+    </linearGradient>
+    <linearGradient id="merchPouch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d97706"/>
+      <stop offset="1" stop-color="#92400e"/>
+    </linearGradient>
+  </defs>
+  <!-- Schatten -->
+  <ellipse cx="30" cy="93" rx="14" ry="2.6" fill="rgba(0,0,0,0.22)"/>
+  <!-- Stiefel -->
+  <ellipse cx="23" cy="89" rx="6" ry="4" fill="#1f1410"/>
+  <ellipse cx="37" cy="89" rx="6" ry="4" fill="#1f1410"/>
+  <rect x="18" y="83" width="10" height="7" rx="2" fill="#2a1812"/>
+  <rect x="32" y="83" width="10" height="7" rx="2" fill="#2a1812"/>
+  <!-- Hose -->
+  <path d="M19 64 L18 84 L29 84 L30 64 Z" fill="#3a2a1a"/>
+  <path d="M30 64 L31 84 L42 84 L41 64 Z" fill="#3a2a1a"/>
+  <!-- Mantel / Oberkörper -->
+  <path d="M16 44 Q12 60 18 70 L42 70 Q48 60 44 44 Q42 38 30 38 Q18 38 16 44 Z" fill="url(#merchCoat)"/>
+  <!-- Innenseite Mantel (Kragen-V) -->
+  <path d="M25 38 L30 56 L35 38 Z" fill="#c9a36a"/>
+  <!-- Hemd-Kragen -->
+  <path d="M27 40 L30 48 L33 40 Z" fill="#f5e3c2"/>
+  <!-- Gürtel -->
+  <rect x="16" y="62" width="28" height="5" fill="#3b2410"/>
+  <rect x="28" y="62" width="4" height="5" fill="#fbbf24"/>
+  <rect x="28.7" y="63" width="2.6" height="3" fill="#92400e"/>
+  <!-- Knöpfe Mantel -->
+  <circle cx="30" cy="50" r="1.2" fill="#fbbf24"/>
+  <circle cx="30" cy="56" r="1.2" fill="#fbbf24"/>
+  <circle cx="30" cy="62" r="1.2" fill="#fbbf24"/>
+  <!-- Arme -->
+  <path d="M16 44 Q10 54 12 66 Q14 70 18 68 Q20 58 20 48 Z" fill="url(#merchCoat)"/>
+  <path d="M44 44 Q50 54 48 66 Q46 70 42 68 Q40 58 40 48 Z" fill="url(#merchCoat)"/>
+  <!-- Hände -->
+  <circle cx="14" cy="68" r="3" fill="#e8b88a"/>
+  <circle cx="46" cy="68" r="3" fill="#e8b88a"/>
+  <!-- Geldbeutel rechts -->
+  <ellipse cx="48" cy="72" rx="5.5" ry="6" fill="url(#merchPouch)"/>
+  <path d="M44 69 Q48 64 52 69" stroke="#5a3010" stroke-width="1.2" fill="none"/>
+  <text x="48" y="75" text-anchor="middle" font-size="6" font-weight="bold" fill="#fde68a">$</text>
+  <!-- Hals -->
+  <rect x="27" y="33" width="6" height="6" fill="#d9a679"/>
+  <!-- Kopf -->
+  <ellipse cx="30" cy="28" rx="9" ry="10" fill="#e8b88a"/>
+  <!-- Ohren -->
+  <ellipse cx="21" cy="28" rx="1.6" ry="2.4" fill="#d9a679"/>
+  <ellipse cx="39" cy="28" rx="1.6" ry="2.4" fill="#d9a679"/>
+  <!-- Augen -->
+  <ellipse cx="26.5" cy="27" rx="1.1" ry="1.4" fill="#1f2937"/>
+  <ellipse cx="33.5" cy="27" rx="1.1" ry="1.4" fill="#1f2937"/>
+  <circle cx="26.8" cy="26.6" r="0.4" fill="#fff"/>
+  <circle cx="33.8" cy="26.6" r="0.4" fill="#fff"/>
+  <!-- Augenbrauen -->
+  <path d="M24 23.5 Q26.5 22.5 29 23.5" stroke="#3a2410" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <path d="M31 23.5 Q33.5 22.5 36 23.5" stroke="#3a2410" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Nase -->
+  <path d="M30 28 Q29 31 30 32 Q31 31 30 28" fill="#c89878"/>
+  <!-- Schnurrbart -->
+  <path d="M25 33 Q28 34 30 33 Q32 34 35 33 Q33 35 30 35 Q27 35 25 33 Z" fill="#3a2410"/>
+  <!-- Bart -->
+  <path d="M22 33 Q24 40 30 41 Q36 40 38 33 Q36 38 30 39 Q24 38 22 33 Z" fill="#3a2410"/>
+  <!-- Mund -->
+  <path d="M28 36 Q30 37 32 36" stroke="#5a2010" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  <!-- Hut: Krempe -->
+  <ellipse cx="30" cy="19" rx="15" ry="3.2" fill="url(#merchHat)"/>
+  <!-- Hut: Kopfteil -->
+  <path d="M22 19 Q22 10 30 8 Q38 10 38 19 Z" fill="url(#merchHat)"/>
+  <!-- Hut: Band -->
+  <rect x="22" y="17" width="16" height="2.4" fill="#92400e"/>
+  <rect x="29" y="17" width="3" height="2.4" fill="#fbbf24"/>
+  <!-- Feder am Hut -->
+  <path d="M37 16 Q42 10 40 6 Q39 11 36 14 Z" fill="#dc2626"/>
+</svg>`;
+  }
+
+  let merchantPendingPlan = null;
+
+  function buildMerchantPlan() {
+    let total = 0;
+    let canSellAll = true;
+    let anyInStock = false;
+    const items = merchant.offer.map(o => {
+      const recipe = getMerchantRecipe(o.category, o.id);
+      if (!recipe) return null;
+      const stock = (inventory[o.category] && inventory[o.category][o.id]) || 0;
+      const want = o.qty;
+      const will = Math.min(stock, want);
+      if (will > 0) anyInStock = true;
+      if (will < want) canSellAll = false;
+      const pricePerUnit = recipe.sellPrice * 2;
+      total += will * pricePerUnit;
+      return { ...o, recipe, stock, want, will, pricePerUnit, single: recipe.sellPrice };
+    }).filter(Boolean);
+    return { items, total, canSellAll, anyInStock };
+  }
+
+  window.openMerchant = function() {
+    if (isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; }
+    const today = todayStr();
+    if (merchant.lastVisitDate === today) {
+      window.showToast('Der Händler ist heute schon weg ✋');
+      return;
+    }
+    if (!Array.isArray(merchant.offer) || merchant.offer.length === 0) refreshMerchant();
+    const plan = buildMerchantPlan();
+    merchantPendingPlan = plan;
+    const list = document.getElementById('merchantOfferList');
+    list.innerHTML = plan.items.map(it => {
+      const enough = it.stock >= it.want;
+      return `<div class="merchant-offer-row${enough ? '' : ' insufficient'}">
+        <div class="merchant-offer-icon">${it.recipe.icon}</div>
+        <div class="merchant-offer-info">
+          <div class="merchant-offer-name">${it.recipe.name}</div>
+          <div class="merchant-offer-meta">Sucht: <b>${it.want}×</b> · Auf Lager: ${it.stock}</div>
+          <div class="merchant-offer-price"><span class="price-strike">${it.single} 🪙</span>${it.pricePerUnit.toLocaleString('de-DE')} 🪙<span class="price-2x">2×</span></div>
+        </div>
+      </div>`;
+    }).join('');
+    const preview = document.getElementById('merchantTotalPreview');
+    preview.textContent = '+' + plan.total.toLocaleString('de-DE') + ' 🪙';
+    const sellBtn = document.getElementById('merchantSellBtn');
+    sellBtn.disabled = !plan.anyInStock;
+    sellBtn.textContent = plan.canSellAll ? 'Alles verkaufen ✓' : (plan.anyInStock ? 'Verfügbares verkaufen ✓' : 'Nichts auf Lager');
+    window.showSpecificModal('modalMerchant');
+  }
+
+  window.confirmMerchantSell = async function() {
+    const plan = merchantPendingPlan || buildMerchantPlan();
+    if (!plan.anyInStock) return;
+    let total = 0;
+    for (const it of plan.items) {
+      if (it.will <= 0) continue;
+      if ((inventory[it.category][it.id] || 0) >= it.will) {
+        inventory[it.category][it.id] -= it.will;
+        total += it.will * it.pricePerUnit;
+      }
+    }
+    if (total <= 0) return;
+    merchant.lastVisitDate = todayStr();
+    merchantPendingPlan = null;
+    await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
+    runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
+    await saveFarmData();
+    window.closeAllModals();
+    renderMerchant();
+    window.showFloatingNumber('+' + total.toLocaleString('de-DE') + ' 🪙', '#22c55e');
+    window.showToast('Der Händler zieht weiter 🎩');
+  }
+
+  window.dismissMerchant = async function() {
+    merchant.lastVisitDate = todayStr();
+    merchantPendingPlan = null;
+    window.closeAllModals();
+    renderMerchant();
+    if (userKey && !isVisitMode) await saveFarmData();
+  }
+
+  // Tageswechsel-Check im selben Takt wie checkDayNight
+  setInterval(() => { if (userKey && !isVisitMode) refreshMerchant(); }, 60000);
 
   window.openInventory = function() {
     const container = document.getElementById('inventoryContent'); container.innerHTML = '';
