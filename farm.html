@@ -3191,7 +3191,8 @@
     dog:     { id: 'dog',     name: 'Hund',    icon: '🐕', price: 8000  },
     goat:    { id: 'goat',    name: 'Ziege',   icon: '🐐', price: 10000 },
     horse:   { id: 'horse',   name: 'Pferd',   icon: '🐴', price: 12000 },
-    pig:     { id: 'pig',     name: 'Schwein', icon: '🐷', price: 15000 }
+    pig:     { id: 'pig',     name: 'Schwein', icon: '🐷', price: 15000 },
+    unicorn: { id: 'unicorn', name: 'Einhorn', icon: '🦄', price: 15000 }
   };
 
   // ── NEUE REZEPTE (WIRTSCHAFTLICH SINNVOLL) ──
@@ -3209,7 +3210,8 @@
     trufflesauce: { id: 'trufflesauce', name: 'Trüffelsoße',      icon: '🍄', time: 2400, sellPrice: 1900, req: { items: { truffle: 1 }, crops: { carrot: 1 } } },
     cake:         { id: 'cake',         name: 'Premium Torte',    icon: '🍰', time: 2700, sellPrice: 1100, req: { crops: { wheat: 1 }, items: { egg: 1, milk: 1 } } },
     pizza:        { id: 'pizza',        name: 'Pizza',            icon: '🍕', time: 2700, sellPrice: 950,  req: { crops: { tomato: 2, wheat: 1 }, items: { milk: 1 } } },
-    honeycake:    { id: 'honeycake',    name: 'Honigkuchen',      icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } }
+    honeycake:    { id: 'honeycake',    name: 'Honigkuchen',      icon: '🍯', time: 3600, sellPrice: 1250, req: { crops: { wheat: 1 }, items: { honey: 1 }, bakery: { oatmilk: 1 } } },
+    mondlichtmacarons: { id: 'mondlichtmacarons', name: 'Mondlicht-Macarons', icon: '🌠', time: 3600, sellPrice: 2200, req: { items: { rainbowessence: 1, milk: 1 }, crops: { blueberry: 2 } } }
   };
 
   const weavingRecipes = {
@@ -3220,7 +3222,8 @@
     sunhat:         { id: 'sunhat',         name: 'Sonnenhut',           icon: '🌞', time: 1800, sellPrice: 1800, req: { crops: { sunflower: 2 }, items: { wool: 1 } } },
     radishearrings: { id: 'radishearrings', name: 'Radieschen-Ohrringe', icon: '🧅', time: 2700, sellPrice: 3800, req: { items: { wool: 1 }, crops: { radish: 2 } } },
     flowercrown:    { id: 'flowercrown',    name: 'Blumenkranz',         icon: '🌸', time: 3600, sellPrice: 3500, req: { crops: { oats: 2 }, items: { fertilizer: 1 } } },
-    goldenbridle:   { id: 'goldenbridle',   name: 'Goldenes Zaumzeug',   icon: '🏅', time: 3600, sellPrice: 4500, req: { items: { horseshoe: 1, wool: 2 } } }
+    goldenbridle:   { id: 'goldenbridle',   name: 'Goldenes Zaumzeug',   icon: '🏅', time: 3600, sellPrice: 4500, req: { items: { horseshoe: 1, wool: 2 } } },
+    unicornplush:   { id: 'unicornplush',   name: 'Einhorn-Plüschie',    icon: '🦄', time: 3600, sellPrice: 5500, req: { items: { rainbowessence: 1, wool: 2 } } }
   };
 
   const bedPrices = [0, 500, 2500, 10000, 50000, 100000, 125000, 150000, 175000, 200000, 225000, 250000];
@@ -3272,10 +3275,10 @@
   let inventory = {
     seeds:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0 },
     crops:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0 },
-    items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0 },
-    bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0 },
+    items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, rainbowessence: 0 },
+    bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, mondlichtmacarons: 0 },
     tailoring:   { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0 },
-    accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0 },
+    accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, unicornplush: 0 },
     ores:        { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0 },
     jewelry:     { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0 }
   };
@@ -3329,10 +3332,10 @@
           const data = snap.val();
           inventory.seeds       = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.seeds  || {}) };
           inventory.crops       = { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.crops  || {}) };
-          inventory.items       = { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, ...(data.inventory?.items || {}) };
-          inventory.bakery      = { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, ...(data.inventory?.bakery || {}) };
+          inventory.items       = { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, rainbowessence: 0, ...(data.inventory?.items || {}) };
+          inventory.bakery      = { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, mondlichtmacarons: 0, ...(data.inventory?.bakery || {}) };
           inventory.tailoring   = { hat: 0, scarf: 0, coat: 0, blanket: 0, plushie: 0, ...(data.inventory?.tailoring || {}) };
-          inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) };
+          inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, unicornplush: 0, ...(data.inventory?.accessories || {}) };
           inventory.ores        = { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0, ...(data.inventory?.ores || {}) };
           inventory.jewelry     = { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0, ...(data.inventory?.jewelry || {}) };
           unlockedBeds = data.unlockedBeds || 1;
@@ -3524,7 +3527,8 @@
     goat:    { strawhat:{x:35,y:14,scale:1.1},  porkpie:{x:35,y:16,scale:1.0},   spectrespecs:{x:35,y:21,scale:0.7},    radishearrings:{x:35,y:14,scale:0.6},   flowercrown:{x:35,y:15,scale:0.55},  featherboa:{x:34,y:37,scale:0.9}  },
     pig:     { strawhat:{x:37,y:12,scale:1.2},  porkpie:{x:37,y:14,scale:1.1},   spectrespecs:{x:38,y:19,scale:0.8},    radishearrings:{x:36,y:12,scale:0.65},  flowercrown:{x:37,y:13,scale:0.6},   featherboa:{x:34,y:35,scale:1.0}  },
     horse:   { strawhat:{x:36,y:14,scale:1.2},  porkpie:{x:36,y:15,scale:1.1},   spectrespecs:{x:36,y:20,scale:0.75},   radishearrings:{x:35,y:14,scale:0.6},   flowercrown:{x:36,y:14,scale:0.6},   featherboa:{x:34,y:36,scale:1.0}  },
-    dog:     { strawhat:{x:36,y:16,scale:1.1},  porkpie:{x:36,y:17,scale:1.0},   spectrespecs:{x:36,y:22,scale:0.7},    radishearrings:{x:35,y:16,scale:0.6},   flowercrown:{x:36,y:16,scale:0.55},  featherboa:{x:33,y:36,scale:0.9}  }
+    dog:     { strawhat:{x:36,y:16,scale:1.1},  porkpie:{x:36,y:17,scale:1.0},   spectrespecs:{x:36,y:22,scale:0.7},    radishearrings:{x:35,y:16,scale:0.6},   flowercrown:{x:36,y:16,scale:0.55},  featherboa:{x:33,y:36,scale:0.9}  },
+    unicorn: { strawhat:{x:36,y:18,scale:1.2},  porkpie:{x:36,y:19,scale:1.1},   spectrespecs:{x:36,y:22,scale:0.75},   radishearrings:{x:35,y:18,scale:0.6},   flowercrown:{x:36,y:18,scale:0.6},   featherboa:{x:34,y:36,scale:1.0}  }
   };
 
   const accessoryEmojis = { strawhat: '👒', porkpie: '🎩', spectrespecs: '👓', radishearrings: '🧅', flowercrown: '🌸', featherboa: '🪶', goldenbridle: '🏅', sunhat: '🌞' };
@@ -3833,6 +3837,48 @@
         <ellipse cx="178" cy="42" rx="2.5" ry="4" fill="#3E2723" transform="rotate(20 178 42)" />
       </svg>`;
     }
+    else if (species === 'unicorn') {
+      baseSvg = `<svg class="rabbit" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- SCHWEIF -->
+        <path d="M 45 90 Q 15 100 20 145 Q 30 115 50 105 Z" fill="#CE93D8" />
+        <!-- HINTERE BEINE -->
+        <rect x="55" y="100" width="14" height="65" rx="5" fill="#E0E0E0" />
+        <rect x="115" y="100" width="14" height="65" rx="5" fill="#E0E0E0" />
+        <!-- HUFE (Hintere Beine) -->
+        <path d="M 55 155 L 69 155 L 69 165 L 53 165 Z" fill="#FFCA28" />
+        <path d="M 115 155 L 129 155 L 129 165 L 113 165 Z" fill="#FFCA28" />
+        <!-- KÖRPER -->
+        <rect x="40" y="65" width="90" height="55" rx="25" fill="#FFFFFF" />
+        <!-- VORDERE BEINE -->
+        <rect x="42" y="105" width="16" height="65" rx="5" fill="#FFFFFF" />
+        <rect x="102" y="105" width="16" height="65" rx="5" fill="#FFFFFF" />
+        <!-- HUFE (Vordere Beine) -->
+        <path d="M 42 160 L 58 160 L 58 170 L 40 170 Z" fill="#FFCA28" />
+        <path d="M 102 160 L 118 160 L 118 170 L 100 170 Z" fill="#FFCA28" />
+        <!-- HALS -->
+        <path d="M 100 75 Q 115 35 140 30 L 155 55 Q 130 85 110 95 Z" fill="#FFFFFF" />
+        <!-- KOPF -->
+        <path d="M 135 30 L 175 30 Q 190 30 185 50 Q 180 60 150 55 Z" fill="#FFFFFF" />
+        <!-- SCHNAUZE -->
+        <path d="M 165 30 L 175 30 Q 190 30 185 50 Q 180 55 165 52 Z" fill="#F8BBD0" />
+        <!-- HORN -->
+        <polygon points="152,25 162,2 165,28" fill="#FFD54F" />
+        <polygon points="152,25 162,2 157,26" fill="#FFCA28" />
+        <!-- OHREN -->
+        <path d="M 145 32 L 143 18 L 151 26 Z" fill="#E0E0E0" />
+        <path d="M 145 32 L 140 12 L 155 25 Z" fill="#FFFFFF" />
+        <!-- MÄHNE -->
+        <path d="M 125 85 Q 140 50 145 25 L 130 20 Q 110 50 115 80 Z" fill="#F48FB1" />
+        <path d="M 140 25 Q 150 15 160 30 Q 150 25 140 30 Z" fill="#F48FB1" />
+        <!-- AUGE -->
+        <circle cx="155" cy="40" r="3.5" fill="#3E2723" />
+        <circle cx="156" cy="39" r="1" fill="#FFFFFF" />
+        <!-- Magisches Funkeln -->
+        <polygon points="163,33 165,37 169,38 165,39 163,43 161,39 157,38 161,37" fill="#FFCA28" />
+        <!-- NÜSTER -->
+        <ellipse cx="178" cy="42" rx="2.5" ry="4" fill="#424242" transform="rotate(20 178 42)" />
+      </svg>`;
+    }
     else if (species === 'dog') {
       baseSvg = `<svg class="rabbit" viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -4065,9 +4111,9 @@
   }
 
   // ── TIERARTEN-ZONEN ──
-  const SPECIES_ORDER = ['cow', 'horse', 'pig', 'sheep', 'goat', 'rabbit', 'duck', 'chicken', 'cat', 'dog'];
-  const SPECIES_NAMES = { cow:'Kühe', horse:'Pferde', pig:'Schweine', sheep:'Schafe', goat:'Ziegen', rabbit:'Hasen', duck:'Enten', chicken:'Hühner', cat:'Katzen', dog:'Hunde' };
-  const SPECIES_EMOJI = { cow:'🐄', horse:'🐴', pig:'🐷', sheep:'🐑', goat:'🐐', rabbit:'🐰', duck:'🦆', chicken:'🐔', cat:'🐱', dog:'🐕' };
+  const SPECIES_ORDER = ['cow', 'horse', 'unicorn', 'pig', 'sheep', 'goat', 'rabbit', 'duck', 'chicken', 'cat', 'dog'];
+  const SPECIES_NAMES = { cow:'Kühe', horse:'Pferde', unicorn:'Einhörner', pig:'Schweine', sheep:'Schafe', goat:'Ziegen', rabbit:'Hasen', duck:'Enten', chicken:'Hühner', cat:'Katzen', dog:'Hunde' };
+  const SPECIES_EMOJI = { cow:'🐄', horse:'🐴', unicorn:'🦄', pig:'🐷', sheep:'🐑', goat:'🐐', rabbit:'🐰', duck:'🦆', chicken:'🐔', cat:'🐱', dog:'🐕' };
   const ZONE_HEIGHT = 48;   // % pro Zone (relativ zur farm-world Höhe)
   const ZONE_START  = 88;   // % – unterhalb der Felder
 
@@ -4287,6 +4333,7 @@
         if(a.species === 'duck')  rewardIcon = '🪶';
         if(a.species === 'goat')  rewardIcon = '🥛';
         if(a.species === 'pig')   rewardIcon = '🍄';
+        if(a.species === 'unicorn') rewardIcon = '🌈';
         rewardHtml = `<div class="reward-bubble">${rewardIcon}</div>`;
     }
 
@@ -4347,6 +4394,7 @@
     else if (a.species === 'goat') sizeMod = 1.0;
     else if (a.species === 'duck')  sizeMod = 0.72;
     else if (a.species === 'horse') sizeMod = 1.75;
+    else if (a.species === 'unicorn') sizeMod = 1.75;
     else if (a.species === 'dog')   sizeMod = 0.72;
 
     const scale = Math.min(1.24, 0.5 + ((a.y - 35) / 60) * 0.7) * sizeMod;
@@ -4704,6 +4752,7 @@
     if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (400 🪙)</button></div>`; }
     if ((inventory.items.truffle || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (1200 🪙)</button></div>`; }
     if ((inventory.items.horseshoe || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧲</span><div><span class="item-name">Hufeisen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.horseshoe}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'horseshoe', 1500)">Verkaufen (1500 🪙)</button></div>`; }
+    if ((inventory.items.rainbowessence || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🌈</span><div><span class="item-name">Regenbogen-Essenz</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.rainbowessence}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'rainbowessence', 1500)">Verkaufen (1500 🪙)</button></div>`; }
     if (itemsRows) html += `<div class="section-title">🎒 Tierprodukte & Items</div><div class="item-list">${itemsRows}</div>`;
 
     let bakeryRows = '';
@@ -5703,7 +5752,7 @@
   // ── ANIMAL LOGIC ──
   function getAnimalFood(species) {
     if (species === 'cat') return { foodType: 'milk', isItem: true };
-    const map = { rabbit: 'carrot', chicken: 'wheat', cow: 'wheat', sheep: 'wheat', duck: 'wheat', goat: 'carrot', pig: 'lettuce', horse: 'oats', dog: 'carrot' };
+    const map = { rabbit: 'carrot', chicken: 'wheat', cow: 'wheat', sheep: 'wheat', duck: 'wheat', goat: 'carrot', pig: 'lettuce', horse: 'oats', dog: 'carrot', unicorn: 'blueberry' };
     return map[species] ? { foodType: map[species], isItem: false } : null;
   }
 
@@ -5787,6 +5836,7 @@
         if(a.species === 'goat')  rewardIcon = '🥛';
         if(a.species === 'pig')   rewardIcon = '🍄';
         if(a.species === 'horse') rewardIcon = '🧲';
+        if(a.species === 'unicorn') rewardIcon = '🌈';
         if(a.species === 'dog')   rewardIcon = '🎁';
         mainActionHtml = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`;
     } else if (a.isProducing) { 
@@ -5806,6 +5856,7 @@
         if(a.species === 'goat')  foodNeed = 'carrot';
         if(a.species === 'pig')   foodNeed = 'lettuce';
         if(a.species === 'horse') foodNeed = 'oats';
+        if(a.species === 'unicorn') foodNeed = 'blueberry';
         if(a.species === 'dog')   foodNeed = 'carrot';
 
         if(foodNeed === 'milk') { 
@@ -5945,6 +5996,7 @@
       else if (a.species === 'goat')  { inventory.items.goatmilk++;window.showToast(`🥛 Ziegenmilch erhalten!`); }
       else if (a.species === 'pig')   { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
       else if (a.species === 'horse') { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
+      else if (a.species === 'unicorn'){ inventory.items.rainbowessence++; window.showToast(`🌈 Regenbogen-Essenz erhalten!`); }
       else if (a.species === 'dog')   { await applyDogFind(); }
       await saveFarmData(); updateFarmDOM(); window.openAnimalStats(a.id);
   }
@@ -5979,7 +6031,7 @@
 
     const tabsEl = document.getElementById('stallFilterTabs');
     let tabsHtml = `<button class="stall-tab ${filterSpecies==='all'?'active':''}" data-filter="all" onclick="window.renderStall('all')">Alle (${animals.length})</button>`;
-    ['rabbit','chicken','cow','sheep','cat','duck','goat','pig','horse','dog'].forEach(sp => {
+    ['rabbit','chicken','cow','sheep','cat','duck','goat','pig','horse','unicorn','dog'].forEach(sp => {
       if (!counts[sp]) return;
       tabsHtml += `<button class="stall-tab ${filterSpecies===sp?'active':''}" data-filter="${sp}" onclick="window.renderStall('${sp}')">${animalItems[sp].icon} ${counts[sp]}</button>`;
     });
@@ -5997,7 +6049,7 @@
       return 0;
     });
 
-    const rewardIcons = { rabbit:'🪴', chicken:'🥚', cow:'🥛', cat:'💎', sheep:'🧶', duck:'🪶', goat:'🥛', pig:'🍄', horse:'🧲', dog:'🎁' };
+    const rewardIcons = { rabbit:'🪴', chicken:'🥚', cow:'🥛', cat:'💎', sheep:'🧶', duck:'🪶', goat:'🥛', pig:'🍄', horse:'🧲', unicorn:'🌈', dog:'🎁' };
 
     listEl.innerHTML = sorted.map(a => {
       let cardClass = '', statusHtml = '', actionHtml = '';
@@ -6079,6 +6131,7 @@
     else if (a.species === 'goat')   { inventory.items.goatmilk++;   window.showToast(`🥛 Ziegenmilch erhalten!`); }
     else if (a.species === 'pig')    { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
     else if (a.species === 'horse')  { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
+    else if (a.species === 'unicorn'){ inventory.items.rainbowessence++; window.showToast(`🌈 Regenbogen-Essenz erhalten!`); }
     else if (a.species === 'dog')    { await applyDogFind(); }
     await saveFarmData();
     updateFarmDOM();
@@ -6112,9 +6165,9 @@
       inventory = {
         seeds:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.seeds  || {}) },
         crops:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.crops  || {}) },
-        items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, ...(data.inventory?.items || {}) },
-        bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, ...(data.inventory?.bakery || {}) },
-        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) },
+        items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, rainbowessence: 0, ...(data.inventory?.items || {}) },
+        bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, mondlichtmacarons: 0, ...(data.inventory?.bakery || {}) },
+        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, unicornplush: 0, ...(data.inventory?.accessories || {}) },
         ores:        { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0, ...(data.inventory?.ores || {}) },
         jewelry:     { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0, ...(data.inventory?.jewelry || {}) }
       };
@@ -6185,9 +6238,9 @@
       inventory = {
         seeds:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.seeds  || {}) },
         crops:       { radish: 0, carrot: 0, lettuce: 0, oats: 0, wheat: 0, blueberry: 0, tomato: 0, corn: 0, sunflower: 0, ...(data.inventory?.crops  || {}) },
-        items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, ...(data.inventory?.items || {}) },
-        bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, ...(data.inventory?.bakery || {}) },
-        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, ...(data.inventory?.accessories || {}) },
+        items:       { fertilizer: 0, honey: 0, egg: 0, milk: 0, wool: 0, diamond: 0, firefly: 0, feather: 0, goatmilk: 0, truffle: 0, horseshoe: 0, rainbowessence: 0, ...(data.inventory?.items || {}) },
+        bakery:      { salad: 0, bread: 0, oatmilk: 0, carrotcake: 0, bluemuffin: 0, cake: 0, honeycake: 0, goatcheese: 0, trufflesauce: 0, tomatosoup: 0, cornbread: 0, sunfloweroil: 0, pizza: 0, popcorn: 0, mondlichtmacarons: 0, ...(data.inventory?.bakery || {}) },
+        accessories: { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0, featherboa: 0, goldenbridle: 0, sunhat: 0, unicornplush: 0, ...(data.inventory?.accessories || {}) },
         ores:        { kupfer: 0, eisen: 0, silber: 0, gold: 0, amethyst: 0, smaragd: 0, ...(data.inventory?.ores || {}) },
         jewelry:     { kupferarmband: 0, eisenring: 0, kupfersilberkette: 0, silberring: 0, eisengoldanhaenger: 0, goldring: 0, silberamethystohrring: 0, amethystbrosche: 0, goldsmaragdhalskette: 0, koenigskrone: 0, ...(data.inventory?.jewelry || {}) }
       };
