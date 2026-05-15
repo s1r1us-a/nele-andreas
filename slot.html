@@ -679,32 +679,38 @@
         rgba(212,160,97,0.08) 6px);
   }
 
-  /* Win-Glow um den Rahmen */
-  .reel.win-glow {
+  /* Win-/Anticipation-Glow: eigenes Overlay, animiert nur opacity
+     (compositor-only) statt teurer Box-Shadow-Keyframes */
+  .reel-glow {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
     box-shadow:
       0 0 0 2px var(--slot-accent) inset,
-      0 0 0 3px rgba(0,0,0,0.5) inset,
-      0 4px 14px rgba(0,0,0,0.6) inset,
-      0 0 30px rgba(212,160,97,0.7),
-      0 0 60px rgba(212,160,97,0.4);
-    animation: reelBoxGlow 0.9s ease-in-out infinite;
+      0 0 28px 4px rgba(255,221,150,0.55) inset;
   }
-  @keyframes reelBoxGlow {
-    0%,100% { box-shadow: 0 0 0 2px var(--slot-accent) inset, 0 0 0 3px rgba(0,0,0,0.5) inset,
-                          0 4px 14px rgba(0,0,0,0.6) inset, 0 0 30px rgba(212,160,97,0.7), 0 0 60px rgba(212,160,97,0.4); }
-    50%     { box-shadow: 0 0 0 2px #ffe9b0 inset, 0 0 0 3px rgba(0,0,0,0.5) inset,
-                          0 4px 14px rgba(0,0,0,0.6) inset, 0 0 50px rgba(255,221,150,1), 0 0 100px rgba(255,221,150,0.6); }
+  .reel.win-glow .reel-glow {
+    opacity: 1;
+    animation: glowPulse 1s ease-in-out infinite;
   }
-
-  /* Anticipation: 2 matchen, 3. wird spannend */
-  .reel.anticipating {
-    animation: anticipationBox 0.5s ease-in-out infinite;
+  .reel.anticipating .reel-glow {
+    opacity: 1;
+    box-shadow:
+      0 0 0 2px rgba(232,115,138,0.9) inset,
+      0 0 26px 4px rgba(232,115,138,0.5) inset;
+    animation: glowPulse 0.6s ease-in-out infinite;
   }
-  @keyframes anticipationBox {
-    0%,100% { box-shadow: 0 0 0 2px rgba(232,115,138,0.5) inset, 0 0 0 3px rgba(0,0,0,0.5) inset,
-                          0 4px 14px rgba(0,0,0,0.6) inset, 0 0 20px rgba(232,115,138,0.4); }
-    50%     { box-shadow: 0 0 0 3px rgba(232,115,138,1) inset, 0 0 0 4px rgba(0,0,0,0.6) inset,
-                          0 4px 14px rgba(0,0,0,0.6) inset, 0 0 40px rgba(232,115,138,0.8), 0 0 70px rgba(232,115,138,0.4); }
+  @keyframes glowPulse {
+    0%,100% { opacity: 0.5; }
+    50%     { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reel.win-glow .reel-glow,
+    .reel.anticipating .reel-glow { animation: none; opacity: 0.9; }
   }
 
   /* RESULT AREA */
@@ -740,21 +746,17 @@
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* BET CONTROLS — Arcade-Konsole mit Push-Buttons */
+  /* BET CONTROLS — weiche Konsole im Seiten-Stil (analog .quote-card) */
   .bet-controls {
     margin-top: 18px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px 10px;
-    padding: 12px 10px 10px;
-    background:
-      linear-gradient(180deg, #1a0f22 0%, #050208 100%);
-    border-radius: 18px;
-    box-shadow:
-      0 0 0 2px rgba(212,160,97,0.45) inset,
-      0 0 0 4px rgba(0,0,0,0.55) inset,
-      0 6px 20px rgba(0,0,0,0.55) inset,
-      0 0 20px rgba(212,160,97,0.12);
+    padding: 16px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(232,115,138,0.25);
+    border-radius: 24px;
+    box-shadow: 0 8px 40px rgba(232,115,138,0.12);
     position: relative;
     z-index: 2;
   }
@@ -762,96 +764,81 @@
     .bet-controls { grid-template-columns: repeat(4, 1fr); }
   }
   .arcade-btn {
-    --cap: #4ade80;
-    --cap-light: #86efac;
-    --cap-dark: #166534;
-    --ring: #052e16;
+    --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
+    --glow: rgba(232,115,138,0.4);
+    --glow-hover: rgba(232,115,138,0.5);
     appearance: none;
     border: 0;
     cursor: pointer;
     width: 100%;
     min-height: 48px;
-    height: 52px;
-    border-radius: 10px;
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    font-size: 12px;
-    letter-spacing: 0.08em;
+    height: 54px;
+    border-radius: 50px;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
     color: #fff;
-    text-shadow:
-      0 -1px 0 rgba(0,0,0,0.55),
-      0 1px 0 rgba(255,255,255,0.25);
-    background:
-      radial-gradient(circle at 50% 32%,
-        var(--cap-light) 0%,
-        var(--cap) 38%,
-        var(--cap-dark) 95%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.4),
-      inset 0 -3px 6px rgba(0,0,0,0.4),
-      inset 0 0 0 1px rgba(0,0,0,0.3),
-      0 3px 0 var(--ring),
-      0 5px 8px rgba(0,0,0,0.5),
-      0 0 10px color-mix(in srgb, var(--cap) 35%, transparent);
+    background: var(--grad);
+    box-shadow: 0 4px 20px var(--glow);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px;
+    gap: 1px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
-    overflow: hidden;
-  }
-  /* Top-Glanz wie auf einer Plastikkappe */
-  .arcade-btn::before {
-    content: '';
-    position: absolute;
-    left: 14%; right: 14%; top: 6%;
-    height: 40%;
-    border-radius: 50%;
-    background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 100%);
-    pointer-events: none;
-    filter: blur(0.5px);
   }
   .arcade-btn small {
     display: block;
     font-family: 'Quicksand', sans-serif;
     font-size: 10px;
-    font-weight: 700;
-    opacity: 0.92;
+    font-weight: 600;
+    opacity: 0.9;
     letter-spacing: 0;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.4);
   }
   .arcade-btn:hover:not(:disabled) {
-    filter: brightness(1.05);
+    transform: scale(1.03) translateY(-2px);
+    box-shadow: 0 8px 30px var(--glow-hover);
   }
   .arcade-btn:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.3),
-      inset 0 -2px 5px rgba(0,0,0,0.5),
-      inset 0 0 0 1px rgba(0,0,0,0.3),
-      0 1px 0 var(--ring),
-      0 2px 5px rgba(0,0,0,0.5),
-      0 0 8px color-mix(in srgb, var(--cap) 30%, transparent);
+    transform: scale(0.97);
   }
   .arcade-btn:disabled {
-    filter: grayscale(0.6) brightness(0.55);
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.45);
+    box-shadow: none;
     cursor: not-allowed;
-    transform: translateY(2px);
   }
-  /* Farbvarianten */
-  .arcade-green { --cap:#4ade80; --cap-light:#a7f3d0; --cap-dark:#166534; --ring:#052e16; }
-  .arcade-blue  { --cap:#3b82f6; --cap-light:#93c5fd; --cap-dark:#1e3a8a; --ring:#0c1e4a; }
-  .arcade-red   { --cap:#ef4444; --cap-light:#fca5a5; --cap-dark:#7f1d1d; --ring:#3f0808; }
-  .arcade-gold  { --cap:#fbbf24; --cap-light:#fde68a; --cap-dark:#92400e; --ring:#451a03;
-                  color:#3b1d05;
-                  text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.2); }
+  @media (prefers-reduced-motion: reduce) {
+    .arcade-btn { transition: box-shadow 0.2s ease; }
+    .arcade-btn:hover:not(:disabled) { transform: none; }
+    .arcade-btn:active:not(:disabled) { transform: none; }
+  }
+  /* Farbvarianten — Rosé/Gold-Palette der Seite */
+  .arcade-green {
+    --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
+    --glow: rgba(232,115,138,0.4); --glow-hover: rgba(232,115,138,0.55);
+  }
+  .arcade-blue {
+    --grad: linear-gradient(135deg, #e6c79a 0%, #d4a061 100%);
+    --glow: rgba(212,160,97,0.35); --glow-hover: rgba(212,160,97,0.5);
+    color: #5a2d3a;
+  }
+  .arcade-red {
+    --grad: linear-gradient(135deg, #c85070 0%, #9d2f4f 100%);
+    --glow: rgba(157,47,79,0.4); --glow-hover: rgba(157,47,79,0.55);
+  }
+  .arcade-gold {
+    --grad: linear-gradient(135deg, #d4a061 0%, #c87830 100%);
+    --glow: rgba(212,160,97,0.4); --glow-hover: rgba(212,160,97,0.55);
+  }
+  .arcade-blue small { opacity: 0.75; }
   .slot-container.test-active .arcade-btn small::before {
     content: 'GRATIS · ';
-    color: #facc15;
+    color: #fff8f0;
     font-weight: 800;
-    text-shadow: 0 0 6px rgba(250,204,21,0.7);
   }
+  .slot-container.test-active .arcade-blue small::before { color: #5a2d3a; }
 
   /* PAYOUT TABLE */
   .payout-table {
@@ -923,11 +910,11 @@
     gap: 8px;
   }
   .debug-btn {
-    border: 1.5px solid rgba(250,204,21,0.35);
-    background: rgba(250,204,21,0.05);
+    border: 1.5px solid rgba(232,115,138,0.35);
+    background: rgba(232,115,138,0.08);
     color: var(--slot-text-light);
-    border-radius: 10px;
-    padding: 10px 12px;
+    border-radius: 50px;
+    padding: 10px 14px;
     font-family: 'Quicksand', sans-serif;
     font-size: 12px;
     font-weight: 600;
@@ -935,8 +922,8 @@
     transition: all 0.2s ease;
   }
   .debug-btn:hover:not(:disabled) {
-    background: rgba(250,204,21,0.15);
-    border-color: #facc15;
+    background: rgba(232,115,138,0.18);
+    border-color: #e8738a;
   }
   .debug-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -1338,6 +1325,7 @@
             <div class="reel-bezel left"></div>
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
+            <div class="reel-glow"></div>
           </div>
           <div class="reel" id="reel-2">
             <canvas class="reel-canvas"></canvas>
@@ -1345,6 +1333,7 @@
             <div class="reel-bezel left"></div>
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
+            <div class="reel-glow"></div>
           </div>
           <div class="reel" id="reel-3">
             <canvas class="reel-canvas"></canvas>
@@ -1352,6 +1341,7 @@
             <div class="reel-bezel left"></div>
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
+            <div class="reel-glow"></div>
           </div>
         </div>
       </div>
@@ -1559,9 +1549,56 @@
   let symbolTextures = null;
   let reelEngines = [null, null, null];
 
-  function easeOutBack(t) {
-    const c1 = 1.70158, c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  // Sanftes Ausrollen OHNE Rückwärts-Anteil (kein easeOutBack-Zurückfedern,
+  // das wie eine falsche Drehrichtung aussah).
+  function easeOutSettle(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  // Eine gemeinsame requestAnimationFrame-Schleife für alle Walzen.
+  // Läuft NUR, solange etwas animiert wird (kein Dauer-Rendering im Idle).
+  let _tickerRaf = null;
+  let _tickerLast = null;
+  let fbReels = null;
+  let fallbackActive = false;
+
+  function reelTick(now) {
+    _tickerRaf = null;
+    if (_tickerLast == null) _tickerLast = now;
+    let dt = (now - _tickerLast) / 1000;
+    _tickerLast = now;
+    if (dt > 0.05) dt = 0.05;
+
+    let anyActive = false;
+    for (const eng of reelEngines) {
+      if (eng && eng.step(dt, now)) anyActive = true;
+    }
+    if (fallbackActive) { stepFallback(dt); anyActive = true; }
+
+    if (anyActive && !document.hidden) {
+      _tickerRaf = requestAnimationFrame(reelTick);
+    } else {
+      _tickerLast = null;
+    }
+  }
+
+  function startReelTicker() {
+    if (_tickerRaf != null || document.hidden) return;
+    _tickerLast = null;
+    _tickerRaf = requestAnimationFrame(reelTick);
+  }
+
+  function stepFallback(dt) {
+    if (!fbReels) return;
+    let any = false;
+    for (const r of fbReels) {
+      if (!r.el.classList.contains('spinning')) continue;
+      any = true;
+      // Sequenziell in Dreh-Richtung (abwärts) statt Zufalls-Sprünge
+      r.idx = (r.idx + dt * 22) % REEL_LENGTH;
+      if (r.span) r.span.textContent = REEL_SYMBOLS[Math.floor(r.idx)];
+    }
+    if (!any) fallbackActive = false;
   }
 
   async function buildSymbolTextures() {
@@ -1599,8 +1636,7 @@
       this.phase = 'idle';      // idle | spinning | stopping
       this.speed = 0;
       this.anticipating = false;
-      this._raf = null;
-      this._lastTime = null;
+      this._contextLost = false;
     }
 
     init() {
@@ -1612,7 +1648,7 @@
         canvas: this.canvas,
         alpha: true,
         antialias: true,
-        powerPreference: 'low-power',
+        powerPreference: 'default',
         premultipliedAlpha: true,
       });
       this.renderer.setPixelRatio(dpr);
@@ -1655,32 +1691,31 @@
       this.angle = startIdx * SEG_RAD;
       this.cylinder.rotation.x = this.angle;
 
-      this._loop = this._loop.bind(this);
-      this._raf = requestAnimationFrame(this._loop);
-
-      // Context-Lost-Recovery
+      // Context-Lost-Recovery: nur Flag setzen, der gemeinsame Ticker
+      // überspringt das Rendern dieser Walze, bis der Context zurück ist.
       this.canvas.addEventListener('webglcontextlost', (e) => {
         e.preventDefault();
-        if (this._raf) cancelAnimationFrame(this._raf);
+        this._contextLost = true;
       });
       this.canvas.addEventListener('webglcontextrestored', () => {
-        this._raf = requestAnimationFrame(this._loop);
+        this._contextLost = false;
+        startReelTicker();
       });
     }
 
-    _loop(now) {
-      if (this._lastTime == null) this._lastTime = now;
-      const dt = Math.min((now - this._lastTime) / 1000, 0.05);
-      this._lastTime = now;
+    // Vom gemeinsamen Ticker pro Frame aufgerufen.
+    // Gibt true zurück, solange die Walze weiter animiert werden muss.
+    step(dt, now) {
+      if (this._contextLost) return this.phase !== 'idle';
 
       if (this.phase === 'spinning') {
-        const maxSpeed = this.anticipating ? 6 : 14; // rad/s
+        const maxSpeed = this.anticipating ? 6 : 11; // rad/s
         this.speed = Math.min(this.speed + 60 * dt, maxSpeed);
         // Positive Rotation → Symbole rollen nach unten (Slot-Standardrichtung)
         this.angle += this.speed * dt;
       } else if (this.phase === 'stopping') {
         const t = Math.min(1, (now - this._stopStart) / this._stopDur);
-        const e = easeOutBack(t);
+        const e = easeOutSettle(t);
         this.angle = this._stopFromAngle + (this.targetAngle - this._stopFromAngle) * e;
         if (t >= 1) {
           this.angle = this.targetAngle;
@@ -1695,12 +1730,13 @@
 
       this.cylinder.rotation.x = this.angle;
       this.renderer.render(this.scene, this.camera);
-      this._raf = requestAnimationFrame(this._loop);
+      return this.phase !== 'idle';
     }
 
     start() {
       this.phase = 'spinning';
       this.speed = 4;
+      startReelTicker();
     }
 
     setAnticipating(on) {
@@ -1720,6 +1756,7 @@
         this._stopDur = 750;
         this._stopResolve = resolve;
         this.phase = 'stopping';
+        startReelTicker();
       });
     }
 
@@ -1727,6 +1764,7 @@
       this.angle = targetIdx * SEG_RAD;
       this.cylinder.rotation.x = this.angle;
       this.phase = 'idle';
+      startReelTicker(); // ein finaler Frame zum Anzeigen der Ruhelage
     }
 
     resize() {
@@ -1753,14 +1791,24 @@
         eng.init();
         reelEngines[i] = eng;
       }
-      if (window.ResizeObserver) {
-        const ro = new ResizeObserver(() => {
+      let resizeTimer = null;
+      const debouncedResize = () => {
+        if (isSpinning) return; // nicht mitten im Spin den Renderer neu aufsetzen
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
           reelEngines.forEach(e => e && e.resize());
-        });
-        ro.observe(document.querySelector('.reels-row'));
+          startReelTicker(); // einmal neu rendern
+        }, 150);
+      };
+      if (window.ResizeObserver) {
+        new ResizeObserver(debouncedResize).observe(document.querySelector('.reels-row'));
       } else {
-        window.addEventListener('resize', () => reelEngines.forEach(e => e && e.resize()));
+        window.addEventListener('resize', debouncedResize);
       }
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) startReelTicker();
+      });
+      startReelTicker(); // initiale Ruhelage einmal rendern
     } catch (e) {
       console.error('Reel-Engine fehlgeschlagen, Fallback:', e);
       initFallbackReels(reelEls);
@@ -1768,13 +1816,14 @@
   }
 
   function initFallbackReels(reelEls) {
-    reelEls.forEach(r => {
+    fbReels = reelEls.map(r => {
       const cv = r.querySelector('.reel-canvas'); if (cv) cv.hidden = true;
       const fb = r.querySelector('.reel-symbol-fallback');
       if (fb) {
         fb.hidden = false;
         fb.textContent = REEL_SYMBOLS[pickRandomIndex()];
       }
+      return { el: r, span: fb, idx: pickRandomIndex() };
     });
   }
 
@@ -1864,16 +1913,11 @@
     reels.forEach(r => r.classList.add('spinning'));
     reelEngines.forEach(e => e && e.start());
 
-    // Fallback-Symbole während des Spins durchblättern lassen
-    let fallbackTimer = null;
-    if (!reelEngines[0]) {
-      fallbackTimer = setInterval(() => {
-        reels.forEach(r => {
-          if (!r.classList.contains('spinning')) return;
-          const fb = r.querySelector('.reel-symbol-fallback');
-          if (fb) fb.textContent = REEL_SYMBOLS[pickRandomIndex()];
-        });
-      }, 90);
+    // Fallback (kein WebGL): über den gemeinsamen Ticker richtungstreu blättern
+    const usingFallback = !reelEngines[0];
+    if (usingFallback) {
+      fallbackActive = true;
+      startReelTicker();
     }
 
     const sym0 = REEL_SYMBOLS[targetIndices[0]];
@@ -1904,7 +1948,7 @@
     }
 
     await stopReel(reels[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
-    if (fallbackTimer) clearInterval(fallbackTimer);
+    if (usingFallback) fallbackActive = false;
     if (particles) particles.classList.remove('dim');
   }
 
@@ -1917,6 +1961,9 @@
 
   // ============== WIN EFFECTS ==============
   function spawnConfetti(count=120) {
+    const reduced = prefersReducedMotion();
+    // DOM-Knoten deckeln — viele Partikel kosten Compositing-Leistung
+    count = Math.min(count, reduced ? 25 : 80);
     const container = document.getElementById('confetti-container');
     const colors = ['#d4a061', '#ffd770', '#f5d49e', '#e8738a', '#c084fc', '#4ade80', '#facc15', '#ffffff'];
     for (let i = 0; i < count; i++) {
@@ -1930,7 +1977,7 @@
         background: ${colors[Math.floor(Math.random() * colors.length)]};
         animation-delay: ${Math.random() * 0.6}s;
         animation-duration: ${2.5 + Math.random() * 2.5}s;
-        transform: rotate(${Math.random() * 360}deg);
+        transform: rotate(${reduced ? 0 : Math.random() * 360}deg);
       `;
       container.appendChild(piece);
       setTimeout(() => piece.remove(), 6000);
@@ -2046,8 +2093,9 @@
   function flashCoinDisplay(kind) {
     const el = document.getElementById('coinCount');
     el.classList.remove('deduct', 'gain');
-    void el.offsetWidth;
-    el.classList.add(kind);
+    // Klasse erst im nächsten Frame setzen — kein erzwungener Reflow
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add(kind)));
+    el.addEventListener('animationend', () => el.classList.remove(kind), { once: true });
   }
 
   // ============== SLOT STATS ==============
