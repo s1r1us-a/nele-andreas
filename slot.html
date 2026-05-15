@@ -554,11 +554,12 @@
     pointer-events: none;
     display: block;
     transition: filter 0.25s ease;
+    will-change: transform, filter;
   }
   /* Motion-Blur-Illusion während des Spins – kaschiert Einzelframes,
      wirkt deutlich flüssiger. Wird beim Stopp (.stopping) wieder weich entfernt. */
   .reel.spinning:not(.stopping) .reel-canvas {
-    filter: blur(1.4px);
+    filter: blur(0.6px);
   }
 
   /* CSS-Fallback (wenn WebGL fehlt): einfaches Symbol im Zentrum */
@@ -577,7 +578,7 @@
     pointer-events: none;
   }
   .reel.spinning .reel-symbol-fallback {
-    animation: fallbackBlur 0.18s linear infinite;
+    animation: fallbackBlur 0.12s linear infinite;
     filter: blur(2px);
   }
   @keyframes fallbackBlur {
@@ -787,6 +788,79 @@
   .payout-table tr.jackpot { color: #ffd770; font-weight: 800; }
   .payout-symbols { font-size: 18px; letter-spacing: 4px; }
 
+  /* BADGE-INFO (Aufklappbare Erklärung) */
+  .badge-info {
+    margin-top: 14px;
+    background: rgba(15,8,22,0.7);
+    border: 1.5px solid rgba(212,160,97,0.25);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+  .badge-info summary {
+    padding: 14px 18px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--slot-accent);
+    list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .badge-info summary::-webkit-details-marker { display: none; }
+  .badge-info summary::after { content: '▾'; transition: transform 0.25s ease; }
+  .badge-info[open] summary::after { transform: rotate(180deg); }
+  .badge-info-body {
+    padding: 4px 18px 18px;
+    border-top: 1px solid rgba(212,160,97,0.12);
+    font-size: 13px;
+    color: var(--slot-text-light);
+    line-height: 1.55;
+  }
+  .badge-info-intro {
+    margin: 12px 0 14px;
+    padding: 10px 12px;
+    background: rgba(212,160,97,0.06);
+    border-left: 3px solid var(--slot-accent);
+    border-radius: 4px;
+    color: var(--slot-text-dim);
+  }
+  .badge-info-intro em { color: var(--slot-text-light); font-style: normal; font-weight: 600; }
+  .badge-info-group { margin-top: 14px; }
+  .badge-info-group h4 {
+    margin: 0 0 8px;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--slot-accent);
+  }
+  .badge-info-group ul {
+    margin: 0; padding: 0; list-style: none;
+  }
+  .badge-info-group li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    border-top: 1px dashed rgba(212,160,97,0.12);
+  }
+  .badge-info-group li:first-child { border-top: 0; }
+  .badge-info-group li::before {
+    content: '✦';
+    position: absolute; left: 2px; top: 6px;
+    color: var(--slot-accent);
+    font-size: 11px;
+    opacity: 0.7;
+  }
+  .badge-info-group li b { color: var(--slot-text-light); font-weight: 700; }
+  .badge-info-foot {
+    margin: 16px 0 0;
+    font-size: 12px;
+    color: var(--slot-text-dim);
+    text-align: center;
+  }
+  .badge-info-foot a { color: var(--slot-accent); text-decoration: none; border-bottom: 1px solid rgba(212,160,97,0.3); }
+  .badge-info-foot a:hover { color: #ffd770; border-bottom-color: var(--slot-accent); }
+
   /* LIFETIME STATS */
   .lifetime-stats {
     margin-top: 28px;
@@ -869,26 +943,6 @@
     color: var(--slot-text-dim);
   }
   .special-counters b { color: var(--slot-accent); font-family: 'Orbitron', monospace; }
-
-  .reset-stats {
-    margin-top: 14px;
-    display: block;
-    margin-left: auto;
-    background: transparent;
-    border: 1.5px solid rgba(248,113,113,0.3);
-    color: rgba(248,113,113,0.7);
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .reset-stats:hover {
-    background: rgba(248,113,113,0.1);
-    color: var(--slot-loss);
-    border-color: var(--slot-loss);
-  }
 
   /* TOAST / ERROR */
   .toast {
@@ -1222,6 +1276,42 @@
           <tr><td>Zwei gleiche andere</td><td>100 🪙</td></tr>
         </table>
       </details>
+
+      <details class="badge-info">
+        <summary>🏅 Wie bekomme ich Badges?</summary>
+        <div class="badge-info-body">
+          <p class="badge-info-intro">
+            Im Slot gibt es geheime Sammel-Badges. Hier siehst du, <em>wodurch</em> sie
+            ausgelöst werden — welche genau es sind, bleibt eine Überraschung. 🤫
+          </p>
+
+          <div class="badge-info-group">
+            <h4>🎰 Walzen-Kombinationen</h4>
+            <ul>
+              <li><b>Drei gleiche Symbole</b> — jedes Symbol hat sein eigenes Badge. Seltenere Symbole = wertvollere Badges.</li>
+              <li><b>Zwei gleiche</b> bestimmter Symbole — auch knappe Treffer werden belohnt.</li>
+              <li><b>Beinahe-Treffer</b> — wenn zwei besonders seltene Symbole liegen, aber die dritte Walze daneben fällt.</li>
+              <li><b>Komplett daneben</b> — wenn alle drei Walzen unterschiedlich sind, gibt es ein Trost-Badge.</li>
+            </ul>
+          </div>
+
+          <div class="badge-info-group">
+            <h4>📈 Spielfortschritt</h4>
+            <ul>
+              <li><b>Spin-Meilensteine</b> — dein allererster Spin sowie bestimmte runde Spin-Zahlen.</li>
+              <li><b>Einsatz-Summe</b> — wie viele 🪙 du insgesamt eingeworfen hast.</li>
+              <li><b>Gewinn-Summe</b> — wie viele 🪙 du insgesamt gewonnen hast.</li>
+              <li><b>Einzelgewinn-Schwellen</b> — wenn ein einzelner Spin besonders fett ausfällt.</li>
+              <li><b>Trio-Sammler</b> — bestimmte 3er-Kombis mehrfach in einer Karriere zu treffen.</li>
+              <li><b>Netto-Bilanz</b> — sowohl klares Plus über viele Spins als auch besonders mutige Verluste werden gewürdigt.</li>
+            </ul>
+          </div>
+
+          <p class="badge-info-foot">
+            Freigeschaltete Badges erscheinen in deinem <a href="profil.html">Profil</a>.
+          </p>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -1268,7 +1358,6 @@
       <span>🧮 Ramanujan: <b id="stat-ramanujan">0</b></span>
       <span>🧦 Laufmaschen: <b id="stat-laufmaschen">0</b></span>
     </div>
-    <button id="resetStatsBtn" class="reset-stats">🗑️ Statistik zurücksetzen</button>
   </section>
 </div>
 
@@ -1404,8 +1493,8 @@
   // Sanftes Ausrollen OHNE Rückwärts-Anteil (kein easeOutBack-Zurückfedern,
   // das wie eine falsche Drehrichtung aussah).
   function easeOutSettle(t) {
-    // Quintisches Ausrollen: monoton, kein Rückfedern, weicher & länger als kubisch.
-    return 1 - Math.pow(1 - t, 5);
+    // Schnelles Ausrollen, sanfter Snap am Ende, kein Rückfedern.
+    return 1 - Math.pow(1 - t, 3.2);
   }
 
   // Eine gemeinsame requestAnimationFrame-Schleife für alle Walzen.
@@ -1448,7 +1537,7 @@
       if (!r.el.classList.contains('spinning')) continue;
       any = true;
       // Sequenziell in Dreh-Richtung (abwärts) statt Zufalls-Sprünge
-      r.idx = (r.idx + dt * 22) % REEL_LENGTH;
+      r.idx = (r.idx + dt * 34) % REEL_LENGTH;
       if (r.span) r.span.textContent = REEL_SYMBOLS[Math.floor(r.idx)];
     }
     if (!any) fallbackActive = false;
@@ -1562,9 +1651,9 @@
       if (this._contextLost) return this.phase !== 'idle';
 
       if (this.phase === 'spinning') {
-        const maxSpeed = this.anticipating ? 7 : 13; // rad/s
+        const maxSpeed = this.anticipating ? 10 : 18; // rad/s
         // Sanftere Beschleunigung → weicheres Anlaufen statt Ruck.
-        this.speed = Math.min(this.speed + 38 * dt, maxSpeed);
+        this.speed = Math.min(this.speed + 70 * dt, maxSpeed);
         // Positive Rotation → Symbole rollen nach unten (Slot-Standardrichtung)
         this.angle += this.speed * dt;
       } else if (this.phase === 'stopping') {
@@ -1607,7 +1696,7 @@
         this._stopFromAngle = this.angle;
         this.targetAngle = target;
         this._stopStart = performance.now();
-        this._stopDur = 1050;
+        this._stopDur = 680;
         this._stopResolve = resolve;
         this.phase = 'stopping';
         startReelTicker();
@@ -1770,12 +1859,12 @@
     const willAnticipate = (sym0 === sym1);
     const reel3WillMatch = willAnticipate && (sym1 === sym2);
 
-    // Walze 1 stoppt nach 1150ms
-    await sleep(1150);
+    // Walze 1 stoppt nach 700ms
+    await sleep(700);
     await stopReel(reels[0], 0, targetIndices[0]);
 
-    // Walze 2 stoppt nach weiteren 520ms
-    await sleep(520);
+    // Walze 2 stoppt nach weiteren 360ms
+    await sleep(360);
     await stopReel(reels[1], 1, targetIndices[1]);
 
     // Anticipation: wenn Walze 1 & 2 gleich → Walze 3 wird langsamer + glüht rot
@@ -1783,11 +1872,11 @@
       reels[2].classList.add('anticipating');
       if (reelEngines[2]) reelEngines[2].setAnticipating(true);
       sfx.anticipateStart();
-      // Längere Anticipation für mehr Spannung
-      await sleep(reel3WillMatch ? 1500 : 1000);
+      // Kürzere, knackigere Anticipation
+      await sleep(reel3WillMatch ? 1000 : 650);
       sfx.anticipateEnd();
     } else {
-      await sleep(620);
+      await sleep(420);
     }
 
     await stopReel(reels[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
@@ -2147,25 +2236,6 @@
   }
 
 
-  function bindResetStats() {
-    document.getElementById('resetStatsBtn').addEventListener('click', async () => {
-      if (!userKey) return;
-      if (!confirm('Möchtest du wirklich alle Slot-Statistiken zurücksetzen?\nDeine Coins bleiben unverändert.')) return;
-      const path = `loveslots/${userKey}`;
-      await set(ref(db, path), {
-        totalSpins: 0,
-        totalWagered: 0,
-        totalWon: 0,
-        biggestWin: 0,
-        jackpotCount: 0,
-        ramanujanCount: 0,
-        laufmaschenCount: 0,
-        lastSpinAt: Date.now()
-      });
-      showToast('Statistik zurückgesetzt 🗑️');
-    });
-  }
-
   // ============== AUTH FLOW ==============
   const overlay = document.getElementById('modalOverlay');
   const loginBtn = document.getElementById('loginBtn');
@@ -2402,7 +2472,6 @@
 
   // ============== INIT ==============
   bindBetButtons();
-  bindResetStats();
   bindMuteButton();
   spawnAmbientParticles();
 </script>
