@@ -135,11 +135,125 @@
     .badge-item.locked .badge-item-emoji { filter: grayscale(1); font-size: 20px; }
     .badge-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
     .badge-item.locked .badge-item-name { color: #bbb; }
-    .badge-rarity-dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; }
-    .badge-rarity-dot.common { background: #a0a0a0; }
-    .badge-rarity-dot.rare { background: #6c8ebf; }
-    .badge-rarity-dot.legendary { background: #c87830; }
-    .badge-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; }
+    .badge-rarity-dot { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; position: relative; z-index: 2; }
+    .badge-rarity-dot.common    { background: radial-gradient(circle at 30% 30%, #e8e8ee, #9a9aa6); box-shadow: 0 0 4px rgba(180,180,195,0.6); }
+    .badge-rarity-dot.rare      { background: radial-gradient(circle at 30% 30%, #aac4ee, #3d6ab0); box-shadow: 0 0 6px rgba(108,142,191,0.85), 0 0 12px rgba(108,142,191,0.4); }
+    .badge-rarity-dot.legendary { background: radial-gradient(circle at 30% 30%, #ffe3a3, #c87830); box-shadow: 0 0 6px rgba(255,180,80,0.9), 0 0 14px rgba(255,150,40,0.55); }
+    .badge-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; z-index: 5; }
+
+    /* ============================================ */
+    /*  BADGE & FRAME RARITY DESIGN                 */
+    /* ============================================ */
+    .badge-item, .frame-item { isolation: isolate; }
+
+    /* COMMON – Silber */
+    .badge-item.owned.rarity-common,
+    .frame-item.owned.rarity-common {
+      background: linear-gradient(135deg, rgba(232,232,240,0.55), rgba(196,196,210,0.35)) !important;
+      border-color: rgba(170,170,190,0.55) !important;
+      box-shadow: 0 2px 8px rgba(150,150,170,0.18), inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    .badge-item.owned.rarity-common::before,
+    .frame-item.owned.rarity-common::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.45) 50%, transparent 62%);
+      background-size: 220% 100%; background-position: 200% 0;
+      animation: badgeShineSweep 7s ease-in-out infinite;
+      border-radius: inherit;
+    }
+
+    /* RARE – Saphir */
+    .badge-item.owned.rarity-rare,
+    .frame-item.owned.rarity-rare {
+      background: linear-gradient(135deg, rgba(140,175,225,0.32), rgba(70,110,180,0.42)) !important;
+      border-color: rgba(108,142,191,0.85) !important;
+      animation: badgeRarePulse 3.4s ease-in-out infinite;
+    }
+    .badge-item.owned.rarity-rare::before,
+    .frame-item.owned.rarity-rare::before {
+      content: ''; position: absolute; inset: -2px; pointer-events: none; z-index: 0;
+      background: linear-gradient(115deg, transparent 36%, rgba(200,225,255,0.6) 50%, transparent 64%);
+      background-size: 220% 100%; background-position: 200% 0;
+      animation: badgeShineSweep 5.5s ease-in-out infinite;
+      border-radius: inherit;
+    }
+
+    /* LEGENDARY – Gold */
+    .badge-item.owned.rarity-legendary,
+    .frame-item.owned.rarity-legendary {
+      background: linear-gradient(135deg, rgba(255,210,120,0.4), rgba(212,160,97,0.55), rgba(200,120,48,0.4)) !important;
+      border-color: rgba(255,200,90,0.9) !important;
+      animation: badgeLegendaryPulse 2.4s ease-in-out infinite;
+    }
+    .badge-item.owned.rarity-legendary::before,
+    .frame-item.owned.rarity-legendary::before {
+      content: ''; position: absolute; inset: -6px; pointer-events: none; z-index: -1;
+      background: conic-gradient(from 0deg, #ffd86b, #ffae3d, #ff7a18, #ffd86b, #fff0a8, #ffae3d, #ffd86b);
+      filter: blur(9px); opacity: 0.7;
+      animation: badgeLegendaryHalo 6s linear infinite;
+      border-radius: inherit;
+    }
+    .badge-item.owned.rarity-legendary::after,
+    .frame-item.owned.rarity-legendary::after {
+      content: '✨'; position: absolute; top: 1px; left: 3px; font-size: 11px; z-index: 4;
+      pointer-events: none; filter: drop-shadow(0 0 4px rgba(255,210,120,0.9));
+      animation: sparkleTwinkle 1.6s ease-in-out infinite;
+    }
+    .badge-item.owned.rarity-legendary .badge-item-name,
+    .frame-item.owned.rarity-legendary .frame-item-name {
+      color: #6b3a10; font-weight: 700; text-shadow: 0 1px 0 rgba(255,235,180,0.6);
+    }
+    .badge-item.owned.rarity-rare .badge-item-name,
+    .frame-item.owned.rarity-rare .frame-item-name {
+      color: #1e3a6b; font-weight: 700;
+    }
+
+    /* Equipped + Rarität: Gold-/Cream-Rand siegt als „equipped"-Signal */
+    .badge-item.owned.equipped.rarity-common,
+    .frame-item.owned.equipped.rarity-common,
+    .badge-item.owned.equipped.rarity-rare,
+    .frame-item.owned.equipped.rarity-rare       { border-color: var(--gold) !important; }
+    .badge-item.owned.equipped.rarity-legendary,
+    .frame-item.owned.equipped.rarity-legendary  { border-color: #fff3c0 !important; }
+
+    /* Slot-locked atmet sanft (einladend, nicht aufdringlich) */
+    .badge-item.slot-locked { animation: slotLockedBreath 3.6s ease-in-out infinite; }
+
+    /* Inhalt der Kachel über die Pseudo-Effekte heben */
+    .badge-item > .badge-item-emoji,
+    .badge-item > .badge-item-name,
+    .badge-item > .badge-rarity-dot,
+    .badge-item > .badge-equipped-star,
+    .frame-item > .frame-preview-avatar,
+    .frame-item > .frame-item-name,
+    .frame-item > .frame-rarity-dot,
+    .frame-item > .frame-equipped-star { position: relative; z-index: 2; }
+
+    @keyframes badgeShineSweep {
+      0%   { background-position: 200% 0; }
+      55%  { background-position: -120% 0; }
+      100% { background-position: -120% 0; }
+    }
+    @keyframes badgeRarePulse {
+      0%, 100% { box-shadow: 0 2px 10px rgba(108,142,191,0.35), 0 0 0 rgba(108,142,191,0); }
+      50%      { box-shadow: 0 4px 18px rgba(108,142,191,0.6),  0 0 22px rgba(108,142,191,0.45); }
+    }
+    @keyframes badgeLegendaryPulse {
+      0%, 100% { box-shadow: 0 3px 14px rgba(212,160,97,0.55), 0 0 18px rgba(255,180,80,0.35); transform: scale(1); }
+      50%      { box-shadow: 0 5px 24px rgba(255,150,40,0.75), 0 0 38px rgba(255,200,90,0.55); transform: scale(1.025); }
+    }
+    @keyframes badgeLegendaryHalo {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes sparkleTwinkle {
+      0%, 100% { opacity: 0.35; transform: scale(0.75) rotate(0deg); }
+      50%      { opacity: 1;    transform: scale(1.15) rotate(15deg); }
+    }
+    @keyframes slotLockedBreath {
+      0%, 100% { box-shadow: 0 0 6px rgba(212,160,97,0.18); }
+      50%      { box-shadow: 0 0 14px rgba(212,160,97,0.4); }
+    }
 
     /* FRAME GRID */
     .frame-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -152,11 +266,11 @@
     .frame-item.locked .frame-preview-avatar { background: #ccc !important; }
     .frame-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
     .frame-item.locked .frame-item-name { color: #bbb; }
-    .frame-rarity-dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; }
-    .frame-rarity-dot.common { background: #a0a0a0; }
-    .frame-rarity-dot.rare { background: #6c8ebf; }
-    .frame-rarity-dot.legendary { background: #c87830; }
-    .frame-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; }
+    .frame-rarity-dot { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; position: relative; z-index: 2; }
+    .frame-rarity-dot.common    { background: radial-gradient(circle at 30% 30%, #e8e8ee, #9a9aa6); box-shadow: 0 0 4px rgba(180,180,195,0.6); }
+    .frame-rarity-dot.rare      { background: radial-gradient(circle at 30% 30%, #aac4ee, #3d6ab0); box-shadow: 0 0 6px rgba(108,142,191,0.85), 0 0 12px rgba(108,142,191,0.4); }
+    .frame-rarity-dot.legendary { background: radial-gradient(circle at 30% 30%, #ffe3a3, #c87830); box-shadow: 0 0 6px rgba(255,180,80,0.9), 0 0 14px rgba(255,150,40,0.55); }
+    .frame-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; z-index: 5; }
 
     /* BOOSTER INVENTAR */
     .booster-list { display: flex; flex-direction: column; gap: 10px; }
@@ -842,7 +956,7 @@
       const isOwned    = ownedBadges.includes(b.id);
       const isEquipped = equippedBadge === b.id;
       const el = document.createElement('div');
-      el.className = `badge-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+      el.className = `badge-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''} ${isOwned ? 'rarity-' + b.rarity : ''}`;
       el.innerHTML = `
         ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
         <span class="badge-item-emoji">${isOwned ? b.emoji : '❓'}</span>
@@ -862,7 +976,7 @@
       const el = document.createElement('div');
       // Nicht gewonnene Slot-Badges: geheim mit Sonder-Rand (slot-locked),
       // klar unterscheidbar vom normalen grauen .locked.
-      el.className = `badge-item ${isOwned ? 'owned' : 'slot-locked'} ${isEquipped ? 'equipped' : ''}`;
+      el.className = `badge-item ${isOwned ? 'owned' : 'slot-locked'} ${isEquipped ? 'equipped' : ''} ${isOwned ? 'rarity-' + b.rarity : ''}`;
       el.innerHTML = `
         ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
         <span class="badge-item-emoji">${isOwned ? b.emoji : '🎰'}</span>
@@ -880,7 +994,7 @@
       const isOwned    = ownedFrames.includes(f.id);
       const isEquipped = equippedFrame === f.id;
       const el = document.createElement('div');
-      el.className = `frame-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+      el.className = `frame-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''} ${isOwned ? 'rarity-' + f.rarity : ''}`;
       const avatarStyle = isOwned ? `style="background:${f.gradient}"` : 'style="background:#ccc"';
       el.innerHTML = `
         ${isEquipped ? '<span class="frame-equipped-star">⭐</span>' : ''}
