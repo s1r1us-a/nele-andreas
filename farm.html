@@ -4453,6 +4453,7 @@
                     else if(item === 'egg') itemName = 'Ei';
                     else if(item === 'milk') itemName = 'Kuhmilch';
                     else if(item === 'honey') itemName = 'Honig';
+                    else if(item === 'rainbowessence') itemName = 'Regenbogen-Essenz';
                     let usedHave = have;
                     if (item === 'milk' && have < needed) {
                         let oatHave = inventory.bakery.oatmilk || 0;
@@ -4797,6 +4798,7 @@
     else if (itemId === 'goatmilk') { icon = '🥛'; name = 'Ziegenmilch'; }
     else if (itemId === 'truffle')  { icon = '🍄'; name = 'Trüffel'; }
     else if (itemId === 'horseshoe'){ icon = '🧲'; name = 'Hufeisen'; }
+    else if (itemId === 'rainbowessence'){ icon = '🌈'; name = 'Regenbogen-Essenz'; }
     else if (category === 'ores')    { icon = oreTypes[itemId].icon; name = oreTypes[itemId].name; }
     else if (category === 'jewelry') { icon = jewelryRecipes[itemId].icon; name = jewelryRecipes[itemId].name; }
 
@@ -4875,6 +4877,7 @@
     if ((inventory.items.goatmilk || 0) > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><span class="item-name">Ziegenmilch</span></div><div class="item-count">${inventory.items.goatmilk}x</div></div>`; }
     if ((inventory.items.truffle  || 0) > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><span class="item-name">Trüffel</span></div><div class="item-count">${inventory.items.truffle}x</div></div>`; }
     if ((inventory.items.horseshoe || 0) > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🧲</span><span class="item-name">Hufeisen</span></div><div class="item-count">${inventory.items.horseshoe}x</div></div>`; }
+    if ((inventory.items.rainbowessence || 0) > 0) { hasSpecial = true; itemsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">🌈</span><span class="item-name">Regenbogen-Essenz</span></div><div class="item-count">${inventory.items.rainbowessence}x</div></div>`; }
     if(!hasSpecial) itemsHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Items vorhanden.</div>`; itemsHtml += '</div>';
     let bakeryHtml = '<div class="section-title">🍩 Backwaren</div><div class="item-list">'; let hasBakery = false; Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasBakery = true; const item = bakeryRecipes[key]; bakeryHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.bakery[key]}x</div></div>`; } }); if(!hasBakery) bakeryHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Backwaren vorhanden.</div>`; bakeryHtml += '</div>';
     let tailoringHtml = '<div class="section-title">🧵 Textilien</div><div class="item-list">'; let hasTailoring = false; Object.keys(inventory.tailoring).forEach(key => { if (inventory.tailoring[key] > 0) { hasTailoring = true; const item = weavingRecipes[key]; tailoringHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span></div><div class="item-count">${inventory.tailoring[key]}x</div></div>`; } }); if(!hasTailoring) tailoringHtml += `<div style="font-size:12px; color:var(--text-mid);">Keine Textilien vorhanden.</div>`; tailoringHtml += '</div>';
@@ -4928,6 +4931,7 @@
             else if (item === 'goatmilk') itemName = 'Ziegenmilch';
             else if (item === 'truffle')  itemName = 'Trüffel';
             else if (item === 'horseshoe') itemName = 'Hufeisen';
+            else if (item === 'rainbowessence') itemName = 'Regenbogen-Essenz';
             if (have < needed) canWeave = false;
             let color = have >= needed ? 'var(--grass-mid)' : 'var(--rose)';
             reqHtml += `<span style="font-size:11px; color:${color}; font-weight:600; margin-right:6px;">${needed}x ${itemName} (${have}/${needed} vorhanden)</span>`;
@@ -6555,8 +6559,8 @@
     if (category === 'seeds') return (shopItems[itemId]?.icon || '') + ' ' + (shopItems[itemId]?.name || itemId) + 'samen';
     if (category === 'crops') return (shopItems[itemId]?.icon || '') + ' ' + (shopItems[itemId]?.name || itemId);
     if (category === 'items') {
-      const icons = { fertilizer:'🪴', honey:'🍯', egg:'🥚', milk:'🥛', wool:'🧶', diamond:'💎', firefly:'🫙', feather:'🪶', goatmilk:'🥛', truffle:'🍄', horseshoe:'🧲' };
-      const names = { fertilizer:'Dünger', honey:'Honig', egg:'Ei', milk:'Milch', wool:'Wolle', diamond:'Diamant', firefly:'Glühwürmchen', feather:'Feder', goatmilk:'Ziegenmilch', truffle:'Trüffel', horseshoe:'Hufeisen' };
+      const icons = { fertilizer:'🪴', honey:'🍯', egg:'🥚', milk:'🥛', wool:'🧶', diamond:'💎', firefly:'🫙', feather:'🪶', goatmilk:'🥛', truffle:'🍄', horseshoe:'🧲', rainbowessence:'🌈' };
+      const names = { fertilizer:'Dünger', honey:'Honig', egg:'Ei', milk:'Milch', wool:'Wolle', diamond:'Diamant', firefly:'Glühwürmchen', feather:'Feder', goatmilk:'Ziegenmilch', truffle:'Trüffel', horseshoe:'Hufeisen', rainbowessence:'Regenbogen-Essenz' };
       return (icons[itemId] || '') + ' ' + (names[itemId] || itemId);
     }
     if (category === 'bakery') return (bakeryRecipes[itemId]?.icon || '') + ' ' + (bakeryRecipes[itemId]?.name || itemId);
@@ -6572,7 +6576,7 @@
     const cats = [
       { key: 'seeds',       label: '🌱 Samen',    items: Object.keys(shopItems) },
       { key: 'crops',       label: '🧺 Ernte',    items: Object.keys(shopItems) },
-      { key: 'items',       label: '📦 Items',    items: ['fertilizer','honey','egg','milk','wool','diamond','firefly','feather','goatmilk','truffle','horseshoe'] },
+      { key: 'items',       label: '📦 Items',    items: ['fertilizer','honey','egg','milk','wool','diamond','firefly','feather','goatmilk','truffle','horseshoe','rainbowessence'] },
       { key: 'bakery',      label: '🍞 Bäckerei', items: Object.keys(bakeryRecipes) },
       { key: 'accessories', label: '🎀 Weberei',  items: Object.keys(weavingRecipes) }
     ];
@@ -6631,7 +6635,7 @@
   const TRADE_CATS = [
     { key: 'seeds',       label: '🌱',  items: () => Object.keys(shopItems) },
     { key: 'crops',       label: '🧺',  items: () => Object.keys(shopItems) },
-    { key: 'items',       label: '📦',  items: () => ['fertilizer','honey','egg','milk','wool','diamond','firefly','feather','goatmilk','truffle','horseshoe'] },
+    { key: 'items',       label: '📦',  items: () => ['fertilizer','honey','egg','milk','wool','diamond','firefly','feather','goatmilk','truffle','horseshoe','rainbowessence'] },
     { key: 'bakery',      label: '🍞',  items: () => Object.keys(bakeryRecipes) },
     { key: 'accessories', label: '🎀',  items: () => Object.keys(weavingRecipes) }
   ];
