@@ -1541,6 +1541,11 @@
     }
 
     /* ── INTRO ANIMATION ── */
+    @property --intro-iris {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 0%;
+    }
     .farm-intro-overlay {
       position: fixed; inset: 0; z-index: 100000;
       display: flex; align-items: center; justify-content: center;
@@ -1550,10 +1555,63 @@
         radial-gradient(ellipse at 80% 16%, rgba(212,160,97,0.28) 0%, transparent 48%),
         linear-gradient(180deg, #ffd6b3 0%, #ffb8c8 18%, #ffe4b8 42%, #bfe089 72%, #5ba830 100%);
       overflow: hidden;
-      transition: opacity 0.5s ease;
+      --intro-iris: 0%;
+      -webkit-mask-image: radial-gradient(circle at 50% 42%, transparent var(--intro-iris), #000 calc(var(--intro-iris) + 28%));
+              mask-image: radial-gradient(circle at 50% 42%, transparent var(--intro-iris), #000 calc(var(--intro-iris) + 28%));
+      transition:
+        opacity 1.0s cubic-bezier(0.65,0,0.35,1) 0.30s,
+        transform 1.4s cubic-bezier(0.22,1,0.36,1) 0.30s,
+        filter 1.0s cubic-bezier(0.65,0,0.35,1) 0.30s,
+        --intro-iris 1.2s cubic-bezier(0.22,1,0.36,1) 0.30s;
     }
-    .farm-intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+    .farm-intro-overlay.fade-out {
+      opacity: 0;
+      transform: scale(1.08);
+      filter: blur(14px);
+      pointer-events: none;
+      --intro-iris: 72%;
+    }
     .farm-intro-particles { position: absolute; inset: 0; pointer-events: none; }
+
+    /* Inhalts-Elemente staffeln beim Ausfaden (Phase A) */
+    .farm-intro-overlay .farm-intro-content,
+    .farm-intro-overlay .farm-intro-particles,
+    .farm-intro-overlay .farm-intro-bee,
+    .farm-intro-overlay .farm-intro-rainbow,
+    .farm-intro-overlay .farm-intro-birds,
+    .farm-intro-overlay .farm-intro-clouds,
+    .farm-intro-overlay .farm-intro-sun,
+    .farm-intro-overlay .farm-intro-rays-wrap,
+    .farm-intro-overlay .farm-intro-grass {
+      transition: opacity 0.55s ease-out, transform 0.65s cubic-bezier(0.22,1,0.36,1);
+    }
+    .farm-intro-overlay.fade-out .farm-intro-particles { opacity: 0; transform: translateY(-8px) scale(0.97);  transition-delay: 0s; }
+    .farm-intro-overlay.fade-out .farm-intro-bee       { opacity: 0; transform: translate(-50%,-50%) translateY(-20px) scale(0.9); transition-delay: 0.02s; }
+    .farm-intro-overlay.fade-out .farm-intro-birds     { opacity: 0; transform: translateY(-14px);             transition-delay: 0.04s; }
+    .farm-intro-overlay.fade-out .farm-intro-rainbow   { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(1.04); transition-delay: 0.06s; }
+    .farm-intro-overlay.fade-out .farm-intro-clouds    { opacity: 0; transform: translateY(-10px);             transition-delay: 0.08s; }
+    .farm-intro-overlay.fade-out .farm-intro-content   { opacity: 0; transform: translateY(-12px) scale(0.97); transition-delay: 0.10s; }
+    .farm-intro-overlay.fade-out .farm-intro-sun       { opacity: 0; transform: translateY(-18px) scale(0.95); transition-delay: 0.12s; }
+    .farm-intro-overlay.fade-out .farm-intro-rays-wrap { opacity: 0;                                           transition-delay: 0.05s; }
+    .farm-intro-overlay.fade-out .farm-intro-grass     { opacity: 0; transform: translateY(8px);               transition-delay: 0.14s; }
+
+    /* Goldener Lichtschimmer beim Reveal */
+    .farm-intro-flash {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0;
+      background: radial-gradient(circle at 50% 42%,
+        rgba(255,240,200,0.65) 0%,
+        rgba(255,210,140,0.35) 22%,
+        transparent 55%);
+      mix-blend-mode: screen;
+    }
+    .farm-intro-overlay.fade-out .farm-intro-flash {
+      animation: introFlash 0.85s ease-out 0.20s forwards;
+    }
+    @keyframes introFlash {
+      0%   { opacity: 0; transform: scale(0.85); }
+      30%  { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 0; transform: scale(1.25); }
+    }
 
     /* Atmen-Glühen */
     .farm-intro-glow {
@@ -1638,6 +1696,118 @@
       100% { transform: scale(6.5); opacity: 0; }
     }
 
+    /* Wolken am Himmel */
+    .farm-intro-clouds {
+      position: absolute; left: 0; right: 0; top: 0; height: 50%;
+      pointer-events: none;
+    }
+    .farm-intro-cloud {
+      position: absolute; opacity: 0;
+      filter: drop-shadow(0 4px 12px rgba(255,255,255,0.45));
+    }
+    .farm-intro-cloud-1 { top:  9%; left:  -22%; width: 140px; animation: introCloudDriftR 11.0s linear 0.30s both; }
+    .farm-intro-cloud-2 { top: 22%; left: -26%; width: 110px; animation: introCloudDriftR 12.5s linear 0.90s both; }
+    .farm-intro-cloud-3 { top: 14%; right: -22%; width: 125px; animation: introCloudDriftL  9.8s linear 1.50s both; }
+    @keyframes introCloudDriftR {
+      0%   { opacity: 0;   transform: translateX(0); }
+      14%  { opacity: 0.95; }
+      82%  { opacity: 0.92; }
+      100% { opacity: 0.8;  transform: translateX(150vw); }
+    }
+    @keyframes introCloudDriftL {
+      0%   { opacity: 0;   transform: translateX(0); }
+      14%  { opacity: 0.95; }
+      82%  { opacity: 0.92; }
+      100% { opacity: 0.8;  transform: translateX(-150vw); }
+    }
+
+    /* Vogelschwarm */
+    .farm-intro-birds {
+      position: absolute; left: 0; right: 0; top: 0; height: 40%;
+      pointer-events: none;
+    }
+    .farm-intro-bird {
+      position: absolute; left: -8%;
+      width: 24px; opacity: 0;
+    }
+    .farm-intro-bird-1 { top: 12%; animation: introBirdFly 2.6s linear 1.95s both; }
+    .farm-intro-bird-2 { top: 20%; animation: introBirdFly 2.5s linear 2.20s both; }
+    .farm-intro-bird-3 { top: 16%; animation: introBirdFly 2.7s linear 2.45s both; }
+    .farm-intro-bird svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .farm-intro-bird path { animation: introBirdFlap 0.42s ease-in-out infinite alternate; transform-origin: 50% 60%; }
+    @keyframes introBirdFly {
+      0%   { opacity: 0; transform: translate(0, 0); }
+      8%   { opacity: 1; }
+      25%  { transform: translate(28vw, -10px); }
+      50%  { transform: translate(58vw,   6px); }
+      75%  { transform: translate(88vw,  -8px); }
+      92%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(122vw, 0); }
+    }
+    @keyframes introBirdFlap {
+      0%   { transform: scaleY(0.55); }
+      100% { transform: scaleY(1.15); }
+    }
+
+    /* Regenbogen */
+    .farm-intro-rainbow {
+      position: absolute; left: 50%; top: 16%;
+      width: min(86vw, 460px); height: auto;
+      transform: translateX(-50%);
+      pointer-events: none; opacity: 0;
+      animation: introRainbowFade 0.9s ease-out 1.75s both;
+    }
+    .farm-intro-rainbow path {
+      fill: none;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 900;
+      stroke-dashoffset: 900;
+      animation: introRainbowDraw 1.2s cubic-bezier(0.22,1,0.36,1) 1.75s forwards;
+    }
+    .farm-intro-rainbow path:nth-child(1) { animation-delay: 1.75s; }
+    .farm-intro-rainbow path:nth-child(2) { animation-delay: 1.83s; }
+    .farm-intro-rainbow path:nth-child(3) { animation-delay: 1.91s; }
+    .farm-intro-rainbow path:nth-child(4) { animation-delay: 1.99s; }
+    .farm-intro-rainbow path:nth-child(5) { animation-delay: 2.07s; }
+    .farm-intro-rainbow path:nth-child(6) { animation-delay: 2.15s; }
+    .farm-intro-rainbow path:nth-child(7) { animation-delay: 2.23s; }
+    @keyframes introRainbowFade {
+      0%   { opacity: 0; }
+      100% { opacity: 0.88; }
+    }
+    @keyframes introRainbowDraw {
+      0%   { stroke-dashoffset: 900; }
+      100% { stroke-dashoffset: 0; }
+    }
+
+    /* Biene */
+    .farm-intro-bee {
+      position: absolute; left: 50%; top: 52%;
+      font-size: 26px; line-height: 1;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.18));
+      pointer-events: none; opacity: 0; z-index: 4;
+      animation:
+        introBeeIn   0.4s ease-out 1.80s both,
+        introBeeOrbit 1.05s ease-in-out 2.20s 2 both;
+    }
+    @keyframes introBeeIn {
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.4) rotate(-30deg); }
+      100% { opacity: 1; transform: translate(-50%,-50%) scale(1)    rotate(0deg); }
+    }
+    @keyframes introBeeOrbit {
+      0%   { transform: translate(-50%, -50%) translate(0,        0)    rotate(0deg); }
+      12%  { transform: translate(-50%, -50%) translate(-46px,  -14px) rotate(-15deg); }
+      25%  { transform: translate(-50%, -50%) translate(-18px,  -42px) rotate(15deg); }
+      37%  { transform: translate(-50%, -50%) translate( 36px,  -22px) rotate(30deg); }
+      50%  { transform: translate(-50%, -50%) translate( 48px,   12px) rotate(8deg); }
+      62%  { transform: translate(-50%, -50%) translate( 18px,   34px) rotate(-12deg); }
+      75%  { transform: translate(-50%, -50%) translate(-30px,   26px) rotate(-28deg); }
+      87%  { transform: translate(-50%, -50%) translate(-48px,   -2px) rotate(-15deg); }
+      100% { transform: translate(-50%, -50%) translate(0,        0)    rotate(0deg); }
+    }
+
     /* Grasbüschel-Silhouette */
     .farm-intro-grass {
       position: absolute; left: 0; right: 0; bottom: 0; height: 26%; pointer-events: none;
@@ -1646,18 +1816,24 @@
       position: absolute; bottom: 0;
       transform-origin: bottom center;
       transform: scaleY(0);
-      animation: introGrassGrow 0.6s cubic-bezier(0.22,1,0.36,1) 0.25s both;
+      animation:
+        introGrassGrow 0.6s cubic-bezier(0.22,1,0.36,1) 0.25s both,
+        introGrassSway 4.2s ease-in-out 1.20s infinite alternate;
     }
-    .farm-intro-grass-tuft:nth-child(1) { left: 6%;  animation-delay: 0.25s; }
-    .farm-intro-grass-tuft:nth-child(2) { left: 22%; animation-delay: 0.32s; }
-    .farm-intro-grass-tuft:nth-child(3) { left: 38%; animation-delay: 0.40s; }
-    .farm-intro-grass-tuft:nth-child(4) { left: 58%; animation-delay: 0.34s; }
-    .farm-intro-grass-tuft:nth-child(5) { left: 74%; animation-delay: 0.28s; }
-    .farm-intro-grass-tuft:nth-child(6) { left: 90%; animation-delay: 0.38s; }
+    .farm-intro-grass-tuft:nth-child(1) { left: 6%;  animation-delay: 0.25s, 1.10s; }
+    .farm-intro-grass-tuft:nth-child(2) { left: 22%; animation-delay: 0.32s, 1.30s; }
+    .farm-intro-grass-tuft:nth-child(3) { left: 38%; animation-delay: 0.40s, 1.05s; }
+    .farm-intro-grass-tuft:nth-child(4) { left: 58%; animation-delay: 0.34s, 1.40s; }
+    .farm-intro-grass-tuft:nth-child(5) { left: 74%; animation-delay: 0.28s, 1.20s; }
+    .farm-intro-grass-tuft:nth-child(6) { left: 90%; animation-delay: 0.38s, 0.95s; }
     @keyframes introGrassGrow {
       0%   { transform: scaleY(0); }
       70%  { transform: scaleY(1.15); }
       100% { transform: scaleY(1); }
+    }
+    @keyframes introGrassSway {
+      0%   { transform: scaleY(1) rotate(-3deg); }
+      100% { transform: scaleY(1) rotate(3deg); }
     }
 
     /* Wachsende Pflanze */
@@ -1729,26 +1905,39 @@
       100% { transform: translateX(-50%) scale(1) rotate(0deg); }
     }
 
-    /* Titel */
+    /* Titel — Buchstabe für Buchstabe */
     .farm-intro-title {
       font-family: 'Dancing Script', cursive;
       font-size: clamp(42px, 11vw, 84px); font-weight: 700; line-height: 1.05;
       margin: 14px 0 6px;
+      color: transparent;
+    }
+    .farm-intro-title-char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(22px) scale(1.3);
+      filter: blur(12px);
       background: linear-gradient(110deg,
         #e8738a 0%, #c25070 26%,
-        #ffd6a0 47%, rgba(255,255,255,0.9) 52%, #ffe4b8 57%,
+        #ffd6a0 47%, rgba(255,255,255,0.95) 52%, #ffe4b8 57%,
         #d4a061 72%, #e8738a 100%);
-      background-size: 220% auto; background-position: 0% center;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      background-size: 220% auto;
+      background-position: 0% center;
+      -webkit-background-clip: text;
+              background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 18px rgba(232,115,138,0.20);
       animation:
-        introTitleFocus   1.0s cubic-bezier(0.22,1,0.36,1) 0.85s both,
-        introTitleShimmer 0.8s ease-out                    1.65s forwards;
+        introTitleCharIn 0.65s cubic-bezier(0.34,1.56,0.64,1) calc(2.00s + var(--i) * 0.075s) both,
+        introTitleShimmer 1.4s ease-out 3.40s forwards;
     }
-    @keyframes introTitleFocus {
-      0%   { opacity: 0; transform: scale(1.14); filter: blur(28px) drop-shadow(0 0 80px rgba(255,200,90,1)) brightness(2.6); }
-      35%  { opacity: 1; filter: blur(6px)  drop-shadow(0 0 50px rgba(255,180,90,0.95)) brightness(1.7); }
-      70%  { filter: blur(1px) drop-shadow(0 0 32px rgba(232,115,138,0.75)) brightness(1.15); }
-      100% { opacity: 1; transform: scale(1); filter: blur(0) drop-shadow(0 0 20px rgba(232,115,138,0.55)) brightness(1); }
+    .farm-intro-title-char.is-space {
+      width: 0.32em;
+    }
+    @keyframes introTitleCharIn {
+      0%   { opacity: 0; transform: translateY(22px) scale(1.3); filter: blur(12px) drop-shadow(0 0 30px rgba(255,200,90,0.9)) brightness(1.8); }
+      55%  { opacity: 1; filter: blur(2px)  drop-shadow(0 0 18px rgba(232,115,138,0.7)) brightness(1.25); }
+      100% { opacity: 1; transform: translateY(0)    scale(1);   filter: blur(0) drop-shadow(0 0 14px rgba(232,115,138,0.45)) brightness(1); }
     }
     @keyframes introTitleShimmer {
       0%   { background-position: 0%   center; }
@@ -1759,7 +1948,7 @@
     .farm-intro-divider {
       height: 1.5px; border-radius: 2px;
       background: linear-gradient(90deg, transparent, rgba(232,115,138,0.75), rgba(212,160,97,0.65), transparent);
-      animation: introDivider 0.5s ease-out 1.30s both;
+      animation: introDivider 0.5s ease-out 3.55s both;
     }
     @keyframes introDivider {
       0%   { width: 0;    opacity: 0; }
@@ -1772,7 +1961,7 @@
       font-size: 12px; font-weight: 600;
       text-transform: uppercase; color: rgba(90,45,58,0.78);
       margin-top: 9px;
-      animation: introSubTrack 0.8s cubic-bezier(0.22,1,0.36,1) 1.55s both;
+      animation: introSubTrack 0.8s cubic-bezier(0.22,1,0.36,1) 3.80s both;
     }
     @keyframes introSubTrack {
       0%   { opacity: 0; letter-spacing: 16px; }
@@ -1809,17 +1998,38 @@
       100% { opacity: 0;   transform: translateY(-180px) scale(1.15) rotate(20deg); }
     }
 
+    /* Farm-Content unter dem Intro — "settelt" sich sanft ein.
+       Endzustand bewusst transform/filter: none, damit fixed-positionierte
+       Kinder nach der Animation wieder relativ zum Viewport stehen. */
+    .farm-content-wrap {
+      transition:
+        opacity 1.7s cubic-bezier(0.22,1,0.36,1) 0.30s,
+        transform 1.7s cubic-bezier(0.22,1,0.36,1) 0.30s,
+        filter   1.4s cubic-bezier(0.22,1,0.36,1) 0.40s;
+      opacity: 1;
+      transform: none;
+      filter: none;
+      transform-origin: center 38%;
+    }
+    body.farm-intro-active .farm-content-wrap {
+      opacity: 0.85;
+      transform: scale(0.985);
+      filter: blur(6px) brightness(1.05);
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      .farm-intro-overlay { transition: opacity 0.3s ease; }
+      .farm-intro-overlay { transition: opacity 0.3s ease; -webkit-mask-image: none !important; mask-image: none !important; }
       .farm-intro-overlay *,
       .farm-intro-overlay *::before,
       .farm-intro-overlay *::after {
         animation: none !important;
       }
+      .farm-content-wrap { transition: opacity 0.3s ease; filter: none !important; transform: none !important; }
+      body.farm-intro-active .farm-content-wrap { filter: none !important; transform: none !important; opacity: 1; }
     }
   </style>
 </head>
-<body>
+<body class="farm-intro-active">
 
 <!-- ===== INTRO ANIMATION ===== -->
 <div class="farm-intro-overlay" id="farmIntroOverlay">
@@ -1830,6 +2040,56 @@
   <div class="farm-intro-ring farm-intro-ring-r2"></div>
   <div class="farm-intro-ring farm-intro-ring-r3"></div>
   <div class="farm-intro-ring farm-intro-ring-r4"></div>
+
+  <!-- Wolken -->
+  <div class="farm-intro-clouds">
+    <div class="farm-intro-cloud farm-intro-cloud-1">
+      <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg" width="140" height="60">
+        <path d="M22 48 Q14 48 14 38 Q14 28 26 28 Q28 16 44 18 Q52 8 66 16 Q78 12 84 24 Q102 22 104 38 Q116 38 116 48 Q116 56 106 56 L26 56 Q18 56 22 48 Z"
+              fill="rgba(255,255,255,0.92)"/>
+      </svg>
+    </div>
+    <div class="farm-intro-cloud farm-intro-cloud-2">
+      <svg viewBox="0 0 110 50" xmlns="http://www.w3.org/2000/svg" width="110" height="50">
+        <path d="M18 40 Q10 40 10 32 Q10 22 22 22 Q26 12 40 14 Q48 6 60 14 Q74 12 78 24 Q90 24 92 34 Q98 36 96 42 Q96 48 88 48 L22 48 Q14 48 18 40 Z"
+              fill="rgba(255,255,255,0.88)"/>
+      </svg>
+    </div>
+    <div class="farm-intro-cloud farm-intro-cloud-3">
+      <svg viewBox="0 0 125 56" xmlns="http://www.w3.org/2000/svg" width="125" height="56">
+        <path d="M20 44 Q12 44 12 34 Q12 24 24 24 Q26 12 42 14 Q50 4 64 14 Q76 10 82 22 Q98 22 100 34 Q110 36 108 44 Q108 52 98 52 L24 52 Q16 52 20 44 Z"
+              fill="rgba(255,255,255,0.90)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Regenbogen -->
+  <svg class="farm-intro-rainbow" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <path d="M30 180 Q200 -40 370 180" stroke="#e8738a"/>
+    <path d="M42 180 Q200 -18 358 180" stroke="#ff9d3a"/>
+    <path d="M54 180 Q200   4 346 180" stroke="#ffd25c"/>
+    <path d="M66 180 Q200  26 334 180" stroke="#7ec850"/>
+    <path d="M78 180 Q200  48 322 180" stroke="#5cc5f0"/>
+    <path d="M90 180 Q200  70 310 180" stroke="#9a8bd6"/>
+    <path d="M102 180 Q200 92 298 180" stroke="#c97ed4"/>
+  </svg>
+
+  <!-- Vögel -->
+  <div class="farm-intro-birds">
+    <div class="farm-intro-bird farm-intro-bird-1">
+      <svg viewBox="0 0 24 12" xmlns="http://www.w3.org/2000/svg"><path d="M2 9 Q6 2 12 7 Q18 2 22 9" stroke="#3a2a1a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="farm-intro-bird farm-intro-bird-2">
+      <svg viewBox="0 0 24 12" xmlns="http://www.w3.org/2000/svg"><path d="M2 9 Q6 2 12 7 Q18 2 22 9" stroke="#3a2a1a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="farm-intro-bird farm-intro-bird-3">
+      <svg viewBox="0 0 24 12" xmlns="http://www.w3.org/2000/svg"><path d="M2 9 Q6 2 12 7 Q18 2 22 9" stroke="#3a2a1a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Biene -->
+  <div class="farm-intro-bee">🐝</div>
+
   <div class="farm-intro-particles" id="farmIntroParticles"></div>
   <div class="farm-intro-grass">
     <div class="farm-intro-grass-tuft">
@@ -1859,17 +2119,20 @@
       <div class="farm-intro-seed">🌱</div>
       <div class="farm-intro-flower">🌻</div>
     </div>
-    <div class="farm-intro-title" id="farmIntroTitle">Unsere Farm</div>
+    <div class="farm-intro-title" id="farmIntroTitle" data-text="Unsere Farm"></div>
     <div class="farm-intro-divider"></div>
     <div class="farm-intro-sub">Wo die Liebe wächst</div>
     <div class="farm-intro-sparkle-row">
-      <span class="farm-intro-sparkle" style="animation-delay:1.65s;animation-duration:1.6s">✨</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.80s;animation-duration:1.5s">🌸</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.72s;animation-duration:1.7s">🌻</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.88s;animation-duration:1.5s">⭐</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.78s;animation-duration:1.6s">✨</span>
+      <span class="farm-intro-sparkle" style="animation-delay:4.00s;animation-duration:1.6s">✨</span>
+      <span class="farm-intro-sparkle" style="animation-delay:4.12s;animation-duration:1.5s">🌸</span>
+      <span class="farm-intro-sparkle" style="animation-delay:4.08s;animation-duration:1.7s">🌻</span>
+      <span class="farm-intro-sparkle" style="animation-delay:4.22s;animation-duration:1.5s">⭐</span>
+      <span class="farm-intro-sparkle" style="animation-delay:4.16s;animation-duration:1.6s">✨</span>
     </div>
   </div>
+
+  <!-- Goldener Lichtschimmer beim Fade-out -->
+  <div class="farm-intro-flash"></div>
 </div>
 
 <script>
@@ -1879,33 +2142,47 @@
   var titleEl   = document.getElementById('farmIntroTitle');
   var rand = function(a, b) { return a + Math.random() * (b - a); };
 
+  /* ── Farm-Content sanft dimmen, bis das Intro wegfaded ── */
+  document.body.classList.add('farm-intro-active');
+
   /* ── Farmname aus letzter Session ── */
+  var titleText = 'Unsere Farm';
   try {
     var cached = localStorage.getItem('farmIntroLastUser');
     if (cached) {
-      titleEl.textContent = cached === 'Andreas' ? "Andreas' Farm" : cached + "s Farm";
+      titleText = cached === 'Andreas' ? "Andreas' Farm" : cached + "s Farm";
     }
   } catch (e) {}
 
-  /* ── Schmetterlinge & Blütenblätter steigen auf ── */
-  var floats = ['🦋','🌸','✨','🌼','💕','🌻','🍃','🦋','🌸','✨','🌼','🍃','🌻','🦋'];
+  /* ── Titel Buchstabe für Buchstabe ── */
+  titleEl.textContent = '';
+  Array.from(titleText).forEach(function(ch, i) {
+    var span = document.createElement('span');
+    span.className = 'farm-intro-title-char' + (ch === ' ' ? ' is-space' : '');
+    span.style.setProperty('--i', i);
+    span.textContent = ch === ' ' ? ' ' : ch;
+    titleEl.appendChild(span);
+  });
+
+  /* ── Schmetterlinge & Blütenblätter steigen über die ganze Dauer auf ── */
+  var floats = ['🦋','🌸','✨','🌼','💕','🌻','🍃','🦋','🌸','✨','🌼','🍃','🌻','🦋','🌸','💕','🌼','🦋'];
   floats.forEach(function(emoji, i) {
     var f = document.createElement('div');
     f.className = 'farm-intro-float';
     f.textContent = emoji;
     f.style.cssText =
-      'left:' + rand(4, 96) + '%;bottom:' + rand(8, 32) + '%;' +
+      'left:' + rand(4, 96) + '%;bottom:' + rand(6, 34) + '%;' +
       'font-size:' + rand(14, 26) + 'px;' +
-      'animation-delay:' + (1.40 + i * 0.13) + 's;' +
-      'animation-duration:' + rand(1.6, 2.4) + 's;';
+      'animation-delay:' + (1.40 + i * 0.17).toFixed(2) + 's;' +
+      'animation-duration:' + rand(1.8, 2.8).toFixed(2) + 's;';
     particles.appendChild(f);
   });
 
   /* ── Starburst um die Blüte ── */
   setTimeout(function() {
-    for (var i = 0; i < 14; i++) {
-      var angle = (i / 14) * Math.PI * 2 + rand(-0.18, 0.18);
-      var dist  = rand(55, 140);
+    for (var i = 0; i < 16; i++) {
+      var angle = (i / 16) * Math.PI * 2 + rand(-0.18, 0.18);
+      var dist  = rand(55, 145);
       var bx = Math.cos(angle) * dist;
       var by = Math.sin(angle) * dist - 20;
       var sz = rand(2, 4.5);
@@ -1920,20 +2197,23 @@
         'box-shadow:0 0 ' + (sz * 2.2) + 'px ' + bc + ';' +
         'top:28%;left:50%;' +
         'margin:' + (-sz / 2) + 'px 0 0 ' + (-sz / 2) + 'px;' +
-        'animation:introBurst 0.85s cubic-bezier(0.18,0,0.48,1) both;';
+        'animation:introBurst 0.95s cubic-bezier(0.18,0,0.48,1) both;';
       b.style.setProperty('--bx', bx.toFixed(1) + 'px');
       b.style.setProperty('--by', by.toFixed(1) + 'px');
       overlay.appendChild(b);
     }
   }, 1250);
 
-  /* ── Auto-Dismiss nach 2,5 s ── */
+  /* ── Mehrstufiges Fade-out nach 4,5 s ── */
   setTimeout(function() {
     overlay.classList.add('fade-out');
-    setTimeout(function() { overlay.style.display = 'none'; }, 550);
-  }, 2500);
+    document.body.classList.remove('farm-intro-active');
+    setTimeout(function() { overlay.style.display = 'none'; }, 2000);
+  }, 4500);
 })();
 </script>
+
+<div class="farm-content-wrap">
 
 <div class="offline-banner" id="offlineBanner">
   <div class="offline-dot" id="offlineDot"></div>
@@ -7051,5 +7331,7 @@
     });
   };
 </script>
+
+</div><!-- /.farm-content-wrap -->
 </body>
 </html>
