@@ -332,8 +332,40 @@
   }
 
   /* AKTIVES BADGE IN TOP-BAR */
-  .active-badge-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-btn-bg); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: var(--ui-btn-text); transition: all 0.3s ease; }
+  .active-badge-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-btn-bg); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: var(--ui-btn-text); transition: all 0.3s ease; position: relative; isolation: isolate; }
   .active-badge-pill .badge-emoji { font-size: 16px; }
+
+  /* Rarität-Glow für die Top-Bar-Pill */
+  .active-badge-pill.rarity-common {
+    background: linear-gradient(135deg, rgba(232,232,240,0.65), rgba(196,196,210,0.45)) !important;
+    border-color: rgba(170,170,190,0.7) !important;
+    box-shadow: 0 2px 8px rgba(150,150,170,0.22);
+  }
+  .active-badge-pill.rarity-rare {
+    background: linear-gradient(135deg, rgba(140,175,225,0.42), rgba(70,110,180,0.5)) !important;
+    border-color: rgba(108,142,191,0.9) !important;
+    color: #1e3a6b !important;
+    animation: pillRarePulse 2.8s ease-in-out infinite;
+  }
+  .active-badge-pill.rarity-legendary {
+    background: linear-gradient(135deg, rgba(255,210,120,0.55), rgba(212,160,97,0.7), rgba(200,120,48,0.55)) !important;
+    border-color: rgba(255,200,90,0.95) !important;
+    color: #6b3a10 !important;
+    animation: pillLegendaryPulse 2.2s ease-in-out infinite;
+  }
+  .active-badge-pill.rarity-legendary::after {
+    content: '✨'; position: absolute; top: -6px; right: -4px; font-size: 12px;
+    pointer-events: none; filter: drop-shadow(0 0 4px rgba(255,210,120,0.95));
+    animation: sparkleTwinkle 1.6s ease-in-out infinite;
+  }
+  @keyframes pillRarePulse {
+    0%, 100% { box-shadow: 0 2px 10px rgba(108,142,191,0.4),  0 0 0 rgba(108,142,191,0); transform: scale(1); }
+    50%      { box-shadow: 0 4px 18px rgba(108,142,191,0.65), 0 0 22px rgba(108,142,191,0.45); transform: scale(1.04); }
+  }
+  @keyframes pillLegendaryPulse {
+    0%, 100% { box-shadow: 0 3px 14px rgba(212,160,97,0.6),  0 0 18px rgba(255,180,80,0.4);  transform: scale(1); }
+    50%      { box-shadow: 0 5px 24px rgba(255,150,40,0.8),  0 0 38px rgba(255,200,90,0.6);  transform: scale(1.06); }
+  }
 
   /* INITIALS AVATAR */
   .initials-avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); flex-shrink: 0; transition: box-shadow 0.3s ease; cursor: pointer; }
@@ -1843,11 +1875,13 @@
     const pill  = document.getElementById('activeBadgePill');
     const emoji = document.getElementById('activeBadgeEmoji');
     const name  = document.getElementById('activeBadgeName');
+    pill.classList.remove('rarity-common', 'rarity-rare', 'rarity-legendary');
     if (!userEquippedBadge) { pill.style.display = 'none'; return; }
     const b = [...ALL_BADGES, ...SLOT_BADGES].find(x => x.id === userEquippedBadge);
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;
+    if (b.rarity) pill.classList.add('rarity-' + b.rarity);
     pill.style.display = 'inline-flex';
   }
 
