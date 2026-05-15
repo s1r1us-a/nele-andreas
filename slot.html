@@ -275,65 +275,6 @@
     font-weight: 500;
   }
 
-  /* TEST-MODE-BAR */
-  .test-mode-bar {
-    margin-top: 18px;
-    padding: 10px 16px;
-    border-radius: 14px;
-    background: rgba(34,211,238,0.06);
-    border: 1.5px solid rgba(34,211,238,0.2);
-    display: flex; flex-direction: column; gap: 8px;
-    max-width: 520px; width: 100%;
-    transition: all 0.3s ease;
-  }
-  .test-mode-bar.active {
-    background: rgba(250,204,21,0.1);
-    border-color: rgba(250,204,21,0.5);
-    box-shadow: 0 0 24px rgba(250,204,21,0.2);
-  }
-  .toggle {
-    display: flex; align-items: center; gap: 12px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .toggle input { position: absolute; opacity: 0; pointer-events: none; }
-  .toggle .slider {
-    width: 44px; height: 24px;
-    background: rgba(255,255,255,0.1);
-    border: 1.5px solid rgba(212,160,97,0.3);
-    border-radius: 50px;
-    position: relative;
-    transition: all 0.25s ease;
-  }
-  .toggle .slider::after {
-    content: '';
-    position: absolute;
-    left: 2px; top: 1px;
-    width: 18px; height: 18px;
-    background: var(--slot-text-light);
-    border-radius: 50%;
-    transition: all 0.25s cubic-bezier(.5,0,.5,1.4);
-  }
-  .toggle input:checked + .slider {
-    background: rgba(250,204,21,0.4);
-    border-color: #facc15;
-  }
-  .toggle input:checked + .slider::after {
-    left: 22px;
-    background: #facc15;
-  }
-  .toggle-label {
-    font-size: 13px; font-weight: 600;
-    color: var(--slot-text-light);
-  }
-  .test-mode-info {
-    font-size: 12px;
-    color: #facc15;
-    font-weight: 500;
-    padding-left: 56px;
-  }
-  .test-mode-info[hidden] { display: none; }
-
   /* SLOT-MACHINE */
   .slot-container {
     max-width: 600px; width: 100%;
@@ -480,27 +421,6 @@
   }
   .cabinet-marquee .marquee-bulb.left  { left: 10px;  animation-delay: 0.2s; }
   .cabinet-marquee .marquee-bulb.right { right: 10px; animation-delay: 0.6s; }
-  .slot-container.test-active .machine-frame {
-    border-color: #facc15;
-    box-shadow:
-      0 16px 60px rgba(0,0,0,0.6),
-      0 0 0 1px rgba(250,204,21,0.3) inset,
-      0 0 80px rgba(250,204,21,0.25) inset;
-  }
-  .slot-container.test-active::before {
-    content: 'TEST-MODUS';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%) rotate(-12deg);
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(60px, 14vw, 120px);
-    font-weight: 900;
-    color: rgba(250,204,21,0.06);
-    letter-spacing: 0.1em;
-    pointer-events: none;
-    z-index: 1;
-    white-space: nowrap;
-  }
 
   /* REEL SHELF (3D Container) */
   .reels-shelf {
@@ -822,11 +742,6 @@
     --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
     --glow: rgba(232,115,138,0.4); --glow-hover: rgba(232,115,138,0.55);
   }
-  .slot-container.test-active .arcade-btn small::before {
-    content: 'GRATIS · ';
-    color: #fff8f0;
-    font-weight: 800;
-  }
 
   /* PAYOUT TABLE */
   .payout-table {
@@ -871,49 +786,6 @@
   .payout-table tr.special { color: var(--slot-accent); font-weight: 700; }
   .payout-table tr.jackpot { color: #ffd770; font-weight: 800; }
   .payout-symbols { font-size: 18px; letter-spacing: 4px; }
-
-  /* DEBUG-PANEL (Test-Modus) */
-  .debug-panel {
-    margin-top: 16px;
-    padding: 14px;
-    background: rgba(250,204,21,0.08);
-    border: 1.5px dashed rgba(250,204,21,0.4);
-    border-radius: 14px;
-    display: none;
-    position: relative;
-    z-index: 2;
-  }
-  .debug-panel.active { display: block; }
-  .debug-panel-title {
-    font-size: 12px;
-    font-weight: 800;
-    color: #facc15;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-  .debug-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 8px;
-  }
-  .debug-btn {
-    border: 1.5px solid rgba(232,115,138,0.35);
-    background: rgba(232,115,138,0.08);
-    color: var(--slot-text-light);
-    border-radius: 50px;
-    padding: 10px 14px;
-    font-family: 'Quicksand', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .debug-btn:hover:not(:disabled) {
-    background: rgba(232,115,138,0.18);
-    border-color: #e8738a;
-  }
-  .debug-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* LIFETIME STATS */
   .lifetime-stats {
@@ -1256,18 +1128,6 @@
     <div class="page-subtitle">Dreh die Walzen</div>
   </header>
 
-  <!-- TEST-MODE TOGGLE -->
-  <div id="testModeBar" class="test-mode-bar">
-    <label class="toggle">
-      <input type="checkbox" id="testModeToggle">
-      <span class="slider"></span>
-      <span class="toggle-label">🧪 Test-Modus (kostenlos spielen)</span>
-    </label>
-    <div id="testModeInfo" class="test-mode-info" hidden>
-      Test-Modus aktiv · Spins sind gratis · Gewinne werden nicht gutgeschrieben · Statistik unverändert
-    </div>
-  </div>
-
   <!-- SLOT MACHINE -->
   <div id="slotContainer" class="slot-container">
     <div class="slot-aura"></div>
@@ -1362,22 +1222,6 @@
           <tr><td>Zwei gleiche andere</td><td>100 🪙</td></tr>
         </table>
       </details>
-    </div>
-
-    <!-- DEBUG PANEL (Test-Modus) -->
-    <div id="debugPanel" class="debug-panel">
-      <div class="debug-panel-title">🧪 Test-Hilfen · Ergebnis erzwingen</div>
-      <div class="debug-buttons">
-        <button class="debug-btn" data-force="👸,👸,👸">👸 Jackpot</button>
-        <button class="debug-btn" data-force="🧮,🧮,🧮">🧮 Ramanujan</button>
-        <button class="debug-btn" data-force="🧦,🧦,🧦">🧦 Laufmasche</button>
-        <button class="debug-btn" data-force="💎,💎,💎">💎 3× Diamant</button>
-        <button class="debug-btn" data-force="⭐,⭐,⭐">⭐ 3× Stern</button>
-        <button class="debug-btn" data-force="🔔,🔔,🔔">🔔 3× Glocke</button>
-        <button class="debug-btn" data-force="🍀,🍀,🍀">🍀 3× Klee</button>
-        <button class="debug-btn" data-force="👸,👸,🍒">2× Prinzesschen</button>
-        <button class="debug-btn" data-force="random">🎲 Random</button>
-      </div>
     </div>
   </div>
 
@@ -1542,9 +1386,6 @@
     if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
     if (email.toLowerCase() === 'nele.busse@web.de') return 'Nele';
     return email.split('@')[0];
-  }
-  function isTestMode() {
-    return document.getElementById('testModeToggle').checked;
   }
   function showToast(msg, isError=false) {
     const t = document.getElementById('toast');
@@ -1848,17 +1689,6 @@
     const indices = [pickRandomIndex(), pickRandomIndex(), pickRandomIndex()];
     const result = indices.map(i => REEL_SYMBOLS[i]);
     return { indices, result };
-  }
-  // Erzeugt Indizes, sodass die mittlere Symbol-Reihe die gewünschten Symbole zeigt.
-  // Bei mehreren Vorkommen wird eine zufällige Position gewählt.
-  function indicesForSymbols(symbols) {
-    return symbols.map(sym => {
-      const matchIdx = REEL_SYMBOLS
-        .map((s, i) => s === sym ? i : -1)
-        .filter(i => i >= 0);
-      if (matchIdx.length === 0) return pickRandomIndex();
-      return matchIdx[Math.floor(Math.random() * matchIdx.length)];
-    });
   }
   function calculateWin(result) {
     const key = result.join('');
@@ -2247,41 +2077,28 @@
   // ============== SPIN ENGINE ==============
   function setButtonsDisabled(disabled) {
     document.querySelectorAll('.arcade-btn').forEach(b => b.disabled = disabled);
-    document.querySelectorAll('.debug-btn').forEach(b => b.disabled = disabled);
   }
 
-  async function doSpin({ betAmount, spinCount, multiplier=1, forcedSymbols=null }) {
+  async function doSpin({ betAmount, spinCount, multiplier=1 }) {
     if (isSpinning) return;
     isSpinning = true;
     setButtonsDisabled(true);
 
     const perSpin = Math.round(betAmount / spinCount);
-    const test = isTestMode();
 
     try {
       for (let i = 0; i < spinCount; i++) {
-        // 1. Coin-Check (nur Live-Modus)
-        if (!test) {
-          const coinsSnap = await get(ref(db, `coins/${userKey}`));
-          const have = coinsSnap.val() || 0;
-          if (have < perSpin) {
-            showToast(`Nicht genug Coins (brauchst ${fmt(perSpin)} 🪙)`, true);
-            break;
-          }
-          await deductCoins(perSpin);
+        // 1. Coin-Check
+        const coinsSnap = await get(ref(db, `coins/${userKey}`));
+        const have = coinsSnap.val() || 0;
+        if (have < perSpin) {
+          showToast(`Nicht genug Coins (brauchst ${fmt(perSpin)} 🪙)`, true);
+          break;
         }
+        await deductCoins(perSpin);
 
-        // 2. RNG (oder forciert)
-        let indices, result;
-        if (forcedSymbols && i === 0) {
-          indices = indicesForSymbols(forcedSymbols);
-          result  = indices.map(idx => REEL_SYMBOLS[idx]);
-          forcedSymbols = null; // nur erster Spin forciert
-        } else {
-          const roll = rollReels();
-          indices = roll.indices;
-          result  = roll.result;
-        }
+        // 2. RNG
+        const { indices, result } = rollReels();
 
         // 3. Animation
         await animateReels(indices);
@@ -2290,20 +2107,18 @@
         let { amount: win, meta } = calculateWin(result);
         if (multiplier > 1) win *= multiplier;
 
-        // 5. Auszahlung (nur Live)
-        if (win > 0 && !test) {
+        // 5. Auszahlung
+        if (win > 0) {
           await addCoins(win);
         }
 
-        // 6. Win-Effekt (immer)
+        // 6. Win-Effekt
         await triggerWinEffect(win, meta);
 
-        // 7. Stats + Badges (nur Live)
-        if (!test) {
-          await updateSlotStats(result, win, perSpin);
-          await checkComboBadges(result, meta);
-          await checkMilestoneBadges(win);
-        }
+        // 7. Stats + Badges
+        await updateSlotStats(result, win, perSpin);
+        await checkComboBadges(result, meta);
+        await checkMilestoneBadges(win);
 
         // 8. Pause zwischen Auto-Spins
         if (i < spinCount - 1) await sleep(700);
@@ -2331,41 +2146,6 @@
     });
   }
 
-  function bindDebugButtons() {
-    document.querySelectorAll('.debug-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        sfx.click();
-        sfx.unlock();
-        const force = btn.dataset.force;
-        if (force === 'random') {
-          doSpin({ betAmount: 100, spinCount: 1 });
-        } else {
-          const symbols = force.split(',');
-          doSpin({ betAmount: 100, spinCount: 1, forcedSymbols: symbols });
-        }
-      });
-    });
-  }
-
-  function bindTestModeToggle() {
-    const toggle = document.getElementById('testModeToggle');
-    const bar    = document.getElementById('testModeBar');
-    const info   = document.getElementById('testModeInfo');
-    const debug  = document.getElementById('debugPanel');
-    const container = document.getElementById('slotContainer');
-
-    function applyState() {
-      const on = toggle.checked;
-      bar.classList.toggle('active', on);
-      container.classList.toggle('test-active', on);
-      info.hidden = !on;
-      debug.classList.toggle('active', on);
-      localStorage.setItem('slot-test-mode', on ? '1' : '0');
-    }
-    toggle.checked = localStorage.getItem('slot-test-mode') === '1';
-    applyState();
-    toggle.addEventListener('change', applyState);
-  }
 
   function bindResetStats() {
     document.getElementById('resetStatsBtn').addEventListener('click', async () => {
@@ -2622,8 +2402,6 @@
 
   // ============== INIT ==============
   bindBetButtons();
-  bindDebugButtons();
-  bindTestModeToggle();
   bindResetStats();
   bindMuteButton();
   spawnAmbientParticles();
