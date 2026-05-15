@@ -427,10 +427,8 @@
   .led-bulb:nth-child(14){ animation-delay: 0.70s; }
   .led-bulb:nth-child(15){ animation-delay: 0.85s; }
   @keyframes bulbPulse {
-    0%,100% { transform: scale(1); filter: brightness(1);
-              box-shadow: 0 0 4px rgba(255,221,150,0.7), 0 0 8px rgba(212,160,97,0.5); }
-    50%     { transform: scale(1.35); filter: brightness(1.6);
-              box-shadow: 0 0 10px rgba(255,221,150,1), 0 0 22px rgba(255,221,150,0.85), 0 0 36px rgba(212,160,97,0.5); }
+    0%,100% { transform: scale(1);    opacity: 0.7; }
+    50%     { transform: scale(1.25); opacity: 1; }
   }
   /* Beim Gewinn: schnelleres Chasing */
   .slot-container.win-flash .led-bulb {
@@ -762,90 +760,80 @@
     .bet-controls { grid-template-columns: repeat(4, 1fr); }
   }
   .arcade-btn {
-    --cap: #4ade80;
-    --cap-light: #86efac;
-    --cap-dark: #166534;
-    --ring: #052e16;
+    --accent: #d4a061;
+    --accent-glow: rgba(212,160,97,0.45);
     appearance: none;
     border: 0;
     cursor: pointer;
     width: 100%;
     min-height: 48px;
     height: 52px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-family: 'Orbitron', monospace;
-    font-weight: 900;
+    font-weight: 700;
     font-size: 12px;
-    letter-spacing: 0.08em;
-    color: #fff;
-    text-shadow:
-      0 -1px 0 rgba(0,0,0,0.55),
-      0 1px 0 rgba(255,255,255,0.25);
+    letter-spacing: 0.1em;
+    color: var(--slot-text-light);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.65);
     background:
-      radial-gradient(circle at 50% 32%,
-        var(--cap-light) 0%,
-        var(--cap) 38%,
-        var(--cap-dark) 95%);
+      linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.35) 100%),
+      linear-gradient(180deg, #2a1a35 0%, #1a0f22 55%, #0e0716 100%);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.4),
-      inset 0 -3px 6px rgba(0,0,0,0.4),
-      inset 0 0 0 1px rgba(0,0,0,0.3),
-      0 3px 0 var(--ring),
-      0 5px 8px rgba(0,0,0,0.5),
-      0 0 10px color-mix(in srgb, var(--cap) 35%, transparent);
+      inset 0 0 0 1px rgba(212,160,97,0.45),
+      inset 0 0 14px rgba(0,0,0,0.45),
+      inset 0 14px 18px -10px var(--accent-glow),
+      0 2px 0 rgba(0,0,0,0.55),
+      0 4px 10px rgba(0,0,0,0.45);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 2px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+    transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.15s ease;
     position: relative;
     overflow: hidden;
   }
-  /* Top-Glanz wie auf einer Plastikkappe */
+  /* Feine Gold-Hairline oben — passt zum Cabinet-Trim */
   .arcade-btn::before {
     content: '';
     position: absolute;
-    left: 14%; right: 14%; top: 6%;
-    height: 40%;
-    border-radius: 50%;
-    background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 100%);
+    left: 12%; right: 12%; top: 4px;
+    height: 1px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+    opacity: 0.75;
     pointer-events: none;
-    filter: blur(0.5px);
   }
   .arcade-btn small {
     display: block;
     font-family: 'Quicksand', sans-serif;
     font-size: 10px;
     font-weight: 700;
-    opacity: 0.92;
-    letter-spacing: 0;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+    color: var(--accent);
+    opacity: 0.95;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.5);
   }
   .arcade-btn:hover:not(:disabled) {
-    filter: brightness(1.05);
+    filter: brightness(1.12);
   }
   .arcade-btn:active:not(:disabled) {
-    transform: translateY(2px);
+    transform: translateY(1px);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.3),
-      inset 0 -2px 5px rgba(0,0,0,0.5),
-      inset 0 0 0 1px rgba(0,0,0,0.3),
-      0 1px 0 var(--ring),
-      0 2px 5px rgba(0,0,0,0.5),
-      0 0 8px color-mix(in srgb, var(--cap) 30%, transparent);
+      inset 0 0 0 1px rgba(212,160,97,0.55),
+      inset 0 0 18px rgba(0,0,0,0.6),
+      inset 0 10px 16px -8px var(--accent-glow),
+      0 1px 0 rgba(0,0,0,0.55),
+      0 2px 5px rgba(0,0,0,0.45);
   }
   .arcade-btn:disabled {
-    filter: grayscale(0.6) brightness(0.55);
+    filter: grayscale(0.65) brightness(0.55);
     cursor: not-allowed;
-    transform: translateY(2px);
   }
-  /* Farbvarianten */
-  .arcade-green { --cap:#4ade80; --cap-light:#a7f3d0; --cap-dark:#166534; --ring:#052e16; }
-  .arcade-blue  { --cap:#3b82f6; --cap-light:#93c5fd; --cap-dark:#1e3a8a; --ring:#0c1e4a; }
-  .arcade-red   { --cap:#ef4444; --cap-light:#fca5a5; --cap-dark:#7f1d1d; --ring:#3f0808; }
-  .arcade-gold  { --cap:#fbbf24; --cap-light:#fde68a; --cap-dark:#92400e; --ring:#451a03;
-                  color:#3b1d05;
-                  text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.2); }
+  /* Farb-Akzente — gedämpfte Juwelentöne, passend zur royalen Palette */
+  .arcade-green { --accent: #6dd49a; --accent-glow: rgba(109,212,154,0.35); }
+  .arcade-blue  { --accent: #7aaef5; --accent-glow: rgba(122,174,245,0.35); }
+  .arcade-red   { --accent: #e88a8a; --accent-glow: rgba(232,138,138,0.35); }
+  .arcade-gold  { --accent: #f5d088; --accent-glow: rgba(245,208,136,0.55); }
   .slot-container.test-active .arcade-btn small::before {
     content: 'GRATIS · ';
     color: #facc15;
@@ -1560,8 +1548,7 @@
   let reelEngines = [null, null, null];
 
   function easeOutBack(t) {
-    const c1 = 1.70158, c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    return 1 - Math.pow(1 - t, 3);
   }
 
   async function buildSymbolTextures() {
@@ -1606,7 +1593,7 @@
     init() {
       const w = Math.max(1, this.canvas.clientWidth);
       const h = Math.max(1, this.canvas.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
       this.renderer = new THREE.WebGLRenderer({
         canvas: this.canvas,
@@ -1664,6 +1651,7 @@
         if (this._raf) cancelAnimationFrame(this._raf);
       });
       this.canvas.addEventListener('webglcontextrestored', () => {
+        this._lastTime = null;
         this._raf = requestAnimationFrame(this._loop);
       });
     }
@@ -1674,9 +1662,8 @@
       this._lastTime = now;
 
       if (this.phase === 'spinning') {
-        const maxSpeed = this.anticipating ? 6 : 14; // rad/s
-        this.speed = Math.min(this.speed + 60 * dt, maxSpeed);
-        // Positive Rotation → Symbole rollen nach unten (Slot-Standardrichtung)
+        const maxSpeed = this.anticipating ? 4 : 9; // rad/s — unter Nyquist-Limit
+        this.speed = Math.min(this.speed + 40 * dt, maxSpeed);
         this.angle += this.speed * dt;
       } else if (this.phase === 'stopping') {
         const t = Math.min(1, (now - this._stopStart) / this._stopDur);
@@ -1695,12 +1682,22 @@
 
       this.cylinder.rotation.x = this.angle;
       this.renderer.render(this.scene, this.camera);
+
+      if (this.phase === 'idle') {
+        this._raf = null;
+        this._lastTime = null;
+        return;
+      }
       this._raf = requestAnimationFrame(this._loop);
     }
 
     start() {
       this.phase = 'spinning';
-      this.speed = 4;
+      this.speed = 3;
+      if (this._raf == null) {
+        this._lastTime = null;
+        this._raf = requestAnimationFrame(this._loop);
+      }
     }
 
     setAnticipating(on) {
@@ -1727,6 +1724,9 @@
       this.angle = targetIdx * SEG_RAD;
       this.cylinder.rotation.x = this.angle;
       this.phase = 'idle';
+      if (this._raf == null && this.renderer) {
+        this.renderer.render(this.scene, this.camera);
+      }
     }
 
     resize() {
@@ -1735,6 +1735,9 @@
       this.renderer.setSize(w, h, false);
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
+      if (this._raf == null) {
+        this.renderer.render(this.scene, this.camera);
+      }
     }
   }
 
@@ -2480,7 +2483,7 @@
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
-    const count = 8;
+    const count = 5;
     for (let i = 0; i < count; i++) {
       const p = document.createElement('div');
       p.className = 'ambient-particle';
