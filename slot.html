@@ -76,30 +76,30 @@
     50%     { opacity: 0.75; }
   }
 
-  /* Ambient floating particles (goldene Motes) */
+  /* Ambient floating particles (sparsam, GPU-freundlich) */
   .ambient-particles {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 1;
     overflow: hidden;
+    transition: opacity 0.3s ease;
   }
+  .ambient-particles.dim { opacity: 0; }
   .ambient-particle {
     position: absolute;
     bottom: -10px;
-    width: 4px; height: 4px;
+    width: 3px; height: 3px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,221,150,0.9) 0%, rgba(212,160,97,0.4) 40%, transparent 70%);
-    box-shadow: 0 0 6px rgba(255,221,150,0.6);
+    background: rgba(255,221,150,0.7);
     animation: ambientFloat linear infinite;
-    will-change: transform, opacity;
+    will-change: transform;
   }
   @keyframes ambientFloat {
-    0%   { transform: translateY(0) translateX(0) scale(0.6); opacity: 0; }
-    8%   { opacity: 1; }
-    50%  { transform: translateY(-50vh) translateX(20px) scale(1); }
-    92%  { opacity: 1; }
-    100% { transform: translateY(-100vh) translateX(-15px) scale(0.4); opacity: 0; }
+    0%   { transform: translateY(0) scale(0.7); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
   }
 
   /* TOP BAR */
@@ -131,6 +131,18 @@
     background: rgba(212,160,97,0.25);
     border-color: var(--slot-accent);
   }
+  .top-bar-right {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .mute-btn {
+    width: 38px; height: 38px;
+    padding: 0;
+    font-size: 17px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .mute-btn.muted { opacity: 0.55; }
   .coin-display {
     display: flex; align-items: center; gap: 6px;
     background: rgba(212,160,97,0.12);
@@ -710,44 +722,6 @@
     user-select: none;
   }
 
-  /* PAYLINE (mittlerer Strich) — mit Lauflicht */
-  .payline {
-    position: absolute;
-    left: 12px; right: 12px;
-    top: 50%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent 0%, var(--slot-accent) 20%, var(--slot-accent) 80%, transparent 100%);
-    transform: translateY(-1px);
-    z-index: 4;
-    pointer-events: none;
-    box-shadow: 0 0 12px rgba(212,160,97,0.55);
-    opacity: 0.7;
-    overflow: hidden;
-  }
-  .payline::before {
-    content: '';
-    position: absolute;
-    top: -2px; bottom: -2px;
-    width: 30%;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(255,221,150,0.4) 30%,
-      rgba(255,255,255,0.9) 50%,
-      rgba(255,221,150,0.4) 70%,
-      transparent 100%);
-    filter: blur(1px);
-    animation: paylineChase 2.4s linear infinite;
-  }
-  @keyframes paylineChase {
-    from { left: -30%; }
-    to   { left: 100%; }
-  }
-  .slot-container.win-flash .payline {
-    height: 3px;
-    opacity: 1;
-    box-shadow: 0 0 16px rgba(255,221,150,1), 0 0 32px rgba(212,160,97,0.7);
-  }
-
   /* RESULT AREA */
   .result-area {
     margin-top: 22px;
@@ -781,83 +755,117 @@
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* BET CONTROLS */
+  /* BET CONTROLS — Arcade-Konsole mit Push-Buttons */
   .bet-controls {
-    margin-top: 22px;
+    margin-top: 26px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 22px 18px;
+    padding: 20px 14px 16px;
+    background:
+      linear-gradient(180deg, #1a0f22 0%, #050208 100%);
+    border-radius: 18px;
+    box-shadow:
+      0 0 0 2px rgba(212,160,97,0.45) inset,
+      0 0 0 4px rgba(0,0,0,0.55) inset,
+      0 6px 20px rgba(0,0,0,0.55) inset,
+      0 0 20px rgba(212,160,97,0.12);
     position: relative;
     z-index: 2;
   }
   @media (min-width: 540px) {
     .bet-controls { grid-template-columns: repeat(4, 1fr); }
   }
-  .spin-btn {
-    border: 1.5px solid rgba(212,160,97,0.45);
-    background:
-      linear-gradient(180deg, rgba(212,160,97,0.22) 0%, rgba(212,160,97,0.06) 50%, rgba(0,0,0,0.2) 100%);
-    color: var(--slot-text-light);
-    border-radius: 14px;
-    padding: 14px 8px;
-    font-family: 'Orbitron', monospace;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
+  .arcade-btn {
+    --cap: #4ade80;
+    --cap-light: #86efac;
+    --cap-dark: #166534;
+    --ring: #052e16;
+    appearance: none;
+    border: 0;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    width: 100%;
+    aspect-ratio: 1.55 / 1;
+    min-height: 78px;
+    border-radius: 999px;
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: #fff;
+    text-shadow:
+      0 -1px 0 rgba(0,0,0,0.55),
+      0 1px 0 rgba(255,255,255,0.25);
+    background:
+      radial-gradient(circle at 50% 32%,
+        var(--cap-light) 0%,
+        var(--cap) 38%,
+        var(--cap-dark) 95%);
     box-shadow:
-      0 4px 14px rgba(0,0,0,0.4),
-      0 0 0 1px rgba(255,255,255,0.04) inset,
-      0 1px 0 rgba(255,255,255,0.1) inset;
+      inset 0 2px 0 rgba(255,255,255,0.55),
+      inset 0 -7px 12px rgba(0,0,0,0.45),
+      inset 0 0 0 2px rgba(0,0,0,0.25),
+      0 6px 0 var(--ring),
+      0 11px 18px rgba(0,0,0,0.55),
+      0 0 22px color-mix(in srgb, var(--cap) 50%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
     position: relative;
     overflow: hidden;
   }
-  .spin-btn::before {
+  /* Top-Glanz wie auf einer Plastikkappe */
+  .arcade-btn::before {
     content: '';
     position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
-    transition: left 0.5s ease;
+    left: 14%; right: 14%; top: 8%;
+    height: 28%;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+    filter: blur(0.5px);
   }
-  .spin-btn:hover:not(:disabled)::before {
-    left: 100%;
-  }
-  .spin-btn small {
+  .arcade-btn small {
+    display: block;
     font-family: 'Quicksand', sans-serif;
     font-size: 11px;
-    font-weight: 600;
-    color: var(--slot-accent);
+    font-weight: 700;
+    opacity: 0.92;
     letter-spacing: 0;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.4);
   }
-  .spin-btn:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.02);
-    background: linear-gradient(180deg, rgba(212,160,97,0.28) 0%, rgba(212,160,97,0.12) 100%);
-    border-color: var(--slot-accent);
-    box-shadow: 0 8px 24px rgba(212,160,97,0.3);
+  .arcade-btn:hover:not(:disabled) {
+    filter: brightness(1.05);
   }
-  .spin-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
-  .spin-btn:disabled {
-    opacity: 0.45;
+  .arcade-btn:active:not(:disabled) {
+    transform: translateY(5px);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.4),
+      inset 0 -3px 8px rgba(0,0,0,0.55),
+      inset 0 0 0 2px rgba(0,0,0,0.3),
+      0 1px 0 var(--ring),
+      0 3px 8px rgba(0,0,0,0.55),
+      0 0 12px color-mix(in srgb, var(--cap) 40%, transparent);
+  }
+  .arcade-btn:disabled {
+    filter: grayscale(0.6) brightness(0.55);
     cursor: not-allowed;
-    filter: grayscale(0.4);
+    transform: translateY(2px);
   }
-  .spin-btn.high-roller {
-    background: linear-gradient(180deg, rgba(232,115,138,0.22) 0%, rgba(232,115,138,0.08) 100%);
-    border-color: rgba(232,115,138,0.5);
-  }
-  .spin-btn.high-roller small { color: var(--rose-light); }
-  .spin-btn.high-roller:hover:not(:disabled) {
-    background: linear-gradient(180deg, rgba(232,115,138,0.35) 0%, rgba(232,115,138,0.15) 100%);
-    border-color: var(--rose);
-    box-shadow: 0 8px 24px rgba(232,115,138,0.35);
-  }
-  .slot-container.test-active .spin-btn small::before {
+  /* Farbvarianten */
+  .arcade-green { --cap:#4ade80; --cap-light:#a7f3d0; --cap-dark:#166534; --ring:#052e16; }
+  .arcade-blue  { --cap:#3b82f6; --cap-light:#93c5fd; --cap-dark:#1e3a8a; --ring:#0c1e4a; }
+  .arcade-red   { --cap:#ef4444; --cap-light:#fca5a5; --cap-dark:#7f1d1d; --ring:#3f0808; }
+  .arcade-gold  { --cap:#fbbf24; --cap-light:#fde68a; --cap-dark:#92400e; --ring:#451a03;
+                  color:#3b1d05;
+                  text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.2); }
+  .slot-container.test-active .arcade-btn small::before {
     content: 'GRATIS · ';
     color: #facc15;
-    font-weight: 700;
+    font-weight: 800;
+    text-shadow: 0 0 6px rgba(250,204,21,0.7);
   }
 
   /* PAYOUT TABLE */
@@ -1237,7 +1245,6 @@
     body.shake .slot-container { animation: none; }
     .led-bulb { animation: none !important; opacity: 0.7; }
     .cabinet-marquee .marquee-bulb { animation: none !important; }
-    .payline::before { animation: none; left: 35%; }
     body::before { animation: none; }
     .slot-aura { animation: none; }
   }
@@ -1278,7 +1285,10 @@
     <span class="coin-count" id="coinCount">0</span>
     <span>🪙</span>
   </div>
-  <button id="logoutBtn" class="top-bar-btn">Logout</button>
+  <div class="top-bar-right">
+    <button id="muteBtn" class="top-bar-btn mute-btn" aria-label="Ton an/aus" title="Ton an/aus">🔊</button>
+    <button id="logoutBtn" class="top-bar-btn">Logout</button>
+  </div>
 </div>
 
 <!-- MAIN PAGE -->
@@ -1358,7 +1368,6 @@
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
           </div>
-          <div class="payline"></div>
         </div>
       </div>
 
@@ -1367,19 +1376,19 @@
       </div>
 
       <div class="bet-controls">
-        <button class="spin-btn" data-bet="100" data-spins="1">
+        <button class="arcade-btn arcade-green" data-bet="100" data-spins="1">
           SPIN
           <small>100 🪙</small>
         </button>
-        <button class="spin-btn" data-bet="500" data-spins="5">
+        <button class="arcade-btn arcade-blue" data-bet="500" data-spins="5">
           5× SPIN
           <small>500 🪙</small>
         </button>
-        <button class="spin-btn" data-bet="1080" data-spins="12">
+        <button class="arcade-btn arcade-red" data-bet="1080" data-spins="12">
           12× SPIN
           <small>1.080 🪙 🎁</small>
         </button>
-        <button class="spin-btn high-roller" data-bet="1000" data-spins="1" data-multiplier="10">
+        <button class="arcade-btn arcade-gold" data-bet="1000" data-spins="1" data-multiplier="10">
           HIGH-ROLLER
           <small>1.000 🪙 · ×10</small>
         </button>
@@ -1631,8 +1640,9 @@
         cyl.style.transform = `rotateX(${endAngle}deg)`;
         reelAngles[idx] = endAngle;
         reel.classList.remove('stopping');
-        // Mikro-Bounce-Sparkle am Stopp
+        // Mikro-Bounce-Sparkle + Klick am Stopp
         spawnReelStopSparkle(reel);
+        sfx.reelStop();
         resolve();
       };
       cyl.addEventListener('animationend', onEnd);
@@ -1658,9 +1668,14 @@
     const reels = [...document.querySelectorAll('.reel')];
     const cylinders = reels.map(r => r.querySelector('.reel-cylinder'));
 
+    // Partikel während Spin ausblenden (entlastet Compositing)
+    const particles = document.getElementById('ambientParticles');
+    if (particles) particles.classList.add('dim');
+
     // Spinning starten
     reels.forEach(r => r.classList.remove('stopping', 'win-glow', 'anticipating'));
     reels.forEach(r => r.classList.add('spinning'));
+    sfx.spinStart();
 
     const sym0 = REEL_SYMBOLS[targetIndices[0]];
     const sym1 = REEL_SYMBOLS[targetIndices[1]];
@@ -1680,13 +1695,17 @@
     // Anticipation: wenn Walze 1 & 2 gleich → Walze 3 wird langsamer + glüht rot
     if (willAnticipate) {
       reels[2].classList.add('anticipating');
+      sfx.anticipateStart();
       // Längere Anticipation für mehr Spannung
       await sleep(reel3WillMatch ? 1800 : 1200);
+      sfx.anticipateEnd();
     } else {
       await sleep(700);
     }
 
     await stopReel(reels[2], cylinders[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
+    sfx.spinEnd();
+    if (particles) particles.classList.remove('dim');
   }
 
   function highlightWinningReels() {
@@ -1780,7 +1799,7 @@
       lastWinEl.className = 'last-win ' + (isBig ? 'big-win' : 'win');
       spawnFloatingWin(amount);
       highlightWinningReels();
-      // LED-Strip & Payline auf Win-Flash-Modus
+      // LED-Strip auf Win-Flash-Modus
       container.classList.add('win-flash');
       setTimeout(() => container.classList.remove('win-flash'), 2400);
     } else {
@@ -1905,7 +1924,7 @@
 
   // ============== SPIN ENGINE ==============
   function setButtonsDisabled(disabled) {
-    document.querySelectorAll('.spin-btn').forEach(b => b.disabled = disabled);
+    document.querySelectorAll('.arcade-btn').forEach(b => b.disabled = disabled);
     document.querySelectorAll('.debug-btn').forEach(b => b.disabled = disabled);
   }
 
@@ -1979,8 +1998,10 @@
 
   // ============== EVENT BINDINGS ==============
   function bindBetButtons() {
-    document.querySelectorAll('.spin-btn').forEach(btn => {
+    document.querySelectorAll('.arcade-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        sfx.click();
+        sfx.unlock();
         const bet = parseInt(btn.dataset.bet, 10);
         const spins = parseInt(btn.dataset.spins, 10);
         const mult = parseInt(btn.dataset.multiplier || '1', 10);
@@ -1992,6 +2013,8 @@
   function bindDebugButtons() {
     document.querySelectorAll('.debug-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        sfx.click();
+        sfx.unlock();
         const force = btn.dataset.force;
         if (force === 'random') {
           doSpin({ betAmount: 100, spinCount: 1 });
@@ -2108,6 +2131,148 @@
     }
   });
 
+  // ============== SOUND (Web Audio, synthetisch) ==============
+  const sfx = (() => {
+    let ctx = null;
+    let muted = localStorage.getItem('slotMuted') === '1';
+    let masterGain = null;
+    let spinNodes = null;
+    let antNodes = null;
+
+    function ensure() {
+      if (ctx) return ctx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = muted ? 0 : 0.6;
+      masterGain.connect(ctx.destination);
+      return ctx;
+    }
+    function unlock() {
+      const c = ensure();
+      if (!c) return;
+      if (c.state === 'suspended') c.resume();
+    }
+    function beep(freq, dur, type='sine', gain=0.18, attack=0.005) {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const o = c.createOscillator(), g = c.createGain();
+      const t0 = c.currentTime;
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g).connect(masterGain);
+      o.start(t0); o.stop(t0 + dur + 0.02);
+    }
+    function noiseBurst(dur=0.05, gain=0.12, filterFreq=2000) {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const bufferSize = Math.max(1, Math.floor(c.sampleRate * dur));
+      const buf = c.createBuffer(1, bufferSize, c.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random()*2 - 1) * (1 - i / bufferSize);
+      const src = c.createBufferSource(); src.buffer = buf;
+      const flt = c.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = filterFreq;
+      const g = c.createGain(); g.gain.value = gain;
+      src.connect(flt).connect(g).connect(masterGain);
+      src.start();
+    }
+
+    return {
+      unlock,
+      click() {
+        beep(880, 0.035, 'square', 0.06, 0.001);
+        beep(440, 0.06,  'square', 0.04, 0.001);
+      },
+      reelStop() {
+        // Tiefer "Klonk" + kurzes Klick-Geräusch
+        beep(180, 0.10, 'triangle', 0.22, 0.001);
+        beep(90,  0.14, 'sine',     0.16, 0.001);
+        noiseBurst(0.04, 0.08, 1200);
+      },
+      spinStart() {
+        // Kontinuierliches Surren mit leichtem LFO
+        if (muted) return;
+        const c = ensure(); if (!c) return;
+        if (spinNodes) return;
+        const t0 = c.currentTime;
+        const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 130;
+        const o2 = c.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = 137;
+        const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 6;
+        const lfoGain = c.createGain(); lfoGain.gain.value = 4;
+        lfo.connect(lfoGain).connect(o.frequency);
+        const flt = c.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 800; flt.Q.value = 1;
+        const g = c.createGain(); g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.18);
+        o.connect(flt); o2.connect(flt); flt.connect(g).connect(masterGain);
+        o.start(); o2.start(); lfo.start();
+        spinNodes = { o, o2, lfo, g, flt };
+      },
+      spinEnd() {
+        if (!spinNodes) return;
+        const c = ctx; if (!c) { spinNodes = null; return; }
+        const t = c.currentTime;
+        const { o, o2, lfo, g } = spinNodes;
+        g.gain.cancelScheduledValues(t);
+        g.gain.setValueAtTime(g.gain.value, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+        o.stop(t + 0.18); o2.stop(t + 0.18); lfo.stop(t + 0.18);
+        spinNodes = null;
+      },
+      anticipateStart() {
+        if (muted) return;
+        const c = ensure(); if (!c) return;
+        if (antNodes) return;
+        const t0 = c.currentTime;
+        const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 220;
+        o.frequency.exponentialRampToValueAtTime(660, t0 + 1.2);
+        const g = c.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.2);
+        o.connect(g).connect(masterGain);
+        o.start();
+        antNodes = { o, g };
+      },
+      anticipateEnd() {
+        if (!antNodes) return;
+        const c = ctx; if (!c) { antNodes = null; return; }
+        const t = c.currentTime;
+        const { o, g } = antNodes;
+        g.gain.cancelScheduledValues(t);
+        g.gain.setValueAtTime(g.gain.value, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+        o.stop(t + 0.15);
+        antNodes = null;
+      },
+      setMuted(v) {
+        muted = !!v;
+        localStorage.setItem('slotMuted', muted ? '1' : '0');
+        if (masterGain && ctx) {
+          masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.6, ctx.currentTime + 0.05);
+        }
+        if (muted) { this.spinEnd(); this.anticipateEnd(); }
+      },
+      isMuted() { return muted; }
+    };
+  })();
+
+  function bindMuteButton() {
+    const btn = document.getElementById('muteBtn');
+    if (!btn) return;
+    const refresh = () => {
+      btn.textContent = sfx.isMuted() ? '🔇' : '🔊';
+      btn.classList.toggle('muted', sfx.isMuted());
+    };
+    btn.addEventListener('click', () => {
+      sfx.unlock();
+      sfx.setMuted(!sfx.isMuted());
+      refresh();
+    });
+    refresh();
+  }
+
   // ============== AMBIENT PARTICLES ==============
   function spawnAmbientParticles() {
     const container = document.getElementById('ambientParticles');
@@ -2115,22 +2280,20 @@
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
-    const count = 28;
+    const count = 8;
     for (let i = 0; i < count; i++) {
       const p = document.createElement('div');
       p.className = 'ambient-particle';
-      const size = 2 + Math.random() * 5;
-      const duration = 12 + Math.random() * 14;
+      const size = 2 + Math.random() * 3;
+      const duration = 14 + Math.random() * 10;
       const delay = Math.random() * duration;
       const left = Math.random() * 100;
-      const drift = (Math.random() - 0.5) * 60;
       p.style.cssText = `
         left: ${left}%;
         width: ${size}px;
         height: ${size}px;
         animation-duration: ${duration}s;
         animation-delay: -${delay}s;
-        --drift: ${drift}px;
       `;
       container.appendChild(p);
     }
@@ -2141,6 +2304,7 @@
   bindDebugButtons();
   bindTestModeToggle();
   bindResetStats();
+  bindMuteButton();
   spawnAmbientParticles();
 </script>
 </body>
