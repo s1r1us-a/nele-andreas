@@ -3292,7 +3292,7 @@
     if (!userKey || isVisitMode) return;
     const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots,
       bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites] };
-    await set(ref(db, `farm/${userKey}`), data);
+    await update(ref(db, `farm/${userKey}`), data);
   }
   window.saveFarmData = saveFarmData;
 
@@ -4416,7 +4416,7 @@
   }
 
   window.showSpecificModal = function(modalId) { document.getElementById('modalOverlay').classList.add('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); document.getElementById(modalId).classList.add('active'); }
-  window.closeAllModals = function() { document.getElementById('modalOverlay').classList.remove('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); selectedAnimalId = null; currentTargetSlot = null; currentStatusSlot = null; }
+  window.closeAllModals = function() { document.getElementById('modalOverlay').classList.remove('active'); document.querySelectorAll('.modal-card').forEach(c => c.classList.remove('active')); selectedAnimalId = null; currentTargetSlot = null; currentStatusSlot = null; pendingSell = null; itemToBuy = null; }
   window.openShopToFields = function() { if(isVisitMode) return; window.renderShop('seeds'); window.showSpecificModal('modalShop'); }
 
   // ── BACKHAUS LOGIK MIT 3 SLOTS ──
@@ -4448,8 +4448,8 @@
                     let needed = r.req[cat][item];
                     let have = inventory[cat][item] || 0;
                     let itemName = item;
-                    if(cat === 'crops') itemName = shopItems[item].name;
-                    else if(cat === 'bakery') itemName = bakeryRecipes[item].name;
+                    if(cat === 'crops' && shopItems[item]) itemName = shopItems[item].name;
+                    else if(cat === 'bakery' && bakeryRecipes[item]) itemName = bakeryRecipes[item].name;
                     else if(item === 'egg') itemName = 'Ei';
                     else if(item === 'milk') itemName = 'Kuhmilch';
                     else if(item === 'honey') itemName = 'Honig';
@@ -4477,9 +4477,11 @@
                 slotsHtml += `<div style="display:flex; align-items:center; gap:10px; padding: 8px 12px; color: var(--text-mid); border: 2px dashed var(--ui-card-border); border-radius: 10px; margin-bottom: 6px; font-size:12px; font-weight:600;">🔲 Slot ${index+1}: Leer</div>`;
             } else if (slot.state === 'ready') {
                 const r = bakeryRecipes[slot.item];
+                if (!r) { oven.slots[index] = { state: 'empty', item: null, startedAt: 0 }; return; }
                 slotsHtml += `<div style="display:flex; align-items:center; gap:10px; padding: 8px 12px; border: 2px solid #22c55e; border-radius: 10px; margin-bottom: 6px; background: rgba(34,197,94,0.05);"><span style="font-size:22px; animation: popIn 0.5s;">${r.icon}</span><span style="font-size:12px; font-weight:700; color:var(--text-dark); flex:1;">${r.name} fertig!</span><button class="btn-generic" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 6px 10px; font-size:11px; white-space:nowrap;" onclick="window.collectBakery(${index})">Abholen</button></div>`;
             } else {
                 const r = bakeryRecipes[slot.item];
+                if (!r) { oven.slots[index] = { state: 'empty', item: null, startedAt: 0 }; return; }
                 const elapsedSec = Math.floor((Date.now() - slot.startedAt) / 1000);
                 const pct = Math.min(100, (elapsedSec / r.time) * 100);
                 const rem = Math.max(0, r.time - elapsedSec);
@@ -4515,13 +4517,16 @@
 
   window.collectBakery = async function(index) {
       const slot = oven.slots[index];
-      if (slot && slot.state === 'ready') { 
-          inventory.bakery[slot.item]++; 
-          oven.slots[index] = { state: 'empty', item: null, startedAt: 0 }; 
-          await saveFarmData(); 
+      if (slot && slot.state === 'ready') {
+          const r = bakeryRecipes[slot.item];
+          if (!r) { oven.slots[index] = { state: 'empty', item: null, startedAt: 0 }; await saveFarmData(); window.renderBakery('oven'); return; }
+          inventory.bakery[slot.item] = (inventory.bakery[slot.item] || 0) + 1;
+          oven.slots[index] = { state: 'empty', item: null, startedAt: 0 };
+          await saveFarmData();
           updateFarmDOM();
-          window.renderBakery('oven'); 
-          window.showToast('Backware abgeholt! 🧑‍🍳'); 
+          window.renderBakery('oven');
+          window.showFloatingNumber('+1 ' + r.icon, '#d97706');
+          window.showToast(r.name + ' fertig! ' + r.icon);
       }
   }
 
@@ -4592,7 +4597,7 @@
   window.buyBeehive = async function() {
     if (currentCoins >= 800) {
         await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - 800);
-        runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + 800).catch(err => console.error('Stats-Fehler:', err));
+        await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + 800).catch(err => console.error('Stats-Fehler:', err));
         beehive.level = 1;
         beehive.isProducing = true; 
         beehive.fedAt = Date.now(); 
@@ -4609,7 +4614,7 @@
   window.upgradeBeehive = async function(cost) {
     if (currentCoins >= cost) {
         await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
-        runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
+        await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
         beehive.level++;
         await saveFarmData();
         updateFarmDOM();
@@ -4621,19 +4626,24 @@
     }
   }
 
-  window.buyBed = async function() {
+  window.buyBed = async function(confirmed) {
       const cost = bedPrices[unlockedBeds];
-      if (currentCoins >= cost) {
-          await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
-          runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
-          unlockedBeds++;
-          await saveFarmData();
-          updateFarmDOM();
-          window.renderShop('fields');
-          window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
-      } else {
-          window.showToast('Nicht genug Münzen! 🪙');
+      if (currentCoins < cost) { window.showToast('Nicht genug Münzen! 🪙'); return; }
+      if (!confirmed && cost >= 50000) {
+          document.getElementById('confirmTitle').textContent = 'Feld kaufen?';
+          document.getElementById('confirmText').innerHTML = `Möchtest du <b>Feld ${unlockedBeds + 1}</b> für <b>${cost.toLocaleString('de-DE')} 🪙</b> kaufen?`;
+          document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.buyBed(true)">Kaufen ✓</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Abbrechen</button>`;
+          window.showSpecificModal('modalConfirm');
+          return;
       }
+      await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+      await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
+      unlockedBeds++;
+      await saveFarmData();
+      updateFarmDOM();
+      window.renderShop('fields');
+      window.showSpecificModal('modalShop');
+      window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
   }
 
   window.openConfirmBuy = function(itemId, type) { 
@@ -4656,13 +4666,13 @@
       `;
       document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.buyQtyMax()" style="background: linear-gradient(135deg, #c084fc, #a855f7);">Max kaufen</button><button class="btn-generic btn-buy" onclick="window.processBuyInput()">Kaufen ✓</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`;
     }
-    else { itemToBuy = animalItems[itemId]; document.getElementById('confirmTitle').textContent = "Tier adoptieren 🐾"; document.getElementById('confirmText').innerHTML = `Wie soll dein neues Tier heißen?<br><br><span style="font-size:28px">${itemToBuy.icon}</span><br><br><input type="text" id="newAnimalName" class="name-input" placeholder="Name eingeben..." autocomplete="off">`; document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.processBuyAnimal()">Adoptieren (${itemToBuy.price} 🪙)</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`; setTimeout(() => { const input = document.getElementById('newAnimalName'); if(input) input.focus(); }, 100); }
+    else { itemToBuy = animalItems[itemId]; document.getElementById('confirmTitle').textContent = "Tier adoptieren 🐾"; document.getElementById('confirmText').innerHTML = `Wie soll dein neues Tier heißen?<br><br><span style="font-size:28px">${itemToBuy.icon}</span><br><br><input type="text" id="newAnimalName" class="name-input" placeholder="Name eingeben..." autocomplete="off" maxlength="20">`; document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.processBuyAnimal()">Adoptieren (${itemToBuy.price} 🪙)</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`; setTimeout(() => { const input = document.getElementById('newAnimalName'); if(input) input.focus(); }, 100); }
     window.showSpecificModal('modalConfirm');
   }
 
   window.processBuy = async function(amount) {
     const cost = itemToBuy.price * amount;
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
@@ -4696,12 +4706,13 @@
     await window.processBuy(val);
   }
 
-  window.processBuyAnimal = async function() { 
-    const cost = itemToBuy.price; const nameInput = document.getElementById('newAnimalName').value.trim();
+  window.processBuyAnimal = async function() {
+    const cost = itemToBuy.price; let nameInput = document.getElementById('newAnimalName').value.trim();
     if(!nameInput) { window.showToast('Bitte gib einen Namen ein! 📝'); return; }
+    if (nameInput.length > 20) nameInput = nameInput.slice(0, 20);
     if (currentCoins >= cost) { 
         await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); 
-        runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); 
+        await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); 
         
         let h = Math.floor(Math.random() * 40) - 20; 
         let s = (85 + Math.random() * 30) / 100;     
@@ -4781,12 +4792,13 @@
   }
 
   let pendingSell = null;
+  let isSelling = false;
 
   window.sellItem = function(category, itemId, price) {
     let icon = '🛒', name = itemId;
-    if (category === 'bakery') { icon = bakeryRecipes[itemId].icon; name = bakeryRecipes[itemId].name; }
-    else if (category === 'tailoring' || category === 'accessories') { icon = weavingRecipes[itemId].icon; name = weavingRecipes[itemId].name; }
-    else if (category === 'crops') { icon = shopItems[itemId].icon; name = shopItems[itemId].name; }
+    if (category === 'bakery' && bakeryRecipes[itemId]) { icon = bakeryRecipes[itemId].icon; name = bakeryRecipes[itemId].name; }
+    else if ((category === 'tailoring' || category === 'accessories') && weavingRecipes[itemId]) { icon = weavingRecipes[itemId].icon; name = weavingRecipes[itemId].name; }
+    else if (category === 'crops' && shopItems[itemId]) { icon = shopItems[itemId].icon; name = shopItems[itemId].name; }
     else if (itemId === 'egg') { icon = '🥚'; name = 'Ei'; }
     else if (itemId === 'diamond') { icon = '💎'; name = 'Diamant'; }
     else if (itemId === 'milk') { icon = '🥛'; name = 'Milch'; }
@@ -4799,8 +4811,8 @@
     else if (itemId === 'truffle')  { icon = '🍄'; name = 'Trüffel'; }
     else if (itemId === 'horseshoe'){ icon = '🧲'; name = 'Hufeisen'; }
     else if (itemId === 'rainbowessence'){ icon = '🌈'; name = 'Regenbogen-Essenz'; }
-    else if (category === 'ores')    { icon = oreTypes[itemId].icon; name = oreTypes[itemId].name; }
-    else if (category === 'jewelry') { icon = jewelryRecipes[itemId].icon; name = jewelryRecipes[itemId].name; }
+    else if (category === 'ores' && oreTypes[itemId])    { icon = oreTypes[itemId].icon; name = oreTypes[itemId].name; }
+    else if (category === 'jewelry' && jewelryRecipes[itemId]) { icon = jewelryRecipes[itemId].icon; name = jewelryRecipes[itemId].name; }
 
     const stock = inventory[category][itemId] || 0;
     pendingSell = { category, itemId, price, stock };
@@ -4838,22 +4850,28 @@
   }
 
   window.sellQtyConfirm = async function() {
-    if (!pendingSell) return;
+    if (!pendingSell || isSelling) return;
     const input = document.getElementById('sellQtyInput');
     let amount = parseInt(input.value) || 1;
     if (amount < 1) amount = 1;
     if (amount > pendingSell.stock) amount = pendingSell.stock;
     const { category, itemId, price } = pendingSell;
     const total = amount * price;
-    pendingSell = null;
-    window.closeSellQty();
-    if (inventory[category][itemId] >= amount) {
+    if ((inventory[category][itemId] || 0) < amount) {
+      window.closeSellQty();
+      return;
+    }
+    isSelling = true;
+    try {
       inventory[category][itemId] -= amount;
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
-      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
+      await runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
       await saveFarmData();
       window.showFloatingNumber("+" + total + " 🪙", "#22c55e");
-      window.openSell();
+    } finally {
+      isSelling = false;
+      pendingSell = null;
+      window.closeSellQty();
     }
   }
 
@@ -4950,9 +4968,11 @@
           slotsHtml += `<div style="display:flex; align-items:center; gap:10px; padding: 8px 12px; color: var(--text-mid); border: 2px dashed var(--ui-card-border); border-radius: 10px; margin-bottom: 6px; font-size:12px; font-weight:600;">🔲 Webstuhl ${index+1}: Leer</div>`;
         } else if (slot.state === 'ready') {
           const r = weavingRecipes[slot.item];
+          if (!r) { loom.slots[index] = { state: 'empty', item: null, startedAt: 0 }; return; }
           slotsHtml += `<div style="display:flex; align-items:center; gap:10px; padding: 8px 12px; border: 2px solid #22c55e; border-radius: 10px; margin-bottom: 6px; background: rgba(34,197,94,0.05);"><span style="font-size:22px; animation: popIn 0.5s;">${r.icon}</span><span style="font-size:12px; font-weight:700; color:var(--text-dark); flex:1;">${r.name} fertig!</span><button class="btn-generic" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 6px 10px; font-size:11px; white-space:nowrap;" onclick="window.collectWeaving(${index})">Abholen</button></div>`;
         } else {
           const r = weavingRecipes[slot.item];
+          if (!r) { loom.slots[index] = { state: 'empty', item: null, startedAt: 0 }; return; }
           const elapsedSec = Math.floor((Date.now() - slot.startedAt) / 1000);
           const pct = Math.min(100, (elapsedSec / r.time) * 100);
           const rem = Math.max(0, r.time - elapsedSec);
@@ -4983,6 +5003,7 @@
     const slot = loom.slots[index];
     if (slot.state !== 'ready') return;
     const r = weavingRecipes[slot.item];
+    if (!r) { loom.slots[index] = { state: 'empty', item: null, startedAt: 0 }; await saveFarmData(); window.renderWeaving('looms'); return; }
     if (!inventory.accessories) inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0 };
     inventory.accessories[slot.item] = (inventory.accessories[slot.item] || 0) + 1;
     loom.slots[index] = { state: 'empty', item: null, startedAt: 0 };
@@ -5036,6 +5057,7 @@
           html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px dashed var(--ui-card-border);border-radius:10px;margin-bottom:6px;font-size:12px;color:var(--text-mid);font-weight:600;">🔲 Werkbank ${i+1}: Leer</div>`;
         } else if (slot.state === 'ready') {
           const r = jewelryRecipes[slot.item];
+          if (!r) { forgeSlots[i] = { state: 'empty', item: null, startedAt: 0 }; return; }
           html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid #22c55e;border-radius:10px;margin-bottom:6px;background:rgba(34,197,94,0.05);">
             <span style="font-size:22px;animation:popIn 0.5s;">${r.icon}</span>
             <span style="font-size:12px;font-weight:700;color:var(--text-dark);flex:1;">${r.name} fertig!</span>
@@ -5043,6 +5065,7 @@
           </div>`;
         } else {
           const r = jewelryRecipes[slot.item];
+          if (!r) { forgeSlots[i] = { state: 'empty', item: null, startedAt: 0 }; return; }
           const elapsedSec = Math.floor((Date.now() - slot.startedAt) / 1000);
           const pct = Math.min(100, (elapsedSec / r.time) * 100);
           const rem = Math.max(0, r.time - elapsedSec);
@@ -5087,6 +5110,7 @@
     const slot = forgeSlots[index];
     if (slot.state !== 'ready') return;
     const r = jewelryRecipes[slot.item];
+    if (!r) { forgeSlots[index] = { state: 'empty', item: null, startedAt: 0 }; await saveFarmData(); window.renderForge('slots'); return; }
     inventory.jewelry[slot.item] = (inventory.jewelry[slot.item] || 0) + 1;
     forgeSlots[index] = { state: 'empty', item: null, startedAt: 0 };
     await saveFarmData();
