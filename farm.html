@@ -259,12 +259,20 @@
     .night-mode .bird-flock { opacity: 0.25; }
 
 
-    /* ── PERMANENTER SCHORNSTEIN-RAUCH ── */
-    .bakery-chimney::before { content: ''; position: absolute; top: -16px; left: 2px; width: 9px; height: 9px; background: rgba(200,200,200,0.5); border-radius: 50%; animation: chimneyPuff 3.2s ease-out infinite; pointer-events: none; }
-    .bakery-chimney::after  { content: ''; position: absolute; top: -22px; left: 4px; width: 7px; height: 7px; background: rgba(200,200,200,0.35); border-radius: 50%; animation: chimneyPuff 3.2s ease-out 1.6s infinite; pointer-events: none; }
-    @keyframes chimneyPuff { 0% { transform: translateY(0) scale(0.5); opacity: 0.7; } 100% { transform: translateY(-26px) scale(2.5); opacity: 0; } }
-    .is-baking .bakery-chimney::before { background: rgba(140,140,140,0.8); animation-duration: 1.6s; }
-    .is-baking .bakery-chimney::after  { background: rgba(140,140,140,0.6); animation-duration: 1.6s; }
+    /* ── SCHORNSTEIN-RAUCH: nur beim Backen (SVG-Element .bakery-smoke) ── */
+    .bakery-smoke {
+      position: absolute;
+      right: 10px;
+      top: -34px;
+      width: 30px;
+      height: 60px;
+      overflow: visible;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      z-index: 2;
+    }
+    .is-baking .bakery-smoke { opacity: 1; }
 
     /* Verschönerte Sonne (Tag) */
     .sun { 
@@ -468,10 +476,9 @@
     .bakery-sign { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 24px; height: 12px; background: #d4a061; border: 2px solid #8e5a32; border-radius: 3px; z-index: 4; display: flex; align-items: center; justify-content: center; font-size: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     .bakery-sign::after { content: '🥖'; }
     
-    /* Kamin & Rauch */
+    /* Kamin (Rauch jetzt via SVG-Element .bakery-smoke) */
     .bakery-chimney { position: absolute; top: 6px; right: 14px; width: 14px; height: 35px; background: #704224; border-radius: 3px; box-shadow: inset -3px 0 0 rgba(0,0,0,0.2); z-index: 1; }
-    .is-baking .bakery-chimney::after { content: '💨'; position: absolute; top: -22px; left: -2px; font-size: 16px; pointer-events: none; animation: floatSmoke 2.2s infinite ease-out; display: block; }
-    @keyframes floatSmoke { 
+    @keyframes floatSmoke {
       0% { transform: translateY(0) scale(0.5) rotate(-90deg); opacity: 0; } 
       20% { opacity: 0.7; } 
       100% { transform: translateY(-45px) scale(1.5) rotate(-90deg); opacity: 0; } 
@@ -592,6 +599,7 @@
       .bakery-roof::after    { left: -26px; width: 52px; top: 27px; }
       .bakery-base           { width: 44px; height: 28px; }
       .bakery-chimney        { right: 9px; width: 10px; height: 24px; }
+      .bakery-smoke          { right: 6px; top: -24px; width: 22px; height: 44px; }
       .bakery-door           { left: 7px; width: 12px; height: 18px; }
       .bakery-window         { top: 6px; right: 6px; width: 11px; height: 11px; }
       .weaving-building      { width: 52px; height: 64px; left: 48%; top: calc(35% - 56px); }
@@ -1018,22 +1026,6 @@
         #704224 !important;
       box-shadow: inset -3px 0 0 rgba(0,0,0,0.25), 0 2px 3px rgba(0,0,0,0.2) !important;
     }
-    /* Verbesserte Rauch-Puffs: weicher, mehrere Stufen */
-    .bakery-chimney::before {
-      width: 11px !important; height: 11px !important;
-      background: radial-gradient(circle, rgba(240,240,240,0.85), rgba(200,200,200,0.3) 60%, transparent) !important;
-      filter: blur(1px);
-      animation: riseFade 3.4s ease-out infinite !important;
-    }
-    .bakery-chimney::after {
-      width: 8px !important; height: 8px !important;
-      background: radial-gradient(circle, rgba(230,230,230,0.7), rgba(180,180,180,0.2) 60%, transparent) !important;
-      filter: blur(1.2px);
-      animation: riseFade 3.4s ease-out 1.7s infinite !important;
-    }
-    .is-baking .bakery-chimney::before { background: radial-gradient(circle, rgba(120,120,120,0.9), rgba(80,80,80,0.4) 60%, transparent) !important; animation-duration: 1.8s !important; }
-    .is-baking .bakery-chimney::after { background: radial-gradient(circle, rgba(140,140,140,0.8), rgba(90,90,90,0.3) 60%, transparent) !important; animation-duration: 1.8s !important; }
-
     /* Mehlsack-Deko vor dem Backhaus (positioniert per zusätzlichem Div) */
     .bakery-decor {
       position: absolute; bottom: -2px; left: -10px;
@@ -1562,7 +1554,7 @@
         radial-gradient(ellipse at 50% 30%, rgba(255,215,130,0.35) 0%, transparent 55%),
         radial-gradient(ellipse at 30% 70%, rgba(232,115,138,0.14) 0%, transparent 50%),
         radial-gradient(ellipse at 70% 75%, rgba(126,200,80,0.20) 0%, transparent 50%);
-      animation: introGlowBreath 3s ease-in-out 0.2s infinite alternate;
+      animation: introGlowBreath 5s ease-in-out 0.2s infinite alternate;
     }
     @keyframes introGlowBreath {
       0%   { opacity: 0.55; transform: scale(1); }
@@ -1580,7 +1572,7 @@
         0 0 60px 12px rgba(255,200,90,0.65),
         0 0 120px 30px rgba(255,160,100,0.35);
       opacity: 0;
-      animation: introSunRise 0.9s cubic-bezier(0.22,1,0.36,1) 0.05s both, introSunPulse 2.4s ease-in-out 0.95s infinite alternate;
+      animation: introSunRise 1.2s cubic-bezier(0.22,1,0.36,1) 0.20s both, introSunPulse 3.0s ease-in-out 1.40s infinite alternate;
     }
     @keyframes introSunRise {
       0%   { opacity: 0; transform: translateY(220px) scale(0.45); filter: brightness(1.4); }
@@ -1598,7 +1590,7 @@
       left: 50%; top: 28%;
       margin: -390px 0 0 -390px;
       pointer-events: none;
-      animation: introRaysSpin 22s linear 0.4s infinite;
+      animation: introRaysSpin 30s linear 0.4s infinite;
     }
     .farm-intro-rays {
       position: absolute; inset: 0; border-radius: 50%;
@@ -1614,7 +1606,7 @@
         transparent 286deg, rgba(212,160,97,0.10)  292deg,transparent 300deg,
         transparent 330deg, rgba(255,215,110,0.12) 336deg,transparent 344deg
       );
-      animation: introRaysIn 1.0s ease-out 0.25s both;
+      animation: introRaysIn 1.2s ease-out 0.55s both;
     }
     @keyframes introRaysSpin { to { transform: rotate(360deg); } }
     @keyframes introRaysIn {
@@ -1628,10 +1620,10 @@
       position: absolute; border-radius: 50%; pointer-events: none; opacity: 0;
       left: 50%; top: 28%;
     }
-    .farm-intro-ring-r1 { width: 140px; height: 140px; margin: -70px 0 0 -70px;  border: 1.8px solid rgba(232,115,138,0.65); animation: introRingExp 1.6s ease-out 0.30s both; }
-    .farm-intro-ring-r2 { width: 110px; height: 110px; margin: -55px 0 0 -55px;  border: 1.5px solid rgba(212,160,97,0.60);  animation: introRingExp 1.5s ease-out 0.55s both; }
-    .farm-intro-ring-r3 { width: 170px; height: 170px; margin: -85px 0 0 -85px;  border: 1.2px solid rgba(255,255,255,0.55); animation: introRingExp 1.4s ease-out 2.05s both; }
-    .farm-intro-ring-r4 { width: 130px; height: 130px; margin: -65px 0 0 -65px;  border: 1.8px solid rgba(126,200,80,0.55);  animation: introRingExp 1.4s ease-out 2.25s both; }
+    .farm-intro-ring-r1 { width: 140px; height: 140px; margin: -70px 0 0 -70px;  border: 1.8px solid rgba(232,115,138,0.65); animation: introRingExp 1.6s ease-out 0.45s both; }
+    .farm-intro-ring-r2 { width: 110px; height: 110px; margin: -55px 0 0 -55px;  border: 1.5px solid rgba(212,160,97,0.60);  animation: introRingExp 1.5s ease-out 0.85s both; }
+    .farm-intro-ring-r3 { width: 170px; height: 170px; margin: -85px 0 0 -85px;  border: 1.2px solid rgba(255,255,255,0.55); animation: introRingExp 1.4s ease-out 1.30s both; }
+    .farm-intro-ring-r4 { width: 130px; height: 130px; margin: -65px 0 0 -65px;  border: 1.8px solid rgba(126,200,80,0.55);  animation: introRingExp 1.4s ease-out 1.85s both; }
     @keyframes introRingExp {
       0%   { transform: scale(1);   opacity: 0.9; }
       55%  { opacity: 0.45; }
@@ -1646,14 +1638,14 @@
       position: absolute; bottom: 0;
       transform-origin: bottom center;
       transform: scaleY(0);
-      animation: introGrassGrow 0.6s cubic-bezier(0.22,1,0.36,1) 0.25s both;
+      animation: introGrassGrow 0.8s cubic-bezier(0.22,1,0.36,1) 0.40s both;
     }
-    .farm-intro-grass-tuft:nth-child(1) { left: 6%;  animation-delay: 0.25s; }
-    .farm-intro-grass-tuft:nth-child(2) { left: 22%; animation-delay: 0.32s; }
-    .farm-intro-grass-tuft:nth-child(3) { left: 38%; animation-delay: 0.40s; }
-    .farm-intro-grass-tuft:nth-child(4) { left: 58%; animation-delay: 0.34s; }
-    .farm-intro-grass-tuft:nth-child(5) { left: 74%; animation-delay: 0.28s; }
-    .farm-intro-grass-tuft:nth-child(6) { left: 90%; animation-delay: 0.38s; }
+    .farm-intro-grass-tuft:nth-child(1) { left: 6%;  animation-delay: 0.40s; }
+    .farm-intro-grass-tuft:nth-child(2) { left: 22%; animation-delay: 0.50s; }
+    .farm-intro-grass-tuft:nth-child(3) { left: 38%; animation-delay: 0.65s; }
+    .farm-intro-grass-tuft:nth-child(4) { left: 58%; animation-delay: 0.55s; }
+    .farm-intro-grass-tuft:nth-child(5) { left: 74%; animation-delay: 0.45s; }
+    .farm-intro-grass-tuft:nth-child(6) { left: 90%; animation-delay: 0.60s; }
     @keyframes introGrassGrow {
       0%   { transform: scaleY(0); }
       70%  { transform: scaleY(1.15); }
@@ -1676,7 +1668,7 @@
       transform: translateX(-50%);
       font-size: 28px; line-height: 1;
       opacity: 0;
-      animation: introSeedFall 0.45s cubic-bezier(0.5,0,0.7,1) 0.40s both;
+      animation: introSeedFall 0.55s cubic-bezier(0.5,0,0.7,1) 1.25s both;
     }
     @keyframes introSeedFall {
       0%   { opacity: 0; transform: translate(-50%, -150px) rotate(-30deg); }
@@ -1693,7 +1685,7 @@
       transform-origin: bottom center;
       transform: scaleY(0);
       box-shadow: 0 0 8px rgba(74,142,37,0.35);
-      animation: introStemGrow 0.55s cubic-bezier(0.22,1,0.36,1) 0.85s both;
+      animation: introStemGrow 0.75s cubic-bezier(0.22,1,0.36,1) 1.70s both;
     }
     @keyframes introStemGrow {
       0%   { transform: scaleY(0); }
@@ -1707,8 +1699,8 @@
       transform-origin: left center;
       opacity: 0;
     }
-    .farm-intro-leaf.left  { transform: translateX(-100%) rotate(20deg) scaleX(0); animation: introLeafLeft  0.4s cubic-bezier(0.34,1.56,0.64,1) 1.05s both; }
-    .farm-intro-leaf.right { transform: translateX(0)    rotate(-20deg) scaleX(0); animation: introLeafRight 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.12s both; bottom: 50px; border-radius: 12px 12px 2px 12px; }
+    .farm-intro-leaf.left  { transform: translateX(-100%) rotate(20deg) scaleX(0); animation: introLeafLeft  0.50s cubic-bezier(0.34,1.30,0.64,1) 2.20s both; }
+    .farm-intro-leaf.right { transform: translateX(0)    rotate(-20deg) scaleX(0); animation: introLeafRight 0.50s cubic-bezier(0.34,1.30,0.64,1) 2.30s both; bottom: 50px; border-radius: 12px 12px 2px 12px; }
     @keyframes introLeafLeft  { 0% { opacity: 0; transform: translateX(-100%) rotate(20deg)  scaleX(0); } 100% { opacity: 1; transform: translateX(-100%) rotate(20deg)  scaleX(1); } }
     @keyframes introLeafRight { 0% { opacity: 0; transform: translateX(0)     rotate(-20deg) scaleX(0); } 100% { opacity: 1; transform: translateX(0)     rotate(-20deg) scaleX(1); } }
     .farm-intro-flower {
@@ -1716,7 +1708,7 @@
       transform: translateX(-50%) scale(0);
       font-size: 56px; line-height: 1;
       filter: drop-shadow(0 4px 14px rgba(255,180,60,0.55));
-      animation: introFlowerPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 1.25s both, introFlowerWobble 2.6s ease-in-out 1.8s infinite;
+      animation: introFlowerPop 0.65s cubic-bezier(0.34,1.30,0.64,1) 2.55s both, introFlowerWobble 2.6s ease-in-out 3.30s infinite;
     }
     @keyframes introFlowerPop {
       0%   { opacity: 0; transform: translateX(-50%) scale(0)   rotate(-40deg); }
@@ -1741,8 +1733,8 @@
       background-size: 220% auto; background-position: 0% center;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       animation:
-        introTitleFocus   1.0s cubic-bezier(0.22,1,0.36,1) 0.85s both,
-        introTitleShimmer 0.8s ease-out                    1.65s forwards;
+        introTitleFocus   1.2s cubic-bezier(0.22,1,0.36,1) 2.90s both,
+        introTitleShimmer 0.8s ease-out                    4.10s forwards;
     }
     @keyframes introTitleFocus {
       0%   { opacity: 0; transform: scale(1.14); filter: blur(28px) drop-shadow(0 0 80px rgba(255,200,90,1)) brightness(2.6); }
@@ -1759,7 +1751,7 @@
     .farm-intro-divider {
       height: 1.5px; border-radius: 2px;
       background: linear-gradient(90deg, transparent, rgba(232,115,138,0.75), rgba(212,160,97,0.65), transparent);
-      animation: introDivider 0.5s ease-out 1.30s both;
+      animation: introDivider 0.7s ease-out 2.70s both;
     }
     @keyframes introDivider {
       0%   { width: 0;    opacity: 0; }
@@ -1772,7 +1764,7 @@
       font-size: 12px; font-weight: 600;
       text-transform: uppercase; color: rgba(90,45,58,0.78);
       margin-top: 9px;
-      animation: introSubTrack 0.8s cubic-bezier(0.22,1,0.36,1) 1.55s both;
+      animation: introSubTrack 0.9s cubic-bezier(0.22,1,0.36,1) 3.40s both;
     }
     @keyframes introSubTrack {
       0%   { opacity: 0; letter-spacing: 16px; }
@@ -1863,11 +1855,11 @@
     <div class="farm-intro-divider"></div>
     <div class="farm-intro-sub">Meine Farm</div>
     <div class="farm-intro-sparkle-row">
-      <span class="farm-intro-sparkle" style="animation-delay:1.65s;animation-duration:1.6s">✨</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.80s;animation-duration:1.5s">🌸</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.72s;animation-duration:1.7s">🌻</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.88s;animation-duration:1.5s">⭐</span>
-      <span class="farm-intro-sparkle" style="animation-delay:1.78s;animation-duration:1.6s">✨</span>
+      <span class="farm-intro-sparkle" style="animation-delay:3.60s;animation-duration:1.6s">✨</span>
+      <span class="farm-intro-sparkle" style="animation-delay:3.75s;animation-duration:1.5s">🌸</span>
+      <span class="farm-intro-sparkle" style="animation-delay:3.68s;animation-duration:1.7s">🌻</span>
+      <span class="farm-intro-sparkle" style="animation-delay:3.95s;animation-duration:1.5s">⭐</span>
+      <span class="farm-intro-sparkle" style="animation-delay:3.82s;animation-duration:1.6s">✨</span>
     </div>
   </div>
 </div>
@@ -1896,7 +1888,7 @@
     f.style.cssText =
       'left:' + rand(4, 96) + '%;bottom:' + rand(8, 32) + '%;' +
       'font-size:' + rand(14, 26) + 'px;' +
-      'animation-delay:' + (1.40 + i * 0.13) + 's;' +
+      'animation-delay:' + (3.00 + i * 0.18) + 's;' +
       'animation-duration:' + rand(1.6, 2.4) + 's;';
     particles.appendChild(f);
   });
@@ -1925,13 +1917,13 @@
       b.style.setProperty('--by', by.toFixed(1) + 'px');
       overlay.appendChild(b);
     }
-  }, 1250);
+  }, 3600);
 
-  /* ── Auto-Dismiss nach 2,5 s ── */
+  /* ── Auto-Dismiss nach 5,5 s (Gesamt inkl. Fade ≈ 6 s) ── */
   setTimeout(function() {
     overlay.classList.add('fade-out');
     setTimeout(function() { overlay.style.display = 'none'; }, 550);
-  }, 2500);
+  }, 5500);
 })();
 </script>
 
@@ -2232,6 +2224,25 @@
   
   <div class="bakery-building" id="bakeryBuilding" onclick="openBakery()">
     <div class="bakery-chimney"></div>
+    <svg class="bakery-smoke" viewBox="0 0 30 60" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+      <g>
+        <circle cx="15" cy="50" r="4" fill="rgba(180,170,200,0.85)">
+          <animate attributeName="cy" from="50" to="-8" dur="3.2s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="4" to="12" dur="3.2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.95" to="0" dur="3.2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="13" cy="50" r="3.5" fill="rgba(180,170,200,0.8)">
+          <animate attributeName="cy" from="50" to="-12" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="3" to="11" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.9" to="0" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="17" cy="50" r="3" fill="rgba(180,170,200,0.75)">
+          <animate attributeName="cy" from="50" to="-16" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2.5" to="10" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.85" to="0" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </svg>
     <div class="bakery-roof"></div>
     <div class="bakery-base">
       <div class="bakery-sign"></div>
@@ -2425,20 +2436,20 @@
 
       <!-- Chimney smoke -->
       <g class="forge-smoke">
-        <circle cx="74" cy="40" r="4" fill="rgba(220,205,235,0.85)">
-          <animate attributeName="cy" from="40" to="6" dur="2.4s" repeatCount="indefinite"/>
-          <animate attributeName="r" from="3" to="8" dur="2.4s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" from="0.95" to="0" dur="2.4s" repeatCount="indefinite"/>
+        <circle cx="74" cy="40" r="4" fill="rgba(180,170,200,0.85)">
+          <animate attributeName="cy" from="40" to="-8" dur="3.2s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="4" to="12" dur="3.2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.95" to="0" dur="3.2s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="72" cy="40" r="3.5" fill="rgba(220,205,235,0.8)">
-          <animate attributeName="cy" from="40" to="4" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
-          <animate attributeName="r" from="2.5" to="7" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" from="0.9" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+        <circle cx="72" cy="40" r="3.5" fill="rgba(180,170,200,0.8)">
+          <animate attributeName="cy" from="40" to="-12" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="3" to="11" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.9" to="0" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="76" cy="40" r="3" fill="rgba(220,205,235,0.75)">
-          <animate attributeName="cy" from="40" to="2" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
-          <animate attributeName="r" from="2" to="6.5" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" from="0.85" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+        <circle cx="76" cy="40" r="3" fill="rgba(180,170,200,0.75)">
+          <animate attributeName="cy" from="40" to="-16" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2.5" to="10" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.85" to="0" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
         </circle>
       </g>
 
@@ -2539,19 +2550,19 @@
     <svg viewBox="0 0 90 110" xmlns="http://www.w3.org/2000/svg" overflow="visible">
       <g class="weaving-smoke">
         <circle cx="73" cy="18" r="4" fill="rgba(180,170,200,0.85)">
-          <animate attributeName="cy" from="18" to="-12" dur="2.4s" repeatCount="indefinite"/>
-          <animate attributeName="r" from="3" to="8" dur="2.4s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" from="0.95" to="0" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="cy" from="18" to="-22" dur="3.2s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="4" to="12" dur="3.2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.95" to="0" dur="3.2s" repeatCount="indefinite"/>
         </circle>
         <circle cx="71" cy="18" r="3.5" fill="rgba(180,170,200,0.8)">
-          <animate attributeName="cy" from="18" to="-14" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
-          <animate attributeName="r" from="2.5" to="7" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" from="0.9" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+          <animate attributeName="cy" from="18" to="-26" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="3" to="11" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.9" to="0" dur="3.2s" begin="0.9s" repeatCount="indefinite"/>
         </circle>
         <circle cx="75" cy="18" r="3" fill="rgba(180,170,200,0.75)">
-          <animate attributeName="cy" from="18" to="-16" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
-          <animate attributeName="r" from="2" to="6.5" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" from="0.85" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+          <animate attributeName="cy" from="18" to="-30" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="r" from="2.5" to="10" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="0.85" to="0" dur="3.2s" begin="1.8s" repeatCount="indefinite"/>
         </circle>
       </g>
       
