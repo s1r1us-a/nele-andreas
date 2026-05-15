@@ -4872,6 +4872,8 @@
       isSelling = false;
       pendingSell = null;
       window.closeSellQty();
+      const sellModal = document.getElementById('modalSell');
+      if (sellModal && sellModal.classList.contains('active')) window.openSell();
     }
   }
 
