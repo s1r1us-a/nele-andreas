@@ -1690,6 +1690,38 @@
     { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'legendary' },
   ];
 
+  // Slot-Badges (nur in der Slotmaschine gewinnbar) – hier nur für den
+  // Badge-Pill-Lookup, damit ein equipptes Slot-Badge korrekt angezeigt wird.
+  const SLOT_BADGES = [
+    { id: 'prinzesschen-krone',  emoji: '👸',  name: 'Prinzesschen-Krone', rarity: 'legendary' },
+    { id: 'ramanujan',           emoji: '🧮',  name: 'Ramanujan',          rarity: 'legendary' },
+    { id: 'laufmaschen-koenigin',emoji: '🧦',  name: 'Laufmaschen-Königin',rarity: 'rare' },
+    { id: 'diamant-trio',        emoji: '💎',  name: 'Diamant-Trio',       rarity: 'rare' },
+    { id: 'sternenstaub',        emoji: '⭐',  name: 'Sternenstaub',       rarity: 'rare' },
+    { id: 'glockenklang',        emoji: '🔔',  name: 'Glockenklang',       rarity: 'common' },
+    { id: 'glueckspilz',         emoji: '🍀',  name: 'Glückspilz',         rarity: 'common' },
+    { id: 'fast-prinzessin',     emoji: '👑',  name: 'Fast Prinzessin',    rarity: 'common' },
+    { id: 'beinahe-genie',       emoji: '📐',  name: 'Beinahe-Genie',      rarity: 'common' },
+    { id: 'diamant-paar',        emoji: '💍',  name: 'Diamant-Paar',       rarity: 'common' },
+    { id: 'so-knapp',            emoji: '😤',  name: 'So knapp!',          rarity: 'rare' },
+    { id: 'voll-daneben',        emoji: '🍂',  name: 'Voll daneben',       rarity: 'common' },
+    { id: 'erster-hebelzug',     emoji: '🎰',  name: 'Erster Hebelzug',    rarity: 'common' },
+    { id: 'stammspielerin',      emoji: '🎲',  name: 'Stammspielerin',     rarity: 'common' },
+    { id: 'slot-veteranin',      emoji: '🕹️', name: 'Slot-Veteranin',     rarity: 'rare' },
+    { id: 'slot-suechtig',       emoji: '😵‍💫',name: 'Slot-Süchtig',       rarity: 'legendary' },
+    { id: 'kleiner-einsatz',     emoji: '🎫',  name: 'Warmgespielt',       rarity: 'common' },
+    { id: 'hochrollerin',        emoji: '🎩',  name: 'Hochrollerin',       rarity: 'rare' },
+    { id: 'grossgewinn',         emoji: '💰',  name: 'Großgewinn',         rarity: 'rare' },
+    { id: 'mega-gewinn',         emoji: '💸',  name: 'Mega-Gewinn',        rarity: 'legendary' },
+    { id: 'jackpot-jaegerin',    emoji: '👸',  name: 'Jackpot-Jägerin',    rarity: 'legendary' },
+    { id: 'ramanujan-schuelerin',emoji: '🔢',  name: 'Ramanujan-Schülerin',rarity: 'rare' },
+    { id: 'strumpf-pechvogel',   emoji: '🧶',  name: 'Strumpf-Pechvogel',  rarity: 'rare' },
+    { id: 'slot-millionaerin',   emoji: '🤑',  name: 'Slot-Millionärin',   rarity: 'legendary' },
+    { id: 'slot-koenigin',       emoji: '🏆',  name: 'Slot-Königin',       rarity: 'legendary' },
+    { id: 'haus-bezwingerin',    emoji: '📈',  name: 'Haus-Bezwingerin',   rarity: 'legendary' },
+    { id: 'mutige-spielerin',    emoji: '🎯',  name: 'Mutige Spielerin',   rarity: 'rare' },
+  ];
+
   const ALL_FRAMES = [
     { id: 'sakura',     name: 'Sakura',     emoji: '🌸', rarity: 'common',    cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
     { id: 'ocean',      name: 'Ozean',      emoji: '🌊', rarity: 'common',    cssClass: 'frame-ocean',      gradient: 'linear-gradient(135deg,#2a9d8f,#4ecdc4)' },
@@ -1734,7 +1766,7 @@
     const emoji = document.getElementById('activeBadgeEmoji');
     const name  = document.getElementById('activeBadgeName');
     if (!userEquippedBadge) { pill.style.display = 'none'; return; }
-    const b = ALL_BADGES.find(x => x.id === userEquippedBadge);
+    const b = [...ALL_BADGES, ...SLOT_BADGES].find(x => x.id === userEquippedBadge);
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;

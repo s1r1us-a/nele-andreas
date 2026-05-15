@@ -126,6 +126,11 @@
     .badge-item.owned:hover { border-color: var(--rose); transform: translateY(-2px); }
     .badge-item.owned.equipped { border-color: var(--gold); background: rgba(212,160,97,0.1); box-shadow: 0 2px 10px rgba(212,160,97,0.2); }
     .badge-item.locked { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); opacity: 0.45; cursor: default; }
+    /* Geheimes, noch nicht gewonnenes Slot-Badge: gestrichelter Gold-Rand
+       signalisiert "nur in der Slotmaschine zu gewinnen" – klar anders als .locked */
+    .badge-item.slot-locked { background: rgba(212,160,97,0.06); border: 1.5px dashed var(--gold); opacity: 0.7; cursor: default; box-shadow: 0 0 8px rgba(212,160,97,0.18); }
+    .badge-item.slot-locked .badge-item-emoji { filter: grayscale(0.3); opacity: 0.85; }
+    .badge-item.slot-locked .badge-item-name { color: var(--gold); }
     .badge-item-emoji { font-size: 24px; display: block; margin-bottom: 2px; }
     .badge-item.locked .badge-item-emoji { filter: grayscale(1); font-size: 20px; }
     .badge-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
@@ -571,6 +576,14 @@
   </div>
 
   <div class="section">
+    <div class="section-label">🎰 Slot-Automaten Badges</div>
+    <div class="section-hint">Nur in der Slotmaschine zu gewinnen 🎰</div>
+    <div class="badge-grid" id="slotBadgeGrid">
+      <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-label">🖼️ Meine Rahmen</div>
     <div class="section-hint" id="frameHint">Klick auf einen Rahmen um ihn zu aktivieren ✨</div>
     <div class="frame-grid" id="profileFrameGrid">
@@ -673,10 +686,43 @@
     { id: 'galaxy',     name: 'Galaxy',     emoji: '🔮', rarity: 'legendary', cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
+  // Geteilter Slot-Badge-Katalog (identisch in slot.html / index.html).
+  // Nur in der Slotmaschine zu gewinnen.
+  const SLOT_BADGES = [
+    { id: 'prinzesschen-krone',  emoji: '👸',  name: 'Prinzesschen-Krone', rarity: 'legendary' },
+    { id: 'ramanujan',           emoji: '🧮',  name: 'Ramanujan',          rarity: 'legendary' },
+    { id: 'laufmaschen-koenigin',emoji: '🧦',  name: 'Laufmaschen-Königin',rarity: 'rare' },
+    { id: 'diamant-trio',        emoji: '💎',  name: 'Diamant-Trio',       rarity: 'rare' },
+    { id: 'sternenstaub',        emoji: '⭐',  name: 'Sternenstaub',       rarity: 'rare' },
+    { id: 'glockenklang',        emoji: '🔔',  name: 'Glockenklang',       rarity: 'common' },
+    { id: 'glueckspilz',         emoji: '🍀',  name: 'Glückspilz',         rarity: 'common' },
+    { id: 'fast-prinzessin',     emoji: '👑',  name: 'Fast Prinzessin',    rarity: 'common' },
+    { id: 'beinahe-genie',       emoji: '📐',  name: 'Beinahe-Genie',      rarity: 'common' },
+    { id: 'diamant-paar',        emoji: '💍',  name: 'Diamant-Paar',       rarity: 'common' },
+    { id: 'so-knapp',            emoji: '😤',  name: 'So knapp!',          rarity: 'rare' },
+    { id: 'voll-daneben',        emoji: '🍂',  name: 'Voll daneben',       rarity: 'common' },
+    { id: 'erster-hebelzug',     emoji: '🎰',  name: 'Erster Hebelzug',    rarity: 'common' },
+    { id: 'stammspielerin',      emoji: '🎲',  name: 'Stammspielerin',     rarity: 'common' },
+    { id: 'slot-veteranin',      emoji: '🕹️', name: 'Slot-Veteranin',     rarity: 'rare' },
+    { id: 'slot-suechtig',       emoji: '😵‍💫',name: 'Slot-Süchtig',       rarity: 'legendary' },
+    { id: 'kleiner-einsatz',     emoji: '🎫',  name: 'Warmgespielt',       rarity: 'common' },
+    { id: 'hochrollerin',        emoji: '🎩',  name: 'Hochrollerin',       rarity: 'rare' },
+    { id: 'grossgewinn',         emoji: '💰',  name: 'Großgewinn',         rarity: 'rare' },
+    { id: 'mega-gewinn',         emoji: '💸',  name: 'Mega-Gewinn',        rarity: 'legendary' },
+    { id: 'jackpot-jaegerin',    emoji: '👸',  name: 'Jackpot-Jägerin',    rarity: 'legendary' },
+    { id: 'ramanujan-schuelerin',emoji: '🔢',  name: 'Ramanujan-Schülerin',rarity: 'rare' },
+    { id: 'strumpf-pechvogel',   emoji: '🧶',  name: 'Strumpf-Pechvogel',  rarity: 'rare' },
+    { id: 'slot-millionaerin',   emoji: '🤑',  name: 'Slot-Millionärin',   rarity: 'legendary' },
+    { id: 'slot-koenigin',       emoji: '🏆',  name: 'Slot-Königin',       rarity: 'legendary' },
+    { id: 'haus-bezwingerin',    emoji: '📈',  name: 'Haus-Bezwingerin',   rarity: 'legendary' },
+    { id: 'mutige-spielerin',    emoji: '🎯',  name: 'Mutige Spielerin',   rarity: 'rare' },
+  ];
+
   let currentUser    = null;
   let isReadOnly     = false;
   let loggedInUserName = null;
   let ownedBadges    = [];
+  let ownedSlotBadges = [];
   let ownedFrames    = [];
   let equippedBadge  = null;
   let equippedFrame  = null;
@@ -845,7 +891,7 @@
     const emoji = document.getElementById('activeBadgeEmoji');
     const name  = document.getElementById('activeBadgeName');
     if (!equippedBadge) { pill.style.display = 'none'; return; }
-    const b = ALL_BADGES.find(x => x.id === equippedBadge);
+    const b = [...ALL_BADGES, ...SLOT_BADGES].find(x => x.id === equippedBadge);
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;
@@ -865,6 +911,26 @@
       el.innerHTML = `
         ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
         <span class="badge-item-emoji">${isOwned ? b.emoji : '❓'}</span>
+        <div class="badge-item-name">${isOwned ? b.name : '???'}</div>
+        <div class="badge-rarity-dot ${b.rarity}"></div>`;
+      if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
+      grid.appendChild(el);
+    });
+  }
+
+  function renderSlotBadges() {
+    const grid = document.getElementById('slotBadgeGrid');
+    grid.innerHTML = '';
+    SLOT_BADGES.forEach(b => {
+      const isOwned    = ownedSlotBadges.includes(b.id);
+      const isEquipped = equippedBadge === b.id;
+      const el = document.createElement('div');
+      // Nicht gewonnene Slot-Badges: geheim mit Sonder-Rand (slot-locked),
+      // klar unterscheidbar vom normalen grauen .locked.
+      el.className = `badge-item ${isOwned ? 'owned' : 'slot-locked'} ${isEquipped ? 'equipped' : ''}`;
+      el.innerHTML = `
+        ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
+        <span class="badge-item-emoji">${isOwned ? b.emoji : '🎰'}</span>
         <div class="badge-item-name">${isOwned ? b.name : '???'}</div>
         <div class="badge-rarity-dot ${b.rarity}"></div>`;
       if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
@@ -896,6 +962,7 @@
     equippedBadge = equippedBadge === badgeId ? null : badgeId;
     await set(ref(db, `shop/${key}/equippedBadge`), equippedBadge);
     renderBadges();
+    renderSlotBadges();
     updateBadgePill();
   }
 
@@ -970,17 +1037,20 @@
       if (vgPotLost) vgPotLost.textContent = fmt(vg.potLost);
     });
 
-    const [badgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
+    const [badgesSnap, slotBadgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
       get(ref(db, `shop/${key}/badges`)),
+      get(ref(db, `slotbadges/${key}`)),
       get(ref(db, `shop/${key}/frames`)),
       get(ref(db, `shop/${key}/equippedBadge`)),
       get(ref(db, `shop/${key}/equippedFrame`)),
     ]);
-    ownedBadges   = badgesSnap.val()    || [];
-    ownedFrames   = framesSnap.val()    || [];
-    equippedBadge = equippedBSnap.val() || null;
-    equippedFrame = equippedFSnap.val() || null;
+    ownedBadges     = badgesSnap.val()     || [];
+    ownedSlotBadges = Object.keys(slotBadgesSnap.val() || {});
+    ownedFrames     = framesSnap.val()     || [];
+    equippedBadge   = equippedBSnap.val()  || null;
+    equippedFrame   = equippedFSnap.val()  || null;
     renderBadges();
+    renderSlotBadges();
     renderFrames();
     updateBadgePill();
     updateAvatarDisplay();
