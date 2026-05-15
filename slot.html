@@ -633,6 +633,12 @@
     z-index: 2;
     pointer-events: none;
     display: block;
+    transition: filter 0.25s ease;
+  }
+  /* Motion-Blur-Illusion während des Spins – kaschiert Einzelframes,
+     wirkt deutlich flüssiger. Wird beim Stopp (.stopping) wieder weich entfernt. */
+  .reel.spinning:not(.stopping) .reel-canvas {
+    filter: blur(1.4px);
   }
 
   /* CSS-Fallback (wenn WebGL fehlt): einfaches Symbol im Zentrum */
@@ -750,7 +756,7 @@
   .bet-controls {
     margin-top: 18px;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 12px 10px;
     padding: 16px 14px;
     background: rgba(255,255,255,0.06);
@@ -759,9 +765,6 @@
     box-shadow: 0 8px 40px rgba(232,115,138,0.12);
     position: relative;
     z-index: 2;
-  }
-  @media (min-width: 540px) {
-    .bet-controls { grid-template-columns: repeat(4, 1fr); }
   }
   .arcade-btn {
     --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
@@ -819,26 +822,11 @@
     --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
     --glow: rgba(232,115,138,0.4); --glow-hover: rgba(232,115,138,0.55);
   }
-  .arcade-blue {
-    --grad: linear-gradient(135deg, #e6c79a 0%, #d4a061 100%);
-    --glow: rgba(212,160,97,0.35); --glow-hover: rgba(212,160,97,0.5);
-    color: #5a2d3a;
-  }
-  .arcade-red {
-    --grad: linear-gradient(135deg, #c85070 0%, #9d2f4f 100%);
-    --glow: rgba(157,47,79,0.4); --glow-hover: rgba(157,47,79,0.55);
-  }
-  .arcade-gold {
-    --grad: linear-gradient(135deg, #d4a061 0%, #c87830 100%);
-    --glow: rgba(212,160,97,0.4); --glow-hover: rgba(212,160,97,0.55);
-  }
-  .arcade-blue small { opacity: 0.75; }
   .slot-container.test-active .arcade-btn small::before {
     content: 'GRATIS · ';
     color: #fff8f0;
     font-weight: 800;
   }
-  .slot-container.test-active .arcade-blue small::before { color: #5a2d3a; }
 
   /* PAYOUT TABLE */
   .payout-table {
@@ -1208,6 +1196,7 @@
     .reel.win-glow { animation: none; }
     .reel.anticipating { animation: none; }
     .reel.spinning .reel-symbol-fallback { animation: none; filter: none; }
+    .reel.spinning:not(.stopping) .reel-canvas { filter: none; }
     .confetti { animation-duration: 0.5s !important; }
     .formula-fly, .tear-line, .tear-emoji { animation-duration: 0.4s; }
     .win-overlay-text { animation: none; }
@@ -1355,18 +1344,6 @@
           SPIN
           <small>100 🪙</small>
         </button>
-        <button class="arcade-btn arcade-blue" data-bet="500" data-spins="5">
-          5× SPIN
-          <small>500 🪙</small>
-        </button>
-        <button class="arcade-btn arcade-red" data-bet="1080" data-spins="12">
-          12× SPIN
-          <small>1.080 🪙 🎁</small>
-        </button>
-        <button class="arcade-btn arcade-gold" data-bet="1000" data-spins="1" data-multiplier="10">
-          HIGH-ROLLER
-          <small>1.000 🪙 · ×10</small>
-        </button>
       </div>
 
       <details class="payout-table">
@@ -1508,14 +1485,48 @@
   const REEL_LENGTH = REEL_SYMBOLS.length; // 20
 
   const PAYOUTS = {
-    '👸👸👸': { coins: 75000, badge: 'prinzesschen-krone', badgeName: '👸 Prinzesschen-Krone', badgeDesc: '3× Prinzesschen in der Slotmaschine getroffen', effect: 'jackpot',     label: '👸 PRINZESSCHEN-JACKPOT' },
-    '🧮🧮🧮': { coins: 30000, badge: 'mathe-genie',         badgeName: '🧮 Mathe-Genie',         badgeDesc: '3× Ramanujan in der Slotmaschine getroffen',     effect: 'ramanujan',    label: '🧮 RAMANUJAN!' },
-    '🧦🧦🧦': { coins: 12000, effect: 'laufmasche',        label: '🧦 LAUFMASCHEN-PECH!' },
-    '💎💎💎': { coins: 8000,  effect: 'big',               label: '💎 DIAMANT-TRIO!' },
-    '⭐⭐⭐': { coins: 3000,  effect: 'normal',            label: '⭐ STERN-TRIO!' },
-    '🔔🔔🔔': { coins: 1500,  effect: 'normal',            label: '🔔 GLOCKEN-TRIO!' },
-    '🍀🍀🍀': { coins: 500,   effect: 'small',             label: '🍀 KLEEBLATT-TRIO!' }
+    '👸👸👸': { coins: 75000, badge: 'prinzesschen-krone',  badgeName: '👸 Prinzesschen-Krone', badgeDesc: '3× Prinzesschen in der Slotmaschine getroffen', effect: 'jackpot',     label: '👸 PRINZESSCHEN-JACKPOT' },
+    '🧮🧮🧮': { coins: 30000, badge: 'ramanujan',            badgeName: '🧮 Ramanujan',          badgeDesc: '3× Ramanujan in der Slotmaschine getroffen',     effect: 'ramanujan',    label: '🧮 RAMANUJAN!' },
+    '🧦🧦🧦': { coins: 12000, badge: 'laufmaschen-koenigin', badgeName: '🧦 Laufmaschen-Königin', badgeDesc: '3× Laufmasche in der Slotmaschine getroffen',    effect: 'laufmasche',  label: '🧦 LAUFMASCHEN-PECH!' },
+    '💎💎💎': { coins: 8000,  badge: 'diamant-trio',         badgeName: '💎 Diamant-Trio',        badgeDesc: '3× Diamant in der Slotmaschine getroffen',       effect: 'big',         label: '💎 DIAMANT-TRIO!' },
+    '⭐⭐⭐': { coins: 3000,  badge: 'sternenstaub',         badgeName: '⭐ Sternenstaub',        badgeDesc: '3× Stern in der Slotmaschine getroffen',         effect: 'normal',      label: '⭐ STERN-TRIO!' },
+    '🔔🔔🔔': { coins: 1500,  badge: 'glockenklang',         badgeName: '🔔 Glockenklang',        badgeDesc: '3× Glocke in der Slotmaschine getroffen',        effect: 'normal',      label: '🔔 GLOCKEN-TRIO!' },
+    '🍀🍀🍀': { coins: 500,   badge: 'glueckspilz',          badgeName: '🍀 Glückspilz',          badgeDesc: '3× Kleeblatt in der Slotmaschine getroffen',     effect: 'small',       label: '🍀 KLEEBLATT-TRIO!' }
   };
+
+  // Geteilter Slot-Badge-Katalog (auch in profil.html / index.html dupliziert).
+  const SLOT_BADGES = [
+    // Combo-Badges
+    { id: 'prinzesschen-krone',  emoji: '👸',  name: 'Prinzesschen-Krone', desc: '3× 👸 in der Slotmaschine',          rarity: 'legendary', type: 'combo' },
+    { id: 'ramanujan',           emoji: '🧮',  name: 'Ramanujan',          desc: '3× 🧮 in der Slotmaschine',          rarity: 'legendary', type: 'combo' },
+    { id: 'laufmaschen-koenigin',emoji: '🧦',  name: 'Laufmaschen-Königin',desc: '3× 🧦 in der Slotmaschine',          rarity: 'rare',      type: 'combo' },
+    { id: 'diamant-trio',        emoji: '💎',  name: 'Diamant-Trio',       desc: '3× 💎 in der Slotmaschine',          rarity: 'rare',      type: 'combo' },
+    { id: 'sternenstaub',        emoji: '⭐',  name: 'Sternenstaub',       desc: '3× ⭐ in der Slotmaschine',          rarity: 'rare',      type: 'combo' },
+    { id: 'glockenklang',        emoji: '🔔',  name: 'Glockenklang',       desc: '3× 🔔 in der Slotmaschine',          rarity: 'common',    type: 'combo' },
+    { id: 'glueckspilz',         emoji: '🍀',  name: 'Glückspilz',         desc: '3× 🍀 in der Slotmaschine',          rarity: 'common',    type: 'combo' },
+    { id: 'fast-prinzessin',     emoji: '👑',  name: 'Fast Prinzessin',    desc: '2× 👸 in der Slotmaschine',          rarity: 'common',    type: 'combo' },
+    { id: 'beinahe-genie',       emoji: '📐',  name: 'Beinahe-Genie',      desc: '2× 🧮 in der Slotmaschine',          rarity: 'common',    type: 'combo' },
+    { id: 'diamant-paar',        emoji: '💍',  name: 'Diamant-Paar',       desc: '2× 💎 in der Slotmaschine',          rarity: 'common',    type: 'combo' },
+    { id: 'so-knapp',            emoji: '😤',  name: 'So knapp!',          desc: '👸👸 – aber Walze 3 daneben',        rarity: 'rare',      type: 'combo' },
+    { id: 'voll-daneben',        emoji: '🍂',  name: 'Voll daneben',       desc: '3 komplett verschiedene Symbole',    rarity: 'common',    type: 'combo' },
+    // Milestone-Badges
+    { id: 'erster-hebelzug',     emoji: '🎰',  name: 'Erster Hebelzug',    desc: 'Den ersten Spin gewagt',             rarity: 'common',    type: 'milestone' },
+    { id: 'stammspielerin',      emoji: '🎲',  name: 'Stammspielerin',     desc: '100 Spins gedreht',                  rarity: 'common',    type: 'milestone' },
+    { id: 'slot-veteranin',      emoji: '🕹️', name: 'Slot-Veteranin',     desc: '1.000 Spins gedreht',                rarity: 'rare',      type: 'milestone' },
+    { id: 'slot-suechtig',       emoji: '😵‍💫',name: 'Slot-Süchtig',       desc: '5.000 Spins gedreht',                rarity: 'legendary', type: 'milestone' },
+    { id: 'kleiner-einsatz',     emoji: '🎫',  name: 'Warmgespielt',       desc: 'Insgesamt 100.000 🪙 eingesetzt',    rarity: 'common',    type: 'milestone' },
+    { id: 'hochrollerin',        emoji: '🎩',  name: 'Hochrollerin',       desc: 'Insgesamt 1.000.000 🪙 eingesetzt',  rarity: 'rare',      type: 'milestone' },
+    { id: 'grossgewinn',         emoji: '💰',  name: 'Großgewinn',         desc: 'Einzelgewinn ≥ 50.000 🪙',           rarity: 'rare',      type: 'milestone' },
+    { id: 'mega-gewinn',         emoji: '💸',  name: 'Mega-Gewinn',        desc: 'Einzelgewinn ≥ 100.000 🪙',          rarity: 'legendary', type: 'milestone' },
+    { id: 'jackpot-jaegerin',    emoji: '👸',  name: 'Jackpot-Jägerin',    desc: '5× den 👸-Jackpot getroffen',        rarity: 'legendary', type: 'milestone' },
+    { id: 'ramanujan-schuelerin',emoji: '🔢',  name: 'Ramanujan-Schülerin',desc: '5× das 🧮-Trio getroffen',           rarity: 'rare',      type: 'milestone' },
+    { id: 'strumpf-pechvogel',   emoji: '🧶',  name: 'Strumpf-Pechvogel',  desc: '5× das 🧦-Trio getroffen',           rarity: 'rare',      type: 'milestone' },
+    { id: 'slot-millionaerin',   emoji: '🤑',  name: 'Slot-Millionärin',   desc: 'Insgesamt 1.000.000 🪙 gewonnen',    rarity: 'legendary', type: 'milestone' },
+    { id: 'slot-koenigin',       emoji: '🏆',  name: 'Slot-Königin',       desc: 'Insgesamt 5.000.000 🪙 gewonnen',    rarity: 'legendary', type: 'milestone' },
+    { id: 'haus-bezwingerin',    emoji: '📈',  name: 'Haus-Bezwingerin',   desc: 'Netto im Plus nach 100+ Spins',      rarity: 'legendary', type: 'milestone' },
+    { id: 'mutige-spielerin',    emoji: '🎯',  name: 'Mutige Spielerin',   desc: 'Netto ≤ -100.000 🪙',                rarity: 'rare',      type: 'milestone' },
+  ];
+  const SLOT_BADGE_BY_ID = Object.fromEntries(SLOT_BADGES.map(b => [b.id, b]));
 
   // ============== STATE ==============
   let currentUser = null;
@@ -1552,7 +1563,8 @@
   // Sanftes Ausrollen OHNE Rückwärts-Anteil (kein easeOutBack-Zurückfedern,
   // das wie eine falsche Drehrichtung aussah).
   function easeOutSettle(t) {
-    return 1 - Math.pow(1 - t, 3);
+    // Quintisches Ausrollen: monoton, kein Rückfedern, weicher & länger als kubisch.
+    return 1 - Math.pow(1 - t, 5);
   }
 
   // Eine gemeinsame requestAnimationFrame-Schleife für alle Walzen.
@@ -1709,8 +1721,9 @@
       if (this._contextLost) return this.phase !== 'idle';
 
       if (this.phase === 'spinning') {
-        const maxSpeed = this.anticipating ? 6 : 11; // rad/s
-        this.speed = Math.min(this.speed + 60 * dt, maxSpeed);
+        const maxSpeed = this.anticipating ? 7 : 13; // rad/s
+        // Sanftere Beschleunigung → weicheres Anlaufen statt Ruck.
+        this.speed = Math.min(this.speed + 38 * dt, maxSpeed);
         // Positive Rotation → Symbole rollen nach unten (Slot-Standardrichtung)
         this.angle += this.speed * dt;
       } else if (this.phase === 'stopping') {
@@ -1735,7 +1748,7 @@
 
     start() {
       this.phase = 'spinning';
-      this.speed = 4;
+      this.speed = 0; // sanft aus dem Stand hochrampen
       startReelTicker();
     }
 
@@ -1753,7 +1766,7 @@
         this._stopFromAngle = this.angle;
         this.targetAngle = target;
         this._stopStart = performance.now();
-        this._stopDur = 750;
+        this._stopDur = 1050;
         this._stopResolve = resolve;
         this.phase = 'stopping';
         startReelTicker();
@@ -1927,12 +1940,12 @@
     const willAnticipate = (sym0 === sym1);
     const reel3WillMatch = willAnticipate && (sym1 === sym2);
 
-    // Walze 1 stoppt nach 1300ms
-    await sleep(1300);
+    // Walze 1 stoppt nach 1150ms
+    await sleep(1150);
     await stopReel(reels[0], 0, targetIndices[0]);
 
-    // Walze 2 stoppt nach weiteren 600ms
-    await sleep(600);
+    // Walze 2 stoppt nach weiteren 520ms
+    await sleep(520);
     await stopReel(reels[1], 1, targetIndices[1]);
 
     // Anticipation: wenn Walze 1 & 2 gleich → Walze 3 wird langsamer + glüht rot
@@ -1941,10 +1954,10 @@
       if (reelEngines[2]) reelEngines[2].setAnticipating(true);
       sfx.anticipateStart();
       // Längere Anticipation für mehr Spannung
-      await sleep(reel3WillMatch ? 1800 : 1200);
+      await sleep(reel3WillMatch ? 1500 : 1000);
       sfx.anticipateEnd();
     } else {
-      await sleep(700);
+      await sleep(620);
     }
 
     await stopReel(reels[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
@@ -2156,18 +2169,79 @@
   }
 
   // ============== BADGES ==============
-  async function unlockBadge(badgeId, badgeName, badgeDesc) {
-    const badgesRef = ref(db, `shop/${userKey}/badges`);
-    const snap = await get(badgesRef);
-    const badges = snap.val() || {};
-    if (badges[badgeId]) return;
-    badges[badgeId] = {
+  // Eigener Firebase-Knoten (Map), getrennt vom Array `shop/{user}/badges`
+  // (Lootbox). Verhindert Doppelvergabe über den Existenz-Check.
+  // Gibt true zurück, wenn das Badge NEU vergeben wurde.
+  async function unlockBadge(badgeId) {
+    const def = SLOT_BADGE_BY_ID[badgeId];
+    if (!def) return false;
+    const badgeRef = ref(db, `slotbadges/${userKey}/${badgeId}`);
+    const snap = await get(badgeRef);
+    if (snap.exists()) return false; // schon gewonnen → kein zweites Mal
+    await set(badgeRef, {
       unlockedAt: Date.now(),
-      name: badgeName,
-      description: badgeDesc,
+      name: def.name,
+      description: def.desc,
       source: 'slot'
-    };
-    await set(badgesRef, badges);
+    });
+    return true;
+  }
+
+  function announceBadge(badgeId) {
+    const def = SLOT_BADGE_BY_ID[badgeId];
+    if (!def) return;
+    showToast(`🏅 Neues Badge: ${def.emoji} ${def.name}`);
+  }
+
+  // Combo-/Spezial-Badges aus dem Spin-Ergebnis ableiten und vergeben.
+  async function checkComboBadges(result, meta) {
+    const ids = [];
+    if (meta?.badge) ids.push(meta.badge); // Trio-Badge (aus PAYOUTS)
+
+    const counts = {};
+    result.forEach(s => counts[s] = (counts[s] || 0) + 1);
+    if (counts['👸'] === 2) ids.push('fast-prinzessin');
+    if (counts['🧮'] === 2) ids.push('beinahe-genie');
+    if (counts['💎'] === 2) ids.push('diamant-paar');
+    // "So knapp!": Walze 1 & 2 = 👸, Walze 3 ≠ 👸
+    if (result[0] === '👸' && result[1] === '👸' && result[2] !== '👸') ids.push('so-knapp');
+    // "Voll daneben": 3 verschiedene Symbole & kein Gewinn
+    if (new Set(result).size === 3) ids.push('voll-daneben');
+
+    for (const id of ids) {
+      if (await unlockBadge(id)) announceBadge(id);
+    }
+  }
+
+  // Meilenstein-Badges anhand der aktuellen Lifetime-Statistik vergeben.
+  async function checkMilestoneBadges(lastWin) {
+    const snap = await get(ref(db, `loveslots/${userKey}`));
+    const s = snap.val() || {};
+    const spins   = s.totalSpins   || 0;
+    const wagered = s.totalWagered || 0;
+    const won     = s.totalWon     || 0;
+    const net     = won - wagered;
+
+    const reached = [];
+    if (spins   >= 1)        reached.push('erster-hebelzug');
+    if (spins   >= 100)      reached.push('stammspielerin');
+    if (spins   >= 1000)     reached.push('slot-veteranin');
+    if (spins   >= 5000)     reached.push('slot-suechtig');
+    if (wagered >= 100000)   reached.push('kleiner-einsatz');
+    if (wagered >= 1000000)  reached.push('hochrollerin');
+    if (lastWin >= 50000)    reached.push('grossgewinn');
+    if (lastWin >= 100000)   reached.push('mega-gewinn');
+    if ((s.jackpotCount   || 0) >= 5) reached.push('jackpot-jaegerin');
+    if ((s.ramanujanCount || 0) >= 5) reached.push('ramanujan-schuelerin');
+    if ((s.laufmaschenCount||0) >= 5) reached.push('strumpf-pechvogel');
+    if (won >= 1000000)      reached.push('slot-millionaerin');
+    if (won >= 5000000)      reached.push('slot-koenigin');
+    if (spins >= 100 && net > 0)        reached.push('haus-bezwingerin');
+    if (net <= -100000)      reached.push('mutige-spielerin');
+
+    for (const id of reached) {
+      if (await unlockBadge(id)) announceBadge(id);
+    }
   }
 
   // ============== SPIN ENGINE ==============
@@ -2224,12 +2298,11 @@
         // 6. Win-Effekt (immer)
         await triggerWinEffect(win, meta);
 
-        // 7. Stats + Badge (nur Live)
+        // 7. Stats + Badges (nur Live)
         if (!test) {
           await updateSlotStats(result, win, perSpin);
-          if (meta?.badge) {
-            await unlockBadge(meta.badge, meta.badgeName, meta.badgeDesc);
-          }
+          await checkComboBadges(result, meta);
+          await checkMilestoneBadges(win);
         }
 
         // 8. Pause zwischen Auto-Spins
