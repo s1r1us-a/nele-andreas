@@ -370,6 +370,16 @@ html[data-theme="prinzesschen"] .badge-pill {
   color: #c2185b !important;
 }
 
+/* Rarität-Halos im Prinzessinnen-Theme leicht ins Pink ziehen */
+html[data-theme="prinzesschen"] .badge-item.owned.rarity-legendary::before,
+html[data-theme="prinzesschen"] .frame-item.owned.rarity-legendary::before {
+  filter: blur(9px) hue-rotate(-18deg) saturate(1.1);
+}
+html[data-theme="prinzesschen"] .badge-item.owned.rarity-rare,
+html[data-theme="prinzesschen"] .frame-item.owned.rarity-rare {
+  border-color: rgba(220,120,180,0.85) !important;
+}
+
 /* ---------- Toast ---------- */
 html[data-theme="prinzesschen"] .toast {
   background: linear-gradient(135deg, #ff1493, #c084fc) !important;
