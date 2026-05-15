@@ -1999,22 +1999,24 @@
     }
 
     /* Farm-Content unter dem Intro — "settelt" sich sanft ein.
-       Endzustand bewusst transform/filter: none, damit fixed-positionierte
-       Kinder nach der Animation wieder relativ zum Viewport stehen. */
+       Bleibt stark gebluert WÄHREND das Overlay noch sichtbar ist und
+       scharft sich erst LANGSAM scharf, nachdem das Overlay verschwunden
+       ist. Endzustand bewusst filter/transform: none, damit fixed-
+       positionierte Kinder wieder relativ zum Viewport stehen. */
     .farm-content-wrap {
       transition:
-        opacity 1.7s cubic-bezier(0.22,1,0.36,1) 0.30s,
-        transform 1.7s cubic-bezier(0.22,1,0.36,1) 0.30s,
-        filter   1.4s cubic-bezier(0.22,1,0.36,1) 0.40s;
+        opacity 2.6s cubic-bezier(0.22,1,0.36,1),
+        transform 2.6s cubic-bezier(0.22,1,0.36,1),
+        filter   2.6s cubic-bezier(0.22,1,0.36,1);
       opacity: 1;
       transform: none;
       filter: none;
       transform-origin: center 38%;
     }
     body.farm-intro-active .farm-content-wrap {
-      opacity: 0.85;
+      opacity: 0.72;
       transform: scale(0.985);
-      filter: blur(6px) brightness(1.05);
+      filter: blur(14px) brightness(1.08);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2204,11 +2206,16 @@
     }
   }, 1250);
 
-  /* ── Mehrstufiges Fade-out nach 4,5 s ── */
+  /* ── Mehrstufiges Fade-out nach 4,5 s ──
+     Wichtig: die Farm-Wrap bleibt WÄHREND des Overlay-Fades stark gebluert.
+     Erst wenn das Overlay komplett weg ist, wird die Body-Klasse entfernt
+     und die Farm scharft sich über 2,6s langsam — kein Aufploppen. */
   setTimeout(function() {
     overlay.classList.add('fade-out');
-    document.body.classList.remove('farm-intro-active');
-    setTimeout(function() { overlay.style.display = 'none'; }, 2000);
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      document.body.classList.remove('farm-intro-active');
+    }, 2000);
   }, 4500);
 })();
 </script>
