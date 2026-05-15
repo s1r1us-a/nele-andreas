@@ -2001,7 +2001,7 @@
     <button class="topbar-btn" id="btnShop" onclick="openShop()">🏪 <span>Shop</span></button>
     <button class="topbar-btn" id="btnInventory" onclick="openInventory()">🎒 <span>Inventar</span></button>
     <button class="topbar-btn" id="btnSell" onclick="openSell()">💰 <span>Verkauf</span></button>
-    <div class="topbar-btn-wrap">
+    <div class="topbar-btn-wrap" id="btnStallWrap">
       <button class="topbar-btn" id="btnStall" onclick="window.openStall()">🐾 <span>Stall</span></button>
       <span id="stallBadge"></span>
     </div>
@@ -6179,7 +6179,7 @@
     document.getElementById('btnSell').style.display = 'none';
     document.getElementById('btnHarvestAll').style.display = 'none';
     document.getElementById('btnVisit').style.display = 'none';
-    document.getElementById('btnStall').style.display = 'none';
+    document.getElementById('btnStallWrap').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
 
     const _ftVisit = document.getElementById('farmTitle'); if (_ftVisit) _ftVisit.textContent = farmName(otherUser);
@@ -6255,7 +6255,7 @@
     document.getElementById('btnSell').style.display = '';
     document.getElementById('btnHarvestAll').style.display = '';
     document.getElementById('btnVisit').style.display = 'flex';
-    document.getElementById('btnStall').style.display = '';
+    document.getElementById('btnStallWrap').style.display = '';
     document.getElementById('topbarCoins').style.display = '';
     document.getElementById('visitBanner').classList.remove('show');
 
