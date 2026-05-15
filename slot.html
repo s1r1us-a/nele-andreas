@@ -553,13 +553,11 @@
     z-index: 2;
     pointer-events: none;
     display: block;
-    transition: filter 0.25s ease;
+    /* Blur wird vom ReelEngine-Tick als Custom-Property gesetzt — kaschiert
+       Einzelframes proportional zur Geschwindigkeit, wirkt sehr flüssig. */
+    filter: blur(var(--reel-blur, 0px));
+    transition: filter 0.12s ease;
     will-change: transform, filter;
-  }
-  /* Motion-Blur-Illusion während des Spins – kaschiert Einzelframes,
-     wirkt deutlich flüssiger. Wird beim Stopp (.stopping) wieder weich entfernt. */
-  .reel.spinning:not(.stopping) .reel-canvas {
-    filter: blur(0.6px);
   }
 
   /* CSS-Fallback (wenn WebGL fehlt): einfaches Symbol im Zentrum */
@@ -578,12 +576,12 @@
     pointer-events: none;
   }
   .reel.spinning .reel-symbol-fallback {
-    animation: fallbackBlur 0.12s linear infinite;
+    animation: fallbackBlur 0.18s linear infinite;
     filter: blur(2px);
   }
   @keyframes fallbackBlur {
-    0%,100% { transform: translateY(-6px); opacity: 0.85; }
-    50%     { transform: translateY(6px);  opacity: 0.85; }
+    0%,100% { opacity: 0.85; filter: blur(2px); }
+    50%     { opacity: 1;    filter: blur(2.6px); }
   }
 
   /* Speed-Lines + Vignette beim Spin (über dem Canvas) */
@@ -1493,8 +1491,8 @@
   // Sanftes Ausrollen OHNE Rückwärts-Anteil (kein easeOutBack-Zurückfedern,
   // das wie eine falsche Drehrichtung aussah).
   function easeOutSettle(t) {
-    // Schnelles Ausrollen, sanfter Snap am Ende, kein Rückfedern.
-    return 1 - Math.pow(1 - t, 3.2);
+    // Quintische Verzögerung — minimaler Snap am Ende, sehr weicher Auslauf, kein Rückfedern.
+    return 1 - Math.pow(1 - t, 5);
   }
 
   // Eine gemeinsame requestAnimationFrame-Schleife für alle Walzen.
@@ -1652,19 +1650,26 @@
 
       if (this.phase === 'spinning') {
         const maxSpeed = this.anticipating ? 10 : 18; // rad/s
-        // Sanftere Beschleunigung → weicheres Anlaufen statt Ruck.
-        this.speed = Math.min(this.speed + 70 * dt, maxSpeed);
+        // Exponentielles Annähern → weiches Andocken statt scharfer Knick an maxSpeed.
+        this.speed += (maxSpeed - this.speed) * Math.min(1, dt * 4.5);
         // Positive Rotation → Symbole rollen nach unten (Slot-Standardrichtung)
         this.angle += this.speed * dt;
+        // Blur an aktuelle Geschwindigkeit koppeln (max 1.4 px bei voller Speed)
+        const blurPx = Math.min(1.4, this.speed / 18 * 1.4);
+        this.canvas.style.setProperty('--reel-blur', blurPx.toFixed(2) + 'px');
       } else if (this.phase === 'stopping') {
         const t = Math.min(1, (now - this._stopStart) / this._stopDur);
         const e = easeOutSettle(t);
         this.angle = this._stopFromAngle + (this.targetAngle - this._stopFromAngle) * e;
+        // Blur synchron mit Verzögerung auf 0 zurückblenden
+        const blurPx = (1 - e) * 0.9;
+        this.canvas.style.setProperty('--reel-blur', blurPx.toFixed(2) + 'px');
         if (t >= 1) {
           this.angle = this.targetAngle;
           this.phase = 'idle';
           this.speed = 0;
           this.anticipating = false;
+          this.canvas.style.setProperty('--reel-blur', '0px');
           const r = this._stopResolve;
           this._stopResolve = null;
           if (r) r();
@@ -1696,7 +1701,7 @@
         this._stopFromAngle = this.angle;
         this.targetAngle = target;
         this._stopStart = performance.now();
-        this._stopDur = 680;
+        this._stopDur = 820;
         this._stopResolve = resolve;
         this.phase = 'stopping';
         startReelTicker();
@@ -1872,11 +1877,11 @@
       reels[2].classList.add('anticipating');
       if (reelEngines[2]) reelEngines[2].setAnticipating(true);
       sfx.anticipateStart();
-      // Kürzere, knackigere Anticipation
-      await sleep(reel3WillMatch ? 1000 : 650);
+      // Anticipation mit mehr Atmung — der rote Glow darf wirken
+      await sleep(reel3WillMatch ? 1000 : 800);
       sfx.anticipateEnd();
     } else {
-      await sleep(420);
+      await sleep(480);
     }
 
     await stopReel(reels[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
