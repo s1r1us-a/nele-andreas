@@ -624,19 +624,42 @@
         transparent 62%);
   }
 
-  .reel-cylinder {
+  /* WebGL-Canvas: rendert die 3D-Walze pro Reel */
+  .reel-canvas {
     position: absolute;
     inset: 0;
-    transform-style: preserve-3d;
-    transform: rotateX(0deg);
-    will-change: transform;
-    transition: filter 0.3s ease;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    display: block;
   }
-  .reel.spinning .reel-cylinder {
-    animation: reelSpinLoop 0.5s linear infinite;
-    filter: blur(1.5px) brightness(1.1);
+
+  /* CSS-Fallback (wenn WebGL fehlt): einfaches Symbol im Zentrum */
+  .reel-symbol-fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(54px, 13vw, 80px);
+    text-shadow:
+      0 4px 12px rgba(0,0,0,0.8),
+      0 0 18px rgba(212,160,97,0.4);
+    user-select: none;
+    pointer-events: none;
   }
-  /* Speed-Lines beim Spin */
+  .reel.spinning .reel-symbol-fallback {
+    animation: fallbackBlur 0.18s linear infinite;
+    filter: blur(2px);
+  }
+  @keyframes fallbackBlur {
+    0%,100% { transform: translateY(-6px); opacity: 0.85; }
+    50%     { transform: translateY(6px);  opacity: 0.85; }
+  }
+
+  /* Speed-Lines + Vignette beim Spin (über dem Canvas) */
   .reel.spinning::before {
     background:
       linear-gradient(180deg, rgba(5,2,8,1) 0%, rgba(5,2,8,0.5) 30%, rgba(5,2,8,0.1) 80%, transparent 100%),
@@ -655,18 +678,8 @@
         rgba(212,160,97,0.08) 4px,
         rgba(212,160,97,0.08) 6px);
   }
-  @keyframes reelSpinLoop {
-    from { transform: rotateX(0deg); }
-    to   { transform: rotateX(-360deg); }
-  }
-  .reel.stopping .reel-cylinder {
-    animation: reelStopBounce 0.7s cubic-bezier(.17,.67,.32,1.2) forwards;
-  }
-  @keyframes reelStopBounce {
-    0%   { transform: rotateX(var(--start-angle, 0deg)); }
-    78%  { transform: rotateX(calc(var(--end-angle, 0deg) - 6deg)); }
-    100% { transform: rotateX(var(--end-angle, 0deg)); }
-  }
+
+  /* Win-Glow um den Rahmen */
   .reel.win-glow {
     box-shadow:
       0 0 0 2px var(--slot-accent) inset,
@@ -682,13 +695,6 @@
     50%     { box-shadow: 0 0 0 2px #ffe9b0 inset, 0 0 0 3px rgba(0,0,0,0.5) inset,
                           0 4px 14px rgba(0,0,0,0.6) inset, 0 0 50px rgba(255,221,150,1), 0 0 100px rgba(255,221,150,0.6); }
   }
-  .reel.win-glow .reel-cylinder {
-    animation: reelWinPulse 0.9s ease-in-out infinite;
-  }
-  @keyframes reelWinPulse {
-    0%,100% { filter: brightness(1.1) drop-shadow(0 0 8px rgba(212,160,97,0.6)); }
-    50%     { filter: brightness(1.5) drop-shadow(0 0 22px rgba(255,221,150,1)); }
-  }
 
   /* Anticipation: 2 matchen, 3. wird spannend */
   .reel.anticipating {
@@ -699,27 +705,6 @@
                           0 4px 14px rgba(0,0,0,0.6) inset, 0 0 20px rgba(232,115,138,0.4); }
     50%     { box-shadow: 0 0 0 3px rgba(232,115,138,1) inset, 0 0 0 4px rgba(0,0,0,0.6) inset,
                           0 4px 14px rgba(0,0,0,0.6) inset, 0 0 40px rgba(232,115,138,0.8), 0 0 70px rgba(232,115,138,0.4); }
-  }
-  .reel.anticipating .reel-cylinder {
-    animation-duration: 1.2s !important;
-    filter: blur(2.5px) brightness(1.2) hue-rotate(-10deg) !important;
-  }
-
-  .reel-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(48px, 12vw, 72px);
-    backface-visibility: hidden;
-    text-shadow:
-      0 4px 12px rgba(0,0,0,0.8),
-      0 0 18px rgba(212,160,97,0.4),
-      0 0 30px rgba(212,160,97,0.2);
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-    user-select: none;
   }
 
   /* RESULT AREA */
@@ -1233,12 +1218,9 @@
 
   /* REDUCED MOTION */
   @media (prefers-reduced-motion: reduce) {
-    .reel.spinning .reel-cylinder { animation-duration: 0.2s; }
-    .reel.stopping .reel-cylinder { animation-duration: 0.25s; }
-    .reel.win-glow .reel-cylinder { animation: none; }
     .reel.win-glow { animation: none; }
     .reel.anticipating { animation: none; }
-    .reel.anticipating .reel-cylinder { animation-duration: 0.4s !important; filter: none !important; }
+    .reel.spinning .reel-symbol-fallback { animation: none; filter: none; }
     .confetti { animation-duration: 0.5s !important; }
     .formula-fly, .tear-line, .tear-emoji { animation-duration: 0.4s; }
     .win-overlay-text { animation: none; }
@@ -1351,19 +1333,22 @@
       <div class="reels-shelf">
         <div class="reels-row">
           <div class="reel" id="reel-1">
-            <div class="reel-cylinder"></div>
+            <canvas class="reel-canvas"></canvas>
+            <div class="reel-symbol-fallback" hidden></div>
             <div class="reel-bezel left"></div>
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
           </div>
           <div class="reel" id="reel-2">
-            <div class="reel-cylinder"></div>
+            <canvas class="reel-canvas"></canvas>
+            <div class="reel-symbol-fallback" hidden></div>
             <div class="reel-bezel left"></div>
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
           </div>
           <div class="reel" id="reel-3">
-            <div class="reel-cylinder"></div>
+            <canvas class="reel-canvas"></canvas>
+            <div class="reel-symbol-fallback" hidden></div>
             <div class="reel-bezel left"></div>
             <div class="reel-bezel right"></div>
             <div class="reel-shine"></div>
@@ -1492,6 +1477,22 @@
   import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+  // Three.js wird dynamisch geladen — bei Fehler greift der CSS-Fallback
+  let THREE = null;
+  const THREE_CDNS = [
+    "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "https://unpkg.com/three@0.160.0/build/three.module.js"
+  ];
+  for (const url of THREE_CDNS) {
+    try {
+      THREE = await import(url);
+      break;
+    } catch (e) {
+      console.warn('Three.js konnte nicht von', url, 'geladen werden:', e);
+    }
+  }
+  if (!THREE) console.warn('Three.js nicht verfügbar — Fallback-Modus aktiv.');
+
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
     authDomain: "nele-und-andreas.firebaseapp.com",
@@ -1515,7 +1516,6 @@
     '🍀','🍀','🍀','🍀','🍀','🍀','🍀'
   ];
   const REEL_LENGTH = REEL_SYMBOLS.length; // 20
-  const ANGLE_PER_FACE = 360 / REEL_LENGTH; // 18°
 
   const PAYOUTS = {
     '👸👸👸': { coins: 75000, badge: 'prinzesschen-krone', badgeName: '👸 Prinzesschen-Krone', badgeDesc: '3× Prinzesschen in der Slotmaschine getroffen', effect: 'jackpot',     label: '👸 PRINZESSCHEN-JACKPOT' },
@@ -1554,33 +1554,229 @@
     t._timer = setTimeout(() => t.classList.remove('show'), 2400);
   }
 
-  // ============== REEL SETUP (3D) ==============
-  function initReels() {
-    // Radius für 20-seitiges Polygon: r = h / (2 * tan(π/n))
-    document.querySelectorAll('.reel-cylinder').forEach((cyl, idx) => {
-      cyl.innerHTML = '';
-      const reelHeight = cyl.parentElement.getBoundingClientRect().height || 130;
-      const radius = reelHeight / (2 * Math.tan(Math.PI / REEL_LENGTH));
-      for (let i = 0; i < REEL_LENGTH; i++) {
-        const face = document.createElement('div');
-        face.className = 'reel-face';
-        face.textContent = REEL_SYMBOLS[i];
-        face.style.transform = `rotateX(${i * ANGLE_PER_FACE}deg) translateZ(${radius}px)`;
-        cyl.appendChild(face);
-      }
-      // Zufällige Startposition pro Walze (nicht immer Prinzesschen sichtbar)
-      const startIdx = pickRandomIndex();
-      const startAngle = -(startIdx * ANGLE_PER_FACE);
-      cyl.style.transform = `rotateX(${startAngle}deg)`;
-      reelAngles[idx] = startAngle;
+  // ============== REEL ENGINE (Three.js WebGL) ==============
+  const SEG_RAD = (Math.PI * 2) / REEL_LENGTH;
+  let symbolTextures = null;
+  let reelEngines = [null, null, null];
+
+  function easeOutBack(t) {
+    const c1 = 1.70158, c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+
+  async function buildSymbolTextures() {
+    if (!THREE) return null;
+    try { await document.fonts.ready; } catch {}
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const px = Math.round(192 * dpr);
+    return REEL_SYMBOLS.map(sym => {
+      const cv = document.createElement('canvas');
+      cv.width = px; cv.height = px;
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0, 0, px, px);
+      // Sanfter Tiefen-Schatten unter dem Symbol
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur  = px * 0.06;
+      ctx.shadowOffsetY = px * 0.03;
+      ctx.font = `${Math.round(px * 0.72)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(sym, px / 2, px / 2 + px * 0.04);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.anisotropy = 4;
+      return tex;
     });
   }
-  // Re-init bei Resize (Walzen-Höhe ändert sich)
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { if (!isSpinning) initReels(); }, 250);
-  });
+
+  class ReelEngine {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.angle = 0;
+      this.targetAngle = 0;
+      this.phase = 'idle';      // idle | spinning | stopping
+      this.speed = 0;
+      this.anticipating = false;
+      this._raf = null;
+      this._lastTime = null;
+    }
+
+    init() {
+      const w = Math.max(1, this.canvas.clientWidth);
+      const h = Math.max(1, this.canvas.clientHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: 'low-power',
+        premultipliedAlpha: true,
+      });
+      this.renderer.setPixelRatio(dpr);
+      this.renderer.setSize(w, h, false);
+      this.renderer.setClearColor(0x000000, 0);
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+      // Leichte Perspektive für echtes 3D-Feeling
+      this.camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 1000);
+      this.camera.position.set(0, 0, 7);
+      this.camera.lookAt(0, 0, 0);
+
+      this.scene = new THREE.Scene();
+
+      // Zylinder aus 20 einzelnen Symbol-Planes
+      this.cylinder = new THREE.Group();
+      // Radius/Höhe so wählen, dass ~3 Symbole vertikal sichtbar sind
+      const radius = 1.45;
+      const planeH = 2 * radius * Math.sin(Math.PI / REEL_LENGTH) * 1.08; // arc + überlapp
+      const planeW = planeH * 1.25;
+      const geom = new THREE.PlaneGeometry(planeW, planeH);
+
+      for (let i = 0; i < REEL_LENGTH; i++) {
+        const mat = new THREE.MeshBasicMaterial({
+          map: symbolTextures[i],
+          transparent: true,
+          depthWrite: false,
+          alphaTest: 0.01,
+        });
+        const mesh = new THREE.Mesh(geom, mat);
+        const theta = i * SEG_RAD;
+        mesh.position.set(0, radius * Math.sin(theta), radius * Math.cos(theta));
+        mesh.rotation.x = -theta;
+        this.cylinder.add(mesh);
+      }
+      this.scene.add(this.cylinder);
+
+      // Zufälliger Startwinkel — Φ = idx * SEG_RAD zeigt Symbol idx vorne
+      const startIdx = pickRandomIndex();
+      this.angle = startIdx * SEG_RAD;
+      this.cylinder.rotation.x = this.angle;
+
+      this._loop = this._loop.bind(this);
+      this._raf = requestAnimationFrame(this._loop);
+
+      // Context-Lost-Recovery
+      this.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        if (this._raf) cancelAnimationFrame(this._raf);
+      });
+      this.canvas.addEventListener('webglcontextrestored', () => {
+        this._raf = requestAnimationFrame(this._loop);
+      });
+    }
+
+    _loop(now) {
+      if (this._lastTime == null) this._lastTime = now;
+      const dt = Math.min((now - this._lastTime) / 1000, 0.05);
+      this._lastTime = now;
+
+      if (this.phase === 'spinning') {
+        const maxSpeed = this.anticipating ? 6 : 14; // rad/s
+        this.speed = Math.min(this.speed + 60 * dt, maxSpeed);
+        // Positive Rotation → Symbole rollen nach unten (Slot-Standardrichtung)
+        this.angle += this.speed * dt;
+      } else if (this.phase === 'stopping') {
+        const t = Math.min(1, (now - this._stopStart) / this._stopDur);
+        const e = easeOutBack(t);
+        this.angle = this._stopFromAngle + (this.targetAngle - this._stopFromAngle) * e;
+        if (t >= 1) {
+          this.angle = this.targetAngle;
+          this.phase = 'idle';
+          this.speed = 0;
+          this.anticipating = false;
+          const r = this._stopResolve;
+          this._stopResolve = null;
+          if (r) r();
+        }
+      }
+
+      this.cylinder.rotation.x = this.angle;
+      this.renderer.render(this.scene, this.camera);
+      this._raf = requestAnimationFrame(this._loop);
+    }
+
+    start() {
+      this.phase = 'spinning';
+      this.speed = 4;
+    }
+
+    setAnticipating(on) {
+      this.anticipating = !!on;
+    }
+
+    stop(targetIdx, extraRotations = 5) {
+      return new Promise(resolve => {
+        // Φ = targetIdx * SEG_RAD zeigt das Symbol vorne. Plus volle Umdrehungen
+        // in Spin-Richtung (+) für satten Overshoot.
+        let target = targetIdx * SEG_RAD + extraRotations * Math.PI * 2;
+        while (target < this.angle + Math.PI) target += Math.PI * 2;
+
+        this._stopFromAngle = this.angle;
+        this.targetAngle = target;
+        this._stopStart = performance.now();
+        this._stopDur = 750;
+        this._stopResolve = resolve;
+        this.phase = 'stopping';
+      });
+    }
+
+    snapTo(targetIdx) {
+      this.angle = targetIdx * SEG_RAD;
+      this.cylinder.rotation.x = this.angle;
+      this.phase = 'idle';
+    }
+
+    resize() {
+      const w = Math.max(1, this.canvas.clientWidth);
+      const h = Math.max(1, this.canvas.clientHeight);
+      this.renderer.setSize(w, h, false);
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
+  let reelsInitialized = false;
+  async function initReels() {
+    if (reelsInitialized) return;
+    reelsInitialized = true;
+    const reelEls = [...document.querySelectorAll('.reel')];
+    if (!THREE) { initFallbackReels(reelEls); return; }
+    try {
+      if (!symbolTextures) symbolTextures = await buildSymbolTextures();
+      for (let i = 0; i < reelEls.length; i++) {
+        const canvas = reelEls[i].querySelector('.reel-canvas');
+        if (!canvas) continue;
+        const eng = new ReelEngine(canvas);
+        eng.init();
+        reelEngines[i] = eng;
+      }
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(() => {
+          reelEngines.forEach(e => e && e.resize());
+        });
+        ro.observe(document.querySelector('.reels-row'));
+      } else {
+        window.addEventListener('resize', () => reelEngines.forEach(e => e && e.resize()));
+      }
+    } catch (e) {
+      console.error('Reel-Engine fehlgeschlagen, Fallback:', e);
+      initFallbackReels(reelEls);
+    }
+  }
+
+  function initFallbackReels(reelEls) {
+    reelEls.forEach(r => {
+      const cv = r.querySelector('.reel-canvas'); if (cv) cv.hidden = true;
+      const fb = r.querySelector('.reel-symbol-fallback');
+      if (fb) {
+        fb.hidden = false;
+        fb.textContent = REEL_SYMBOLS[pickRandomIndex()];
+      }
+    });
+  }
 
   // ============== RNG & WIN CALC ==============
   function pickRandomIndex() {
@@ -1614,40 +1810,32 @@
     return { amount: 0, meta: null };
   }
 
-  // ============== 3D-REEL ANIMATION ==============
-  // Speichert für jede Walze den aktuellen "End-Winkel", damit beim nächsten Spin nahtlos weitergedreht wird
-  const reelAngles = [0, 0, 0];
+  // ============== REEL ANIMATION (Engine-gesteuert) ==============
+  const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function stopReel(reel, cyl, idx, targetIdx, extraRotationsBoost = 0) {
-    return new Promise(resolve => {
-      reel.classList.remove('spinning', 'anticipating');
+  async function stopReel(reel, idx, targetIdx, extraRotationsBoost = 0) {
+    reel.classList.remove('spinning', 'anticipating');
+    reel.classList.add('stopping');
 
-      const baseTarget = -(targetIdx * ANGLE_PER_FACE);
-      const previousAngle = reelAngles[idx];
-      const extraRotations = 5 + idx + extraRotationsBoost;
-      let endAngle = baseTarget - 360 * extraRotations;
-      while (endAngle >= previousAngle - 180) endAngle -= 360;
+    const eng = reelEngines[idx];
+    if (eng) {
+      if (prefersReducedMotion()) {
+        eng.snapTo(targetIdx);
+        await sleep(120);
+      } else {
+        const extra = 5 + idx + extraRotationsBoost;
+        await eng.stop(targetIdx, extra);
+      }
+    } else {
+      // CSS-Fallback: kurz warten, Symbol anzeigen
+      await sleep(420);
+      const fb = reel.querySelector('.reel-symbol-fallback');
+      if (fb) fb.textContent = REEL_SYMBOLS[targetIdx];
+    }
 
-      cyl.style.setProperty('--start-angle', `${previousAngle}deg`);
-      cyl.style.setProperty('--end-angle',   `${endAngle}deg`);
-      cyl.style.transform = `rotateX(${previousAngle}deg)`;
-      void cyl.offsetHeight;
-
-      reel.classList.add('stopping');
-
-      const onEnd = () => {
-        cyl.removeEventListener('animationend', onEnd);
-        cyl.style.transform = `rotateX(${endAngle}deg)`;
-        reelAngles[idx] = endAngle;
-        reel.classList.remove('stopping');
-        // Mikro-Bounce-Sparkle + Klick am Stopp
-        spawnReelStopSparkle(reel);
-        sfx.reelStop();
-        resolve();
-      };
-      cyl.addEventListener('animationend', onEnd);
-      setTimeout(() => { onEnd(); }, 1000);
-    });
+    reel.classList.remove('stopping');
+    spawnReelStopSparkle(reel);
+    sfx.reelStop();
   }
 
   function spawnReelStopSparkle(reel) {
@@ -1666,7 +1854,6 @@
 
   async function animateReels(targetIndices) {
     const reels = [...document.querySelectorAll('.reel')];
-    const cylinders = reels.map(r => r.querySelector('.reel-cylinder'));
 
     // Partikel während Spin ausblenden (entlastet Compositing)
     const particles = document.getElementById('ambientParticles');
@@ -1675,7 +1862,20 @@
     // Spinning starten
     reels.forEach(r => r.classList.remove('stopping', 'win-glow', 'anticipating'));
     reels.forEach(r => r.classList.add('spinning'));
+    reelEngines.forEach(e => e && e.start());
     sfx.spinStart();
+
+    // Fallback-Symbole während des Spins durchblättern lassen
+    let fallbackTimer = null;
+    if (!reelEngines[0]) {
+      fallbackTimer = setInterval(() => {
+        reels.forEach(r => {
+          if (!r.classList.contains('spinning')) return;
+          const fb = r.querySelector('.reel-symbol-fallback');
+          if (fb) fb.textContent = REEL_SYMBOLS[pickRandomIndex()];
+        });
+      }, 90);
+    }
 
     const sym0 = REEL_SYMBOLS[targetIndices[0]];
     const sym1 = REEL_SYMBOLS[targetIndices[1]];
@@ -1686,15 +1886,16 @@
 
     // Walze 1 stoppt nach 1300ms
     await sleep(1300);
-    await stopReel(reels[0], cylinders[0], 0, targetIndices[0]);
+    await stopReel(reels[0], 0, targetIndices[0]);
 
     // Walze 2 stoppt nach weiteren 600ms
     await sleep(600);
-    await stopReel(reels[1], cylinders[1], 1, targetIndices[1]);
+    await stopReel(reels[1], 1, targetIndices[1]);
 
     // Anticipation: wenn Walze 1 & 2 gleich → Walze 3 wird langsamer + glüht rot
     if (willAnticipate) {
       reels[2].classList.add('anticipating');
+      if (reelEngines[2]) reelEngines[2].setAnticipating(true);
       sfx.anticipateStart();
       // Längere Anticipation für mehr Spannung
       await sleep(reel3WillMatch ? 1800 : 1200);
@@ -1703,8 +1904,9 @@
       await sleep(700);
     }
 
-    await stopReel(reels[2], cylinders[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
+    await stopReel(reels[2], 2, targetIndices[2], willAnticipate ? 2 : 0);
     sfx.spinEnd();
+    if (fallbackTimer) clearInterval(fallbackTimer);
     if (particles) particles.classList.remove('dim');
   }
 
@@ -2104,7 +2306,7 @@
       document.documentElement.setAttribute('data-theme', activeTheme);
 
       // Reels jetzt rendern (nachdem die Page sichtbar ist und Layout-Größen stimmen)
-      requestAnimationFrame(() => initReels());
+      requestAnimationFrame(() => { initReels().catch(err => console.error('initReels:', err)); });
 
       // Live Coins
       onValue(ref(db, `coins/${userKey}`), snap => {
