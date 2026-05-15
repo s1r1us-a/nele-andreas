@@ -117,9 +117,7 @@ html[data-theme="prinzesschen"] .scard,
 html[data-theme="prinzesschen"] .icard,
 html[data-theme="prinzesschen"] .quiz-card,
 html[data-theme="prinzesschen"] .quiz-panel,
-html[data-theme="prinzesschen"] .quiz-hs-item,
-html[data-theme="prinzesschen"] .stat-item,
-html[data-theme="prinzesschen"] .legend-item {
+html[data-theme="prinzesschen"] .quiz-hs-item {
   border-width: 2px;
   animation: princessBorderShift 7s linear infinite;
   background: rgba(255,240,248,0.92) !important;
