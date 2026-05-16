@@ -741,6 +741,58 @@
     --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
     --glow: rgba(232,115,138,0.4); --glow-hover: rgba(232,115,138,0.55);
   }
+  .arcade-gold {
+    --grad: linear-gradient(135deg, #f0c674 0%, #d4a061 100%);
+    --glow: rgba(212,160,97,0.4); --glow-hover: rgba(212,160,97,0.6);
+    color: #2a1808;
+  }
+  .arcade-gold small { opacity: 0.75; }
+
+  /* AUTOSPIN SWITCH */
+  .autospin-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    user-select: none;
+  }
+  .autospin-row label { cursor: pointer; }
+  .switch {
+    --w: 46px; --h: 26px;
+    position: relative;
+    width: var(--w); height: var(--h);
+    flex: 0 0 auto;
+    cursor: pointer;
+  }
+  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .switch-track {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(232,115,138,0.3);
+    border-radius: 50px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .switch-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease;
+  }
+  .switch input:checked ~ .switch-track {
+    background: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
+    border-color: rgba(232,115,138,0.6);
+  }
+  .switch input:checked ~ .switch-thumb { transform: translateX(20px); }
+  .switch input:focus-visible ~ .switch-track { outline: 2px solid #f0c674; outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    .switch-track, .switch-thumb { transition: none; }
+  }
 
   /* PAYOUT TABLE */
   .payout-table {
@@ -1256,6 +1308,18 @@
           SPIN
           <small>100 🪙</small>
         </button>
+        <button class="arcade-btn arcade-gold" data-bet="1000" data-spins="1" data-multiplier="10">
+          HIGH ROLLER
+          <small>1000 🪙 · Gewinne ×10</small>
+        </button>
+        <div class="autospin-row">
+          <span class="switch">
+            <input type="checkbox" id="autoSpinToggle" aria-label="Autospin umschalten">
+            <span class="switch-track"></span>
+            <span class="switch-thumb"></span>
+          </span>
+          <label for="autoSpinToggle">🔁 Autospin <small style="opacity:.6;font-weight:600;">(stoppt bei großem Gewinn oder Badge)</small></label>
+        </div>
       </div>
 
       <details class="payout-table">
@@ -1464,6 +1528,8 @@
   let userKey = null;
   let currentCoins = 0;
   let isSpinning = false;
+  let autoSpinActive = false;
+  const AUTOSPIN_WIN_STOP_FACTOR = 50; // Autospin stoppt bei Gewinn >= 50× Einsatz (einsatz-relativ, fair für High Roller)
   let activeTheme = 'sakura';
 
   // ============== HELPERS ==============
@@ -2132,9 +2198,11 @@
     // "Voll daneben": 3 verschiedene Symbole & kein Gewinn
     if (new Set(result).size === 3) ids.push('voll-daneben');
 
+    let unlockedAny = false;
     for (const id of ids) {
-      if (await unlockBadge(id)) announceBadge(id);
+      if (await unlockBadge(id)) { announceBadge(id); unlockedAny = true; }
     }
+    return unlockedAny;
   }
 
   // Meilenstein-Badges anhand der aktuellen Lifetime-Statistik vergeben.
@@ -2163,9 +2231,11 @@
     if (spins >= 100 && net > 0)        reached.push('haus-bezwingerin');
     if (net <= -100000)      reached.push('mutige-spielerin');
 
+    let unlockedAny = false;
     for (const id of reached) {
-      if (await unlockBadge(id)) announceBadge(id);
+      if (await unlockBadge(id)) { announceBadge(id); unlockedAny = true; }
     }
+    return unlockedAny;
   }
 
   // ============== SPIN ENGINE ==============
@@ -2173,7 +2243,7 @@
     document.querySelectorAll('.arcade-btn').forEach(b => b.disabled = disabled);
   }
 
-  async function doSpin({ betAmount, spinCount, multiplier=1 }) {
+  async function doSpin({ betAmount, spinCount, multiplier=1, auto=false }) {
     if (isSpinning) return;
     isSpinning = true;
     setButtonsDisabled(true);
@@ -2181,7 +2251,8 @@
     const perSpin = Math.round(betAmount / spinCount);
 
     try {
-      for (let i = 0; i < spinCount; i++) {
+      let i = 0;
+      while (auto ? autoSpinActive : i < spinCount) {
         // 1. Coin-Check
         const coinsSnap = await get(ref(db, `coins/${userKey}`));
         const have = coinsSnap.val() || 0;
@@ -2209,25 +2280,48 @@
         // 6. Win-Effekt
         await triggerWinEffect(win, meta);
 
-        // 7. Stats + Badges
+        // 7. Stats + Badges — läuft bei JEDEM Spin (auch Autospin) identisch
         await updateSlotStats(result, win, perSpin);
-        await checkComboBadges(result, meta);
-        await checkMilestoneBadges(win);
+        const comboBadge     = await checkComboBadges(result, meta);
+        const milestoneBadge = await checkMilestoneBadges(win);
 
-        // 8. Pause zwischen Auto-Spins
-        if (i < spinCount - 1) await sleep(700);
+        // 8. Autospin-Stopp-Prüfung — bewusst NACH Stats/Badges,
+        //    damit auch die abschließende Runde voll in die Statistik zählt.
+        if (auto) {
+          if (win >= perSpin * AUTOSPIN_WIN_STOP_FACTOR) {
+            showToast(`⏹ Autospin gestoppt: großer Gewinn (+${fmt(win)} 🪙)!`);
+            break;
+          }
+          if (comboBadge || milestoneBadge) {
+            showToast('⏹ Autospin gestoppt: neues Badge!');
+            break;
+          }
+          if (!autoSpinActive) break; // manuell ausgeschaltet
+        }
+
+        // 9. Pause zwischen Spins
+        const more = auto ? autoSpinActive : (i + 1 < spinCount);
+        if (more) await sleep(700);
+        i++;
       }
     } catch (err) {
       console.error('Spin error:', err);
       showToast('Fehler beim Spin: ' + err.message, true);
     } finally {
       isSpinning = false;
+      if (auto) {
+        autoSpinActive = false;
+        const t = document.getElementById('autoSpinToggle');
+        if (t) t.checked = false;
+      }
       setButtonsDisabled(false);
     }
   }
 
   // ============== EVENT BINDINGS ==============
   function bindBetButtons() {
+    const autoToggle = document.getElementById('autoSpinToggle');
+
     document.querySelectorAll('.arcade-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         sfx.click();
@@ -2235,9 +2329,21 @@
         const bet = parseInt(btn.dataset.bet, 10);
         const spins = parseInt(btn.dataset.spins, 10);
         const mult = parseInt(btn.dataset.multiplier || '1', 10);
-        doSpin({ betAmount: bet, spinCount: spins, multiplier: mult });
+        if (autoToggle && autoToggle.checked) {
+          autoSpinActive = true;
+          doSpin({ betAmount: bet, spinCount: 1, multiplier: mult, auto: true });
+        } else {
+          doSpin({ betAmount: bet, spinCount: spins, multiplier: mult });
+        }
       });
     });
+
+    // Autospin manuell ausschalten → laufende Runde endet sauber, dann Stopp.
+    if (autoToggle) {
+      autoToggle.addEventListener('change', () => {
+        if (!autoToggle.checked) autoSpinActive = false;
+      });
+    }
   }
 
 
