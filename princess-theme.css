@@ -379,6 +379,12 @@ html[data-theme="prinzesschen"] .badge-item.owned.rarity-rare,
 html[data-theme="prinzesschen"] .frame-item.owned.rarity-rare {
   border-color: rgba(220,120,180,0.85) !important;
 }
+/* Mythisch behält seinen Regenbogen-Holo (kein Filter-Override, sonst
+   stoppt die Hue-Animation) – nur Rand harmonisiert pink. */
+html[data-theme="prinzesschen"] .badge-item.owned.rarity-mythic,
+html[data-theme="prinzesschen"] .frame-item.owned.rarity-mythic {
+  border-color: rgba(235,150,225,0.95) !important;
+}
 
 /* ---------- Toast ---------- */
 html[data-theme="prinzesschen"] .toast {

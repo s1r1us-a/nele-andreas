@@ -281,9 +281,11 @@
   @keyframes rewardBounce { 0%{transform:translateY(-20px);opacity:0} 60%{transform:translateY(6px)} 100%{transform:translateY(0);opacity:1} }
   .reward-type { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
   .reward-type.coins { color: var(--gold); }
+  .reward-type.badge-bronze { color: #9c6b3f; }
   .reward-type.badge-common { color: #8b8b8b; }
   .reward-type.badge-rare { color: #6c8ebf; }
   .reward-type.badge-legendary { color: #c87830; }
+  .reward-type.badge-mythic { color: #a368d8; }
   .reward-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
   .reward-sub { font-size: 13px; color: var(--ui-btn-text); font-weight: 500; margin-bottom: 28px; line-height: 1.5; }
   .reward-close { width: 100%; background: linear-gradient(135deg, var(--gold), #c87830); border: none; border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 16px rgba(212,160,97,0.4); transition: transform 0.2s ease; }
@@ -294,9 +296,11 @@
   @keyframes konfettiFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
 
   /* REWARD TYPE RAHMEN */
+  .reward-type.frame-bronze    { color: #9c6b3f; }
   .reward-type.frame-common    { color: #8b8b8b; }
   .reward-type.frame-rare      { color: #6c8ebf; }
   .reward-type.frame-legendary { color: #c87830; }
+  .reward-type.frame-mythic    { color: #a368d8; }
 
   /* RAHMEN-VORSCHAU IM REWARD POPUP */
   .reward-avatar-wrap { margin: 0 auto 16px; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; position: relative; }
@@ -615,12 +619,14 @@
         <div class="lootbox-odds-row"><span>🟤 Erz (Häufig: Kupfer/Eisen)</span><span>8%</span></div>
         <div class="lootbox-odds-row"><span>🥈 Erz (Selten: Silber/Gold)</span><span>5%</span></div>
         <div class="lootbox-odds-row"><span>💜 Erz (Episch: Amethyst/Smaragd)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🏷️ Badge (Gewöhnlich)</span><span>5%</span></div>
-        <div class="lootbox-odds-row"><span>💎 Badge (Selten)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>👑 Badge (Legendär)</span><span>1%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Gewöhnlich)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Selten)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🌈 Rahmen (Legendär)</span><span>1%</span></div>
+        <div class="lootbox-odds-row"><span>🥉 Badge (Bronze)</span><span>4%</span></div>
+        <div class="lootbox-odds-row"><span>🥈 Badge (Silber)</span><span>2,5%</span></div>
+        <div class="lootbox-odds-row"><span>💎 Badge (Saphir)</span><span>1%</span></div>
+        <div class="lootbox-odds-row"><span>👑 Badge (Gold)</span><span>0,4%</span></div>
+        <div class="lootbox-odds-row"><span>🌟 Badge (Mythisch)</span><span>0,1%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Silber)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Saphir)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🌈 Rahmen (Gold)</span><span>1%</span></div>
         <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>5%</span></div>
         <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>4%</span></div>
       </div>
@@ -1367,27 +1373,27 @@
   });
   // ---- LOOTBOX ----
   const BADGES = [
-    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'common',    rarityLabel: 'Gewöhnlich' },
-    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'common',    rarityLabel: 'Gewöhnlich' },
-    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'common',    rarityLabel: 'Gewöhnlich' },
-    { id: 'gamerin',      emoji: '🎮', name: 'Gamerin',          rarity: 'common',    rarityLabel: 'Gewöhnlich' },
-    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'rare',      rarityLabel: 'Selten' },
-    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'rare',      rarityLabel: 'Selten' },
-    { id: 'feuerfuchs',   emoji: '🔥', name: 'Feuerfuchs',       rarity: 'rare',      rarityLabel: 'Selten' },
-    { id: 'diamant',      emoji: '💎', name: 'Diamant',           rarity: 'rare',      rarityLabel: 'Selten' },
-    { id: 'klickqueen',   emoji: '👑', name: 'Klick-Queen',      rarity: 'legendary', rarityLabel: 'Legendär' },
-    { id: 'sternen',      emoji: '🌟', name: 'Sternensammlerin', rarity: 'legendary', rarityLabel: 'Legendär' },
-    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'legendary', rarityLabel: 'Legendär' },
-    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'legendary', rarityLabel: 'Legendär' },
+    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'bronze',    rarityLabel: 'Bronze' },
+    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'bronze',    rarityLabel: 'Bronze' },
+    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'bronze',    rarityLabel: 'Bronze' },
+    { id: 'gamerin',      emoji: '🎮', name: 'Gamerin',          rarity: 'common',    rarityLabel: 'Silber' },
+    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'common',    rarityLabel: 'Silber' },
+    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'common',    rarityLabel: 'Silber' },
+    { id: 'feuerfuchs',   emoji: '🔥', name: 'Feuerfuchs',       rarity: 'rare',      rarityLabel: 'Saphir' },
+    { id: 'diamant',      emoji: '💎', name: 'Diamant',           rarity: 'rare',      rarityLabel: 'Saphir' },
+    { id: 'klickqueen',   emoji: '👑', name: 'Klick-Queen',      rarity: 'legendary', rarityLabel: 'Gold' },
+    { id: 'sternen',      emoji: '🌟', name: 'Sternensammlerin', rarity: 'legendary', rarityLabel: 'Gold' },
+    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'mythic',    rarityLabel: 'Mythisch' },
+    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'mythic',    rarityLabel: 'Mythisch' },
   ];
 
   const FRAMES = [
-    { id: 'sakura',      name: 'Sakura',      emoji: '🌸', rarity: 'common',    rarityLabel: 'Gewöhnlich', cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
-    { id: 'ocean',       name: 'Ozean',       emoji: '🌊', rarity: 'common',    rarityLabel: 'Gewöhnlich', cssClass: 'frame-ocean',      gradient: 'linear-gradient(135deg,#2a9d8f,#4ecdc4)' },
-    { id: 'feuer',       name: 'Feuer',       emoji: '🔥', rarity: 'rare',      rarityLabel: 'Selten',     cssClass: 'frame-feuer',      gradient: 'linear-gradient(135deg,#dc2626,#f97316)' },
-    { id: 'blitz',       name: 'Blitz',       emoji: '⚡', rarity: 'rare',      rarityLabel: 'Selten',     cssClass: 'frame-blitz',      gradient: 'linear-gradient(135deg,#ca8a04,#fbbf24)' },
-    { id: 'regenbogen',  name: 'Regenbogen',  emoji: '🌈', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-regenbogen', gradient: 'linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4)' },
-    { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Legendär',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
+    { id: 'sakura',      name: 'Sakura',      emoji: '🌸', rarity: 'common',    rarityLabel: 'Silber', cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
+    { id: 'ocean',       name: 'Ozean',       emoji: '🌊', rarity: 'common',    rarityLabel: 'Silber', cssClass: 'frame-ocean',      gradient: 'linear-gradient(135deg,#2a9d8f,#4ecdc4)' },
+    { id: 'feuer',       name: 'Feuer',       emoji: '🔥', rarity: 'rare',      rarityLabel: 'Saphir', cssClass: 'frame-feuer',      gradient: 'linear-gradient(135deg,#dc2626,#f97316)' },
+    { id: 'blitz',       name: 'Blitz',       emoji: '⚡', rarity: 'rare',      rarityLabel: 'Saphir', cssClass: 'frame-blitz',      gradient: 'linear-gradient(135deg,#ca8a04,#fbbf24)' },
+    { id: 'regenbogen',  name: 'Regenbogen',  emoji: '🌈', rarity: 'legendary', rarityLabel: 'Gold',   cssClass: 'frame-regenbogen', gradient: 'linear-gradient(135deg,#e8738a,#a78bfa,#4ecdc4)' },
+    { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Gold',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
   const BOX_BASE_PRICE = 500;
@@ -1536,10 +1542,12 @@
     if (r < 70)  return { type: 'farm', category: 'ores_common' };
     if (r < 75)  return { type: 'farm', category: 'ores_rare' };
     if (r < 77)  return { type: 'farm', category: 'ores_epic' };
-    // Badges
-    if (r < 82)  return { type: 'badge', rarity: 'common' };
-    if (r < 84)  return { type: 'badge', rarity: 'rare' };
-    if (r < 85)  return { type: 'badge', rarity: 'legendary' };
+    // Badges (5 Stufen, Gesamtanteil ~8 %)
+    if (r < 81)   return { type: 'badge', rarity: 'bronze' };     // 4 %
+    if (r < 83.5) return { type: 'badge', rarity: 'common' };     // 2,5 %
+    if (r < 84.5) return { type: 'badge', rarity: 'rare' };       // 1 %
+    if (r < 84.9) return { type: 'badge', rarity: 'legendary' };  // 0,4 %
+    if (r < 85)   return { type: 'badge', rarity: 'mythic' };     // 0,1 %
     // Profilrahmen
     if (r < 88)  return { type: 'frame', rarity: 'common' };
     if (r < 90)  return { type: 'frame', rarity: 'rare' };
