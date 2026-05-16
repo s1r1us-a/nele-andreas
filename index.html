@@ -1015,30 +1015,65 @@
     animation: boostRingBlue 0.85s ease-in-out infinite;
   }
   .heart-glow-ring.sabotage {
-    box-shadow: 0 0 0 6px rgba(255,30,30,1), 0 0 50px 18px rgba(255,30,30,0.95), 0 0 105px 44px rgba(200,0,0,0.65);
-    animation: boostRingRed 0.5s ease-in-out infinite;
+    box-shadow: 0 0 0 5px rgba(0,255,65,1), 0 0 50px 18px rgba(0,255,65,0.85), 0 0 105px 44px rgba(0,180,40,0.5);
+    animation: boostRingHack 0.5s ease-in-out infinite, hackFlicker 2.4s steps(1,end) infinite;
   }
   @keyframes boostGlowBlue { 0%,100% { opacity: 0.65; } 50% { opacity: 1; } }
-  @keyframes boostGlowRed  { 0%,100% { opacity: 0.6; }  50% { opacity: 1; } }
   @keyframes boostRingBlue { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.07); } }
-  @keyframes boostRingRed  { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+  @keyframes boostRingHack { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+  @keyframes hackFlicker {
+    0%,100% { opacity: 1; }
+    7% { opacity: 0.35; }
+    9% { opacity: 1; }
+    11% { opacity: 0.6; }
+    13% { opacity: 1; }
+    55% { opacity: 0.85; }
+    57% { opacity: 1; }
+  }
   /* Direkt am Button, NACH allen Theme-Regeln + !important → Theme wird für den Glow ignoriert */
   .heart-btn.boost-glow-auto     { box-shadow: 0 0 0 5px rgba(56,160,255,1), 0 0 40px 14px rgba(56,160,255,0.85) !important; }
-  .heart-btn.boost-glow-sabotage { box-shadow: 0 0 0 5px rgba(255,30,30,1), 0 0 44px 16px rgba(255,30,30,0.85) !important; filter: saturate(1.4) !important; }
+  .heart-btn.boost-glow-sabotage { box-shadow: 0 0 0 5px rgba(0,255,65,1), 0 0 44px 16px rgba(0,255,65,0.8) !important; filter: saturate(1.5) brightness(1.05) !important; }
   .heart-status-badge {
     display: none; margin: 2px auto 0; font-family: 'Quicksand', sans-serif;
     font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 50px; letter-spacing: 0.4px;
   }
   .heart-status-badge.show { display: inline-block; }
   .heart-status-badge.auto     { background: rgba(56,160,255,0.16); color: #1e6fd6; border: 1.5px solid rgba(56,160,255,0.55); }
-  .heart-status-badge.sabotage { background: rgba(255,40,40,0.16); color: #d11; border: 1.5px solid rgba(255,40,40,0.6); animation: boostGlowRed 0.8s ease-in-out infinite; }
-  /* Gegner-Glow (Angreifer-Sicht): wenn der Gegner gerade sabotiert ist */
-  .stat-item.sabotaged-target { position: relative; z-index: 0; border-radius: 14px; background: rgba(255,40,40,0.14); }
+  .heart-status-badge.sabotage { background: rgba(0,20,5,0.9); color: #00ff41; border: 1.5px solid rgba(0,255,65,0.6); font-family: 'Courier New', monospace; text-shadow: 0 0 6px rgba(0,255,65,0.7); animation: hackFlicker 2.4s steps(1,end) infinite; }
+  /* Gegner-Glow (Angreifer-Sicht): wenn der Gegner gerade gehackt wird */
+  .stat-item.sabotaged-target { position: relative; z-index: 0; border-radius: 14px; background: rgba(0,255,65,0.12); }
   .stat-item.sabotaged-target::before {
     content: ''; position: absolute; inset: -7px; border-radius: 18px; pointer-events: none; z-index: -1;
-    box-shadow: 0 0 0 4px rgba(255,30,30,1), 0 0 36px 12px rgba(255,30,30,0.9), 0 0 80px 30px rgba(200,0,0,0.6);
-    animation: boostRingRed 0.55s ease-in-out infinite;
+    box-shadow: 0 0 0 4px rgba(0,255,65,1), 0 0 36px 12px rgba(0,255,65,0.85), 0 0 80px 30px rgba(0,180,40,0.5);
+    animation: boostRingHack 0.55s ease-in-out infinite, hackFlicker 2.4s steps(1,end) infinite;
   }
+  /* Opfer-Modal im Hacker/Terminal-Look (nur dieses Modal, andere unberührt) */
+  .moment-modal-card.hack-modal {
+    position: relative; overflow: hidden;
+    background: #0a0f0a; border: 1.5px solid rgba(0,255,65,0.55);
+    box-shadow: 0 0 0 1px rgba(0,255,65,0.25), 0 0 40px 6px rgba(0,255,65,0.3), 0 18px 50px rgba(0,0,0,0.55);
+  }
+  .moment-modal-card.hack-modal::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; border-radius: inherit;
+    background: repeating-linear-gradient(0deg, rgba(0,255,65,0.05) 0 1px, transparent 1px 3px);
+  }
+  .moment-modal-card.hack-modal > * { position: relative; z-index: 3; }
+  .hack-modal .modal-title {
+    font-family: 'Courier New', monospace; font-weight: 700; font-size: 26px; letter-spacing: 3px;
+    background: none; -webkit-background-clip: initial; background-clip: initial;
+    color: #00ff41; -webkit-text-fill-color: #00ff41;
+    text-shadow: 0 0 10px rgba(0,255,65,0.75);
+    animation: hackFlicker 2.4s steps(1,end) infinite;
+  }
+  .hack-modal .modal-subtitle { font-family: 'Courier New', monospace; color: #00ff41; opacity: 0.78; letter-spacing: 1px; }
+  .hack-modal .modal-emoji { text-shadow: 0 0 14px rgba(0,255,65,0.7); }
+  .hack-modal #sabotageAlertText { font-family: 'Courier New', monospace; color: #7CFC9A; }
+  .hack-modal .moment-save-btn {
+    font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px;
+    background: transparent; color: #00ff41; border: 1.5px solid rgba(0,255,65,0.7);
+    text-shadow: 0 0 6px rgba(0,255,65,0.5);
+  }
+  .hack-modal .moment-save-btn:hover { background: rgba(0,255,65,0.18); color: #aaffbf; transform: scale(1.03) translateY(-1px); }
   .booster-open-btn {
     border: 1.5px solid var(--gold); background: rgba(212,160,97,0.12); color: var(--gold);
     border-radius: 50px; padding: 9px 20px; font-family: 'Quicksand', sans-serif;
@@ -1250,13 +1285,13 @@
 
 <!-- Modal: Sabotage-Hinweis (Opfer) -->
 <div class="moment-modal-overlay" id="sabotageAlertOverlay">
-  <div class="moment-modal-card">
-    <span class="modal-emoji">😈</span>
-    <div class="modal-title">Sabotage!</div>
-    <div class="modal-subtitle">Du wurdest erwischt</div>
-    <p id="sabotageAlertText" style="font-size:14px;color:var(--text-dark);line-height:1.6;margin-bottom:22px;"></p>
+  <div class="moment-modal-card hack-modal">
+    <span class="modal-emoji">💻</span>
+    <div class="modal-title">HACK INCOMING</div>
+    <div class="modal-subtitle">&gt; System wird gehackt…</div>
+    <p id="sabotageAlertText" style="font-size:14px;line-height:1.6;margin-bottom:22px;"></p>
     <div class="moment-modal-btns">
-      <button class="moment-save-btn" id="sabotageAlertBtn">Verstanden 😤</button>
+      <button class="moment-save-btn" id="sabotageAlertBtn">&gt; Verstanden 💻</button>
     </div>
   </div>
 </div>
@@ -1697,7 +1732,7 @@
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                        durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                        durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
     autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 5×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
-    sabotage_booster:    { emoji: '😈', name: 'Sabotage',         desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
+    sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
   };
 
   function isBoosterActive(data) {
@@ -1735,7 +1770,7 @@
     if (s && s.pending && !s.activatedAt) {
       const secs = Math.round((s.durationMs || 90000) / 1000);
       document.getElementById('sabotageAlertText').textContent =
-        `${s.from || 'Dein Gegner'} hat eine Sabotage gegen dich gestartet! Sobald du das hier wegklickst, zählt ${secs} Sekunden lang nur jeder 10. Klick. 😈`;
+        `${s.from || 'Dein Gegner'} hat dich gehackt! 💻 Sobald du das wegklickst, zählt ${secs} Sekunden lang nur jeder 10. Klick.`;
       if (ov) ov.classList.add('open');
     } else if (ov && ov.classList.contains('open')) {
       ov.classList.remove('open');
@@ -1775,7 +1810,7 @@
 
     if (sabOn) {
       const r = (activeSabotage.activatedAt + activeSabotage.durationMs) - Date.now();
-      badge.textContent = `😈 Sabotiert ${formatCountdown(r)}`;
+      badge.textContent = `💻 Gehackt ${formatCountdown(r)}`;
       badge.className = 'heart-status-badge show sabotage';
     } else if (autoOn) {
       const r = (activeBoosterAutoclicker.activatedAt + activeBoosterAutoclicker.durationMs) - Date.now();
@@ -1811,7 +1846,7 @@
     if (isBoosterActive(activeBoosterAutoclicker))
       out.push({ id:'autoclicker_booster', emoji:'🤖', text:'Auto-Klicker aktiv – klickt für dich!', until: activeBoosterAutoclicker.activatedAt + activeBoosterAutoclicker.durationMs });
     if (isBoosterActive(activeSabotage))
-      out.push({ id:'sabotage_booster', emoji:'😈', text:`Sabotiert von ${activeSabotage.from || 'Gegner'}! Nur jeder 10. Klick zählt`, until: activeSabotage.activatedAt + activeSabotage.durationMs });
+      out.push({ id:'sabotage_booster', emoji:'💻', text:`Gehackt von ${activeSabotage.from || 'Gegner'} – nur jeder 10. Klick zählt`, until: activeSabotage.activatedAt + activeSabotage.durationMs });
     return out;
   }
 

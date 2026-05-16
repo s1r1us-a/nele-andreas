@@ -914,7 +914,7 @@
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                       durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                       durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
     autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 5×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
-    sabotage_booster:    { emoji: '😈', name: 'Sabotage',         desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
+    sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
   };
 
   function getActiveData(id) {
@@ -1061,7 +1061,7 @@
         existing.pending ||
         (existing.activatedAt && Date.now() < existing.activatedAt + (existing.durationMs || 0))
       );
-      if (stillActive) { showToast('😈 Gegner ist bereits sabotiert!'); return; }
+      if (stillActive) { showToast('💻 Gegner wird bereits gehackt!'); return; }
     }
 
     // Inventar um 1 verringern
@@ -1070,7 +1070,7 @@
     if (def.target === 'opponent') {
       const opponentKey = key === 'andreas' ? 'nele' : 'andreas';
       await set(ref(db, `boosters/${opponentKey}/${def.activeKey}`), { durationMs: def.durationMs, from: currentUser, pending: true });
-      showToast(`😈 ${def.name} gestartet! Der Gegner wird benachrichtigt.`);
+      showToast(`💻 ${def.name} gestartet! Der Gegner wird benachrichtigt.`);
     } else {
       await set(ref(db, `boosters/${key}/${def.activeKey}`), { activatedAt: Date.now(), durationMs: def.durationMs });
       showToast(`🚀 ${def.name} aktiviert! Viel Spaß!`);
