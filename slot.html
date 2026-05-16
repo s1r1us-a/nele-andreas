@@ -1529,7 +1529,7 @@
   let currentCoins = 0;
   let isSpinning = false;
   let autoSpinActive = false;
-  const AUTOSPIN_WIN_STOP = 5000; // Einzelgewinn-Schwelle (nach multiplier) → Autospin-Stopp
+  const AUTOSPIN_WIN_STOP_FACTOR = 50; // Autospin stoppt bei Gewinn >= 50× Einsatz (einsatz-relativ, fair für High Roller)
   let activeTheme = 'sakura';
 
   // ============== HELPERS ==============
@@ -2288,7 +2288,7 @@
         // 8. Autospin-Stopp-Prüfung — bewusst NACH Stats/Badges,
         //    damit auch die abschließende Runde voll in die Statistik zählt.
         if (auto) {
-          if (win >= AUTOSPIN_WIN_STOP) {
+          if (win >= perSpin * AUTOSPIN_WIN_STOP_FACTOR) {
             showToast(`⏹ Autospin gestoppt: großer Gewinn (+${fmt(win)} 🪙)!`);
             break;
           }
