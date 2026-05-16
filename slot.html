@@ -215,6 +215,11 @@
     letter-spacing: 2px; text-transform: uppercase;
     margin-bottom: 24px;
   }
+  .badge-modal-rarity {
+    font-size: 11px; color: var(--slot-text-dim);
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
   .login-field {
     width: 100%;
     border: 1.5px solid rgba(212,160,97,0.3);
@@ -1405,6 +1410,17 @@
   <div id="winOverlayText" class="win-overlay-text"></div>
 </div>
 
+<!-- BADGE MODAL -->
+<div id="badgeModalOverlay" class="modal-overlay" style="display:none; z-index:10003;">
+  <div class="modal-card">
+    <span id="badgeModalEmoji" class="modal-emoji">🏅</span>
+    <div id="badgeModalName" class="modal-title">Badge</div>
+    <div id="badgeModalDesc" class="modal-subtitle">Beschreibung</div>
+    <div id="badgeModalRarity" class="badge-modal-rarity"></div>
+    <button id="badgeModalBtn" class="login-btn">Weiter 🏅</button>
+  </div>
+</div>
+
 <!-- CONFETTI -->
 <div id="confetti-container"></div>
 
@@ -2179,10 +2195,31 @@
     return true;
   }
 
-  function announceBadge(badgeId) {
+  // Zeigt das gewonnene Badge in einem Modal und löst erst auf,
+  // wenn der Nutzer "Weiter" klickt. Mehrere Badges pro Spin werden
+  // durch das await an den Aufrufstellen nacheinander gezeigt.
+  function showBadgeModal(def) {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('badgeModalOverlay');
+      const btn = document.getElementById('badgeModalBtn');
+      document.getElementById('badgeModalEmoji').textContent = def.emoji;
+      document.getElementById('badgeModalName').textContent = def.name;
+      document.getElementById('badgeModalDesc').textContent = def.desc;
+      document.getElementById('badgeModalRarity').textContent = def.rarity;
+      overlay.style.display = 'flex';
+      const onClose = () => {
+        btn.removeEventListener('click', onClose);
+        overlay.style.display = 'none';
+        resolve();
+      };
+      btn.addEventListener('click', onClose);
+    });
+  }
+
+  async function announceBadge(badgeId) {
     const def = SLOT_BADGE_BY_ID[badgeId];
     if (!def) return;
-    showToast(`🏅 Neues Badge: ${def.emoji} ${def.name}`);
+    await showBadgeModal(def);
   }
 
   // Combo-/Spezial-Badges aus dem Spin-Ergebnis ableiten und vergeben.
@@ -2202,7 +2239,7 @@
 
     let unlockedAny = false;
     for (const id of ids) {
-      if (await unlockBadge(id)) { announceBadge(id); unlockedAny = true; }
+      if (await unlockBadge(id)) { await announceBadge(id); unlockedAny = true; }
     }
     return unlockedAny;
   }
@@ -2235,7 +2272,7 @@
 
     let unlockedAny = false;
     for (const id of reached) {
-      if (await unlockBadge(id)) { announceBadge(id); unlockedAny = true; }
+      if (await unlockBadge(id)) { await announceBadge(id); unlockedAny = true; }
     }
     return unlockedAny;
   }
