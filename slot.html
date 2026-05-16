@@ -1520,6 +1520,28 @@
     { id: 'slot-koenigin',       emoji: '🏆',  name: 'Slot-Königin',       desc: 'Insgesamt 5.000.000 🪙 gewonnen',    rarity: 'legendary', type: 'milestone' },
     { id: 'haus-bezwingerin',    emoji: '📈',  name: 'Haus-Bezwingerin',   desc: 'Netto im Plus nach 100+ Spins',      rarity: 'legendary', type: 'milestone' },
     { id: 'mutige-spielerin',    emoji: '🎯',  name: 'Mutige Spielerin',   desc: 'Netto ≤ -1.000.000 🪙',              rarity: 'common',    type: 'milestone' },
+    // Langzeit-Badges (Grind / Strähnen / Treue) – belohnen lange Autospin-Läufe
+    { id: 'slot-marathon',       emoji: '🏃‍♀️',name: 'Slot-Marathon',      desc: '10.000 Spins gedreht',               rarity: 'legendary', type: 'milestone' },
+    { id: 'slot-dauerlaeuferin', emoji: '🛤️', name: 'Dauerläuferin',      desc: '25.000 Spins gedreht',               rarity: 'legendary', type: 'milestone' },
+    { id: 'slot-legende',        emoji: '🏛️', name: 'Slot-Legende',       desc: '50.000 Spins gedreht',               rarity: 'mythic',    type: 'milestone' },
+    { id: 'slot-unsterblich',    emoji: '♾️', name: 'Slot-Unsterblich',   desc: '100.000 Spins gedreht',              rarity: 'mythic',    type: 'milestone' },
+    { id: 'grossinvestorin',     emoji: '🏦',  name: 'Großinvestorin',     desc: 'Insgesamt 5.000.000 🪙 eingesetzt',  rarity: 'rare',      type: 'milestone' },
+    { id: 'spielbank-investorin',emoji: '🎰',  name: 'Spielbank-Investorin',desc: 'Insgesamt 25.000.000 🪙 eingesetzt', rarity: 'legendary', type: 'milestone' },
+    { id: 'all-in-koenigin',     emoji: '🃏',  name: 'All-In-Königin',     desc: 'Insgesamt 100.000.000 🪙 eingesetzt', rarity: 'mythic',    type: 'milestone' },
+    { id: 'slot-magnatin',       emoji: '🤵‍♀️',name: 'Slot-Magnatin',      desc: 'Insgesamt 25.000.000 🪙 gewonnen',   rarity: 'legendary', type: 'milestone' },
+    { id: 'slot-imperatorin',    emoji: '👑',  name: 'Slot-Imperatorin',   desc: 'Insgesamt 100.000.000 🪙 gewonnen',  rarity: 'mythic',    type: 'milestone' },
+    { id: 'halbe-million',       emoji: '💵',  name: 'Halbe Million',      desc: 'Einzelgewinn ≥ 500.000 🪙',          rarity: 'legendary', type: 'milestone' },
+    { id: 'millionen-spin',      emoji: '🌌',  name: 'Millionen-Spin',     desc: 'Einzelgewinn ≥ 1.000.000 🪙',        rarity: 'mythic',    type: 'milestone' },
+    { id: 'jackpot-veteranin',   emoji: '🎖️', name: 'Jackpot-Veteranin',  desc: '25× den 👸-Jackpot getroffen',       rarity: 'mythic',    type: 'milestone' },
+    { id: 'jackpot-legende',     emoji: '🏅',  name: 'Jackpot-Legende',    desc: '100× den 👸-Jackpot getroffen',      rarity: 'mythic',    type: 'milestone' },
+    { id: 'ramanujan-meisterin', emoji: '🔱',  name: 'Ramanujan-Meisterin',desc: '25× das 🧮-Trio getroffen',          rarity: 'legendary', type: 'milestone' },
+    { id: 'strumpf-fluch',       emoji: '🪡',  name: 'Strumpf-Fluch',      desc: '25× das 🧦-Trio getroffen',          rarity: 'legendary', type: 'milestone' },
+    { id: 'gluecksstraehne',     emoji: '🔥',  name: 'Glückssträhne',      desc: '5 Gewinne in Folge',                 rarity: 'rare',      type: 'milestone' },
+    { id: 'heisse-haende',       emoji: '🌶️', name: 'Heiße Hände',        desc: '10 Gewinne in Folge',                rarity: 'legendary', type: 'milestone' },
+    { id: 'pechstraehne',        emoji: '🌧️', name: 'Pechsträhne',        desc: '25 Spins ohne Gewinn in Folge',      rarity: 'rare',      type: 'milestone' },
+    { id: 'eisern',              emoji: '🪨',  name: 'Eisern',             desc: '100 Spins ohne Gewinn in Folge',     rarity: 'legendary', type: 'milestone' },
+    { id: 'wochenend-zockerin',  emoji: '📅',  name: 'Wochenend-Zockerin', desc: 'An 7 verschiedenen Tagen gespielt',  rarity: 'common',    type: 'milestone' },
+    { id: 'treue-spielerin',     emoji: '💞',  name: 'Treue Spielerin',    desc: 'An 30 verschiedenen Tagen gespielt', rarity: 'legendary', type: 'milestone' },
   ];
   const SLOT_BADGE_BY_ID = Object.fromEntries(SLOT_BADGES.map(b => [b.id, b]));
 
@@ -2149,6 +2171,28 @@
     if (key === '🧮🧮🧮') await runTransaction(ref(db, `${path}/ramanujanCount`),   c => (c || 0) + 1);
     if (key === '🧦🧦🧦') await runTransaction(ref(db, `${path}/laufmaschenCount`), c => (c || 0) + 1);
 
+    // Gewinn-/Pech-Strähnen (für Langzeit-Badges)
+    if (win > 0) {
+      const ws = await runTransaction(ref(db, `${path}/winStreak`), c => (c || 0) + 1);
+      const cur = ws?.snapshot?.val() || 0;
+      await runTransaction(ref(db, `${path}/maxWinStreak`), c => Math.max(c || 0, cur));
+      await runTransaction(ref(db, `${path}/lossStreak`), () => 0);
+    } else {
+      const ls = await runTransaction(ref(db, `${path}/lossStreak`), c => (c || 0) + 1);
+      const cur = ls?.snapshot?.val() || 0;
+      await runTransaction(ref(db, `${path}/maxLossStreak`), c => Math.max(c || 0, cur));
+      await runTransaction(ref(db, `${path}/winStreak`), () => 0);
+    }
+
+    // Verschiedene Spieltage zählen (lokales Datum als YYYY-MM-DD)
+    const today = new Date();
+    const dayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const lastDaySnap = await get(ref(db, `${path}/lastSpinDay`));
+    if (lastDaySnap.val() !== dayStr) {
+      await runTransaction(ref(db, `${path}/daysPlayed`), c => (c || 0) + 1);
+      await set(ref(db, `${path}/lastSpinDay`), dayStr);
+    }
+
     await set(ref(db, `${path}/lastSpinAt`), Date.now());
   }
 
@@ -2299,6 +2343,29 @@
     if (won >= 5000000)      reached.push('slot-koenigin');
     if (spins >= 100 && net > 0)        reached.push('haus-bezwingerin');
     if (net <= -1000000)     reached.push('mutige-spielerin');
+
+    // Langzeit-Badges
+    if (spins   >= 10000)     reached.push('slot-marathon');
+    if (spins   >= 25000)     reached.push('slot-dauerlaeuferin');
+    if (spins   >= 50000)     reached.push('slot-legende');
+    if (spins   >= 100000)    reached.push('slot-unsterblich');
+    if (wagered >= 5000000)   reached.push('grossinvestorin');
+    if (wagered >= 25000000)  reached.push('spielbank-investorin');
+    if (wagered >= 100000000) reached.push('all-in-koenigin');
+    if (won     >= 25000000)  reached.push('slot-magnatin');
+    if (won     >= 100000000) reached.push('slot-imperatorin');
+    if (lastWin >= 500000)    reached.push('halbe-million');
+    if (lastWin >= 1000000)   reached.push('millionen-spin');
+    if ((s.jackpotCount    || 0) >= 25)  reached.push('jackpot-veteranin');
+    if ((s.jackpotCount    || 0) >= 100) reached.push('jackpot-legende');
+    if ((s.ramanujanCount  || 0) >= 25)  reached.push('ramanujan-meisterin');
+    if ((s.laufmaschenCount|| 0) >= 25)  reached.push('strumpf-fluch');
+    if ((s.maxWinStreak    || 0) >= 5)   reached.push('gluecksstraehne');
+    if ((s.maxWinStreak    || 0) >= 10)  reached.push('heisse-haende');
+    if ((s.maxLossStreak   || 0) >= 25)  reached.push('pechstraehne');
+    if ((s.maxLossStreak   || 0) >= 100) reached.push('eisern');
+    if ((s.daysPlayed      || 0) >= 7)   reached.push('wochenend-zockerin');
+    if ((s.daysPlayed      || 0) >= 30)  reached.push('treue-spielerin');
 
     let unlockedAny = false;
     for (const id of reached) {
