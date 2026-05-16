@@ -630,7 +630,7 @@
         <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
         <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>🤖 Auto-Klicker (3 Min.)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>😈 Sabotage (90 Sek.)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>💻 Hack (90 Sek.)</span><span>2%</span></div>
       </div>
       <div class="lootbox-price" id="lootboxPrice">🪙 500 Coins</div>
       <div class="lootbox-price-info" id="lootboxPriceInfo" style="font-size:11px;color:var(--text-mid);font-weight:500;margin-top:-10px;margin-bottom:16px;display:none;">Preis steigt pro Kauf um 150 🪙 · Reset um Mitternacht</div>
@@ -668,13 +668,13 @@
 
     <div class="lootbox-card">
       <div class="lootbox-emoji-wrap">
-        <span class="lootbox-icon" style="cursor:default;">😈</span>
+        <span class="lootbox-icon" style="cursor:default;">💻</span>
       </div>
-      <div class="lootbox-name">Sabotage</div>
-      <div class="lootbox-desc">Beim Gegner zählt 90 Sek nur jeder 10. Klick 😈</div>
+      <div class="lootbox-name">Hack</div>
+      <div class="lootbox-desc">Beim Gegner zählt 90 Sek nur jeder 10. Klick 💻</div>
       <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
       <div class="lootbox-price">🪙 12.000 Coins</div>
-      <button class="btn-open-box" id="buySabotageBoosterBtn">😈 Booster kaufen</button>
+      <button class="btn-open-box" id="buySabotageBoosterBtn">💻 Booster kaufen</button>
     </div>
   </div>
 
@@ -1251,7 +1251,7 @@
   const SHOP_BOOSTERS = {
     moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster', price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
     autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',     price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
-    sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '😈', name: 'Sabotage',         price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du eine Sabotage kaufen? Sie landet in deinem Profil-Inventar.' },
+    sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '💻', name: 'Hack',             price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du einen Hack kaufen? Er landet in deinem Profil-Inventar.' },
   };
 
   function renderBoosterShop() {
@@ -1660,7 +1660,7 @@
         coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     sub: 'Doppelte Coins für 10 Min.!' },
         moments_booster:     { emoji: '💫', name: 'Momenten-Booster', sub: 'Doppelte Momente für 3 Min.!' },
         autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     sub: 'Klickt 3 Min lang 5×/Sek für dich!' },
-        sabotage_booster:    { emoji: '😈', name: 'Sabotage',         sub: 'Beim Gegner zählt 90 Sek nur jeder 10. Klick!' },
+        sabotage_booster:    { emoji: '💻', name: 'Hack',             sub: 'Beim Gegner zählt 90 Sek nur jeder 10. Klick!' },
       };
       const bd = LOOT_BOOSTERS[result.boosterId] || LOOT_BOOSTERS.coins_booster;
       rewardEmoji.textContent = bd.emoji;
