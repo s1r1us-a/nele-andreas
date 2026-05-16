@@ -676,6 +676,17 @@
       <div class="lootbox-price">🪙 12.000 Coins</div>
       <button class="btn-open-box" id="buySabotageBoosterBtn">💻 Booster kaufen</button>
     </div>
+
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" style="cursor:default;">🛡️</span>
+      </div>
+      <div class="lootbox-name">Gegen-Hack</div>
+      <div class="lootbox-desc">Bricht einen eingehenden Hack ab 🛡️</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Wird im Hack-Alarm angeboten · Mehrfach kaufbar</div>
+      <div class="lootbox-price">🪙 15.000 Coins</div>
+      <button class="btn-open-box" id="buyAntiHackBoosterBtn">🛡️ Booster kaufen</button>
+    </div>
   </div>
 
   <!-- THEMES SEKTION -->
@@ -1247,11 +1258,13 @@
   const MOMENTS_BOOSTER_PRICE     = 10000;
   const AUTOCLICKER_BOOSTER_PRICE = 15000;
   const SABOTAGE_BOOSTER_PRICE    = 12000;
+  const ANTI_HACK_BOOSTER_PRICE   = 15000;
 
   const SHOP_BOOSTERS = {
     moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster', price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
     autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',     price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
     sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '💻', name: 'Hack',             price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du einen Hack kaufen? Er landet in deinem Profil-Inventar.' },
+    anti_hack_booster:   { btnId: 'buyAntiHackBoosterBtn',    emoji: '🛡️', name: 'Gegen-Hack',       price: ANTI_HACK_BOOSTER_PRICE,   confirm: 'Möchtest du einen Gegen-Hack kaufen? Er landet in deinem Profil-Inventar und wird im Hack-Alarm angeboten.' },
   };
 
   function renderBoosterShop() {
