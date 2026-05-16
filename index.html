@@ -1291,6 +1291,7 @@
     <div class="modal-subtitle">&gt; System wird gehackt…</div>
     <p id="sabotageAlertText" style="font-size:14px;line-height:1.6;margin-bottom:22px;"></p>
     <div class="moment-modal-btns">
+      <button class="moment-save-btn" id="counterHackBtn" style="display:none;">🛡️ Gegen-Hack starten</button>
       <button class="moment-save-btn" id="sabotageAlertBtn">&gt; Verstanden 💻</button>
     </div>
   </div>
@@ -1585,6 +1586,7 @@
         boosterInventoryIndex = {};
         Object.keys(BOOSTER_DEFS).forEach(id => { boosterInventoryIndex[id] = data[id] || 0; });
         renderInGameBoosterPanel();
+        handleSabotageState();
       });
     } else {
       window.currentUser = null;
@@ -1733,6 +1735,7 @@
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                        durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
     autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 5×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
     sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
+    anti_hack_booster:   { emoji: '🛡️', name: 'Gegen-Hack',       desc: 'Bricht einen eingehenden Hack ab – wird im Hack-Alarm angeboten', target: 'self' },
   };
 
   function isBoosterActive(data) {
@@ -1767,12 +1770,23 @@
   function handleSabotageState() {
     const s  = activeSabotage;
     const ov = document.getElementById('sabotageAlertOverlay');
+    const cBtn = document.getElementById('counterHackBtn');
     if (s && s.pending && !s.activatedAt) {
       const secs = Math.round((s.durationMs || 90000) / 1000);
       document.getElementById('sabotageAlertText').textContent =
         `${s.from || 'Dein Gegner'} hat dich gehackt! 💻 Sobald du das wegklickst, zählt ${secs} Sekunden lang nur jeder 10. Klick.`;
+      const n = boosterInventoryIndex['anti_hack_booster'] || 0;
+      if (cBtn) {
+        if (n > 0) {
+          cBtn.textContent = `🛡️ Gegen-Hack starten (×${n})`;
+          cBtn.style.display = '';
+        } else {
+          cBtn.style.display = 'none';
+        }
+      }
       if (ov) ov.classList.add('open');
     } else if (ov && ov.classList.contains('open')) {
+      if (cBtn) cBtn.style.display = 'none';
       ov.classList.remove('open');
     }
     if (!isBoosterActive(s)) sabotageClickCounter = 0;
@@ -1791,6 +1805,20 @@
       durationMs:  activeSabotage.durationMs || 90000,
       from:        activeSabotage.from || null,
     });
+  }
+
+  async function counterHack() {
+    const user = window.currentUser;
+    if (!user || !activeSabotage || activeSabotage.activatedAt) return;
+    const userKey = user.toLowerCase();
+    const n = boosterInventoryIndex['anti_hack_booster'] || 0;
+    if (n <= 0) return;
+    const ov = document.getElementById('sabotageAlertOverlay');
+    if (ov) ov.classList.remove('open');
+    sabotageClickCounter = 0;
+    await set(ref(db, `boosters/${userKey}/inventory/anti_hack_booster`), n - 1);
+    await set(ref(db, `boosters/${userKey}/active_sabotage`), null);
+    alert('🛡️ Hack abgewehrt!');
   }
 
   // ---- HERZ-BUTTON GLOW + STATUS-BADGE (theme-unabhängig) ----
@@ -1895,7 +1923,7 @@
   function renderInGameBoosterPanel() {
     const list = document.getElementById('inGameBoosterList');
     if (!list) return;
-    const ids = Object.keys(BOOSTER_DEFS).filter(id => (boosterInventoryIndex[id] || 0) > 0);
+    const ids = Object.keys(BOOSTER_DEFS).filter(id => id !== 'anti_hack_booster' && (boosterInventoryIndex[id] || 0) > 0);
     if (ids.length === 0) {
       list.innerHTML = '<div style="text-align:center;color:var(--ui-btn-text);font-size:13px;padding:20px 6px;">Keine Booster im Inventar 📦<br><span style="font-size:11px;opacity:0.7;">Im Shop kaufen oder aus Lootboxen 🎁</span></div>';
       return;
@@ -1959,12 +1987,14 @@
     const panel    = document.getElementById('boosterPanelOverlay');
     const closeBtn = document.getElementById('boosterPanelCloseBtn');
     const sabBtn   = document.getElementById('sabotageAlertBtn');
+    const ctrBtn   = document.getElementById('counterHackBtn');
     const cYes     = document.getElementById('igBoosterConfirmYes');
     const cNo      = document.getElementById('igBoosterConfirmNo');
     if (openBtn)  openBtn.addEventListener('click', () => { renderInGameBoosterPanel(); panel.classList.add('open'); });
     if (closeBtn) closeBtn.addEventListener('click', () => panel.classList.remove('open'));
     if (panel)    panel.addEventListener('click', e => { if (e.target === panel) panel.classList.remove('open'); });
     if (sabBtn)   sabBtn.addEventListener('click', ackSabotage);
+    if (ctrBtn)   ctrBtn.addEventListener('click', counterHack);
     if (cNo)  cNo.addEventListener('click', () => { document.getElementById('igBoosterConfirmOverlay').classList.remove('open'); pendingInGameBoosterId = null; });
     if (cYes) cYes.addEventListener('click', async () => {
       document.getElementById('igBoosterConfirmOverlay').classList.remove('open');

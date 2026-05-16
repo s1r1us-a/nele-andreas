@@ -915,6 +915,7 @@
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                       durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
     autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 5×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
     sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
+    anti_hack_booster:   { emoji: '🛡️', name: 'Gegen-Hack',       desc: 'Bricht einen eingehenden Hack ab – wird im Hack-Alarm angeboten', target: 'self' },
   };
 
   function getActiveData(id) {
@@ -981,6 +982,11 @@
       } else if (active && activeData) {
         const remaining = (activeData.activatedAt + activeData.durationMs) - Date.now();
         rightSide = `<div class="booster-active-badge" id="boosterTimer_${id}">✓ ${label} ${formatCountdown(remaining)}</div>`;
+      } else if (count > 0 && id === 'anti_hack_booster') {
+        rightSide = `
+          <span class="booster-count">×${count}</span>
+          <div class="booster-active-badge">🛡️ Im Hack-Alarm</div>
+        `;
       } else if (count > 0) {
         rightSide = `
           <span class="booster-count">×${count}</span>
@@ -1050,6 +1056,7 @@
     if (!def) return;
     const count = boosterInventory[boosterId] || 0;
     if (count <= 0) { showToast('❌ Kein Booster im Inventar!'); return; }
+    if (def.target === 'self' && !def.activeKey) { showToast('🛡️ Gegen-Hack wird automatisch im Hack-Alarm angeboten.'); return; }
 
     // Gegner-Booster: nicht erneut starten, solange einer noch läuft/wartet
     // (sonst würde der laufende Effekt beim Opfer zurückgesetzt). Prüfung VOR
