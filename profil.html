@@ -152,6 +152,8 @@
     /* SECTION */
     .section { background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border); border-radius: 22px; padding: 20px; margin-bottom: 16px; }
     .section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 12px; }
+    .badge-count { float: right; letter-spacing: 0.5px; text-transform: none; font-size: 11px; font-weight: 700; color: var(--gold); background: rgba(212,160,97,0.12); border: 1px solid rgba(212,160,97,0.35); border-radius: 999px; padding: 1px 9px; }
+    .badge-count.complete { color: #fff; background: linear-gradient(135deg,#c87830,#ffe3a3); border-color: transparent; }
     .section-hint { font-size: 11px; color: var(--text-mid); font-weight: 500; margin-bottom: 10px; }
 
     /* BADGE GRID */
@@ -744,7 +746,7 @@
   </div>
 
   <div class="section">
-    <div class="section-label">🏅 Meine Badges</div>
+    <div class="section-label">🏅 Meine Badges<span class="badge-count" id="badgeCount">–</span></div>
     <div class="section-hint" id="badgeHint">Klick auf ein Badge um es auszurüsten ✨</div>
     <div class="badge-grid" id="profileBadgeGrid">
       <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
@@ -752,7 +754,7 @@
   </div>
 
   <div class="section">
-    <div class="section-label">🎰 Slot-Automaten Badges</div>
+    <div class="section-label">🎰 Slot-Automaten Badges<span class="badge-count" id="slotBadgeCount">–</span></div>
     <div class="section-hint">Nur in der Slotmaschine zu gewinnen 🎰</div>
     <div class="badge-grid" id="slotBadgeGrid">
       <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
@@ -1165,6 +1167,17 @@
       if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
       grid.appendChild(el);
     });
+    setBadgeCount('badgeCount', ALL_BADGES);
+  }
+
+  // Zeigt "X / Y" freigeschaltete Badges im Abschnitts-Header.
+  function setBadgeCount(elId, list) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const total = list.length;
+    const owned = list.filter(b => ownedBadges.includes(b.id) || ownedSlotBadges.includes(b.id)).length;
+    el.textContent = `${owned} / ${total}`;
+    el.classList.toggle('complete', owned === total && total > 0);
   }
 
   function renderSlotBadges() {
@@ -1185,6 +1198,7 @@
       if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
       grid.appendChild(el);
     });
+    setBadgeCount('slotBadgeCount', SLOT_BADGES);
   }
 
   function renderFrames() {
