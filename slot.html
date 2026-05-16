@@ -748,50 +748,28 @@
   }
   .arcade-gold small { opacity: 0.75; }
 
-  /* AUTOSPIN SWITCH */
-  .autospin-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-family: 'Quicksand', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    color: rgba(255,255,255,0.85);
-    user-select: none;
+  /* AUTOSPIN BUTTON — Scharfschalter / Stopp */
+  .arcade-auto {
+    --grad: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
+    --glow: rgba(232,115,138,0.4); --glow-hover: rgba(232,115,138,0.55);
+    filter: saturate(0.7) brightness(0.85);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   }
-  .autospin-row label { cursor: pointer; }
-  .switch {
-    --w: 46px; --h: 26px;
-    position: relative;
-    width: var(--w); height: var(--h);
-    flex: 0 0 auto;
-    cursor: pointer;
+  .arcade-auto.is-armed {
+    filter: none;
+    --glow: rgba(240,198,116,0.55); --glow-hover: rgba(240,198,116,0.7);
+    box-shadow: 0 4px 22px var(--glow), 0 0 0 2px rgba(240,198,116,0.85) inset;
+    outline: 2px solid rgba(240,198,116,0.9);
+    outline-offset: 2px;
   }
-  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-  .switch-track {
-    position: absolute; inset: 0;
-    background: rgba(255,255,255,0.16);
-    border: 1px solid rgba(232,115,138,0.3);
-    border-radius: 50px;
-    transition: background 0.2s ease, border-color 0.2s ease;
+  .arcade-auto.is-running {
+    --grad: linear-gradient(135deg, #e85a5a 0%, #c83a3a 100%);
+    --glow: rgba(232,90,90,0.5); --glow-hover: rgba(232,90,90,0.65);
+    filter: none;
   }
-  .switch-thumb {
-    position: absolute; top: 3px; left: 3px;
-    width: 18px; height: 18px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
-    transition: transform 0.2s ease;
-  }
-  .switch input:checked ~ .switch-track {
-    background: linear-gradient(135deg, #e8738a 0%, #c85070 100%);
-    border-color: rgba(232,115,138,0.6);
-  }
-  .switch input:checked ~ .switch-thumb { transform: translateX(20px); }
-  .switch input:focus-visible ~ .switch-track { outline: 2px solid #f0c674; outline-offset: 2px; }
+  .arcade-auto.is-stopping { opacity: 0.7; }
   @media (prefers-reduced-motion: reduce) {
-    .switch-track, .switch-thumb { transition: none; }
+    .arcade-auto { transition: box-shadow 0.2s ease, filter 0.2s ease; }
   }
 
   /* PAYOUT TABLE */
@@ -1312,14 +1290,10 @@
           HIGH ROLLER
           <small>1000 🪙 · Gewinne ×10</small>
         </button>
-        <div class="autospin-row">
-          <span class="switch">
-            <input type="checkbox" id="autoSpinToggle" aria-label="Autospin umschalten">
-            <span class="switch-track"></span>
-            <span class="switch-thumb"></span>
-          </span>
-          <label for="autoSpinToggle">🔁 Autospin <small style="opacity:.6;font-weight:600;">(stoppt bei großem Gewinn oder Badge)</small></label>
-        </div>
+        <button id="autoSpinBtn" class="arcade-btn arcade-auto" type="button" aria-pressed="false">
+          🔁 AUTOSPIN
+          <small>Antippen zum Scharfschalten</small>
+        </button>
       </div>
 
       <details class="payout-table">
@@ -1529,6 +1503,8 @@
   let currentCoins = 0;
   let isSpinning = false;
   let autoSpinActive = false;
+  let autoSpinArmed = false;
+  let autoSpinStopping = false;
   const AUTOSPIN_WIN_STOP_FACTOR = 50; // Autospin stoppt bei Gewinn >= 50× Einsatz (einsatz-relativ, fair für High Roller)
   let activeTheme = 'sakura';
 
@@ -2240,13 +2216,50 @@
 
   // ============== SPIN ENGINE ==============
   function setButtonsDisabled(disabled) {
-    document.querySelectorAll('.arcade-btn').forEach(b => b.disabled = disabled);
+    document.querySelectorAll('.arcade-btn[data-bet]').forEach(b => b.disabled = disabled);
+  }
+
+  // Großer Autospin-Button: Scharfschalter ↔ Stopp, abhängig vom Spielzustand.
+  function renderAutoSpinBtn() {
+    const btn = document.getElementById('autoSpinBtn');
+    if (!btn) return;
+    const small = btn.querySelector('small');
+    btn.classList.remove('is-armed', 'is-running', 'is-stopping');
+    if (autoSpinActive) {
+      // Lauf aktiv → Stopp-Button, einziger klickbarer Button.
+      btn.firstChild.textContent = '⏹ STOPP ';
+      btn.classList.add('is-running');
+      if (small) small.textContent = 'Tippen zum Anhalten';
+      btn.setAttribute('aria-pressed', 'true');
+      btn.disabled = false;
+    } else if (autoSpinStopping) {
+      // Stopp angefordert, laufende Runde läuft noch aus.
+      btn.firstChild.textContent = '⏹ STOPP ';
+      btn.classList.add('is-running', 'is-stopping');
+      if (small) small.textContent = 'Stoppt nach dieser Runde…';
+      btn.setAttribute('aria-pressed', 'true');
+      btn.disabled = true;
+    } else if (autoSpinArmed && !isSpinning) {
+      // Scharf geschaltet, wartet auf SPIN / HIGH ROLLER.
+      btn.firstChild.textContent = '🔁 AUTOSPIN · AN ';
+      btn.classList.add('is-armed');
+      if (small) small.textContent = 'Jetzt SPIN oder HIGH ROLLER wählen';
+      btn.setAttribute('aria-pressed', 'true');
+      btn.disabled = false;
+    } else {
+      // Idle. Während eines normalen Einzel-Spins gesperrt.
+      btn.firstChild.textContent = '🔁 AUTOSPIN ';
+      if (small) small.textContent = 'Antippen zum Scharfschalten';
+      btn.setAttribute('aria-pressed', 'false');
+      btn.disabled = isSpinning;
+    }
   }
 
   async function doSpin({ betAmount, spinCount, multiplier=1, auto=false }) {
     if (isSpinning) return;
     isSpinning = true;
     setButtonsDisabled(true);
+    renderAutoSpinBtn();
 
     const perSpin = Math.round(betAmount / spinCount);
 
@@ -2309,28 +2322,25 @@
       showToast('Fehler beim Spin: ' + err.message, true);
     } finally {
       isSpinning = false;
-      if (auto) {
-        autoSpinActive = false;
-        const t = document.getElementById('autoSpinToggle');
-        if (t) t.checked = false;
-      }
+      if (auto) { autoSpinActive = false; autoSpinArmed = false; }
+      autoSpinStopping = false;
       setButtonsDisabled(false);
+      renderAutoSpinBtn();
     }
   }
 
   // ============== EVENT BINDINGS ==============
   function bindBetButtons() {
-    const autoToggle = document.getElementById('autoSpinToggle');
-
-    document.querySelectorAll('.arcade-btn').forEach(btn => {
+    document.querySelectorAll('.arcade-btn[data-bet]').forEach(btn => {
       btn.addEventListener('click', () => {
         sfx.click();
         sfx.unlock();
         const bet = parseInt(btn.dataset.bet, 10);
         const spins = parseInt(btn.dataset.spins, 10);
         const mult = parseInt(btn.dataset.multiplier || '1', 10);
-        if (autoToggle && autoToggle.checked) {
+        if (autoSpinArmed) {
           autoSpinActive = true;
+          renderAutoSpinBtn();
           doSpin({ betAmount: bet, spinCount: 1, multiplier: mult, auto: true });
         } else {
           doSpin({ betAmount: bet, spinCount: spins, multiplier: mult });
@@ -2338,12 +2348,24 @@
       });
     });
 
-    // Autospin manuell ausschalten → laufende Runde endet sauber, dann Stopp.
-    if (autoToggle) {
-      autoToggle.addEventListener('change', () => {
-        if (!autoToggle.checked) autoSpinActive = false;
+    // Großer Autospin-Button: läuft → Stopp, sonst scharf/entschärfen.
+    const autoBtn = document.getElementById('autoSpinBtn');
+    if (autoBtn) {
+      autoBtn.addEventListener('click', () => {
+        sfx.click();
+        sfx.unlock();
+        if (autoSpinActive) {
+          // Manuell stoppen: laufende Runde endet sauber, dann Stopp.
+          autoSpinActive = false;
+          autoSpinStopping = true;
+        } else {
+          autoSpinArmed = !autoSpinArmed;
+        }
+        renderAutoSpinBtn();
       });
     }
+
+    renderAutoSpinBtn();
   }
 
 
