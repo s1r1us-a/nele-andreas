@@ -1505,11 +1505,37 @@
   let autoSpinActive = false;
   let autoSpinArmed = false;
   let autoSpinStopping = false;
+  let wakeLockSentinel = null;
   const AUTOSPIN_WIN_STOP_FACTOR = 50; // Autospin stoppt bei Gewinn >= 50× Einsatz (einsatz-relativ, fair für High Roller)
   let activeTheme = 'sakura';
 
   // ============== HELPERS ==============
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function acquireWakeLock() {
+    try {
+      if ('wakeLock' in navigator && !wakeLockSentinel) {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+          wakeLockSentinel = null;
+        });
+      }
+    } catch (e) {
+      // Wake Lock nicht verfügbar/verweigert — Spiel läuft normal weiter
+      wakeLockSentinel = null;
+    }
+  }
+
+  async function releaseWakeLock() {
+    try {
+      if (wakeLockSentinel) {
+        const s = wakeLockSentinel;
+        wakeLockSentinel = null;
+        await s.release();
+      }
+    } catch (e) { /* gracefully ignorieren */ }
+  }
+
   function fmt(n) { return Math.round(n).toLocaleString('de-DE'); }
   function displayName(email) {
     if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
@@ -2264,6 +2290,7 @@
     const perSpin = Math.round(betAmount / spinCount);
 
     try {
+      if (auto) await acquireWakeLock();
       let i = 0;
       while (auto ? autoSpinActive : i < spinCount) {
         // 1. Coin-Check
@@ -2322,7 +2349,7 @@
       showToast('Fehler beim Spin: ' + err.message, true);
     } finally {
       isSpinning = false;
-      if (auto) { autoSpinActive = false; autoSpinArmed = false; }
+      if (auto) { autoSpinActive = false; autoSpinArmed = false; releaseWakeLock(); }
       autoSpinStopping = false;
       setButtonsDisabled(false);
       renderAutoSpinBtn();
@@ -2366,6 +2393,14 @@
     }
 
     renderAutoSpinBtn();
+
+    // Browser geben den Wake Lock frei, sobald die Seite in den Hintergrund
+    // geht. Kommt der Nutzer bei laufendem Autospin zurück, neu anfordern.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && autoSpinActive) {
+        acquireWakeLock();
+      }
+    });
   }
 
 
