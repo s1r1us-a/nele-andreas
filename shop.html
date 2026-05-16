@@ -627,8 +627,10 @@
         <div class="lootbox-odds-row"><span>🖼️ Rahmen (Silber)</span><span>3%</span></div>
         <div class="lootbox-odds-row"><span>🖼️ Rahmen (Saphir)</span><span>2%</span></div>
         <div class="lootbox-odds-row"><span>🌈 Rahmen (Gold)</span><span>1%</span></div>
-        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>5%</span></div>
-        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>4%</span></div>
+        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
+        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>🤖 Auto-Klicker (3 Min.)</span><span>2%</span></div>
+        <div class="lootbox-odds-row"><span>😈 Sabotage (90 Sek.)</span><span>2%</span></div>
       </div>
       <div class="lootbox-price" id="lootboxPrice">🪙 500 Coins</div>
       <div class="lootbox-price-info" id="lootboxPriceInfo" style="font-size:11px;color:var(--text-mid);font-weight:500;margin-top:-10px;margin-bottom:16px;display:none;">Preis steigt pro Kauf um 150 🪙 · Reset um Mitternacht</div>
@@ -651,6 +653,28 @@
       <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
       <div class="lootbox-price">🪙 10.000 Coins</div>
       <button class="btn-open-box" id="buyMomentsBoosterBtn">💫 Booster kaufen</button>
+    </div>
+
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" style="cursor:default;">🤖</span>
+      </div>
+      <div class="lootbox-name">Auto-Klicker</div>
+      <div class="lootbox-desc">Klickt 3 Minuten lang 4×/Sek automatisch 🚀</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
+      <div class="lootbox-price">🪙 15.000 Coins</div>
+      <button class="btn-open-box" id="buyAutoclickerBoosterBtn">🤖 Booster kaufen</button>
+    </div>
+
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" style="cursor:default;">😈</span>
+      </div>
+      <div class="lootbox-name">Sabotage</div>
+      <div class="lootbox-desc">Beim Gegner zählt 90 Sek nur jeder 10. Klick 😈</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
+      <div class="lootbox-price">🪙 12.000 Coins</div>
+      <button class="btn-open-box" id="buySabotageBoosterBtn">😈 Booster kaufen</button>
     </div>
   </div>
 
@@ -1220,25 +1244,40 @@
   }
 
   // ---- BOOSTER SHOP ----
-  const MOMENTS_BOOSTER_PRICE = 10000;
+  const MOMENTS_BOOSTER_PRICE     = 10000;
+  const AUTOCLICKER_BOOSTER_PRICE = 15000;
+  const SABOTAGE_BOOSTER_PRICE    = 12000;
+
+  const SHOP_BOOSTERS = {
+    moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster', price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
+    autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',     price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
+    sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '😈', name: 'Sabotage',         price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du eine Sabotage kaufen? Sie landet in deinem Profil-Inventar.' },
+  };
 
   function renderBoosterShop() {
-    const btn = document.getElementById('buyMomentsBoosterBtn');
-    if (!btn) return;
-    const canAfford = currentCoins >= MOMENTS_BOOSTER_PRICE;
-    btn.disabled = !canAfford;
-    btn.title = canAfford ? '' : 'Zu wenig Coins';
+    Object.values(SHOP_BOOSTERS).forEach(b => {
+      const btn = document.getElementById(b.btnId);
+      if (!btn) return;
+      const canAfford = currentCoins >= b.price;
+      btn.disabled = !canAfford;
+      btn.title = canAfford ? '' : 'Zu wenig Coins';
+    });
   }
 
-  function handleBuyMomentsBoosterClick() {
-    pendingBuy = { kind: 'booster', id: 'moments_booster', price: MOMENTS_BOOSTER_PRICE };
-    document.getElementById('confirmEmoji').textContent = '💫';
-    document.getElementById('confirmText').textContent = 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.';
-    document.getElementById('confirmPrice').textContent = `${MOMENTS_BOOSTER_PRICE.toLocaleString('de-DE')} 🪙`;
+  function handleBuyBoosterClick(id) {
+    const b = SHOP_BOOSTERS[id];
+    if (!b) return;
+    pendingBuy = { kind: 'booster', id, price: b.price };
+    document.getElementById('confirmEmoji').textContent = b.emoji;
+    document.getElementById('confirmText').textContent = b.confirm;
+    document.getElementById('confirmPrice').textContent = `${b.price.toLocaleString('de-DE')} 🪙`;
     document.getElementById('confirmOverlay').classList.add('open');
   }
 
-  document.getElementById('buyMomentsBoosterBtn').addEventListener('click', handleBuyMomentsBoosterClick);
+  Object.entries(SHOP_BOOSTERS).forEach(([id, b]) => {
+    const btn = document.getElementById(b.btnId);
+    if (btn) btn.addEventListener('click', () => handleBuyBoosterClick(id));
+  });
 
   async function handleActivate(themeId) {
     if (!userKey) return;
@@ -1265,7 +1304,8 @@
       try { await updateStats(0, price, 0); } catch(e) { console.warn('Stats:', e.message); }
       const invRef = ref(db, `boosters/${userKey}/inventory/${pendingBuy.id}`);
       await runTransaction(invRef, n => (n||0) + 1);
-      showToast('💫 Momenten-Booster gekauft! Im Profil aktivieren ✨');
+      const b = SHOP_BOOSTERS[pendingBuy.id];
+      showToast(`${b ? b.emoji + ' ' + b.name : 'Booster'} gekauft! Im Profil oder Spiel aktivieren ✨`);
       return;
     }
 
@@ -1552,9 +1592,11 @@
     if (r < 88)  return { type: 'frame', rarity: 'common' };
     if (r < 90)  return { type: 'frame', rarity: 'rare' };
     if (r < 91)  return { type: 'frame', rarity: 'legendary' };
-    // Booster
-    if (r < 96)  return { type: 'booster', boosterId: 'coins_booster' };
-    return               { type: 'booster', boosterId: 'moments_booster' };
+    // Booster (Band 91–100, je ~2–3 %)
+    if (r < 94)  return { type: 'booster', boosterId: 'coins_booster' };
+    if (r < 96)  return { type: 'booster', boosterId: 'moments_booster' };
+    if (r < 98)  return { type: 'booster', boosterId: 'autoclicker_booster' };
+    return               { type: 'booster', boosterId: 'sabotage_booster' };
   }
 
   function pickFromPool(pool, ownedList) {
@@ -1614,14 +1656,18 @@
         ? 'Schon gehabt – du bekommst stattdessen 500 🪙'
         : 'Neuer Badge! Im Profil ausrüsten 🎨';
     } else if (result.type === 'booster') {
-      const isCoin = result.boosterId === 'coins_booster';
-      rewardEmoji.textContent = isCoin ? '⚡' : '💫';
+      const LOOT_BOOSTERS = {
+        coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     sub: 'Doppelte Coins für 10 Min.!' },
+        moments_booster:     { emoji: '💫', name: 'Momenten-Booster', sub: 'Doppelte Momente für 3 Min.!' },
+        autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     sub: 'Klickt 3 Min lang 4×/Sek für dich!' },
+        sabotage_booster:    { emoji: '😈', name: 'Sabotage',         sub: 'Beim Gegner zählt 90 Sek nur jeder 10. Klick!' },
+      };
+      const bd = LOOT_BOOSTERS[result.boosterId] || LOOT_BOOSTERS.coins_booster;
+      rewardEmoji.textContent = bd.emoji;
       rewardType.className = 'reward-type coins';
       rewardType.textContent = 'Booster gewonnen!';
-      rewardTitle.textContent = isCoin ? '⚡ Coin-Booster' : '💫 Momenten-Booster';
-      rewardSub.textContent = isCoin
-        ? 'Doppelte Coins für 10 Min.!\nIm Profil → Inventar aktivieren 🚀'
-        : 'Doppelte Momente für 3 Min.!\nIm Profil → Inventar aktivieren 🚀';
+      rewardTitle.textContent = `${bd.emoji} ${bd.name}`;
+      rewardSub.textContent = `${bd.sub}\nIm Profil oder Spiel aktivieren 🚀`;
     } else if (result.type === 'farm' && result.item) {
       rewardEmoji.textContent = result.item.icon;
       rewardType.className = 'reward-type coins';
