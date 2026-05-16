@@ -180,7 +180,7 @@
     .coin-display:hover { transform: scale(1.03); }
   }
   .coin-display .coin-icon { font-size: 18px; }
-  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; }
+  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; display: inline-block; min-width: 4.2em; text-align: left; font-variant-numeric: tabular-nums; }
   .coin-bump { animation: countBump 0.4s cubic-bezier(0.22,1,0.36,1); }
 
   /* BOOSTER BANNER */
@@ -404,8 +404,9 @@
   }
 
   /* AKTIVES BADGE IN TOP-BAR */
-  .active-badge-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-btn-bg); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: var(--ui-btn-text); transition: all 0.3s ease; position: relative; isolation: isolate; }
+  .active-badge-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--ui-btn-bg); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: var(--ui-btn-text); transition: all 0.3s ease; position: relative; isolation: isolate; flex-shrink: 0; }
   .active-badge-pill .badge-emoji { font-size: 16px; }
+  .active-badge-pill #activeBadgeName { display: inline-block; white-space: nowrap; }
 
   /* Rarität-Glow für die Top-Bar-Pill */
   .active-badge-pill.rarity-bronze {
@@ -1980,6 +1981,19 @@
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;
+    if (!window.__maxBadgeNameW) {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:13px;font-weight:600;';
+      document.body.appendChild(probe);
+      let max = 0;
+      for (const x of [...ALL_BADGES, ...SLOT_BADGES]) {
+        probe.textContent = x.name;
+        max = Math.max(max, probe.offsetWidth);
+      }
+      probe.remove();
+      window.__maxBadgeNameW = max;
+    }
+    name.style.minWidth = window.__maxBadgeNameW + 'px';
     if (b.rarity) pill.classList.add('rarity-' + b.rarity);
     pill.style.display = 'inline-flex';
   }
