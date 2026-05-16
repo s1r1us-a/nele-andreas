@@ -1011,18 +1011,20 @@
   }
   .heart-glow-ring.show { opacity: 1; }
   .heart-glow-ring.auto {
-    box-shadow: 0 0 0 3px rgba(56,160,255,0.95), 0 0 24px 7px rgba(56,160,255,0.7), 0 0 46px 16px rgba(56,160,255,0.4);
-    animation: boostGlowBlue 1.1s ease-in-out infinite;
+    box-shadow: 0 0 0 6px rgba(56,160,255,1), 0 0 45px 16px rgba(56,160,255,0.9), 0 0 95px 38px rgba(56,160,255,0.6);
+    animation: boostRingBlue 0.85s ease-in-out infinite;
   }
   .heart-glow-ring.sabotage {
-    box-shadow: 0 0 0 3px rgba(255,40,40,0.98), 0 0 26px 8px rgba(255,30,30,0.8), 0 0 50px 18px rgba(200,0,0,0.5);
-    animation: boostGlowRed 0.65s ease-in-out infinite;
+    box-shadow: 0 0 0 6px rgba(255,30,30,1), 0 0 50px 18px rgba(255,30,30,0.95), 0 0 105px 44px rgba(200,0,0,0.65);
+    animation: boostRingRed 0.5s ease-in-out infinite;
   }
   @keyframes boostGlowBlue { 0%,100% { opacity: 0.65; } 50% { opacity: 1; } }
   @keyframes boostGlowRed  { 0%,100% { opacity: 0.6; }  50% { opacity: 1; } }
+  @keyframes boostRingBlue { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.07); } }
+  @keyframes boostRingRed  { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
   /* Direkt am Button, NACH allen Theme-Regeln + !important → Theme wird für den Glow ignoriert */
-  .heart-btn.boost-glow-auto     { box-shadow: 0 0 0 3px rgba(56,160,255,0.95), 0 0 26px 8px rgba(56,160,255,0.65) !important; }
-  .heart-btn.boost-glow-sabotage { box-shadow: 0 0 0 3px rgba(255,40,40,0.98), 0 0 28px 9px rgba(255,30,30,0.7) !important; filter: saturate(1.2) !important; }
+  .heart-btn.boost-glow-auto     { box-shadow: 0 0 0 5px rgba(56,160,255,1), 0 0 40px 14px rgba(56,160,255,0.85) !important; }
+  .heart-btn.boost-glow-sabotage { box-shadow: 0 0 0 5px rgba(255,30,30,1), 0 0 44px 16px rgba(255,30,30,0.85) !important; filter: saturate(1.4) !important; }
   .heart-status-badge {
     display: none; margin: 2px auto 0; font-family: 'Quicksand', sans-serif;
     font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 50px; letter-spacing: 0.4px;
@@ -1030,6 +1032,13 @@
   .heart-status-badge.show { display: inline-block; }
   .heart-status-badge.auto     { background: rgba(56,160,255,0.16); color: #1e6fd6; border: 1.5px solid rgba(56,160,255,0.55); }
   .heart-status-badge.sabotage { background: rgba(255,40,40,0.16); color: #d11; border: 1.5px solid rgba(255,40,40,0.6); animation: boostGlowRed 0.8s ease-in-out infinite; }
+  /* Gegner-Glow (Angreifer-Sicht): wenn der Gegner gerade sabotiert ist */
+  .stat-item.sabotaged-target { position: relative; z-index: 0; border-radius: 14px; background: rgba(255,40,40,0.14); }
+  .stat-item.sabotaged-target::before {
+    content: ''; position: absolute; inset: -7px; border-radius: 18px; pointer-events: none; z-index: -1;
+    box-shadow: 0 0 0 4px rgba(255,30,30,1), 0 0 36px 12px rgba(255,30,30,0.9), 0 0 80px 30px rgba(200,0,0,0.6);
+    animation: boostRingRed 0.55s ease-in-out infinite;
+  }
   .booster-open-btn {
     border: 1.5px solid var(--gold); background: rgba(212,160,97,0.12); color: var(--gold);
     border-radius: 50px; padding: 9px 20px; font-family: 'Quicksand', sans-serif;
@@ -1531,6 +1540,11 @@
         handleSabotageState();
         updateBoosterBanner();
       });
+      const opponentKey = boosterKey === 'andreas' ? 'nele' : 'andreas';
+      onValue(ref(db, `boosters/${opponentKey}/active_sabotage`), snap => {
+        sabotageOnOpponent = snap.val() || null;
+        updateOpponentSabotageFx();
+      });
       onValue(ref(db, `boosters/${boosterKey}/inventory`), snap => {
         const data = snap.val() || {};
         boosterInventoryIndex = {};
@@ -1672,6 +1686,8 @@
   let activeBoosterMoments     = null;
   let activeBoosterAutoclicker = null;
   let activeSabotage           = null;   // Sabotage GEGEN den aktuellen Spieler (Opfer-Sicht)
+  let sabotageOnOpponent       = null;   // Sabotage GEGEN den Gegner (Angreifer-Sicht)
+  let opponentSabotageFxInterval = null;
   let boosterInventoryIndex    = {};
   let boosterBannerInterval    = null;
   let autoclickInterval        = null;
@@ -1680,7 +1696,7 @@
   const BOOSTER_DEFS = {
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                        durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                        durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
-    autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 4×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
+    autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 5×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
     sabotage_booster:    { emoji: '😈', name: 'Sabotage',         desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
   };
 
@@ -1704,7 +1720,7 @@
       autoclickInterval = setInterval(() => {
         if (!isBoosterActive(activeBoosterAutoclicker)) { updateAutoclicker(); return; }
         performClick({ auto: true });
-      }, 250); // 4×/Sekunde
+      }, 200); // 5×/Sekunde
     } else if (!active && autoclickInterval) {
       clearInterval(autoclickInterval);
       autoclickInterval = null;
@@ -1767,6 +1783,22 @@
       badge.className = 'heart-status-badge show auto';
     } else {
       badge.className = 'heart-status-badge';
+    }
+  }
+
+  // Gegner-Glow (Angreifer-Sicht): roter Aura um die Gegner-Karte im Leaderboard
+  function updateOpponentSabotageFx() {
+    const active   = isBoosterActive(sabotageOnOpponent);
+    const oppBarId = (window.currentUser === 'Andreas') ? 'barNele' : 'barAndreas';
+    const bar      = document.getElementById(oppBarId);
+    const item     = bar ? bar.closest('.stat-item') : null;
+    if (item) item.classList.toggle('sabotaged-target', active);
+    if (active && !opponentSabotageFxInterval) {
+      // Ablauf ist zeitbasiert (kein Firebase-Event) → selbst nachticken
+      opponentSabotageFxInterval = setInterval(updateOpponentSabotageFx, 1000);
+    } else if (!active && opponentSabotageFxInterval) {
+      clearInterval(opponentSabotageFxInterval);
+      opponentSabotageFxInterval = null;
     }
   }
 

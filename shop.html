@@ -660,7 +660,7 @@
         <span class="lootbox-icon" style="cursor:default;">🤖</span>
       </div>
       <div class="lootbox-name">Auto-Klicker</div>
-      <div class="lootbox-desc">Klickt 3 Minuten lang 4×/Sek automatisch 🚀</div>
+      <div class="lootbox-desc">Klickt 3 Minuten lang 5×/Sek automatisch 🚀</div>
       <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
       <div class="lootbox-price">🪙 15.000 Coins</div>
       <button class="btn-open-box" id="buyAutoclickerBoosterBtn">🤖 Booster kaufen</button>
@@ -1659,7 +1659,7 @@
       const LOOT_BOOSTERS = {
         coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     sub: 'Doppelte Coins für 10 Min.!' },
         moments_booster:     { emoji: '💫', name: 'Momenten-Booster', sub: 'Doppelte Momente für 3 Min.!' },
-        autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     sub: 'Klickt 3 Min lang 4×/Sek für dich!' },
+        autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     sub: 'Klickt 3 Min lang 5×/Sek für dich!' },
         sabotage_booster:    { emoji: '😈', name: 'Sabotage',         sub: 'Beim Gegner zählt 90 Sek nur jeder 10. Klick!' },
       };
       const bd = LOOT_BOOSTERS[result.boosterId] || LOOT_BOOSTERS.coins_booster;
@@ -1848,3 +1848,4 @@
   }
 
 </script>
+<script type="module" src="autoclicker.js"></script>
