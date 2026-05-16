@@ -105,6 +105,11 @@
     .badge-pill { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,160,97,0.1); border: 1.5px solid rgba(212,160,97,0.3); border-radius: 50px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-top: 10px; }
     .badge-pill.rarity-rare      { animation: badgePillRare 2.5s ease-in-out infinite; }
     .badge-pill.rarity-legendary { animation: badgePillLegendary 1.8s ease-in-out infinite; }
+    .badge-pill.rarity-mythic    { animation: badgePillMythic 1.5s ease-in-out infinite; }
+    @keyframes badgePillMythic {
+      0%, 100% { transform: scale(1);    box-shadow: 0 3px 12px rgba(190,140,255,0.45); border-color: rgba(220,180,255,0.6); filter: hue-rotate(0deg); }
+      50%      { transform: scale(1.10); box-shadow: 0 5px 22px rgba(255,140,230,0.75), 0 0 30px rgba(150,210,255,0.4); border-color: rgba(220,180,255,0.95); filter: hue-rotate(60deg); }
+    }
     @keyframes badgePillRare {
       0%, 100% { transform: scale(1);    box-shadow: 0 2px 8px rgba(108,142,191,0.3); border-color: rgba(108,142,191,0.5); }
       50%       { transform: scale(1.06); box-shadow: 0 4px 16px rgba(108,142,191,0.6); border-color: rgba(108,142,191,0.8); }
@@ -136,9 +141,11 @@
     .badge-item-name { font-size: 9px; font-weight: 600; color: var(--text-mid); line-height: 1.2; }
     .badge-item.locked .badge-item-name { color: #bbb; }
     .badge-rarity-dot { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; position: relative; z-index: 2; }
+    .badge-rarity-dot.bronze    { background: radial-gradient(circle at 30% 30%, #e8c9a0, #9c6b3f); box-shadow: 0 0 4px rgba(160,110,60,0.55); }
     .badge-rarity-dot.common    { background: radial-gradient(circle at 30% 30%, #e8e8ee, #9a9aa6); box-shadow: 0 0 4px rgba(180,180,195,0.6); }
     .badge-rarity-dot.rare      { background: radial-gradient(circle at 30% 30%, #aac4ee, #3d6ab0); box-shadow: 0 0 6px rgba(108,142,191,0.85), 0 0 12px rgba(108,142,191,0.4); }
     .badge-rarity-dot.legendary { background: radial-gradient(circle at 30% 30%, #ffe3a3, #c87830); box-shadow: 0 0 6px rgba(255,180,80,0.9), 0 0 14px rgba(255,150,40,0.55); }
+    .badge-rarity-dot.mythic    { background: radial-gradient(circle at 30% 30%, #ffd9f5, #8ad7ff 55%, #c7a3ff); box-shadow: 0 0 6px rgba(190,140,255,0.9), 0 0 14px rgba(120,230,255,0.6); animation: badgeMythicDot 4s linear infinite; }
     .badge-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; z-index: 5; }
 
     /* ============================================ */
@@ -208,13 +215,63 @@
       color: #1e3a6b; font-weight: 700;
     }
 
+    /* BRONZE – schlicht & ruhig (niedrigste Stufe) */
+    .badge-item.owned.rarity-bronze,
+    .frame-item.owned.rarity-bronze {
+      background: linear-gradient(135deg, rgba(214,178,138,0.42), rgba(168,118,73,0.30)) !important;
+      border-color: rgba(168,118,73,0.55) !important;
+      animation: badgeBronzeShimmer 6s ease-in-out infinite;
+    }
+    .badge-item.owned.rarity-bronze::before,
+    .frame-item.owned.rarity-bronze::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: linear-gradient(115deg, transparent 40%, rgba(255,238,210,0.35) 50%, transparent 60%);
+      background-size: 220% 100%; background-position: 200% 0;
+      animation: badgeShineSweep 9s ease-in-out infinite;
+      border-radius: inherit;
+    }
+    .badge-item.owned.rarity-bronze .badge-item-name,
+    .frame-item.owned.rarity-bronze .frame-item-name {
+      color: #5a3a18; font-weight: 700;
+    }
+
+    /* MYTHIC – irisierend/holografisch (höchste Stufe, über Gold) */
+    .badge-item.owned.rarity-mythic,
+    .frame-item.owned.rarity-mythic {
+      background: linear-gradient(135deg, rgba(255,180,240,0.40), rgba(150,200,255,0.46), rgba(190,255,220,0.40)) !important;
+      border-color: rgba(220,180,255,0.95) !important;
+      animation: badgeMythicPulse 2s ease-in-out infinite;
+    }
+    .badge-item.owned.rarity-mythic::before,
+    .frame-item.owned.rarity-mythic::before {
+      content: ''; position: absolute; inset: -7px; pointer-events: none; z-index: -1;
+      background: conic-gradient(from 0deg, #ff8ad6, #8ab4ff, #7af0d0, #ffe98a, #ff8ad6, #c79bff, #ff8ad6);
+      opacity: 0.75;
+      animation: badgeMythicHolo 5s linear infinite;
+      border-radius: inherit;
+    }
+    .badge-item.owned.rarity-mythic::after,
+    .frame-item.owned.rarity-mythic::after {
+      content: '✨'; position: absolute; top: 0; left: 2px; font-size: 12px; z-index: 4;
+      pointer-events: none; filter: drop-shadow(0 0 5px rgba(190,140,255,0.95));
+      animation: sparkleTwinkle 1.4s ease-in-out infinite;
+    }
+    .badge-item.owned.rarity-mythic .badge-item-name,
+    .frame-item.owned.rarity-mythic .frame-item-name {
+      color: #5b2a7a; font-weight: 800; text-shadow: 0 1px 0 rgba(255,235,255,0.6);
+    }
+
     /* Equipped + Rarität: Gold-/Cream-Rand siegt als „equipped"-Signal */
+    .badge-item.owned.equipped.rarity-bronze,
+    .frame-item.owned.equipped.rarity-bronze,
     .badge-item.owned.equipped.rarity-common,
     .frame-item.owned.equipped.rarity-common,
     .badge-item.owned.equipped.rarity-rare,
     .frame-item.owned.equipped.rarity-rare       { border-color: var(--gold) !important; }
     .badge-item.owned.equipped.rarity-legendary,
-    .frame-item.owned.equipped.rarity-legendary  { border-color: #fff3c0 !important; }
+    .frame-item.owned.equipped.rarity-legendary,
+    .badge-item.owned.equipped.rarity-mythic,
+    .frame-item.owned.equipped.rarity-mythic     { border-color: #fff3c0 !important; }
 
     /* Slot-locked atmet sanft (einladend, nicht aufdringlich) */
     .badge-item.slot-locked { animation: slotLockedBreath 3.6s ease-in-out infinite; }
@@ -253,6 +310,22 @@
     @keyframes slotLockedBreath {
       0%, 100% { box-shadow: 0 0 6px rgba(212,160,97,0.18); }
       50%      { box-shadow: 0 0 14px rgba(212,160,97,0.4); }
+    }
+    @keyframes badgeBronzeShimmer {
+      0%, 100% { box-shadow: 0 2px 7px rgba(150,100,55,0.20), inset 0 1px 0 rgba(255,240,220,0.4); }
+      50%      { box-shadow: 0 2px 10px rgba(150,100,55,0.32), inset 0 1px 0 rgba(255,240,220,0.55); }
+    }
+    @keyframes badgeMythicHolo {
+      0%   { transform: rotate(0deg);   filter: blur(10px) hue-rotate(0deg); }
+      100% { transform: rotate(360deg); filter: blur(10px) hue-rotate(360deg); }
+    }
+    @keyframes badgeMythicPulse {
+      0%, 100% { box-shadow: 0 3px 16px rgba(190,140,255,0.55), 0 0 22px rgba(120,230,255,0.40); transform: scale(1); }
+      50%      { box-shadow: 0 6px 28px rgba(255,140,230,0.80), 0 0 44px rgba(150,210,255,0.65); transform: scale(1.04); }
+    }
+    @keyframes badgeMythicDot {
+      0%   { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
     }
 
     /* FRAME GRID */
@@ -713,18 +786,18 @@
   }
 
   const ALL_BADGES = [
-    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'common' },
-    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'common' },
-    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'common' },
+    { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'bronze' },
+    { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'bronze' },
+    { id: 'kaffee',       emoji: '☕', name: 'Kaffeetasse',      rarity: 'bronze' },
     { id: 'gamerin',      emoji: '🎮', name: 'Gamerin',          rarity: 'common' },
-    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'rare' },
-    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'rare' },
+    { id: 'nachteule',    emoji: '🌙', name: 'Nachteule',        rarity: 'common' },
+    { id: 'schmetterling',emoji: '🦋', name: 'Schmetterling',    rarity: 'common' },
     { id: 'feuerfuchs',   emoji: '🔥', name: 'Feuerfuchs',       rarity: 'rare' },
     { id: 'diamant',      emoji: '💎', name: 'Diamant',           rarity: 'rare' },
     { id: 'klickqueen',   emoji: '👑', name: 'Klick-Queen',      rarity: 'legendary' },
     { id: 'sternen',      emoji: '🌟', name: 'Sternensammlerin', rarity: 'legendary' },
-    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'legendary' },
-    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'legendary' },
+    { id: 'grinderin',    emoji: '💀', name: 'Grinderin',         rarity: 'mythic' },
+    { id: 'unaufhaltbar', emoji: '🏆', name: 'Unaufhaltbar',     rarity: 'mythic' },
   ];
   const ALL_FRAMES = [
     { id: 'sakura',     name: 'Sakura',     emoji: '🌸', rarity: 'common',    cssClass: 'frame-sakura',     gradient: 'linear-gradient(135deg,#e8738a,#f5a3b5)' },
@@ -738,33 +811,33 @@
   // Geteilter Slot-Badge-Katalog (identisch in slot.html / index.html).
   // Nur in der Slotmaschine zu gewinnen.
   const SLOT_BADGES = [
-    { id: 'prinzesschen-krone',  emoji: '👸',  name: 'Prinzesschen-Krone', rarity: 'legendary' },
-    { id: 'ramanujan',           emoji: '🧮',  name: 'Ramanujan',          rarity: 'legendary' },
-    { id: 'laufmaschen-koenigin',emoji: '🧦',  name: 'Laufmaschen-Königin',rarity: 'rare' },
-    { id: 'diamant-trio',        emoji: '💎',  name: 'Diamant-Trio',       rarity: 'rare' },
+    { id: 'prinzesschen-krone',  emoji: '👸',  name: 'Prinzesschen-Krone', rarity: 'mythic' },
+    { id: 'ramanujan',           emoji: '🧮',  name: 'Ramanujan',          rarity: 'mythic' },
+    { id: 'laufmaschen-koenigin',emoji: '🧦',  name: 'Laufmaschen-Königin',rarity: 'legendary' },
+    { id: 'diamant-trio',        emoji: '💎',  name: 'Diamant-Trio',       rarity: 'legendary' },
     { id: 'sternenstaub',        emoji: '⭐',  name: 'Sternenstaub',       rarity: 'rare' },
     { id: 'glockenklang',        emoji: '🔔',  name: 'Glockenklang',       rarity: 'common' },
-    { id: 'glueckspilz',         emoji: '🍀',  name: 'Glückspilz',         rarity: 'common' },
-    { id: 'fast-prinzessin',     emoji: '👑',  name: 'Fast Prinzessin',    rarity: 'common' },
-    { id: 'beinahe-genie',       emoji: '📐',  name: 'Beinahe-Genie',      rarity: 'common' },
+    { id: 'glueckspilz',         emoji: '🍀',  name: 'Glückspilz',         rarity: 'bronze' },
+    { id: 'fast-prinzessin',     emoji: '👑',  name: 'Fast Prinzessin',    rarity: 'rare' },
+    { id: 'beinahe-genie',       emoji: '📐',  name: 'Beinahe-Genie',      rarity: 'rare' },
     { id: 'diamant-paar',        emoji: '💍',  name: 'Diamant-Paar',       rarity: 'common' },
     { id: 'so-knapp',            emoji: '😤',  name: 'So knapp!',          rarity: 'rare' },
-    { id: 'voll-daneben',        emoji: '🍂',  name: 'Voll daneben',       rarity: 'common' },
-    { id: 'erster-hebelzug',     emoji: '🎰',  name: 'Erster Hebelzug',    rarity: 'common' },
-    { id: 'stammspielerin',      emoji: '🎲',  name: 'Stammspielerin',     rarity: 'common' },
-    { id: 'slot-veteranin',      emoji: '🕹️', name: 'Slot-Veteranin',     rarity: 'rare' },
-    { id: 'slot-suechtig',       emoji: '😵‍💫',name: 'Slot-Süchtig',       rarity: 'legendary' },
-    { id: 'kleiner-einsatz',     emoji: '🎫',  name: 'Warmgespielt',       rarity: 'common' },
-    { id: 'hochrollerin',        emoji: '🎩',  name: 'Hochrollerin',       rarity: 'rare' },
+    { id: 'voll-daneben',        emoji: '🍂',  name: 'Voll daneben',       rarity: 'bronze' },
+    { id: 'erster-hebelzug',     emoji: '🎰',  name: 'Erster Hebelzug',    rarity: 'bronze' },
+    { id: 'stammspielerin',      emoji: '🎲',  name: 'Stammspielerin',     rarity: 'bronze' },
+    { id: 'slot-veteranin',      emoji: '🕹️', name: 'Slot-Veteranin',     rarity: 'common' },
+    { id: 'slot-suechtig',       emoji: '😵‍💫',name: 'Slot-Süchtig',       rarity: 'rare' },
+    { id: 'kleiner-einsatz',     emoji: '🎫',  name: 'Warmgespielt',       rarity: 'bronze' },
+    { id: 'hochrollerin',        emoji: '🎩',  name: 'Hochrollerin',       rarity: 'common' },
     { id: 'grossgewinn',         emoji: '💰',  name: 'Großgewinn',         rarity: 'rare' },
     { id: 'mega-gewinn',         emoji: '💸',  name: 'Mega-Gewinn',        rarity: 'legendary' },
-    { id: 'jackpot-jaegerin',    emoji: '👸',  name: 'Jackpot-Jägerin',    rarity: 'legendary' },
-    { id: 'ramanujan-schuelerin',emoji: '🔢',  name: 'Ramanujan-Schülerin',rarity: 'rare' },
-    { id: 'strumpf-pechvogel',   emoji: '🧶',  name: 'Strumpf-Pechvogel',  rarity: 'rare' },
-    { id: 'slot-millionaerin',   emoji: '🤑',  name: 'Slot-Millionärin',   rarity: 'legendary' },
+    { id: 'jackpot-jaegerin',    emoji: '👸',  name: 'Jackpot-Jägerin',    rarity: 'mythic' },
+    { id: 'ramanujan-schuelerin',emoji: '🔢',  name: 'Ramanujan-Schülerin',rarity: 'mythic' },
+    { id: 'strumpf-pechvogel',   emoji: '🧶',  name: 'Strumpf-Pechvogel',  rarity: 'legendary' },
+    { id: 'slot-millionaerin',   emoji: '🤑',  name: 'Slot-Millionärin',   rarity: 'rare' },
     { id: 'slot-koenigin',       emoji: '🏆',  name: 'Slot-Königin',       rarity: 'legendary' },
     { id: 'haus-bezwingerin',    emoji: '📈',  name: 'Haus-Bezwingerin',   rarity: 'legendary' },
-    { id: 'mutige-spielerin',    emoji: '🎯',  name: 'Mutige Spielerin',   rarity: 'rare' },
+    { id: 'mutige-spielerin',    emoji: '🎯',  name: 'Mutige Spielerin',   rarity: 'common' },
   ];
 
   let currentUser    = null;
@@ -944,8 +1017,8 @@
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;
-    pill.classList.remove('rarity-common', 'rarity-rare', 'rarity-legendary');
-    if (b.rarity !== 'common') pill.classList.add('rarity-' + b.rarity);
+    pill.classList.remove('rarity-bronze', 'rarity-common', 'rarity-rare', 'rarity-legendary', 'rarity-mythic');
+    if (b.rarity !== 'common' && b.rarity !== 'bronze') pill.classList.add('rarity-' + b.rarity);
     pill.style.display = 'inline-flex';
   }
 
