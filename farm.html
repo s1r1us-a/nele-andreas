@@ -6591,6 +6591,8 @@
     }
     if (category === 'bakery') return (bakeryRecipes[itemId]?.icon || '') + ' ' + (bakeryRecipes[itemId]?.name || itemId);
     if (category === 'accessories' || category === 'tailoring') return (weavingRecipes[itemId]?.icon || accessoryEmojis[itemId] || '') + ' ' + (weavingRecipes[itemId]?.name || itemId);
+    if (category === 'ores') return (oreTypes[itemId]?.icon || '') + ' ' + (oreTypes[itemId]?.name || itemId);
+    if (category === 'jewelry') return (jewelryRecipes[itemId]?.icon || '') + ' ' + (jewelryRecipes[itemId]?.name || itemId);
     return itemId;
   }
 
@@ -6663,9 +6665,11 @@
     { key: 'crops',       label: '🧺',  items: () => Object.keys(shopItems) },
     { key: 'items',       label: '📦',  items: () => ['fertilizer','honey','egg','milk','wool','diamond','firefly','feather','goatmilk','truffle','horseshoe','rainbowessence'] },
     { key: 'bakery',      label: '🍞',  items: () => Object.keys(bakeryRecipes) },
-    { key: 'accessories', label: '🎀',  items: () => Object.keys(weavingRecipes) }
+    { key: 'accessories', label: '🎀',  items: () => Object.keys(weavingRecipes) },
+    { key: 'ores',        label: '⛏️',  items: () => Object.keys(oreTypes) },
+    { key: 'jewelry',     label: '💎',  items: () => Object.keys(jewelryRecipes) }
   ];
-  const CAT_NAMES = { seeds:'Samen', crops:'Ernte', items:'Items', bakery:'Bäckerei', accessories:'Weberei' };
+  const CAT_NAMES = { seeds:'Samen', crops:'Ernte', items:'Items', bakery:'Bäckerei', accessories:'Weberei', ores:'Erze', jewelry:'Schmuck' };
 
   function getQty(qtys, cat, id) { return qtys[cat + '__' + id] || 0; }
   function setQty(qtys, cat, id, val) {
