@@ -106,42 +106,91 @@ function injectStyle() {
     pointer-events:none;opacity:.55;}
   .spamhack-backdrop{position:fixed;inset:0;background:rgba(0,8,4,.35);
     z-index:2147483600;pointer-events:none;}
-  .spamhack-win{position:absolute;width:min(360px,90vw);
-    background:#0a0e12;border:2px solid #1f7a3a;border-radius:8px;
-    box-shadow:0 0 0 2px #000,0 0 26px rgba(34,255,120,.45);
+  .spamhack-win{position:absolute;width:min(370px,90vw);
+    background:linear-gradient(180deg,#0b1016 0%,#070b0f 100%);
+    border-radius:9px;padding:2px;
+    box-shadow:0 0 0 1px #000,0 0 34px rgba(34,255,120,.55),
+      0 0 70px rgba(34,255,120,.25);
     font-family:'Courier New',monospace;color:#7CFC9A;overflow:hidden;
     pointer-events:auto;
-    animation:spamhack-pop .18s ease-out, spamhack-glitch 1.6s steps(2) infinite;}
+    animation:spamhack-pop .2s ease-out,
+      spamhack-glitch 2.4s steps(3) infinite,
+      spamhack-flicker 6s linear infinite;}
+  .spamhack-win::before{content:'';position:absolute;inset:0;border-radius:9px;
+    padding:2px;pointer-events:none;
+    background:conic-gradient(from 0deg,#22ff78,#0af,#22ff78,#7CFC9A,#22ff78);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    animation:spamhack-spin 4s linear infinite;}
+  .spamhack-inner{position:relative;border-radius:7px;overflow:hidden;
+    background:#070b0f;}
   .spamhack-bar{display:flex;align-items:center;gap:7px;padding:7px 10px;
-    background:#11151b;border-bottom:1px solid #1f7a3a;font-size:12px;color:#9aa;}
-  .spamhack-dot{width:10px;height:10px;border-radius:50%;background:#ff3b3b;
-    box-shadow:0 0 6px #ff3b3b;}
-  .spamhack-body{padding:16px 16px 8px;font-size:14px;line-height:1.55;
-    text-shadow:0 0 4px rgba(124,252,154,.6);min-height:1.2em;}
+    background:linear-gradient(180deg,#161c24,#0e1218);
+    border-bottom:1px solid #1f7a3a;font-size:11px;color:#9aa;}
+  .spamhack-lights{display:flex;gap:5px;}
+  .spamhack-lights i{width:9px;height:9px;border-radius:50%;display:block;}
+  .spamhack-lights i:nth-child(1){background:#ff5f56;box-shadow:0 0 6px #ff5f56;}
+  .spamhack-lights i:nth-child(2){background:#ffbd2e;box-shadow:0 0 6px #ffbd2e;}
+  .spamhack-lights i:nth-child(3){background:#27c93f;box-shadow:0 0 6px #27c93f;}
+  .spamhack-title{flex:1;letter-spacing:1px;color:#bfe;
+    text-shadow:1.4px 0 #ff2d6b,-1.4px 0 #00e6ff;
+    animation:spamhack-chroma 2.2s steps(2) infinite;}
+  .spamhack-rec{display:flex;align-items:center;gap:4px;color:#ff5f56;
+    font-weight:bold;}
+  .spamhack-rec b{width:8px;height:8px;border-radius:50%;background:#ff3b3b;
+    box-shadow:0 0 7px #ff3b3b;animation:spamhack-blink 1s steps(1) infinite;}
+  .spamhack-danger{padding:5px 0;text-align:center;font-size:11px;
+    font-weight:bold;letter-spacing:2px;color:#0a0e12;
+    background:repeating-linear-gradient(45deg,#ffcc00 0 14px,#1a1100 14px 28px);
+    background-size:40px 40px;animation:spamhack-barber .7s linear infinite;
+    text-shadow:0 0 2px rgba(0,0,0,.4);}
+  .spamhack-body{padding:16px 16px 10px;font-size:14px;line-height:1.55;
+    text-shadow:0 0 5px rgba(124,252,154,.7);min-height:1.2em;}
   .spamhack-body::after{content:'_';animation:spamhack-blink 1s steps(1) infinite;}
   .spamhack-body.done::after{content:'';}
-  .spamhack-log{margin:0 14px;padding:6px 8px;background:#05080a;
+  .spamhack-meters{display:flex;gap:8px;margin:0 14px 10px;}
+  .spamhack-meters div{flex:1;font-size:9px;color:#5fae7e;letter-spacing:1px;}
+  .spamhack-meters span{display:block;height:5px;margin-top:3px;border-radius:3px;
+    background:#0d1f15;overflow:hidden;position:relative;}
+  .spamhack-meters span::after{content:'';position:absolute;inset:0;
+    background:linear-gradient(90deg,#22ff78,#0af);transform-origin:left;
+    animation:spamhack-meter 1.8s ease-in-out infinite alternate;}
+  .spamhack-meters div:nth-child(2) span::after{animation-duration:1.2s;}
+  .spamhack-meters div:nth-child(3) span::after{animation-duration:2.4s;}
+  .spamhack-log{margin:0 14px;padding:6px 8px;background:#04070a;
     border:1px solid #14391f;border-radius:4px;font-size:11px;line-height:1.5;
     color:#4fae6e;max-height:90px;overflow:hidden;white-space:pre-wrap;
-    word-break:break-all;}
-  .spamhack-timer{margin:12px 14px 0;padding:7px;text-align:center;
-    border:1px dashed #c9a227;border-radius:4px;font-size:13px;
-    font-weight:bold;color:#ffd24a;background:rgba(120,90,0,.18);
-    text-shadow:0 0 6px rgba(255,210,74,.7);
+    word-break:break-all;box-shadow:inset 0 0 14px rgba(0,255,120,.08);}
+  .spamhack-timer{margin:12px 14px 0;padding:9px;text-align:center;
+    border:1px solid #ff3b3b;border-radius:5px;font-size:15px;
+    font-weight:bold;letter-spacing:1px;color:#fff;
+    background:linear-gradient(180deg,rgba(120,0,0,.45),rgba(60,0,0,.3));
+    text-shadow:0 0 8px #ff3b3b,0 0 14px #ff3b3b;
+    box-shadow:0 0 16px rgba(255,59,59,.5),inset 0 0 10px rgba(255,59,59,.3);
     animation:spamhack-pulse 1s ease-in-out infinite;}
   .spamhack-scan{position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);}
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px),
+      radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45) 100%);}
+  .spamhack-scan::after{content:'';position:absolute;left:0;right:0;height:38px;
+    background:linear-gradient(180deg,transparent,rgba(124,252,154,.16),transparent);
+    animation:spamhack-sweep 3s linear infinite;}
   .spamhack-close{display:block;width:calc(100% - 28px);margin:12px 14px 14px;
     padding:9px;background:#161b22;color:#ff6b6b;border:1px solid #7a1f1f;
     border-radius:5px;font-family:'Courier New',monospace;font-size:13px;
     cursor:not-allowed;opacity:.55;transition:left .1s,top .1s;}
   .spamhack-close.ready{cursor:pointer;opacity:1;color:#7CFC9A;
-    border-color:#1f7a3a;}
+    border-color:#1f7a3a;box-shadow:0 0 12px rgba(34,255,120,.4);}
   .spamhack-shake{animation:spamhack-shake .3s linear;}
   @keyframes spamhack-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes spamhack-blink{50%{opacity:0}}
-  @keyframes spamhack-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
-  @keyframes spamhack-glitch{0%,92%,100%{filter:none}94%{filter:hue-rotate(60deg) contrast(1.4)}96%{filter:invert(.15)}}
+  @keyframes spamhack-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  @keyframes spamhack-glitch{0%,90%,100%{filter:none}92%{filter:hue-rotate(70deg) contrast(1.5)}95%{filter:invert(.18) saturate(1.6)}98%{filter:hue-rotate(-40deg)}}
+  @keyframes spamhack-flicker{0%,97%,100%{opacity:1}98%{opacity:.82}99%{opacity:.93}}
+  @keyframes spamhack-chroma{0%,88%,100%{text-shadow:1.4px 0 #ff2d6b,-1.4px 0 #00e6ff}94%{text-shadow:3px 0 #ff2d6b,-3px 0 #00e6ff}}
+  @keyframes spamhack-spin{to{transform:rotate(360deg)}}
+  @keyframes spamhack-barber{to{background-position:40px 0}}
+  @keyframes spamhack-meter{from{transform:scaleX(.15)}to{transform:scaleX(1)}}
+  @keyframes spamhack-sweep{0%{top:-40px}100%{top:100%}}
   @keyframes spamhack-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
   `;
   document.head.appendChild(s);
@@ -256,14 +305,23 @@ function spawn(text) {
   const win = document.createElement('div');
   win.className = 'spamhack-win';
   win.innerHTML = `
-    <div class="spamhack-bar">
-      <span class="spamhack-dot"></span>
-      <span>root@nele-und-andreas: ~/exploit</span>
-    </div>
-    <div class="spamhack-body"></div>
-    <div class="spamhack-log"></div>
-    <div class="spamhack-timer">⏳ …</div>
-    <div class="spamhack-scan"></div>`;
+    <div class="spamhack-inner">
+      <div class="spamhack-bar">
+        <span class="spamhack-lights"><i></i><i></i><i></i></span>
+        <span class="spamhack-title">root@nele-und-andreas:~/exploit ▓</span>
+        <span class="spamhack-rec"><b></b>REC</span>
+      </div>
+      <div class="spamhack-danger">⚠ UNAUTHORIZED ACCESS — SYSTEM BREACHED ⚠</div>
+      <div class="spamhack-body"></div>
+      <div class="spamhack-meters">
+        <div>CPU<span></span></div>
+        <div>MEM<span></span></div>
+        <div>NET<span></span></div>
+      </div>
+      <div class="spamhack-log"></div>
+      <div class="spamhack-timer">☠ …</div>
+      <div class="spamhack-scan"></div>
+    </div>`;
 
   const body  = win.querySelector('.spamhack-body');
   const logEl = win.querySelector('.spamhack-log');
@@ -303,8 +361,8 @@ function spawn(text) {
   const renderTimer = () => {
     const left = Math.max(0, Math.ceil((endTime(spamData) - Date.now()) / 1000));
     timer.textContent = left > 0
-      ? `⏳ Angriff endet in ${left}s`
-      : '⛔ Verbindung wird gekappt …';
+      ? `☠ HACK GEHT NOCH ${left} SEKUNDEN`
+      : '⛔ VERBINDUNG WIRD GEKAPPT …';
   };
   renderTimer();
   const timerTick = setInterval(renderTimer, 1000);
