@@ -700,6 +700,19 @@
   </div>
 </div>
 
+<div class="booster-confirm-overlay" id="adminOverlay">
+  <div class="booster-confirm-card">
+    <span class="booster-confirm-emoji">🛠️</span>
+    <div class="booster-confirm-title">Admin – Hack-Test</div>
+    <div class="booster-confirm-text">Hack-Booster gratis &amp; sofort auf dich selbst anwenden (Nele bleibt unberührt).</div>
+    <div class="booster-confirm-btns" style="flex-direction:column;gap:10px;">
+      <button class="booster-confirm-yes" id="adminApplySabotage">💻 Hack auf mich</button>
+      <button class="booster-confirm-yes" id="adminApplySpam">📺 Popup-Hack auf mich</button>
+      <button class="booster-confirm-no" id="adminClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="page" id="profilePage" style="display:none;">
@@ -775,6 +788,7 @@
     <div class="booster-list" id="boosterList">
       <div class="booster-empty">Lade Booster…</div>
     </div>
+    <button id="adminBtn" style="display:none;margin-top:14px;" class="booster-activate-btn">🛠️ Admin</button>
   </div>
 
   <div class="account-section" id="accountSection">
@@ -839,6 +853,12 @@
     if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
     if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
     return email.split('@')[0];
+  }
+
+  const ADMIN_EMAIL = 'raederich@outlook.com';
+  function isAdmin() {
+    const u = auth.currentUser;
+    return !!(u && u.email && u.email.toLowerCase() === ADMIN_EMAIL);
   }
 
   const ALL_BADGES = [
@@ -1122,6 +1142,33 @@
       showToast(`🚀 ${def.name} aktiviert! Viel Spaß!`);
     }
   }
+
+  async function adminApplyHackToSelf(boosterId) {
+    if (!isAdmin()) return;
+    const def = BOOSTER_DEFS[boosterId];
+    if (!def || def.target !== 'opponent') return;
+    const key = 'andreas';
+    if (def.activeKey === 'active_spam') {
+      await set(ref(db, `boosters/${key}/active_spam`),
+        { activatedAt: Date.now(), durationMs: def.durationMs, from: 'Andreas (Admin-Test)' });
+    } else {
+      await set(ref(db, `boosters/${key}/active_sabotage`),
+        { activatedAt: Date.now(), durationMs: def.durationMs, from: 'Andreas (Admin-Test)' });
+    }
+    showToast(`🛠️ ${def.name} zum Testen auf dich aktiviert!`);
+    document.getElementById('adminOverlay').classList.remove('open');
+  }
+
+  document.getElementById('adminBtn').addEventListener('click', () => {
+    if (!isAdmin()) return;
+    document.getElementById('adminOverlay').classList.add('open');
+  });
+  document.getElementById('adminClose').addEventListener('click', () =>
+    document.getElementById('adminOverlay').classList.remove('open'));
+  document.getElementById('adminApplySabotage').addEventListener('click', () =>
+    adminApplyHackToSelf('sabotage_booster'));
+  document.getElementById('adminApplySpam').addEventListener('click', () =>
+    adminApplyHackToSelf('spam_booster'));
 
   document.getElementById('boosterConfirmYes').addEventListener('click', async () => {
     document.getElementById('boosterConfirmOverlay').classList.remove('open');
@@ -1688,6 +1735,8 @@
       get(ref(db, `shop/${loggedInUserName.toLowerCase()}/activeTheme`)).then(snap => {
         if (snap.val()) applyProfilTheme(snap.val());
       }).catch(()=>{});
+      const adminBtn = document.getElementById('adminBtn');
+      if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
     }
     document.getElementById('profilePage').style.display = 'block';
   });
