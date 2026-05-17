@@ -1002,6 +1002,85 @@
   }
   .moment-cancel-btn:hover { border-color: #ff6b9d; color: #ff6b9d; }
 
+  /* ---- Briefkasten / Postsystem ---- */
+  .mailbox-wrap { position: relative; display: none; }
+  .mailbox-badge {
+    position: absolute; top: -8px; right: -6px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 50px; box-shadow: 0 3px 12px rgba(239,68,68,0.5);
+    animation: badgePulse 1.8s ease-in-out infinite; pointer-events: none; display: none;
+  }
+  .mail-modal-card { max-width: 460px; }
+  .mail-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .mail-tab {
+    flex: 1; border: 1.5px solid var(--ui-modal-border); border-radius: 50px; padding: 9px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;
+    background: transparent; color: var(--ui-btn-text); transition: all 0.2s ease;
+  }
+  .mail-tab.active { background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: #fff; border-color: transparent; }
+  .mail-list { max-height: 52vh; overflow-y: auto; margin-bottom: 16px; text-align: left; }
+  .mail-empty { text-align: center; color: var(--ui-btn-text); font-size: 13px; padding: 30px 6px; }
+  .mail-card {
+    border: 1.5px solid var(--ui-modal-border); border-radius: 16px;
+    padding: 14px; margin-bottom: 12px; background: var(--ui-input-bg);
+  }
+  .mail-card.unread { border-color: var(--rose); box-shadow: 0 0 0 2px rgba(232,115,138,0.15); }
+  .mail-card.admin { border-color: var(--gold); background: rgba(212,160,97,0.12); }
+  .mail-from { font-weight: 700; font-size: 14px; color: var(--text-dark); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .mail-admin-pill {
+    display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 800;
+    color: #fff; background: linear-gradient(135deg, var(--gold), #b9803f);
+    padding: 2px 9px; border-radius: 50px; letter-spacing: 0.5px;
+  }
+  .mail-time { font-size: 11px; color: var(--ui-btn-text); margin: 3px 0 8px; font-weight: 600; }
+  .mail-body { font-size: 13px; color: var(--text-dark); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .mail-attach {
+    margin-top: 10px; font-size: 12px; color: var(--text-mid); font-weight: 600;
+    background: rgba(212,160,97,0.12); border-radius: 12px; padding: 8px 12px;
+  }
+  .mail-attach.claimed { opacity: 0.55; text-decoration: line-through; }
+  .mail-card-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .mail-btn {
+    border: none; border-radius: 50px; padding: 9px 14px; font-family: 'Quicksand', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease;
+  }
+  .mail-btn:hover { transform: scale(1.04); }
+  .mail-btn.claim { background: linear-gradient(135deg, #34d399, #059669); color: #fff; }
+  .mail-btn.del { background: transparent; border: 1.5px solid var(--ui-modal-border); color: var(--ui-btn-text); }
+  .mail-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+  .mail-admin-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: rgba(212,160,97,0.14); border: 1.5px solid rgba(212,160,97,0.4);
+    border-radius: 14px; padding: 10px 14px; margin-bottom: 14px;
+    font-size: 13px; font-weight: 700; color: var(--text-dark);
+  }
+  .mail-recipient-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .mail-recipient-row .mail-tab { font-size: 12px; padding: 8px; }
+  .mail-attach-builder { text-align: left; margin-bottom: 14px; }
+  .mail-attach-builder select, .mail-attach-builder input {
+    border: 1.5px solid var(--ui-modal-border); border-radius: 12px; padding: 9px 11px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ui-input-color); background: var(--ui-input-bg); outline: none; box-sizing: border-box;
+  }
+  .mail-attach-builder select:focus, .mail-attach-builder input:focus { border-color: #ff6b9d; }
+  .mail-attach-builder .mail-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .mail-attach-list { margin: 10px 0; }
+  .mail-attach-chip {
+    display: inline-flex; align-items: center; gap: 6px; background: rgba(232,115,138,0.14);
+    border-radius: 50px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+    color: var(--text-dark); margin: 0 6px 6px 0;
+  }
+  .mail-attach-chip button { border: none; background: none; color: #c85070; cursor: pointer; font-weight: 800; font-size: 14px; padding: 0; }
+  .mail-toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: var(--ui-toast-bg); color: #fff; padding: 12px 22px; border-radius: 50px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; z-index: 10010;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3); opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .mail-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   /* ---- Booster: Herz-Button Glow + Status (theme-unabhängig) ---- */
   .heart-btn-wrap { position: relative; width: 100%; max-width: 420px; display: flex; justify-content: center; }
   .heart-btn-wrap .heart-btn { position: relative; z-index: 1; }
@@ -1092,6 +1171,10 @@
   <a id="visitOtherProfileBtn" href="#" class="initials-avatar" title="Profil besuchen" style="display:none; text-decoration:none; width:32px; height:32px; font-size:16px; cursor:pointer;">?</a>
   <div id="activeBadgePill" style="display:none;" class="active-badge-pill"><span class="badge-emoji" id="activeBadgeEmoji">🐾</span><span id="activeBadgeName"></span></div>
   <div class="coin-display" id="coinDisplay" style="display:none;"><span class="coin-icon">🪙</span><span class="coin-count" id="coinCount">0</span></div>
+  <span class="mailbox-wrap" id="mailboxWrap">
+    <button class="top-bar-btn" id="mailboxBtn" title="Briefkasten">📬 Post</button>
+    <span class="mailbox-badge" id="mailboxBadge"></span>
+  </span>
   <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
 </div>
 
@@ -1322,6 +1405,73 @@
   </div>
 </div>
 
+<!-- Modal: Briefkasten -->
+<div class="moment-modal-overlay" id="mailboxOverlay">
+  <div class="moment-modal-card mail-modal-card">
+    <span class="modal-emoji">📬</span>
+    <div class="modal-title">Briefkasten</div>
+    <div class="modal-subtitle" id="mailSubtitle">Post von Nele &amp; Andreas</div>
+    <div class="mail-tabs">
+      <button class="mail-tab active" id="mailTabInbox">📥 Posteingang</button>
+      <button class="mail-tab" id="mailTabCompose">✏️ Schreiben</button>
+    </div>
+    <div id="mailInboxView">
+      <div class="mail-list" id="mailList"></div>
+    </div>
+    <div id="mailComposeView" style="display:none;">
+      <div class="mail-admin-toggle" id="mailAdminToggle" style="display:none;">
+        <span>⚙️ Admin-Modus</span>
+        <label style="display:inline-flex;align-items:center;cursor:pointer;">
+          <input type="checkbox" id="mailAdminCheck" style="width:18px;height:18px;cursor:pointer;">
+        </label>
+      </div>
+      <div class="mail-recipient-row" id="mailRecipientRow" style="display:none;">
+        <button class="mail-tab active" data-mailrcpt="nele">Nele</button>
+        <button class="mail-tab" data-mailrcpt="andreas">Andreas</button>
+        <button class="mail-tab" data-mailrcpt="both">Beide</button>
+      </div>
+      <div id="mailRecipientLabel" style="font-size:13px;font-weight:700;color:var(--text-mid);text-align:left;margin-bottom:10px;"></div>
+      <textarea class="moment-modal-textarea" id="mailBody" placeholder="Schreib deine Nachricht…" maxlength="500"></textarea>
+      <div class="mail-attach-builder">
+        <div style="font-size:11px;font-weight:700;color:var(--text-mid);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">📎 Anhang hinzufügen</div>
+        <div class="mail-row">
+          <select id="mailAttachType">
+            <option value="coins">🪙 Coins</option>
+            <option value="booster">🎒 Booster</option>
+            <option value="farmitem">🌾 Farm-Item</option>
+          </select>
+          <select id="mailAttachCat" style="display:none;"></select>
+          <select id="mailAttachItem" style="display:none;"></select>
+          <input type="number" id="mailAttachQty" min="1" value="1" style="width:80px;">
+          <button class="mail-btn claim" id="mailAttachAdd" style="padding:9px 16px;">+</button>
+        </div>
+        <div class="mail-attach-list" id="mailAttachList"></div>
+      </div>
+      <div class="moment-modal-cost" id="mailCostNote">🪙 Versand kostet 100 Coins</div>
+      <div class="moment-modal-error" id="mailError"></div>
+    </div>
+    <div class="moment-modal-btns">
+      <button class="moment-cancel-btn" id="mailCloseBtn">Schließen</button>
+      <button class="moment-save-btn" id="mailSendBtn" style="display:none;">Senden 💌</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Post löschen bestätigen -->
+<div class="moment-modal-overlay" id="mailDeleteOverlay">
+  <div class="moment-modal-card">
+    <span class="modal-emoji">🗑️</span>
+    <div class="modal-title">Post löschen?</div>
+    <p id="mailDeleteText" style="font-size:14px;color:var(--text-dark);line-height:1.6;margin:6px 0 22px;"></p>
+    <div class="moment-modal-btns">
+      <button class="moment-cancel-btn" id="mailDeleteNo">Abbrechen</button>
+      <button class="moment-save-btn" id="mailDeleteYes">Ja, löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="mail-toast" id="mailToast"></div>
+
 <script>
   // Auth state handled by Firebase module below
   window.currentUser = null;
@@ -1386,7 +1536,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, runTransaction, onValue, set, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, runTransaction, onValue, set, get, query, orderByChild, equalTo, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1494,6 +1644,8 @@
       const av = document.getElementById('topBarAvatar');
       if (av) av.textContent = window.currentUser[0].toUpperCase();
       document.getElementById('coinDisplay').style.display = 'flex';
+      window.mailIsAdmin = !!(user.email && user.email.toLowerCase() === 'raederich@outlook.com');
+      document.getElementById('mailboxWrap').style.display = 'flex';
       // Reveal page content
       document.getElementById('mainPage').classList.remove('page-hidden');
       document.getElementById('bgGradient').classList.remove('page-hidden');
@@ -1555,6 +1707,15 @@
         _updateFarmBadge();
       });
 
+      // Briefkasten live hören
+      if (_unsubMailbox) { _unsubMailbox(); _unsubMailbox = null; }
+      _mailMsgs = {};
+      _unsubMailbox = onValue(ref(db, `mailbox/${userKey}`), snap => {
+        _mailMsgs = snap.exists() ? snap.val() : {};
+        _updateMailBadge();
+        if (document.getElementById('mailboxOverlay').classList.contains('open') && _mailView === 'inbox') renderMailInbox();
+      });
+
       // Booster live hören
       const boosterKey = userKey;
       onValue(ref(db, `boosters/${boosterKey}/active_coins`), snap => {
@@ -1589,6 +1750,9 @@
       });
     } else {
       window.currentUser = null;
+      window.mailIsAdmin = false;
+      if (_unsubMailbox) { _unsubMailbox(); _unsubMailbox = null; }
+      _mailMsgs = {}; _updateMailBadge();
       document.getElementById('authLoading').style.display='none';
       overlay.style.display = 'flex';
       overlay.style.opacity = '1';
@@ -1726,6 +1890,17 @@
   let opponentSabotageFxInterval = null;
   let boosterInventoryIndex    = {};
   let boosterBannerInterval    = null;
+
+  // ---- Briefkasten / Postsystem (Modul-Scope) ----
+  let _unsubMailbox = null;
+  let _mailMsgs = {};
+  let _mailView = 'inbox';        // 'inbox' | 'compose'
+  let _mailAdminMode = false;     // nur für Andreas
+  let _mailAttachments = [];      // { type, ... } für die Verfass-Ansicht
+  let _mailSending = false;
+  let _mailPendingDelete = null;  // msgId für Lösch-Bestätigung
+  let _mailAdminRecipient = 'nele';
+  let _mailToastTimer = null;
   let autoclickInterval        = null;
   let sabotageClickCounter     = 0;
 
@@ -2006,6 +2181,364 @@
     });
   }
   wireBoosterPanel();
+
+  // ============================================================
+  //  BRIEFKASTEN / POSTSYSTEM
+  // ============================================================
+
+  const MAIL_SEND_COST = 100; // Coins pro Versand (außer Admin-Modus)
+
+  // Anzeige-Katalog der Farm-Items. Spiegel der Definitionen in farm.html
+  // (shopItems / items / bakeryRecipes / weavingRecipes / oreTypes /
+  //  jewelryRecipes). Bei Änderungen dort hier mitpflegen.
+  const _MAIL_SHOP = {
+    radish:{name:'Radieschen',icon:'🧅'}, carrot:{name:'Karotte',icon:'🥕'},
+    tomato:{name:'Tomate',icon:'🍅'}, lettuce:{name:'Salat',icon:'🥬'},
+    corn:{name:'Mais',icon:'🌽'}, oats:{name:'Hafer',icon:'🌿'},
+    sunflower:{name:'Sonnenblume',icon:'🌻'}, wheat:{name:'Weizen',icon:'🌾'},
+    blueberry:{name:'Blaubeere',icon:'🫐'}
+  };
+  const MAIL_FARM_CATALOG = {
+    seeds:  { label:'🌱 Samen',  items: Object.fromEntries(Object.entries(_MAIL_SHOP).map(([k,v])=>[k,{name:v.name+'samen',icon:v.icon}])) },
+    crops:  { label:'🧺 Ernte',  items: { ..._MAIL_SHOP } },
+    items:  { label:'📦 Items',  items: {
+      fertilizer:{name:'Dünger',icon:'🪴'}, honey:{name:'Honig',icon:'🍯'},
+      egg:{name:'Ei',icon:'🥚'}, milk:{name:'Milch',icon:'🥛'},
+      wool:{name:'Wolle',icon:'🧶'}, diamond:{name:'Diamant',icon:'💎'},
+      firefly:{name:'Glühwürmchen',icon:'🫙'}, feather:{name:'Feder',icon:'🪶'},
+      goatmilk:{name:'Ziegenmilch',icon:'🥛'}, truffle:{name:'Trüffel',icon:'🍄'},
+      horseshoe:{name:'Hufeisen',icon:'🧲'}, rainbowessence:{name:'Regenbogen-Essenz',icon:'🌈'}
+    } },
+    bakery: { label:'🍞 Bäckerei', items: {
+      salad:{name:'Radieschen-Salat',icon:'🥗'}, popcorn:{name:'Popcorn',icon:'🍿'},
+      bread:{name:'Rustikales Brot',icon:'🍞'}, oatmilk:{name:'Hafermilch',icon:'🥛'},
+      tomatosoup:{name:'Tomatensuppe',icon:'🍲'}, carrotcake:{name:'Karottenkuchen',icon:'🥧'},
+      goatcheese:{name:'Ziegenkäse',icon:'🧀'}, cornbread:{name:'Maisbrot',icon:'🥖'},
+      bluemuffin:{name:'Blue Muffin',icon:'🧁'}, sunfloweroil:{name:'Sonnenblumenöl',icon:'🧴'},
+      trufflesauce:{name:'Trüffelsoße',icon:'🍄'}, cake:{name:'Premium Torte',icon:'🍰'},
+      pizza:{name:'Pizza',icon:'🍕'}, honeycake:{name:'Honigkuchen',icon:'🍯'},
+      mondlichtmacarons:{name:'Mondlicht-Macarons',icon:'🌠'}
+    } },
+    accessories: { label:'🎀 Weberei', items: {
+      strawhat:{name:'Strohhut',icon:'👒'}, porkpie:{name:'Schwarzer Hut',icon:'🎩'},
+      spectrespecs:{name:'Gespensterbrille',icon:'👓'}, featherboa:{name:'Federboa',icon:'🪶'},
+      sunhat:{name:'Sonnenhut',icon:'🌞'}, radishearrings:{name:'Radieschen-Ohrringe',icon:'🧅'},
+      flowercrown:{name:'Blumenkranz',icon:'🌸'}, goldenbridle:{name:'Goldenes Zaumzeug',icon:'🏅'},
+      unicornplush:{name:'Einhorn-Plüschie',icon:'🦄'}
+    } },
+    ores: { label:'⛏️ Erze', items: {
+      kupfer:{name:'Kupfer',icon:'🟤'}, eisen:{name:'Eisen',icon:'⚙️'},
+      silber:{name:'Silber',icon:'🥈'}, gold:{name:'Gold',icon:'🥇'},
+      amethyst:{name:'Amethyst',icon:'💜'}, smaragd:{name:'Smaragd',icon:'💚'}
+    } },
+    jewelry: { label:'💎 Schmuck', items: {
+      kupferarmband:{name:'Kupferarmband',icon:'📿'}, eisenring:{name:'Eisenring',icon:'💍'},
+      kupfersilberkette:{name:'Kupfer-Silber-Kette',icon:'📿'}, silberring:{name:'Silberring',icon:'💍'},
+      eisengoldanhaenger:{name:'Eisen-Gold-Anhänger',icon:'✨'}, goldring:{name:'Goldring',icon:'💍'},
+      silberamethystohrring:{name:'Silber-Amethyst-Ohrring',icon:'💜'}, amethystbrosche:{name:'Amethyst-Brosche',icon:'🔮'},
+      goldsmaragdhalskette:{name:'Gold-Smaragd-Halskette',icon:'📿'}, koenigskrone:{name:'Prinzesschenkrönchen',icon:'👑'}
+    } }
+  };
+
+  function mailItemLabel(cat, id) {
+    const it = MAIL_FARM_CATALOG[cat] && MAIL_FARM_CATALOG[cat].items[id];
+    return it ? `${it.icon} ${it.name}` : mailEsc(id);
+  }
+  function mailBoosterLabel(bid) {
+    const d = BOOSTER_DEFS[bid];
+    return d ? `${d.emoji} ${d.name}` : mailEsc(bid);
+  }
+  function mailEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function mailToast(msg) {
+    const t = document.getElementById('mailToast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(_mailToastTimer);
+    _mailToastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  function mailErr(msg) {
+    const e = document.getElementById('mailError');
+    if (e) e.textContent = msg || '';
+  }
+
+  function _updateMailBadge() {
+    const badge = document.getElementById('mailboxBadge');
+    if (!badge) return;
+    const n = Object.values(_mailMsgs || {}).filter(m => m && !m.read).length;
+    if (n > 0) { badge.style.display = 'inline-block'; badge.textContent = n > 99 ? '99+' : n; }
+    else { badge.style.display = 'none'; }
+  }
+
+  function renderMailInbox() {
+    const list = document.getElementById('mailList');
+    if (!list) return;
+    const entries = Object.entries(_mailMsgs || {}).sort((a, b) => (b[1].sentAt || 0) - (a[1].sentAt || 0));
+    if (!entries.length) { list.innerHTML = '<div class="mail-empty">📭 Noch keine Post</div>'; return; }
+    list.innerHTML = '';
+    entries.forEach(([id, m]) => {
+      const card = document.createElement('div');
+      card.className = 'mail-card' + (m.read ? '' : ' unread') + (m.isAdmin ? ' admin' : '');
+      const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const fromHtml = m.isAdmin ? '<span class="mail-admin-pill">⚙️ Admin</span>' : mailEsc(m.fromName || '?');
+      const atts = m.attachments || [];
+      let attachHtml = '';
+      if (atts.length) {
+        const parts = atts.map(a => {
+          if (a.type === 'coins')   return `🪙 ${a.amount} Coins`;
+          if (a.type === 'booster') return `${mailBoosterLabel(a.boosterId)} ×${a.qty}`;
+          if (a.type === 'farmitem') return `${mailItemLabel(a.category, a.itemId)} ×${a.qty}`;
+          return '';
+        });
+        attachHtml = `<div class="mail-attach${m.claimed ? ' claimed' : ''}">📎 ${parts.join(' · ')}${m.claimed ? ' (angenommen)' : ''}</div>`;
+      }
+      const canClaim = atts.length > 0 && !m.claimed;
+      card.innerHTML = `
+        <div class="mail-from">${fromHtml}</div>
+        <div class="mail-time">${when}</div>
+        ${m.body ? `<div class="mail-body">${mailEsc(m.body)}</div>` : ''}
+        ${attachHtml}
+        <div class="mail-card-btns">
+          ${canClaim ? `<button class="mail-btn claim" data-claim="${id}">🎁 Annehmen</button>` : ''}
+          <button class="mail-btn del" data-del="${id}">🗑️ Löschen</button>
+        </div>`;
+      list.appendChild(card);
+    });
+    list.querySelectorAll('button[data-claim]').forEach(b => b.addEventListener('click', () => mailClaim(b.dataset.claim)));
+    list.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
+  }
+
+  function applyMailMode() {
+    const adminMode = _mailAdminMode && window.mailIsAdmin;
+    const recRow = document.getElementById('mailRecipientRow');
+    const recLbl = document.getElementById('mailRecipientLabel');
+    const costNote = document.getElementById('mailCostNote');
+    if (costNote) costNote.style.display = adminMode ? 'none' : '';
+    if (adminMode) {
+      recRow.style.display = 'flex';
+      recLbl.style.display = 'none';
+      recRow.querySelectorAll('[data-mailrcpt]').forEach(x => x.classList.toggle('active', x.dataset.mailrcpt === _mailAdminRecipient));
+    } else {
+      recRow.style.display = 'none';
+      recLbl.style.display = '';
+      const other = (window.currentUser || '').toLowerCase() === 'andreas' ? 'Nele' : 'Andreas';
+      recLbl.textContent = 'An: ' + other;
+    }
+  }
+
+  function mailFillItemSel() {
+    const cat = document.getElementById('mailAttachCat').value;
+    const itemSel = document.getElementById('mailAttachItem');
+    const items = (MAIL_FARM_CATALOG[cat] && MAIL_FARM_CATALOG[cat].items) || {};
+    itemSel.innerHTML = Object.keys(items).map(id => `<option value="${id}">${mailItemLabel(cat, id)}</option>`).join('');
+  }
+  function mailRefreshAttachInputs() {
+    const type = document.getElementById('mailAttachType').value;
+    const catSel = document.getElementById('mailAttachCat');
+    const itemSel = document.getElementById('mailAttachItem');
+    if (type === 'coins') {
+      catSel.style.display = 'none'; itemSel.style.display = 'none';
+    } else if (type === 'booster') {
+      catSel.style.display = 'none'; itemSel.style.display = '';
+      itemSel.innerHTML = Object.entries(BOOSTER_DEFS).map(([id, d]) => `<option value="${id}">${d.emoji} ${d.name}</option>`).join('');
+    } else {
+      catSel.style.display = ''; itemSel.style.display = '';
+      catSel.innerHTML = Object.entries(MAIL_FARM_CATALOG).map(([k, c]) => `<option value="${k}">${c.label}</option>`).join('');
+      mailFillItemSel();
+    }
+  }
+  function mailAddAttachment() {
+    const type = document.getElementById('mailAttachType').value;
+    const qty = Math.max(1, parseInt(document.getElementById('mailAttachQty').value, 10) || 1);
+    if (type === 'coins') _mailAttachments.push({ type:'coins', amount: qty });
+    else if (type === 'booster') _mailAttachments.push({ type:'booster', boosterId: document.getElementById('mailAttachItem').value, qty });
+    else _mailAttachments.push({ type:'farmitem', category: document.getElementById('mailAttachCat').value, itemId: document.getElementById('mailAttachItem').value, qty });
+    renderMailAttachList();
+  }
+  function renderMailAttachList() {
+    const box = document.getElementById('mailAttachList');
+    if (!box) return;
+    if (!_mailAttachments.length) { box.innerHTML = ''; return; }
+    box.innerHTML = _mailAttachments.map((a, i) => {
+      let lbl;
+      if (a.type === 'coins') lbl = `🪙 ${a.amount} Coins`;
+      else if (a.type === 'booster') lbl = `${mailBoosterLabel(a.boosterId)} ×${a.qty}`;
+      else lbl = `${mailItemLabel(a.category, a.itemId)} ×${a.qty}`;
+      return `<span class="mail-attach-chip">${lbl}<button data-rm="${i}">✕</button></span>`;
+    }).join('');
+    box.querySelectorAll('button[data-rm]').forEach(b => b.addEventListener('click', () => {
+      _mailAttachments.splice(parseInt(b.dataset.rm, 10), 1);
+      renderMailAttachList();
+    }));
+  }
+  function renderMailCompose() {
+    const isAdmin = !!window.mailIsAdmin;
+    document.getElementById('mailAdminToggle').style.display = isAdmin ? 'flex' : 'none';
+    if (!isAdmin) { _mailAdminMode = false; document.getElementById('mailAdminCheck').checked = false; }
+    applyMailMode();
+    mailRefreshAttachInputs();
+    renderMailAttachList();
+    mailErr('');
+  }
+
+  function switchMailView(v) {
+    _mailView = v;
+    document.getElementById('mailTabInbox').classList.toggle('active', v === 'inbox');
+    document.getElementById('mailTabCompose').classList.toggle('active', v === 'compose');
+    document.getElementById('mailInboxView').style.display = v === 'inbox' ? '' : 'none';
+    document.getElementById('mailComposeView').style.display = v === 'compose' ? '' : 'none';
+    document.getElementById('mailSendBtn').style.display = v === 'compose' ? '' : 'none';
+    if (v === 'inbox') { renderMailInbox(); mailMarkAllRead(); }
+    else renderMailCompose();
+  }
+
+  async function mailMarkAllRead() {
+    const myKey = (window.currentUser || '').toLowerCase();
+    if (!myKey) return;
+    const updates = {};
+    Object.entries(_mailMsgs || {}).forEach(([id, m]) => { if (m && !m.read) updates[`${id}/read`] = true; });
+    if (Object.keys(updates).length) {
+      try { await update(ref(db, `mailbox/${myKey}`), updates); } catch (e) { console.error('mailMarkAllRead', e); }
+    }
+  }
+
+  async function mailSend() {
+    if (_mailSending) return;
+    const myKey = (window.currentUser || '').toLowerCase();
+    if (!myKey) return;
+    const adminMode = _mailAdminMode && window.mailIsAdmin;
+    const body = document.getElementById('mailBody').value.trim();
+    if (!body && _mailAttachments.length === 0) { mailErr('Schreib eine Nachricht oder häng etwas an.'); return; }
+
+    let recipients;
+    if (adminMode) recipients = _mailAdminRecipient === 'both' ? ['nele', 'andreas'] : [_mailAdminRecipient];
+    else recipients = [ myKey === 'andreas' ? 'nele' : 'andreas' ];
+
+    const coinsAttached = _mailAttachments.reduce((s, a) => s + (a.type === 'coins' ? a.amount : 0), 0);
+    if (!adminMode) {
+      const coinsNeeded = MAIL_SEND_COST + coinsAttached;
+      const bal = (await get(ref(db, `coins/${myKey}`))).val() || 0;
+      if (bal < coinsNeeded) {
+        mailErr(coinsAttached > 0
+          ? `Nicht genug Coins – ${MAIL_SEND_COST} für den Versand + ${coinsAttached} Anhang nötig.`
+          : `Nicht genug Coins – Versand kostet ${MAIL_SEND_COST}.`);
+        return;
+      }
+      for (const a of _mailAttachments) {
+        if (a.type === 'booster') {
+          if ((boosterInventoryIndex[a.boosterId] || 0) < a.qty) { mailErr('Nicht genug Booster im Inventar.'); return; }
+        } else if (a.type === 'farmitem') {
+          const have = (await get(ref(db, `farm/${myKey}/inventory/${a.category}/${a.itemId}`))).val() || 0;
+          if (have < a.qty) { mailErr('Nicht genug ' + mailItemLabel(a.category, a.itemId) + ' im Inventar.'); return; }
+        }
+      }
+    }
+
+    _mailSending = true;
+    mailErr('');
+    const btn = document.getElementById('mailSendBtn');
+    btn.disabled = true; btn.textContent = '⏳ Senden…';
+    try {
+      const msg = {
+        fromKey: adminMode ? 'admin' : myKey,
+        fromName: adminMode ? 'Admin' : (window.currentUser || ''),
+        isAdmin: adminMode,
+        sentAt: Date.now(),
+        body: body,
+        read: false,
+        claimed: _mailAttachments.length === 0,
+        attachments: _mailAttachments.map(a => ({ ...a }))
+      };
+      for (const rcpt of recipients) {
+        await push(ref(db, `mailbox/${rcpt}`), msg);
+      }
+      if (!adminMode) {
+        const coinsOut = MAIL_SEND_COST + coinsAttached;
+        if (coinsOut > 0) await runTransaction(ref(db, `coins/${myKey}`), c => (c || 0) - coinsOut);
+        for (const a of _mailAttachments) {
+          if (a.type === 'booster') await runTransaction(ref(db, `boosters/${myKey}/inventory/${a.boosterId}`), c => (c || 0) - a.qty);
+          else if (a.type === 'farmitem') await runTransaction(ref(db, `farm/${myKey}/inventory/${a.category}/${a.itemId}`), c => (c || 0) - a.qty);
+        }
+      }
+      _mailAttachments = [];
+      document.getElementById('mailBody').value = '';
+      renderMailAttachList();
+      mailToast(adminMode ? '⚙️ Admin-Post gesendet!' : '💌 Post gesendet!');
+      switchMailView('inbox');
+    } catch (e) {
+      console.error('mailSend Fehler:', e);
+      mailErr('Senden fehlgeschlagen – bitte nochmal versuchen.');
+    } finally {
+      _mailSending = false;
+      btn.disabled = false; btn.textContent = 'Senden 💌';
+    }
+  }
+
+  async function mailClaim(msgId) {
+    const myKey = (window.currentUser || '').toLowerCase();
+    const m = _mailMsgs[msgId];
+    if (!myKey || !m || m.claimed) return;
+    try {
+      for (const a of (m.attachments || [])) {
+        if (a.type === 'coins') await runTransaction(ref(db, `coins/${myKey}`), c => (c || 0) + a.amount);
+        else if (a.type === 'booster') await runTransaction(ref(db, `boosters/${myKey}/inventory/${a.boosterId}`), c => (c || 0) + a.qty);
+        else if (a.type === 'farmitem') await runTransaction(ref(db, `farm/${myKey}/inventory/${a.category}/${a.itemId}`), c => (c || 0) + a.qty);
+      }
+      await update(ref(db, `mailbox/${myKey}/${msgId}`), { claimed: true });
+      mailToast('🎁 Anhänge erhalten!');
+    } catch (e) {
+      console.error('mailClaim Fehler:', e);
+      mailToast('❌ Annehmen fehlgeschlagen.');
+    }
+  }
+
+  function requestMailDelete(msgId) {
+    const m = _mailMsgs[msgId];
+    if (!m) return;
+    _mailPendingDelete = msgId;
+    const hasUnclaimed = !m.claimed && (m.attachments || []).length > 0;
+    document.getElementById('mailDeleteText').textContent = hasUnclaimed
+      ? 'Diese Post enthält noch nicht angenommene Anhänge – sie gehen beim Löschen verloren.'
+      : 'Diese Nachricht wirklich löschen?';
+    document.getElementById('mailDeleteOverlay').classList.add('open');
+  }
+  async function doMailDelete() {
+    const myKey = (window.currentUser || '').toLowerCase();
+    const id = _mailPendingDelete;
+    document.getElementById('mailDeleteOverlay').classList.remove('open');
+    _mailPendingDelete = null;
+    if (!myKey || !id) return;
+    try { await remove(ref(db, `mailbox/${myKey}/${id}`)); mailToast('🗑️ Gelöscht'); }
+    catch (e) { console.error('doMailDelete', e); mailToast('❌ Löschen fehlgeschlagen.'); }
+  }
+
+  function wireMailbox() {
+    const ov = document.getElementById('mailboxOverlay');
+    if (!ov) return;
+    document.getElementById('mailboxBtn').addEventListener('click', () => { ov.classList.add('open'); switchMailView('inbox'); });
+    document.getElementById('mailCloseBtn').addEventListener('click', () => ov.classList.remove('open'));
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+    document.getElementById('mailTabInbox').addEventListener('click', () => switchMailView('inbox'));
+    document.getElementById('mailTabCompose').addEventListener('click', () => switchMailView('compose'));
+    document.getElementById('mailAdminCheck').addEventListener('change', e => { _mailAdminMode = e.target.checked; applyMailMode(); });
+    document.getElementById('mailRecipientRow').querySelectorAll('[data-mailrcpt]').forEach(b => {
+      b.addEventListener('click', () => {
+        _mailAdminRecipient = b.dataset.mailrcpt;
+        document.getElementById('mailRecipientRow').querySelectorAll('[data-mailrcpt]').forEach(x => x.classList.toggle('active', x === b));
+      });
+    });
+    document.getElementById('mailAttachType').addEventListener('change', mailRefreshAttachInputs);
+    document.getElementById('mailAttachCat').addEventListener('change', mailFillItemSel);
+    document.getElementById('mailAttachAdd').addEventListener('click', mailAddAttachment);
+    document.getElementById('mailSendBtn').addEventListener('click', mailSend);
+    const delOv = document.getElementById('mailDeleteOverlay');
+    document.getElementById('mailDeleteNo').addEventListener('click', () => { _mailPendingDelete = null; delOv.classList.remove('open'); });
+    document.getElementById('mailDeleteYes').addEventListener('click', doMailDelete);
+    delOv.addEventListener('click', e => { if (e.target === delOv) { _mailPendingDelete = null; delOv.classList.remove('open'); } });
+  }
+  wireMailbox();
 
 
   function spawnCoin(x, y, amount = 1) {
