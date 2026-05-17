@@ -3243,21 +3243,7 @@
     'ui-toast-bg':          'var(--text-dark)',
   };
   // Wednesday-Theme: ersetzt nur für dieses eine Theme das Startbild.
-  // PLATZHALTER – wird durch das hochgeladene Wednesday-Foto (Base64) ersetzt.
-  const WEDNESDAY_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
-    "<svg xmlns='http://www.w3.org/2000/svg' width='800' height='1000' viewBox='0 0 800 1000'>" +
-    "<defs><radialGradient id='g' cx='50%' cy='38%' r='75%'>" +
-    "<stop offset='0%' stop-color='#3a2a55'/><stop offset='55%' stop-color='#140f1f'/>" +
-    "<stop offset='100%' stop-color='#020103'/></radialGradient></defs>" +
-    "<rect width='800' height='1000' fill='url(#g)'/>" +
-    "<g stroke='rgba(191,191,208,0.55)' stroke-width='3' fill='none'>" +
-    "<path d='M400 250 L400 560 M310 330 L490 330'/>" +
-    "<circle cx='400' cy='430' r='52' stroke='rgba(139,111,196,0.7)'/></g>" +
-    "<text x='400' y='720' font-family='Georgia,serif' font-size='58' fill='#bfbfd0' " +
-    "text-anchor='middle' letter-spacing='6'>NEVERMORE</text>" +
-    "<text x='400' y='790' font-family='Georgia,serif' font-size='26' fill='#8b6fc4' " +
-    "text-anchor='middle'>Wednesday-Foto hier einsetzen</text></svg>"
-  );
+  const WEDNESDAY_IMG = "IMG_7094.jpeg";
   window.applyTheme = function(themeId) {
     const vars = THEME_VARS[themeId];
     if (!vars) return;
