@@ -223,7 +223,7 @@
   .forgot-msg.success { color: #22a35a; }
   .forgot-msg.error { color: #c85070; }
   .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 99999; display: none; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; padding: 10px 16px; background: var(--ui-topbar-bg); border-bottom: 1px solid var(--ui-topbar-border); box-shadow: 0 2px 12px rgba(232,115,138,0.1); backdrop-filter: blur(8px); transition: background 0.4s ease, border-color 0.4s ease; }
-  .top-bar-btn { background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; }
+  .top-bar-btn { display: inline-flex; align-items: center; justify-content: center; height: 32px; line-height: 1; box-sizing: border-box; background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 0 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; }
   .top-bar-btn:hover { color: var(--rose); border-color: var(--rose); }
 
   /* PROFIL OVERLAY */
@@ -596,7 +596,7 @@
     .modal-btn { width: 100%; }
     .heart-btn { padding: 18px 24px; }
     .top-bar { padding: 8px 10px; gap: 6px; }
-    .top-bar-btn { padding: 6px 10px; font-size: 11px; }
+    .top-bar-btn { padding: 0 10px; font-size: 11px; }
     .page { padding: 56px 14px 50px; }
   }
 
@@ -935,12 +935,14 @@
   .moment-modal-overlay {
     position: fixed; inset: 0; z-index: 10001; display: none;
     align-items: center; justify-content: center;
+    padding: 24px 0; overflow-y: auto;
     background: rgba(90,45,58,0.85); backdrop-filter: blur(10px);
   }
   .moment-modal-overlay.open { display: flex; }
   .moment-modal-card {
     background: var(--ui-modal-bg); border: 1.5px solid var(--ui-modal-border);
     border-radius: 28px; padding: 36px 32px 32px; max-width: 380px; width: 92%;
+    max-height: calc(100vh - 48px); overflow-y: auto;
     text-align: center; box-shadow: 0 20px 70px rgba(194,24,91,0.25);
     animation: momentModalIn 0.35s cubic-bezier(0.22,1,0.36,1);
   }
@@ -1003,13 +1005,17 @@
   .moment-cancel-btn:hover { border-color: #ff6b9d; color: #ff6b9d; }
 
   /* ---- Briefkasten / Postsystem ---- */
-  .mailbox-wrap { position: relative; display: none; }
+  .mailbox-wrap { position: relative; display: none; flex-shrink: 0; align-items: center; }
   .mailbox-badge {
-    position: absolute; top: -8px; right: -6px;
+    position: absolute; top: -6px; right: -4px;
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 700;
-    padding: 2px 7px; border-radius: 50px; box-shadow: 0 3px 12px rgba(239,68,68,0.5);
+    line-height: 1; padding: 2px 7px; border-radius: 50px; box-shadow: 0 3px 12px rgba(239,68,68,0.5);
     animation: badgePulse 1.8s ease-in-out infinite; pointer-events: none; display: none;
+  }
+  .mailbox-badge.bump { animation: badgePulse 1.8s ease-in-out infinite, mailBadgeBump 0.5s ease; }
+  @keyframes mailBadgeBump {
+    0% { transform: scale(1); } 35% { transform: scale(1.5); } 70% { transform: scale(0.92); } 100% { transform: scale(1); }
   }
   .mail-modal-card { max-width: 460px; }
   .mail-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
@@ -1019,8 +1025,44 @@
     background: transparent; color: var(--ui-btn-text); transition: all 0.2s ease;
   }
   .mail-tab.active { background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); color: #fff; border-color: transparent; }
-  .mail-list { max-height: 52vh; overflow-y: auto; margin-bottom: 16px; text-align: left; }
+  .mail-list { max-height: 48vh; overflow-y: auto; margin-bottom: 16px; text-align: left; }
   .mail-empty { text-align: center; color: var(--ui-btn-text); font-size: 13px; padding: 30px 6px; }
+  .mail-row-item {
+    display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer;
+    border: 1.5px solid var(--ui-modal-border); border-radius: 16px;
+    padding: 12px 14px; margin-bottom: 10px; background: var(--ui-input-bg);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .mail-row-item:hover { border-color: var(--rose); transform: translateX(2px); }
+  .mail-row-item.unread { border-color: var(--rose); box-shadow: 0 0 0 2px rgba(232,115,138,0.15); }
+  .mail-row-item.admin { border-color: var(--gold); background: rgba(212,160,97,0.12); }
+  .mail-unread-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--rose); flex-shrink: 0; }
+  .mail-unread-dot.placeholder { background: transparent; }
+  .mail-row-main { flex: 1; min-width: 0; }
+  .mail-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .mail-row-sender { font-size: 12px; font-weight: 700; color: var(--text-mid); display: flex; align-items: center; gap: 5px; min-width: 0; }
+  .mail-row-sender span.txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mail-row-time { font-size: 11px; color: var(--ui-btn-text); font-weight: 600; flex-shrink: 0; }
+  .mail-row-subject {
+    font-size: 14px; color: var(--text-dark); margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .mail-row-item.unread .mail-row-subject { font-weight: 800; }
+  .mail-row-clip { font-size: 13px; flex-shrink: 0; opacity: 0.7; }
+  .mail-back-btn {
+    background: transparent; border: 1.5px solid var(--ui-modal-border); color: var(--ui-btn-text);
+    border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer; margin-bottom: 14px; transition: all 0.2s ease;
+  }
+  .mail-back-btn:hover { color: var(--rose); border-color: var(--rose); }
+  .mail-detail-subject { font-size: 17px; font-weight: 800; color: var(--text-dark); margin: 6px 0 4px; word-break: break-word; text-align: left; }
+  .mail-subject-input {
+    width: 100%; border: 1.5px solid var(--ui-modal-border); border-radius: 14px;
+    padding: 12px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px;
+    font-weight: 600; color: var(--ui-input-color); background: var(--ui-input-bg);
+    outline: none; box-sizing: border-box; margin-bottom: 10px;
+  }
+  .mail-subject-input:focus { border-color: #ff6b9d; }
   .mail-card {
     border: 1.5px solid var(--ui-modal-border); border-radius: 16px;
     padding: 14px; margin-bottom: 12px; background: var(--ui-input-bg);
@@ -1417,6 +1459,10 @@
     </div>
     <div id="mailInboxView">
       <div class="mail-list" id="mailList"></div>
+      <div id="mailDetailView" style="display:none;text-align:left;">
+        <button class="mail-back-btn" id="mailBackBtn">← Zurück</button>
+        <div id="mailDetailBody"></div>
+      </div>
     </div>
     <div id="mailComposeView" style="display:none;">
       <div class="mail-admin-toggle" id="mailAdminToggle" style="display:none;">
@@ -1431,6 +1477,7 @@
         <button class="mail-tab" data-mailrcpt="both">Beide</button>
       </div>
       <div id="mailRecipientLabel" style="font-size:13px;font-weight:700;color:var(--text-mid);text-align:left;margin-bottom:10px;"></div>
+      <input type="text" class="mail-subject-input" id="mailSubject" placeholder="Betreff…" maxlength="80">
       <textarea class="moment-modal-textarea" id="mailBody" placeholder="Schreib deine Nachricht…" maxlength="500"></textarea>
       <div class="mail-attach-builder">
         <div style="font-size:11px;font-weight:700;color:var(--text-mid);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">📎 Anhang hinzufügen</div>
@@ -1712,8 +1759,18 @@
       _mailMsgs = {};
       _unsubMailbox = onValue(ref(db, `mailbox/${userKey}`), snap => {
         _mailMsgs = snap.exists() ? snap.val() : {};
+        const unread = Object.values(_mailMsgs || {}).filter(m => m && !m.read);
+        const modalOpen = document.getElementById('mailboxOverlay').classList.contains('open');
+        if (_mailLastUnread !== null && unread.length > _mailLastUnread && !modalOpen) {
+          const newest = unread.sort((a, b) => (b.sentAt || 0) - (a.sentAt || 0))[0];
+          mailToast('💌 Neue Post: ' + _mailSubjectOf(newest));
+        }
+        _mailLastUnread = unread.length;
         _updateMailBadge();
-        if (document.getElementById('mailboxOverlay').classList.contains('open') && _mailView === 'inbox') renderMailInbox();
+        if (modalOpen && _mailView === 'inbox') {
+          if (_mailOpenId && _mailMsgs[_mailOpenId]) renderMailDetail();
+          else showMailList();
+        }
       });
 
       // Booster live hören
@@ -1901,6 +1958,8 @@
   let _mailPendingDelete = null;  // msgId für Lösch-Bestätigung
   let _mailAdminRecipient = 'nele';
   let _mailToastTimer = null;
+  let _mailOpenId = null;         // aktuell geöffnete Nachricht (Detail-Ansicht)
+  let _mailLastUnread = null;     // letzte bekannte Ungelesen-Zahl (für Live-Hinweis)
   let autoclickInterval        = null;
   let sabotageClickCounter     = 0;
 
@@ -2268,8 +2327,47 @@
     const badge = document.getElementById('mailboxBadge');
     if (!badge) return;
     const n = Object.values(_mailMsgs || {}).filter(m => m && !m.read).length;
-    if (n > 0) { badge.style.display = 'inline-block'; badge.textContent = n > 99 ? '99+' : n; }
-    else { badge.style.display = 'none'; }
+    const prev = parseInt(badge.dataset.count || '0', 10);
+    if (n > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = n > 99 ? '99+' : n;
+      if (n > prev) {
+        badge.classList.remove('bump');
+        void badge.offsetWidth;
+        badge.classList.add('bump');
+      }
+    } else {
+      badge.style.display = 'none';
+      badge.classList.remove('bump');
+    }
+    badge.dataset.count = n;
+  }
+
+  function _mailSubjectOf(m) {
+    if (!m) return '(Kein Betreff)';
+    const s = (m.subject || '').trim();
+    if (s) return s;
+    const b = (m.body || '').trim();
+    if (b) { const first = b.split('\n')[0]; return first.length > 60 ? first.slice(0, 60) + '…' : first; }
+    return '(Kein Betreff)';
+  }
+
+  function _mailAttachLabels(atts) {
+    return atts.map(a => {
+      if (a.type === 'coins')   return `🪙 ${a.amount} Coins`;
+      if (a.type === 'booster') return `${mailBoosterLabel(a.boosterId)} ×${a.qty}`;
+      if (a.type === 'farmitem') return `${mailItemLabel(a.category, a.itemId)} ×${a.qty}`;
+      return '';
+    });
+  }
+
+  function showMailList() {
+    _mailOpenId = null;
+    const dv = document.getElementById('mailDetailView');
+    const lst = document.getElementById('mailList');
+    if (dv) dv.style.display = 'none';
+    if (lst) lst.style.display = '';
+    renderMailInbox();
   }
 
   function renderMailInbox() {
@@ -2279,36 +2377,68 @@
     if (!entries.length) { list.innerHTML = '<div class="mail-empty">📭 Noch keine Post</div>'; return; }
     list.innerHTML = '';
     entries.forEach(([id, m]) => {
-      const card = document.createElement('div');
-      card.className = 'mail-card' + (m.read ? '' : ' unread') + (m.isAdmin ? ' admin' : '');
+      const row = document.createElement('div');
+      row.className = 'mail-row-item' + (m.read ? '' : ' unread') + (m.isAdmin ? ' admin' : '');
       const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-      const fromHtml = m.isAdmin ? '<span class="mail-admin-pill">⚙️ Admin</span>' : mailEsc(m.fromName || '?');
-      const atts = m.attachments || [];
-      let attachHtml = '';
-      if (atts.length) {
-        const parts = atts.map(a => {
-          if (a.type === 'coins')   return `🪙 ${a.amount} Coins`;
-          if (a.type === 'booster') return `${mailBoosterLabel(a.boosterId)} ×${a.qty}`;
-          if (a.type === 'farmitem') return `${mailItemLabel(a.category, a.itemId)} ×${a.qty}`;
-          return '';
-        });
-        attachHtml = `<div class="mail-attach${m.claimed ? ' claimed' : ''}">📎 ${parts.join(' · ')}${m.claimed ? ' (angenommen)' : ''}</div>`;
-      }
-      const canClaim = atts.length > 0 && !m.claimed;
-      card.innerHTML = `
+      const fromHtml = m.isAdmin ? '<span class="mail-admin-pill">⚙️ Admin</span>' : `<span class="txt">${mailEsc(m.fromName || '?')}</span>`;
+      const hasAtt = (m.attachments || []).length > 0;
+      row.innerHTML = `
+        <div class="mail-unread-dot${m.read ? ' placeholder' : ''}"></div>
+        <div class="mail-row-main">
+          <div class="mail-row-top">
+            <div class="mail-row-sender">${fromHtml}</div>
+            <div class="mail-row-time">${when}</div>
+          </div>
+          <div class="mail-row-subject">${mailEsc(_mailSubjectOf(m))}</div>
+        </div>
+        ${hasAtt ? '<div class="mail-row-clip">📎</div>' : ''}`;
+      row.addEventListener('click', () => openMailMessage(id));
+      list.appendChild(row);
+    });
+  }
+
+  async function openMailMessage(id) {
+    const m = _mailMsgs[id];
+    if (!m) return;
+    _mailOpenId = id;
+    document.getElementById('mailList').style.display = 'none';
+    document.getElementById('mailDetailView').style.display = '';
+    renderMailDetail();
+    if (!m.read) {
+      const myKey = (window.currentUser || '').toLowerCase();
+      if (myKey) { try { await update(ref(db, `mailbox/${myKey}/${id}`), { read: true }); } catch (e) { console.error('mail read', e); } }
+    }
+  }
+
+  function renderMailDetail() {
+    const box = document.getElementById('mailDetailBody');
+    const id = _mailOpenId;
+    const m = id && _mailMsgs[id];
+    if (!box || !m) { showMailList(); return; }
+    const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const fromHtml = m.isAdmin ? '<span class="mail-admin-pill">⚙️ Admin</span>' : mailEsc(m.fromName || '?');
+    const atts = m.attachments || [];
+    let attachHtml = '';
+    if (atts.length) {
+      attachHtml = `<div class="mail-attach${m.claimed ? ' claimed' : ''}">📎 ${_mailAttachLabels(atts).join(' · ')}${m.claimed ? ' (angenommen)' : ''}</div>`;
+    }
+    const canClaim = atts.length > 0 && !m.claimed;
+    box.innerHTML = `
+      <div class="mail-card${m.isAdmin ? ' admin' : ''}">
         <div class="mail-from">${fromHtml}</div>
         <div class="mail-time">${when}</div>
+        <div class="mail-detail-subject">${mailEsc(_mailSubjectOf(m))}</div>
         ${m.body ? `<div class="mail-body">${mailEsc(m.body)}</div>` : ''}
         ${attachHtml}
         <div class="mail-card-btns">
           ${canClaim ? `<button class="mail-btn claim" data-claim="${id}">🎁 Annehmen</button>` : ''}
           <button class="mail-btn del" data-del="${id}">🗑️ Löschen</button>
-        </div>`;
-      list.appendChild(card);
-    });
-    list.querySelectorAll('button[data-claim]').forEach(b => b.addEventListener('click', () => mailClaim(b.dataset.claim)));
-    list.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
+        </div>
+      </div>`;
+    box.querySelectorAll('button[data-claim]').forEach(b => b.addEventListener('click', () => mailClaim(b.dataset.claim)));
+    box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
   }
+
 
   function applyMailMode() {
     const adminMode = _mailAdminMode && window.mailIsAdmin;
@@ -2390,18 +2520,8 @@
     document.getElementById('mailInboxView').style.display = v === 'inbox' ? '' : 'none';
     document.getElementById('mailComposeView').style.display = v === 'compose' ? '' : 'none';
     document.getElementById('mailSendBtn').style.display = v === 'compose' ? '' : 'none';
-    if (v === 'inbox') { renderMailInbox(); mailMarkAllRead(); }
+    if (v === 'inbox') showMailList();
     else renderMailCompose();
-  }
-
-  async function mailMarkAllRead() {
-    const myKey = (window.currentUser || '').toLowerCase();
-    if (!myKey) return;
-    const updates = {};
-    Object.entries(_mailMsgs || {}).forEach(([id, m]) => { if (m && !m.read) updates[`${id}/read`] = true; });
-    if (Object.keys(updates).length) {
-      try { await update(ref(db, `mailbox/${myKey}`), updates); } catch (e) { console.error('mailMarkAllRead', e); }
-    }
   }
 
   async function mailSend() {
@@ -2409,8 +2529,27 @@
     const myKey = (window.currentUser || '').toLowerCase();
     if (!myKey) return;
     const adminMode = _mailAdminMode && window.mailIsAdmin;
+    const subject = document.getElementById('mailSubject').value.trim();
     const body = document.getElementById('mailBody').value.trim();
-    if (!body && _mailAttachments.length === 0) { mailErr('Schreib eine Nachricht oder häng etwas an.'); return; }
+
+    // Konfigurierten Anhang automatisch übernehmen, wenn "+" vergessen wurde
+    // (triviale Default-Auswahl „Coins, Menge 1“ zählt NICHT als Anhang).
+    if (_mailAttachments.length === 0) {
+      const type = document.getElementById('mailAttachType').value;
+      const qty = Math.max(1, parseInt(document.getElementById('mailAttachQty').value, 10) || 1);
+      if (type === 'booster') {
+        const bid = document.getElementById('mailAttachItem').value;
+        if (bid) _mailAttachments.push({ type:'booster', boosterId: bid, qty });
+      } else if (type === 'farmitem') {
+        const cat = document.getElementById('mailAttachCat').value;
+        const iid = document.getElementById('mailAttachItem').value;
+        if (cat && iid) _mailAttachments.push({ type:'farmitem', category: cat, itemId: iid, qty });
+      } else if (type === 'coins' && qty >= 2) {
+        _mailAttachments.push({ type:'coins', amount: qty });
+      }
+    }
+
+    if (!body && !subject && _mailAttachments.length === 0) { mailErr('Schreib eine Nachricht oder häng etwas an.'); return; }
 
     let recipients;
     if (adminMode) recipients = _mailAdminRecipient === 'both' ? ['nele', 'andreas'] : [_mailAdminRecipient];
@@ -2446,6 +2585,7 @@
         fromName: adminMode ? 'Admin' : (window.currentUser || ''),
         isAdmin: adminMode,
         sentAt: Date.now(),
+        subject: subject,
         body: body,
         read: false,
         claimed: _mailAttachments.length === 0,
@@ -2463,6 +2603,7 @@
         }
       }
       _mailAttachments = [];
+      document.getElementById('mailSubject').value = '';
       document.getElementById('mailBody').value = '';
       renderMailAttachList();
       mailToast(adminMode ? '⚙️ Admin-Post gesendet!' : '💌 Post gesendet!');
@@ -2520,6 +2661,7 @@
     document.getElementById('mailboxBtn').addEventListener('click', () => { ov.classList.add('open'); switchMailView('inbox'); });
     document.getElementById('mailCloseBtn').addEventListener('click', () => ov.classList.remove('open'));
     ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+    document.getElementById('mailBackBtn').addEventListener('click', showMailList);
     document.getElementById('mailTabInbox').addEventListener('click', () => switchMailView('inbox'));
     document.getElementById('mailTabCompose').addEventListener('click', () => switchMailView('compose'));
     document.getElementById('mailAdminCheck').addEventListener('change', e => { _mailAdminMode = e.target.checked; applyMailMode(); });
