@@ -24,8 +24,8 @@ const db   = getDatabase(app);
 const auth = getAuth(app);
 
 // ---- Konstanten (leicht justierbar) ----
-const SPAWN_MIN     = 900;    // min. Abstand bis zum naechsten Popup
-const SPAWN_MAX     = 2000;   // max. Abstand bis zum naechsten Popup
+const SPAWN_MIN     = 4000;   // min. Abstand bis zum naechsten Popup
+const SPAWN_MAX     = 7000;   // max. Abstand bis zum naechsten Popup
 const FIRST_DELAY   = 500;    // Verzoegerung bis zum ersten Popup
 const CLOSE_LOCK    = 1500;   // "Schliessen"-Knopf erst danach aktiv
 const DODGE         = true;   // Schliessen-Knopf weicht beim 1. Klick aus
