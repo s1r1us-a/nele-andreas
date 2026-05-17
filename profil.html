@@ -708,7 +708,6 @@
     <div class="booster-confirm-btns" style="flex-direction:column;gap:10px;">
       <button class="booster-confirm-yes" id="adminApplySabotage">💻 Hack auf mich</button>
       <button class="booster-confirm-yes" id="adminApplySpam">📺 Popup-Hack auf mich</button>
-      <button class="booster-confirm-yes" id="adminActivateWednesday">🦇 Wednesday-Theme aktivieren</button>
       <button class="booster-confirm-no" id="adminResetTheme">↩️ Theme zurücksetzen (Sakura)</button>
       <button class="booster-confirm-no" id="adminClose">Schließen</button>
     </div>
@@ -1176,12 +1175,8 @@
     await set(ref(db, 'shop/andreas/activeTheme'), themeId);
     applyProfilTheme(themeId);
     document.getElementById('adminOverlay').classList.remove('open');
-    showToast(themeId === 'wednesday'
-      ? '🦇 Wednesday-Theme aktiviert!'
-      : '↩️ Theme zurückgesetzt!');
+    showToast('↩️ Theme zurückgesetzt!');
   }
-  document.getElementById('adminActivateWednesday').addEventListener('click', () =>
-    adminSetTheme('wednesday'));
   document.getElementById('adminResetTheme').addEventListener('click', () =>
     adminSetTheme('sakura'));
 
