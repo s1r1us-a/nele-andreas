@@ -1447,6 +1447,7 @@
         </div>
         <div class="mail-attach-list" id="mailAttachList"></div>
       </div>
+      <div class="moment-modal-cost" id="mailCostNote">🪙 Versand kostet 100 Coins</div>
       <div class="moment-modal-error" id="mailError"></div>
     </div>
     <div class="moment-modal-btns">
@@ -2185,6 +2186,8 @@
   //  BRIEFKASTEN / POSTSYSTEM
   // ============================================================
 
+  const MAIL_SEND_COST = 100; // Coins pro Versand (außer Admin-Modus)
+
   // Anzeige-Katalog der Farm-Items. Spiegel der Definitionen in farm.html
   // (shopItems / items / bakeryRecipes / weavingRecipes / oreTypes /
   //  jewelryRecipes). Bei Änderungen dort hier mitpflegen.
@@ -2311,6 +2314,8 @@
     const adminMode = _mailAdminMode && window.mailIsAdmin;
     const recRow = document.getElementById('mailRecipientRow');
     const recLbl = document.getElementById('mailRecipientLabel');
+    const costNote = document.getElementById('mailCostNote');
+    if (costNote) costNote.style.display = adminMode ? 'none' : '';
     if (adminMode) {
       recRow.style.display = 'flex';
       recLbl.style.display = 'none';
@@ -2411,12 +2416,18 @@
     if (adminMode) recipients = _mailAdminRecipient === 'both' ? ['nele', 'andreas'] : [_mailAdminRecipient];
     else recipients = [ myKey === 'andreas' ? 'nele' : 'andreas' ];
 
+    const coinsAttached = _mailAttachments.reduce((s, a) => s + (a.type === 'coins' ? a.amount : 0), 0);
     if (!adminMode) {
+      const coinsNeeded = MAIL_SEND_COST + coinsAttached;
+      const bal = (await get(ref(db, `coins/${myKey}`))).val() || 0;
+      if (bal < coinsNeeded) {
+        mailErr(coinsAttached > 0
+          ? `Nicht genug Coins – ${MAIL_SEND_COST} für den Versand + ${coinsAttached} Anhang nötig.`
+          : `Nicht genug Coins – Versand kostet ${MAIL_SEND_COST}.`);
+        return;
+      }
       for (const a of _mailAttachments) {
-        if (a.type === 'coins') {
-          const bal = (await get(ref(db, `coins/${myKey}`))).val() || 0;
-          if (bal < a.amount) { mailErr('Nicht genug Coins für den Anhang.'); return; }
-        } else if (a.type === 'booster') {
+        if (a.type === 'booster') {
           if ((boosterInventoryIndex[a.boosterId] || 0) < a.qty) { mailErr('Nicht genug Booster im Inventar.'); return; }
         } else if (a.type === 'farmitem') {
           const have = (await get(ref(db, `farm/${myKey}/inventory/${a.category}/${a.itemId}`))).val() || 0;
@@ -2444,9 +2455,10 @@
         await push(ref(db, `mailbox/${rcpt}`), msg);
       }
       if (!adminMode) {
+        const coinsOut = MAIL_SEND_COST + coinsAttached;
+        if (coinsOut > 0) await runTransaction(ref(db, `coins/${myKey}`), c => (c || 0) - coinsOut);
         for (const a of _mailAttachments) {
-          if (a.type === 'coins') await runTransaction(ref(db, `coins/${myKey}`), c => (c || 0) - a.amount);
-          else if (a.type === 'booster') await runTransaction(ref(db, `boosters/${myKey}/inventory/${a.boosterId}`), c => (c || 0) - a.qty);
+          if (a.type === 'booster') await runTransaction(ref(db, `boosters/${myKey}/inventory/${a.boosterId}`), c => (c || 0) - a.qty);
           else if (a.type === 'farmitem') await runTransaction(ref(db, `farm/${myKey}/inventory/${a.category}/${a.itemId}`), c => (c || 0) - a.qty);
         }
       }
