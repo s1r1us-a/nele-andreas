@@ -708,6 +708,8 @@
     <div class="booster-confirm-btns" style="flex-direction:column;gap:10px;">
       <button class="booster-confirm-yes" id="adminApplySabotage">💻 Hack auf mich</button>
       <button class="booster-confirm-yes" id="adminApplySpam">📺 Popup-Hack auf mich</button>
+      <button class="booster-confirm-yes" id="adminActivateWednesday">🦇 Wednesday-Theme aktivieren</button>
+      <button class="booster-confirm-no" id="adminResetTheme">↩️ Theme zurücksetzen (Sakura)</button>
       <button class="booster-confirm-no" id="adminClose">Schließen</button>
     </div>
   </div>
@@ -1169,6 +1171,19 @@
     adminApplyHackToSelf('sabotage_booster'));
   document.getElementById('adminApplySpam').addEventListener('click', () =>
     adminApplyHackToSelf('spam_booster'));
+  async function adminSetTheme(themeId) {
+    if (!isAdmin()) return;
+    await set(ref(db, 'shop/andreas/activeTheme'), themeId);
+    applyProfilTheme(themeId);
+    document.getElementById('adminOverlay').classList.remove('open');
+    showToast(themeId === 'wednesday'
+      ? '🦇 Wednesday-Theme aktiviert!'
+      : '↩️ Theme zurückgesetzt!');
+  }
+  document.getElementById('adminActivateWednesday').addEventListener('click', () =>
+    adminSetTheme('wednesday'));
+  document.getElementById('adminResetTheme').addEventListener('click', () =>
+    adminSetTheme('sakura'));
 
   document.getElementById('boosterConfirmYes').addEventListener('click', async () => {
     document.getElementById('boosterConfirmOverlay').classList.remove('open');
@@ -1517,7 +1532,8 @@
     rainbow: 'radial-gradient(ellipse at 15% 15%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 22%, rgba(255,215,0,0.50) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(0,230,118,0.45) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(41,98,255,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(213,0,249,0.55) 0%, transparent 55%), linear-gradient(160deg, #ffe0ee 0%, #fff2c9 25%, #c9ffd9 50%, #c9dcff 75%, #efc9ff 100%)',
     neon:    'radial-gradient(ellipse at 18% 22%, rgba(240,171,252,0.70) 0%, transparent 55%), radial-gradient(ellipse at 82% 78%, rgba(34,211,238,0.70) 0%, transparent 55%), radial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.45) 0%, transparent 60%), linear-gradient(160deg, #1a0540 0%, #2d0a5c 50%, #3a0f6c 100%)',
     prinzesschen: 'radial-gradient(ellipse at 18% 20%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,132,252,0.45) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(251,191,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(255,138,198,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(233,30,99,0.45) 0%, transparent 55%), linear-gradient(160deg, #ffe4f3 0%, #ffd6ec 25%, #ffc1de 50%, #f9d6ff 75%, #fff0f8 100%)',
-    schattenfuerstin: 'radial-gradient(ellipse at 18% 20%, rgba(76,29,107,0.22) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,192,192,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(45,27,61,0.20) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(92,26,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.90) 0%, transparent 55%), linear-gradient(160deg, #030306 0%, #06060b 25%, #08070d 50%, #050508 75%, #020203 100%)'
+    schattenfuerstin: 'radial-gradient(ellipse at 18% 20%, rgba(76,29,107,0.22) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,192,192,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(45,27,61,0.20) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(92,26,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.90) 0%, transparent 55%), linear-gradient(160deg, #030306 0%, #06060b 25%, #08070d 50%, #050508 75%, #020203 100%)',
+    wednesday: 'radial-gradient(ellipse at 18% 20%, rgba(74,45,107,0.26) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(191,191,208,0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(36,23,51,0.24) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(60,40,90,0.16) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #020103 0%, #050409 25%, #07060d 50%, #040308 75%, #010102 100%)'
   };
   const _P_THEME_VARS = {
     sakura:  { rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565' },
@@ -1535,7 +1551,8 @@
     rainbow: { rose:'#ec4899','rose-light':'#f472b6','rose-pale':'#fdf2f8',cream:'#fafaff',gold:'#8b5cf6',warm:'#f5f3ff','text-dark':'#2e1a4a','text-mid':'#6d28d9' },
     neon:    { rose:'#f0abfc','rose-light':'#f9a8d4','rose-pale':'#1a0a2e',cream:'#07051a',gold:'#22d3ee',warm:'#1a0a2e','text-dark':'#fae8ff','text-mid':'#f0abfc' },
     prinzesschen: { rose:'#ff1493','rose-light':'#ff8ac6','rose-pale':'#ffe4f3', cream:'#fff0f8', gold:'#d4af37', warm:'#ffd6ec', 'text-dark':'#7a1856','text-mid':'#c2185b' },
-    schattenfuerstin: { rose:'#a78bd9','rose-light':'#c0c0c0','rose-pale':'#1a1226', cream:'#0a0a0f', gold:'#d4d4d8', warm:'#2d1b3d', 'text-dark':'#e8e6f0','text-mid':'#a78bd9' }
+    schattenfuerstin: { rose:'#a78bd9','rose-light':'#c0c0c0','rose-pale':'#1a1226', cream:'#0a0a0f', gold:'#d4d4d8', warm:'#2d1b3d', 'text-dark':'#e8e6f0','text-mid':'#a78bd9' },
+    wednesday: { rose:'#8b6fc4','rose-light':'#bfbfd0','rose-pale':'#140f1f', cream:'#050409', gold:'#c9c7d4', warm:'#241733', 'text-dark':'#e9e7f2','text-mid':'#9a86c4' }
   };
   const _P_DARK_UI = {
     midnight: {
@@ -1639,6 +1656,23 @@
       'ui-input-color':       '#e8e6f0',
       'ui-quote-card-bg':     'rgba(20,16,30,0.82)',
       'ui-quote-card-border': 'rgba(167,139,217,0.30)',
+    },
+    wednesday: {
+      'ui-card-bg':           'rgba(12,9,20,0.90)',
+      'ui-card-border':       'rgba(139,111,196,0.40)',
+      'ui-topbar-bg':         'rgba(5,4,9,0.97)',
+      'ui-topbar-border':     'rgba(191,191,208,0.28)',
+      'ui-btn-bg':            'rgba(18,13,28,0.92)',
+      'ui-btn-border':        'rgba(191,191,208,0.42)',
+      'ui-btn-text':          '#e9e7f2',
+      'ui-coin-bg':           'rgba(18,13,28,0.92)',
+      'ui-modal-bg':          '#0c0916',
+      'ui-modal-overlay':     'rgba(0,0,0,0.95)',
+      'ui-modal-border':      'rgba(139,111,196,0.45)',
+      'ui-input-bg':          '#140f1f',
+      'ui-input-color':       '#e9e7f2',
+      'ui-quote-card-bg':     'rgba(18,13,28,0.82)',
+      'ui-quote-card-border': 'rgba(139,111,196,0.30)',
     }
   };
   const _P_DEFAULT_UI = {
