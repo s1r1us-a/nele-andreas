@@ -6,7 +6,7 @@
 // Typewriter-Text, Fake-Terminal-Log und ein Live-Countdown pro Popup.
 
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -24,8 +24,7 @@ const db   = getDatabase(app);
 const auth = getAuth(app);
 
 // ---- Konstanten (leicht justierbar) ----
-const SPAWN_MIN     = 4000;   // min. Abstand bis zum naechsten Popup
-const SPAWN_MAX     = 7000;   // max. Abstand bis zum naechsten Popup
+const SPAWN_INTERVAL = 4000;  // fester Abstand bis zum naechsten Popup (nur 1 gleichzeitig)
 const FIRST_DELAY   = 500;    // Verzoegerung bis zum ersten Popup
 const CLOSE_LOCK    = 1500;   // "Schliessen"-Knopf erst danach aktiv
 const DODGE         = true;   // Schliessen-Knopf weicht beim 1. Klick aus
@@ -180,6 +179,14 @@ function injectStyle() {
     cursor:not-allowed;opacity:.55;transition:left .1s,top .1s;}
   .spamhack-close.ready{cursor:pointer;opacity:1;color:#7CFC9A;
     border-color:#1f7a3a;box-shadow:0 0 12px rgba(34,255,120,.4);}
+  .spamhack-anti{display:block;width:calc(100% - 28px);margin:0 14px 14px;
+    padding:9px;background:#0c1f14;color:#7CFC9A;border:1px solid #1f7a3a;
+    border-radius:5px;font-family:'Courier New',monospace;font-size:13px;
+    font-weight:bold;cursor:pointer;
+    box-shadow:0 0 12px rgba(34,255,120,.4);
+    text-shadow:0 0 6px rgba(124,252,154,.7);}
+  .spamhack-anti:hover{background:#10301f;}
+  .spamhack-anti:disabled{cursor:not-allowed;opacity:.55;}
   .spamhack-shake{animation:spamhack-shake .3s linear;}
   @keyframes spamhack-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes spamhack-blink{50%{opacity:0}}
@@ -249,6 +256,7 @@ let userKey      = null;
 let spamData     = null;
 let running      = false;
 let popups       = new Set();
+let antiHackCount = 0;
 let nextTimeout  = null;
 let endTimeout   = null;
 let firstTimeout = null;
@@ -272,16 +280,48 @@ function removeAll() {
   popups.clear();
 }
 
+function updateAntiBtn(btn) {
+  if (!btn) return;
+  if (antiHackCount > 0) {
+    btn.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = `🛡️ Gegen-Hack einsetzen (×${antiHackCount})`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function refreshAntiHackButtons() {
+  popups.forEach(backdrop => updateAntiBtn(backdrop._antiBtn));
+}
+
+async function useAntiHack(btn) {
+  if (!userKey || antiHackCount <= 0) return;
+  if (btn._used) return;
+  btn._used = true;
+  btn.disabled = true;
+  try {
+    await set(ref(db, `boosters/${userKey}/inventory/anti_hack_booster`), Math.max(0, antiHackCount - 1));
+    await set(ref(db, `boosters/${userKey}/active_spam`), null);
+    await set(ref(db, `boosters/${userKey}/active_sabotage`), null);
+  } catch (_) {
+    btn._used = false;
+    btn.disabled = false;
+  }
+}
+
 function scheduleNext() {
   if (!running) return;
   if (nextTimeout) return;
-  const delay = SPAWN_MIN + Math.random() * (SPAWN_MAX - SPAWN_MIN);
   nextTimeout = setTimeout(() => {
     nextTimeout = null;
     if (!running || !isActive(spamData)) return;
-    spawn(fillMsg(MESSAGES[Math.floor(Math.random() * MESSAGES.length)], spamData && spamData.from));
+    // Immer nur 1 Popup gleichzeitig: erst nachspawnen, wenn das aktuelle weg ist.
+    if (popups.size === 0) {
+      spawn(fillMsg(MESSAGES[Math.floor(Math.random() * MESSAGES.length)], spamData && spamData.from));
+    }
     scheduleNext();
-  }, delay);
+  }, SPAWN_INTERVAL);
 }
 
 function placeWin(win) {
@@ -330,6 +370,13 @@ function spawn(text) {
   const close = document.createElement('button');
   close.className = 'spamhack-close';
   win.querySelector('.spamhack-scan').before(close);
+
+  const antiBtn = document.createElement('button');
+  antiBtn.className = 'spamhack-anti';
+  win.querySelector('.spamhack-scan').before(antiBtn);
+  backdrop._antiBtn = antiBtn;
+  updateAntiBtn(antiBtn);
+  antiBtn.addEventListener('click', () => useAntiHack(antiBtn));
 
   backdrop.appendChild(win);
   document.body.appendChild(backdrop);
@@ -392,7 +439,7 @@ function spawn(text) {
 
   // Klick irgendwo ins Fenster (nicht der Knopf) -> nur nerviges Wackeln
   win.addEventListener('click', e => {
-    if (e.target === close) return;
+    if (e.target === close || e.target === antiBtn) return;
     win.classList.remove('spamhack-shake');
     void win.offsetWidth;
     win.classList.add('spamhack-shake');
@@ -438,5 +485,9 @@ onAuthStateChanged(auth, user => {
   onValue(ref(db, `boosters/${userKey}/active_spam`), snap => {
     spamData = snap.val() || null;
     sync();
+  });
+  onValue(ref(db, `boosters/${userKey}/inventory/anti_hack_booster`), snap => {
+    antiHackCount = snap.val() || 0;
+    refreshAntiHackButtons();
   });
 });
