@@ -679,11 +679,22 @@
 
     <div class="lootbox-card">
       <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" style="cursor:default;">📺</span>
+      </div>
+      <div class="lootbox-name">Popup-Hack</div>
+      <div class="lootbox-desc">Spammt den Gegner 90 Sek mit nervigen Popups zu – auf jeder Seite 📺</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
+      <div class="lootbox-price">🪙 20.000 Coins</div>
+      <button class="btn-open-box" id="buySpamBoosterBtn">📺 Booster kaufen</button>
+    </div>
+
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
         <span class="lootbox-icon" style="cursor:default;">🛡️</span>
       </div>
       <div class="lootbox-name">Gegen-Hack</div>
-      <div class="lootbox-desc">Bricht einen eingehenden Hack ab 🛡️</div>
-      <div class="lootbox-desc" style="margin-top:-10px;">Wird im Hack-Alarm angeboten · Mehrfach kaufbar</div>
+      <div class="lootbox-desc">Bricht einen laufenden Hack sofort ab 🛡️</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Manuell im Profil aktivierbar · Mehrfach kaufbar</div>
       <div class="lootbox-price">🪙 15.000 Coins</div>
       <button class="btn-open-box" id="buyAntiHackBoosterBtn">🛡️ Booster kaufen</button>
     </div>
@@ -1258,13 +1269,15 @@
   const MOMENTS_BOOSTER_PRICE     = 10000;
   const AUTOCLICKER_BOOSTER_PRICE = 15000;
   const SABOTAGE_BOOSTER_PRICE    = 12000;
+  const SPAM_BOOSTER_PRICE        = 20000;
   const ANTI_HACK_BOOSTER_PRICE   = 15000;
 
   const SHOP_BOOSTERS = {
     moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster', price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
     autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',     price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
     sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '💻', name: 'Hack',             price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du einen Hack kaufen? Er landet in deinem Profil-Inventar.' },
-    anti_hack_booster:   { btnId: 'buyAntiHackBoosterBtn',    emoji: '🛡️', name: 'Gegen-Hack',       price: ANTI_HACK_BOOSTER_PRICE,   confirm: 'Möchtest du einen Gegen-Hack kaufen? Er landet in deinem Profil-Inventar und wird im Hack-Alarm angeboten.' },
+    spam_booster:        { btnId: 'buySpamBoosterBtn',        emoji: '📺', name: 'Popup-Hack',       price: SPAM_BOOSTER_PRICE,        confirm: 'Möchtest du einen Popup-Hack kaufen? Er landet in deinem Profil-Inventar.' },
+    anti_hack_booster:   { btnId: 'buyAntiHackBoosterBtn',    emoji: '🛡️', name: 'Gegen-Hack',       price: ANTI_HACK_BOOSTER_PRICE,   confirm: 'Möchtest du einen Gegen-Hack kaufen? Er landet in deinem Profil-Inventar und wird manuell aktiviert.' },
   };
 
   function renderBoosterShop() {
@@ -1606,10 +1619,11 @@
     if (r < 90)  return { type: 'frame', rarity: 'rare' };
     if (r < 91)  return { type: 'frame', rarity: 'legendary' };
     // Booster (Band 91–100, je ~2–3 %)
-    if (r < 94)  return { type: 'booster', boosterId: 'coins_booster' };
-    if (r < 96)  return { type: 'booster', boosterId: 'moments_booster' };
-    if (r < 98)  return { type: 'booster', boosterId: 'autoclicker_booster' };
-    return               { type: 'booster', boosterId: 'sabotage_booster' };
+    if (r < 93)   return { type: 'booster', boosterId: 'coins_booster' };
+    if (r < 95)   return { type: 'booster', boosterId: 'moments_booster' };
+    if (r < 97)   return { type: 'booster', boosterId: 'autoclicker_booster' };
+    if (r < 98.5) return { type: 'booster', boosterId: 'sabotage_booster' };
+    return                { type: 'booster', boosterId: 'spam_booster' };
   }
 
   function pickFromPool(pool, ownedList) {
@@ -1674,6 +1688,7 @@
         moments_booster:     { emoji: '💫', name: 'Momenten-Booster', sub: 'Doppelte Momente für 3 Min.!' },
         autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     sub: 'Klickt 3 Min lang 5×/Sek für dich!' },
         sabotage_booster:    { emoji: '💻', name: 'Hack',             sub: 'Beim Gegner zählt 90 Sek nur jeder 10. Klick!' },
+        spam_booster:        { emoji: '📺', name: 'Popup-Hack',       sub: 'Spammt den Gegner 90 Sek mit Popups zu!' },
       };
       const bd = LOOT_BOOSTERS[result.boosterId] || LOOT_BOOSTERS.coins_booster;
       rewardEmoji.textContent = bd.emoji;
@@ -1862,3 +1877,4 @@
 
 </script>
 <script type="module" src="autoclicker.js"></script>
+<script type="module" src="spamhack.js"></script>
