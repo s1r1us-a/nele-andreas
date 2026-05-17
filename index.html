@@ -159,6 +159,24 @@
     pointer-events: none; z-index: 3; opacity: 0.7;
   }
 
+  /* Menü- & Momente-Buttons: einheitlich gotisch (nur Wednesday) */
+  html[data-theme="wednesday"] .menu-btn,
+  html[data-theme="wednesday"] .save-moment-btn {
+    background: linear-gradient(135deg, rgba(22,16,32,0.95) 0%, rgba(40,26,58,0.95) 100%) !important;
+    border: 1px solid rgba(139,111,196,0.45) !important;
+    color: #e9e7f2 !important;
+    box-shadow: 0 4px 22px rgba(95,60,150,0.35) !important;
+  }
+  html[data-theme="wednesday"] .menu-btn:hover,
+  html[data-theme="wednesday"] .save-moment-btn:hover {
+    box-shadow: 0 8px 34px rgba(139,111,196,0.55) !important;
+    border-color: rgba(191,191,208,0.55) !important;
+  }
+  html[data-theme="wednesday"] .footer-text {
+    color: #bfa9e6;
+    text-shadow: 0 0 10px rgba(139,111,196,0.45);
+  }
+
 
   .page { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 70px 20px 60px; }
   .page-hidden { visibility: hidden; opacity: 0; }
@@ -1504,20 +1522,20 @@
     <a href="stats.html" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid var(--ui-quote-card-border); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--rose); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(232,115,138,0.1);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📊 Statistik</a>
   </div>
   <div class="quiz-section" style="margin-top: 35px; max-width: 420px; width: 100%; position: relative;">
-    <a href="quiz.html" id="quizBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
+    <a href="quiz.html" id="quizBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
     <div id="quizNewBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #f59e0b, #d97706); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(245,158,11,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap;">✨ Neu!</div>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
   <div style="position: relative;">
-    <a href="farm.html" id="farmBtn" style="display: block; width: 100%; background: linear-gradient(135deg, #7ec850 0%, #5ba830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(126,200,80,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐔 Meine Farm</a>
+    <a href="farm.html" id="farmBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #7ec850 0%, #5ba830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(126,200,80,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐔 Meine Farm</a>
     <div id="farmTradeBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #ef4444, #dc2626); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(239,68,68,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap; pointer-events:none;"></div>
   </div>
   <div style="position: relative; width: 100%; margin-top: 16px;">
-    <a href="slot.html" id="slotBtn" style="display: block; width: 100%; background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(251,191,36,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎰 Slotmaschine</a>
+    <a href="slot.html" id="slotBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(251,191,36,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎰 Slotmaschine</a>
   </div>
   <div style="position: relative; width: 100%; margin-top: 16px;">
-    <a href="ourhome.html" style="display: block; width: 100%; background: linear-gradient(135deg, #f9a8d4 0%, #ec4899 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(236,72,153,0.4); transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🏠 Our Home</a>
-    <a href="marienkaefer.html" style="display: block; width: 100%; background: linear-gradient(135deg, #e53e3e 0%, #9b1c1c 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(229,62,62,0.4); transition: all 0.2s ease; margin-top: 16px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐞 Marienkäfer</a>
+    <a href="ourhome.html" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #f9a8d4 0%, #ec4899 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(236,72,153,0.4); transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🏠 Our Home</a>
+    <a href="marienkaefer.html" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #e53e3e 0%, #9b1c1c 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(229,62,62,0.4); transition: all 0.2s ease; margin-top: 16px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🐞 Marienkäfer</a>
   </div>
 </div>
   <div class="booster-banner" id="boosterBanner">
@@ -1544,13 +1562,13 @@
     </a>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
-    <a href="game.html" style="display: block; width: 100%; background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(167,139,250,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🔴 Vier Gewinnt</a>
+    <a href="game.html" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(167,139,250,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🔴 Vier Gewinnt</a>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
-    <a href="battleship.html" style="display: block; width: 100%; background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(14,165,233,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">⚓ Schiffe Versenken</a>
+    <a href="battleship.html" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(14,165,233,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">⚓ Schiffe Versenken</a>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
-    <a href="zombiedefense.html" style="display: block; width: 100%; background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(74,222,128,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🧟 Zombie Land</a>
+    <a href="zombiedefense.html" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(74,222,128,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🧟 Zombie Land</a>
   </div>
   <div class="shop-btn-wrap" style="margin-top: 16px; max-width: 420px; width: 100%;">
     <a href="shop.html" id="shopBtn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #c87830 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(212,160,97,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🛍️ Shop</a>
@@ -3326,6 +3344,23 @@
         qAuthor.textContent = qAuthor.dataset.orig;
       }
     }
+    // Footer & Header-Emojis exklusiv für Wednesday
+    const isWed = themeId === 'wednesday';
+    const fText = document.querySelector('.footer-text');
+    if (fText) {
+      if (!fText.dataset.orig) fText.dataset.orig = fText.textContent;
+      fText.textContent = isWed ? 'Gemeinsam im Schatten 🦇' : fText.dataset.orig;
+    }
+    const fHearts = document.querySelector('.footer-hearts');
+    if (fHearts) {
+      if (!fHearts.dataset.orig) fHearts.dataset.orig = fHearts.textContent;
+      fHearts.textContent = isWed ? '💀 · 🖐️' : fHearts.dataset.orig;
+    }
+    const wedDots = ['💀', '🖐️', '💀'];
+    document.querySelectorAll('.hearts-row .heart-dot').forEach((dot, i) => {
+      if (!dot.dataset.orig) dot.dataset.orig = dot.textContent;
+      dot.textContent = isWed ? (wedDots[i] || '💀') : dot.dataset.orig;
+    });
     try { localStorage.setItem('activeTheme', themeId); } catch (e) {}
   };
   window.addEventListener('pageshow', e => {
