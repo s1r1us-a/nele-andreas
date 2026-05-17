@@ -712,6 +712,13 @@
     <!-- Themes werden per JS gerendert -->
   </div>
 
+  <div class="shop-section-title" id="exclusiveThemesTitle" style="display:none;">💎 Exklusive Themes</div>
+  <div class="shop-section-sub" id="exclusiveThemesSub" style="display:none;">Selten &amp; besonders</div>
+
+  <div class="themes-grid" id="exclusiveThemesGrid">
+    <!-- Exklusive Themes werden per JS gerendert -->
+  </div>
+
   <div class="footer">
     <p class="footer-text">Schön, dass wir uns kennen 🐾</p>
   </div>
@@ -1104,11 +1111,11 @@
       name: 'Wednesday',
       emoji: '🦇',
       desc: 'Regennasse Gotik – Nevermore',
-      price: 0,
+      price: 500000,
       premium: true,
+      exclusive: true,
       fx: 'wednesday',
       dark: true,
-      hidden: true,
       previewBg: 'linear-gradient(135deg, #050409 0%, #140f1f 25%, #241733 50%, #4a2d6b 70%, #bfbfd0 88%, #050409 100%)',
       previewBar: 'rgba(74,45,107,0.9)',
       vars: {
@@ -1239,13 +1246,10 @@
     }
   }
 
-  function renderThemes() {
-    const grid = document.getElementById('themesGrid');
-    grid.innerHTML = '';
-    THEMES.filter(t => !t.hidden).forEach(t => {
-      const isOwned = ownedThemes.includes(t.id);
-      const isActive = activeTheme === t.id;
-      const card = document.createElement('div');
+  function buildThemeCard(t) {
+    const isOwned = ownedThemes.includes(t.id);
+    const isActive = activeTheme === t.id;
+    const card = document.createElement('div');
       card.className = 'theme-card' + (isActive ? ' active-card' : '') + (t.premium ? ' is-premium' : '');
       const fxClass = t.fx ? ` fx-${t.fx}` : '';
       const priceLabel = t.price === 0
@@ -1271,14 +1275,10 @@
           }
         </div>
       `;
-      grid.appendChild(card);
-    });
+      return card;
+  }
 
-    // Update active theme name
-    const active = THEMES.find(x => x.id === activeTheme);
-    document.getElementById('activeThemeName').textContent = active ? `${active.emoji} ${active.name}` : 'Sakura 🌸';
-
-    // Events
+  function bindThemeCardEvents(grid) {
     grid.querySelectorAll('.btn-preview').forEach(btn => {
       btn.addEventListener('click', () => handlePreview(btn.dataset.id));
     });
@@ -1288,6 +1288,28 @@
     grid.querySelectorAll('.btn-activate').forEach(btn => {
       btn.addEventListener('click', () => handleActivate(btn.dataset.id));
     });
+  }
+
+  function renderThemes() {
+    const grid = document.getElementById('themesGrid');
+    const exGrid = document.getElementById('exclusiveThemesGrid');
+    grid.innerHTML = '';
+    exGrid.innerHTML = '';
+
+    THEMES.filter(t => !t.exclusive).forEach(t => grid.appendChild(buildThemeCard(t)));
+
+    const exclusive = THEMES.filter(t => t.exclusive);
+    exclusive.forEach(t => exGrid.appendChild(buildThemeCard(t)));
+    const showEx = exclusive.length > 0 ? '' : 'none';
+    document.getElementById('exclusiveThemesTitle').style.display = showEx;
+    document.getElementById('exclusiveThemesSub').style.display = showEx;
+
+    // Update active theme name
+    const active = THEMES.find(x => x.id === activeTheme);
+    document.getElementById('activeThemeName').textContent = active ? `${active.emoji} ${active.name}` : 'Sakura 🌸';
+
+    bindThemeCardEvents(grid);
+    bindThemeCardEvents(exGrid);
   }
 
   function handlePreview(themeId) {
