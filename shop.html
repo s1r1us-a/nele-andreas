@@ -1354,6 +1354,7 @@
     if (!userKey) return;
     // Kostenloses Theme oder bereits besessen: direkt aktivieren
     activeTheme = themeId;
+    try { localStorage.setItem('activeTheme', themeId); } catch(e) {}
     await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
     // Zur owned list hinzufügen falls noch nicht drin
     if (!ownedThemes.includes(themeId)) {
@@ -1392,6 +1393,7 @@
     await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
     // Automatisch aktivieren
     activeTheme = themeId;
+    try { localStorage.setItem('activeTheme', themeId); } catch(e) {}
     await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
     applyTheme(themeId);
     showToast(`🎉 „${t.name}" gekauft & aktiviert!`);
