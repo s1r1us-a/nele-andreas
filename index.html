@@ -190,6 +190,49 @@
     text-shadow: 0 0 10px rgba(139,111,196,0.45);
   }
 
+  /* "Moment sammeln" – der coolste Button (nur Wednesday, nicht bei Boostern) */
+  html[data-theme="wednesday"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage) {
+    background: linear-gradient(135deg, #170d24 0%, #3a1f5c 42%, #7b2fbf 68%, #3a1f5c 100%) !important;
+    background-size: 240% 240% !important;
+    border: 1px solid rgba(170,90,255,0.7) !important;
+    color: #f3ecff !important;
+    text-shadow: 0 0 12px rgba(190,120,255,0.75);
+    animation: wednesdayHeartGlow 1.9s ease-in-out infinite,
+               wednesdayHeartSheen 6s ease infinite;
+  }
+  html[data-theme="wednesday"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage):hover {
+    border-color: rgba(228,195,255,0.95) !important;
+    animation-duration: 0.95s, 6s;
+  }
+  @keyframes wednesdayHeartGlow {
+    0%,100% {
+      box-shadow: 0 0 16px 4px rgba(157,78,221,0.72),
+                  0 0 42px 14px rgba(123,44,191,0.5),
+                  0 0 90px 32px rgba(90,40,160,0.34);
+    }
+    50% {
+      box-shadow: 0 0 38px 13px rgba(214,150,255,1),
+                  0 0 90px 34px rgba(170,90,255,0.92),
+                  0 0 170px 70px rgba(123,44,191,0.6);
+    }
+  }
+  @keyframes wednesdayHeartSheen {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  html[data-theme="wednesday"] .heart-glow-ring:not(.auto):not(.sabotage) {
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(170,90,255,0.85),
+                0 0 42px 15px rgba(157,78,221,0.85),
+                0 0 100px 40px rgba(123,44,191,0.5);
+    animation: wednesdayHeartRing 1.9s ease-in-out infinite;
+  }
+  @keyframes wednesdayHeartRing {
+    0%,100% { opacity: 0.55; transform: scale(1); }
+    50%     { opacity: 1;    transform: scale(1.055); }
+  }
+
 
   .page { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 70px 20px 60px; }
   .page-hidden { visibility: hidden; opacity: 0; }
@@ -3374,6 +3417,11 @@
       if (!dot.dataset.orig) dot.dataset.orig = dot.textContent;
       dot.textContent = isWed ? (wedDots[i] || '💀') : dot.dataset.orig;
     });
+    const heartBtn = document.getElementById('heartBtn');
+    if (heartBtn) {
+      if (!heartBtn.dataset.orig) heartBtn.dataset.orig = heartBtn.textContent;
+      heartBtn.textContent = isWed ? '🦇 Moment sammeln' : heartBtn.dataset.orig;
+    }
     try { localStorage.setItem('activeTheme', themeId); } catch (e) {}
   };
   window.addEventListener('pageshow', e => {
