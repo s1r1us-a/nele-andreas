@@ -992,3 +992,38 @@ html[data-theme="schattenfuerstin"] .stats-divider {
     transition: none !important;
   }
 }
+
+/* ============================================================ */
+/* ULTRA PERFORMANCE THEME                                       */
+/* Dunkel, kühl-blau. Maximal renderschonend für schwache        */
+/* Geräte: keinerlei Animationen, Transitions, Blur, Schatten    */
+/* oder Effekt-Layer. Einzige Ausnahme: kurzes Klick-Feedback    */
+/* auf Buttons. Scope strikt auf dieses Theme begrenzt.          */
+/* ============================================================ */
+html[data-theme="ultra-performance"] *,
+html[data-theme="ultra-performance"] *::before,
+html[data-theme="ultra-performance"] *::after {
+  animation: none !important;
+  transition: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  background-image: none !important;
+}
+html[data-theme="ultra-performance"] body,
+html[data-theme="ultra-performance"] .bg-gradient {
+  background: #0d1117 !important;
+}
+/* EINZIGE erlaubte Ausnahme: kurzes Klick-Feedback auf Buttons */
+html[data-theme="ultra-performance"] button:active,
+html[data-theme="ultra-performance"] .btn-buy:not(:disabled):active,
+html[data-theme="ultra-performance"] .btn-activate:active,
+html[data-theme="ultra-performance"] .btn-preview:active,
+html[data-theme="ultra-performance"] .login-btn:active,
+html[data-theme="ultra-performance"] .confirm-yes:active,
+html[data-theme="ultra-performance"] .confirm-no:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.06s linear !important;
+}
