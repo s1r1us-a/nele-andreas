@@ -108,6 +108,8 @@
   .theme-card.active-card { border-color: var(--gold); box-shadow: 0 6px 30px rgba(212,160,97,0.2); }
   .theme-card.is-premium { border-color: var(--gold); }
   .premium-tag { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #fbbf24, #b45309); color: #fff; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 50px; box-shadow: 0 2px 8px rgba(180,83,9,0.4); z-index: 2; }
+  .exclusive-tag { position: absolute; top: 8px; right: 8px; background: linear-gradient(120deg, #7f5af0, #2cb1ff, #ff5fce, #7f5af0); background-size: 300% 100%; animation: exclusiveShimmer 4s linear infinite; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 50px; box-shadow: 0 2px 12px rgba(127,90,240,0.55), 0 0 0 1px rgba(255,255,255,0.25) inset; text-shadow: 0 1px 3px rgba(0,0,0,0.35); z-index: 2; }
+  @keyframes exclusiveShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
 
   .theme-preview { height: 84px; border-radius: 12px; margin-bottom: 12px; position: relative; overflow: hidden; isolation: isolate; }
   .theme-preview-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: rgba(255,255,255,0.95); z-index: 3; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -932,7 +934,7 @@
     .theme-price { font-size: 11px; margin-bottom: 8px; }
     .theme-actions { gap: 5px; }
     .btn-preview, .btn-buy, .btn-activate { font-size: 10px; padding: 7px 4px; }
-    .premium-tag { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
+    .premium-tag, .exclusive-tag { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
     .confirm-card { padding: 28px 20px 24px; border-radius: 22px; }
     .confirm-title { font-size: 24px; }
     .confirm-text { font-size: 13px; }
@@ -1576,7 +1578,6 @@
       price: 500000,
       premium: true,
       exclusive: true,
-      adminOnly: true,
       fx: 'minecraft',
       dark: false,
       previewBg: 'linear-gradient(180deg, #79c7f2 0%, #8fd0f5 38%, #5fb04a 58%, #3e8e2f 74%, #7c5230 100%)',
@@ -1621,7 +1622,6 @@
       price: 500000,
       premium: true,
       exclusive: true,
-      adminOnly: true,
       fx: 'squid-game',
       dark: true,
       previewBg: 'linear-gradient(135deg, #07060b 0%, #14121c 25%, #2a0f24 50%, #ed1b76 70%, #249f8c 88%, #07060b 100%)',
@@ -1663,10 +1663,9 @@
       name: 'Cult of the Lamb',
       emoji: '🐑',
       desc: 'Das rote Lamm – Erleuchte deine Sekte',
-      price: 500000,
+      price: 666000,
       premium: true,
       exclusive: true,
-      adminOnly: true,
       fx: 'cult-of-the-lamb',
       dark: true,
       previewBg: 'linear-gradient(135deg, #070405 0%, #140a0c 25%, #2a1018 50%, #c2102e 70%, #f0a83c 88%, #070405 100%)',
@@ -1820,7 +1819,7 @@
         ? '🎁 Kostenlos'
         : `🪙 ${t.price.toLocaleString('de-DE')}`;
       card.innerHTML = `
-        ${t.premium ? '<div class="premium-tag">Premium</div>' : ''}
+        ${t.exclusive ? '<div class="exclusive-tag">💎 Exklusiv</div>' : (t.premium ? '<div class="premium-tag">Premium</div>' : '')}
         <div class="theme-preview${fxClass}" style="background:${t.previewBg};">
           ${t.fx === 'princess' ? '<span class="fx-sparkle s1">✨</span><span class="fx-sparkle s2">💖</span><span class="fx-sparkle s3">✨</span>' : ''}
           <div class="theme-preview-bar" style="background:${t.previewBar};">${t.emoji} ${t.name}</div>
