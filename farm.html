@@ -5810,27 +5810,51 @@
     return DOG_FIND_POOL[0];
   }
 
-  async function applyDogFind() {
-    const find = pickDogFind();
-    const qty = Math.floor(find.min + Math.random() * (find.max - find.min + 1));
-    if (find.type === 'coins') {
-      await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + qty);
-      window.showToast(`🐕 Fundsache: ${qty} 🪙`);
-    } else if (find.type === 'item') {
-      inventory.items[find.key] = (inventory.items[find.key] || 0) + qty;
-      window.showToast(`🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`);
-    } else if (find.type === 'crop') {
-      inventory.crops[find.key] = (inventory.crops[find.key] || 0) + qty;
-      window.showToast(`🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`);
-    } else if (find.type === 'ore') {
-      if (!inventory.ores) inventory.ores = {};
-      inventory.ores[find.key] = (inventory.ores[find.key] || 0) + qty;
-      window.showToast(`🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`);
+  // Vergibt die Belohnung eines Tiers NUR im Speicher (kein save/render/toast).
+  // acc.dogCoins sammelt Hund-Münzfunde für eine einzige Firebase-Transaktion.
+  function grantAnimalReward(a, acc) {
+    a.isProducing = false;
+    a.rewardReady = false;
+    const itemMap = {
+      rabbit:  ['fertilizer',     '🪴 Dünger erhalten!'],
+      chicken: ['egg',            '🥚 Ei erhalten!'],
+      cow:     ['milk',           '🥛 Milch erhalten!'],
+      cat:     ['diamond',        '💎 Diamant erhalten!'],
+      sheep:   ['wool',           '🧶 Wolle erhalten!'],
+      duck:    ['feather',        '🪶 Feder erhalten!'],
+      goat:    ['goatmilk',       '🥛 Ziegenmilch erhalten!'],
+      pig:     ['truffle',        '🍄 Trüffel erhalten!'],
+      horse:   ['horseshoe',      '🧲 Hufeisen erhalten!'],
+      unicorn: ['rainbowessence', '🌈 Regenbogen-Essenz erhalten!']
+    };
+    const m = itemMap[a.species];
+    if (m) {
+      inventory.items[m[0]] = (inventory.items[m[0]] || 0) + 1;
+      return m[1];
     }
+    if (a.species === 'dog') {
+      const find = pickDogFind();
+      const qty = Math.floor(find.min + Math.random() * (find.max - find.min + 1));
+      if (find.type === 'coins') {
+        acc.dogCoins += qty;
+        return `🐕 Fundsache: ${qty} 🪙`;
+      } else if (find.type === 'item') {
+        inventory.items[find.key] = (inventory.items[find.key] || 0) + qty;
+        return `🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`;
+      } else if (find.type === 'crop') {
+        inventory.crops[find.key] = (inventory.crops[find.key] || 0) + qty;
+        return `🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`;
+      } else if (find.type === 'ore') {
+        if (!inventory.ores) inventory.ores = {};
+        inventory.ores[find.key] = (inventory.ores[find.key] || 0) + qty;
+        return `🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`;
+      }
+    }
+    return null;
   }
 
-  window.openAnimalStats = function(id) { 
-    selectedAnimalId = id; 
+  window.openAnimalStats = function(id) {
+    selectedAnimalId = id;
     const a = animals.find(anim => anim.id === id); 
     
     // Tier im Modal MIT Ausrüstung rendern
@@ -6014,20 +6038,12 @@
       } 
   }
   
-  window.collectAnimalReward = async function() { 
-      const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return; 
-      a.isProducing = false; a.rewardReady = false; 
-      if(a.species === 'rabbit') { inventory.items.fertilizer++; window.showToast(`🪴 Dünger erhalten!`); } 
-      else if (a.species === 'chicken') { inventory.items.egg++; window.showToast(`🥚 Ei erhalten!`); } 
-      else if (a.species === 'cow') { inventory.items.milk++; window.showToast(`🥛 Milch erhalten!`); } 
-      else if (a.species === 'cat') { inventory.items.diamond++; window.showToast(`💎 Diamant erhalten!`); } 
-      else if (a.species === 'sheep') { inventory.items.wool++;    window.showToast(`🧶 Wolle erhalten!`); }
-      else if (a.species === 'duck')  { inventory.items.feather++; window.showToast(`🪶 Feder erhalten!`); }
-      else if (a.species === 'goat')  { inventory.items.goatmilk++;window.showToast(`🥛 Ziegenmilch erhalten!`); }
-      else if (a.species === 'pig')   { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
-      else if (a.species === 'horse') { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
-      else if (a.species === 'unicorn'){ inventory.items.rainbowessence++; window.showToast(`🌈 Regenbogen-Essenz erhalten!`); }
-      else if (a.species === 'dog')   { await applyDogFind(); }
+  window.collectAnimalReward = async function() {
+      const a = animals.find(anim => anim.id === selectedAnimalId); if (!a) return;
+      const acc = { dogCoins: 0 };
+      const msg = grantAnimalReward(a, acc);
+      if (acc.dogCoins > 0) await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + acc.dogCoins);
+      if (msg) window.showToast(msg);
       await saveFarmData(); updateFarmDOM(); window.openAnimalStats(a.id);
   }
   window.updateName = async function(newName) { if (!selectedAnimalId || isVisitMode) return; animals.find(anim => anim.id === selectedAnimalId).name = newName; if(newName.trim()) { window.showToast('Name gespeichert!'); await saveFarmData(); } }
@@ -6048,6 +6064,10 @@
     const hungryCount    = animals.filter(a => !a.isProducing && !a.rewardReady).length;
     const producingCount = animals.filter(a => a.isProducing && !a.rewardReady).length;
 
+    const scope = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    const readyInScope  = scope.filter(a => a.rewardReady).length;
+    const hungryInScope = scope.filter(a => !a.isProducing && !a.rewardReady).length;
+
     document.getElementById('stallHeader').innerHTML = `
       <div class="stall-hero">
         <div class="stall-hero-title">🐾 Mein Stall</div>
@@ -6057,6 +6077,10 @@
         <div class="stall-stat stall-stat-ready">✅ ${readyCount} bereit</div>
         <div class="stall-stat stall-stat-hungry">🍽️ ${hungryCount} hungrig</div>
         <div class="stall-stat stall-stat-producing">⏳ ${producingCount} prod.</div>
+      </div>
+      <div class="stall-stats-row" style="margin-top:8px;">
+        <button class="stall-action-btn stall-btn-collect" style="flex:1;" ${readyInScope>0?'':'disabled'} onclick="window.stallCollectAll('${filterSpecies}')">✅ Alle abholen (${readyInScope})</button>
+        <button class="stall-action-btn stall-btn-feed" style="flex:1;" ${hungryInScope>0?'':'disabled'} onclick="window.stallFeedAll('${filterSpecies}')">🍽️ Alle füttern (${hungryInScope})</button>
       </div>`;
 
     const tabsEl = document.getElementById('stallFilterTabs');
@@ -6150,23 +6174,69 @@
   window.stallCollectDirect = async function(animalId) {
     const a = animals.find(anim => anim.id === animalId);
     if (!a) return;
-    a.isProducing = false;
-    a.rewardReady = false;
-    if (a.species === 'rabbit')      { inventory.items.fertilizer++; window.showToast(`🪴 Dünger erhalten!`); }
-    else if (a.species === 'chicken'){ inventory.items.egg++;        window.showToast(`🥚 Ei erhalten!`); }
-    else if (a.species === 'cow')    { inventory.items.milk++;       window.showToast(`🥛 Milch erhalten!`); }
-    else if (a.species === 'cat')    { inventory.items.diamond++;    window.showToast(`💎 Diamant erhalten!`); }
-    else if (a.species === 'sheep')  { inventory.items.wool++;       window.showToast(`🧶 Wolle erhalten!`); }
-    else if (a.species === 'duck')   { inventory.items.feather++;    window.showToast(`🪶 Feder erhalten!`); }
-    else if (a.species === 'goat')   { inventory.items.goatmilk++;   window.showToast(`🥛 Ziegenmilch erhalten!`); }
-    else if (a.species === 'pig')    { inventory.items.truffle++;    window.showToast(`🍄 Trüffel erhalten!`); }
-    else if (a.species === 'horse')  { inventory.items.horseshoe++;  window.showToast(`🧲 Hufeisen erhalten!`); }
-    else if (a.species === 'unicorn'){ inventory.items.rainbowessence++; window.showToast(`🌈 Regenbogen-Essenz erhalten!`); }
-    else if (a.species === 'dog')    { await applyDogFind(); }
+    const acc = { dogCoins: 0 };
+    const msg = grantAnimalReward(a, acc);
+    if (acc.dogCoins > 0) await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + acc.dogCoins);
+    if (msg) window.showToast(msg);
     await saveFarmData();
     updateFarmDOM();
     const activeTab = document.querySelector('.stall-tab.active');
     window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
+  };
+
+  // Holt alle bereiten Tiere im Filter-Scope ab: O(n) im Speicher,
+  // genau EIN Firebase-Write, EIN Render, EINE Toast.
+  window.stallCollectAll = async function(filterSpecies) {
+    if (isVisitMode) return;
+    filterSpecies = filterSpecies || 'all';
+    const scope = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    const acc = { dogCoins: 0 };
+    let count = 0;
+    for (const a of scope) {
+      if (!a.rewardReady) continue;
+      grantAnimalReward(a, acc);
+      count++;
+    }
+    if (count === 0) { window.showToast('Nichts zum Abholen bereit.'); return; }
+    if (acc.dogCoins > 0) await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + acc.dogCoins);
+    await saveFarmData();
+    updateFarmDOM();
+    window.renderStall(filterSpecies);
+    window.showToast(`🎁 ${count} Tier${count !== 1 ? 'e' : ''} abgeholt!`);
+  };
+
+  // Füttert so viele hungrige Tiere wie möglich im Filter-Scope: O(n),
+  // genau EIN Firebase-Write, EIN Render, EINE Toast.
+  window.stallFeedAll = async function(filterSpecies) {
+    if (isVisitMode) return;
+    filterSpecies = filterSpecies || 'all';
+    const scope = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    let fedCount = 0, skippedCount = 0;
+    for (const a of scope) {
+      if (a.isProducing || a.rewardReady) continue;
+      const f = getAnimalFood(a.species);
+      if (!f) continue;
+      const invCategory = f.isItem ? inventory.items : inventory.crops;
+      if ((invCategory[f.foodType] || 0) > 0) {
+        invCategory[f.foodType]--;
+        a.isProducing = true;
+        a.fedAt = Date.now();
+        a.rewardReady = false;
+        fedCount++;
+      } else {
+        skippedCount++;
+      }
+    }
+    if (fedCount === 0 && skippedCount === 0) { window.showToast('Keine hungrigen Tiere.'); return; }
+    if (fedCount > 0) await saveFarmData();
+    window.renderStall(filterSpecies);
+    if (fedCount === 0) {
+      window.showToast(`🥕 Kein Futter im Inventar (${skippedCount} hungrig).`);
+    } else if (skippedCount > 0) {
+      window.showToast(`🍎 ${fedCount} gefüttert · ${skippedCount} ohne Futter`);
+    } else {
+      window.showToast(`🍎 ${fedCount} Tier${fedCount !== 1 ? 'e' : ''} gefüttert!`);
+    }
   };
   
   // ── BESUCHSMODUS ──
