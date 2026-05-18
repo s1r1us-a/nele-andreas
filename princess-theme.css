@@ -1010,7 +1010,11 @@ html[data-theme="ultra-performance"] *::after {
   box-shadow: none !important;
   text-shadow: none !important;
   filter: none !important;
-  background-image: none !important;
+}
+/* Funktionales Lade-Feedback MUSS animiert bleiben – ein eingefrorener     */
+/* Spinner lässt die App abgestürzt wirken, obwohl sie nur lädt.            */
+html[data-theme="ultra-performance"] .auth-spinner {
+  animation: spin 0.7s linear infinite !important;
 }
 html[data-theme="ultra-performance"] body,
 html[data-theme="ultra-performance"] .bg-gradient {
