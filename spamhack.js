@@ -81,6 +81,10 @@ function endTime(d) {
   return d.activatedAt + (d.durationMs || DEFAULT_DUR);
 }
 
+function isPending(d) {
+  return !!(d && d.pending && !d.activatedAt);
+}
+
 function fillMsg(tpl, from) {
   return tpl
     .replace(/\{from\}/g, from || 'Hacker')
@@ -260,6 +264,7 @@ let antiHackCount = 0;
 let nextTimeout  = null;
 let endTimeout   = null;
 let firstTimeout = null;
+let pendingEl    = null;
 
 function clearTimers() {
   if (nextTimeout)  { clearTimeout(nextTimeout);  nextTimeout  = null; }
@@ -471,11 +476,92 @@ function stopRun() {
   stopMatrix();
 }
 
+// Bestätigungs-Modal im Terminal-Style: erscheint, wenn ein Popup-Hack
+// "pending" ist (auch nachdem das Opfer offline war). Der Spam startet erst,
+// wenn das Opfer hier wegklickt.
+function showSpamPending() {
+  if (pendingEl) return;
+  injectStyle();
+
+  const from = (spamData && spamData.from) || 'Jemand';
+  const secs = Math.round(((spamData && spamData.durationMs) || DEFAULT_DUR) / 1000);
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'spamhack-backdrop';
+  backdrop._spamTimers = [];
+
+  const win = document.createElement('div');
+  win.className = 'spamhack-win';
+  win.innerHTML = `
+    <div class="spamhack-inner">
+      <div class="spamhack-bar">
+        <span class="spamhack-lights"><i></i><i></i><i></i></span>
+        <span class="spamhack-title">root@nele-und-andreas:~/exploit ▓</span>
+        <span class="spamhack-rec"><b></b>REC</span>
+      </div>
+      <div class="spamhack-danger">⚠ UNAUTHORIZED ACCESS — SYSTEM BREACHED ⚠</div>
+      <div class="spamhack-body done">💻 ${from} hat dich gehackt! Sobald du das wegklickst, wirst du ${secs}s lang mit Popups zugespammt 😈</div>
+      <div class="spamhack-scan"></div>
+    </div>`;
+
+  const close = document.createElement('button');
+  close.className = 'spamhack-close';
+  win.querySelector('.spamhack-scan').before(close);
+
+  backdrop.appendChild(win);
+  document.body.appendChild(backdrop);
+  pendingEl = backdrop;
+  placeWin(win);
+
+  if (navigator.vibrate) { try { navigator.vibrate(120); } catch (_) {} }
+
+  let left = Math.ceil(CLOSE_LOCK / 1000);
+  close.textContent = `[ Schließen in ${left} ]`;
+  const cd = setInterval(() => {
+    left--;
+    if (left > 0) close.textContent = `[ Schließen in ${left} ]`;
+  }, 1000);
+  backdrop._spamTimers.push(cd);
+  const unlock = setTimeout(() => {
+    clearInterval(cd);
+    close.classList.add('ready');
+    close.textContent = '[ ✕ Verstanden – Verbindung kappen ]';
+  }, CLOSE_LOCK);
+  backdrop._spamTimers.push(unlock);
+
+  close.addEventListener('click', async () => {
+    if (!close.classList.contains('ready')) return;
+    if (close._used) return;
+    close._used = true;
+    try {
+      await set(ref(db, `boosters/${userKey}/active_spam`), {
+        activatedAt: Date.now(),
+        durationMs:  (spamData && spamData.durationMs) || DEFAULT_DUR,
+        from:        (spamData && spamData.from) || null,
+      });
+    } catch (_) {
+      close._used = false;
+    }
+  });
+}
+
+function removeSpamPending() {
+  if (!pendingEl) return;
+  (pendingEl._spamTimers || []).forEach(t => { clearTimeout(t); clearInterval(t); });
+  pendingEl.remove();
+  pendingEl = null;
+}
+
 function sync() {
   if (isActive(spamData)) {
+    removeSpamPending();
     if (!running) startRun();
-  } else if (running || popups.size) {
-    stopRun();
+  } else if (isPending(spamData)) {
+    if (running || popups.size) stopRun();
+    showSpamPending();
+  } else {
+    removeSpamPending();
+    if (running || popups.size) stopRun();
   }
 }
 
