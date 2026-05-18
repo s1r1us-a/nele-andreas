@@ -8,7 +8,8 @@
   // Theme sofort (vor dem ersten Paint) aus dem letzten bekannten Wert setzen,
   // damit es ohne Flackern aktiv ist. Firebase bleibt die Quelle und korrigiert.
   try {
-    var t = localStorage.getItem('activeTheme');
+    var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+    var t = localStorage.getItem('activeTheme' + dev) || localStorage.getItem('activeTheme');
     if (t) document.documentElement.setAttribute('data-theme', t);
   } catch (e) {}
 </script>
@@ -238,6 +239,8 @@
   .confirm-yes:hover { transform: scale(1.03); }
   .confirm-no { flex: 1; background: transparent; border: 1.5px solid var(--ui-confirm-no-border); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; }
   .confirm-no:hover { border-color: var(--rose); color: var(--rose); }
+  .device-buttons { display: flex; flex-direction: column; gap: 10px; }
+  .device-buttons .device-choice { flex: none; width: 100%; }
 
   /* TOAST */
   .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ui-toast-bg); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
@@ -974,6 +977,21 @@
     <div class="confirm-buttons">
       <button class="confirm-no" id="confirmNo">Abbrechen</button>
       <button class="confirm-yes" id="confirmYes">Kaufen ✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- Device Theme Modal -->
+<div class="confirm-overlay" id="deviceThemeOverlay">
+  <div class="confirm-card">
+    <span class="confirm-emoji" id="deviceThemeEmoji">🎨</span>
+    <div class="confirm-title">Wo anwenden?</div>
+    <div class="confirm-text" id="deviceThemeText">Auf welchem Gerät soll dieses Theme aktiv sein?</div>
+    <div class="device-buttons">
+      <button class="confirm-yes device-choice" data-scope="mobile">📱 Handy</button>
+      <button class="confirm-yes device-choice" data-scope="desktop">💻 PC</button>
+      <button class="confirm-yes device-choice" data-scope="both">🌐 Beide</button>
+      <button class="confirm-no" id="deviceThemeCancel">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -1747,8 +1765,20 @@
   let currentCoins = 0;
   let ownedThemes = ['sakura'];
   let activeTheme = 'sakura';
+  let activeThemeMobile = null;
+  let activeThemeDesktop = null;
   let pendingBuy = null;
+  let pendingDeviceTheme = null;
   let previewTimeout = null;
+
+  function getDeviceType() {
+    return window.matchMedia('(max-width: 600px)').matches ? 'mobile' : 'desktop';
+  }
+  function resolveDeviceTheme() {
+    const dev = getDeviceType();
+    const specific = dev === 'mobile' ? activeThemeMobile : activeThemeDesktop;
+    return specific || activeTheme || 'sakura';
+  }
 
   // ---- UTILS ----
   function showToast(msg) {
@@ -1843,13 +1873,23 @@
   // ohne auf die Firebase-Antwort zu warten. Firebase korrigiert danach nur
   // noch im Hintergrund.
   try {
-    const cachedTheme = localStorage.getItem('activeTheme');
+    const dev = getDeviceType();
+    const cachedTheme = localStorage.getItem(dev === 'mobile' ? 'activeThemeMobile' : 'activeThemeDesktop')
+      || localStorage.getItem('activeTheme');
     if (cachedTheme) applyTheme(cachedTheme);
   } catch (e) {}
 
   function buildThemeCard(t) {
     const isOwned = ownedThemes.includes(t.id);
-    const isActive = activeTheme === t.id;
+    const mob = activeThemeMobile || activeTheme;
+    const desk = activeThemeDesktop || activeTheme;
+    const onMobile = mob === t.id;
+    const onDesktop = desk === t.id;
+    const isActive = onMobile || onDesktop;
+    const activeLabel = (onMobile && onDesktop) ? '✓ Aktiv (Beide)'
+                      : onMobile ? '✓ Aktiv (Handy)'
+                      : onDesktop ? '✓ Aktiv (PC)'
+                      : '🎨 Aktivieren';
     const card = document.createElement('div');
       card.className = 'theme-card' + (isActive ? ' active-card' : '') + (t.premium ? ' is-premium' : '');
       const fxClass = t.fx ? ` fx-${t.fx}` : '';
@@ -1869,7 +1909,7 @@
         <div class="theme-actions">
           <button class="btn-preview" data-id="${t.id}">👁️ Vorschau</button>
           ${isOwned
-            ? `<button class="btn-activate ${isActive ? 'is-active' : ''}" data-id="${t.id}">${isActive ? '✓ Aktiv' : '🎨 Aktivieren'}</button>`
+            ? `<button class="btn-activate ${isActive ? 'is-active' : ''}" data-id="${t.id}">${activeLabel}</button>`
             : t.price === 0
               ? `<button class="btn-activate" data-id="${t.id}">🎨 Aktivieren</button>`
               : `<button class="btn-buy" data-id="${t.id}" ${currentCoins < t.price ? 'disabled title="Zu wenig Coins"' : ''}>Kaufen 🛒</button>`
@@ -1906,7 +1946,7 @@
     document.getElementById('exclusiveThemesSub').style.display = showEx;
 
     // Update active theme name
-    const active = THEMES.find(x => x.id === activeTheme);
+    const active = THEMES.find(x => x.id === resolveDeviceTheme());
     document.getElementById('activeThemeName').textContent = active ? `${active.emoji} ${active.name}` : 'Sakura 🌸';
 
     bindThemeCardEvents(grid);
@@ -1918,7 +1958,7 @@
     applyTheme(themeId);
     showToast('⏳ Vorschau für 5 Sekunden…');
     previewTimeout = setTimeout(() => {
-      applyTheme(activeTheme);
+      applyTheme(resolveDeviceTheme());
       showToast('🔄 Zurück zu deinem Theme');
     }, 5000);
   }
@@ -1973,19 +2013,51 @@
     if (btn) btn.addEventListener('click', () => handleBuyBoosterClick(id));
   });
 
-  async function handleActivate(themeId) {
+  function handleActivate(themeId) {
     if (!userKey) return;
-    // Kostenloses Theme oder bereits besessen: direkt aktivieren
-    activeTheme = themeId;
-    try { localStorage.setItem('activeTheme', themeId); } catch(e) {}
-    await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
-    // Zur owned list hinzufügen falls noch nicht drin
+    openDeviceThemeModal(themeId);
+  }
+
+  function openDeviceThemeModal(themeId) {
+    const t = THEMES.find(x => x.id === themeId);
+    if (!t) return;
+    pendingDeviceTheme = themeId;
+    document.getElementById('deviceThemeEmoji').textContent = t.emoji;
+    document.getElementById('deviceThemeText').textContent =
+      `Wo soll „${t.name}" aktiv sein?`;
+    document.getElementById('deviceThemeOverlay').classList.add('open');
+  }
+
+  async function activateThemeForDevice(themeId, scope) {
+    if (!userKey) return;
+    // Besitz sicherstellen
     if (!ownedThemes.includes(themeId)) {
       ownedThemes.push(themeId);
       await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
     }
-    applyTheme(themeId);
-    showToast(`✨ Theme aktiviert!`);
+    const setMobile = scope === 'mobile' || scope === 'both';
+    const setDesktop = scope === 'desktop' || scope === 'both';
+    if (setMobile) {
+      activeThemeMobile = themeId;
+      try { localStorage.setItem('activeThemeMobile', themeId); } catch(e) {}
+      await set(ref(db, `shop/${userKey}/activeThemeMobile`), themeId);
+    }
+    if (setDesktop) {
+      activeThemeDesktop = themeId;
+      try { localStorage.setItem('activeThemeDesktop', themeId); } catch(e) {}
+      await set(ref(db, `shop/${userKey}/activeThemeDesktop`), themeId);
+    }
+    // Legacy-Wert als Fallback mitschreiben
+    activeTheme = themeId;
+    try { localStorage.setItem('activeTheme', themeId); } catch(e) {}
+    await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
+    // Nur anwenden, wenn das aktuelle Gerät betroffen ist
+    const dev = getDeviceType();
+    if ((dev === 'mobile' && setMobile) || (dev === 'desktop' && setDesktop)) {
+      applyTheme(themeId);
+    }
+    const label = scope === 'both' ? 'Handy & PC' : scope === 'mobile' ? 'Handy' : 'PC';
+    showToast(`✨ Theme für ${label} aktiviert!`);
     renderThemes();
   }
 
@@ -2014,13 +2086,10 @@
     // Zu owned hinzufügen
     ownedThemes.push(themeId);
     await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
-    // Automatisch aktivieren
-    activeTheme = themeId;
-    try { localStorage.setItem('activeTheme', themeId); } catch(e) {}
-    await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
-    applyTheme(themeId);
-    showToast(`🎉 „${t.name}" gekauft & aktiviert!`);
+    showToast(`🎉 „${t.name}" gekauft!`);
     renderThemes();
+    // Gerät wählen (Modal)
+    openDeviceThemeModal(themeId);
   }
 
   // Confirm modal events
@@ -2032,6 +2101,20 @@
   document.getElementById('confirmNo').addEventListener('click', () => {
     document.getElementById('confirmOverlay').classList.remove('open');
     pendingBuy = null;
+  });
+
+  // Device theme modal events
+  document.querySelectorAll('#deviceThemeOverlay .device-choice').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      document.getElementById('deviceThemeOverlay').classList.remove('open');
+      const themeId = pendingDeviceTheme;
+      pendingDeviceTheme = null;
+      if (themeId) await activateThemeForDevice(themeId, btn.dataset.scope);
+    });
+  });
+  document.getElementById('deviceThemeCancel').addEventListener('click', () => {
+    document.getElementById('deviceThemeOverlay').classList.remove('open');
+    pendingDeviceTheme = null;
   });
 
   // ---- AUTH ----
@@ -2078,7 +2161,13 @@
       const shopData = shopSnap.val() || {};
       ownedThemes = shopData.owned || ['sakura'];
       activeTheme = shopData.activeTheme || 'sakura';
-      applyTheme(activeTheme);
+      activeThemeMobile = shopData.activeThemeMobile || null;
+      activeThemeDesktop = shopData.activeThemeDesktop || null;
+      try {
+        if (activeThemeMobile) localStorage.setItem('activeThemeMobile', activeThemeMobile);
+        if (activeThemeDesktop) localStorage.setItem('activeThemeDesktop', activeThemeDesktop);
+      } catch(e) {}
+      applyTheme(resolveDeviceTheme());
       await loadBadges();
       await loadBoxState();
 
