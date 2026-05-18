@@ -643,6 +643,13 @@
   /* INITIALS AVATAR */
   .initials-avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); flex-shrink: 0; transition: box-shadow 0.3s ease; cursor: pointer; }
   .initials-avatar.large { width: 72px; height: 72px; font-size: 32px; margin: 0 auto 16px; display: flex; }
+  .presence-dot { position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--card-bg, #fff); box-sizing: border-box; background: #9aa0a6; pointer-events: none; }
+  .presence-dot.is-offline { background: #9aa0a6; }
+  .presence-dot.is-afk { background: #f1c40f; }
+  .presence-dot.is-online { background: #2ecc71; animation: presencePulse 2s ease-in-out infinite; }
+  @keyframes presencePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.55); } 50% { box-shadow: 0 0 0 5px rgba(46,204,113,0); } }
+  .presence-text { font-size: 12px; font-weight: 600; color: var(--ui-btn-text, #7a5c3e); opacity: 0.85; white-space: nowrap; max-width: 38vw; overflow: hidden; text-overflow: ellipsis; align-self: center; }
+  @media (max-width: 600px) { .presence-text { display: none !important; } }
   /* Abstand zwischen Avataren und zur Badge-Pill kommt aus dem Flex-`gap`
      der .top-bar-left-Gruppe, damit sich die Frame-Glow-Ringe (box-shadow)
      nicht ineinander glitchen. */
@@ -1501,7 +1508,11 @@
 <div class="top-bar" id="topBar">
   <div class="top-bar-group top-bar-left">
     <a href="profil.html" class="initials-avatar" id="topBarAvatar" title="Mein Profil" style="text-decoration:none;">?</a>
-    <a id="visitOtherProfileBtn" href="#" class="initials-avatar" title="Profil besuchen" style="display:none; text-decoration:none; width:32px; height:32px; font-size:16px; cursor:pointer;">?</a>
+    <span id="otherAvatarWrap" style="position:relative; display:inline-flex;">
+      <a id="visitOtherProfileBtn" href="#" class="initials-avatar" title="Profil besuchen" style="display:none; text-decoration:none; width:32px; height:32px; font-size:16px; cursor:pointer;">?</a>
+      <span id="otherPresenceDot" class="presence-dot is-offline" title="offline"></span>
+    </span>
+    <span id="otherPresenceText" class="presence-text" style="display:none;"></span>
     <div id="activeBadgePill" style="display:none;" class="active-badge-pill"><span class="badge-emoji" id="activeBadgeEmoji">🐾</span><span id="activeBadgeName"></span></div>
   </div>
   <div class="top-bar-group top-bar-right">
@@ -3784,3 +3795,4 @@
 
 </script>
 <script type="module" src="spamhack.js"></script>
+<script type="module" src="presence.js"></script>
