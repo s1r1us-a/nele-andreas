@@ -314,6 +314,60 @@
     border: 3px solid #5a3c22 !important; border-radius: 0 !important;
     box-shadow: inset 2px 2px 0 rgba(255,255,255,0.12), inset -2px -2px 0 rgba(0,0,0,0.45), 4px 4px 0 rgba(0,0,0,0.4);
   }
+  html[data-theme="minecraft"] .quote-card::before { color: rgba(126,200,80,0.14); }
+  html[data-theme="minecraft"] .quote-text {
+    color: #f4f4f4 !important;
+    font-family: 'Minecraft','Press Start 2P',ui-monospace,monospace !important;
+    font-size: 15px !important; line-height: 1.8 !important; letter-spacing: 0.5px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  }
+  html[data-theme="minecraft"] .quote-author {
+    color: #8fd0f5 !important;
+    font-family: 'Minecraft','Press Start 2P',ui-monospace,monospace !important;
+    font-size: 11px !important; letter-spacing: 1.5px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  }
+
+  /* "Wer sammelt mehr?" – Pixel-Klotz-Box */
+  html[data-theme="minecraft"] .stats-section {
+    border-radius: 0 !important;
+    border: 3px solid #5a3c22 !important;
+    background: linear-gradient(180deg, rgba(40,32,20,0.92) 0%, rgba(28,22,14,0.92) 100%) !important;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.12),
+                inset -2px -2px 0 rgba(0,0,0,0.5),
+                4px 4px 0 rgba(0,0,0,0.4) !important;
+  }
+  html[data-theme="minecraft"] .stats-title,
+  html[data-theme="minecraft"] .stats-today-title {
+    font-family: 'Minecraft','Press Start 2P',ui-monospace,monospace !important;
+    color: #f4f4f4 !important; text-shadow: 2px 2px 0 rgba(0,0,0,0.55);
+  }
+  html[data-theme="minecraft"] .stat-label {
+    color: #f4f4f4 !important; font-weight: 700;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  }
+  html[data-theme="minecraft"] .stat-count { text-shadow: 1px 1px 0 rgba(0,0,0,0.6); }
+  html[data-theme="minecraft"] .stat-count-andreas { color: #7ec850 !important; }
+  html[data-theme="minecraft"] .stat-count-nele { color: #b794f6 !important; }
+  html[data-theme="minecraft"] .stat-pct { opacity: 0.85; }
+  html[data-theme="minecraft"] .stat-bar-wrap {
+    border-radius: 0 !important;
+    border: 2px solid #2b2b2b;
+    background: rgba(0,0,0,0.45) !important;
+  }
+  html[data-theme="minecraft"] .stat-bar { border-radius: 0 !important; }
+  html[data-theme="minecraft"] .stat-bar-andreas {
+    background: linear-gradient(180deg, #7ec850 0%, #5fb04a 60%, #4e9e3a 100%) !important;
+  }
+  html[data-theme="minecraft"] .stat-bar-nele {
+    background: linear-gradient(180deg, #b794f6 0%, #9a6fe0 60%, #7c3aed 100%) !important;
+  }
+  html[data-theme="minecraft"] .stats-verdict {
+    color: #f4f4f4 !important; text-shadow: 1px 1px 0 rgba(0,0,0,0.55);
+  }
+  html[data-theme="minecraft"] .stats-divider {
+    border-top: 2px solid #5a3c22 !important;
+  }
 
   /* Pixel-Klotz-Buttons (Minecraft-GUI-Bevel) */
   html[data-theme="minecraft"] .menu-btn,
@@ -1733,10 +1787,10 @@
     <button class="save-moment-btn" id="saveMomentBtn">✨ Momente Speichern</button>
   </div>
   <div style="margin-top: 10px; max-width: 420px; width: 100%;">
-    <a href="momente-archiv.html" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid var(--ui-quote-card-border); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: var(--rose); text-align: center; letter-spacing: 0.5px; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📖 Momente Archiv</a>
+    <a href="momente-archiv.html" class="menu-btn" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid var(--ui-quote-card-border); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; color: var(--rose); text-align: center; letter-spacing: 0.5px; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📖 Momente Archiv</a>
   </div>
   <div style="margin-top: 16px; max-width: 420px; width: 100%;">
-    <a href="stats.html" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid var(--ui-quote-card-border); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--rose); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(232,115,138,0.1);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📊 Statistik</a>
+    <a href="stats.html" class="menu-btn" style="display: block; width: 100%; background: var(--ui-quote-card-bg); backdrop-filter: blur(20px); border: 1.5px solid var(--ui-quote-card-border); border-radius: 50px; padding: 16px; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--rose); text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(232,115,138,0.1);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">📊 Statistik</a>
   </div>
   <div class="quiz-section" style="margin-top: 35px; max-width: 420px; width: 100%; position: relative;">
     <a href="quiz.html" id="quizBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 20px rgba(232,115,138,0.4); transition: transform 0.2s ease; text-align: center; text-decoration: none; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎯 Quiz spielen</a>
