@@ -530,6 +530,20 @@
     .admin-toggle-btn:hover { transform: scale(1.04); }
     .admin-toggle-btn.is-unlocked { background: rgba(34,197,94,0.15); color: #16a34a; border: 1.5px solid rgba(34,197,94,0.35); }
     .admin-toggle-btn.is-locked { background: rgba(232,80,112,0.15); color: #c85070; border: 1.5px solid rgba(232,80,112,0.4); }
+    .redeem-form { display:flex; flex-direction:column; gap:8px; background:rgba(212,160,97,0.08); border-radius:14px; padding:12px; margin-bottom:14px; }
+    .redeem-field { width:100%; border:1.5px solid rgba(232,115,138,0.25); border-radius:10px; padding:9px 12px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:var(--ui-input-color,#5a4a52); background:var(--ui-input-bg,#fff); outline:none; }
+    .redeem-field:focus { border-color:var(--rose); }
+    .redeem-reward-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; background:rgba(255,255,255,0.55); border:1px solid rgba(212,160,97,0.2); border-radius:12px; padding:8px; }
+    .redeem-reward-row .redeem-field { flex:1; min-width:84px; width:auto; }
+    .redeem-reward-row .redeem-amt { max-width:78px; flex:0 0 auto; }
+    .redeem-del-btn { flex-shrink:0; border:none; background:rgba(232,80,112,0.15); color:#c85070; border-radius:10px; padding:8px 10px; font-size:13px; cursor:pointer; }
+    .redeem-add-btn { align-self:flex-start; border:1.5px dashed rgba(212,160,97,0.5); background:transparent; color:var(--gold); border-radius:50px; padding:8px 16px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
+    .redeem-code-row { display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(212,160,97,0.08); border-radius:14px; padding:8px 8px 8px 14px; margin-bottom:6px; }
+    .redeem-code-info { flex:1; min-width:0; }
+    .redeem-code-name { font-size:13px; font-weight:800; color:var(--text-dark); word-break:break-all; }
+    .redeem-code-meta { font-size:11px; color:var(--text-mid); font-weight:600; margin-top:2px; }
+    .redeem-code-del { flex-shrink:0; border:none; border-radius:50px; padding:8px 12px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; cursor:pointer; background:rgba(232,80,112,0.15); color:#c85070; border:1.5px solid rgba(232,80,112,0.4); }
+    .redeem-empty { font-size:12px; color:var(--text-mid); text-align:center; padding:8px; }
 
     /* TOAST */
     .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-dark); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
@@ -1452,8 +1466,92 @@
         { label: '🦑 Squid Game-Theme aktivieren', onClick: () => adminSetTheme('squid-game') },
         { label: '🐑 Cult of the Lamb-Theme aktivieren', onClick: () => adminSetTheme('cult-of-the-lamb') },
         { label: '↩️ Theme zurücksetzen (Sakura)', onClick: () => adminSetTheme('sakura') }
-    ] }
+    ] },
+    { id: 'codes', title: '🎟️ Einlöse-Codes', kind: 'redeemCodes' }
   ];
+
+  // IDs müssen exakt mit shop.html übereinstimmen (SHOP_BOOSTERS / THEMES / FARM_*-Pools),
+  // sonst landet die Belohnung beim Einlösen unter einem unbekannten Inventar-Pfad.
+  const REDEEM_CATALOG = {
+    boosters: [
+      { id: 'moments_booster',     emoji: '💫', name: 'Momenten-Booster' },
+      { id: 'autoclicker_booster', emoji: '🤖', name: 'Auto-Klicker' },
+      { id: 'sabotage_booster',    emoji: '💻', name: 'Hack' },
+      { id: 'spam_booster',        emoji: '📺', name: 'Popup-Hack' },
+      { id: 'anti_hack_booster',   emoji: '🛡️', name: 'Gegen-Hack' }
+    ],
+    themes: [
+      { id: 'sakura',            emoji: '🌸', name: 'Sakura' },
+      { id: 'ultra-performance', emoji: '⚡', name: 'Ultra Performance' },
+      { id: 'ocean',             emoji: '🌊', name: 'Ocean Breeze' },
+      { id: 'forest',            emoji: '🌿', name: 'Forest' },
+      { id: 'midnight',          emoji: '🌙', name: 'Midnight' },
+      { id: 'golden',            emoji: '✨', name: 'Golden Hour' },
+      { id: 'candy',             emoji: '🍬', name: 'Candy' },
+      { id: 'sunset',            emoji: '🌅', name: 'Sunset Dream' },
+      { id: 'aurora',            emoji: '🌌', name: 'Aurora' },
+      { id: 'ice',               emoji: '❄️', name: 'Crystal Ice' },
+      { id: 'fire',              emoji: '🔥', name: 'Phoenix Fire' },
+      { id: 'cosmic',            emoji: '🌠', name: 'Cosmic Galaxy' },
+      { id: 'royal',             emoji: '💎', name: 'Royal Diamond' },
+      { id: 'rainbow',           emoji: '🌈', name: 'Rainbow Prism' },
+      { id: 'neon',              emoji: '⚡', name: 'Neon Cyberpunk' },
+      { id: 'prinzesschen',      emoji: '👑', name: 'Prinzesschen' },
+      { id: 'schattenfuerstin',  emoji: '🖤', name: 'Schattenfürstin' },
+      { id: 'wednesday',         emoji: '🦇', name: 'Wednesday' },
+      { id: 'minecraft',         emoji: '🧱', name: 'Minecraft' },
+      { id: 'squid-game',        emoji: '🦑', name: 'Squid Game' },
+      { id: 'cult-of-the-lamb',  emoji: '🐑', name: 'Cult of the Lamb' }
+    ],
+    farm: {
+      seeds: [
+        { id: 'radish',    name: 'Radieschen-Samen' },
+        { id: 'carrot',    name: 'Karotten-Samen' },
+        { id: 'lettuce',   name: 'Salat-Samen' },
+        { id: 'oats',      name: 'Hafer-Samen' },
+        { id: 'wheat',     name: 'Weizen-Samen' },
+        { id: 'blueberry', name: 'Blaubeer-Samen' },
+        { id: 'tomato',    name: 'Tomaten-Samen' },
+        { id: 'corn',      name: 'Mais-Samen' },
+        { id: 'sunflower', name: 'Sonnenblumen-Samen' }
+      ],
+      items_common: [
+        { id: 'fertilizer', name: 'Dünger' },
+        { id: 'egg',        name: 'Ei' },
+        { id: 'milk',       name: 'Kuhmilch' },
+        { id: 'firefly',    name: 'Glühwürmchen' },
+        { id: 'feather',    name: 'Feder' },
+        { id: 'goatmilk',   name: 'Ziegenmilch' }
+      ],
+      items_rare: [
+        { id: 'wool',      name: 'Wolle' },
+        { id: 'honey',     name: 'Honig' },
+        { id: 'diamond',   name: 'Diamant' },
+        { id: 'truffle',   name: 'Trüffel' },
+        { id: 'horseshoe', name: 'Hufeisen' }
+      ],
+      ores_common: [
+        { id: 'kupfer', name: 'Kupfer' },
+        { id: 'eisen',  name: 'Eisen' }
+      ],
+      ores_rare: [
+        { id: 'silber', name: 'Silber' },
+        { id: 'gold',   name: 'Gold' }
+      ],
+      ores_epic: [
+        { id: 'amethyst', name: 'Amethyst' },
+        { id: 'smaragd',  name: 'Smaragd' }
+      ]
+    }
+  };
+  const FARM_CATEGORY_LABELS = {
+    seeds: 'Samen', items_common: 'Items (häufig)', items_rare: 'Items (selten)',
+    ores_common: 'Erze (häufig)', ores_rare: 'Erze (selten)', ores_epic: 'Erze (episch)'
+  };
+  const REWARD_TYPE_LABELS = { coins: '🪙 Coins', booster: '🚀 Booster', theme: '🎨 Theme', farm: '🌱 Farm-Item' };
+
+  let redeemCodes = {};
+  let redeemFormState = { code: '', rewards: [] };
 
   function renderAdminPanel() {
     const root = document.getElementById('adminSections');
@@ -1487,6 +1585,8 @@
           row.appendChild(btn);
           box.appendChild(row);
         });
+      } else if (section.kind === 'redeemCodes') {
+        renderRedeemCodesSection(box);
       } else {
         (section.actions || []).forEach(a => {
           const btn = document.createElement('button');
@@ -1506,6 +1606,227 @@
     pageLocks = snap.val() || {};
     if (document.getElementById('adminOverlay').classList.contains('open')) renderAdminPanel();
   });
+
+  onValue(ref(db, 'redeemCodes'), snap => {
+    redeemCodes = snap.val() || {};
+    if (document.getElementById('adminOverlay').classList.contains('open')) renderAdminPanel();
+  });
+
+  function makeOption(value, label, selected) {
+    const o = document.createElement('option');
+    o.value = value; o.textContent = label;
+    if (selected) o.selected = true;
+    return o;
+  }
+
+  function defaultRewardFor(type) {
+    if (type === 'coins')   return { type: 'coins', amount: 1000 };
+    if (type === 'booster') return { type: 'booster', boosterId: REDEEM_CATALOG.boosters[0].id, amount: 1 };
+    if (type === 'theme')   return { type: 'theme', themeId: REDEEM_CATALOG.themes[0].id };
+    return { type: 'farm', category: 'seeds', itemId: REDEEM_CATALOG.farm.seeds[0].id, amount: 1 };
+  }
+
+  function buildRewardRow(reward, idx) {
+    const row = document.createElement('div');
+    row.className = 'redeem-reward-row';
+
+    const typeSel = document.createElement('select');
+    typeSel.className = 'redeem-field';
+    ['coins', 'booster', 'theme', 'farm'].forEach(t =>
+      typeSel.appendChild(makeOption(t, REWARD_TYPE_LABELS[t], t === reward.type)));
+    typeSel.addEventListener('change', () => {
+      redeemFormState.rewards[idx] = defaultRewardFor(typeSel.value);
+      renderAdminPanel();
+    });
+    row.appendChild(typeSel);
+
+    if (reward.type === 'coins') {
+      const amt = document.createElement('input');
+      amt.type = 'number'; amt.min = '1'; amt.className = 'redeem-field redeem-amt';
+      amt.value = reward.amount; amt.placeholder = 'Menge';
+      amt.addEventListener('input', () => { reward.amount = parseInt(amt.value, 10) || 0; });
+      row.appendChild(amt);
+    } else if (reward.type === 'booster') {
+      const sel = document.createElement('select');
+      sel.className = 'redeem-field';
+      REDEEM_CATALOG.boosters.forEach(b =>
+        sel.appendChild(makeOption(b.id, b.emoji + ' ' + b.name, b.id === reward.boosterId)));
+      sel.addEventListener('change', () => { reward.boosterId = sel.value; });
+      row.appendChild(sel);
+      const amt = document.createElement('input');
+      amt.type = 'number'; amt.min = '1'; amt.className = 'redeem-field redeem-amt';
+      amt.value = reward.amount;
+      amt.addEventListener('input', () => { reward.amount = parseInt(amt.value, 10) || 0; });
+      row.appendChild(amt);
+    } else if (reward.type === 'theme') {
+      const sel = document.createElement('select');
+      sel.className = 'redeem-field';
+      REDEEM_CATALOG.themes.forEach(t =>
+        sel.appendChild(makeOption(t.id, t.emoji + ' ' + t.name, t.id === reward.themeId)));
+      sel.addEventListener('change', () => { reward.themeId = sel.value; });
+      row.appendChild(sel);
+    } else if (reward.type === 'farm') {
+      const catSel = document.createElement('select');
+      catSel.className = 'redeem-field';
+      Object.keys(REDEEM_CATALOG.farm).forEach(c =>
+        catSel.appendChild(makeOption(c, FARM_CATEGORY_LABELS[c], c === reward.category)));
+      catSel.addEventListener('change', () => {
+        reward.category = catSel.value;
+        reward.itemId = REDEEM_CATALOG.farm[reward.category][0].id;
+        renderAdminPanel();
+      });
+      row.appendChild(catSel);
+      const itemSel = document.createElement('select');
+      itemSel.className = 'redeem-field';
+      (REDEEM_CATALOG.farm[reward.category] || []).forEach(it =>
+        itemSel.appendChild(makeOption(it.id, it.name, it.id === reward.itemId)));
+      itemSel.addEventListener('change', () => { reward.itemId = itemSel.value; });
+      row.appendChild(itemSel);
+      const amt = document.createElement('input');
+      amt.type = 'number'; amt.min = '1'; amt.className = 'redeem-field redeem-amt';
+      amt.value = reward.amount;
+      amt.addEventListener('input', () => { reward.amount = parseInt(amt.value, 10) || 0; });
+      row.appendChild(amt);
+    }
+
+    const del = document.createElement('button');
+    del.type = 'button'; del.className = 'redeem-del-btn'; del.textContent = '🗑️';
+    del.addEventListener('click', () => {
+      redeemFormState.rewards.splice(idx, 1);
+      renderAdminPanel();
+    });
+    row.appendChild(del);
+    return row;
+  }
+
+  function describeReward(rw) {
+    if (!rw || !rw.type) return '?';
+    if (rw.type === 'coins')   return `🪙 ${rw.amount} Coins`;
+    if (rw.type === 'booster') {
+      const b = REDEEM_CATALOG.boosters.find(x => x.id === rw.boosterId);
+      return `${b ? b.emoji + ' ' + b.name : rw.boosterId} ×${rw.amount}`;
+    }
+    if (rw.type === 'theme') {
+      const t = REDEEM_CATALOG.themes.find(x => x.id === rw.themeId);
+      return `🎨 ${t ? t.name : rw.themeId}`;
+    }
+    if (rw.type === 'farm') {
+      const list = REDEEM_CATALOG.farm[rw.category] || [];
+      const it = list.find(x => x.id === rw.itemId);
+      return `🌱 ${it ? it.name : rw.itemId} ×${rw.amount}`;
+    }
+    return '?';
+  }
+
+  function renderRedeemCodesSection(box) {
+    const form = document.createElement('div');
+    form.className = 'redeem-form';
+
+    const codeInput = document.createElement('input');
+    codeInput.type = 'text';
+    codeInput.className = 'redeem-field';
+    codeInput.placeholder = 'Code (Groß-/Kleinschreibung zählt)';
+    codeInput.value = redeemFormState.code;
+    codeInput.addEventListener('input', () => { redeemFormState.code = codeInput.value; });
+    form.appendChild(codeInput);
+
+    redeemFormState.rewards.forEach((rw, i) => form.appendChild(buildRewardRow(rw, i)));
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button'; addBtn.className = 'redeem-add-btn';
+    addBtn.textContent = '+ Belohnung hinzufügen';
+    addBtn.addEventListener('click', () => {
+      redeemFormState.rewards.push(defaultRewardFor('coins'));
+      renderAdminPanel();
+    });
+    form.appendChild(addBtn);
+
+    const createBtn = document.createElement('button');
+    createBtn.type = 'button'; createBtn.className = 'admin-action-btn';
+    createBtn.textContent = '🎟️ Code erstellen';
+    createBtn.addEventListener('click', adminCreateRedeemCode);
+    form.appendChild(createBtn);
+
+    box.appendChild(form);
+
+    const ids = Object.keys(redeemCodes);
+    if (!ids.length) {
+      const empty = document.createElement('div');
+      empty.className = 'redeem-empty';
+      empty.textContent = 'Noch keine Codes vorhanden.';
+      box.appendChild(empty);
+      return;
+    }
+    ids.forEach(id => {
+      const c = redeemCodes[id] || {};
+      const rb = c.redeemedBy || {};
+      const rrow = document.createElement('div');
+      rrow.className = 'redeem-code-row';
+      const info = document.createElement('div');
+      info.className = 'redeem-code-info';
+      const nm = document.createElement('div');
+      nm.className = 'redeem-code-name';
+      nm.textContent = c.code || '(ohne Code)';
+      const meta = document.createElement('div');
+      meta.className = 'redeem-code-meta';
+      const rewardTxt = Array.isArray(c.rewards) ? c.rewards.map(describeReward).join(', ') : '–';
+      meta.textContent = `${rewardTxt} · Andreas ${rb.andreas ? '✅' : '⬜'} Nele ${rb.nele ? '✅' : '⬜'}`;
+      info.appendChild(nm); info.appendChild(meta);
+      const delC = document.createElement('button');
+      delC.type = 'button'; delC.className = 'redeem-code-del';
+      delC.textContent = '🗑️ Löschen';
+      delC.addEventListener('click', () => adminDeleteRedeemCode(id));
+      rrow.appendChild(info); rrow.appendChild(delC);
+      box.appendChild(rrow);
+    });
+  }
+
+  async function adminCreateRedeemCode() {
+    if (!isAdmin()) { showToast('❌ Keine Admin-Rechte'); return; }
+    const code = (redeemFormState.code || '').trim();
+    if (!code) { showToast('❌ Code darf nicht leer sein'); return; }
+    const rewards = redeemFormState.rewards;
+    if (!rewards.length) { showToast('❌ Mindestens eine Belohnung nötig'); return; }
+    for (const rw of rewards) {
+      if (rw.type === 'coins') {
+        if (!(rw.amount > 0)) { showToast('❌ Coin-Menge muss größer 0 sein'); return; }
+      } else if (rw.type === 'booster') {
+        if (!rw.boosterId || !(rw.amount > 0)) { showToast('❌ Booster ungültig'); return; }
+      } else if (rw.type === 'theme') {
+        if (!rw.themeId) { showToast('❌ Theme ungültig'); return; }
+      } else if (rw.type === 'farm') {
+        if (!rw.category || !rw.itemId || !(rw.amount > 0)) { showToast('❌ Farm-Item ungültig'); return; }
+      } else {
+        showToast('❌ Unbekannter Belohnungstyp'); return;
+      }
+    }
+    const exists = Object.values(redeemCodes).some(c => c && c.code === code);
+    if (exists) { showToast('❌ Dieser Code existiert bereits'); return; }
+    try {
+      await set(push(ref(db, 'redeemCodes')), {
+        code,
+        rewards: rewards.map(r => ({ ...r })),
+        createdAt: Date.now()
+      });
+      redeemFormState = { code: '', rewards: [] };
+      showToast('✅ Code erstellt!');
+      renderAdminPanel();
+    } catch (e) {
+      console.error('Code-Erstellung fehlgeschlagen:', e);
+      showToast('❌ Fehler beim Erstellen (evtl. Firebase-Rules?)');
+    }
+  }
+
+  async function adminDeleteRedeemCode(id) {
+    if (!isAdmin()) { showToast('❌ Keine Admin-Rechte'); return; }
+    try {
+      await remove(ref(db, 'redeemCodes/' + id));
+      showToast('🗑️ Code gelöscht');
+    } catch (e) {
+      console.error('Code-Löschung fehlgeschlagen:', e);
+      showToast('❌ Fehler beim Löschen');
+    }
+  }
 
   document.getElementById('adminBtn').addEventListener('click', () => {
     if (!isAdmin()) return;
