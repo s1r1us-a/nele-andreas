@@ -8,7 +8,8 @@
   // Theme sofort (vor dem ersten Paint) aus dem letzten bekannten Wert setzen,
   // damit es ohne Reload aktiv ist. Firebase bleibt die Quelle und korrigiert.
   try {
-    var t = localStorage.getItem('activeTheme');
+    var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+    var t = localStorage.getItem('activeTheme' + dev) || localStorage.getItem('activeTheme');
     if (t) document.documentElement.setAttribute('data-theme', t);
   } catch (e) {}
 </script>
@@ -2614,8 +2615,19 @@
         renderCoinCount(true);
       });
       // Load active theme
-      get(ref(db, `shop/${userKey}/activeTheme`)).then(snap => {
-        const theme = snap.val();
+      Promise.all([
+        get(ref(db, `shop/${userKey}/activeThemeMobile`)),
+        get(ref(db, `shop/${userKey}/activeThemeDesktop`)),
+        get(ref(db, `shop/${userKey}/activeTheme`))
+      ]).then(([m, d, l]) => {
+        const legacy = l.val();
+        const mob = m.val();
+        const desk = d.val();
+        try {
+          if (mob) localStorage.setItem('activeThemeMobile', mob);
+          if (desk) localStorage.setItem('activeThemeDesktop', desk);
+        } catch (e) {}
+        const theme = (getDeviceType() === 'mobile' ? mob : desk) || legacy;
         if (theme) applyTheme(theme);
       });
       // Load badges
@@ -4166,6 +4178,14 @@
   const SQUIDGAME_IMG = "squid-game.png";
   // Cult-of-the-Lamb-Theme: ersetzt nur für dieses eine Theme das Startbild.
   const LAMB_IMG = "IMG_7098.jpeg";
+  function getDeviceType() {
+    return window.matchMedia('(max-width: 600px)').matches ? 'mobile' : 'desktop';
+  }
+  function resolveCachedTheme() {
+    const dev = getDeviceType();
+    return localStorage.getItem(dev === 'mobile' ? 'activeThemeMobile' : 'activeThemeDesktop')
+      || localStorage.getItem('activeTheme');
+  }
   window.applyTheme = function(themeId) {
     const vars = THEME_VARS[themeId];
     if (!vars) return;
@@ -4262,13 +4282,13 @@
   // Gradient, Texte) – ohne auf die Firebase-Antwort zu warten. Firebase
   // korrigiert danach nur noch im Hintergrund.
   try {
-    const cachedTheme = localStorage.getItem('activeTheme');
+    const cachedTheme = resolveCachedTheme();
     if (cachedTheme) window.applyTheme(cachedTheme);
   } catch (e) {}
   window.addEventListener('pageshow', e => {
     if (e.persisted) {
       let t;
-      try { t = localStorage.getItem('activeTheme'); } catch (err) {}
+      try { t = resolveCachedTheme(); } catch (err) {}
       if (t) window.applyTheme(t);
     }
   });
