@@ -544,6 +544,9 @@
     .redeem-code-meta { font-size:11px; color:var(--text-mid); font-weight:600; margin-top:2px; }
     .redeem-code-del { flex-shrink:0; border:none; border-radius:50px; padding:8px 12px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; cursor:pointer; background:rgba(232,80,112,0.15); color:#c85070; border:1.5px solid rgba(232,80,112,0.4); }
     .redeem-empty { font-size:12px; color:var(--text-mid); text-align:center; padding:8px; }
+    .admin-tabs { display:flex; flex-wrap:wrap; gap:6px; position:sticky; top:0; background:var(--ui-modal-bg,#fff); padding-bottom:10px; margin-bottom:12px; border-bottom:1.5px solid rgba(212,160,97,0.25); z-index:2; }
+    .admin-tab { flex:1 1 auto; border:1.5px solid rgba(212,160,97,0.3); background:rgba(212,160,97,0.08); color:var(--text-mid); border-radius:50px; padding:8px 12px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.15s ease; }
+    .admin-tab.active { background:linear-gradient(135deg,var(--gold),#c87830); color:#fff; border-color:transparent; }
 
     /* TOAST */
     .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-dark); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
@@ -1552,54 +1555,65 @@
 
   let redeemCodes = {};
   let redeemFormState = { code: '', rewards: [] };
+  let adminActiveTab = null;
 
   function renderAdminPanel() {
     const root = document.getElementById('adminSections');
     if (!root) return;
+    if (!adminActiveTab || !ADMIN_SECTIONS.some(s => s.id === adminActiveTab)) {
+      adminActiveTab = ADMIN_SECTIONS[0].id;
+    }
     root.innerHTML = '';
-    ADMIN_SECTIONS.forEach(section => {
-      const sec = document.createElement('div');
-      sec.className = 'admin-section';
-      const h = document.createElement('div');
-      h.className = 'admin-section-title';
-      h.textContent = section.title;
-      sec.appendChild(h);
 
-      const box = document.createElement('div');
-      box.className = 'admin-actions';
-
-      if (section.kind === 'pageLocks') {
-        LOCKABLE_PAGES.forEach(p => {
-          const locked = !!(pageLocks[p.key] && pageLocks[p.key].locked);
-          const row = document.createElement('div');
-          row.className = 'admin-toggle-row';
-          const lbl = document.createElement('span');
-          lbl.className = 'admin-toggle-label';
-          lbl.textContent = p.label;
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'admin-toggle-btn ' + (locked ? 'is-locked' : 'is-unlocked');
-          btn.textContent = locked ? '🔒 Gesperrt' : '🔓 Entsperrt';
-          btn.addEventListener('click', () => togglePageLock(p.key));
-          row.appendChild(lbl);
-          row.appendChild(btn);
-          box.appendChild(row);
-        });
-      } else if (section.kind === 'redeemCodes') {
-        renderRedeemCodesSection(box);
-      } else {
-        (section.actions || []).forEach(a => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'admin-action-btn';
-          btn.textContent = a.label;
-          btn.addEventListener('click', a.onClick);
-          box.appendChild(btn);
-        });
-      }
-      sec.appendChild(box);
-      root.appendChild(sec);
+    const tabs = document.createElement('div');
+    tabs.className = 'admin-tabs';
+    ADMIN_SECTIONS.forEach(s => {
+      const tb = document.createElement('button');
+      tb.type = 'button';
+      tb.className = 'admin-tab' + (s.id === adminActiveTab ? ' active' : '');
+      tb.textContent = s.title;
+      tb.addEventListener('click', () => { adminActiveTab = s.id; renderAdminPanel(); });
+      tabs.appendChild(tb);
     });
+    root.appendChild(tabs);
+
+    const section = ADMIN_SECTIONS.find(s => s.id === adminActiveTab);
+    const sec = document.createElement('div');
+    sec.className = 'admin-section';
+    const box = document.createElement('div');
+    box.className = 'admin-actions';
+
+    if (section.kind === 'pageLocks') {
+      LOCKABLE_PAGES.forEach(p => {
+        const locked = !!(pageLocks[p.key] && pageLocks[p.key].locked);
+        const row = document.createElement('div');
+        row.className = 'admin-toggle-row';
+        const lbl = document.createElement('span');
+        lbl.className = 'admin-toggle-label';
+        lbl.textContent = p.label;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'admin-toggle-btn ' + (locked ? 'is-locked' : 'is-unlocked');
+        btn.textContent = locked ? '🔒 Gesperrt' : '🔓 Entsperrt';
+        btn.addEventListener('click', () => togglePageLock(p.key));
+        row.appendChild(lbl);
+        row.appendChild(btn);
+        box.appendChild(row);
+      });
+    } else if (section.kind === 'redeemCodes') {
+      renderRedeemCodesSection(box);
+    } else {
+      (section.actions || []).forEach(a => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'admin-action-btn';
+        btn.textContent = a.label;
+        btn.addEventListener('click', a.onClick);
+        box.appendChild(btn);
+      });
+    }
+    sec.appendChild(box);
+    root.appendChild(sec);
   }
 
   onValue(ref(db, 'admin/pageLocks'), snap => {
@@ -1626,7 +1640,7 @@
     return { type: 'farm', category: 'seeds', itemId: REDEEM_CATALOG.farm.seeds[0].id, amount: 1 };
   }
 
-  function buildRewardRow(reward, idx) {
+  function buildRewardRow(reward, idx, rerender) {
     const row = document.createElement('div');
     row.className = 'redeem-reward-row';
 
@@ -1635,8 +1649,10 @@
     ['coins', 'booster', 'theme', 'farm'].forEach(t =>
       typeSel.appendChild(makeOption(t, REWARD_TYPE_LABELS[t], t === reward.type)));
     typeSel.addEventListener('change', () => {
-      redeemFormState.rewards[idx] = defaultRewardFor(typeSel.value);
-      renderAdminPanel();
+      const v = typeSel.value;
+      // Defer: lässt das native Select-Picker (Mobile) sicher committen,
+      // bevor wir die Zeile neu aufbauen – sonst springt es auf "Coins" zurück.
+      setTimeout(() => { redeemFormState.rewards[idx] = defaultRewardFor(v); rerender(); }, 0);
     });
     row.appendChild(typeSel);
 
@@ -1671,9 +1687,12 @@
       Object.keys(REDEEM_CATALOG.farm).forEach(c =>
         catSel.appendChild(makeOption(c, FARM_CATEGORY_LABELS[c], c === reward.category)));
       catSel.addEventListener('change', () => {
-        reward.category = catSel.value;
-        reward.itemId = REDEEM_CATALOG.farm[reward.category][0].id;
-        renderAdminPanel();
+        const v = catSel.value;
+        setTimeout(() => {
+          reward.category = v;
+          reward.itemId = REDEEM_CATALOG.farm[v][0].id;
+          rerender();
+        }, 0);
       });
       row.appendChild(catSel);
       const itemSel = document.createElement('select');
@@ -1693,7 +1712,7 @@
     del.type = 'button'; del.className = 'redeem-del-btn'; del.textContent = '🗑️';
     del.addEventListener('click', () => {
       redeemFormState.rewards.splice(idx, 1);
-      renderAdminPanel();
+      rerender();
     });
     row.appendChild(del);
     return row;
@@ -1730,14 +1749,22 @@
     codeInput.addEventListener('input', () => { redeemFormState.code = codeInput.value; });
     form.appendChild(codeInput);
 
-    redeemFormState.rewards.forEach((rw, i) => form.appendChild(buildRewardRow(rw, i)));
+    const rewardsWrap = document.createElement('div');
+    rewardsWrap.style.cssText = 'display:flex; flex-direction:column; gap:8px;';
+    function rerenderRewards() {
+      rewardsWrap.innerHTML = '';
+      redeemFormState.rewards.forEach((rw, i) =>
+        rewardsWrap.appendChild(buildRewardRow(rw, i, rerenderRewards)));
+    }
+    rerenderRewards();
+    form.appendChild(rewardsWrap);
 
     const addBtn = document.createElement('button');
     addBtn.type = 'button'; addBtn.className = 'redeem-add-btn';
     addBtn.textContent = '+ Belohnung hinzufügen';
     addBtn.addEventListener('click', () => {
       redeemFormState.rewards.push(defaultRewardFor('coins'));
-      renderAdminPanel();
+      rerenderRewards();
     });
     form.appendChild(addBtn);
 
