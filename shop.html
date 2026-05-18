@@ -998,6 +998,19 @@
   </div>
 </div>
 
+<!-- Redeem Result Modal -->
+<div class="confirm-overlay" id="redeemResultOverlay">
+  <div class="confirm-card">
+    <span class="confirm-emoji" id="redeemResultEmoji">🎉</span>
+    <div class="confirm-title" id="redeemResultTitle">Glückwunsch!</div>
+    <div class="confirm-text">Du hast erhalten:</div>
+    <ul id="redeemResultList" style="list-style:none; padding:0; margin:0 0 24px; text-align:left;"></ul>
+    <div class="confirm-buttons">
+      <button class="confirm-yes" id="redeemResultClose" style="flex:1;">Super! ✨</button>
+    </div>
+  </div>
+</div>
+
 <!-- Reward Popup -->
 <div class="reward-overlay" id="rewardOverlay">
   <div class="reward-backdrop" id="rewardBackdrop"></div>
@@ -1031,6 +1044,20 @@
   <div class="page-header">
     <h1 class="page-title">🛍️ Shop</h1>
     <p class="page-subtitle">Lootboxen, Booster & Themes</p>
+  </div>
+
+  <!-- CODE EINLÖSEN -->
+  <div class="shop-section-title" style="margin-top:0;">🎟️ Code einlösen</div>
+  <div class="shop-section-sub">Hast du einen Geschenk-Code?</div>
+  <div class="lootbox-area">
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap"><span class="lootbox-icon">🎟️</span></div>
+      <div class="lootbox-name">Code einlösen</div>
+      <div class="lootbox-desc">Gib deinen Code ein – Groß-/Kleinschreibung zählt! Jeder Code kann nur einmal pro Account eingelöst werden.</div>
+      <input type="text" id="redeemInput" placeholder="Code eingeben…" autocomplete="off"
+        style="width:100%; box-sizing:border-box; border:1.5px solid var(--ui-card-border); border-radius:14px; padding:13px 16px; font-family:'Quicksand',sans-serif; font-size:15px; font-weight:600; color:var(--text-dark); background:var(--ui-input-bg,#fff); outline:none; margin:6px 0 12px;">
+      <button class="confirm-yes" id="redeemBtn" style="width:100%;">Einlösen ✨</button>
+    </div>
   </div>
 
   <!-- LOOTBOX SEKTION -->
@@ -2134,6 +2161,126 @@
   document.getElementById('deviceThemeCancel').addEventListener('click', () => {
     document.getElementById('deviceThemeOverlay').classList.remove('open');
     pendingDeviceTheme = null;
+  });
+
+  // ---- CODE EINLÖSEN ----
+  function farmPoolFor(category) {
+    if (category === 'seeds')        return { pool: FARM_SEEDS,        sub: 'seeds' };
+    if (category === 'items_common') return { pool: FARM_ITEMS_COMMON, sub: 'items' };
+    if (category === 'items_rare')   return { pool: FARM_ITEMS_RARE,   sub: 'items' };
+    if (category === 'ores_common')  return { pool: FARM_ORES_COMMON,  sub: 'ores'  };
+    if (category === 'ores_rare')    return { pool: FARM_ORES_RARE,    sub: 'ores'  };
+    return { pool: FARM_ORES_EPIC, sub: 'ores' };
+  }
+
+  function showRedeemResult(granted) {
+    const list = document.getElementById('redeemResultList');
+    list.innerHTML = '';
+    if (!granted.length) {
+      const li = document.createElement('li');
+      li.textContent = 'Belohnung konnte nicht vergeben werden 😢';
+      li.style.cssText = 'padding:8px 0; font-weight:600; color:var(--ui-btn-text);';
+      list.appendChild(li);
+    } else {
+      granted.forEach(g => {
+        const li = document.createElement('li');
+        li.textContent = '✓ ' + g;
+        li.style.cssText = 'padding:8px 0; font-size:15px; font-weight:700; color:var(--text-dark); border-bottom:1px solid var(--ui-card-border);';
+        list.appendChild(li);
+      });
+    }
+    document.getElementById('redeemResultOverlay').classList.add('open');
+  }
+
+  async function redeemCode() {
+    const input = document.getElementById('redeemInput');
+    const code = (input.value || '').trim();
+    if (!code) { showToast('❌ Bitte einen Code eingeben'); return; }
+    if (!userKey) { showToast('❌ Nicht eingeloggt'); return; }
+
+    const btn = document.getElementById('redeemBtn');
+    btn.disabled = true;
+    try {
+      const snap = await get(ref(db, 'redeemCodes'));
+      const all = snap.val() || {};
+      let foundId = null, foundNode = null;
+      for (const [id, c] of Object.entries(all)) {
+        if (c && c.code === code) { foundId = id; foundNode = c; break; } // case-sensitiv
+      }
+      if (!foundId) { showToast('❌ Code ungültig oder existiert nicht'); return; }
+      if (foundNode.redeemedBy && foundNode.redeemedBy[userKey]) {
+        showToast('⚠️ Du hast diesen Code bereits eingelöst'); return;
+      }
+
+      let tx;
+      try {
+        tx = await runTransaction(ref(db, 'redeemCodes/' + foundId), node => {
+          if (node === null) return;                              // parallel gelöscht
+          if (node.redeemedBy && node.redeemedBy[userKey]) return; // schon eingelöst
+          node.redeemedBy = node.redeemedBy || {};
+          node.redeemedBy[userKey] = true;
+          const both = node.redeemedBy.andreas && node.redeemedBy.nele;
+          return both ? null : node;                               // beide → Code löschen
+        });
+      } catch (e) {
+        console.error('Einlöse-Transaktion fehlgeschlagen:', e);
+        showToast('❌ Fehler beim Einlösen'); return;
+      }
+      if (!tx.committed) {
+        showToast('⚠️ Code bereits eingelöst oder nicht mehr verfügbar'); return;
+      }
+
+      const rewards = Array.isArray(foundNode.rewards) ? foundNode.rewards : [];
+      const granted = [];
+      let themeAdded = false;
+      for (const rw of rewards) {
+        try {
+          if (rw.type === 'coins') {
+            const amt = Number(rw.amount) || 0;
+            await runTransaction(ref(db, `coins/${userKey}`), c => (Number(c) || 0) + amt);
+            granted.push(`${amt.toLocaleString('de-DE')} Coins 🪙`);
+          } else if (rw.type === 'booster') {
+            const amt = Number(rw.amount) || 1;
+            const r = ref(db, `boosters/${userKey}/inventory/${rw.boosterId}`);
+            const cur = Number((await get(r)).val()) || 0;
+            await set(r, cur + amt);
+            const b = SHOP_BOOSTERS[rw.boosterId];
+            granted.push(`${b ? b.emoji + ' ' + b.name : rw.boosterId} ×${amt}`);
+          } else if (rw.type === 'theme') {
+            if (!ownedThemes.includes(rw.themeId)) {
+              ownedThemes.push(rw.themeId);
+              await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
+              themeAdded = true;
+            }
+            const t = THEMES.find(x => x.id === rw.themeId);
+            granted.push(`${t ? t.emoji + ' Theme „' + t.name + '"' : 'Theme'} 🎨`);
+          } else if (rw.type === 'farm') {
+            const amt = Number(rw.amount) || 1;
+            const { pool, sub } = farmPoolFor(rw.category);
+            const r = ref(db, `farm/${userKey}/inventory/${sub}/${rw.itemId}`);
+            const cur = Number((await get(r)).val()) || 0;
+            await set(r, cur + amt);
+            const it = pool.find(x => x.id === rw.itemId);
+            granted.push(`${it ? (it.icon || '🌱') + ' ' + it.name : rw.itemId} ×${amt}`);
+          }
+        } catch (e) {
+          console.error('Belohnung fehlgeschlagen:', rw, e);
+        }
+      }
+      if (themeAdded) { try { renderThemes(); } catch (e) {} }
+      input.value = '';
+      showRedeemResult(granted);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('redeemBtn').addEventListener('click', redeemCode);
+  document.getElementById('redeemInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') redeemCode();
+  });
+  document.getElementById('redeemResultClose').addEventListener('click', () => {
+    document.getElementById('redeemResultOverlay').classList.remove('open');
   });
 
   // ---- AUTH ----
