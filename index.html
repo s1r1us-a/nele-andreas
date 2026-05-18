@@ -215,6 +215,136 @@
     html[data-theme="squid-game"] .squid-game-mob { animation: none !important; }
   }
 
+  /* Menü- & Speichern-Buttons: dunkle Neon-Pille im Squid-Game-Look */
+  html[data-theme="squid-game"] .menu-btn,
+  html[data-theme="squid-game"] .save-moment-btn,
+  html[data-theme="squid-game"] .booster-open-btn {
+    position: relative;
+    background: linear-gradient(135deg, rgba(13,8,16,0.96) 0%, rgba(40,13,34,0.96) 52%, rgba(13,8,16,0.96) 100%) !important;
+    border: 1.5px solid rgba(237,27,118,0.62) !important;
+    color: #ffd9ec !important;
+    text-shadow: 0 0 10px rgba(237,27,118,0.55) !important;
+    box-shadow: 0 0 14px 3px rgba(237,27,118,0.50),
+                0 0 36px 11px rgba(36,159,140,0.24),
+                inset 0 0 18px rgba(237,27,118,0.14) !important;
+  }
+  html[data-theme="squid-game"] .menu-btn::before,
+  html[data-theme="squid-game"] .save-moment-btn::before {
+    content: ''; position: absolute; top: 50%; right: 18px; transform: translateY(-50%);
+    width: 58px; height: 20px; pointer-events: none; z-index: 0; opacity: 0.55;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 58 20'><circle cx='8' cy='10' r='6.4' fill='none' stroke='rgba(237,27,118,0.9)' stroke-width='2'/><polygon points='29,3 36,17 22,17' fill='none' stroke='rgba(36,159,140,0.9)' stroke-width='2'/><rect x='44' y='3.6' width='12.8' height='12.8' fill='none' stroke='rgba(237,27,118,0.9)' stroke-width='2'/></svg>") no-repeat center / contain;
+  }
+  html[data-theme="squid-game"] .menu-btn::after,
+  html[data-theme="squid-game"] .save-moment-btn::after,
+  html[data-theme="squid-game"] .booster-open-btn::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    pointer-events: none; z-index: 0;
+    box-shadow: 0 0 30px 10px rgba(255,90,170,0.92),
+                0 0 62px 22px rgba(237,27,118,0.6);
+    opacity: 0; transition: opacity 0.25s ease; will-change: opacity;
+  }
+  html[data-theme="squid-game"] .menu-btn:hover,
+  html[data-theme="squid-game"] .save-moment-btn:hover,
+  html[data-theme="squid-game"] .booster-open-btn:hover {
+    border-color: rgba(36,159,140,0.95) !important;
+  }
+  html[data-theme="squid-game"] .menu-btn:hover::after,
+  html[data-theme="squid-game"] .save-moment-btn:hover::after,
+  html[data-theme="squid-game"] .booster-open-btn:hover::after { opacity: 1; }
+  html[data-theme="squid-game"] .save-moment-btn.disabled {
+    box-shadow: none !important; color: #9a7187 !important;
+  }
+  html[data-theme="squid-game"] .save-moment-btn.disabled::before,
+  html[data-theme="squid-game"] .save-moment-btn.disabled::after { opacity: 0; }
+
+  /* "Moment sammeln" – der coolste Button (Pink↔Teal-Verlauf, nicht bei Boostern) */
+  html[data-theme="squid-game"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage) {
+    position: relative;
+    background: linear-gradient(135deg, #0d0810 0%, #ed1b76 32%, #2a0f24 52%, #249f8c 72%, #0d0810 100%) !important;
+    background-size: 250% 250% !important;
+    border: 1.5px solid rgba(237,27,118,0.75) !important;
+    color: #fff0f7 !important;
+    text-shadow: 0 0 12px rgba(255,120,185,0.8);
+    box-shadow: 0 0 18px 4px rgba(237,27,118,0.72),
+                0 0 46px 15px rgba(36,159,140,0.45),
+                0 0 96px 34px rgba(237,27,118,0.30) !important;
+    animation: squidHeartSheen 6s ease infinite;
+  }
+  html[data-theme="squid-game"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage)::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    pointer-events: none; z-index: 0;
+    box-shadow: 0 0 40px 14px rgba(255,90,170,1),
+                0 0 92px 34px rgba(237,27,118,0.9),
+                0 0 175px 72px rgba(36,159,140,0.55);
+    opacity: 0; animation: squidHeartGlow 2s ease-in-out infinite;
+    will-change: opacity;
+  }
+  html[data-theme="squid-game"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage):hover {
+    border-color: rgba(36,159,140,0.95) !important;
+  }
+  html[data-theme="squid-game"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage):hover::after {
+    animation-duration: 1s;
+  }
+  @keyframes squidHeartGlow { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+  @keyframes squidHeartSheen {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* "Wer sammelt mehr?" – Squid-Game-Karte mit ○ △ □ */
+  html[data-theme="squid-game"] .stats-section {
+    position: relative; overflow: hidden;
+    border-radius: 22px !important;
+    border: 1.5px solid rgba(237,27,118,0.55) !important;
+    background: linear-gradient(165deg, rgba(13,8,16,0.94) 0%, rgba(34,11,28,0.94) 55%, rgba(8,5,11,0.96) 100%) !important;
+    box-shadow: 0 0 22px 4px rgba(237,27,118,0.34),
+                0 0 60px 16px rgba(36,159,140,0.18),
+                inset 0 0 28px rgba(237,27,118,0.10) !important;
+  }
+  html[data-theme="squid-game"] .stats-section::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    opacity: 0.5;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><circle cx='40' cy='42' r='20' fill='none' stroke='rgba(237,27,118,0.42)' stroke-width='3'/><polygon points='150,24 176,70 124,70' fill='none' stroke='rgba(36,159,140,0.40)' stroke-width='3'/><rect x='150' y='148' width='34' height='34' fill='none' stroke='rgba(237,27,118,0.38)' stroke-width='3'/><circle cx='44' cy='160' r='14' fill='none' stroke='rgba(36,159,140,0.34)' stroke-width='3'/></svg>") no-repeat center / 78% auto;
+  }
+  html[data-theme="squid-game"] .stats-section > * { position: relative; z-index: 1; }
+  html[data-theme="squid-game"] .stats-title,
+  html[data-theme="squid-game"] .stats-today-title {
+    color: #ffd9ec !important; letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(237,27,118,0.6);
+  }
+  html[data-theme="squid-game"] .stat-label {
+    color: #f3eef2 !important; text-shadow: 0 0 8px rgba(237,27,118,0.4);
+  }
+  html[data-theme="squid-game"] .stat-count { text-shadow: 0 0 10px rgba(237,27,118,0.45); }
+  html[data-theme="squid-game"] .stat-count-andreas { color: #ed1b76 !important; }
+  html[data-theme="squid-game"] .stat-count-nele { color: #249f8c !important; }
+  html[data-theme="squid-game"] .stat-pct { opacity: 0.75; }
+  html[data-theme="squid-game"] .stat-bar-wrap {
+    border: 1px solid rgba(237,27,118,0.35);
+    background: rgba(0,0,0,0.55) !important;
+  }
+  html[data-theme="squid-game"] .stat-bar-andreas {
+    background: linear-gradient(90deg, #ff5aaa, #ed1b76) !important;
+    box-shadow: 0 0 12px rgba(237,27,118,0.7);
+  }
+  html[data-theme="squid-game"] .stat-bar-nele {
+    background: linear-gradient(90deg, #3fd6bf, #249f8c) !important;
+    box-shadow: 0 0 12px rgba(36,159,140,0.7);
+  }
+  html[data-theme="squid-game"] .stats-verdict {
+    color: #ffd9ec !important; text-shadow: 0 0 10px rgba(237,27,118,0.5);
+  }
+  html[data-theme="squid-game"] .stats-divider {
+    border-top: 1px solid rgba(237,27,118,0.4) !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html[data-theme="squid-game"] .heart-btn,
+    html[data-theme="squid-game"] .heart-btn::after { animation: none !important; }
+    html[data-theme="squid-game"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage)::after { opacity: 1; }
+  }
+
   html[data-theme="wednesday"] .image-wrapper::before,
   html[data-theme="wednesday"] .quote-card::after {
     content: ''; position: absolute; top: 0; right: 0;
