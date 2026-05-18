@@ -2808,6 +2808,8 @@
 
   onValue(momentsRef, s => {
     _momentsTotalBase = s.val() || 0;
+    if (_autoTarget < _momentsTotalBase) _autoTarget = _momentsTotalBase;
+    _recalcAutoPending();
     renderHeartCount();
   });
 
@@ -2875,12 +2877,25 @@
   let _mailOpenId = null;         // aktuell geöffnete Nachricht (Detail-Ansicht)
   let _mailLastUnread = null;     // letzte bekannte Ungelesen-Zahl (für Live-Hinweis)
   let autoclickInterval        = null;
+  let autoclickFlushInterval   = null;
   let sabotageClickCounter     = 0;
+  // Autoklicker: optimistische Anzeige (flackerfrei via max-Reconcile) +
+  // gebündelte Firebase-Writes (1×/Sek statt pro Tick).
+  let _autoTarget              = 0;   // angestrebter sichtbarer moments/count-Stand
+  let _autoContributed         = 0;   // lokal getickte Momente (zum Schreiben)
+  let _autoWritten             = 0;   // davon bereits nach Firebase geschrieben
+  let _autoCoinsContributed    = 0;
+  let _autoCoinsWritten        = 0;
+  let _autoLastClick           = null;
+  function _recalcAutoPending() {
+    window._pending = window._pending || {};
+    window._pending.moments = Math.max(0, _autoTarget - _momentsTotalBase);
+  }
 
   const BOOSTER_DEFS = {
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                        durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                        durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
-    autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 3 Minuten lang 5×/Sekunde automatisch für dich', durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
+    autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 2 Minuten lang 10×/Sekunde automatisch für dich', durationMs: 2 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
     sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
     spam_booster:        { emoji: '📺', name: 'Popup-Hack',       desc: 'Spammt den Gegner 90 Sek. lang mit nervigen Hacker-Popups zu – auf jeder Seite', durationMs: 90 * 1000, target: 'opponent', activeKey: 'active_spam' },
     anti_hack_booster:   { emoji: '🛡️', name: 'Gegen-Hack',       desc: 'Bricht einen laufenden Hack sofort ab – manuell hier aktivieren', target: 'self' },
@@ -2900,19 +2915,82 @@
   }
 
   // ---- AUTO-KLICKER ----
+  // Pro Tick (100 ms) wird die Anzeige optimistisch hochgezählt; die
+  // Firebase-Writes werden gebündelt einmal pro Sekunde geflusht.
+  function autoClickTick() {
+    const user = window.currentUser;
+    if (!user) return;
+    // Sabotage-Gate: nur jeder 10. Klick zählt
+    if (isBoosterActive(activeSabotage)) {
+      sabotageClickCounter++;
+      if (sabotageClickCounter % 10 !== 0) {
+        heartCount.classList.remove('bump');
+        void heartCount.offsetWidth;
+        heartCount.classList.add('bump');
+        return;
+      }
+    }
+    const momentBoost = isBoosterActive(activeBoosterMoments) ? 2 : 1;
+    const coinAmount  = isBoosterActive(activeBoosterCoin)    ? 2 : 1;
+    _autoContributed      += momentBoost;
+    _autoCoinsContributed += coinAmount;
+    _autoTarget           += momentBoost;
+    _autoLastClick = { name: user, time: Date.now() };
+    lastClickEl.textContent = 'Letzter Moment von ' + user + (user === 'Andreas' ? ' 🐾' : ' 🌸');
+    spawnCoin(0, 0, coinAmount);
+    heartCount.classList.remove('bump');
+    void heartCount.offsetWidth;
+    heartCount.classList.add('bump');
+    _recalcAutoPending();
+    renderHeartCount();
+  }
+
+  function flushAutoclicks() {
+    const user = window.currentUser;
+    if (!user) return;
+    const dM = _autoContributed      - _autoWritten;
+    const dC = _autoCoinsContributed - _autoCoinsWritten;
+    if (dM <= 0 && dC <= 0) return;
+    const userKey  = user.toLowerCase();
+    const uRef     = userKey === 'andreas' ? andreasRef : neleRef;
+    const todayRef = userKey === 'andreas' ? andreasRefToday : neleRefToday;
+    if (dM > 0) {
+      runTransaction(momentsRef, v => (v||0) + dM);
+      runTransaction(uRef,       v => (v||0) + dM);
+      runTransaction(todayRef,   v => (v||0) + dM);
+      _autoWritten = _autoContributed;
+    }
+    if (dC > 0) {
+      runTransaction(ref(db, `coins/${userKey}`),             v => (v||0) + dC).catch(err => console.error('Coin-Fehler:', err));
+      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), v => (v||0) + dC).catch(err => console.error('Stats-Fehler:', err));
+      _autoCoinsWritten = _autoCoinsContributed;
+    }
+    if (_autoLastClick) set(lastClickRef, _autoLastClick);
+  }
+
   function updateAutoclicker() {
     const active = isBoosterActive(activeBoosterAutoclicker);
     if (active && !autoclickInterval) {
+      _autoTarget = _momentsTotalBase;
+      _autoContributed = 0; _autoWritten = 0;
+      _autoCoinsContributed = 0; _autoCoinsWritten = 0;
+      _autoLastClick = null;
       autoclickInterval = setInterval(() => {
         if (!isBoosterActive(activeBoosterAutoclicker)) { updateAutoclicker(); return; }
-        performClick({ auto: true });
-      }, 200); // 5×/Sekunde
+        autoClickTick();
+      }, 100); // 10×/Sekunde
+      autoclickFlushInterval = setInterval(flushAutoclicks, 1000);
     } else if (!active && autoclickInterval) {
       clearInterval(autoclickInterval);
       autoclickInterval = null;
+      if (autoclickFlushInterval) { clearInterval(autoclickFlushInterval); autoclickFlushInterval = null; }
+      flushAutoclicks();
     }
     updateHeartFx();
   }
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushAutoclicks(); });
+  window.addEventListener('pagehide', flushAutoclicks);
 
   // ---- SABOTAGE (Opfer-Sicht): Hinweis-Modal → Start ----
   function handleSabotageState() {

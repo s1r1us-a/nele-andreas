@@ -46,10 +46,15 @@ if (!document.getElementById('heartBtn')) {
   let activeMoments        = null;
   let activeCoins          = null;
   let activeSabotage       = null;
-  let autoclickInterval    = null;
-  let sabotageClickCounter = 0;
+  let autoclickInterval      = null;
+  let autoclickFlushInterval = null;
+  let sabotageClickCounter   = 0;
+  let pendMoments            = 0;   // akkumulierte Momente bis zum Flush
+  let pendCoins              = 0;
+  let pendLastClick          = null;
 
-  function performAutoClick() {
+  // Headless: kein sichtbarer Zähler -> nur akkumulieren, gebündelt schreiben.
+  function autoClickTick() {
     if (!userKey) return;
 
     // Sabotage-Gate: nur jeder 10. Klick zählt (wie index.html)
@@ -60,36 +65,56 @@ if (!document.getElementById('heartBtn')) {
 
     const momentBoost = isBoosterActive(activeMoments) ? 2 : 1;
     const coinAmount  = isBoosterActive(activeCoins)   ? 2 : 1;
-    const now         = Date.now();
-    const name        = userKey === 'andreas' ? 'Andreas' : 'Nele';
-    const today       = getGermanDate();
+    pendMoments  += momentBoost;
+    pendCoins    += coinAmount;
+    pendLastClick = { name: userKey === 'andreas' ? 'Andreas' : 'Nele', time: Date.now() };
+  }
 
-    runTransaction(ref(db, 'moments/count'),                c => (c || 0) + momentBoost);
-    runTransaction(ref(db, `moments/${userKey}`),           c => (c || 0) + momentBoost);
-    runTransaction(ref(db, `moments/daily/${today}/${userKey}`), c => (c || 0) + momentBoost);
-    runTransaction(ref(db, `coins/${userKey}`),             c => (c || 0) + coinAmount).catch(err => console.error('Coin-Fehler:', err));
-    runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + coinAmount).catch(err => console.error('Stats-Fehler:', err));
-    set(ref(db, 'moments/lastClick'), { name, time: now });
+  function flushAutoclicks() {
+    if (!userKey) return;
+    const m = pendMoments, c = pendCoins;
+    if (m <= 0 && c <= 0) return;
+    const today = getGermanDate();
+    if (m > 0) {
+      runTransaction(ref(db, 'moments/count'),                     v => (v || 0) + m);
+      runTransaction(ref(db, `moments/${userKey}`),                v => (v || 0) + m);
+      runTransaction(ref(db, `moments/daily/${today}/${userKey}`), v => (v || 0) + m);
+    }
+    if (c > 0) {
+      runTransaction(ref(db, `coins/${userKey}`),             v => (v || 0) + c).catch(err => console.error('Coin-Fehler:', err));
+      runTransaction(ref(db, `stats/${userKey}/coinsEarned`), v => (v || 0) + c).catch(err => console.error('Stats-Fehler:', err));
+    }
+    if (pendLastClick) set(ref(db, 'moments/lastClick'), pendLastClick);
+    pendMoments = 0; pendCoins = 0;
   }
 
   function updateAutoclicker() {
     const active = isBoosterActive(activeAutoclicker);
     if (active && !autoclickInterval) {
+      pendMoments = 0; pendCoins = 0; pendLastClick = null;
       autoclickInterval = setInterval(() => {
         if (!isBoosterActive(activeAutoclicker)) { updateAutoclicker(); return; }
-        performAutoClick();
-      }, 200); // 5×/Sekunde
+        autoClickTick();
+      }, 100); // 10×/Sekunde
+      autoclickFlushInterval = setInterval(flushAutoclicks, 1000);
     } else if (!active && autoclickInterval) {
       clearInterval(autoclickInterval);
       autoclickInterval = null;
+      if (autoclickFlushInterval) { clearInterval(autoclickFlushInterval); autoclickFlushInterval = null; }
+      flushAutoclicks();
     }
     if (!isBoosterActive(activeSabotage)) sabotageClickCounter = 0;
   }
 
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushAutoclicks(); });
+  window.addEventListener('pagehide', flushAutoclicks);
+
   onAuthStateChanged(auth, user => {
     if (!user || !user.email) {
+      flushAutoclicks();
       userKey = null;
       if (autoclickInterval) { clearInterval(autoclickInterval); autoclickInterval = null; }
+      if (autoclickFlushInterval) { clearInterval(autoclickFlushInterval); autoclickFlushInterval = null; }
       return;
     }
     userKey = displayName(user.email).toLowerCase();
