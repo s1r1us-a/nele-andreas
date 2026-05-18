@@ -2516,20 +2516,23 @@
       return;
     }
 
+    // Gegner-Booster: nicht erneut starten, solange einer wartet/läuft
+    // (sonst würde der laufende/wartende Effekt beim Opfer zurückgesetzt).
+    // Prüfung VOR dem Inventar-Abzug, damit kein Booster verloren geht.
+    if (def.target === 'opponent') {
+      const oppKey   = key === 'andreas' ? 'nele' : 'andreas';
+      const existing = (await get(ref(db, `boosters/${oppKey}/${def.activeKey}`))).val();
+      const stillActive = existing && (
+        existing.pending ||
+        (existing.activatedAt && Date.now() < existing.activatedAt + (existing.durationMs || 0))
+      );
+      if (stillActive) { alert('💻 Gegner wird bereits gehackt!'); return; }
+    }
+
     if (def.target === 'opponent') {
       const opponentKey = key === 'andreas' ? 'nele' : 'andreas';
-      if (def.activeKey === 'active_spam') {
-        // Sofort, ohne Pending/Modal – wirkt seitenübergreifend
-        const ex = (await get(ref(db, `boosters/${opponentKey}/active_spam`))).val();
-        if (ex && ex.activatedAt && Date.now() < ex.activatedAt + (ex.durationMs || 90000)) {
-          alert('📺 Gegner wird schon zugespammt!'); return;
-        }
-        await set(ref(db, `boosters/${key}/inventory/${id}`), count - 1);
-        await set(ref(db, `boosters/${opponentKey}/active_spam`), { activatedAt: Date.now(), durationMs: def.durationMs, from: user });
-      } else {
-        await set(ref(db, `boosters/${key}/inventory/${id}`), count - 1);
-        await set(ref(db, `boosters/${opponentKey}/${def.activeKey}`), { durationMs: def.durationMs, from: user, pending: true });
-      }
+      await set(ref(db, `boosters/${key}/inventory/${id}`), count - 1);
+      await set(ref(db, `boosters/${opponentKey}/${def.activeKey}`), { durationMs: def.durationMs, from: user, pending: true });
     } else {
       await set(ref(db, `boosters/${key}/inventory/${id}`), count - 1);
       await set(ref(db, `boosters/${key}/${def.activeKey}`), { activatedAt: Date.now(), durationMs: def.durationMs });

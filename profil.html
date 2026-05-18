@@ -1132,8 +1132,8 @@
     if (def.target === 'opponent') {
       const opponentKey = key === 'andreas' ? 'nele' : 'andreas';
       if (def.activeKey === 'active_spam') {
-        await set(ref(db, `boosters/${opponentKey}/active_spam`), { activatedAt: Date.now(), durationMs: def.durationMs, from: currentUser });
-        showToast(`📺 ${def.name} gestartet! Der Gegner wird zugespammt.`);
+        await set(ref(db, `boosters/${opponentKey}/active_spam`), { durationMs: def.durationMs, from: currentUser, pending: true });
+        showToast(`📺 ${def.name} gestartet! Der Gegner wird benachrichtigt.`);
       } else {
         await set(ref(db, `boosters/${opponentKey}/${def.activeKey}`), { durationMs: def.durationMs, from: currentUser, pending: true });
         showToast(`💻 ${def.name} gestartet! Der Gegner wird benachrichtigt.`);
