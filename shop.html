@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop 🛍️ – Nele & Andreas</title>
+<script>
+  // Theme sofort (vor dem ersten Paint) aus dem letzten bekannten Wert setzen,
+  // damit es ohne Flackern aktiv ist. Firebase bleibt die Quelle und korrigiert.
+  try {
+    var t = localStorage.getItem('activeTheme');
+    if (t) document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="princess-theme.css">
 <style>
@@ -1654,6 +1662,14 @@
       document.body.style.background = '';
     }
   }
+
+  // Theme sofort vollständig aus localStorage anwenden (Variablen, Gradient),
+  // ohne auf die Firebase-Antwort zu warten. Firebase korrigiert danach nur
+  // noch im Hintergrund.
+  try {
+    const cachedTheme = localStorage.getItem('activeTheme');
+    if (cachedTheme) applyTheme(cachedTheme);
+  } catch (e) {}
 
   function buildThemeCard(t) {
     const isOwned = ownedThemes.includes(t.id);
