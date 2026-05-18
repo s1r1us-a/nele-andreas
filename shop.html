@@ -9,7 +9,9 @@
   // damit es ohne Flackern aktiv ist. Firebase bleibt die Quelle und korrigiert.
   try {
     var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
-    var t = localStorage.getItem('activeTheme' + dev) || localStorage.getItem('activeTheme');
+    var spec = localStorage.getItem('activeTheme' + dev);
+    var anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    var t = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
     if (t) document.documentElement.setAttribute('data-theme', t);
   } catch (e) {}
 </script>
@@ -1777,7 +1779,11 @@
   function resolveDeviceTheme() {
     const dev = getDeviceType();
     const specific = dev === 'mobile' ? activeThemeMobile : activeThemeDesktop;
-    return specific || activeTheme || 'sakura';
+    if (specific) return specific;
+    // Sobald irgendein Geräte-Wert gesetzt ist, gilt "pro Gerät":
+    // fehlender Wert => Standard, NICHT der (evtl. veraltete) Legacy-Wert.
+    if (activeThemeMobile || activeThemeDesktop) return 'sakura';
+    return activeTheme || 'sakura';
   }
 
   // ---- UTILS ----
@@ -1874,8 +1880,9 @@
   // noch im Hintergrund.
   try {
     const dev = getDeviceType();
-    const cachedTheme = localStorage.getItem(dev === 'mobile' ? 'activeThemeMobile' : 'activeThemeDesktop')
-      || localStorage.getItem('activeTheme');
+    const spec = localStorage.getItem(dev === 'mobile' ? 'activeThemeMobile' : 'activeThemeDesktop');
+    const anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    const cachedTheme = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
     if (cachedTheme) applyTheme(cachedTheme);
   } catch (e) {}
 
@@ -2037,6 +2044,10 @@
     }
     const setMobile = scope === 'mobile' || scope === 'both';
     const setDesktop = scope === 'desktop' || scope === 'both';
+    // Nur das/die gewählte(n) Gerät(e) schreiben. Der Legacy-Wert
+    // (shop/<user>/activeTheme) bleibt UNVERÄNDERT als Migrations-Fallback,
+    // damit das nicht gewählte Gerät seinen alten Wert behält und nicht
+    // versehentlich das neue Theme erbt.
     if (setMobile) {
       activeThemeMobile = themeId;
       try { localStorage.setItem('activeThemeMobile', themeId); } catch(e) {}
@@ -2047,10 +2058,6 @@
       try { localStorage.setItem('activeThemeDesktop', themeId); } catch(e) {}
       await set(ref(db, `shop/${userKey}/activeThemeDesktop`), themeId);
     }
-    // Legacy-Wert als Fallback mitschreiben
-    activeTheme = themeId;
-    try { localStorage.setItem('activeTheme', themeId); } catch(e) {}
-    await set(ref(db, `shop/${userKey}/activeTheme`), themeId);
     // Nur anwenden, wenn das aktuelle Gerät betroffen ist
     const dev = getDeviceType();
     if ((dev === 'mobile' && setMobile) || (dev === 'desktop' && setDesktop)) {
