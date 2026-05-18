@@ -160,6 +160,44 @@ function startWatchingOther(meKey) {
   renderOther();
 }
 
+// ---------- Detaillierte Statusanzeige auf Profilseiten ----------
+function startProfilePresence() {
+  const el = document.getElementById('profilePresence');
+  if (!el) return;
+  let subscribedKey = null;
+  let data = null;
+
+  function render() {
+    const key = el.dataset.player;
+    if (!key) { el.style.display = 'none'; return; }
+    const status = classify(data);
+    el.classList.remove('is-online', 'is-afk', 'is-offline');
+    el.classList.add('is-' + status);
+    const nice  = key.charAt(0).toUpperCase() + key.slice(1);
+    const where = (status !== 'offline' && data && data.page) ? data.page : '';
+    const word  = status === 'online' ? 'Online' : status === 'afk' ? 'AFK' : 'Offline';
+    const txt   = status === 'offline'
+      ? nice + ' ist offline'
+      : nice + ' ist ' + word + (where ? ' – ' + where : '');
+    el.innerHTML = '<span class="pp-dot"></span><span>' + txt + '</span>';
+    el.style.display = 'inline-flex';
+  }
+
+  function sync() {
+    const key = el.dataset.player;
+    if (key && key !== subscribedKey) {
+      subscribedKey = key;
+      onValue(ref(db, 'presence/' + key), snap => { data = snap.val(); render(); });
+    }
+    render();
+  }
+
+  new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['data-player'] });
+  setInterval(render, 30 * 1000);
+  sync();
+}
+startProfilePresence();
+
 // ---------- Auth ----------
 let watchingStarted = false;
 onAuthStateChanged(auth, user => {
