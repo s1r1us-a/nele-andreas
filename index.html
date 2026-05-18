@@ -3320,6 +3320,9 @@
     clearTimeout(_mailNotifyTimer);
   }
   function showMailNotify(msg, count) {
+    // Alter Auto-Toast deaktiviert: message-notify.js zeigt jetzt seitenweit
+    // ein manuell wegzuklickendes Modal für neue Post.
+    return;
     const n = document.getElementById('mailNotify');
     if (!n) return;
     const titleEl = document.getElementById('mailNotifyTitle');
@@ -4593,3 +4596,4 @@
 </script>
 <script type="module" src="spamhack.js"></script>
 <script type="module" src="presence.js"></script>
+<script type="module" src="message-notify.js"></script>
