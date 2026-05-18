@@ -309,6 +309,29 @@
   /* KONFETTI */
   .konfetti-piece { position: fixed; pointer-events: none; z-index: 9999998; border-radius: 3px; animation: konfettiFall linear forwards; }
   @keyframes konfettiFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+  .redeem-emoji-piece { position: fixed; pointer-events: none; z-index: 9999998; line-height: 1; animation: konfettiFall linear forwards; will-change: transform, opacity; }
+  @keyframes redeemCardPop {
+    0%   { opacity: 0; transform: scale(0.55) translateY(28px); }
+    55%  { opacity: 1; transform: scale(1.06) translateY(-6px); }
+    72%  { transform: scale(0.97) translateY(2px); }
+    86%  { transform: scale(1.02); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .redeem-celebrate { animation: redeemCardPop 0.62s cubic-bezier(0.18, 0.9, 0.32, 1.25) both; }
+  @keyframes redeemEmojiPop {
+    0%   { transform: scale(0.4) rotate(-18deg); }
+    35%  { transform: scale(1.5) rotate(12deg); }
+    55%  { transform: scale(0.92) rotate(-8deg); }
+    72%  { transform: scale(1.18) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .redeem-emoji-celebrate { display: inline-block; animation: redeemEmojiPop 0.9s ease-out 0.12s both; }
+  .redeem-glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 9999997;
+    background: radial-gradient(circle at 50% 45%, rgba(255,215,120,0.55) 0%, rgba(255,150,190,0.32) 28%, rgba(255,255,255,0) 62%);
+    animation: redeemGlow 1.1s ease-out forwards;
+  }
+  @keyframes redeemGlow { 0%{opacity:0;transform:scale(0.6)} 22%{opacity:1} 100%{opacity:0;transform:scale(1.45)} }
 
   /* REWARD TYPE RAHMEN */
   .reward-type.frame-bronze    { color: #9c6b3f; }
@@ -2170,6 +2193,10 @@
     if (category === 'items_rare')   return { pool: FARM_ITEMS_RARE,   sub: 'items' };
     if (category === 'ores_common')  return { pool: FARM_ORES_COMMON,  sub: 'ores'  };
     if (category === 'ores_rare')    return { pool: FARM_ORES_RARE,    sub: 'ores'  };
+    if (category === 'ores_epic')    return { pool: FARM_ORES_EPIC,    sub: 'ores'  };
+    if (category === 'bakery')       return { pool: FARM_BAKERY,        sub: 'bakery' };
+    if (category === 'accessories')  return { pool: FARM_ACCESSORIES,   sub: 'accessories' };
+    if (category === 'jewelry')      return { pool: FARM_JEWELRY,       sub: 'jewelry' };
     return { pool: FARM_ORES_EPIC, sub: 'ores' };
   }
 
@@ -2190,6 +2217,7 @@
       list.appendChild(li);
     });
     document.getElementById('redeemResultOverlay').classList.add('open');
+    if (success) celebrateRedeem();
   }
 
   async function redeemCode() {
@@ -2551,6 +2579,46 @@
     { id: 'amethyst', name: 'Amethyst', icon: '💜', min: 1, max: 1 },
     { id: 'smaragd',  name: 'Smaragd',  icon: '💚', min: 1, max: 1 }
   ];
+  const FARM_BAKERY = [
+    { id: 'salad',             name: 'Radieschen-Salat',   icon: '🥗' },
+    { id: 'popcorn',           name: 'Popcorn',            icon: '🍿' },
+    { id: 'bread',             name: 'Rustikales Brot',    icon: '🍞' },
+    { id: 'oatmilk',           name: 'Hafermilch',         icon: '🥛' },
+    { id: 'tomatosoup',        name: 'Tomatensuppe',       icon: '🍲' },
+    { id: 'carrotcake',        name: 'Karottenkuchen',     icon: '🥧' },
+    { id: 'goatcheese',        name: 'Ziegenkäse',         icon: '🧀' },
+    { id: 'cornbread',         name: 'Maisbrot',           icon: '🥖' },
+    { id: 'bluemuffin',        name: 'Blue Muffin',        icon: '🧁' },
+    { id: 'sunfloweroil',      name: 'Sonnenblumenöl',     icon: '🧴' },
+    { id: 'trufflesauce',      name: 'Trüffelsoße',        icon: '🍄' },
+    { id: 'cake',              name: 'Premium Torte',      icon: '🍰' },
+    { id: 'pizza',             name: 'Pizza',              icon: '🍕' },
+    { id: 'honeycake',         name: 'Honigkuchen',        icon: '🍯' },
+    { id: 'mondlichtmacarons', name: 'Mondlicht-Macarons', icon: '🌠' }
+  ];
+  const FARM_ACCESSORIES = [
+    { id: 'strawhat',       name: 'Strohhut',            icon: '👒' },
+    { id: 'porkpie',        name: 'Schwarzer Hut',       icon: '🎩' },
+    { id: 'spectrespecs',   name: 'Gespensterbrille',    icon: '👓' },
+    { id: 'featherboa',     name: 'Federboa',            icon: '🪶' },
+    { id: 'sunhat',         name: 'Sonnenhut',           icon: '🌞' },
+    { id: 'radishearrings', name: 'Radieschen-Ohrringe', icon: '🧅' },
+    { id: 'flowercrown',    name: 'Blumenkranz',         icon: '🌸' },
+    { id: 'goldenbridle',   name: 'Goldenes Zaumzeug',   icon: '🏅' },
+    { id: 'unicornplush',   name: 'Einhorn-Plüschie',    icon: '🦄' }
+  ];
+  const FARM_JEWELRY = [
+    { id: 'kupferarmband',         name: 'Kupferarmband',          icon: '📿' },
+    { id: 'eisenring',             name: 'Eisenring',              icon: '💍' },
+    { id: 'kupfersilberkette',     name: 'Kupfer-Silber-Kette',    icon: '📿' },
+    { id: 'silberring',            name: 'Silberring',             icon: '💍' },
+    { id: 'eisengoldanhaenger',    name: 'Eisen-Gold-Anhänger',    icon: '✨' },
+    { id: 'goldring',              name: 'Goldring',               icon: '💍' },
+    { id: 'silberamethystohrring', name: 'Silber-Amethyst-Ohrring', icon: '💜' },
+    { id: 'amethystbrosche',       name: 'Amethyst-Brosche',       icon: '🔮' },
+    { id: 'goldsmaragdhalskette',  name: 'Gold-Smaragd-Halskette', icon: '📿' },
+    { id: 'koenigskrone',          name: 'Prinzesschenkrönchen',   icon: '👑' }
+  ];
 
   function rollLootbox() {
     const r = Math.random() * 100;
@@ -2602,6 +2670,55 @@
       el.style.cssText = `width:${size}px;height:${size*(0.4+Math.random()*0.6)}px;left:${Math.random()*100}vw;top:${-20-Math.random()*40}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;transform:rotate(${Math.random()*360}deg);border-radius:${Math.random()>0.5?'50%':'3px'};`;
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 4000);
+    }
+  }
+
+  function spawnKonfettiWave(count) {
+    const colors = ['#e8738a','#f5a3b5','#d4a061','#a78bfa','#4ecdc4','#fbbf24','#ec4899','#22c55e','#fde047','#60a5fa'];
+    const emojis = ['🎉','✨','🎊','⭐','💖','🌟'];
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      const dur = 1.8 + Math.random() * 2.2;
+      const delay = Math.random() * 0.6;
+      const left = Math.random() * 100;
+      const top = -20 - Math.random() * 60;
+      if (Math.random() < 0.32) {
+        el.className = 'redeem-emoji-piece';
+        el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        el.style.cssText = `font-size:${16 + Math.random() * 20}px;left:${left}vw;top:${top}px;animation-duration:${dur}s;animation-delay:${delay}s;transform:rotate(${Math.random()*360}deg);`;
+      } else {
+        el.className = 'konfetti-piece';
+        const size = 6 + Math.random() * 11;
+        el.style.cssText = `width:${size}px;height:${size*(0.4+Math.random()*0.6)}px;left:${left}vw;top:${top}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${dur}s;animation-delay:${delay}s;transform:rotate(${Math.random()*360}deg);border-radius:${Math.random()>0.5?'50%':'3px'};`;
+      }
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+
+  function celebrateRedeem() {
+    spawnKonfettiWave(70);
+    setTimeout(() => spawnKonfettiWave(55), 220);
+    setTimeout(() => spawnKonfettiWave(45), 480);
+
+    const glow = document.createElement('div');
+    glow.className = 'redeem-glow';
+    document.body.appendChild(glow);
+    setTimeout(() => glow.remove(), 1300);
+
+    const card = document.querySelector('#redeemResultOverlay .confirm-card');
+    if (card) {
+      card.classList.remove('redeem-celebrate');
+      void card.offsetWidth;
+      card.classList.add('redeem-celebrate');
+      card.addEventListener('animationend', () => card.classList.remove('redeem-celebrate'), { once: true });
+    }
+    const emoji = document.getElementById('redeemResultEmoji');
+    if (emoji) {
+      emoji.classList.remove('redeem-emoji-celebrate');
+      void emoji.offsetWidth;
+      emoji.classList.add('redeem-emoji-celebrate');
+      emoji.addEventListener('animationend', () => emoji.classList.remove('redeem-emoji-celebrate'), { once: true });
     }
   }
 
