@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Mein Profil 🐾</title>
+  <script>
+    // Theme sofort (vor dem ersten Paint) aus dem letzten bekannten Wert
+    // setzen, damit es ohne Flackern aktiv ist. Firebase korrigiert danach.
+    try {
+      var t = localStorage.getItem('activeTheme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="princess-theme.css">
   <style>
@@ -2054,6 +2062,14 @@
     if (bg) bg.style.background = _P_THEME_GRADIENTS[themeId] || _P_THEME_GRADIENTS.sakura;
     document.body.style.background = _P_DARK_UI[themeId] ? vars.cream : '';
   }
+
+  // Theme sofort vollständig aus localStorage anwenden (Variablen, Gradient),
+  // ohne auf die Firebase-Antwort zu warten. Firebase korrigiert danach nur
+  // noch im Hintergrund.
+  try {
+    const cachedTheme = localStorage.getItem('activeTheme');
+    if (cachedTheme) applyProfilTheme(cachedTheme);
+  } catch (e) {}
   // ── END THEME SYSTEM ────────────────────────────────────────────────────
 
   onAuthStateChanged(auth, user => {
