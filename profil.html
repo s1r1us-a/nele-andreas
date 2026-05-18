@@ -84,6 +84,12 @@
     .profile-header { text-align: center; margin-bottom: 8px; }
     .profile-title { font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-top: 14px; margin-bottom: 4px; }
     .profile-subtitle { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); font-weight: 600; }
+    .profile-presence { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px; padding: 5px 14px; border-radius: 50px; font-size: 13px; font-weight: 700; background: var(--ui-btn-bg, rgba(0,0,0,0.05)); color: var(--text-mid); }
+    .profile-presence .pp-dot { width: 10px; height: 10px; border-radius: 50%; background: #9aa0a6; flex-shrink: 0; }
+    .profile-presence.is-offline .pp-dot { background: #9aa0a6; }
+    .profile-presence.is-afk .pp-dot { background: #f1c40f; }
+    .profile-presence.is-online .pp-dot { background: #2ecc71; animation: ppPulse 2s ease-in-out infinite; }
+    @keyframes ppPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.55); } 50% { box-shadow: 0 0 0 5px rgba(46,204,113,0); } }
 
     /* AVATAR */
     .initials-avatar { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 36px; font-weight: 700; color: white; background: linear-gradient(135deg, var(--rose), #c85070); margin: 0 auto; transition: box-shadow 0.3s ease; }
@@ -724,6 +730,7 @@
     <div class="initials-avatar" id="profileAvatar">?</div>
     <div class="profile-title" id="profileTitle">Mein Profil</div>
     <div class="profile-subtitle" id="profileSubtitle"></div>
+    <div id="profilePresence" class="profile-presence" data-player="" style="display:none;"></div>
     <div id="activeBadgePill" style="display:none;" class="badge-pill">
       <span id="activeBadgeEmoji">🐾</span>
       <span id="activeBadgeName"></span>
@@ -1727,6 +1734,7 @@
       document.getElementById('profileTitle').textContent    = setTitle(otherUser);
       document.getElementById('profileSubtitle').textContent = otherEmoji + ' ' + otherUser;
       document.getElementById('profileAvatar').textContent   = otherUser[0].toUpperCase();
+      document.getElementById('profilePresence').dataset.player = otherUser.toLowerCase();
       // Sections verstecken
       const hide = ['readonlyBadge','badgeHint','frameHint','boosterSection','accountSection'];
       hide.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = id === 'readonlyBadge' ? 'inline-flex' : 'none'; });
@@ -1751,6 +1759,7 @@
       document.getElementById('profileTitle').textContent    = setTitle(loggedInUserName);
       document.getElementById('profileSubtitle').textContent = user.email;
       document.getElementById('profileAvatar').textContent   = getUserInitial();
+      document.getElementById('profilePresence').dataset.player = loggedInUserName.toLowerCase();
       // Anderen besuchen Button
       const vBtn = document.getElementById('visitOtherBtn');
       if (vBtn) { vBtn.href = 'profil.html?user=' + otherUser.toLowerCase(); vBtn.style.display = 'inline-flex'; }
