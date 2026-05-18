@@ -9,7 +9,9 @@
   // damit es ohne Reload aktiv ist. Firebase bleibt die Quelle und korrigiert.
   try {
     var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
-    var t = localStorage.getItem('activeTheme' + dev) || localStorage.getItem('activeTheme');
+    var spec = localStorage.getItem('activeTheme' + dev);
+    var anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    var t = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
     if (t) document.documentElement.setAttribute('data-theme', t);
   } catch (e) {}
 </script>
@@ -2627,7 +2629,10 @@
           if (mob) localStorage.setItem('activeThemeMobile', mob);
           if (desk) localStorage.setItem('activeThemeDesktop', desk);
         } catch (e) {}
-        const theme = (getDeviceType() === 'mobile' ? mob : desk) || legacy;
+        const specific = getDeviceType() === 'mobile' ? mob : desk;
+        // Sobald irgendein Geräte-Wert existiert => "pro Gerät";
+        // fehlend = Standard, NICHT der evtl. veraltete Legacy-Wert.
+        const theme = specific || ((mob || desk) ? null : legacy);
         if (theme) applyTheme(theme);
       });
       // Load badges
@@ -4183,8 +4188,10 @@
   }
   function resolveCachedTheme() {
     const dev = getDeviceType();
-    return localStorage.getItem(dev === 'mobile' ? 'activeThemeMobile' : 'activeThemeDesktop')
-      || localStorage.getItem('activeTheme');
+    const spec = localStorage.getItem(dev === 'mobile' ? 'activeThemeMobile' : 'activeThemeDesktop');
+    if (spec) return spec;
+    const anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    return anyDev ? null : localStorage.getItem('activeTheme');
   }
   window.applyTheme = function(themeId) {
     const vars = THEME_VARS[themeId];
