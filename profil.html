@@ -515,6 +515,7 @@
     .booster-confirm-yes:hover { transform: scale(1.03); }
     .booster-confirm-no { flex: 1; background: transparent; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
     .booster-confirm-no:hover { border-color: var(--rose); color: var(--rose); }
+    .booster-confirm-yes.danger { background: linear-gradient(135deg,#e85070,#c83a58); box-shadow:0 4px 14px rgba(232,80,112,0.4); }
 
     /* ADMIN PANEL */
     .admin-card { max-width: 360px; }
@@ -531,6 +532,9 @@
     .admin-toggle-btn.is-unlocked { background: rgba(34,197,94,0.15); color: #16a34a; border: 1.5px solid rgba(34,197,94,0.35); }
     .admin-toggle-btn.is-locked { background: rgba(232,80,112,0.15); color: #c85070; border: 1.5px solid rgba(232,80,112,0.4); }
     .redeem-form { display:flex; flex-direction:column; gap:8px; background:rgba(212,160,97,0.08); border-radius:14px; padding:12px; margin-bottom:14px; }
+    .redeem-draft-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .redeem-draft-label { font-size:12px; font-weight:800; color:var(--text-dark); text-transform:uppercase; letter-spacing:0.4px; }
+    .redeem-draft-remove { flex-shrink:0; border:1.5px solid rgba(232,80,112,0.4); background:rgba(232,80,112,0.15); color:#c85070; border-radius:50px; padding:5px 12px; font-family:'Quicksand',sans-serif; font-size:11px; font-weight:700; cursor:pointer; }
     .redeem-field { width:100%; border:1.5px solid rgba(232,115,138,0.25); border-radius:10px; padding:9px 12px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:600; color:var(--ui-input-color,#5a4a52); background:var(--ui-input-bg,#fff); outline:none; }
     .redeem-field:focus { border-color:var(--rose); }
     .redeem-reward-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; background:rgba(255,255,255,0.55); border:1px solid rgba(212,160,97,0.2); border-radius:12px; padding:8px; }
@@ -973,6 +977,19 @@
   </div>
 </div>
 
+<div class="booster-confirm-overlay" id="codeDeleteOverlay" style="z-index:100000;">
+  <div class="booster-confirm-card">
+    <span class="booster-confirm-emoji">🗑️</span>
+    <div class="booster-confirm-title">Code wirklich löschen?</div>
+    <div class="booster-confirm-text" id="codeDeleteText"></div>
+    <div class="booster-confirm-warn">⚠️ Das kann nicht rückgängig gemacht werden!</div>
+    <div class="booster-confirm-btns">
+      <button class="booster-confirm-no" id="codeDeleteNo">Abbrechen</button>
+      <button class="booster-confirm-yes danger" id="codeDeleteYes">Endgültig löschen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="page" id="profilePage" style="display:none;">
@@ -1212,6 +1229,7 @@
   let activeBoosterAutoclicker = null;
   let activeSabotageOnOpponent = null; // Sabotage, die der aktuelle User dem Gegner verpasst hat
   let pendingBoosterId     = null;
+  let pendingDeleteCodeId  = null;
   let boosterCountdownInterval = null;
 
   const BOOSTER_DEFS = {
@@ -1595,7 +1613,7 @@
   const REWARD_TYPE_LABELS = { coins: '🪙 Coins', booster: '🚀 Booster', theme: '🎨 Theme', farm: '🌱 Farm-Item' };
 
   let redeemCodes = {};
-  let redeemFormState = { code: '', rewards: [] };
+  let redeemDraftCodes = [{ code: '', rewards: [] }];
   let adminActiveTab = null;
 
   function renderAdminPanel() {
@@ -1681,7 +1699,7 @@
     return { type: 'farm', category: 'seeds', itemId: REDEEM_CATALOG.farm.seeds[0].id, amount: 1 };
   }
 
-  function buildRewardRow(reward, idx, rerender) {
+  function buildRewardRow(reward, rewardsArr, idx, rerender) {
     const row = document.createElement('div');
     row.className = 'redeem-reward-row';
 
@@ -1693,7 +1711,7 @@
       const v = typeSel.value;
       // Defer: lässt das native Select-Picker (Mobile) sicher committen,
       // bevor wir die Zeile neu aufbauen – sonst springt es auf "Coins" zurück.
-      setTimeout(() => { redeemFormState.rewards[idx] = defaultRewardFor(v); rerender(); }, 0);
+      setTimeout(() => { rewardsArr[idx] = defaultRewardFor(v); rerender(); }, 0);
     });
     row.appendChild(typeSel);
 
@@ -1752,7 +1770,7 @@
     const del = document.createElement('button');
     del.type = 'button'; del.className = 'redeem-del-btn'; del.textContent = '🗑️';
     del.addEventListener('click', () => {
-      redeemFormState.rewards.splice(idx, 1);
+      rewardsArr.splice(idx, 1);
       rerender();
     });
     row.appendChild(del);
@@ -1778,24 +1796,57 @@
     return '?';
   }
 
-  function renderRedeemCodesSection(box) {
+  function validateRewardEntry(rw) {
+    if (rw.type === 'coins') {
+      if (!(rw.amount > 0)) return 'Coin-Menge muss größer 0 sein';
+    } else if (rw.type === 'booster') {
+      if (!rw.boosterId || !(rw.amount > 0)) return 'Booster ungültig';
+    } else if (rw.type === 'theme') {
+      if (!rw.themeId) return 'Theme ungültig';
+    } else if (rw.type === 'farm') {
+      if (!rw.category || !rw.itemId || !(rw.amount > 0)) return 'Farm-Item ungültig';
+    } else {
+      return 'Unbekannter Belohnungstyp';
+    }
+    return null;
+  }
+
+  function buildDraftCard(draft, draftIdx) {
     const form = document.createElement('div');
     form.className = 'redeem-form';
+
+    const head = document.createElement('div');
+    head.className = 'redeem-draft-head';
+    const label = document.createElement('div');
+    label.className = 'redeem-draft-label';
+    label.textContent = `Code #${draftIdx + 1}`;
+    head.appendChild(label);
+    if (redeemDraftCodes.length > 1) {
+      const rmDraft = document.createElement('button');
+      rmDraft.type = 'button'; rmDraft.className = 'redeem-draft-remove';
+      rmDraft.textContent = '✕ Entwurf entfernen';
+      rmDraft.addEventListener('click', () => {
+        redeemDraftCodes.splice(draftIdx, 1);
+        renderAdminPanel();
+      });
+      head.appendChild(rmDraft);
+    }
+    form.appendChild(head);
 
     const codeInput = document.createElement('input');
     codeInput.type = 'text';
     codeInput.className = 'redeem-field';
     codeInput.placeholder = 'Code (Groß-/Kleinschreibung zählt)';
-    codeInput.value = redeemFormState.code;
-    codeInput.addEventListener('input', () => { redeemFormState.code = codeInput.value; });
+    codeInput.value = draft.code;
+    codeInput.addEventListener('input', () => { draft.code = codeInput.value; });
     form.appendChild(codeInput);
 
     const rewardsWrap = document.createElement('div');
     rewardsWrap.style.cssText = 'display:flex; flex-direction:column; gap:8px;';
     function rerenderRewards() {
       rewardsWrap.innerHTML = '';
-      redeemFormState.rewards.forEach((rw, i) =>
-        rewardsWrap.appendChild(buildRewardRow(rw, i, rerenderRewards)));
+      draft.rewards.forEach((rw, i) =>
+        rewardsWrap.appendChild(buildRewardRow(rw, draft.rewards, i, rerenderRewards)));
     }
     rerenderRewards();
     form.appendChild(rewardsWrap);
@@ -1804,25 +1855,59 @@
     addBtn.type = 'button'; addBtn.className = 'redeem-add-btn';
     addBtn.textContent = '+ Belohnung hinzufügen';
     addBtn.addEventListener('click', () => {
-      redeemFormState.rewards.push(defaultRewardFor('coins'));
+      draft.rewards.push(defaultRewardFor('coins'));
       rerenderRewards();
     });
     form.appendChild(addBtn);
 
+    return form;
+  }
+
+  function renderRedeemCodesSection(box) {
+    const createSection = document.createElement('div');
+    createSection.className = 'admin-section';
+    const createTitle = document.createElement('div');
+    createTitle.className = 'admin-section-title';
+    createTitle.textContent = 'Neue Codes erstellen';
+    createSection.appendChild(createTitle);
+
+    redeemDraftCodes.forEach((draft, i) =>
+      createSection.appendChild(buildDraftCard(draft, i)));
+
+    const addCodeBtn = document.createElement('button');
+    addCodeBtn.type = 'button'; addCodeBtn.className = 'redeem-add-btn';
+    addCodeBtn.textContent = '+ Weiteren Code hinzufügen';
+    addCodeBtn.style.marginBottom = '10px';
+    addCodeBtn.addEventListener('click', () => {
+      redeemDraftCodes.push({ code: '', rewards: [] });
+      renderAdminPanel();
+    });
+    createSection.appendChild(addCodeBtn);
+
     const createBtn = document.createElement('button');
     createBtn.type = 'button'; createBtn.className = 'admin-action-btn';
-    createBtn.textContent = '🎟️ Code erstellen';
-    createBtn.addEventListener('click', adminCreateRedeemCode);
-    form.appendChild(createBtn);
+    createBtn.textContent = redeemDraftCodes.length > 1
+      ? `🎟️ Alle Codes erstellen (${redeemDraftCodes.length})`
+      : '🎟️ Code erstellen';
+    createBtn.addEventListener('click', adminCreateRedeemCodes);
+    createSection.appendChild(createBtn);
 
-    box.appendChild(form);
+    box.appendChild(createSection);
+
+    const listSection = document.createElement('div');
+    listSection.className = 'admin-section';
+    const listTitle = document.createElement('div');
+    listTitle.className = 'admin-section-title';
+    listTitle.textContent = 'Bestehende Codes';
+    listSection.appendChild(listTitle);
 
     const ids = Object.keys(redeemCodes);
     if (!ids.length) {
       const empty = document.createElement('div');
       empty.className = 'redeem-empty';
       empty.textContent = 'Noch keine Codes vorhanden.';
-      box.appendChild(empty);
+      listSection.appendChild(empty);
+      box.appendChild(listSection);
       return;
     }
     ids.forEach(id => {
@@ -1845,39 +1930,36 @@
       delC.textContent = '🗑️ Löschen';
       delC.addEventListener('click', () => adminDeleteRedeemCode(id));
       rrow.appendChild(info); rrow.appendChild(delC);
-      box.appendChild(rrow);
+      listSection.appendChild(rrow);
     });
+    box.appendChild(listSection);
   }
 
-  async function adminCreateRedeemCode() {
+  async function adminCreateRedeemCodes() {
     if (!isAdmin()) { showToast('❌ Keine Admin-Rechte'); return; }
-    const code = (redeemFormState.code || '').trim();
-    if (!code) { showToast('❌ Code darf nicht leer sein'); return; }
-    const rewards = redeemFormState.rewards;
-    if (!rewards.length) { showToast('❌ Mindestens eine Belohnung nötig'); return; }
-    for (const rw of rewards) {
-      if (rw.type === 'coins') {
-        if (!(rw.amount > 0)) { showToast('❌ Coin-Menge muss größer 0 sein'); return; }
-      } else if (rw.type === 'booster') {
-        if (!rw.boosterId || !(rw.amount > 0)) { showToast('❌ Booster ungültig'); return; }
-      } else if (rw.type === 'theme') {
-        if (!rw.themeId) { showToast('❌ Theme ungültig'); return; }
-      } else if (rw.type === 'farm') {
-        if (!rw.category || !rw.itemId || !(rw.amount > 0)) { showToast('❌ Farm-Item ungültig'); return; }
-      } else {
-        showToast('❌ Unbekannter Belohnungstyp'); return;
+    const existingCodes = new Set(
+      Object.values(redeemCodes).filter(c => c && c.code).map(c => c.code));
+    const seen = new Set();
+    const prepared = [];
+    for (let i = 0; i < redeemDraftCodes.length; i++) {
+      const n = i + 1;
+      const draft = redeemDraftCodes[i];
+      const code = (draft.code || '').trim();
+      if (!code) { showToast(`❌ Code #${n}: darf nicht leer sein`); return; }
+      if (!draft.rewards.length) { showToast(`❌ Code #${n}: mindestens eine Belohnung nötig`); return; }
+      for (const rw of draft.rewards) {
+        const err = validateRewardEntry(rw);
+        if (err) { showToast(`❌ Code #${n}: ${err}`); return; }
       }
+      if (existingCodes.has(code)) { showToast(`❌ Code #${n}: "${code}" existiert bereits`); return; }
+      if (seen.has(code)) { showToast(`❌ Code #${n}: "${code}" doppelt in den Entwürfen`); return; }
+      seen.add(code);
+      prepared.push({ code, rewards: draft.rewards.map(r => ({ ...r })), createdAt: Date.now() });
     }
-    const exists = Object.values(redeemCodes).some(c => c && c.code === code);
-    if (exists) { showToast('❌ Dieser Code existiert bereits'); return; }
     try {
-      await set(push(ref(db, 'redeemCodes')), {
-        code,
-        rewards: rewards.map(r => ({ ...r })),
-        createdAt: Date.now()
-      });
-      redeemFormState = { code: '', rewards: [] };
-      showToast('✅ Code erstellt!');
+      await Promise.all(prepared.map(p => set(push(ref(db, 'redeemCodes')), p)));
+      redeemDraftCodes = [{ code: '', rewards: [] }];
+      showToast(`✅ ${prepared.length} Code${prepared.length > 1 ? 's' : ''} erstellt!`);
       renderAdminPanel();
     } catch (e) {
       console.error('Code-Erstellung fehlgeschlagen:', e);
@@ -1885,8 +1967,22 @@
     }
   }
 
-  async function adminDeleteRedeemCode(id) {
+  function adminDeleteRedeemCode(id) {
     if (!isAdmin()) { showToast('❌ Keine Admin-Rechte'); return; }
+    const c = redeemCodes[id] || {};
+    const rewardTxt = Array.isArray(c.rewards) && c.rewards.length
+      ? c.rewards.map(describeReward).join(', ') : 'keine Belohnungen';
+    pendingDeleteCodeId = id;
+    document.getElementById('codeDeleteText').textContent =
+      `„${c.code || '(ohne Code)'}" – ${rewardTxt}`;
+    document.getElementById('codeDeleteOverlay').classList.add('open');
+  }
+
+  async function confirmDeleteRedeemCode() {
+    const id = pendingDeleteCodeId;
+    document.getElementById('codeDeleteOverlay').classList.remove('open');
+    pendingDeleteCodeId = null;
+    if (!id) return;
     try {
       await remove(ref(db, 'redeemCodes/' + id));
       showToast('🗑️ Code gelöscht');
@@ -1914,6 +2010,11 @@
   document.getElementById('boosterConfirmNo').addEventListener('click', () => {
     document.getElementById('boosterConfirmOverlay').classList.remove('open');
     pendingBoosterId = null;
+  });
+  document.getElementById('codeDeleteYes').addEventListener('click', confirmDeleteRedeemCode);
+  document.getElementById('codeDeleteNo').addEventListener('click', () => {
+    document.getElementById('codeDeleteOverlay').classList.remove('open');
+    pendingDeleteCodeId = null;
   });
 
   function getUserInitial() { return (currentUser || '?')[0].toUpperCase(); }
