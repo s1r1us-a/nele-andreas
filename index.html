@@ -3778,6 +3778,13 @@
     }
     try { localStorage.setItem('activeTheme', themeId); } catch (e) {}
   };
+  // Theme sofort vollständig aus localStorage anwenden (Bild, Variablen,
+  // Gradient, Texte) – ohne auf die Firebase-Antwort zu warten. Firebase
+  // korrigiert danach nur noch im Hintergrund.
+  try {
+    const cachedTheme = localStorage.getItem('activeTheme');
+    if (cachedTheme) window.applyTheme(cachedTheme);
+  } catch (e) {}
   window.addEventListener('pageshow', e => {
     if (e.persisted) {
       let t;
