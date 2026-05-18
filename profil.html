@@ -435,6 +435,21 @@
     .booster-confirm-no { flex: 1; background: transparent; border: 1.5px solid rgba(232,115,138,0.3); border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all 0.2s ease; }
     .booster-confirm-no:hover { border-color: var(--rose); color: var(--rose); }
 
+    /* ADMIN PANEL */
+    .admin-card { max-width: 360px; }
+    #adminSections { text-align: left; max-height: 60vh; overflow-y: auto; margin-bottom: 14px; }
+    .admin-section { margin-bottom: 16px; }
+    .admin-section-title { font-size: 13px; font-weight: 800; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1.5px solid rgba(212,160,97,0.25); }
+    .admin-actions { display: flex; flex-direction: column; gap: 8px; }
+    .admin-action-btn { width: 100%; border: none; border-radius: 50px; padding: 11px 14px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease; background: linear-gradient(135deg, var(--gold), #c87830); color: #fff; box-shadow: 0 3px 10px rgba(212,160,97,0.3); }
+    .admin-action-btn:hover { transform: scale(1.02); }
+    .admin-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(212,160,97,0.08); border-radius: 14px; padding: 8px 8px 8px 14px; }
+    .admin-toggle-label { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+    .admin-toggle-btn { flex-shrink: 0; border: none; border-radius: 50px; padding: 8px 14px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease; }
+    .admin-toggle-btn:hover { transform: scale(1.04); }
+    .admin-toggle-btn.is-unlocked { background: rgba(34,197,94,0.15); color: #16a34a; border: 1.5px solid rgba(34,197,94,0.35); }
+    .admin-toggle-btn.is-locked { background: rgba(232,80,112,0.15); color: #c85070; border: 1.5px solid rgba(232,80,112,0.4); }
+
     /* TOAST */
     .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-dark); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -707,14 +722,11 @@
 </div>
 
 <div class="booster-confirm-overlay" id="adminOverlay">
-  <div class="booster-confirm-card">
+  <div class="booster-confirm-card admin-card">
     <span class="booster-confirm-emoji">🛠️</span>
-    <div class="booster-confirm-title">Admin – Hack-Test</div>
-    <div class="booster-confirm-text">Hack-Booster gratis &amp; sofort auf dich selbst anwenden (Nele bleibt unberührt).</div>
-    <div class="booster-confirm-btns" style="flex-direction:column;gap:10px;">
-      <button class="booster-confirm-yes" id="adminApplySabotage">💻 Hack auf mich</button>
-      <button class="booster-confirm-yes" id="adminApplySpam">📺 Popup-Hack auf mich</button>
-      <button class="booster-confirm-no" id="adminResetTheme">↩️ Theme zurücksetzen (Sakura)</button>
+    <div class="booster-confirm-title">Admin-Menü</div>
+    <div id="adminSections"></div>
+    <div class="booster-confirm-btns" style="margin-top:6px;">
       <button class="booster-confirm-no" id="adminClose">Schließen</button>
     </div>
   </div>
@@ -1167,16 +1179,6 @@
     document.getElementById('adminOverlay').classList.remove('open');
   }
 
-  document.getElementById('adminBtn').addEventListener('click', () => {
-    if (!isAdmin()) return;
-    document.getElementById('adminOverlay').classList.add('open');
-  });
-  document.getElementById('adminClose').addEventListener('click', () =>
-    document.getElementById('adminOverlay').classList.remove('open'));
-  document.getElementById('adminApplySabotage').addEventListener('click', () =>
-    adminApplyHackToSelf('sabotage_booster'));
-  document.getElementById('adminApplySpam').addEventListener('click', () =>
-    adminApplyHackToSelf('spam_booster'));
   async function adminSetTheme(themeId) {
     if (!isAdmin()) return;
     await set(ref(db, 'shop/andreas/activeTheme'), themeId);
@@ -1184,8 +1186,102 @@
     document.getElementById('adminOverlay').classList.remove('open');
     showToast('↩️ Theme zurückgesetzt!');
   }
-  document.getElementById('adminResetTheme').addEventListener('click', () =>
-    adminSetTheme('sakura'));
+
+  // Seiten, die gesperrt werden können (ohne index & profil).
+  const LOCKABLE_PAGES = [
+    { key: 'farm',           label: 'Farm' },
+    { key: 'shop',           label: 'Shop' },
+    { key: 'game',           label: 'Vier Gewinnt' },
+    { key: 'quiz',           label: 'Quiz' },
+    { key: 'battleship',     label: 'Schiffe versenken' },
+    { key: 'zombiedefense',  label: 'Zombie-Abwehr' },
+    { key: 'aquarium',       label: 'Aquarium' },
+    { key: 'marienkaefer',   label: 'Marienkäfer' },
+    { key: 'stats',          label: 'Statistiken' },
+    { key: 'ourhome',        label: 'Unser Zuhause' },
+    { key: 'momente-archiv', label: 'Momente-Archiv' },
+    { key: 'slot',           label: 'Slotmaschine' }
+  ];
+
+  let pageLocks = {};
+  async function togglePageLock(key) {
+    if (!isAdmin()) return;
+    const locked = !(pageLocks[key] && pageLocks[key].locked);
+    await set(ref(db, 'admin/pageLocks/' + key), { locked, lockedAt: Date.now() });
+    showToast(locked ? '🔒 Seite gesperrt' : '🔓 Seite entsperrt');
+  }
+
+  // Kategorien-Konfig – neue Funktionen einfach hier ergänzen.
+  const ADMIN_SECTIONS = [
+    { id: 'pages', title: '🔒 Seiten sperren', kind: 'pageLocks' },
+    { id: 'hacks', title: '💻 Hack-Tests', actions: [
+        { label: '💻 Hack auf mich',        onClick: () => adminApplyHackToSelf('sabotage_booster') },
+        { label: '📺 Popup-Hack auf mich',  onClick: () => adminApplyHackToSelf('spam_booster') }
+    ] },
+    { id: 'theme', title: '🎨 Theme', actions: [
+        { label: '↩️ Theme zurücksetzen (Sakura)', onClick: () => adminSetTheme('sakura') }
+    ] }
+  ];
+
+  function renderAdminPanel() {
+    const root = document.getElementById('adminSections');
+    if (!root) return;
+    root.innerHTML = '';
+    ADMIN_SECTIONS.forEach(section => {
+      const sec = document.createElement('div');
+      sec.className = 'admin-section';
+      const h = document.createElement('div');
+      h.className = 'admin-section-title';
+      h.textContent = section.title;
+      sec.appendChild(h);
+
+      const box = document.createElement('div');
+      box.className = 'admin-actions';
+
+      if (section.kind === 'pageLocks') {
+        LOCKABLE_PAGES.forEach(p => {
+          const locked = !!(pageLocks[p.key] && pageLocks[p.key].locked);
+          const row = document.createElement('div');
+          row.className = 'admin-toggle-row';
+          const lbl = document.createElement('span');
+          lbl.className = 'admin-toggle-label';
+          lbl.textContent = p.label;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'admin-toggle-btn ' + (locked ? 'is-locked' : 'is-unlocked');
+          btn.textContent = locked ? '🔒 Gesperrt' : '🔓 Entsperrt';
+          btn.addEventListener('click', () => togglePageLock(p.key));
+          row.appendChild(lbl);
+          row.appendChild(btn);
+          box.appendChild(row);
+        });
+      } else {
+        (section.actions || []).forEach(a => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'admin-action-btn';
+          btn.textContent = a.label;
+          btn.addEventListener('click', a.onClick);
+          box.appendChild(btn);
+        });
+      }
+      sec.appendChild(box);
+      root.appendChild(sec);
+    });
+  }
+
+  onValue(ref(db, 'admin/pageLocks'), snap => {
+    pageLocks = snap.val() || {};
+    if (document.getElementById('adminOverlay').classList.contains('open')) renderAdminPanel();
+  });
+
+  document.getElementById('adminBtn').addEventListener('click', () => {
+    if (!isAdmin()) return;
+    renderAdminPanel();
+    document.getElementById('adminOverlay').classList.add('open');
+  });
+  document.getElementById('adminClose').addEventListener('click', () =>
+    document.getElementById('adminOverlay').classList.remove('open'));
 
   document.getElementById('boosterConfirmYes').addEventListener('click', async () => {
     document.getElementById('boosterConfirmOverlay').classList.remove('open');
