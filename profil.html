@@ -69,7 +69,18 @@
     @keyframes bgWednesdayProfil { 0%{filter:hue-rotate(-4deg) saturate(1.05);opacity:0.5;transform:translate(-2%,-1%) scale(1)} 100%{filter:hue-rotate(8deg) saturate(1.3);opacity:1;transform:translate(2%,1%) scale(1.05)} }
     html[data-theme="wednesday"] body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 150'><line x1='30' y1='-10' x2='18' y2='40' stroke='rgba(170,175,200,0.35)' stroke-width='1.1'/><line x1='75' y1='-10' x2='63' y2='40' stroke='rgba(170,175,200,0.30)' stroke-width='1.1'/><line x1='120' y1='-10' x2='108' y2='40' stroke='rgba(170,175,200,0.35)' stroke-width='1.1'/><line x1='50' y1='30' x2='38' y2='80' stroke='rgba(150,155,185,0.28)' stroke-width='1'/><line x1='100' y1='30' x2='88' y2='80' stroke='rgba(150,155,185,0.28)' stroke-width='1'/></svg>"), radial-gradient(1.2px 1.2px at 30% 70%, rgba(200,200,220,0.55), transparent 60%), radial-gradient(1.6px 1.6px at 78% 60%, rgba(139,111,196,0.55), transparent 60%); background-size: 140px 220px, 240px 240px, 280px 280px; animation: bgWednesdayRainProfil 1.6s linear infinite; opacity: 0.7; }
     @keyframes bgWednesdayRainProfil { 0%{background-position:0 -220px, 20px 30px, 80px 60px} 100%{background-position:-30px 220px, 20px 30px, 80px 60px} }
-    .minecraft-crawler, .thing-crawler { display: none; }
+    html[data-theme="squid-game"] body::before { background: radial-gradient(ellipse 60% 50% at 25% 20%, rgba(237,27,118,0.20), transparent 70%), radial-gradient(ellipse 55% 50% at 75% 25%, rgba(36,159,140,0.14), transparent 70%), radial-gradient(ellipse 65% 55% at 50% 65%, rgba(14,10,18,0.70), transparent 70%), radial-gradient(ellipse 55% 50% at 80% 85%, rgba(0,0,0,0.60), transparent 70%); animation: bgSquidProfil 11s ease-in-out infinite alternate; }
+    @keyframes bgSquidProfil { 0%{filter:hue-rotate(-4deg) saturate(1.05);opacity:0.55;transform:translate(-2%,-1%) scale(1)} 100%{filter:hue-rotate(6deg) saturate(1.25);opacity:1;transform:translate(2%,1%) scale(1.05)} }
+    html[data-theme="squid-game"] body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><circle cx='48' cy='52' r='20' fill='none' stroke='rgba(237,27,118,0.28)' stroke-width='4'/><polygon points='150,30 178,78 122,78' fill='none' stroke='rgba(36,159,140,0.26)' stroke-width='4'/><rect x='168' y='150' width='40' height='40' fill='none' stroke='rgba(237,27,118,0.24)' stroke-width='4'/><circle cx='70' cy='180' r='14' fill='none' stroke='rgba(36,159,140,0.22)' stroke-width='4'/></svg>"); background-size: 280px 280px; animation: bgSquidDriftProfil 24s linear infinite; opacity: 0.7; }
+    @keyframes bgSquidDriftProfil { 0%{background-position:0 0} 100%{background-position:280px 280px} }
+    .minecraft-crawler, .thing-crawler, .squid-game-crawler { display: none; }
+    html[data-theme="squid-game"] .squid-game-crawler {
+      display: block; position: fixed; bottom: 10px; left: 0;
+      font-size: 34px; z-index: 3; pointer-events: none;
+      filter: drop-shadow(0 2px 5px rgba(237,27,118,0.6));
+      animation: squidCrawlProfil 26s linear infinite;
+    }
+    @keyframes squidCrawlProfil { 0%{transform:translateX(-12vw) rotate(0deg);} 50%{transform:translateX(50vw) rotate(8deg);} 100%{transform:translateX(112vw) rotate(0deg);} }
     html[data-theme="minecraft"] .minecraft-crawler {
       display: block; position: fixed; bottom: 10px; left: 0;
       font-size: 34px; z-index: 3; pointer-events: none; image-rendering: pixelated;
@@ -98,7 +109,10 @@
       html[data-theme="minecraft"] .minecraft-crawler,
       html[data-theme="wednesday"] body::before,
       html[data-theme="wednesday"] body::after,
-      html[data-theme="wednesday"] .thing-crawler { animation: none !important; }
+      html[data-theme="wednesday"] .thing-crawler,
+      html[data-theme="squid-game"] body::before,
+      html[data-theme="squid-game"] body::after,
+      html[data-theme="squid-game"] .squid-game-crawler { animation: none !important; }
     }
     /* Inhalt über dem Hintergrund-Layer halten */
     .page { position: relative; z-index: 1; }
@@ -1410,6 +1424,7 @@
     ] },
     { id: 'theme', title: '🎨 Theme', actions: [
         { label: '🧱 Minecraft-Theme aktivieren', onClick: () => adminSetTheme('minecraft') },
+        { label: '🦑 Squid Game-Theme aktivieren', onClick: () => adminSetTheme('squid-game') },
         { label: '↩️ Theme zurücksetzen (Sakura)', onClick: () => adminSetTheme('sakura') }
     ] }
   ];
@@ -1823,7 +1838,8 @@
     prinzesschen: 'radial-gradient(ellipse at 18% 20%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,132,252,0.45) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(251,191,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(255,138,198,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(233,30,99,0.45) 0%, transparent 55%), linear-gradient(160deg, #ffe4f3 0%, #ffd6ec 25%, #ffc1de 50%, #f9d6ff 75%, #fff0f8 100%)',
     schattenfuerstin: 'radial-gradient(ellipse at 18% 20%, rgba(76,29,107,0.22) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,192,192,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(45,27,61,0.20) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(92,26,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.90) 0%, transparent 55%), linear-gradient(160deg, #030306 0%, #06060b 25%, #08070d 50%, #050508 75%, #020203 100%)',
     wednesday: 'radial-gradient(ellipse at 18% 20%, rgba(74,45,107,0.26) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(191,191,208,0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(36,23,51,0.24) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(60,40,90,0.16) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #020103 0%, #050409 25%, #07060d 50%, #040308 75%, #010102 100%)',
-    minecraft: 'radial-gradient(circle at 22% 16%, rgba(255,255,255,0.32) 0%, transparent 20%), radial-gradient(circle at 70% 11%, rgba(255,255,255,0.24) 0%, transparent 18%), linear-gradient(180deg, #79c7f2 0%, #8fd0f5 34%, #69b8ee 48%, #5fb04a 58%, #4e9e3a 70%, #7c5230 84%, #5a3c22 100%)'
+    minecraft: 'radial-gradient(circle at 22% 16%, rgba(255,255,255,0.32) 0%, transparent 20%), radial-gradient(circle at 70% 11%, rgba(255,255,255,0.24) 0%, transparent 18%), linear-gradient(180deg, #79c7f2 0%, #8fd0f5 34%, #69b8ee 48%, #5fb04a 58%, #4e9e3a 70%, #7c5230 84%, #5a3c22 100%)',
+    'squid-game': 'radial-gradient(ellipse at 18% 20%, rgba(237,27,118,0.28) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(36,159,140,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 62%, rgba(42,15,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(237,27,118,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #050409 0%, #07060b 25%, #0d0a12 50%, #08060c 75%, #030205 100%)'
   };
   const _P_THEME_VARS = {
     sakura:  { rose:'#e8738a','rose-light':'#f5a3b5','rose-pale':'#fde8ed',cream:'#fff8f0',gold:'#d4a061',warm:'#f9e4d4','text-dark':'#5a2d3a','text-mid':'#8b5565' },
@@ -1843,7 +1859,8 @@
     prinzesschen: { rose:'#ff1493','rose-light':'#ff8ac6','rose-pale':'#ffe4f3', cream:'#fff0f8', gold:'#d4af37', warm:'#ffd6ec', 'text-dark':'#7a1856','text-mid':'#c2185b' },
     schattenfuerstin: { rose:'#a78bd9','rose-light':'#c0c0c0','rose-pale':'#1a1226', cream:'#0a0a0f', gold:'#d4d4d8', warm:'#2d1b3d', 'text-dark':'#e8e6f0','text-mid':'#a78bd9' },
     wednesday: { rose:'#8b6fc4','rose-light':'#bfbfd0','rose-pale':'#140f1f', cream:'#050409', gold:'#c9c7d4', warm:'#241733', 'text-dark':'#e9e7f2','text-mid':'#9a86c4' },
-    minecraft: { rose:'#5fb04a','rose-light':'#8fd0f5','rose-pale':'#dff0d2', cream:'#cfe9f7', gold:'#c8a14a', warm:'#7c5230', 'text-dark':'#2b2417','text-mid':'#4a6b34' }
+    minecraft: { rose:'#5fb04a','rose-light':'#8fd0f5','rose-pale':'#dff0d2', cream:'#cfe9f7', gold:'#c8a14a', warm:'#7c5230', 'text-dark':'#2b2417','text-mid':'#4a6b34' },
+    'squid-game': { rose:'#249f8c','rose-light':'#ed1b76','rose-pale':'#14121c', cream:'#07060b', gold:'#ed1b76', warm:'#2a0f24', 'text-dark':'#f3eef2','text-mid':'#e589b3' }
   };
   const _P_DARK_UI = {
     midnight: {
@@ -1984,6 +2001,26 @@
       'ui-input-color':       '#f4f4f4',
       'ui-quote-card-bg':     'rgba(28,22,14,0.82)',
       'ui-quote-card-border': 'rgba(95,176,74,0.35)',
+    },
+    'squid-game': {
+      'ui-card-bg':           'rgba(14,12,20,0.92)',
+      'ui-card-border':       'rgba(237,27,118,0.42)',
+      'ui-topbar-bg':         'rgba(7,6,11,0.97)',
+      'ui-topbar-border':     'rgba(237,27,118,0.30)',
+      'ui-btn-bg':            'rgba(20,14,26,0.92)',
+      'ui-btn-border':        'rgba(237,27,118,0.45)',
+      'ui-btn-text':          '#f3eef2',
+      'ui-coin-bg':           'rgba(20,14,26,0.92)',
+      'ui-modal-bg':          '#0f0c16',
+      'ui-modal-overlay':     'rgba(0,0,0,0.95)',
+      'ui-modal-border':      'rgba(237,27,118,0.45)',
+      'ui-input-bg':          '#14121c',
+      'ui-input-color':       '#f3eef2',
+      'ui-quote-card-bg':     'rgba(20,14,26,0.82)',
+      'ui-quote-card-border': 'rgba(237,27,118,0.30)',
+      'ui-card-hover-shadow': 'rgba(36,159,140,0.55)',
+      'ui-active-badge-bg':   'rgba(36,159,140,0.28)',
+      'ui-toast-bg':          '#1f1024',
     }
   };
   const _P_DEFAULT_UI = {
@@ -2091,6 +2128,7 @@
 <script type="module" src="presence.js"></script>
 <div class="minecraft-crawler" aria-hidden="true">🟩</div>
 <div class="thing-crawler" aria-hidden="true">🖐️</div>
+<div class="squid-game-crawler" aria-hidden="true">🦑</div>
 </body>
 <script type="module" src="autoclicker.js"></script>
 <script type="module" src="spamhack.js"></script>

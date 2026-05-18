@@ -720,7 +720,90 @@
     background: linear-gradient(135deg, #170d24 0%, #3a1f5c 60%, #7b2fbf 100%) !important;
   }
 
+  /* SQUID GAME THEME */
+  html[data-theme="squid-game"] .bg-gradient::after { content:''; position:absolute; inset:0; pointer-events:none; background: radial-gradient(ellipse 60% 50% at 25% 20%, rgba(237,27,118,0.20), transparent 70%), radial-gradient(ellipse 55% 50% at 75% 25%, rgba(36,159,140,0.14), transparent 70%), radial-gradient(ellipse 65% 55% at 50% 65%, rgba(14,10,18,0.70), transparent 70%), radial-gradient(ellipse 55% 50% at 80% 85%, rgba(0,0,0,0.60), transparent 70%); animation: bgSquidShop 11s ease-in-out infinite alternate; will-change: transform, filter; }
+  @keyframes bgSquidShop { 0%{filter:hue-rotate(-4deg) saturate(1.05);opacity:0.55;transform:translate(-2%,-1%) scale(1)} 100%{filter:hue-rotate(6deg) saturate(1.25);opacity:1;transform:translate(2%,1%) scale(1.05)} }
+  html[data-theme="squid-game"] .bg-gradient::before { content:''; position:absolute; inset:0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><circle cx='48' cy='52' r='20' fill='none' stroke='rgba(237,27,118,0.28)' stroke-width='4'/><polygon points='150,30 178,78 122,78' fill='none' stroke='rgba(36,159,140,0.26)' stroke-width='4'/><rect x='168' y='150' width='40' height='40' fill='none' stroke='rgba(237,27,118,0.24)' stroke-width='4'/><circle cx='70' cy='180' r='14' fill='none' stroke='rgba(36,159,140,0.22)' stroke-width='4'/></svg>"); background-size: 280px 280px; animation: bgSquidDrift 24s linear infinite; pointer-events: none; z-index: 0; opacity: 0.7; will-change: background-position; }
+  @keyframes bgSquidDrift { 0%{background-position:0 0} 100%{background-position:280px 280px} }
+
+  .squid-game-crawler { display: none; }
+  html[data-theme="squid-game"] .squid-game-crawler {
+    display: block; position: fixed; bottom: 10px; left: 0;
+    font-size: 34px; z-index: 3; pointer-events: none;
+    filter: drop-shadow(0 2px 5px rgba(237,27,118,0.6));
+    animation: squidCrawl 26s linear infinite;
+  }
+  @keyframes squidCrawl {
+    0%   { transform: translateX(-12vw) rotate(0deg); }
+    50%  { transform: translateX(50vw)  rotate(8deg); }
+    100% { transform: translateX(112vw) rotate(0deg); }
+  }
+
+  html[data-theme="squid-game"] .lootbox-card,
+  html[data-theme="squid-game"] .theme-card,
+  html[data-theme="squid-game"] .confirm-card {
+    border-color: rgba(237,27,118,0.55) !important;
+    box-shadow: 0 0 18px 4px rgba(237,27,118,0.42),
+                0 0 45px 14px rgba(36,159,140,0.26) !important;
+  }
+  html[data-theme="squid-game"] .reward-card {
+    box-shadow: 0 0 24px 6px rgba(237,27,118,0.52),
+                0 0 60px 20px rgba(36,159,140,0.32) !important;
+  }
+  html[data-theme="squid-game"] .footer-text {
+    color: #e589b3; text-shadow: 0 0 10px rgba(237,27,118,0.45);
+  }
+  html[data-theme="squid-game"] .btn-buy:not(:disabled),
+  html[data-theme="squid-game"] .btn-activate,
+  html[data-theme="squid-game"] .btn-open-box:not(:disabled),
+  html[data-theme="squid-game"] .confirm-yes {
+    position: relative;
+    background: linear-gradient(135deg, rgba(26,16,28,0.95) 0%, rgba(58,16,46,0.95) 100%) !important;
+    border: 1px solid rgba(237,27,118,0.6) !important;
+    color: #f3eef2 !important;
+    box-shadow: 0 0 12px 3px rgba(237,27,118,0.6),
+                0 0 30px 9px rgba(36,159,140,0.38) !important;
+  }
+  html[data-theme="squid-game"] .btn-buy:not(:disabled)::after,
+  html[data-theme="squid-game"] .btn-activate::after,
+  html[data-theme="squid-game"] .btn-open-box:not(:disabled)::after,
+  html[data-theme="squid-game"] .confirm-yes::after {
+    content: ''; position: absolute; inset: 0;
+    border-radius: inherit; pointer-events: none; z-index: 0;
+    box-shadow: 0 0 30px 11px rgba(255,90,170,0.95),
+                0 0 65px 24px rgba(36,159,140,0.6);
+    opacity: 0;
+    animation: squidBtnGlow 2.4s ease-in-out infinite;
+    will-change: opacity;
+  }
+  @keyframes squidBtnGlow {
+    0%,100% { opacity: 0; }
+    50%     { opacity: 1; }
+  }
+  html[data-theme="squid-game"] .btn-buy:not(:disabled):hover,
+  html[data-theme="squid-game"] .btn-activate:hover,
+  html[data-theme="squid-game"] .btn-open-box:not(:disabled):hover,
+  html[data-theme="squid-game"] .confirm-yes:hover {
+    border-color: rgba(255,120,185,0.95) !important;
+  }
+  html[data-theme="squid-game"] .btn-buy:not(:disabled):hover::after,
+  html[data-theme="squid-game"] .btn-activate:hover::after,
+  html[data-theme="squid-game"] .btn-open-box:not(:disabled):hover::after,
+  html[data-theme="squid-game"] .confirm-yes:hover::after {
+    animation-duration: 1.1s;
+  }
+  html[data-theme="squid-game"] .btn-activate.is-active {
+    background: linear-gradient(135deg, #1a1018 0%, #5c1f46 60%, #ed1b76 100%) !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    html[data-theme="squid-game"] .bg-gradient::before,
+    html[data-theme="squid-game"] .bg-gradient::after,
+    html[data-theme="squid-game"] .squid-game-crawler,
+    html[data-theme="squid-game"] .btn-buy::after,
+    html[data-theme="squid-game"] .btn-activate::after,
+    html[data-theme="squid-game"] .btn-open-box::after,
+    html[data-theme="squid-game"] .confirm-yes::after,
     html[data-theme="minecraft"] .bg-gradient::before,
     html[data-theme="minecraft"] .bg-gradient::after,
     html[data-theme="minecraft"] .minecraft-crawler,
@@ -819,6 +902,7 @@
 <div class="bg-gradient" id="bgGradient"></div>
 <div class="minecraft-crawler" aria-hidden="true">🟩</div>
 <div class="thing-crawler" aria-hidden="true">🖐️</div>
+<div class="squid-game-crawler" aria-hidden="true">🦑</div>
 
 <div class="page" id="mainPage" style="visibility:hidden; opacity:0; position:absolute; pointer-events:none;">
   <div class="page-header">
@@ -1427,6 +1511,51 @@
         'ui-lootbox-odds-bg':   'rgba(95,176,74,0.12)',
         'ui-lootbox-odds-border':'rgba(95,176,74,0.32)',
       }
+    },
+    {
+      id: 'squid-game',
+      name: 'Squid Game',
+      emoji: '🦑',
+      desc: 'Rot Licht, Grün Licht – Spiel 456',
+      price: 500000,
+      premium: true,
+      exclusive: true,
+      adminOnly: true,
+      fx: 'squid-game',
+      dark: true,
+      previewBg: 'linear-gradient(135deg, #07060b 0%, #14121c 25%, #2a0f24 50%, #ed1b76 70%, #249f8c 88%, #07060b 100%)',
+      previewBar: 'rgba(237,27,118,0.9)',
+      vars: {
+        rose:'#249f8c', 'rose-light':'#ed1b76', 'rose-pale':'#14121c',
+        cream:'#07060b', gold:'#ed1b76', warm:'#2a0f24',
+        'text-dark':'#f3eef2', 'text-mid':'#e589b3'
+      },
+      ui: {
+        'ui-card-bg':           'rgba(14,12,20,0.92)',
+        'ui-card-border':       'rgba(237,27,118,0.42)',
+        'ui-card-hover-shadow': 'rgba(36,159,140,0.55)',
+        'ui-topbar-bg':         'rgba(7,6,11,0.97)',
+        'ui-topbar-border':     'rgba(237,27,118,0.30)',
+        'ui-btn-bg':            'rgba(20,14,26,0.92)',
+        'ui-btn-border':        'rgba(237,27,118,0.45)',
+        'ui-btn-text':          '#f3eef2',
+        'ui-coin-bg':           'rgba(20,14,26,0.92)',
+        'ui-modal-bg':          '#0f0c16',
+        'ui-modal-overlay':     'rgba(0,0,0,0.95)',
+        'ui-modal-border':      'rgba(237,27,118,0.45)',
+        'ui-active-badge-bg':   'rgba(36,159,140,0.28)',
+        'ui-input-bg':          '#14121c',
+        'ui-input-color':       '#f3eef2',
+        'ui-preview-btn-border':'rgba(237,27,118,0.45)',
+        'ui-disabled-btn':      '#2a0f24',
+        'ui-owned-badge-bg':    'rgba(36,159,140,0.18)',
+        'ui-owned-badge-border':'rgba(36,159,140,0.45)',
+        'ui-owned-badge-color': '#cdeae3',
+        'ui-toast-bg':          '#1f1024',
+        'ui-confirm-no-border': 'rgba(237,27,118,0.40)',
+        'ui-lootbox-odds-bg':   'rgba(237,27,118,0.10)',
+        'ui-lootbox-odds-border':'rgba(237,27,118,0.30)',
+      }
     }
   ];
 
@@ -1465,7 +1594,8 @@
     prinzesschen: 'radial-gradient(ellipse at 18% 20%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,132,252,0.45) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(251,191,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(255,138,198,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(233,30,99,0.45) 0%, transparent 55%), linear-gradient(160deg, #ffe4f3 0%, #ffd6ec 25%, #ffc1de 50%, #f9d6ff 75%, #fff0f8 100%)',
     schattenfuerstin: 'radial-gradient(ellipse at 18% 20%, rgba(76,29,107,0.22) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,192,192,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(45,27,61,0.20) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(92,26,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.90) 0%, transparent 55%), linear-gradient(160deg, #030306 0%, #06060b 25%, #08070d 50%, #050508 75%, #020203 100%)',
     wednesday: 'radial-gradient(ellipse at 18% 20%, rgba(74,45,107,0.26) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(191,191,208,0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(36,23,51,0.24) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(60,40,90,0.16) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #020103 0%, #050409 25%, #07060d 50%, #040308 75%, #010102 100%)',
-    minecraft: 'radial-gradient(circle at 22% 18%, rgba(255,255,255,0.30) 0%, transparent 22%), radial-gradient(circle at 68% 12%, rgba(255,255,255,0.22) 0%, transparent 20%), linear-gradient(180deg, #79c7f2 0%, #8fd0f5 36%, #69b8ee 50%, #5fb04a 60%, #4e9e3a 72%, #7c5230 86%, #5a3c22 100%)'
+    minecraft: 'radial-gradient(circle at 22% 18%, rgba(255,255,255,0.30) 0%, transparent 22%), radial-gradient(circle at 68% 12%, rgba(255,255,255,0.22) 0%, transparent 20%), linear-gradient(180deg, #79c7f2 0%, #8fd0f5 36%, #69b8ee 50%, #5fb04a 60%, #4e9e3a 72%, #7c5230 86%, #5a3c22 100%)',
+    'squid-game': 'radial-gradient(ellipse at 18% 20%, rgba(237,27,118,0.28) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(36,159,140,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 62%, rgba(42,15,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(237,27,118,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #050409 0%, #07060b 25%, #0d0a12 50%, #08060c 75%, #030205 100%)'
   };
 
   // Default light UI surface vars
