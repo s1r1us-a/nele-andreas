@@ -1205,10 +1205,15 @@
 
   let pageLocks = {};
   async function togglePageLock(key) {
-    if (!isAdmin()) return;
+    if (!isAdmin()) { showToast('❌ Keine Admin-Rechte'); return; }
     const locked = !(pageLocks[key] && pageLocks[key].locked);
-    await set(ref(db, 'admin/pageLocks/' + key), { locked, lockedAt: Date.now() });
-    showToast(locked ? '🔒 Seite gesperrt' : '🔓 Seite entsperrt');
+    try {
+      await set(ref(db, 'admin/pageLocks/' + key), { locked, lockedAt: Date.now() });
+      showToast(locked ? '🔒 Seite gesperrt' : '🔓 Seite entsperrt');
+    } catch (e) {
+      console.error('Seiten-Sperre fehlgeschlagen:', e);
+      showToast('❌ Fehler beim Sperren (siehe Konsole) — evtl. Firebase-Rules?');
+    }
   }
 
   // Kategorien-Konfig – neue Funktionen einfach hier ergänzen.

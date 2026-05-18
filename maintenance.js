@@ -5,6 +5,7 @@
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -93,9 +94,23 @@ if (!EXCLUDED.includes(file)) {
     document.body.style.overflow = '';
   }
 
-  onValue(ref(db, 'admin/pageLocks/' + pageKey), snap => {
-    const lock = snap.val();
-    if (lock && lock.locked === true) showOverlay();
+  const auth = getAuth(app);
+  let subscribed = false;
+
+  function subscribeLock() {
+    if (subscribed) return;
+    subscribed = true;
+    onValue(ref(db, 'admin/pageLocks/' + pageKey), snap => {
+      const lock = snap.val();
+      if (lock && lock.locked === true) showOverlay();
+      else hideOverlay();
+    }, err => {
+      console.error('Wartungsmodus: Lesen von admin/pageLocks fehlgeschlagen:', err);
+    });
+  }
+
+  onAuthStateChanged(auth, user => {
+    if (user) subscribeLock();
     else hideOverlay();
   });
 }
