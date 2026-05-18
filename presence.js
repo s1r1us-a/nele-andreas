@@ -5,7 +5,7 @@
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, set, remove, update, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, update, onValue, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -68,11 +68,12 @@ const pageLabel = currentPageLabel();
 function writeSelf(state) {
   if (!myRef) return;
   myState = state;
-  set(myRef, { state, ts: Date.now(), page: pageLabel }).catch(() => {});
+  const now = Date.now();
+  set(myRef, { state, ts: now, lastSeen: now, page: pageLabel }).catch(() => {});
 }
 
 function touchHeartbeat() {
-  if (myRef) update(myRef, { ts: Date.now() }).catch(() => {});
+  if (myRef) { const now = Date.now(); update(myRef, { ts: now, lastSeen: now }).catch(() => {}); }
 }
 
 function goActive() {
@@ -83,7 +84,7 @@ function goActive() {
 
 function startSelfTracking() {
   writeSelf('online');
-  onDisconnect(myRef).remove().catch(() => {});
+  onDisconnect(myRef).update({ state: 'offline', lastSeen: serverTimestamp() }).catch(() => {});
 
   ['mousemove', 'keydown', 'touchstart', 'click', 'scroll'].forEach(ev =>
     window.addEventListener(ev, goActive, { passive: true }));
@@ -96,7 +97,7 @@ function startSelfTracking() {
     }
   });
 
-  window.addEventListener('pagehide', () => { if (myRef) remove(myRef).catch(() => {}); });
+  window.addEventListener('pagehide', () => { if (myRef) update(myRef, { state: 'offline', lastSeen: Date.now() }).catch(() => {}); });
 
   if (heartbeat) clearInterval(heartbeat);
   heartbeat = setInterval(touchHeartbeat, HEARTBEAT_MS);
@@ -107,7 +108,7 @@ function startSelfTracking() {
 function stopSelfTracking() {
   if (afkTimer)   { clearTimeout(afkTimer); afkTimer = null; }
   if (heartbeat)  { clearInterval(heartbeat); heartbeat = null; }
-  if (myRef)      { remove(myRef).catch(() => {}); }
+  if (myRef)      { update(myRef, { state: 'offline', lastSeen: Date.now() }).catch(() => {}); }
   myRef = null;
   myKey = null;
 }
@@ -123,6 +124,39 @@ function classify(data) {
   return data.state === 'afk' ? 'afk' : 'online';
 }
 
+// Liefert { relative, absolute } für "zuletzt online", oder null wenn
+// kein Zeitstempel vorhanden ist (alte Datensätze).
+function formatLastSeen(data) {
+  const t = data && (typeof data.lastSeen === 'number' ? data.lastSeen
+                    : typeof data.ts === 'number' ? data.ts : null);
+  if (!t) return null;
+  const d   = new Date(t);
+  const now = Date.now();
+  const diffMin = Math.floor((now - t) / 60000);
+
+  let relative;
+  if (diffMin < 1)        relative = 'gerade eben';
+  else if (diffMin < 60)  relative = 'vor ' + diffMin + ' Min.';
+  else if (diffMin < 1440) {
+    const h = Math.floor(diffMin / 60);
+    relative = 'vor ' + h + ' Std.';
+  } else {
+    const days = Math.floor(diffMin / 1440);
+    if (days === 1)      relative = 'gestern';
+    else if (days < 7)   relative = 'vor ' + days + ' Tagen';
+    else {
+      relative = d.getDate().toString().padStart(2, '0') + '.' +
+                 (d.getMonth() + 1).toString().padStart(2, '0') + '.';
+    }
+  }
+
+  const pad = n => n.toString().padStart(2, '0');
+  const absolute = pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' +
+                   d.getFullYear() + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+  return { relative, absolute };
+}
+
 function renderOther() {
   if (!dotEl) return;
   const status = classify(otherData);
@@ -131,14 +165,27 @@ function renderOther() {
 
   const labels = { online: 'online', afk: 'AFK', offline: 'offline' };
   const where  = (status !== 'offline' && otherData && otherData.page) ? otherData.page : '';
-  dotEl.title  = otherName
-    ? otherName + ': ' + labels[status] + (where ? ' – ' + where : '')
-    : labels[status];
+  const seen   = status === 'offline' ? formatLastSeen(otherData) : null;
+
+  if (status === 'offline' && seen) {
+    dotEl.title = otherName
+      ? otherName + ': zuletzt online ' + seen.absolute
+      : 'zuletzt online ' + seen.absolute;
+  } else {
+    dotEl.title = otherName
+      ? otherName + ': ' + labels[status] + (where ? ' – ' + where : '')
+      : labels[status];
+  }
 
   if (textEl) {
     if (status === 'offline') {
-      textEl.textContent = '';
-      textEl.style.display = 'none';
+      if (seen) {
+        textEl.textContent = otherName + ' – zuletzt online ' + seen.relative;
+        textEl.style.display = '';
+      } else {
+        textEl.textContent = '';
+        textEl.style.display = 'none';
+      }
     } else {
       textEl.textContent = where ? otherName + ': ' + where : otherName + ' ' + labels[status];
       textEl.style.display = '';
@@ -176,9 +223,11 @@ function startProfilePresence() {
     const nice  = key.charAt(0).toUpperCase() + key.slice(1);
     const where = (status !== 'offline' && data && data.page) ? data.page : '';
     const word  = status === 'online' ? 'Online' : status === 'afk' ? 'AFK' : 'Offline';
+    const seen  = status === 'offline' ? formatLastSeen(data) : null;
     const txt   = status === 'offline'
-      ? nice + ' ist offline'
+      ? (seen ? nice + ' war zuletzt online ' + seen.relative : nice + ' ist offline')
       : nice + ' ist ' + word + (where ? ' – ' + where : '');
+    el.title = seen ? 'Zuletzt online: ' + seen.absolute : '';
     el.innerHTML = '<span class="pp-dot"></span><span>' + txt + '</span>';
     el.style.display = 'inline-flex';
   }
