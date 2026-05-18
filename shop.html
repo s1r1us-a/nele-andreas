@@ -1145,7 +1145,7 @@
   <div class="shop-section-sub">Frischer Look fürs Spiel</div>
 
   <div class="active-theme-info" id="activeThemeInfo">
-    🎨 Aktives Theme: <strong id="activeThemeName">Sakura 🌸</strong>
+    🎨 Aktiv: <strong id="activeThemeName">Sakura 🌸</strong>
   </div>
 
   <div class="themes-grid" id="themesGrid">
@@ -1952,9 +1952,21 @@
     document.getElementById('exclusiveThemesTitle').style.display = showEx;
     document.getElementById('exclusiveThemesSub').style.display = showEx;
 
-    // Update active theme name
-    const active = THEMES.find(x => x.id === resolveDeviceTheme());
-    document.getElementById('activeThemeName').textContent = active ? `${active.emoji} ${active.name}` : 'Sakura 🌸';
+    // Update active theme name (pro Gerät)
+    const optedIn = !!(activeThemeMobile || activeThemeDesktop);
+    const idFor = which => {
+      const spec = which === 'mobile' ? activeThemeMobile : activeThemeDesktop;
+      if (spec) return spec;
+      return optedIn ? 'sakura' : (activeTheme || 'sakura');
+    };
+    const nameFor = id => {
+      const th = THEMES.find(x => x.id === id);
+      return th ? `${th.emoji} ${th.name}` : 'Sakura 🌸';
+    };
+    const mName = nameFor(idFor('mobile'));
+    const dName = nameFor(idFor('desktop'));
+    document.getElementById('activeThemeName').textContent =
+      (mName === dName) ? mName : `📱 ${mName} · 💻 ${dName}`;
 
     bindThemeCardEvents(grid);
     bindThemeCardEvents(exGrid);
