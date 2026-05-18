@@ -1003,7 +1003,7 @@
   <div class="confirm-card">
     <span class="confirm-emoji" id="redeemResultEmoji">🎉</span>
     <div class="confirm-title" id="redeemResultTitle">Glückwunsch!</div>
-    <div class="confirm-text">Du hast erhalten:</div>
+    <div class="confirm-text" id="redeemResultText">Du hast erhalten:</div>
     <ul id="redeemResultList" style="list-style:none; padding:0; margin:0 0 24px; text-align:left;"></ul>
     <div class="confirm-buttons">
       <button class="confirm-yes" id="redeemResultClose" style="flex:1;">Super! ✨</button>
@@ -2173,30 +2173,36 @@
     return { pool: FARM_ORES_EPIC, sub: 'ores' };
   }
 
-  function showRedeemResult(granted) {
+  function showRedeemModal(emoji, title, text, lines, success) {
+    document.getElementById('redeemResultEmoji').textContent = emoji;
+    document.getElementById('redeemResultTitle').textContent = title;
+    const t = document.getElementById('redeemResultText');
+    t.textContent = text || '';
+    t.style.display = text ? '' : 'none';
     const list = document.getElementById('redeemResultList');
     list.innerHTML = '';
-    if (!granted.length) {
+    (lines || []).forEach(line => {
       const li = document.createElement('li');
-      li.textContent = 'Belohnung konnte nicht vergeben werden 😢';
-      li.style.cssText = 'padding:8px 0; font-weight:600; color:var(--ui-btn-text);';
+      li.textContent = (success ? '✓ ' : '') + line;
+      li.style.cssText = success
+        ? 'padding:8px 0; font-size:15px; font-weight:700; color:var(--text-dark); border-bottom:1px solid var(--ui-card-border);'
+        : 'padding:6px 0; font-size:15px; font-weight:600; color:var(--ui-btn-text);';
       list.appendChild(li);
-    } else {
-      granted.forEach(g => {
-        const li = document.createElement('li');
-        li.textContent = '✓ ' + g;
-        li.style.cssText = 'padding:8px 0; font-size:15px; font-weight:700; color:var(--text-dark); border-bottom:1px solid var(--ui-card-border);';
-        list.appendChild(li);
-      });
-    }
+    });
     document.getElementById('redeemResultOverlay').classList.add('open');
   }
 
   async function redeemCode() {
     const input = document.getElementById('redeemInput');
     const code = (input.value || '').trim();
-    if (!code) { showToast('❌ Bitte einen Code eingeben'); return; }
-    if (!userKey) { showToast('❌ Nicht eingeloggt'); return; }
+    if (!code) {
+      showRedeemModal('✏️', 'Kein Code', '', ['Bitte gib zuerst einen Code ein.'], false);
+      return;
+    }
+    if (!userKey) {
+      showRedeemModal('🔒', 'Nicht eingeloggt', '', ['Bitte logge dich erst ein.'], false);
+      return;
+    }
 
     const btn = document.getElementById('redeemBtn');
     btn.disabled = true;
@@ -2207,27 +2213,49 @@
       for (const [id, c] of Object.entries(all)) {
         if (c && c.code === code) { foundId = id; foundNode = c; break; } // case-sensitiv
       }
-      if (!foundId) { showToast('❌ Code ungültig oder existiert nicht'); return; }
+      if (!foundId) {
+        showRedeemModal('❌', 'Code ungültig', '',
+          ['Diesen Code gibt es nicht. Achte auf Groß- und Kleinschreibung!'], false);
+        return;
+      }
       if (foundNode.redeemedBy && foundNode.redeemedBy[userKey]) {
-        showToast('⚠️ Du hast diesen Code bereits eingelöst'); return;
+        showRedeemModal('⚠️', 'Schon eingelöst', '',
+          ['Du hast diesen Code bereits eingelöst.'], false);
+        return;
       }
 
+      // Leaf-Transaktion auf den eigenen redeemedBy-Eintrag: robust gegen den
+      // Firebase-Null-First-Call (Knoten-Transaktion würde fälschlich abbrechen).
       let tx;
       try {
-        tx = await runTransaction(ref(db, 'redeemCodes/' + foundId), node => {
-          if (node === null) return;                              // parallel gelöscht
-          if (node.redeemedBy && node.redeemedBy[userKey]) return; // schon eingelöst
-          node.redeemedBy = node.redeemedBy || {};
-          node.redeemedBy[userKey] = true;
-          const both = node.redeemedBy.andreas && node.redeemedBy.nele;
-          return both ? null : node;                               // beide → Code löschen
-        });
+        tx = await runTransaction(
+          ref(db, `redeemCodes/${foundId}/redeemedBy/${userKey}`),
+          v => (v === true ? undefined : true)   // schon eingelöst → abbrechen
+        );
       } catch (e) {
         console.error('Einlöse-Transaktion fehlgeschlagen:', e);
-        showToast('❌ Fehler beim Einlösen'); return;
+        showRedeemModal('❌', 'Fehler', '',
+          ['Beim Einlösen ist ein Fehler aufgetreten. Versuch es nochmal.'], false);
+        return;
       }
       if (!tx.committed) {
-        showToast('⚠️ Code bereits eingelöst oder nicht mehr verfügbar'); return;
+        showRedeemModal('⚠️', 'Schon eingelöst', '',
+          ['Du hast diesen Code bereits eingelöst.'], false);
+        return;
+      }
+
+      // Auto-Delete wenn beide eingelöst haben (oder Geist-Knoten aufräumen,
+      // falls der Code zwischen get() und Transaktion gelöscht wurde).
+      try {
+        const after = (await get(ref(db, 'redeemCodes/' + foundId))).val();
+        if (after) {
+          const rb = after.redeemedBy || {};
+          if (!after.code || (rb.andreas && rb.nele)) {
+            await set(ref(db, 'redeemCodes/' + foundId), null);
+          }
+        }
+      } catch (e) {
+        console.error('Auto-Delete fehlgeschlagen:', e);
       }
 
       const rewards = Array.isArray(foundNode.rewards) ? foundNode.rewards : [];
@@ -2269,7 +2297,12 @@
       }
       if (themeAdded) { try { renderThemes(); } catch (e) {} }
       input.value = '';
-      showRedeemResult(granted);
+      if (granted.length) {
+        showRedeemModal('🎉', 'Glückwunsch!', 'Du hast erhalten:', granted, true);
+      } else {
+        showRedeemModal('🎁', 'Code eingelöst', '',
+          ['Belohnung konnte nicht vergeben werden 😢'], false);
+      }
     } finally {
       btn.disabled = false;
     }
@@ -2281,6 +2314,9 @@
   });
   document.getElementById('redeemResultClose').addEventListener('click', () => {
     document.getElementById('redeemResultOverlay').classList.remove('open');
+  });
+  document.getElementById('redeemResultOverlay').addEventListener('click', e => {
+    if (e.target.id === 'redeemResultOverlay') e.currentTarget.classList.remove('open');
   });
 
   // ---- AUTH ----
