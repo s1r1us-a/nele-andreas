@@ -1438,6 +1438,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { contributeToTopf } from './savings-helper.js';
 
   // Three.js wird dynamisch geladen — bei Fehler greift der CSS-Fallback
   let THREE = null;
@@ -2140,6 +2141,7 @@
   // ============== COIN OPERATIONS ==============
   async function deductCoins(amount) {
     await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - amount);
+    contributeToTopf(db, userKey, amount, 'slot').catch(()=>{});
     await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + amount);
     flashCoinDisplay('deduct');
   }

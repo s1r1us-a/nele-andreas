@@ -2919,6 +2919,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, onValue, runTransaction, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { contributeToTopf } from './savings-helper.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -4710,6 +4711,7 @@
   window.buyBeehive = async function() {
     if (currentCoins >= 800) {
         await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - 800);
+        contributeToTopf(db, userKey, 800, 'farm').catch(()=>{});
         await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + 800).catch(err => console.error('Stats-Fehler:', err));
         beehive.level = 1;
         beehive.isProducing = true; 
@@ -4727,6 +4729,7 @@
   window.upgradeBeehive = async function(cost) {
     if (currentCoins >= cost) {
         await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+        contributeToTopf(db, userKey, cost, 'farm').catch(()=>{});
         await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
         beehive.level++;
         await saveFarmData();
@@ -4750,6 +4753,7 @@
           return;
       }
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+      contributeToTopf(db, userKey, cost, 'farm').catch(()=>{});
       await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
       unlockedBeds++;
       await saveFarmData();
@@ -4785,7 +4789,7 @@
 
   window.processBuy = async function(amount) {
     const cost = itemToBuy.price * amount;
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); contributeToTopf(db, userKey, cost, 'farm').catch(()=>{}); await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
@@ -4824,9 +4828,10 @@
     if(!nameInput) { window.showToast('Bitte gib einen Namen ein! 📝'); return; }
     if (nameInput.length > 20) nameInput = nameInput.slice(0, 20);
     if (currentCoins >= cost) { 
-        await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); 
-        await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); 
-        
+        await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+        contributeToTopf(db, userKey, cost, 'farm').catch(()=>{});
+        await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
+
         let h = Math.floor(Math.random() * 40) - 20; 
         let s = (85 + Math.random() * 30) / 100;     
         let b = (90 + Math.random() * 20) / 100;     

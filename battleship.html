@@ -544,6 +544,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { contributeToTopf } from './savings-helper.js';
 
 const app = initializeApp({
   apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1391,6 +1392,7 @@ async function createGame() {
   const snap = await get(ref(db, GAME_REF));
   if (snap.val())         { showToast('Es läuft bereits ein Spiel! ⚔️'); return; }
   await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) - bet);
+  contributeToTopf(db, pkey(currentUser), bet, 'battleship').catch(()=>{});
   await set(ref(db, GAME_REF), {
     status: 'waiting', createdBy: currentUser, bet,
     currentTurn: currentUser, winner: null,
@@ -1412,6 +1414,7 @@ async function acceptGame() {
   const bet = gameState.bet;
   if (bet > currentCoins) { showToast('Nicht genug Coins! 😅'); return; }
   await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) - bet);
+  contributeToTopf(db, pkey(currentUser), bet, 'battleship').catch(()=>{});
   await set(ref(db, GAME_REF), {...gameState, status: 'placement'});
 }
 

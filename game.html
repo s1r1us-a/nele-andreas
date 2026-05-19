@@ -256,6 +256,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { contributeToTopf } from './savings-helper.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -572,6 +573,7 @@
 
     // Coins sofort abziehen
     await runTransaction(ref(db, `coins/${currentUser.toLowerCase()}`), c => (c||0) - betVal);
+    contributeToTopf(db, currentUser.toLowerCase(), betVal, 'game').catch(()=>{});
 
     await set(ref(db, GAME_REF), {
       status: 'waiting',
@@ -599,6 +601,7 @@
 
     // Coins abziehen
     await runTransaction(ref(db, `coins/${currentUser.toLowerCase()}`), c => (c||0) - bet);
+    contributeToTopf(db, currentUser.toLowerCase(), bet, 'game').catch(()=>{});
 
     await set(ref(db, GAME_REF), {
       ...gameState,

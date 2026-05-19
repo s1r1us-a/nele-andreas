@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unser Sparschwein 🐷 – Nele & Andreas</title>
+<script>
+  try {
+    var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+    var spec = localStorage.getItem('activeTheme' + dev);
+    var anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    var t = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
+    if (t) document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="princess-theme.css">
+<style>
+  :root {
+    --rose: #e8738a;
+    --rose-light: #f5a3b5;
+    --rose-pale: #fde8ed;
+    --cream: #fff8f0;
+    --gold: #d4a061;
+    --warm: #f9e4d4;
+    --text-dark: #5a2d3a;
+    --text-mid: #8b5565;
+    --pig-pink: #f9b8d3;
+    --pig-deep: #f07baa;
+    --pig-dark: #c94480;
+    --ui-card-bg: rgba(255,255,255,0.8);
+    --ui-card-border: rgba(232,115,138,0.18);
+    --ui-topbar-bg: rgba(255,248,240,0.95);
+    --ui-topbar-border: rgba(232,115,138,0.2);
+    --ui-btn-bg: rgba(255,255,255,0.9);
+    --ui-btn-border: rgba(232,115,138,0.25);
+    --ui-coin-bg: rgba(255,255,255,0.9);
+    --ui-modal-bg: #fff;
+    --ui-modal-overlay: rgba(253,232,237,0.92);
+    --ui-modal-border: rgba(232,115,138,0.3);
+    --ui-toast-bg: var(--text-dark);
+    --ui-btn-text: var(--text-mid);
+    --ui-input-bg: var(--cream);
+    --ui-input-color: var(--text-dark);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sans-serif; overflow-x: hidden; transition: background 0.6s ease; }
+
+  .bg-gradient {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 15%, rgba(249,184,211,0.25) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 85%, rgba(212,160,97,0.12) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, rgba(232,115,138,0.08) 0%, transparent 60%),
+      linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f8 70%, #fff8e8 100%);
+    z-index: 0; transition: background 0.6s ease;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 10px 16px; background: var(--ui-topbar-bg);
+    border-bottom: 1px solid var(--ui-topbar-border);
+    box-shadow: 0 2px 12px rgba(232,115,138,0.1);
+    backdrop-filter: blur(8px); transition: background 0.4s ease;
+  }
+  .top-bar-btn {
+    background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border);
+    border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif;
+    font-size: 12px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer;
+    transition: all 0.2s ease; text-decoration: none; display: inline-block;
+  }
+  .top-bar-btn:hover { color: var(--rose); border-color: var(--rose); }
+  .coin-display {
+    display: flex; align-items: center; gap: 6px; background: var(--ui-coin-bg);
+    border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px;
+    padding: 6px 14px; font-size: 12px; font-weight: 700; color: var(--gold);
+    transition: background 0.4s ease;
+  }
+  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 18px; }
+
+  /* AUTH */
+  .auth-loading {
+    position: fixed; inset: 0; z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--cream);
+  }
+  .auth-spinner {
+    width: 36px; height: 36px; border: 3px solid rgba(232,115,138,0.2);
+    border-top-color: var(--rose); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ui-modal-overlay);
+  }
+  .modal-card {
+    background: var(--ui-modal-bg); border: 1.5px solid var(--ui-modal-border);
+    border-radius: 28px; padding: 40px 36px 36px; max-width: 340px; width: 90%;
+    text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.2);
+  }
+  .modal-emoji { font-size: 48px; margin-bottom: 12px; display: block; }
+  .modal-title {
+    font-family: 'Dancing Script', cursive; font-size: 32px; font-weight: 700;
+    background: linear-gradient(135deg, var(--rose) 0%, #c85070 60%, var(--rose-light) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+  .modal-subtitle {
+    font-size: 13px; color: var(--ui-btn-text); letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 24px; font-weight: 500;
+  }
+  .login-field {
+    width: 100%; border: 1.5px solid var(--ui-modal-border); border-radius: 14px;
+    padding: 13px 16px; font-family: 'Quicksand', sans-serif; font-size: 14px;
+    font-weight: 500; color: var(--ui-input-color); background: var(--ui-input-bg);
+    outline: none; margin-bottom: 12px; transition: border-color 0.2s ease; box-sizing: border-box;
+  }
+  .login-field:focus { border-color: var(--rose); }
+  .login-btn {
+    width: 100%; border: none; border-radius: 50px; padding: 16px;
+    font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; background: linear-gradient(135deg, var(--rose) 0%, #c85070 100%);
+    color: white; box-shadow: 0 4px 20px rgba(232,115,138,0.4);
+    transition: transform 0.2s ease; margin-top: 4px;
+  }
+  .login-btn:hover { transform: scale(1.03) translateY(-2px); }
+  .login-error { font-size: 12px; color: #c85070; margin-top: 10px; min-height: 18px; font-weight: 600; }
+
+  /* PAGE */
+  .page {
+    position: relative; z-index: 2; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 80px 20px 80px; gap: 28px; max-width: 680px; margin: 0 auto;
+  }
+
+  .page-header { text-align: center; }
+  .page-title {
+    font-family: 'Dancing Script', cursive; font-size: clamp(44px, 11vw, 72px);
+    font-weight: 700;
+    background: linear-gradient(135deg, #e8738a 0%, #c94480 40%, #f07baa 80%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1.1; filter: drop-shadow(0 2px 8px rgba(232,115,138,0.3));
+  }
+  .page-subtitle {
+    font-size: 13px; color: var(--ui-btn-text); letter-spacing: 2px;
+    text-transform: uppercase; font-weight: 500; margin-top: 6px;
+  }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+    background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border);
+    border-radius: 50px; padding: 9px 20px; font-size: 13px; font-weight: 600;
+    color: var(--ui-btn-text); text-decoration: none; transition: all 0.2s ease;
+  }
+  .back-btn:hover { color: var(--rose); border-color: var(--rose); }
+
+  /* PIGGY BANK HERO */
+  .pig-hero {
+    width: 100%; display: flex; flex-direction: column; align-items: center;
+    gap: 0; position: relative;
+  }
+  .pig-wrapper {
+    position: relative; width: min(300px, 85vw);
+  }
+  .pig-svg {
+    width: 100%; height: auto; filter: drop-shadow(0 12px 32px rgba(240,123,170,0.35));
+  }
+
+  /* Coin drop animation */
+  .coin-anim-wrapper {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; overflow: visible;
+  }
+  .anim-coin {
+    position: absolute; width: 18px; height: 18px;
+    background: radial-gradient(circle at 35% 35%, #ffe066, #d4a061, #a06020);
+    border-radius: 50%; border: 2px solid rgba(255,255,255,0.4);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.5), 0 3px 8px rgba(160,96,32,0.4);
+    opacity: 0; left: 50%; transform: translateX(-50%);
+    top: calc(var(--slot-top) - 44px);
+  }
+  .anim-coin.dropping {
+    animation: coinFall 1.1s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+  }
+  @keyframes coinFall {
+    0%   { opacity: 1; transform: translateX(-50%) translateY(0) rotateY(0deg); }
+    60%  { opacity: 1; transform: translateX(-50%) translateY(38px) rotateY(180deg); }
+    75%  { opacity: 0; transform: translateX(-50%) translateY(42px) rotateY(270deg); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(42px); }
+  }
+
+  /* Pig breathing animation */
+  .pig-svg { animation: pigBreathe 4s ease-in-out infinite; transform-origin: center bottom; }
+  @keyframes pigBreathe {
+    0%, 100% { transform: scaleY(1) scaleX(1); }
+    50%       { transform: scaleY(1.018) scaleX(0.995); }
+  }
+
+  /* Topf amount display */
+  .topf-display {
+    margin-top: 4px; text-align: center;
+    background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border);
+    border-radius: 28px; padding: 22px 40px 18px; width: 100%;
+    box-shadow: 0 8px 32px rgba(232,115,138,0.12);
+    backdrop-filter: blur(10px);
+  }
+  .topf-label-small {
+    font-size: 11px; color: var(--ui-btn-text); text-transform: uppercase;
+    letter-spacing: 2px; font-weight: 600; margin-bottom: 6px;
+  }
+  .topf-amount {
+    font-family: 'Dancing Script', cursive; font-size: clamp(52px, 14vw, 76px);
+    font-weight: 700; line-height: 1;
+    background: linear-gradient(135deg, #d4a061 0%, #b07830 40%, #f0c070 80%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 2px 6px rgba(212,160,97,0.3));
+  }
+  .topf-unit {
+    font-family: 'Dancing Script', cursive; font-size: clamp(24px, 6vw, 32px);
+    color: var(--gold); opacity: 0.8; margin-left: 4px;
+  }
+  .topf-sub { font-size: 12px; color: var(--ui-btn-text); margin-top: 6px; font-weight: 500; }
+
+  /* Spar-rate badge */
+  .rate-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, rgba(240,123,170,0.15), rgba(232,115,138,0.1));
+    border: 1.5px solid rgba(232,115,138,0.3); border-radius: 50px;
+    padding: 8px 18px; font-size: 12px; font-weight: 600; color: var(--rose);
+  }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: 700;
+    color: var(--text-dark); align-self: flex-start; margin-bottom: -12px;
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    width: 100%; display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 440px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stats-grid.two-col { grid-template-columns: repeat(2, 1fr); }
+
+  .stat-card {
+    background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border);
+    border-radius: 20px; padding: 16px 14px 14px; text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    backdrop-filter: blur(8px);
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(232,115,138,0.14); }
+  .stat-icon { font-size: 22px; margin-bottom: 6px; }
+  .stat-value {
+    font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: 700;
+    color: var(--text-dark); line-height: 1.1;
+  }
+  .stat-value.gold { color: var(--gold); }
+  .stat-label { font-size: 10px; color: var(--ui-btn-text); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; font-weight: 600; }
+
+  /* COMPARISON */
+  .comparison-card {
+    width: 100%; background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border);
+    border-radius: 20px; padding: 20px 20px 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06); backdrop-filter: blur(8px);
+  }
+  .comparison-header {
+    font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700;
+    color: var(--text-dark); margin-bottom: 14px; text-align: center;
+  }
+  .comparison-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .comp-name { font-size: 13px; font-weight: 700; color: var(--text-dark); width: 60px; text-align: right; }
+  .comp-name.right { text-align: left; }
+  .comp-bar-wrap { flex: 1; height: 18px; background: rgba(0,0,0,0.06); border-radius: 20px; overflow: hidden; }
+  .comp-bar {
+    height: 100%; border-radius: 20px; transition: width 1s cubic-bezier(0.34,1.56,0.64,1);
+    min-width: 4px;
+  }
+  .comp-bar.nele { background: linear-gradient(90deg, #f07baa, #e8738a); }
+  .comp-bar.andreas { background: linear-gradient(90deg, #7baaff, #4a80f0); }
+  .comp-values {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--ui-btn-text); margin-top: 6px; font-weight: 600;
+  }
+
+  /* FEED */
+  .feed-card {
+    width: 100%; background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border);
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06); backdrop-filter: blur(8px);
+  }
+  .feed-header {
+    padding: 16px 20px 12px; border-bottom: 1px solid var(--ui-card-border);
+    font-family: 'Dancing Script', cursive; font-size: 22px; font-weight: 700; color: var(--text-dark);
+  }
+  .feed-list { max-height: 320px; overflow-y: auto; }
+  .feed-list::-webkit-scrollbar { width: 4px; }
+  .feed-list::-webkit-scrollbar-thumb { background: rgba(232,115,138,0.3); border-radius: 2px; }
+  .feed-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; border-bottom: 1px solid rgba(232,115,138,0.07);
+    transition: background 0.2s;
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-item:hover { background: rgba(232,115,138,0.04); }
+  .feed-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .feed-avatar.nele { background: linear-gradient(135deg, #fde8ed, #f5a3b5); }
+  .feed-avatar.andreas { background: linear-gradient(135deg, #e0eeff, #a0c4ff); }
+  .feed-info { flex: 1; min-width: 0; }
+  .feed-name { font-size: 12px; font-weight: 700; color: var(--text-dark); }
+  .feed-detail { font-size: 11px; color: var(--ui-btn-text); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .feed-amount {
+    font-family: 'Dancing Script', cursive; font-size: 18px; font-weight: 700;
+    color: var(--gold); flex-shrink: 0;
+  }
+  .feed-empty {
+    padding: 32px; text-align: center; color: var(--ui-btn-text); font-size: 13px;
+  }
+
+  /* LEEREN BUTTON */
+  .leeren-btn {
+    background: none; border: 1.5px solid rgba(200,68,128,0.3); border-radius: 50px;
+    padding: 11px 28px; font-family: 'Quicksand', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--pig-dark); cursor: pointer;
+    transition: all 0.2s ease; align-self: center;
+  }
+  .leeren-btn:hover { background: rgba(200,68,128,0.07); border-color: var(--pig-dark); }
+
+  /* CONFIRM DIALOG */
+  .confirm-overlay {
+    position: fixed; inset: 0; z-index: 8000; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(90,45,58,0.55); backdrop-filter: blur(4px);
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box {
+    background: var(--ui-modal-bg); border: 1.5px solid var(--ui-modal-border);
+    border-radius: 28px; padding: 36px 32px; max-width: 320px; width: 90%;
+    text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.25);
+  }
+  .confirm-box h3 {
+    font-family: 'Dancing Script', cursive; font-size: 26px; color: var(--text-dark); margin-bottom: 10px;
+  }
+  .confirm-box p { font-size: 13px; color: var(--ui-btn-text); margin-bottom: 24px; line-height: 1.6; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-yes {
+    flex: 1; border: none; border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(135deg, #c94480, #a02060); color: white;
+    box-shadow: 0 4px 16px rgba(201,68,128,0.35); transition: transform 0.2s;
+  }
+  .confirm-yes:hover { transform: scale(1.04); }
+  .confirm-no {
+    flex: 1; background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border);
+    border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif;
+    font-size: 14px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .confirm-no:hover { border-color: var(--rose); color: var(--rose); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--ui-toast-bg); color: #fff; border-radius: 50px;
+    padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999;
+    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease;
+    opacity: 0; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  @media (max-width: 480px) { .toast { font-size: 13px; padding: 10px 18px; white-space: normal; max-width: 90vw; text-align: center; } }
+
+  /* NEW CONTRIBUTION FLASH */
+  @keyframes topfPulse {
+    0%   { filter: drop-shadow(0 2px 6px rgba(212,160,97,0.3)); }
+    50%  { filter: drop-shadow(0 0 20px rgba(212,160,97,0.8)) drop-shadow(0 0 40px rgba(232,115,138,0.4)); }
+    100% { filter: drop-shadow(0 2px 6px rgba(212,160,97,0.3)); }
+  }
+  .topf-amount.pulse { animation: topfPulse 0.8s ease; }
+</style>
+</head>
+<body>
+
+<div class="bg-gradient"></div>
+
+<!-- Auth loading -->
+<div class="auth-loading" id="authLoading">
+  <div class="auth-spinner"></div>
+</div>
+
+<!-- Login modal -->
+<div class="modal-overlay" id="loginOverlay" style="display:none">
+  <div class="modal-card">
+    <span class="modal-emoji">🐷</span>
+    <div class="modal-title">Unser Sparschwein</div>
+    <div class="modal-subtitle">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- Top bar -->
+<div class="top-bar" id="topBar" style="display:none">
+  <a href="index.html" class="top-bar-btn">← Zurück</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="userLabel" style="font-size:12px;font-weight:600;color:var(--text-mid)"></span>
+    <div class="coin-display">
+      <span>🪙</span>
+      <span class="coin-count" id="coinCount">0</span>
+    </div>
+    <button class="top-bar-btn" id="logoutBtn" style="font-size:11px;padding:6px 12px">Ausloggen</button>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>Topf leeren? 🪣</h3>
+    <p id="confirmText">Sicher? Der Topf wird auf 0 gesetzt und die Leerung wird gespeichert.</p>
+    <div class="confirm-btns">
+      <button class="confirm-yes" id="confirmYes">Ja, leeren!</button>
+      <button class="confirm-no" id="confirmNo">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main page -->
+<div class="page" id="mainPage" style="visibility:hidden;opacity:0;position:absolute;pointer-events:none">
+
+  <a href="index.html" class="back-btn">← Zurück</a>
+
+  <div class="page-header">
+    <div class="page-title">Unser Sparschwein</div>
+    <div class="page-subtitle">Zusammen sparen · gemeinsam träumen</div>
+  </div>
+
+  <!-- Piggy bank hero -->
+  <div class="pig-hero">
+    <div class="pig-wrapper" id="pigWrapper">
+      <!-- Coin animation overlay -->
+      <div class="coin-anim-wrapper" id="coinAnimWrapper">
+        <div class="anim-coin" id="animCoin" style="--slot-top: 37%"></div>
+      </div>
+
+      <!-- SVG Piggy bank -->
+      <svg class="pig-svg" viewBox="0 0 280 235" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sparschwein">
+        <defs>
+          <radialGradient id="pigBodyGrad" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#fdd0e8"/>
+            <stop offset="100%" stop-color="#f09bc0"/>
+          </radialGradient>
+          <radialGradient id="pigHeadGrad" cx="35%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#fdd0e8"/>
+            <stop offset="100%" stop-color="#f09bc0"/>
+          </radialGradient>
+          <radialGradient id="snoutGrad" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#f5a0c8"/>
+            <stop offset="100%" stop-color="#e06898"/>
+          </radialGradient>
+          <filter id="pigShadow" x="-5%" y="-5%" width="120%" height="130%">
+            <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="rgba(200,80,130,0.25)"/>
+          </filter>
+        </defs>
+
+        <!-- Tail (curly, left side) -->
+        <path d="M 40 125 C 14 112, 8 84, 30 76 C 48 70, 57 88, 40 96"
+              fill="none" stroke="#e888b8" stroke-width="6" stroke-linecap="round"/>
+
+        <!-- Body -->
+        <ellipse cx="130" cy="148" rx="94" ry="66" fill="url(#pigBodyGrad)" filter="url(#pigShadow)"/>
+
+        <!-- Head -->
+        <circle cx="225" cy="108" r="57" fill="url(#pigHeadGrad)"/>
+
+        <!-- Ear outer -->
+        <ellipse cx="212" cy="56" rx="15" ry="20" fill="#f5b0d5" transform="rotate(-15 212 56)"/>
+        <!-- Ear inner -->
+        <ellipse cx="212" cy="56" rx="9" ry="13" fill="#e06898" transform="rotate(-15 212 56)"/>
+
+        <!-- Coin slot (on top of body between body and head) -->
+        <rect x="106" y="82" width="30" height="8" rx="4" fill="#c84480"/>
+        <!-- Slot shine -->
+        <rect x="109" y="83" width="14" height="3" rx="1.5" fill="rgba(255,255,255,0.4)"/>
+
+        <!-- Snout -->
+        <ellipse cx="273" cy="115" rx="24" ry="18" fill="url(#snoutGrad)"/>
+        <!-- Nostrils -->
+        <circle cx="266" cy="113" r="5.5" fill="#b83870"/>
+        <circle cx="280" cy="113" r="5.5" fill="#b83870"/>
+        <!-- Nostril shine -->
+        <circle cx="264" cy="111" r="2" fill="rgba(255,255,255,0.35)"/>
+        <circle cx="278" cy="111" r="2" fill="rgba(255,255,255,0.35)"/>
+
+        <!-- Eye -->
+        <circle cx="238" cy="87" r="9" fill="#3d1a28"/>
+        <!-- Eye shine -->
+        <circle cx="242" cy="83" r="3.5" fill="white"/>
+        <circle cx="235" cy="90" r="1.5" fill="rgba(255,255,255,0.5)"/>
+
+        <!-- Blush cheek -->
+        <ellipse cx="250" cy="105" rx="14" ry="9" fill="rgba(232,100,150,0.28)"/>
+
+        <!-- Legs -->
+        <rect x="64" y="204" width="22" height="24" rx="11" fill="#ee9dc5"/>
+        <rect x="97" y="207" width="22" height="24" rx="11" fill="#ee9dc5"/>
+        <rect x="138" y="207" width="22" height="24" rx="11" fill="#ee9dc5"/>
+        <rect x="171" y="204" width="22" height="24" rx="11" fill="#ee9dc5"/>
+        <!-- Leg hooves -->
+        <ellipse cx="75" cy="228" rx="11" ry="5" fill="#e06898"/>
+        <ellipse cx="108" cy="231" rx="11" ry="5" fill="#e06898"/>
+        <ellipse cx="149" cy="231" rx="11" ry="5" fill="#e06898"/>
+        <ellipse cx="182" cy="228" rx="11" ry="5" fill="#e06898"/>
+      </svg>
+    </div>
+
+    <!-- Topf display -->
+    <div class="topf-display">
+      <div class="topf-label-small">Aktuell im Topf</div>
+      <div>
+        <span class="topf-amount" id="topfAmount">0</span><span class="topf-unit">🪙</span>
+      </div>
+      <div class="topf-sub" id="topfSub">Noch nichts gespart – fang an!</div>
+    </div>
+  </div>
+
+  <!-- Spar-rate info -->
+  <div class="rate-badge">
+    🐷 Bei jeder Ausgabe gehen automatisch <strong style="margin:0 4px">5%</strong> in unser Sparschwein
+  </div>
+
+  <!-- Lifetime + meta stats -->
+  <div class="section-title">Statistiken 📊</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">💎</div>
+      <div class="stat-value gold" id="statLifetime">0</div>
+      <div class="stat-label">Lifetime gespart</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🗓️</div>
+      <div class="stat-value" id="statSeit">–</div>
+      <div class="stat-label">Gespart seit</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🪣</div>
+      <div class="stat-value" id="statLetzteLeering">–</div>
+      <div class="stat-label">Letzte Leerung</div>
+    </div>
+  </div>
+
+  <!-- Zeitraum-Stats -->
+  <div class="stats-grid two-col">
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-value gold" id="statDieseWoche">0</div>
+      <div class="stat-label">Diese Woche 🪙</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🗓</div>
+      <div class="stat-value gold" id="statDiesenMonat">0</div>
+      <div class="stat-label">Diesen Monat 🪙</div>
+    </div>
+  </div>
+
+  <!-- Extra Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🔢</div>
+      <div class="stat-value" id="statAnzahl">0</div>
+      <div class="stat-label">Einzahlungen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value gold" id="statDurchschnitt">0</div>
+      <div class="stat-label">Ø pro Einzahlung</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-value gold" id="statGroesste">0</div>
+      <div class="stat-label">Größte Einzahlung</div>
+    </div>
+  </div>
+
+  <!-- Per-person comparison -->
+  <div class="comparison-card">
+    <div class="comparison-header">Wer spart mehr? 🏆</div>
+    <div class="comparison-row">
+      <div class="comp-name">Nele</div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar nele" id="barNele" style="width:50%"></div>
+      </div>
+    </div>
+    <div class="comparison-row">
+      <div class="comp-name">Andreas</div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar andreas" id="barAndreas" style="width:50%"></div>
+      </div>
+    </div>
+    <div class="comp-values">
+      <span id="compNeleVal">Nele: 0 🪙</span>
+      <span id="compAndreasVal">Andreas: 0 🪙</span>
+    </div>
+  </div>
+
+  <!-- Per-person breakdown (gesamt) -->
+  <div class="stats-grid two-col">
+    <div class="stat-card">
+      <div class="stat-icon">🌸</div>
+      <div class="stat-value" style="color:var(--rose)" id="statNeleGesamt">0</div>
+      <div class="stat-label">Nele gesamt 🪙</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💙</div>
+      <div class="stat-value" style="color:#4a80f0" id="statAndreasGesamt">0</div>
+      <div class="stat-label">Andreas gesamt 🪙</div>
+    </div>
+  </div>
+
+  <!-- Per-person this week -->
+  <div class="stats-grid two-col">
+    <div class="stat-card">
+      <div class="stat-icon">🌸</div>
+      <div class="stat-value" style="color:var(--rose)" id="statNeleWoche">0</div>
+      <div class="stat-label">Nele diese Woche 🪙</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💙</div>
+      <div class="stat-value" style="color:#4a80f0" id="statAndreasWoche">0</div>
+      <div class="stat-label">Andreas diese Woche 🪙</div>
+    </div>
+  </div>
+
+  <!-- Live feed -->
+  <div class="section-title">Letzte Einzahlungen 🪙</div>
+  <div class="feed-card">
+    <div class="feed-list" id="feedList">
+      <div class="feed-empty">Noch keine Einzahlungen</div>
+    </div>
+  </div>
+
+  <!-- Leeren -->
+  <button class="leeren-btn" id="leerenBtn">🪣 Topf leeren</button>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, runTransaction, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  });
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  let userKey = null;
+  let currentCoins = 0;
+  let allBeitraege = [];
+  let topfVal = 0;
+
+  // ---- HELPERS ----
+  function displayName(email) {
+    if (email.toLowerCase() === 'raederich@outlook.com') return 'Andreas';
+    if (email.toLowerCase() === 'nele.busse@web.de') return 'Nele';
+    return email.split('@')[0];
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function fmtDate(ts) {
+    if (!ts) return '–';
+    const d = new Date(ts);
+    return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  }
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return 'gerade eben';
+    if (min < 60) return `vor ${min} Min.`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `vor ${h} Std.`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `vor ${d} Tag${d>1?'en':''}`;
+    return fmtDate(ts);
+  }
+
+  const QUELLEN_LABELS = {
+    shop: '🛍 Shop', farm: '🌾 Farm', mail: '✉️ Mail',
+    battleship: '🚢 Schiffe', slot: '🎰 Slots',
+    zombiedefense: '🧟 Zombie', ourhome: '🏠 Zuhause',
+    game: '🎮 Spiel', unbekannt: '💸 Ausgabe'
+  };
+  function quelleLabel(q) { return QUELLEN_LABELS[q] || ('💸 ' + q); }
+
+  // ---- COIN DROP ANIMATION ----
+  let coinAnimTimeout = null;
+  function dropCoin() {
+    const coin = document.getElementById('animCoin');
+    if (!coin) return;
+    coin.classList.remove('dropping');
+    void coin.offsetWidth;
+    coin.classList.add('dropping');
+    coinAnimTimeout = setTimeout(dropCoin, 5000 + Math.random() * 4000);
+  }
+
+  function triggerCoinDrop() {
+    const coin = document.getElementById('animCoin');
+    if (!coin) return;
+    clearTimeout(coinAnimTimeout);
+    coin.classList.remove('dropping');
+    void coin.offsetWidth;
+    coin.classList.add('dropping');
+    coinAnimTimeout = setTimeout(dropCoin, 5000);
+  }
+
+  // ---- STATS CALCULATION ----
+  function calcStats(beitraege) {
+    const now = Date.now();
+    const startOfWeek = (() => {
+      const d = new Date(); d.setHours(0,0,0,0);
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      return d.getTime();
+    })();
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+
+    let totalNele = 0, totalAndreas = 0;
+    let wocheNele = 0, wocheAndreas = 0;
+    let monatNele = 0, monatAndreas = 0;
+    let anzahl = 0, groesste = 0, ersteTs = Infinity;
+
+    for (const b of beitraege) {
+      const val = b.beitrag || 0;
+      const ts = b.timestamp || 0;
+      anzahl++;
+      if (val > groesste) groesste = val;
+      if (ts < ersteTs) ersteTs = ts;
+
+      if (b.von === 'nele') {
+        totalNele += val;
+        if (ts >= startOfWeek) wocheNele += val;
+        if (ts >= startOfMonth) monatNele += val;
+      } else {
+        totalAndreas += val;
+        if (ts >= startOfWeek) wocheAndreas += val;
+        if (ts >= startOfMonth) monatAndreas += val;
+      }
+    }
+
+    const totalGesamt = totalNele + totalAndreas;
+    const durchschnitt = anzahl > 0 ? Math.round(totalGesamt / anzahl) : 0;
+    const wocheGesamt = wocheNele + wocheAndreas;
+    const monatGesamt = monatNele + monatAndreas;
+
+    return {
+      totalNele, totalAndreas, totalGesamt,
+      wocheNele, wocheAndreas, wocheGesamt,
+      monatNele, monatAndreas, monatGesamt,
+      anzahl, groesste, durchschnitt,
+      ersteTs: ersteTs === Infinity ? null : ersteTs
+    };
+  }
+
+  function renderStats(stats) {
+    document.getElementById('statAnzahl').textContent     = stats.anzahl;
+    document.getElementById('statDurchschnitt').textContent = stats.durchschnitt;
+    document.getElementById('statGroesste').textContent   = stats.groesste;
+    document.getElementById('statDieseWoche').textContent = stats.wocheGesamt;
+    document.getElementById('statDiesenMonat').textContent = stats.monatGesamt;
+    document.getElementById('statNeleGesamt').textContent = stats.totalNele;
+    document.getElementById('statAndreasGesamt').textContent = stats.totalAndreas;
+    document.getElementById('statNeleWoche').textContent  = stats.wocheNele;
+    document.getElementById('statAndreasWoche').textContent = stats.wocheAndreas;
+    document.getElementById('statSeit').textContent = stats.ersteTs ? fmtDate(stats.ersteTs) : '–';
+
+    // Comparison bars
+    const total = stats.totalNele + stats.totalAndreas;
+    const pctNele = total > 0 ? Math.round((stats.totalNele / total) * 100) : 50;
+    const pctAndreas = total > 0 ? 100 - pctNele : 50;
+    document.getElementById('barNele').style.width = pctNele + '%';
+    document.getElementById('barAndreas').style.width = pctAndreas + '%';
+    document.getElementById('compNeleVal').textContent = `Nele: ${stats.totalNele} 🪙`;
+    document.getElementById('compAndreasVal').textContent = `Andreas: ${stats.totalAndreas} 🪙`;
+  }
+
+  function renderFeed(beitraege) {
+    const feed = document.getElementById('feedList');
+    const sorted = [...beitraege].sort((a,b) => (b.timestamp||0) - (a.timestamp||0)).slice(0, 20);
+    if (sorted.length === 0) {
+      feed.innerHTML = '<div class="feed-empty">Noch keine Einzahlungen 🐷</div>';
+      return;
+    }
+    feed.innerHTML = sorted.map(b => {
+      const isNele = b.von === 'nele';
+      const avatar = isNele ? '🌸' : '💙';
+      const name = isNele ? 'Nele' : 'Andreas';
+      const cls = isNele ? 'nele' : 'andreas';
+      return `
+        <div class="feed-item">
+          <div class="feed-avatar ${cls}">${avatar}</div>
+          <div class="feed-info">
+            <div class="feed-name">${name}</div>
+            <div class="feed-detail">${quelleLabel(b.quelle)} · ${b.ausgabe}🪙 Ausgabe · ${timeAgo(b.timestamp)}</div>
+          </div>
+          <div class="feed-amount">+${b.beitrag}🪙</div>
+        </div>`;
+    }).join('');
+  }
+
+  function updateTopfDisplay(val) {
+    const el = document.getElementById('topfAmount');
+    const wasVal = topfVal;
+    topfVal = val;
+    el.textContent = val;
+
+    if (val > wasVal && wasVal !== undefined) {
+      el.classList.remove('pulse');
+      void el.offsetWidth;
+      el.classList.add('pulse');
+      triggerCoinDrop();
+    }
+
+    const sub = document.getElementById('topfSub');
+    if (val === 0) sub.textContent = 'Noch nichts gespart – fang an!';
+    else if (val < 100) sub.textContent = 'Der Anfang ist gemacht! 🌱';
+    else if (val < 500) sub.textContent = 'Es füllt sich! 🐷✨';
+    else if (val < 1000) sub.textContent = 'Schon ordentlich was zusammen! 💪';
+    else sub.textContent = 'Wow, das ist ein praller Topf! 🎉';
+  }
+
+  // ---- DATA LOADING ----
+  function setupListeners() {
+    // Topf (live)
+    onValue(ref(db, 'savings/topf'), snap => {
+      updateTopfDisplay(snap.val() || 0);
+    });
+
+    // Lifetime total (live)
+    onValue(ref(db, 'savings/totalEver'), snap => {
+      document.getElementById('statLifetime').textContent = snap.val() || 0;
+    });
+
+    // Letzte Leerung (live)
+    onValue(ref(db, 'savings/letzteLeering'), snap => {
+      const d = snap.val();
+      if (d && d.timestamp) {
+        document.getElementById('statLetzteLeering').textContent = fmtDate(d.timestamp);
+      } else {
+        document.getElementById('statLetzteLeering').textContent = 'Noch nie';
+      }
+    });
+
+    // Beitraege (live)
+    onValue(ref(db, 'savings/beitraege'), snap => {
+      const raw = snap.val() || {};
+      allBeitraege = Object.values(raw);
+      const stats = calcStats(allBeitraege);
+      renderStats(stats);
+      renderFeed(allBeitraege);
+    });
+
+    // Own coins
+    onValue(ref(db, `coins/${userKey}`), snap => {
+      currentCoins = snap.val() || 0;
+      document.getElementById('coinCount').textContent = currentCoins;
+    });
+  }
+
+  // ---- TOPF LEEREN ----
+  document.getElementById('leerenBtn').addEventListener('click', () => {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmText').textContent =
+      `Aktuell sind ${topfVal} 🪙 im Topf. Sicher leeren? Das wird als Leerung gespeichert.`;
+    overlay.classList.add('open');
+  });
+
+  document.getElementById('confirmNo').addEventListener('click', () => {
+    document.getElementById('confirmOverlay').classList.remove('open');
+  });
+
+  document.getElementById('confirmYes').addEventListener('click', async () => {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    if (topfVal === 0) { showToast('Der Topf ist bereits leer!'); return; }
+    try {
+      await set(ref(db, 'savings/letzteLeering'), { timestamp: Date.now(), betrag: topfVal, gelaertVon: userKey });
+      await set(ref(db, 'savings/topf'), 0);
+      showToast(`🪣 Topf geleert! ${topfVal} 🪙 ausgegeben.`);
+    } catch(e) {
+      showToast('Fehler beim Leeren – bitte nochmal versuchen.');
+    }
+  });
+
+  // ---- AUTH ----
+  const loginBtn  = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPassword').value;
+    document.getElementById('loginError').textContent = '';
+    loginBtn.textContent = '…';
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch {
+      loginBtn.textContent = 'Einloggen 🌸';
+      document.getElementById('loginError').textContent = 'E-Mail oder Passwort falsch 🐾';
+    }
+  });
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, user => {
+    document.getElementById('authLoading').style.display = 'none';
+    if (user) {
+      const name = displayName(user.email);
+      userKey = name.toLowerCase();
+      document.getElementById('userLabel').textContent = name;
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('topBar').style.display = 'flex';
+      const mp = document.getElementById('mainPage');
+      mp.style.cssText = '';
+      setupListeners();
+      // Start ambient coin drop after a short delay
+      setTimeout(dropCoin, 2500);
+    } else {
+      userKey = null;
+      document.getElementById('loginOverlay').style.display = 'flex';
+      document.getElementById('topBar').style.display = 'none';
+      document.getElementById('mainPage').style.cssText = 'visibility:hidden;opacity:0;position:absolute;pointer-events:none';
+    }
+  });
+
+  // Apply theme from princess-theme.css if defined
+  const savedTheme = document.documentElement.getAttribute('data-theme');
+  if (!savedTheme) document.documentElement.setAttribute('data-theme', 'sakura');
+</script>
+</body>
+</html>

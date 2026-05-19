@@ -608,6 +608,7 @@
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, runTransaction, get, onDisconnect, update as fbUpdate } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { contributeToTopf } from './savings-helper.js';
 
 // Dieselbe App-Instanz wie index.html → teilt die Auth-Session
 const _fbConfig = {
@@ -971,7 +972,7 @@ window.spendCoins = function(amount) {
     runTransaction(ref(_db, `coins/${_myCoinKey}`), c => {
       if ((c || 0) < amount) return;
       return (c || 0) - amount;
-    }).catch(() => {});
+    }).then(() => contributeToTopf(_db, _myCoinKey, amount, 'ourhome')).catch(() => {});
   }
   return true;
 };
