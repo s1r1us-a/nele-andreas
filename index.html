@@ -940,6 +940,10 @@
   }
   .coin-display .coin-icon { font-size: 18px; }
   .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 20px; font-weight: 700; display: inline-block; min-width: 4.2em; text-align: left; font-variant-numeric: tabular-nums; }
+  .savings-display { background: var(--ui-piggy-bg, rgba(232,115,138,0.14)); border-color: rgba(232,115,138,0.4); box-shadow: 0 3px 14px rgba(232,115,138,0.2); color: var(--rose, #e8738a); }
+  @media (hover: hover) {
+    .savings-display:hover { transform: scale(1.03); border-color: rgba(232,115,138,0.65); }
+  }
   .coin-bump { animation: countBump 0.4s cubic-bezier(0.22,1,0.36,1); }
 
   /* BOOSTER BANNER */
@@ -2100,6 +2104,7 @@
   </div>
   <div class="top-bar-group top-bar-right">
     <div class="coin-display" id="coinDisplay" style="display:none;"><span class="coin-icon">🪙</span><span class="coin-count" id="coinCount">0</span></div>
+    <a href="sparschwein.html" class="coin-display savings-display" id="savingsDisplay" title="Zum Sparschwein" style="display:none; text-decoration:none;"><span class="coin-icon">🐷</span><span class="coin-count" id="savingsCount">0</span></a>
     <span class="mailbox-wrap" id="mailboxWrap">
       <button class="top-bar-btn" id="mailboxBtn" title="Briefkasten">📬 Post</button>
       <span class="mailbox-badge" id="mailboxBadge"></span>
@@ -2607,6 +2612,7 @@
       const av = document.getElementById('topBarAvatar');
       if (av) av.textContent = window.currentUser[0].toUpperCase();
       document.getElementById('coinDisplay').style.display = 'flex';
+      document.getElementById('savingsDisplay').style.display = 'inline-flex';
       window.mailIsAdmin = !!(user.email && user.email.toLowerCase() === 'raederich@outlook.com');
       document.getElementById('mailboxWrap').style.display = 'flex';
       // Reveal page content
@@ -2619,6 +2625,9 @@
       onValue(coinRef, snap => {
         _coinsBase = snap.val() || 0;
         renderCoinCount(true);
+      });
+      onValue(ref(db, 'savings/topf'), snap => {
+        renderSavingsCount(snap.val() || 0, true);
       });
       // Load active theme
       Promise.all([
@@ -2820,6 +2829,16 @@
     if (!el) return;
     const c = _coinsBase + _pendingNum('coins');
     el.textContent = c.toLocaleString('de-DE');
+    if (bump) {
+      el.classList.remove('coin-bump');
+      void el.offsetWidth;
+      el.classList.add('coin-bump');
+    }
+  }
+  function renderSavingsCount(val, bump) {
+    const el = document.getElementById('savingsCount');
+    if (!el) return;
+    el.textContent = (val || 0).toLocaleString('de-DE');
     if (bump) {
       el.classList.remove('coin-bump');
       void el.offsetWidth;
