@@ -346,37 +346,23 @@
 
     const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._\-]/g, "_")}`;
 
-    // Supabase JS v2 does not expose upload progress natively, so we use XMLHttpRequest
-    const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(path)}`;
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    xhr.setRequestHeader("Authorization", `Bearer ${SUPABASE_KEY}`);
-    xhr.setRequestHeader("x-upsert", "false");
-    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-
-    xhr.upload.addEventListener("progress", e => {
-      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
-    });
-
-    xhr.addEventListener("load", () => {
-      progressWrap.classList.remove("visible");
-      fileInput.value = "";
-      if (xhr.status === 200 || xhr.status === 201) {
-        showFeedback("✅ Datei erfolgreich hochgeladen!", "success");
-        loadFiles();
-      } else {
-        let msg = "Upload fehlgeschlagen.";
-        try { msg = JSON.parse(xhr.responseText).message || msg; } catch {}
-        showFeedback("❌ " + msg, "error");
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      onUploadProgress: (e) => {
+        if (e.total) setProgress(Math.round((e.loaded / e.total) * 100));
       }
     });
 
-    xhr.addEventListener("error", () => {
-      progressWrap.classList.remove("visible");
-      showFeedback("❌ Netzwerkfehler beim Upload.", "error");
-    });
+    progressWrap.classList.remove("visible");
+    fileInput.value = "";
 
-    xhr.send(file);
+    if (error) {
+      showFeedback("❌ " + (error.message || "Upload fehlgeschlagen."), "error");
+    } else {
+      showFeedback("✅ Datei erfolgreich hochgeladen!", "success");
+      loadFiles();
+    }
   }
 
   function setProgress(pct) {
