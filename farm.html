@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Meine Tierfarm 🐾</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -2006,6 +2008,7 @@
       <span id="stallBadge"></span>
     </div>
     <button class="topbar-btn visit-btn" id="btnVisit" onclick="window.visitOtherFarm()" style="display:none">👀 <span id="visitBtnLabel">Besuchen</span></button>
+    <button class="topbar-btn" id="btnPerfMode" onclick="window.togglePerfMode()" title="Performance-Modus: reduziert Effekte für flüssigeres Spiel">⚡ <span id="perfModeLabel">Voll</span></button>
   </div>
   <div class="topbar-coins" id="topbarCoins"><span id="globalCoins">0</span> 🪙</div>
 </div>
@@ -3004,7 +3007,8 @@
     if (!container) { scheduleShower(); return; }
 
     // 3–7 Sternschnuppen mit je 150–600ms Abstand
-    const count = 3 + Math.floor(Math.random() * 5);
+    let count = 3 + Math.floor(Math.random() * 5);
+    if (document.body.classList.contains('low-fx')) count = Math.ceil(count / 2);
     for (let i = 0; i < count; i++) {
       setTimeout(() => spawnOneStar(container), i * (150 + Math.random() * 450));
     }
@@ -3050,7 +3054,8 @@
     window._fireflyInterval = setInterval(() => {
       if (!document.body.classList.contains('night-mode')) return;
       const c = document.getElementById('firefly-container');
-      if (c && c.children.length < 10) spawnFirefly();
+      const cap = document.body.classList.contains('low-fx') ? 5 : 10;
+      if (c && c.children.length < cap) spawnFirefly();
     }, 600000);
   }
 
@@ -3288,13 +3293,105 @@
   let beds = Array(12).fill(null).map(() => Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = [];
 
-  async function saveFarmData() {
+  // ── Persistenz: gebündelte Firebase-Writes ──
+  // Mehrere Save-Aufrufe (auch aus der 1s-Schleife) werden zu möglichst
+  // wenigen Writes zusammengefasst. Es wird stets der aktuelle Live-State
+  // geschrieben, daher bleibt der Fortschritt korrekt.
+  let _saveInFlight = false;
+  let _savePending = false;
+  let _saveTimer = null;
+
+  async function _doSaveNow() {
     if (!userKey || isVisitMode) return;
     const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots,
       bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites] };
     await update(ref(db, `farm/${userKey}`), data);
   }
+
+  async function saveFarmData() {
+    if (!userKey || isVisitMode) return;
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    if (_saveInFlight) { _savePending = true; return; }
+    _saveInFlight = true;
+    try {
+      await _doSaveNow();
+      while (_savePending) { _savePending = false; await _doSaveNow(); }
+    } finally {
+      _saveInFlight = false;
+    }
+  }
+
+  // Debounced Save: bündelt häufige Status-Wechsel (z.B. aus der 1s-Schleife)
+  // zu einem Write pro Zeitfenster.
+  function scheduleSave(delay = 1500) {
+    if (!userKey || isVisitMode) return;
+    if (_saveInFlight) { _savePending = true; return; }
+    if (_saveTimer) return;
+    _saveTimer = setTimeout(() => { _saveTimer = null; saveFarmData(); }, delay);
+  }
+
+  // Best-effort sofortiger Flush bei Verlassen/Tab-Wechsel (kein Datenverlust).
+  function flushSaveNow() {
+    if (!userKey || isVisitMode) return;
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    _doSaveNow().catch(() => {});
+  }
+
   window.saveFarmData = saveFarmData;
+  window.scheduleSave = scheduleSave;
+
+  // ── DOM-Update pro Tick bündeln ──
+  let _domDirty = false;
+  function requestFarmDOMUpdate() { _domDirty = true; }
+  function flushFarmDOM() { if (_domDirty) { _domDirty = false; updateFarmDOM(); } }
+  window.requestFarmDOMUpdate = requestFarmDOMUpdate;
+
+  // Beet-Slot-DOM-Referenzen cachen (statt 72x getElementById/Sekunde).
+  // Wird invalidiert, sobald bedsContainer neu aufgebaut wird.
+  let _slotElCache = {};
+  function getSlotEl(b, s) {
+    const key = b + '-' + s;
+    let el = _slotElCache[key];
+    if (el && el.isConnected) return el;
+    el = document.getElementById(`slot-${b}-${s}`);
+    if (el) _slotElCache[key] = el;
+    return el;
+  }
+
+  // Sichtbarkeit: ausstehende Saves bei Tab-Wechsel/Schließen sichern.
+  let _farmHidden = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { _farmHidden = true; flushSaveNow(); }
+    else if (_farmHidden) {
+      _farmHidden = false;
+      requestFarmDOMUpdate();
+      flushFarmDOM();
+    }
+  });
+  window.addEventListener('beforeunload', () => { flushSaveNow(); });
+
+  // ── Performance-Modus (optionaler Spar-Schalter) ──
+  function applyPerfModeLabel() {
+    const lbl = document.getElementById('perfModeLabel');
+    const btn = document.getElementById('btnPerfMode');
+    if (!lbl || !btn) return;
+    const on = document.body.classList.contains('low-fx');
+    lbl.textContent = on ? 'Spar' : 'Voll';
+    btn.style.background = on ? 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(22,163,74,0.18))' : '';
+  }
+  window.togglePerfMode = function() {
+    const on = !document.body.classList.contains('low-fx');
+    document.body.classList.toggle('low-fx', on);
+    try { localStorage.setItem('farmPerfMode', on ? '1' : '0'); } catch(e) {}
+    applyPerfModeLabel();
+    if (window.showToast) window.showToast(on ? '⚡ Performance-Modus an' : '✨ Volle Optik an');
+  };
+  try {
+    const pref = localStorage.getItem('farmPerfMode');
+    if (pref === '1') document.body.classList.add('low-fx');
+    else if (pref === '0') document.body.classList.remove('low-fx');
+  } catch(e) {}
+  applyPerfModeLabel();
 
   const loginBtn = document.getElementById('loginBtn');
   loginBtn.addEventListener('click', async () => {
@@ -3533,7 +3630,19 @@
 
   const accessoryEmojis = { strawhat: '👒', porkpie: '🎩', spectrespecs: '👓', radishearrings: '🧅', flowercrown: '🌸', featherboa: '🪶', goldenbridle: '🏅', sunhat: '🌞' };
 
+  const _animalSvgCache = new Map();
   function getAnimalSVG(species, equipped = null) {
+    const eqKey = (equipped && typeof equipped === 'object')
+      ? Object.values(equipped).filter(Boolean).sort().join(',') : '';
+    const key = species + '|' + eqKey;
+    let cached = _animalSvgCache.get(key);
+    if (cached !== undefined) return cached;
+    const built = _buildAnimalSVG(species, equipped);
+    _animalSvgCache.set(key, built);
+    return built;
+  }
+
+  function _buildAnimalSVG(species, equipped = null) {
     const shadow = `<div class="rabbit-shadow"></div>`;
     const defs = `
       <defs>
@@ -4219,7 +4328,7 @@
     let existingBakeryBubble = bakeryEl.querySelector('.reward-bubble');
     if (isReady) {
         if (!existingBakeryBubble) {
-            bakeryEl.innerHTML += `<div class="reward-bubble" style="top: -45px; z-index: 60;">🧑‍🍳</div>`;
+            bakeryEl.insertAdjacentHTML('beforeend', `<div class="reward-bubble" style="top: -45px; z-index: 60;">🧑‍🍳</div>`);
         }
     } else {
         if (existingBakeryBubble) existingBakeryBubble.remove();
@@ -4297,15 +4406,17 @@
         bedsHtml += `</div>`;
       }
       bedsContainer.innerHTML = bedsHtml;
+      _slotElCache = {};
     }
-    
-    updateBedsVisuals(); 
+
+    updateBedsVisuals();
 
     const space = document.getElementById('animalSpace');
+    const liveIds = new Set(animals.map(a => a.id));
     const existingAnimals = Array.from(space.children);
     existingAnimals.forEach(el => {
       const id = parseInt(el.id.replace('animal-', ''));
-      if (!animals.find(a => a.id === id)) { space.removeChild(el); }
+      if (!liveIds.has(id)) { space.removeChild(el); }
     });
     animals.forEach(a => renderAnimalDOM(a));
 
@@ -4431,15 +4542,14 @@
     if (tabType === 'recipes') {
         document.getElementById('tabRecipes').classList.add('active');
         
-        let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Ofen-Slots: ${freeSlots}/5</div>`;
-        content.innerHTML = headerHtml;
+        let html = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Ofen-Slots: ${freeSlots}/5</div>`;
 
         const allBakery = Object.values(bakeryRecipes);
         const sortedBakery = [...allBakery.filter(r => bakeryFavorites.has(r.id)), ...allBakery.filter(r => !bakeryFavorites.has(r.id))];
         let shownDivider = bakeryFavorites.size === 0 || bakeryFavorites.size === allBakery.length;
         sortedBakery.forEach(r => {
             if (!shownDivider && !bakeryFavorites.has(r.id)) {
-                content.innerHTML += `<div class="fav-divider">─── Alle Rezepte ───</div>`;
+                html += `<div class="fav-divider">─── Alle Rezepte ───</div>`;
                 shownDivider = true;
             }
             let canBake = true; let reqHtml = '';
@@ -4467,8 +4577,9 @@
             const isFav = bakeryFavorites.has(r.id);
             let btnState = canBake && freeSlots > 0 ? '' : 'disabled';
             let btnText = freeSlots === 0 ? 'Ofen voll' : 'Backen';
-            content.innerHTML += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
+            html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
         });
+        content.innerHTML = html;
     } else {
         document.getElementById('tabOven').classList.add('active');
         let slotsHtml = '';
@@ -4548,11 +4659,11 @@
         for (let i = unlockedBeds; i < MAX_BEDS; i++) {
           const cost = bedPrices[i];
           const label = cost >= 1000 ? (cost / 1000) + 'k' : cost;
-          list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">🌾</span><div><div class="item-name">Feld ${i + 1}</div><div class="item-price">${label} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBed()">Kaufen</button></div>`;
+          list.insertAdjacentHTML('beforeend', `<div class="item-row"><div class="item-info"><span class="item-icon">🌾</span><div><div class="item-name">Feld ${i + 1}</div><div class="item-price">${label} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBed()">Kaufen</button></div>`);
           break;
         }
         if (unlockedBeds < MAX_BEDS - 1) {
-          list.innerHTML += `<div style="padding:10px 0; color:var(--text-mid); font-size:12px; text-align:center;">Weitere Felder werden nach dem Kauf freigeschaltet.</div>`;
+          list.insertAdjacentHTML('beforeend', `<div style="padding:10px 0; color:var(--text-mid); font-size:12px; text-align:center;">Weitere Felder werden nach dem Kauf freigeschaltet.</div>`);
         }
       }
       return;
@@ -4560,7 +4671,9 @@
 
     if (tabType === 'seeds') {
       document.getElementById('tabSeeds').classList.add('active');
-      Object.values(shopItems).forEach(item => { list.innerHTML += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${item.price} 🪙 | ⏱️ ${Math.round(item.growTime/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
+      let seedsHtml = '';
+      Object.values(shopItems).forEach(item => { seedsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${item.price} 🪙 | ⏱️ ${Math.round(item.growTime/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
+      list.innerHTML = seedsHtml;
     } else if (tabType === 'animals') {
       document.getElementById('tabAnimals').classList.add('active');
       
@@ -4589,7 +4702,7 @@
       });
 
       itemsToRender.sort((a, b) => a.price - b.price);
-      itemsToRender.forEach(item => { list.innerHTML += item.html; });
+      list.innerHTML = itemsToRender.map(item => item.html).join('');
 
     }
   }
@@ -4923,15 +5036,14 @@
 
     if (tabType === 'recipes') {
       document.getElementById('tabWeavingRecipes').classList.add('active');
-      let headerHtml = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Webstuhl-Slots: ${freeSlots}/5</div>`;
-      content.innerHTML = headerHtml;
+      let html = `<div style="text-align:center; color: var(--text-mid); margin-bottom: 12px; font-weight: bold; font-size: 13px;">Freie Webstuhl-Slots: ${freeSlots}/5</div>`;
 
       const allWeaving = Object.values(weavingRecipes);
       const sortedWeaving = [...allWeaving.filter(r => weavingFavorites.has(r.id)), ...allWeaving.filter(r => !weavingFavorites.has(r.id))];
       let shownWeavingDivider = weavingFavorites.size === 0 || weavingFavorites.size === allWeaving.length;
       sortedWeaving.forEach(r => {
         if (!shownWeavingDivider && !weavingFavorites.has(r.id)) {
-          content.innerHTML += `<div class="fav-divider">─── Alle Rezepte ───</div>`;
+          html += `<div class="fav-divider">─── Alle Rezepte ───</div>`;
           shownWeavingDivider = true;
         }
         let canWeave = true; let reqHtml = '';
@@ -4960,8 +5072,9 @@
         const isFav = weavingFavorites.has(r.id);
         let btnState = canWeave && freeSlots > 0 ? '' : 'disabled';
         let btnText = freeSlots === 0 ? 'Voll' : 'Weben';
-        content.innerHTML += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
+        html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
       });
+      content.innerHTML = html;
     } else {
       document.getElementById('tabWeavingLooms').classList.add('active');
       let slotsHtml = '';
@@ -5159,21 +5272,29 @@
   setInterval(() => {
     if (!currentUser) return;
     const now = Date.now();
+    const hidden = document.hidden;
 
     for(let b=0; b<unlockedBeds; b++) {
       for(let s=0; s<6; s++) {
         const slot = beds[b][s];
         if (slot.state === 'growing') {
           const itemDef = shopItems[slot.item]; if (!itemDef || !itemDef.growTime) continue;
-          const elapsedSec = Math.floor((now - slot.plantedAt) / 1000); const remainingSec = itemDef.growTime - elapsedSec; const domSlot = document.getElementById(`slot-${b}-${s}`);
-          if(!domSlot) continue;
-          if (remainingSec <= 0) { 
-              slot.state = 'ready'; 
-              domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`; 
-              domSlot.setAttribute('data-state', 'ready');
-              domSlot.setAttribute('data-item', slot.item);
-              if(currentStatusSlot && currentStatusSlot.b === b && currentStatusSlot.s === s) { window.closeAllModals(); } 
-          } else {
+          const elapsedSec = Math.floor((now - slot.plantedAt) / 1000); const remainingSec = itemDef.growTime - elapsedSec;
+          if (remainingSec <= 0) {
+              slot.state = 'ready';
+              scheduleSave();
+              if (!hidden) {
+                const domSlot = getSlotEl(b, s);
+                if (domSlot) {
+                  domSlot.innerHTML = `<div class="plant-anim">${itemDef.icon}</div>`;
+                  domSlot.setAttribute('data-state', 'ready');
+                  domSlot.setAttribute('data-item', slot.item);
+                }
+                if(currentStatusSlot && currentStatusSlot.b === b && currentStatusSlot.s === s) { window.closeAllModals(); }
+              }
+          } else if (!hidden) {
+            const domSlot = getSlotEl(b, s);
+            if (!domSlot) continue;
             const percent = Math.min(100, ((elapsedSec / itemDef.growTime) * 100));
             let barEl = domSlot.querySelector('.growth-bar'); if(!barEl) { domSlot.innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: ${percent}%"></div></div>`; } else { barEl.style.width = percent + '%'; }
             if(currentStatusSlot && currentStatusSlot.b === b && currentStatusSlot.s === s) { let m = Math.floor(remainingSec / 60); let sec = remainingSec % 60; document.getElementById('statusPlantTimer').textContent = `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`; }
@@ -5188,15 +5309,15 @@
             if (slot.state === 'baking') {
                 const r = bakeryRecipes[slot.item]; if (!r || !r.time) return;
                 const elapsedSec = Math.floor((now - slot.startedAt) / 1000);
-                if (elapsedSec >= r.time) { 
-                    slot.state = 'ready'; 
+                if (elapsedSec >= r.time) {
+                    slot.state = 'ready';
                     bakeryChanged = true;
-                    if (document.getElementById('modalBakery').classList.contains('active') && document.getElementById('tabOven').classList.contains('active')) { 
-                        window.renderBakery('oven'); 
-                    } 
-                } else { 
-                    const pBar = document.getElementById(`ovenProgressBar-${index}`); 
-                    if (pBar) { 
+                    if (!hidden && document.getElementById('modalBakery').classList.contains('active') && document.getElementById('tabOven').classList.contains('active')) {
+                        window.renderBakery('oven');
+                    }
+                } else if (!hidden) {
+                    const pBar = document.getElementById(`ovenProgressBar-${index}`);
+                    if (pBar) {
                         const percent = Math.min(100, ((elapsedSec / r.time) * 100)); 
                         pBar.style.width = percent + '%'; 
                         const rem = r.time - elapsedSec; 
@@ -5207,8 +5328,8 @@
             }
         });
         if(bakeryChanged) {
-            saveFarmData();
-            updateFarmDOM();
+            scheduleSave();
+            requestFarmDOMUpdate();
         }
     }
 
@@ -5221,10 +5342,10 @@
                 if (elapsedSec >= r.time) {
                     slot.state = 'ready';
                     loomChanged = true;
-                    if (document.getElementById('modalWeaving').classList.contains('active') && document.getElementById('tabWeavingLooms').classList.contains('active')) {
+                    if (!hidden && document.getElementById('modalWeaving').classList.contains('active') && document.getElementById('tabWeavingLooms').classList.contains('active')) {
                         window.renderWeaving('looms');
                     }
-                } else {
+                } else if (!hidden) {
                     const pBar = document.getElementById(`loomProgressBar-${index}`);
                     if (pBar) {
                         const percent = Math.min(100, ((elapsedSec / r.time) * 100));
@@ -5237,8 +5358,8 @@
             }
         });
         if (loomChanged) {
-            saveFarmData();
-            updateFarmDOM();
+            scheduleSave();
+            requestFarmDOMUpdate();
         }
     }
 
@@ -5246,10 +5367,11 @@
         const elapsedSec = Math.floor((now - beehive.fedAt) / 1000);
         if (elapsedSec >= ANIMAL_PRODUCTION_TIME) {
             beehive.rewardReady = true;
-            updateFarmDOM();
-            if (document.getElementById('modalBeehive').classList.contains('active')) { window.openBeehive(); }
+            scheduleSave();
+            requestFarmDOMUpdate();
+            if (!hidden && document.getElementById('modalBeehive').classList.contains('active')) { window.openBeehive(); }
         } else {
-            if (document.getElementById('modalBeehive').classList.contains('active')) {
+            if (!hidden && document.getElementById('modalBeehive').classList.contains('active')) {
                 const rem = ANIMAL_PRODUCTION_TIME - elapsedSec;
                 const m = Math.floor(rem / 60); const s = rem % 60;
                 const timerEl = document.getElementById('beehiveTimerDisplay');
@@ -5266,8 +5388,8 @@
             if (elapsedSec >= MINE_SLOT_TIME) {
                 slot.state = 'ready';
                 mineChanged = true;
-                if (document.getElementById('modalMine').classList.contains('active')) window.openMine();
-            } else {
+                if (!hidden && document.getElementById('modalMine').classList.contains('active')) window.openMine();
+            } else if (!hidden) {
                 const pBar = document.getElementById(`mineProgressBar-${i}`);
                 if (pBar) {
                     pBar.style.width = Math.min(100, (elapsedSec / MINE_SLOT_TIME) * 100) + '%';
@@ -5279,7 +5401,7 @@
             }
         }
     });
-    if (mineChanged) { saveFarmData(); updateFarmDOM(); }
+    if (mineChanged) { scheduleSave(); requestFarmDOMUpdate(); }
 
     // ── FORGE TIMER ──
     let forgeChanged = false;
@@ -5290,8 +5412,8 @@
             if (elapsedSec >= r.time) {
                 slot.state = 'ready';
                 forgeChanged = true;
-                if (document.getElementById('modalForge').classList.contains('active') && document.getElementById('tabForgeSlots').classList.contains('active')) window.renderForge('slots');
-            } else {
+                if (!hidden && document.getElementById('modalForge').classList.contains('active') && document.getElementById('tabForgeSlots').classList.contains('active')) window.renderForge('slots');
+            } else if (!hidden) {
                 const pBar = document.getElementById(`forgeProgressBar-${i}`);
                 if (pBar) {
                     pBar.style.width = Math.min(100, (elapsedSec / r.time) * 100) + '%';
@@ -5303,22 +5425,25 @@
             }
         }
     });
-    if (forgeChanged) { saveFarmData(); updateFarmDOM(); }
+    if (forgeChanged) { scheduleSave(); requestFarmDOMUpdate(); }
 
     animals.forEach(a => {
         if(a.isProducing && !a.rewardReady) {
             const elapsedSec = Math.floor((now - a.fedAt) / 1000);
-            if(elapsedSec >= ANIMAL_PRODUCTION_TIME) { 
-                a.rewardReady = true; 
-                updateFarmDOM(); 
-                if(selectedAnimalId === a.id) window.openAnimalStats(a.id); 
-            } 
-            else {
+            if(elapsedSec >= ANIMAL_PRODUCTION_TIME) {
+                a.rewardReady = true;
+                scheduleSave();
+                requestFarmDOMUpdate();
+                if(!hidden && selectedAnimalId === a.id) window.openAnimalStats(a.id);
+            }
+            else if (!hidden) {
                 if(selectedAnimalId === a.id) { const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; const m = Math.floor(rem / 60); const s = rem % 60; const timerEl = document.getElementById('animalTimerDisplay'); if(timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; }
                 if(document.getElementById('modalStall').classList.contains('active')) { const stallTimerEl = document.getElementById('stall-timer-' + a.id); if(stallTimerEl) { const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); stallTimerEl.textContent = `⏳ ${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`; } }
             }
         }
     });
+
+    if (!hidden) flushFarmDOM();
   }, 1000);
 
   // ── FELD & PFLANZEN AKTIONEN ──
@@ -5554,7 +5679,7 @@
   }
   window.openFieldSeedMenu = function() {
     const list = document.getElementById('fieldSeedList');
-    list.innerHTML = '';
+    let listHtml = '';
     let hasSeeds = false;
     const emptySlots = window.countEmptySlots();
     const currentBed = currentTargetSlot ? currentTargetSlot.b : -1;
@@ -5569,10 +5694,10 @@
         const canPlantBed = Math.min(stock, bedEmptySlots);
         const bedDisabled = canPlantBed <= 0 ? 'disabled' : '';
         const bedButton = currentBed >= 0 ? `<button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="window.plantBedSeeds('${key}')" ${bedDisabled}>Beet (${canPlantBed}x)</button>` : '';
-        list.innerHTML += `<div class="item-row"><div class="item-info" style="cursor:pointer;" onclick="window.plantSeed('${key}')"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min · ${stock}x</span></div></div><div style="display:flex; flex-direction:column; gap:6px;"><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px;" onclick="window.plantSeed('${key}')">Pflanzen</button>${bedButton}<button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.plantAllSeeds('${key}')" ${allDisabled}>Alle (${canPlantAll}x)</button></div></div>`;
+        listHtml += `<div class="item-row"><div class="item-info" style="cursor:pointer;" onclick="window.plantSeed('${key}')"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:10px; color:var(--text-mid); display:block;">Wächst ${Math.round(item.growTime/60)} Min · ${stock}x</span></div></div><div style="display:flex; flex-direction:column; gap:6px;"><button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px;" onclick="window.plantSeed('${key}')">Pflanzen</button>${bedButton}<button class="btn-generic btn-buy" style="padding:6px 10px; font-size:12px; background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.plantAllSeeds('${key}')" ${allDisabled}>Alle (${canPlantAll}x)</button></div></div>`;
       }
     });
-    if (!hasSeeds) list.innerHTML = `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast keine Samen.<br>Kaufe welche im Shop!</div>`;
+    list.innerHTML = hasSeeds ? listHtml : `<div style="text-align:center; color:var(--text-mid); padding: 20px;">Du hast keine Samen.<br>Kaufe welche im Shop!</div>`;
     window.showSpecificModal('modalField');
   }
   window.plantSeed = async function(itemId) { if (inventory.seeds[itemId] > 0 && currentTargetSlot) { const b = currentTargetSlot.b; const s = currentTargetSlot.s; inventory.seeds[itemId]--; beds[b][s] = { state: 'growing', item: itemId, plantedAt: Date.now() }; document.getElementById(`slot-${b}-${s}`).innerHTML = `<div class="plant-anim">🌱</div><div class="growth-bar-wrap"><div class="growth-bar" style="width: 0%"></div></div>`; await saveFarmData(); window.closeAllModals(); window.showToast(`Samen gepflanzt! 🌱`); } }
@@ -6382,10 +6507,10 @@
   window.showToast = function(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 
   // ZUFALLS-BEWEGUNG MIT KOLLISIONSSCHUTZ
-  setInterval(() => { 
-    if (!currentUser) return; 
-    animals.forEach(a => { 
-      if (Math.random() < 0.4) { 
+  setInterval(() => {
+    if (!currentUser || document.hidden) return;
+    animals.forEach(a => {
+      if (Math.random() < 0.4) {
         let oldX = a.x; 
         let newX, newY; 
         let validMove = false; 
@@ -6544,7 +6669,9 @@
     const container = document.getElementById('rainContainer');
     if (!container) return;
     container.innerHTML = '';
-    for (let i = 0; i < 80; i++) {
+    const dropCount = document.body.classList.contains('low-fx') ? 40 : 80;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < dropCount; i++) {
       const drop = document.createElement('div');
       drop.className = 'raindrop';
       drop.style.left   = Math.random() * 110 + '%';
@@ -6552,8 +6679,9 @@
       drop.style.animationDuration  = (0.6 + Math.random() * 0.5) + 's';
       drop.style.animationDelay     = (Math.random() * 1.5) + 's';
       drop.style.opacity = 0.5 + Math.random() * 0.5;
-      container.appendChild(drop);
+      frag.appendChild(drop);
     }
+    container.appendChild(frag);
     container.classList.add('active');
     const rainDuration = 60000 + Math.random() * 60000;
     setTimeout(stopRain, rainDuration);
