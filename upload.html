@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nele & Andreas – Dateien</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    /* ── Login Overlay ── */
+    #login-overlay {
+      position: fixed; inset: 0;
+      background: #f3f4f6;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    #login-overlay.hidden { display: none; }
+
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+    }
+    .login-card h1 {
+      font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 6px; color: #111827;
+    }
+    .login-card p { font-size: 0.9rem; color: #6b7280; margin-bottom: 28px; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .field input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #d1d5db; border-radius: 8px;
+      font-size: 0.95rem; outline: none; transition: border-color .2s;
+    }
+    .field input:focus { border-color: #8b5cf6; }
+
+    #login-error {
+      font-size: 0.85rem; color: #ef4444;
+      margin-bottom: 12px; display: none;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity .2s, background .2s;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: #8b5cf6; color: #fff; width: 100%; padding: 12px; }
+    .btn-primary:hover:not(:disabled) { background: #7c3aed; }
+    .btn-ghost { background: transparent; color: #6b7280; font-size: 0.85rem; padding: 6px 10px; }
+    .btn-ghost:hover { color: #374151; }
+    .btn-danger { background: #fee2e2; color: #dc2626; }
+    .btn-danger:hover { background: #fecaca; }
+
+    /* ── Main App ── */
+    #app { display: none; max-width: 800px; margin: 0 auto; padding: 32px 16px 64px; }
+    #app.visible { display: block; }
+
+    .app-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+    }
+    .app-header h1 { font-size: 1.4rem; font-weight: 700; }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .user-info span { font-size: 0.85rem; color: #6b7280; }
+
+    /* ── Stats Grid ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #fff; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .stat-card .label { font-size: 0.78rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .stat-card .value { font-size: 1.6rem; font-weight: 700; color: #111827; }
+
+    .storage-bar-wrap { margin-top: 10px; }
+    .storage-bar-bg {
+      background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden;
+    }
+    .storage-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+      transition: width .6s ease;
+    }
+    .storage-bar-label { font-size: 0.78rem; color: #6b7280; margin-top: 6px; }
+
+    /* ── Upload Zone ── */
+    .section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+    .section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+
+    .drop-zone {
+      border: 2px dashed #d1d5db; border-radius: 10px;
+      padding: 40px 24px; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #8b5cf6; background: #f5f3ff;
+    }
+    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .drop-zone p { font-size: 0.9rem; color: #6b7280; }
+    .drop-zone strong { color: #8b5cf6; }
+    #file-input { display: none; }
+
+    /* ── Progress ── */
+    #progress-wrap { margin-top: 16px; display: none; }
+    #progress-wrap.visible { display: block; }
+    #progress-filename { font-size: 0.85rem; color: #374151; margin-bottom: 8px; font-weight: 600; }
+    #progress-bg { background: #e5e7eb; border-radius: 99px; height: 10px; overflow: hidden; }
+    #progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #8b5cf6, #a78bfa); width: 0%; transition: width .3s ease; }
+    #progress-text { font-size: 0.8rem; color: #6b7280; margin-top: 6px; text-align: right; }
+
+    /* ── Feedback ── */
+    .feedback {
+      margin-top: 14px; padding: 12px 16px; border-radius: 8px;
+      font-size: 0.88rem; display: none;
+    }
+    .feedback.visible { display: block; }
+    .feedback.success { background: #ecfdf5; color: #065f46; }
+    .feedback.error   { background: #fef2f2; color: #991b1b; }
+
+    /* ── File List ── */
+    .file-list { list-style: none; }
+    .file-list li {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid #f3f4f6;
+    }
+    .file-list li:last-child { border-bottom: none; }
+    .file-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .file-meta { flex: 1; min-width: 0; }
+    .file-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-sub  { font-size: 0.78rem; color: #9ca3af; margin-top: 2px; }
+    .file-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .file-actions a {
+      font-size: 0.8rem; font-weight: 600; color: #8b5cf6;
+      text-decoration: none; padding: 5px 10px; border-radius: 6px;
+      background: #f5f3ff; transition: background .15s;
+    }
+    .file-actions a:hover { background: #ede9fe; }
+
+    .empty-state { text-align: center; padding: 32px; color: #9ca3af; font-size: 0.9rem; }
+
+    .loading-spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid #e5e7eb; border-top-color: #8b5cf6;
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .app-header { flex-direction: column; align-items: flex-start; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login Overlay ── -->
+<div id="login-overlay">
+  <div class="login-card">
+    <h1>Nele & Andreas 💜</h1>
+    <p>Bitte melde dich an, um Dateien hochzuladen.</p>
+    <div class="field">
+      <label for="email">E-Mail</label>
+      <input type="email" id="email" placeholder="deine@email.de" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="password">Passwort</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div id="login-error"></div>
+    <button class="btn btn-primary" id="login-btn">Anmelden</button>
+  </div>
+</div>
+
+<!-- ── App ── -->
+<div id="app">
+  <div class="app-header">
+    <h1>📁 Dateien</h1>
+    <div class="user-info">
+      <span id="user-email"></span>
+      <button class="btn btn-ghost btn-danger" id="logout-btn">Abmelden</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Dateien</div>
+      <div class="value" id="stat-count"><span class="loading-spinner"></span></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Gesamtgröße</div>
+      <div class="value" id="stat-size"><span class="loading-spinner"></span></div>
+    </div>
+    <div class="stat-card" style="grid-column: span 2;">
+      <div class="label">Speicher</div>
+      <div class="storage-bar-wrap">
+        <div class="storage-bar-bg">
+          <div class="storage-bar-fill" id="storage-bar" style="width:0%"></div>
+        </div>
+        <div class="storage-bar-label" id="storage-label">Wird geladen …</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="section">
+    <h2>Datei hochladen</h2>
+    <div class="drop-zone" id="drop-zone">
+      <div class="icon">☁️</div>
+      <p><strong>Klicken</strong> oder Datei hierher ziehen</p>
+      <p style="margin-top:6px;font-size:0.8rem;">Alle Dateitypen erlaubt</p>
+    </div>
+    <input type="file" id="file-input" />
+
+    <div id="progress-wrap">
+      <div id="progress-filename"></div>
+      <div id="progress-bg"><div id="progress-fill"></div></div>
+      <div id="progress-text">0%</div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- File List -->
+  <div class="section">
+    <h2>Hochgeladene Dateien</h2>
+    <ul class="file-list" id="file-list">
+      <li><div class="empty-state"><span class="loading-spinner"></span></div></li>
+    </ul>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  // ── Config ──
+  const SUPABASE_URL    = "https://jmoawlnvcypnduvltzij.supabase.co";
+  const SUPABASE_KEY    = "sb_publishable_lmXbK7NTlyCD1N_m7O6lcA_KfJPVBmq";
+  const BUCKET          = "nele-andreas";
+  const STORAGE_QUOTA   = 1 * 1024 * 1024 * 1024; // 1 GB (anpassen falls nötig)
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
+    authDomain: "nele-und-andreas.firebaseapp.com",
+    databaseURL: "https://nele-und-andreas-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "nele-und-andreas",
+    storageBucket: "nele-und-andreas.firebasestorage.app",
+    messagingSenderId: "694973604970",
+    appId: "1:694973604970:web:331975714dca0cd32ad613"
+  };
+
+  const app      = initializeApp(firebaseConfig);
+  const auth     = getAuth(app);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── DOM ──
+  const loginOverlay  = document.getElementById("login-overlay");
+  const appEl         = document.getElementById("app");
+  const emailInput    = document.getElementById("email");
+  const pwInput       = document.getElementById("password");
+  const loginError    = document.getElementById("login-error");
+  const loginBtn      = document.getElementById("login-btn");
+  const logoutBtn     = document.getElementById("logout-btn");
+  const userEmailEl   = document.getElementById("user-email");
+  const dropZone      = document.getElementById("drop-zone");
+  const fileInput     = document.getElementById("file-input");
+  const progressWrap  = document.getElementById("progress-wrap");
+  const progressFill  = document.getElementById("progress-fill");
+  const progressText  = document.getElementById("progress-text");
+  const progressFname = document.getElementById("progress-filename");
+  const feedbackEl    = document.getElementById("feedback");
+  const fileList      = document.getElementById("file-list");
+  const statCount     = document.getElementById("stat-count");
+  const statSize      = document.getElementById("stat-size");
+  const storageBar    = document.getElementById("storage-bar");
+  const storageLabel  = document.getElementById("storage-label");
+
+  // ── Auth ──
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      loginOverlay.classList.add("hidden");
+      appEl.classList.add("visible");
+      userEmailEl.textContent = user.email;
+      loadFiles();
+    } else {
+      loginOverlay.classList.remove("hidden");
+      appEl.classList.remove("visible");
+    }
+  });
+
+  loginBtn.addEventListener("click", async () => {
+    loginError.style.display = "none";
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="loading-spinner"></span>';
+    try {
+      await signInWithEmailAndPassword(auth, emailInput.value.trim(), pwInput.value);
+    } catch {
+      loginError.textContent = "Falsche E-Mail oder falsches Passwort.";
+      loginError.style.display = "block";
+    }
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Anmelden";
+  });
+
+  pwInput.addEventListener("keydown", e => { if (e.key === "Enter") loginBtn.click(); });
+
+  logoutBtn.addEventListener("click", () => signOut(auth));
+
+  // ── Drag & Drop ──
+  dropZone.addEventListener("click", () => fileInput.click());
+  dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+  dropZone.addEventListener("drop", e => {
+    e.preventDefault();
+    dropZone.classList.remove("drag-over");
+    if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files.length) uploadFile(fileInput.files[0]);
+  });
+
+  // ── Upload ──
+  async function uploadFile(file) {
+    showFeedback("", "");
+    progressFname.textContent = file.name;
+    progressWrap.classList.add("visible");
+    setProgress(0);
+
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._\-]/g, "_")}`;
+
+    // Supabase JS v2 does not expose upload progress natively, so we use XMLHttpRequest
+    const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(path)}`;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.setRequestHeader("Authorization", `Bearer ${SUPABASE_KEY}`);
+    xhr.setRequestHeader("x-upsert", "false");
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+
+    xhr.upload.addEventListener("progress", e => {
+      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+    });
+
+    xhr.addEventListener("load", () => {
+      progressWrap.classList.remove("visible");
+      fileInput.value = "";
+      if (xhr.status === 200 || xhr.status === 201) {
+        showFeedback("✅ Datei erfolgreich hochgeladen!", "success");
+        loadFiles();
+      } else {
+        let msg = "Upload fehlgeschlagen.";
+        try { msg = JSON.parse(xhr.responseText).message || msg; } catch {}
+        showFeedback("❌ " + msg, "error");
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      progressWrap.classList.remove("visible");
+      showFeedback("❌ Netzwerkfehler beim Upload.", "error");
+    });
+
+    xhr.send(file);
+  }
+
+  function setProgress(pct) {
+    progressFill.style.width = pct + "%";
+    progressText.textContent = pct + "%";
+  }
+
+  function showFeedback(msg, type) {
+    feedbackEl.textContent = msg;
+    feedbackEl.className = "feedback";
+    if (type) feedbackEl.classList.add("visible", type);
+  }
+
+  // ── File List + Stats ──
+  async function loadFiles() {
+    fileList.innerHTML = '<li><div class="empty-state"><span class="loading-spinner"></span></div></li>';
+    statCount.innerHTML = '<span class="loading-spinner"></span>';
+    statSize.innerHTML  = '<span class="loading-spinner"></span>';
+
+    const { data, error } = await supabase.storage.from(BUCKET).list("", {
+      limit: 500,
+      sortBy: { column: "created_at", order: "desc" }
+    });
+
+    if (error || !data) {
+      fileList.innerHTML = '<li><div class="empty-state">Fehler beim Laden der Dateien.</div></li>';
+      return;
+    }
+
+    const files = data.filter(f => f.name !== ".emptyFolderPlaceholder");
+
+    // Stats
+    const totalBytes = files.reduce((s, f) => s + (f.metadata?.size ?? 0), 0);
+    statCount.textContent = files.length;
+    statSize.textContent  = formatBytes(totalBytes);
+    const pct = Math.min(100, (totalBytes / STORAGE_QUOTA) * 100);
+    storageBar.style.width  = pct.toFixed(1) + "%";
+    storageLabel.textContent = `${formatBytes(totalBytes)} von ${formatBytes(STORAGE_QUOTA)} genutzt (${pct.toFixed(1)} %)`;
+
+    // List
+    if (!files.length) {
+      fileList.innerHTML = '<li><div class="empty-state">Noch keine Dateien hochgeladen.</div></li>';
+      return;
+    }
+
+    fileList.innerHTML = "";
+    for (const f of files) {
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(f.name);
+      const size = f.metadata?.size ? formatBytes(f.metadata.size) : "—";
+      const date = f.created_at ? new Date(f.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" }) : "—";
+      const icon = fileIcon(f.name);
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="file-icon">${icon}</div>
+        <div class="file-meta">
+          <div class="file-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
+          <div class="file-sub">${size} · ${date}</div>
+        </div>
+        <div class="file-actions">
+          <a href="${escHtml(urlData.publicUrl)}" target="_blank" rel="noopener">Öffnen</a>
+          <a href="${escHtml(urlData.publicUrl)}" download="${escHtml(f.name)}">⬇</a>
+        </div>`;
+      fileList.appendChild(li);
+    }
+  }
+
+  // ── Helpers ──
+  function formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024, sizes = ["B","KB","MB","GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(i > 1 ? 1 : 0) + " " + sizes[i];
+  }
+
+  function fileIcon(name) {
+    const ext = name.split(".").pop().toLowerCase();
+    if (["jpg","jpeg","png","gif","webp","svg","heic"].includes(ext)) return "🖼️";
+    if (["mp4","mov","avi","mkv","webm"].includes(ext)) return "🎬";
+    if (["mp3","wav","ogg","flac","aac"].includes(ext)) return "🎵";
+    if (["pdf"].includes(ext)) return "📄";
+    if (["zip","rar","7z","tar","gz"].includes(ext)) return "📦";
+    if (["doc","docx","txt","odt"].includes(ext)) return "📝";
+    if (["xls","xlsx","csv"].includes(ext)) return "📊";
+    return "📎";
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+</script>
+</body>
+</html>
