@@ -1458,7 +1458,8 @@
     fileList.innerHTML = "";
     for (const f of files) {
       const fullPath = f.__legacy ? f.name : `${prefix}/${f.name}`;
-      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fullPath);
+      const { data: signedData } = await supabase.storage.from(BUCKET).createSignedUrl(fullPath, 3600);
+      const fileUrl = signedData?.signedUrl || "";
       const size = f.metadata?.size ? formatBytes(f.metadata.size) : "—";
       const date = f.created_at
         ? new Date(f.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" })
@@ -1475,8 +1476,8 @@
           <div class="file-sub">${size} · ${date} · <span class="by">von ${escHtml(by)}</span></div>
         </div>
         <div class="file-actions">
-          <a href="${escHtml(urlData.publicUrl)}" target="_blank" rel="noopener">Öffnen</a>
-          <a href="${escHtml(urlData.publicUrl)}" download="${escHtml(display)}">⬇</a>
+          ${fileUrl ? `<a href="${escHtml(fileUrl)}" target="_blank" rel="noopener">Öffnen</a>` : '<span style="opacity:0.4">—</span>'}
+          ${fileUrl ? `<a href="${escHtml(fileUrl)}" download="${escHtml(display)}">⬇</a>` : ""}
           ${writable ? '<button class="del">🗑</button>' : ""}
         </div>`;
       const delBtn = li.querySelector(".del");
