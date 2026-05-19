@@ -219,23 +219,6 @@
     }
     .login-card p { font-size: 0.9rem; color: var(--muted); margin-bottom: 28px; }
 
-    .field { margin-bottom: 18px; text-align: left; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 800; color: var(--gold-2); margin-bottom: 7px; letter-spacing: .08em; text-transform: uppercase; }
-    .field input {
-      width: 100%; padding: 14px 16px;
-      background: rgba(13,8,24,0.66);
-      border: 1.5px solid var(--border); border-radius: 13px;
-      font-size: 0.95rem; outline: none; color: var(--text);
-      transition: border-color .2s, box-shadow .2s, background .2s;
-    }
-    .field input::placeholder { color: #8576ac; }
-    .field input:focus {
-      border-color: var(--gold);
-      background: rgba(13,8,24,0.85);
-      box-shadow: 0 0 0 4px rgba(232,196,104,0.16), 0 0 22px rgba(246,217,122,0.22);
-    }
-
-    #login-error { font-size: 0.84rem; color: var(--danger); margin-bottom: 12px; display: none; }
 
     .btn {
       position: relative; overflow: hidden; isolation: isolate;
@@ -1018,11 +1001,21 @@
     }
   }, 1480);
 
-  // Auto-Ende nach ~4 s (inkl. Fade ≈ 4,5 s)
-  setTimeout(function () {
+  // Das Intro kaschiert das Laden: erst ausblenden, wenn die Mindest-Animation
+  // gelaufen IST und der Auth-Status feststeht (App oder Gate dahinter bereit).
+  var vault = (window.__vault = window.__vault || { authReady: false, introMinDone: false });
+  var dismissed = false;
+  function finishIntro() {
+    if (dismissed || !vault.authReady || !vault.introMinDone) return;
+    dismissed = true;
     overlay.classList.add('fade-out');
     setTimeout(function () { overlay.style.display = 'none'; }, 550);
-  }, 3950);
+  }
+  window.__vaultIntroTryFinish = finishIntro;
+
+  setTimeout(function () { vault.introMinDone = true; finishIntro(); }, 3950);
+  // Sicherheits-Notausgang: falls Auth (z. B. offline) nie antwortet.
+  setTimeout(function () { vault.authReady = true; finishIntro(); }, 9000);
 })();
 </script>
 
@@ -1040,22 +1033,18 @@
   </div>
 </div>
 
-<!-- ── Login ── -->
+<!-- ── Zugangs-Gate (kein eigenes Login – Anmeldung läuft über die Hauptseite) ── -->
 <div id="login-overlay">
   <div class="login-card">
     <div class="crest"><svg class="chest-svg" viewBox="0 0 120 110" style="width:3.4rem;height:3.4rem"><use href="#ic-chest"/></svg></div>
     <h1>Schatzkammer</h1>
-    <p>von Nele &amp; Andreas — bitte entsperre die Truhe. 🗝️</p>
-    <div class="field">
-      <label for="email">E-Mail</label>
-      <input type="email" id="email" placeholder="deine@email.de" autocomplete="username" />
+    <div id="gate-loading">
+      <p><span class="loading-spinner"></span>&nbsp; Truhe wird geöffnet …</p>
     </div>
-    <div class="field">
-      <label for="password">Passwort</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    <div id="gate-locked" style="display:none">
+      <p>Du bist nicht angemeldet. Bitte melde dich zuerst auf der Hauptseite an, dann öffnet sich die Truhe automatisch. 🗝️</p>
+      <a class="btn btn-primary" href="index.html">🏠 Zur Hauptseite</a>
     </div>
-    <div id="login-error"></div>
-    <button class="btn btn-primary" id="login-btn">🔓 Truhe öffnen</button>
   </div>
 </div>
 
@@ -1069,6 +1058,7 @@
     </div>
     <div class="user-info">
       <span id="user-email"></span>
+      <a class="btn btn-ghost" href="index.html">🏠 Zur Hauptseite</a>
       <button class="btn btn-ghost btn-danger" id="logout-btn">Abmelden</button>
     </div>
   </div>
@@ -1168,7 +1158,7 @@
 
 <script type="module">
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  import { getAuth, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getDatabase, ref, set, remove, push, query, orderByChild, limitToLast, onValue }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -1225,10 +1215,8 @@
   const $ = id => document.getElementById(id);
   const loginOverlay = $("login-overlay");
   const appEl        = $("app");
-  const emailInput   = $("email");
-  const pwInput      = $("password");
-  const loginError   = $("login-error");
-  const loginBtn     = $("login-btn");
+  const gateLoading  = $("gate-loading");
+  const gateLocked   = $("gate-locked");
   const logoutBtn    = $("logout-btn");
   const userEmailEl  = $("user-email");
   const chestTabs    = $("chest-tabs");
@@ -1385,24 +1373,14 @@
       currentUserKey = null;
       loginOverlay.classList.remove("hidden");
       appEl.classList.remove("visible");
+      gateLoading.style.display = "none";
+      gateLocked.style.display = "";
     }
+    // Intro maskiert das Laden – jetzt Auth-Status melden, damit es enden darf.
+    if (window.__vault) window.__vault.authReady = true;
+    if (window.__vaultIntroTryFinish) window.__vaultIntroTryFinish();
   });
 
-  loginBtn.addEventListener("click", async () => {
-    loginError.style.display = "none";
-    loginBtn.disabled = true;
-    const txt = loginBtn.textContent;
-    loginBtn.innerHTML = '<span class="loading-spinner"></span>';
-    try {
-      await signInWithEmailAndPassword(auth, emailInput.value.trim(), pwInput.value);
-    } catch {
-      loginError.textContent = "Falsche E-Mail oder falsches Passwort.";
-      loginError.style.display = "block";
-    }
-    loginBtn.disabled = false;
-    loginBtn.textContent = txt;
-  });
-  pwInput.addEventListener("keydown", e => { if (e.key === "Enter") loginBtn.click(); });
   logoutBtn.addEventListener("click", () => signOut(auth));
 
   // ── Truhen-Auswahl ──
@@ -1547,7 +1525,12 @@
         { onlyOnce: true });
     });
   }
-  function dbWrite(p) { return p.catch(() => {}); }   // DB-Fehler dürfen UX nicht abbrechen
+  function dbWrite(p) {
+    return p.then(() => true).catch(e => {
+      console.warn("[Schatzkammer] Datenbank-Schreiben fehlgeschlagen:", e?.message || e);
+      return false;
+    });
+  }
 
   // ── Hauptlisting ──
   async function loadFiles() {
@@ -1703,7 +1686,7 @@
     const chest = activeChest;
     const beutel = pathLabel();
     const base = pathPrefix();
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, logFailed = false;
 
     for (const file of files) {
       progressFname.textContent = `📥 ${file.name}`;
@@ -1716,13 +1699,16 @@
       const by = displayName(currentUserKey);
       await dbWrite(set(ref(db, `treasure/meta/${chest}/${metaKey(path)}`),
         { name: file.name, by, ts: Date.now() }));
-      await dbWrite(push(ref(db, "treasure/log"),
+      const logOk = await dbWrite(push(ref(db, "treasure/log"),
         { action: "upload", chest, beutel: beutel || "", file: file.name, by, ts: Date.now() }));
+      if (!logOk) logFailed = true;
     }
 
     progressWrap.classList.remove("visible");
-    if (ok && !fail)      showFeedback(`✅ ${ok} Schatz/Schätze sicher verstaut!`, "success");
-    else if (ok && fail)  showFeedback(`⚠️ ${ok} hochgeladen, ${fail} fehlgeschlagen.`, "error");
+    const chronikHint = ok && logFailed
+      ? " (Chronik konnte nicht aktualisiert werden – Datenbankregeln prüfen)" : "";
+    if (ok && !fail)      showFeedback(`✅ ${ok} Schatz/Schätze sicher verstaut!${chronikHint}`, chronikHint ? "error" : "success");
+    else if (ok && fail)  showFeedback(`⚠️ ${ok} hochgeladen, ${fail} fehlgeschlagen.${chronikHint}`, "error");
     else                  showFeedback(`❌ Upload fehlgeschlagen. Hast du Schreibrechte für diese Truhe?`, "error");
     if (ok) invalidateTotals(chest);
     loadFiles();
