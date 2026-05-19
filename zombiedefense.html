@@ -1476,6 +1476,7 @@ import * as THREE from 'three';
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, push, onDisconnect, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { contributeToTopf } from './savings-helper.js';
 
 // Firebase-Initialisierung (gleiche App wie index.html)
 const _fbConfig = {
@@ -5742,6 +5743,7 @@ function renderWeaponShop() {
       if (w.locked) {
         if (currentCoins >= w.cost) {
           runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) - w.cost).then(() => {
+            contributeToTopf(_db, _myKey, w.cost, 'zombiedefense').catch(()=>{});
             w.locked = false;
             if (w.ranged) ammoState[w.id] = w.magSize;
             saveProgress();
@@ -6130,7 +6132,7 @@ function exitBuildMode() {
 
 function attemptPlaceDefense() {
   if (!buildState.active || !buildState.valid) return;
-  runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) - buildState.item.cost).catch(() => {}); updateHUD();
+  runTransaction(ref(_db, `coins/${_myKey}`), c => (c || 0) - buildState.item.cost).then(() => contributeToTopf(_db, _myKey, buildState.item.cost, 'zombiedefense').catch(()=>{})).catch(() => {}); updateHUD();
   
   const h = buildState.item.type === 'barricade' ? 2 : (buildState.item.type === 'turret' ? 1.5 : 0.2);
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(buildState.item.w, h, buildState.item.d), ToonMat(buildState.item.color));

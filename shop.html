@@ -1218,6 +1218,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, runTransaction, onValue, set, get, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { contributeToTopf } from './savings-helper.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -2137,6 +2138,7 @@
       const price = pendingBuy.price;
       if (currentCoins < price) { showToast('❌ Nicht genug Coins!'); return; }
       await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - price);
+      contributeToTopf(db, userKey, price, 'shop').catch(()=>{});
       try { await updateStats(0, price, 0); } catch(e) { console.warn('Stats:', e.message); }
       const invRef = ref(db, `boosters/${userKey}/inventory/${pendingBuy.id}`);
       await runTransaction(invRef, n => (n||0) + 1);
@@ -2151,6 +2153,7 @@
     if (currentCoins < t.price) { showToast('❌ Nicht genug Coins!'); return; }
     // Coins abziehen
     await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - t.price);
+    contributeToTopf(db, userKey, t.price, 'shop').catch(()=>{});
     try { await updateStats(0, t.price, 0); } catch(e) { console.warn('Stats:', e.message); }
     // Zu owned hinzufügen
     ownedThemes.push(themeId);
