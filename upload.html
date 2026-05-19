@@ -1069,6 +1069,7 @@
     </div>
     <div class="user-info">
       <span id="user-email"></span>
+      <a class="btn btn-ghost" href="index.html">🏠 Zur Hauptseite</a>
       <button class="btn btn-ghost btn-danger" id="logout-btn">Abmelden</button>
     </div>
   </div>
@@ -1547,7 +1548,12 @@
         { onlyOnce: true });
     });
   }
-  function dbWrite(p) { return p.catch(() => {}); }   // DB-Fehler dürfen UX nicht abbrechen
+  function dbWrite(p) {
+    return p.then(() => true).catch(e => {
+      console.warn("[Schatzkammer] Datenbank-Schreiben fehlgeschlagen:", e?.message || e);
+      return false;
+    });
+  }
 
   // ── Hauptlisting ──
   async function loadFiles() {
@@ -1703,7 +1709,7 @@
     const chest = activeChest;
     const beutel = pathLabel();
     const base = pathPrefix();
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, logFailed = false;
 
     for (const file of files) {
       progressFname.textContent = `📥 ${file.name}`;
@@ -1716,13 +1722,16 @@
       const by = displayName(currentUserKey);
       await dbWrite(set(ref(db, `treasure/meta/${chest}/${metaKey(path)}`),
         { name: file.name, by, ts: Date.now() }));
-      await dbWrite(push(ref(db, "treasure/log"),
+      const logOk = await dbWrite(push(ref(db, "treasure/log"),
         { action: "upload", chest, beutel: beutel || "", file: file.name, by, ts: Date.now() }));
+      if (!logOk) logFailed = true;
     }
 
     progressWrap.classList.remove("visible");
-    if (ok && !fail)      showFeedback(`✅ ${ok} Schatz/Schätze sicher verstaut!`, "success");
-    else if (ok && fail)  showFeedback(`⚠️ ${ok} hochgeladen, ${fail} fehlgeschlagen.`, "error");
+    const chronikHint = ok && logFailed
+      ? " (Chronik konnte nicht aktualisiert werden – Datenbankregeln prüfen)" : "";
+    if (ok && !fail)      showFeedback(`✅ ${ok} Schatz/Schätze sicher verstaut!${chronikHint}`, chronikHint ? "error" : "success");
+    else if (ok && fail)  showFeedback(`⚠️ ${ok} hochgeladen, ${fail} fehlgeschlagen.${chronikHint}`, "error");
     else                  showFeedback(`❌ Upload fehlgeschlagen. Hast du Schreibrechte für diese Truhe?`, "error");
     if (ok) invalidateTotals(chest);
     loadFiles();
