@@ -530,32 +530,35 @@
 
     .drop-zone {
       position: relative; isolation: isolate;
-      border: 1.5px dashed var(--border); border-radius: 16px;
-      padding: 34px 24px; text-align: center; cursor: pointer;
+      display: flex; align-items: center; gap: 16px;
+      border: 1.5px dashed var(--border); border-radius: 14px;
+      padding: 14px 20px; text-align: left; cursor: pointer;
       transition: transform .2s, box-shadow .25s, background .25s, border-color .25s;
       background:
-        radial-gradient(260px 160px at 50% 40%, rgba(246,217,122,0.05), transparent 72%),
+        radial-gradient(360px 90px at 30% 50%, rgba(246,217,122,0.045), transparent 72%),
         rgba(11,7,22,0.4);
     }
     .drop-zone:hover, .drop-zone.drag-over {
       border-color: var(--border-strong);
       background:
-        radial-gradient(260px 160px at 50% 40%, rgba(246,217,122,0.1), transparent 72%),
+        radial-gradient(360px 90px at 30% 50%, rgba(246,217,122,0.1), transparent 72%),
         rgba(11,7,22,0.4);
-      box-shadow: 0 0 22px rgba(246,217,122,0.16);
+      box-shadow: 0 0 18px rgba(246,217,122,0.14);
     }
     .drop-zone .icon {
-      line-height: 1; display: inline-flex;
+      line-height: 1; display: inline-flex; flex-shrink: 0;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.45)) drop-shadow(0 0 10px rgba(246,217,122,0.35));
       transition: transform .25s;
     }
-    .drop-zone .icon .chest-svg { width: 56px; height: 56px; }
-    .drop-zone:hover .icon, .drop-zone.drag-over .icon { transform: translateY(-3px) scale(1.06); }
-    .drop-zone p { font-size: 0.92rem; color: var(--muted); margin-top: 12px; }
+    .drop-zone .icon .chest-svg { width: 34px; height: 34px; }
+    .drop-zone:hover .icon, .drop-zone.drag-over .icon { transform: translateY(-2px) scale(1.06); }
+    .drop-zone .dz-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .drop-zone p { font-size: 0.88rem; color: var(--muted); }
+    .drop-zone .dz-hint { font-size: 0.74rem; opacity: .72; }
     .drop-zone strong { color: var(--gold-2); font-weight: 800; }
     .drop-zone.locked { cursor: not-allowed; opacity: .5; }
     .drop-zone.locked .icon { transform: none; }
-    .drop-zone.locked:hover { border-color: var(--border); transform: none; box-shadow: none; background: radial-gradient(260px 160px at 50% 40%, rgba(246,217,122,0.05), transparent 72%), rgba(11,7,22,0.4); }
+    .drop-zone.locked:hover { border-color: var(--border); transform: none; box-shadow: none; background: radial-gradient(360px 90px at 30% 50%, rgba(246,217,122,0.045), transparent 72%), rgba(11,7,22,0.4); }
     #file-input { display: none; }
 
     .lock-note {
@@ -565,7 +568,9 @@
     }
     .lock-note.visible { display: block; }
 
-    .upload-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .beutel-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .beutel-toolbar .btn { padding: 9px 16px; font-size: 0.82rem; }
+    .btn-back { gap: 6px; }
 
     #progress-wrap { margin-top: 18px; display: none; }
     #progress-wrap.visible { display: block; }
@@ -583,6 +588,8 @@
 
     .feedback { margin-top: 16px; padding: 14px 18px; border-radius: 13px; font-size: 0.88rem; font-weight: 700; display: none; border: 1px solid transparent; }
     .feedback.visible { display: block; animation: appIn .35s ease-out both; }
+    .feedback.fade-out { animation: feedbackOut .45s ease-in forwards; }
+    @keyframes feedbackOut { to { opacity: 0; transform: translateY(-6px); } }
     .feedback.success { background: rgba(139,230,176,0.13); color: var(--ok); border-color: rgba(139,230,176,0.34); box-shadow: 0 0 22px rgba(139,230,176,0.16); }
     .feedback.error   { background: rgba(255,138,138,0.13); color: var(--danger); border-color: rgba(255,138,138,0.34); }
 
@@ -604,30 +611,34 @@
     }
 
     /* ── Beutel + Datei-Liste ── */
-    .beutel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 14px; margin-bottom: 20px; }
-    .beutel-card {
-      position: relative; cursor: pointer; text-align: center;
-      background: rgba(11,7,22,0.5); border: 1px solid var(--border);
-      border-radius: 16px; padding: 20px 12px;
+    .beutel-list { list-style: none; margin-bottom: 14px; }
+    .beutel-row {
+      position: relative; cursor: pointer;
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 14px; border-radius: 13px; margin-bottom: 5px;
+      background: linear-gradient(100deg, rgba(232,196,104,0.05), rgba(11,7,22,0.45));
+      border: 1px solid var(--border);
       transition: border-color .18s, transform .15s, box-shadow .22s, background .2s;
     }
-    .beutel-card:hover {
-      border-color: var(--gold); transform: translateY(-4px);
-      background: rgba(232,196,104,0.07);
-      box-shadow: 0 12px 28px rgba(232,196,104,0.2);
+    .beutel-row:hover {
+      border-color: var(--gold); transform: translateX(4px);
+      background: linear-gradient(100deg, rgba(232,196,104,0.12), rgba(11,7,22,0.45));
+      box-shadow: 0 8px 22px rgba(232,196,104,0.16);
     }
-    .beutel-card .b-emoji { font-size: 2rem; line-height: 1; display: inline-block; transition: transform .2s; filter: drop-shadow(0 0 8px rgba(246,217,122,0.4)); }
-    .beutel-card:hover .b-emoji { transform: scale(1.14) rotate(-4deg); }
-    .beutel-card .b-name { font-size: 0.86rem; font-weight: 800; margin-top: 8px; word-break: break-word; }
-    .beutel-card .b-count { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
-    .beutel-card .b-del {
-      position: absolute; top: 7px; right: 7px; border: none; cursor: pointer;
-      background: rgba(255,138,138,0.16); color: var(--danger);
-      width: 26px; height: 26px; border-radius: 50%; font-size: 0.82rem; line-height: 1;
-      display: none; transition: background .15s, transform .15s;
+    .beutel-row .b-emoji { font-size: 1.55rem; line-height: 1; flex-shrink: 0; transition: transform .2s; filter: drop-shadow(0 0 8px rgba(246,217,122,0.4)); }
+    .beutel-row:hover .b-emoji { transform: scale(1.12) rotate(-5deg); }
+    .beutel-row .b-info { flex: 1; min-width: 0; }
+    .beutel-row .b-name { font-size: 0.92rem; font-weight: 800; word-break: break-word; }
+    .beutel-row .b-count { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
+    .beutel-row .b-chev { font-size: 1.1rem; color: var(--gold-2); opacity: .55; flex-shrink: 0; transition: transform .18s, opacity .18s; }
+    .beutel-row:hover .b-chev { opacity: 1; transform: translateX(3px); }
+    .beutel-row .b-del {
+      flex-shrink: 0; border: 1px solid rgba(255,138,138,0.26); cursor: pointer;
+      background: rgba(255,138,138,0.13); color: var(--danger);
+      width: 30px; height: 30px; border-radius: 9px; font-size: 0.82rem; line-height: 1;
+      transition: background .15s, transform .15s, box-shadow .15s;
     }
-    .beutel-card:hover .b-del { display: block; }
-    .beutel-card .b-del:hover { background: rgba(255,138,138,0.34); transform: scale(1.12); }
+    .beutel-row .b-del:hover { background: rgba(255,138,138,0.28); transform: scale(1.08); box-shadow: 0 0 12px rgba(255,138,138,0.25); }
 
     .file-list { list-style: none; }
     .file-list li {
@@ -1101,14 +1112,12 @@
     <h2 id="upload-title">✨ Schatz in die Truhe legen</h2>
     <div class="drop-zone" id="drop-zone">
       <div class="icon"><svg class="chest-svg" viewBox="0 0 120 110"><use href="#ic-chest-open"/></svg></div>
-      <p><strong>Klicken</strong> oder Schätze hierher ziehen</p>
-      <p style="margin-top:6px;font-size:0.78rem;">Alle Dateitypen erlaubt · mehrere möglich</p>
+      <div class="dz-text">
+        <p><strong>Klicken</strong> oder Schätze hierher ziehen</p>
+        <span class="dz-hint">Alle Dateitypen erlaubt · mehrere möglich</span>
+      </div>
     </div>
     <input type="file" id="file-input" multiple />
-
-    <div class="upload-tools">
-      <button class="btn btn-ghost" id="new-beutel-btn">👝 Neuen Schatzbeutel anlegen</button>
-    </div>
 
     <div class="lock-note" id="lock-note"></div>
 
@@ -1124,11 +1133,17 @@
   <!-- Inhalt -->
   <div class="section">
     <h2>🪙 Inhalt</h2>
+
+    <div class="beutel-toolbar" id="beutel-toolbar">
+      <button class="btn btn-ghost btn-back" id="back-btn" style="display:none;">← Zurück</button>
+      <button class="btn btn-ghost" id="new-beutel-btn">👝 Neuen Schatzbeutel anlegen</button>
+    </div>
+
     <div class="breadcrumb" id="breadcrumb"></div>
 
     <div class="filter-bar" id="filter-bar"></div>
 
-    <div class="beutel-grid" id="beutel-grid" style="display:none;"></div>
+    <ul class="beutel-list" id="beutel-list" style="display:none;"></ul>
 
     <ul class="file-list" id="file-list">
       <li><div class="empty-state"><span class="loading-spinner"></span></div></li>
@@ -1188,8 +1203,16 @@
   // ── State ──
   let currentUserKey = null;   // 'nele' | 'andreas' | null
   let activeChest    = "gemeinsam";
-  let activeBeutel   = null;   // safe folder name or null
+  let activePath     = [];     // array of safe folder names (nested beutel path)
   let activeFilter   = "all";
+  let feedbackTimer  = null;
+
+  function pathPrefix() {
+    return activePath.length ? `${activeChest}/${activePath.join("/")}` : activeChest;
+  }
+  function pathLabel() {
+    return activePath.length ? activePath.join(" › ") : "";
+  }
 
   // ── DOM ──
   const $ = id => document.getElementById(id);
@@ -1205,12 +1228,13 @@
   const dropZone     = $("drop-zone");
   const fileInput    = $("file-input");
   const newBeutelBtn = $("new-beutel-btn");
+  const backBtn      = $("back-btn");
   const lockNote     = $("lock-note");
   const progressWrap = $("progress-wrap");
   const progressFname= $("progress-filename");
   const feedbackEl   = $("feedback");
   const fileList     = $("file-list");
-  const beutelGrid   = $("beutel-grid");
+  const beutelList   = $("beutel-list");
   const breadcrumb   = $("breadcrumb");
   const filterBar    = $("filter-bar");
   const uploadTitle  = $("upload-title");
@@ -1376,7 +1400,7 @@
   });
   function selectChest(chest) {
     activeChest  = chest;
-    activeBeutel = null;
+    activePath   = [];
     [...chestTabs.children].forEach(t =>
       t.classList.toggle("active", t.dataset.chest === chest));
     applyPermissionUI();
@@ -1387,6 +1411,7 @@
     const writable = canWrite(activeChest);
     dropZone.classList.toggle("locked", !writable);
     newBeutelBtn.style.display = writable ? "" : "none";
+    backBtn.style.display = activePath.length ? "" : "none";
     if (writable) {
       lockNote.classList.remove("visible");
       lockNote.textContent = "";
@@ -1395,7 +1420,7 @@
       lockNote.textContent = `🔒 Nur ${owner} kann hier Schätze ablegen oder entfernen.`;
       lockNote.classList.add("visible");
     }
-    const loc = CHESTS[activeChest].label + (activeBeutel ? ` › 👝 ${activeBeutel}` : "");
+    const loc = CHESTS[activeChest].label + (activePath.length ? ` › 👝 ${pathLabel()}` : "");
     uploadTitle.textContent = `✨ Schatz ablegen in: ${loc}`;
   }
 
@@ -1404,16 +1429,26 @@
     breadcrumb.innerHTML = "";
     const root = document.createElement("button");
     root.innerHTML = `${CHESTS[activeChest].emoji} ${escHtml(CHESTS[activeChest].label)}`;
-    root.addEventListener("click", () => { activeBeutel = null; applyPermissionUI(); loadFiles(); });
+    root.addEventListener("click", () => { activePath = []; applyPermissionUI(); loadFiles(); });
     breadcrumb.appendChild(root);
-    if (activeBeutel) {
+    activePath.forEach((seg, i) => {
       const sep = document.createElement("span");
       sep.className = "sep"; sep.textContent = "›";
       breadcrumb.appendChild(sep);
-      const cur = document.createElement("span");
-      cur.innerHTML = `👝 <b>${escHtml(activeBeutel)}</b>`;
-      breadcrumb.appendChild(cur);
-    }
+      if (i < activePath.length - 1) {
+        const b = document.createElement("button");
+        b.innerHTML = `👝 ${escHtml(seg)}`;
+        b.addEventListener("click", () => {
+          activePath = activePath.slice(0, i + 1);
+          applyPermissionUI(); loadFiles();
+        });
+        breadcrumb.appendChild(b);
+      } else {
+        const cur = document.createElement("span");
+        cur.innerHTML = `👝 <b>${escHtml(seg)}</b>`;
+        breadcrumb.appendChild(cur);
+      }
+    });
   }
 
   // ── Filter ──
@@ -1451,18 +1486,24 @@
     return entry.id != null && !SKIP_NAMES.includes(entry.name);
   }
 
-  // Summiert Größe/Anzahl einer ganzen Truhe (Wurzel + alle Beutel).
-  async function chestTotals(chest) {
+  // Summiert Größe/Anzahl rekursiv über alle (verschachtelten) Beutel.
+  async function sumPath(prefix) {
     let count = 0, size = 0;
-    const root = await listPath(chest);
-    if (root) {
-      for (const e of root) {
+    const list = await listPath(prefix);
+    if (list) {
+      for (const e of list) {
         if (isFolder(e)) {
-          const sub = await listPath(`${chest}/${e.name}`);
-          if (sub) for (const f of sub) if (isRealFile(f)) { count++; size += f.metadata?.size || 0; }
+          const sub = await sumPath(`${prefix}/${e.name}`);
+          count += sub.count; size += sub.size;
         } else if (isRealFile(e)) { count++; size += e.metadata?.size || 0; }
       }
     }
+    return { count, size };
+  }
+
+  // Summiert Größe/Anzahl einer ganzen Truhe (Wurzel + alle Beutel, beliebig tief).
+  async function chestTotals(chest) {
+    let { count, size } = await sumPath(chest);
     if (chest === "gemeinsam") {
       const legacy = await listPath("");
       if (legacy) for (const e of legacy)
@@ -1498,13 +1539,13 @@
   async function loadFiles() {
     renderBreadcrumb();
     fileList.innerHTML = '<li><div class="empty-state"><span class="loading-spinner"></span></div></li>';
-    beutelGrid.style.display = "none";
-    beutelGrid.innerHTML = "";
+    beutelList.style.display = "none";
+    beutelList.innerHTML = "";
     statCount.innerHTML = '<span class="loading-spinner"></span>';
     statSize.innerHTML  = '<span class="loading-spinner"></span>';
 
     const chest = activeChest;
-    const prefix = activeBeutel ? `${chest}/${activeBeutel}` : chest;
+    const prefix = pathPrefix();
     const entries = await listPath(prefix);
     if (!entries) {
       fileList.innerHTML = '<li><div class="empty-state">Die Truhe ließ sich nicht öffnen.</div></li>';
@@ -1513,10 +1554,10 @@
     }
 
     let files   = entries.filter(isRealFile);
-    const folders = activeBeutel ? [] : entries.filter(isFolder);
+    const folders = entries.filter(isFolder);
 
     // Legacy-Wurzeldateien in die gemeinsame Truhe holen
-    if (!activeBeutel && chest === "gemeinsam") {
+    if (!activePath.length && chest === "gemeinsam") {
       const legacy = await listPath("");
       if (legacy) {
         for (const e of legacy) {
@@ -1535,28 +1576,35 @@
     const meta = await readMeta(chest);
     const writable = canWrite(chest);
 
-    // Beutel-Kacheln
+    // Beutel-Liste
     if (folders.length) {
-      beutelGrid.style.display = "grid";
+      beutelList.style.display = "block";
       for (const fo of folders) {
-        const sub = await listPath(`${chest}/${fo.name}`);
-        const cnt = sub ? sub.filter(isRealFile).length : 0;
-        const card = document.createElement("div");
-        card.className = "beutel-card";
-        card.innerHTML = `
+        const sub = await listPath(`${prefix}/${fo.name}`);
+        const fileCnt   = sub ? sub.filter(isRealFile).length : 0;
+        const folderCnt = sub ? sub.filter(isFolder).length : 0;
+        const parts = [`${fileCnt} ${fileCnt === 1 ? "Schatz" : "Schätze"}`];
+        if (folderCnt) parts.push(`${folderCnt} ${folderCnt === 1 ? "Beutel" : "Beutel"}`);
+        const row = document.createElement("li");
+        row.className = "beutel-row";
+        row.innerHTML = `
           <div class="b-emoji">👝</div>
-          <div class="b-name">${escHtml(fo.name)}</div>
-          <div class="b-count">${cnt} ${cnt === 1 ? "Schatz" : "Schätze"}</div>
-          ${writable ? '<button class="b-del" title="Beutel löschen">✕</button>' : ""}`;
-        card.addEventListener("click", e => {
+          <div class="b-info">
+            <div class="b-name">${escHtml(fo.name)}</div>
+            <div class="b-count">${parts.join(" · ")}</div>
+          </div>
+          ${writable ? '<button class="b-del" title="Beutel löschen">✕</button>' : ""}
+          <div class="b-chev">›</div>`;
+        row.addEventListener("click", e => {
           if (e.target.classList.contains("b-del")) return;
-          activeBeutel = fo.name; applyPermissionUI(); loadFiles();
+          activePath = [...activePath, fo.name]; applyPermissionUI(); loadFiles();
         });
-        const del = card.querySelector(".b-del");
+        const del = row.querySelector(".b-del");
         if (del) del.addEventListener("click", ev => {
-          ev.stopPropagation(); deleteBeutel(chest, fo.name, cnt);
+          ev.stopPropagation();
+          deleteBeutel(`${prefix}/${fo.name}`, fo.name, fileCnt + folderCnt);
         });
-        beutelGrid.appendChild(card);
+        beutelList.appendChild(row);
       }
     }
 
@@ -1625,12 +1673,12 @@
     showFeedback("", "");
     progressWrap.classList.add("visible");
     const chest = activeChest;
-    const beutel = activeBeutel;
+    const beutel = pathLabel();
+    const base = pathPrefix();
     let ok = 0, fail = 0;
 
     for (const file of files) {
       progressFname.textContent = `📥 ${file.name}`;
-      const base = beutel ? `${chest}/${beutel}` : chest;
       const path = `${base}/${Date.now()}_${safeName(file.name)}`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
         cacheControl: "3600", upsert: false
@@ -1653,9 +1701,16 @@
   }
 
   function showFeedback(msg, type) {
+    clearTimeout(feedbackTimer);
     feedbackEl.textContent = msg;
     feedbackEl.className = "feedback";
-    if (type) feedbackEl.classList.add("visible", type);
+    if (!type) return;
+    feedbackEl.classList.add("visible", type);
+    const ttl = type === "error" ? 6000 : 3500;
+    feedbackTimer = setTimeout(() => {
+      feedbackEl.classList.add("fade-out");
+      feedbackTimer = setTimeout(() => { feedbackEl.className = "feedback"; }, 450);
+    }, ttl);
   }
 
   // ── Löschen ──
@@ -1672,7 +1727,7 @@
         if (error) { showFeedback("❌ Löschen fehlgeschlagen: " + error.message, "error"); return; }
         await dbWrite(remove(ref(db, `treasure/meta/${chest}/${metaKey(fullPath)}`)));
         await dbWrite(push(ref(db, "treasure/log"),
-          { action: "delete", chest, beutel: activeBeutel || "", file: display,
+          { action: "delete", chest, beutel: pathLabel(), file: display,
             by: displayName(currentUserKey), ts: Date.now() }));
         showFeedback("🗑 Schatz entfernt.", "success");
         loadFiles();
@@ -1696,10 +1751,11 @@
         const name = safeName(raw);
         const placeholder = new Blob([""], { type: "text/plain" });
         const { error } = await supabase.storage.from(BUCKET)
-          .upload(`${activeChest}/${name}/.beutel`, placeholder, { upsert: true });
+          .upload(`${pathPrefix()}/${name}/.beutel`, placeholder, { upsert: true });
         if (error) { showFeedback("❌ Beutel konnte nicht angelegt werden: " + error.message, "error"); return; }
+        const fullLabel = [...activePath, name].join(" › ");
         await dbWrite(push(ref(db, "treasure/log"),
-          { action: "upload", chest: activeChest, beutel: name, file: `👝 Beutel „${name}"`,
+          { action: "upload", chest: activeChest, beutel: fullLabel, file: `👝 Beutel „${name}"`,
             by: displayName(currentUserKey), ts: Date.now() }));
         showFeedback(`👝 Schatzbeutel „${name}" angelegt.`, "success");
         loadFiles();
@@ -1707,13 +1763,13 @@
     });
   });
 
-  async function deleteBeutel(chest, name, count) {
-    if (!canWrite(chest)) return;
+  async function deleteBeutel(folderPath, name, count) {
+    if (!canWrite(activeChest)) return;
     if (count > 0) {
       showModal({
         icon: "⚠️",
         title: "Beutel nicht leer",
-        msg: `Der Beutel „${name}" enthält noch ${count} Schätze. Bitte zuerst leeren.`,
+        msg: `Der Beutel „${name}" enthält noch ${count} Schätze oder Unterbeutel. Bitte zuerst leeren.`,
         confirmText: "OK",
         confirmClass: "btn-ghost",
         onConfirm: () => {}
@@ -1728,16 +1784,23 @@
       confirmClass: "btn-danger",
       onConfirm: async () => {
         const { error } = await supabase.storage.from(BUCKET)
-          .remove([`${chest}/${name}/.beutel`]);
+          .remove([`${folderPath}/.beutel`]);
         if (error) { showFeedback("❌ Beutel konnte nicht entfernt werden: " + error.message, "error"); return; }
         await dbWrite(push(ref(db, "treasure/log"),
-          { action: "delete", chest, beutel: name, file: `👝 Beutel „${name}"`,
-            by: displayName(currentUserKey), ts: Date.now() }));
+          { action: "delete", chest: activeChest, beutel: [...activePath, name].join(" › "),
+            file: `👝 Beutel „${name}"`, by: displayName(currentUserKey), ts: Date.now() }));
         showFeedback(`🗑 Beutel „${name}" entfernt.`, "success");
         loadFiles();
       }
     });
   }
+
+  backBtn.addEventListener("click", () => {
+    if (!activePath.length) return;
+    activePath = activePath.slice(0, -1);
+    applyPermissionUI();
+    loadFiles();
+  });
 
   // ── Chronik ──
   logToggle.addEventListener("click", () => {
