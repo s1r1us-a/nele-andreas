@@ -352,47 +352,6 @@
     padding: 32px; text-align: center; color: var(--ui-btn-text); font-size: 13px;
   }
 
-  /* LEEREN BUTTON */
-  .leeren-btn {
-    background: none; border: 1.5px solid rgba(200,68,128,0.3); border-radius: 50px;
-    padding: 11px 28px; font-family: 'Quicksand', sans-serif; font-size: 13px;
-    font-weight: 600; color: var(--pig-dark); cursor: pointer;
-    transition: all 0.2s ease; align-self: center;
-  }
-  .leeren-btn:hover { background: rgba(200,68,128,0.07); border-color: var(--pig-dark); }
-
-  /* CONFIRM DIALOG */
-  .confirm-overlay {
-    position: fixed; inset: 0; z-index: 8000; display: none;
-    align-items: center; justify-content: center;
-    background: rgba(90,45,58,0.55); backdrop-filter: blur(4px);
-  }
-  .confirm-overlay.open { display: flex; }
-  .confirm-box {
-    background: var(--ui-modal-bg); border: 1.5px solid var(--ui-modal-border);
-    border-radius: 28px; padding: 36px 32px; max-width: 320px; width: 90%;
-    text-align: center; box-shadow: 0 16px 60px rgba(232,115,138,0.25);
-  }
-  .confirm-box h3 {
-    font-family: 'Dancing Script', cursive; font-size: 26px; color: var(--text-dark); margin-bottom: 10px;
-  }
-  .confirm-box p { font-size: 13px; color: var(--ui-btn-text); margin-bottom: 24px; line-height: 1.6; }
-  .confirm-btns { display: flex; gap: 10px; }
-  .confirm-yes {
-    flex: 1; border: none; border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif;
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    background: linear-gradient(135deg, #c94480, #a02060); color: white;
-    box-shadow: 0 4px 16px rgba(201,68,128,0.35); transition: transform 0.2s;
-  }
-  .confirm-yes:hover { transform: scale(1.04); }
-  .confirm-no {
-    flex: 1; background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border);
-    border-radius: 50px; padding: 13px; font-family: 'Quicksand', sans-serif;
-    font-size: 14px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer;
-    transition: all 0.2s;
-  }
-  .confirm-no:hover { border-color: var(--rose); color: var(--rose); }
-
   /* TOAST */
   .toast {
     position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -445,18 +404,6 @@
       <span class="coin-count" id="coinCount">0</span>
     </div>
     <button class="top-bar-btn" id="logoutBtn" style="font-size:11px;padding:6px 12px">Ausloggen</button>
-  </div>
-</div>
-
-<!-- Confirm dialog -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <h3>Topf leeren? 🪣</h3>
-    <p id="confirmText">Sicher? Der Topf wird auf 0 gesetzt und die Leerung wird gespeichert.</p>
-    <div class="confirm-btns">
-      <button class="confirm-yes" id="confirmYes">Ja, leeren!</button>
-      <button class="confirm-no" id="confirmNo">Abbrechen</button>
-    </div>
   </div>
 </div>
 
@@ -585,7 +532,7 @@
 
   <!-- Spar-rate info -->
   <div class="rate-badge">
-    🐷 Bei jeder Ausgabe gehen automatisch <strong style="margin:0 4px">5%</strong> in unser Sparschwein
+    🐷 Bei jeder Ausgabe gehen automatisch <strong style="margin:0 4px">1%</strong> in unser Sparschwein
   </div>
 
   <!-- Lifetime + meta stats -->
@@ -697,9 +644,6 @@
       <div class="feed-empty">Noch keine Einzahlungen</div>
     </div>
   </div>
-
-  <!-- Leeren -->
-  <button class="leeren-btn" id="leerenBtn">🪣 Topf leeren</button>
 
 </div>
 
@@ -941,29 +885,6 @@
     });
   }
 
-  // ---- TOPF LEEREN ----
-  document.getElementById('leerenBtn').addEventListener('click', () => {
-    const overlay = document.getElementById('confirmOverlay');
-    document.getElementById('confirmText').textContent =
-      `Aktuell sind ${topfVal} 🪙 im Topf. Sicher leeren? Das wird als Leerung gespeichert.`;
-    overlay.classList.add('open');
-  });
-
-  document.getElementById('confirmNo').addEventListener('click', () => {
-    document.getElementById('confirmOverlay').classList.remove('open');
-  });
-
-  document.getElementById('confirmYes').addEventListener('click', async () => {
-    document.getElementById('confirmOverlay').classList.remove('open');
-    if (topfVal === 0) { showToast('Der Topf ist bereits leer!'); return; }
-    try {
-      await set(ref(db, 'savings/letzteLeering'), { timestamp: Date.now(), betrag: topfVal, gelaertVon: userKey });
-      await set(ref(db, 'savings/topf'), 0);
-      showToast(`🪣 Topf geleert! ${topfVal} 🪙 ausgegeben.`);
-    } catch(e) {
-      showToast('Fehler beim Leeren – bitte nochmal versuchen.');
-    }
-  });
 
   // ---- AUTH ----
   const loginBtn  = document.getElementById('loginBtn');

@@ -1,6 +1,6 @@
 import { ref, runTransaction, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const SPAR_RATE = 0.05;
+const SPAR_RATE = 0.01;
 
 export async function contributeToTopf(db, userKey, amount, quelle = 'unbekannt') {
   const beitrag = Math.floor(amount * SPAR_RATE);
