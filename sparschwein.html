@@ -151,24 +151,46 @@
     text-transform: uppercase; font-weight: 500; margin-top: 6px;
   }
 
-  .back-btn {
-    display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
-    background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border);
-    border-radius: 50px; padding: 9px 20px; font-size: 13px; font-weight: 600;
-    color: var(--ui-btn-text); text-decoration: none; transition: all 0.2s ease;
-  }
-  .back-btn:hover { color: var(--rose); border-color: var(--rose); }
-
   /* PIGGY BANK HERO */
   .pig-hero {
     width: 100%; display: flex; flex-direction: column; align-items: center;
     gap: 0; position: relative;
   }
   .pig-wrapper {
-    position: relative; width: min(300px, 85vw);
+    position: relative; width: min(320px, 88vw);
+    animation: pigFloat 6s ease-in-out infinite;
+  }
+  .pig-wrapper::before {
+    content: ''; position: absolute; left: 50%; top: 52%;
+    width: 80%; height: 64%; transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at center, rgba(240,123,170,0.32) 0%, rgba(232,115,138,0.12) 45%, transparent 72%);
+    filter: blur(8px); z-index: -1; pointer-events: none;
+  }
+  @keyframes pigFloat {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-9px); }
   }
   .pig-svg {
-    width: 100%; height: auto; filter: drop-shadow(0 12px 32px rgba(240,123,170,0.35));
+    width: 100%; height: auto;
+    filter: drop-shadow(0 14px 30px rgba(240,123,170,0.32));
+  }
+
+  /* Page entrance */
+  .page.revealed > * {
+    animation: riseIn 0.6s cubic-bezier(0.22,1,0.36,1) backwards;
+  }
+  .page.revealed > *:nth-child(1) { animation-delay: 0.02s; }
+  .page.revealed > *:nth-child(2) { animation-delay: 0.08s; }
+  .page.revealed > *:nth-child(3) { animation-delay: 0.14s; }
+  .page.revealed > *:nth-child(4) { animation-delay: 0.20s; }
+  .page.revealed > *:nth-child(5) { animation-delay: 0.26s; }
+  .page.revealed > *:nth-child(n+6) { animation-delay: 0.32s; }
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pig-wrapper, .pig-svg, .page.revealed > * { animation: none; }
   }
 
   /* Coin drop animation */
@@ -189,9 +211,9 @@
   }
   @keyframes coinFall {
     0%   { opacity: 1; transform: translateX(-50%) translateY(0) rotateY(0deg); }
-    60%  { opacity: 1; transform: translateX(-50%) translateY(38px) rotateY(180deg); }
-    75%  { opacity: 0; transform: translateX(-50%) translateY(42px) rotateY(270deg); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(42px); }
+    58%  { opacity: 1; transform: translateX(-50%) translateY(42px) rotateY(180deg); }
+    74%  { opacity: 0; transform: translateX(-50%) translateY(47px) rotateY(270deg); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(47px); }
   }
 
   /* Pig breathing animation */
@@ -441,8 +463,6 @@
 <!-- Main page -->
 <div class="page" id="mainPage" style="visibility:hidden;opacity:0;position:absolute;pointer-events:none">
 
-  <a href="index.html" class="back-btn">← Zurück</a>
-
   <div class="page-header">
     <div class="page-title">Unser Sparschwein</div>
     <div class="page-subtitle">Zusammen sparen · gemeinsam träumen</div>
@@ -453,77 +473,103 @@
     <div class="pig-wrapper" id="pigWrapper">
       <!-- Coin animation overlay -->
       <div class="coin-anim-wrapper" id="coinAnimWrapper">
-        <div class="anim-coin" id="animCoin" style="--slot-top: 37%"></div>
+        <div class="anim-coin" id="animCoin" style="--slot-top: 30%"></div>
       </div>
 
       <!-- SVG Piggy bank -->
-      <svg class="pig-svg" viewBox="0 0 280 235" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sparschwein">
+      <svg class="pig-svg" viewBox="0 0 320 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sparschwein">
         <defs>
-          <radialGradient id="pigBodyGrad" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stop-color="#fdd0e8"/>
-            <stop offset="100%" stop-color="#f09bc0"/>
+          <radialGradient id="pigBodyGrad" cx="38%" cy="30%" r="74%">
+            <stop offset="0%" stop-color="#ffe3f1"/>
+            <stop offset="55%" stop-color="#fbb6d7"/>
+            <stop offset="100%" stop-color="#ed90bd"/>
           </radialGradient>
-          <radialGradient id="pigHeadGrad" cx="35%" cy="30%" r="65%">
-            <stop offset="0%" stop-color="#fdd0e8"/>
-            <stop offset="100%" stop-color="#f09bc0"/>
+          <radialGradient id="pigHeadGrad" cx="34%" cy="26%" r="74%">
+            <stop offset="0%" stop-color="#ffe3f1"/>
+            <stop offset="55%" stop-color="#fbb6d7"/>
+            <stop offset="100%" stop-color="#eb8cba"/>
           </radialGradient>
-          <radialGradient id="snoutGrad" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" stop-color="#f5a0c8"/>
-            <stop offset="100%" stop-color="#e06898"/>
+          <radialGradient id="snoutGrad" cx="32%" cy="28%" r="78%">
+            <stop offset="0%" stop-color="#f8b1d2"/>
+            <stop offset="100%" stop-color="#dd7ea9"/>
           </radialGradient>
-          <filter id="pigShadow" x="-5%" y="-5%" width="120%" height="130%">
-            <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="rgba(200,80,130,0.25)"/>
+          <radialGradient id="legGrad" cx="40%" cy="25%" r="80%">
+            <stop offset="0%" stop-color="#f6acce"/>
+            <stop offset="100%" stop-color="#e588b6"/>
+          </radialGradient>
+          <linearGradient id="slotGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#b53a72"/>
+            <stop offset="100%" stop-color="#8d2454"/>
+          </linearGradient>
+          <radialGradient id="groundGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(199,68,128,0.30)"/>
+            <stop offset="70%" stop-color="rgba(199,68,128,0.10)"/>
+            <stop offset="100%" stop-color="rgba(199,68,128,0)"/>
+          </radialGradient>
+          <filter id="pigSoft" x="-25%" y="-25%" width="150%" height="155%">
+            <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="rgba(199,68,128,0.26)"/>
           </filter>
         </defs>
 
+        <!-- Ground shadow -->
+        <ellipse cx="150" cy="250" rx="122" ry="16" fill="url(#groundGrad)"/>
+
+        <!-- Back legs (behind body) -->
+        <rect x="96" y="216" width="26" height="36" rx="13" fill="#e082b2"/>
+        <rect x="186" y="216" width="26" height="36" rx="13" fill="#e082b2"/>
+        <ellipse cx="109" cy="252" rx="13" ry="6" fill="#cf6f9f"/>
+        <ellipse cx="199" cy="252" rx="13" ry="6" fill="#cf6f9f"/>
+
         <!-- Tail (curly, left side) -->
-        <path d="M 40 125 C 14 112, 8 84, 30 76 C 48 70, 57 88, 40 96"
-              fill="none" stroke="#e888b8" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 52 158 C 22 152, 14 120, 36 107 C 56 96, 73 115, 57 130 C 47 139, 35 132, 42 121"
+              fill="none" stroke="#ec88b8" stroke-width="7" stroke-linecap="round"/>
 
         <!-- Body -->
-        <ellipse cx="130" cy="148" rx="94" ry="66" fill="url(#pigBodyGrad)" filter="url(#pigShadow)"/>
+        <ellipse cx="150" cy="160" rx="108" ry="82" fill="url(#pigBodyGrad)" filter="url(#pigSoft)"/>
+
+        <!-- Front legs -->
+        <rect x="74" y="222" width="26" height="34" rx="13" fill="url(#legGrad)"/>
+        <rect x="208" y="222" width="26" height="34" rx="13" fill="url(#legGrad)"/>
+        <ellipse cx="87" cy="256" rx="13" ry="6" fill="#df81ab"/>
+        <ellipse cx="221" cy="256" rx="13" ry="6" fill="#df81ab"/>
+
+        <!-- Body soft highlight -->
+        <ellipse cx="116" cy="118" rx="50" ry="32" fill="rgba(255,255,255,0.32)"/>
 
         <!-- Head -->
-        <circle cx="225" cy="108" r="57" fill="url(#pigHeadGrad)"/>
+        <circle cx="240" cy="128" r="62" fill="url(#pigHeadGrad)"/>
 
         <!-- Ear outer -->
-        <ellipse cx="212" cy="56" rx="15" ry="20" fill="#f5b0d5" transform="rotate(-15 212 56)"/>
+        <ellipse cx="226" cy="74" rx="17" ry="23" fill="#f2a3cb" transform="rotate(-18 226 74)"/>
         <!-- Ear inner -->
-        <ellipse cx="212" cy="56" rx="9" ry="13" fill="#e06898" transform="rotate(-15 212 56)"/>
+        <ellipse cx="227" cy="76" rx="9" ry="14" fill="#dd7ea9" transform="rotate(-18 227 76)"/>
 
-        <!-- Coin slot (on top of body between body and head) -->
-        <rect x="106" y="82" width="30" height="8" rx="4" fill="#c84480"/>
+        <!-- Coin slot -->
+        <rect x="110" y="72" width="58" height="13" rx="6.5" fill="url(#slotGrad)" transform="rotate(-5 139 78)"/>
         <!-- Slot shine -->
-        <rect x="109" y="83" width="14" height="3" rx="1.5" fill="rgba(255,255,255,0.4)"/>
+        <rect x="115" y="74.5" width="26" height="3.5" rx="1.75" fill="rgba(255,255,255,0.42)" transform="rotate(-5 139 78)"/>
 
         <!-- Snout -->
-        <ellipse cx="273" cy="115" rx="24" ry="18" fill="url(#snoutGrad)"/>
+        <ellipse cx="289" cy="138" rx="27" ry="22" fill="url(#snoutGrad)"/>
+        <ellipse cx="289" cy="138" rx="27" ry="22" fill="none" stroke="rgba(178,56,110,0.22)" stroke-width="1.5"/>
         <!-- Nostrils -->
-        <circle cx="266" cy="113" r="5.5" fill="#b83870"/>
-        <circle cx="280" cy="113" r="5.5" fill="#b83870"/>
+        <ellipse cx="282" cy="138" rx="4.6" ry="6.4" fill="#a63367"/>
+        <ellipse cx="297" cy="138" rx="4.6" ry="6.4" fill="#a63367"/>
         <!-- Nostril shine -->
-        <circle cx="264" cy="111" r="2" fill="rgba(255,255,255,0.35)"/>
-        <circle cx="278" cy="111" r="2" fill="rgba(255,255,255,0.35)"/>
+        <circle cx="280.5" cy="135" r="1.8" fill="rgba(255,255,255,0.4)"/>
+        <circle cx="295.5" cy="135" r="1.8" fill="rgba(255,255,255,0.4)"/>
+
+        <!-- Smile -->
+        <path d="M 263 167 Q 273 175 285 168" fill="none" stroke="#c95f8e" stroke-width="2.6" stroke-linecap="round"/>
 
         <!-- Eye -->
-        <circle cx="238" cy="87" r="9" fill="#3d1a28"/>
+        <circle cx="254" cy="108" r="9.5" fill="#3d1a28"/>
         <!-- Eye shine -->
-        <circle cx="242" cy="83" r="3.5" fill="white"/>
-        <circle cx="235" cy="90" r="1.5" fill="rgba(255,255,255,0.5)"/>
+        <circle cx="258" cy="104" r="3.6" fill="#fff"/>
+        <circle cx="250.5" cy="111" r="1.6" fill="rgba(255,255,255,0.55)"/>
 
         <!-- Blush cheek -->
-        <ellipse cx="250" cy="105" rx="14" ry="9" fill="rgba(232,100,150,0.28)"/>
-
-        <!-- Legs -->
-        <rect x="64" y="204" width="22" height="24" rx="11" fill="#ee9dc5"/>
-        <rect x="97" y="207" width="22" height="24" rx="11" fill="#ee9dc5"/>
-        <rect x="138" y="207" width="22" height="24" rx="11" fill="#ee9dc5"/>
-        <rect x="171" y="204" width="22" height="24" rx="11" fill="#ee9dc5"/>
-        <!-- Leg hooves -->
-        <ellipse cx="75" cy="228" rx="11" ry="5" fill="#e06898"/>
-        <ellipse cx="108" cy="231" rx="11" ry="5" fill="#e06898"/>
-        <ellipse cx="149" cy="231" rx="11" ry="5" fill="#e06898"/>
-        <ellipse cx="182" cy="228" rx="11" ry="5" fill="#e06898"/>
+        <ellipse cx="266" cy="128" rx="15" ry="9.5" fill="rgba(232,100,150,0.30)"/>
       </svg>
     </div>
 
@@ -680,6 +726,7 @@
   let currentCoins = 0;
   let allBeitraege = [];
   let topfVal = 0;
+  let firstTopfLoad = true;
 
   // ---- HELPERS ----
   function displayName(email) {
@@ -744,7 +791,6 @@
 
   // ---- STATS CALCULATION ----
   function calcStats(beitraege) {
-    const now = Date.now();
     const startOfWeek = (() => {
       const d = new Date(); d.setHours(0,0,0,0);
       d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
@@ -828,9 +874,9 @@
           <div class="feed-avatar ${cls}">${avatar}</div>
           <div class="feed-info">
             <div class="feed-name">${name}</div>
-            <div class="feed-detail">${quelleLabel(b.quelle)} · ${b.ausgabe}🪙 Ausgabe · ${timeAgo(b.timestamp)}</div>
+            <div class="feed-detail">${quelleLabel(b.quelle)} · ${b.ausgabe ?? '?'}🪙 Ausgabe · ${timeAgo(b.timestamp)}</div>
           </div>
-          <div class="feed-amount">+${b.beitrag}🪙</div>
+          <div class="feed-amount">+${b.beitrag ?? 0}🪙</div>
         </div>`;
     }).join('');
   }
@@ -841,12 +887,13 @@
     topfVal = val;
     el.textContent = val;
 
-    if (val > wasVal && wasVal !== undefined) {
+    if (!firstTopfLoad && val > wasVal) {
       el.classList.remove('pulse');
       void el.offsetWidth;
       el.classList.add('pulse');
       triggerCoinDrop();
     }
+    firstTopfLoad = false;
 
     const sub = document.getElementById('topfSub');
     if (val === 0) sub.textContent = 'Noch nichts gespart – fang an!';
@@ -949,6 +996,8 @@
       document.getElementById('topBar').style.display = 'flex';
       const mp = document.getElementById('mainPage');
       mp.style.cssText = '';
+      void mp.offsetWidth;
+      mp.classList.add('revealed');
       setupListeners();
       // Start ambient coin drop after a short delay
       setTimeout(dropCoin, 2500);
@@ -956,7 +1005,9 @@
       userKey = null;
       document.getElementById('loginOverlay').style.display = 'flex';
       document.getElementById('topBar').style.display = 'none';
-      document.getElementById('mainPage').style.cssText = 'visibility:hidden;opacity:0;position:absolute;pointer-events:none';
+      const mp = document.getElementById('mainPage');
+      mp.classList.remove('revealed');
+      mp.style.cssText = 'visibility:hidden;opacity:0;position:absolute;pointer-events:none';
     }
   });
 
