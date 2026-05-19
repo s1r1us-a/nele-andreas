@@ -296,6 +296,60 @@
     .btn-danger { background: rgba(255,138,138,0.13); color: var(--danger); border: 1.5px solid rgba(255,138,138,0.32); }
     .btn-danger:hover:not(:disabled) { background: rgba(255,138,138,0.24); box-shadow: 0 0 22px rgba(255,138,138,0.3); color: #ffb0b0; animation: none; }
 
+    /* ── Custom Modal ── */
+    #custom-modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      background: rgba(11,6,23,0.78);
+      backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    #custom-modal-overlay.visible { opacity: 1; pointer-events: all; }
+    .custom-modal {
+      position: relative; isolation: isolate;
+      background: var(--grad-panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 22px;
+      padding: 38px 32px 30px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.07);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      transform: scale(0.92) translateY(12px);
+      transition: transform .22s ease;
+    }
+    #custom-modal-overlay.visible .custom-modal { transform: scale(1) translateY(0); }
+    .custom-modal::before {
+      content: ""; position: absolute; inset: -2px; border-radius: 24px; z-index: -1;
+      background: conic-gradient(from 0deg, var(--gold), var(--amethyst), var(--sapphire), var(--gold-2), var(--gold));
+      filter: blur(14px); opacity: .35;
+      animation: ringRot 9s linear infinite;
+    }
+    .custom-modal .modal-icon { font-size: 2.6rem; line-height: 1; margin-bottom: 14px; display: block; }
+    .custom-modal h3 {
+      font-size: 1.15rem; font-weight: 900; margin-bottom: 10px;
+      background: linear-gradient(90deg, #e8c468, #fff3c9, #c084fc, #f6d97a, #e8c468);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: goldTextFlow 5s linear infinite;
+    }
+    .custom-modal p { font-size: 0.9rem; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+    .custom-modal .modal-input {
+      width: 100%; padding: 13px 16px; margin-bottom: 20px;
+      background: rgba(13,8,24,0.66);
+      border: 1.5px solid var(--border); border-radius: 13px;
+      font-size: 0.95rem; outline: none; color: var(--text);
+      font-family: inherit;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .custom-modal .modal-input:focus {
+      border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,196,104,0.18);
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .modal-actions .btn { flex: 1; }
+
     /* ── App ── */
     #app { display: none; max-width: 880px; margin: 0 auto; padding: 34px 18px 90px; position: relative; z-index: 1; }
     #app.visible { display: block; animation: appIn .7s ease-out both; }
@@ -959,6 +1013,20 @@
 })();
 </script>
 
+<!-- ── Custom Modal ── -->
+<div id="custom-modal-overlay">
+  <div class="custom-modal">
+    <span class="modal-icon" id="modal-icon">🗑</span>
+    <h3 id="modal-title"></h3>
+    <p id="modal-msg"></p>
+    <input type="text" class="modal-input" id="modal-input" style="display:none" />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Abbrechen</button>
+      <button class="btn btn-ghost btn-danger" id="modal-confirm">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Login ── -->
 <div id="login-overlay">
   <div class="login-card">
@@ -1153,6 +1221,54 @@
   const logToggle    = $("log-toggle");
   const logBody      = $("log-body");
   const logList      = $("log-list");
+
+  // ── Custom Modal ──
+  const modalOverlay = $("custom-modal-overlay");
+  const modalIcon    = $("modal-icon");
+  const modalTitle   = $("modal-title");
+  const modalMsg     = $("modal-msg");
+  const modalInput   = $("modal-input");
+  const modalConfirm = $("modal-confirm");
+  const modalCancel  = $("modal-cancel");
+
+  function showModal({ icon = "💬", title, msg, confirmText = "Bestätigen", confirmClass = "btn-danger",
+                       inputPlaceholder = null, onConfirm }) {
+    modalIcon.textContent  = icon;
+    modalTitle.textContent = title;
+    modalMsg.textContent   = msg;
+    modalConfirm.textContent = confirmText;
+    modalConfirm.className = `btn ${confirmClass}`;
+    if (inputPlaceholder !== null) {
+      modalInput.style.display = "block";
+      modalInput.placeholder   = inputPlaceholder;
+      modalInput.value         = "";
+      setTimeout(() => modalInput.focus(), 80);
+    } else {
+      modalInput.style.display = "none";
+    }
+    modalOverlay.classList.add("visible");
+
+    const cleanup = () => {
+      modalOverlay.classList.remove("visible");
+      modalConfirm.replaceWith(modalConfirm.cloneNode(true));
+      modalCancel.replaceWith(modalCancel.cloneNode(true));
+      // re-bind cancel for next call
+      $("modal-cancel").addEventListener("click", () => modalOverlay.classList.remove("visible"));
+    };
+
+    $("modal-confirm").addEventListener("click", () => {
+      const val = inputPlaceholder !== null ? $("modal-input").value.trim() : null;
+      cleanup();
+      onConfirm(val);
+    });
+    if (inputPlaceholder !== null) {
+      $("modal-input").addEventListener("keydown", e => {
+        if (e.key === "Enter") $("modal-confirm").click();
+      });
+    }
+    modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) cleanup(); }, { once: true });
+  }
+  modalCancel.addEventListener("click", () => modalOverlay.classList.remove("visible"));
 
   // ── Sparkles ──
   (function makeSparkles() {
@@ -1545,50 +1661,82 @@
   // ── Löschen ──
   async function deleteFile(chest, fullPath, display) {
     if (!canWrite(chest)) return;
-    if (!confirm(`„${display}" wirklich aus der Truhe entfernen?`)) return;
-    const { error } = await supabase.storage.from(BUCKET).remove([fullPath]);
-    if (error) { showFeedback("❌ Löschen fehlgeschlagen: " + error.message, "error"); return; }
-    await dbWrite(remove(ref(db, `treasure/meta/${chest}/${metaKey(fullPath)}`)));
-    await dbWrite(push(ref(db, "treasure/log"),
-      { action: "delete", chest, beutel: activeBeutel || "", file: display,
-        by: displayName(currentUserKey), ts: Date.now() }));
-    showFeedback("🗑 Schatz entfernt.", "success");
-    loadFiles();
-    refreshStorageTotal();
+    showModal({
+      icon: "🗑",
+      title: "Schatz entfernen?",
+      msg: `„${display}" wirklich aus der Truhe entfernen?`,
+      confirmText: "🗑 Entfernen",
+      confirmClass: "btn-danger",
+      onConfirm: async () => {
+        const { error } = await supabase.storage.from(BUCKET).remove([fullPath]);
+        if (error) { showFeedback("❌ Löschen fehlgeschlagen: " + error.message, "error"); return; }
+        await dbWrite(remove(ref(db, `treasure/meta/${chest}/${metaKey(fullPath)}`)));
+        await dbWrite(push(ref(db, "treasure/log"),
+          { action: "delete", chest, beutel: activeBeutel || "", file: display,
+            by: displayName(currentUserKey), ts: Date.now() }));
+        showFeedback("🗑 Schatz entfernt.", "success");
+        loadFiles();
+        refreshStorageTotal();
+      }
+    });
   }
 
   // ── Schatzbeutel ──
-  newBeutelBtn.addEventListener("click", async () => {
+  newBeutelBtn.addEventListener("click", () => {
     if (!canWrite(activeChest)) return;
-    const raw = prompt("Name des neuen Schatzbeutels:");
-    if (!raw) return;
-    const name = safeName(raw);
-    const placeholder = new Blob([""], { type: "text/plain" });
-    const { error } = await supabase.storage.from(BUCKET)
-      .upload(`${activeChest}/${name}/.beutel`, placeholder, { upsert: true });
-    if (error) { showFeedback("❌ Beutel konnte nicht angelegt werden: " + error.message, "error"); return; }
-    await dbWrite(push(ref(db, "treasure/log"),
-      { action: "upload", chest: activeChest, beutel: name, file: `👝 Beutel „${name}"`,
-        by: displayName(currentUserKey), ts: Date.now() }));
-    showFeedback(`👝 Schatzbeutel „${name}" angelegt.`, "success");
-    loadFiles();
+    showModal({
+      icon: "👝",
+      title: "Neuen Schatzbeutel anlegen",
+      msg: "Gib dem neuen Beutel einen Namen:",
+      confirmText: "👝 Anlegen",
+      confirmClass: "btn-ghost",
+      inputPlaceholder: "z.B. Urlaub 2025",
+      onConfirm: async (raw) => {
+        if (!raw) return;
+        const name = safeName(raw);
+        const placeholder = new Blob([""], { type: "text/plain" });
+        const { error } = await supabase.storage.from(BUCKET)
+          .upload(`${activeChest}/${name}/.beutel`, placeholder, { upsert: true });
+        if (error) { showFeedback("❌ Beutel konnte nicht angelegt werden: " + error.message, "error"); return; }
+        await dbWrite(push(ref(db, "treasure/log"),
+          { action: "upload", chest: activeChest, beutel: name, file: `👝 Beutel „${name}"`,
+            by: displayName(currentUserKey), ts: Date.now() }));
+        showFeedback(`👝 Schatzbeutel „${name}" angelegt.`, "success");
+        loadFiles();
+      }
+    });
   });
 
   async function deleteBeutel(chest, name, count) {
     if (!canWrite(chest)) return;
     if (count > 0) {
-      alert(`Der Beutel „${name}" enthält noch ${count} Schätze. Bitte zuerst leeren.`);
+      showModal({
+        icon: "⚠️",
+        title: "Beutel nicht leer",
+        msg: `Der Beutel „${name}" enthält noch ${count} Schätze. Bitte zuerst leeren.`,
+        confirmText: "OK",
+        confirmClass: "btn-ghost",
+        onConfirm: () => {}
+      });
       return;
     }
-    if (!confirm(`Leeren Schatzbeutel „${name}" entfernen?`)) return;
-    const { error } = await supabase.storage.from(BUCKET)
-      .remove([`${chest}/${name}/.beutel`]);
-    if (error) { showFeedback("❌ Beutel konnte nicht entfernt werden: " + error.message, "error"); return; }
-    await dbWrite(push(ref(db, "treasure/log"),
-      { action: "delete", chest, beutel: name, file: `👝 Beutel „${name}"`,
-        by: displayName(currentUserKey), ts: Date.now() }));
-    showFeedback(`🗑 Beutel „${name}" entfernt.`, "success");
-    loadFiles();
+    showModal({
+      icon: "🗑",
+      title: "Schatzbeutel entfernen?",
+      msg: `Leeren Schatzbeutel „${name}" wirklich entfernen?`,
+      confirmText: "🗑 Entfernen",
+      confirmClass: "btn-danger",
+      onConfirm: async () => {
+        const { error } = await supabase.storage.from(BUCKET)
+          .remove([`${chest}/${name}/.beutel`]);
+        if (error) { showFeedback("❌ Beutel konnte nicht entfernt werden: " + error.message, "error"); return; }
+        await dbWrite(push(ref(db, "treasure/log"),
+          { action: "delete", chest, beutel: name, file: `👝 Beutel „${name}"`,
+            by: displayName(currentUserKey), ts: Date.now() }));
+        showFeedback(`🗑 Beutel „${name}" entfernt.`, "success");
+        loadFiles();
+      }
+    });
   }
 
   // ── Chronik ──
