@@ -3,176 +3,547 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nele & Andreas – Dateien</title>
+  <title>Schatzkammer – Nele & Andreas</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-      min-height: 100vh;
+    :root {
+      --bg-0:   #100a1d;
+      --bg-1:   #1a1030;
+      --bg-2:   #241544;
+      --panel:  rgba(40, 26, 70, 0.66);
+      --panel-2:rgba(54, 36, 92, 0.55);
+      --border: rgba(232, 196, 104, 0.22);
+      --border-strong: rgba(232, 196, 104, 0.55);
+      --gold:   #e8c468;
+      --gold-2: #f6d97a;
+      --gold-soft: rgba(232, 196, 104, 0.14);
+      --text:   #efe8ff;
+      --muted:  #b3a4d4;
+      --nele:   #e0a3ff;
+      --andreas:#8fb7ff;
+      --gem:    #6ee7c7;
+      --danger: #ff8a8a;
+      --ok:     #8be6b0;
     }
 
-    /* ── Login Overlay ── */
+    html, body { min-height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background:
+        radial-gradient(1100px 600px at 50% -10%, rgba(232,196,104,0.10), transparent 60%),
+        radial-gradient(900px 500px at 10% 110%, rgba(224,163,255,0.10), transparent 60%),
+        radial-gradient(900px 500px at 95% 100%, rgba(143,183,255,0.10), transparent 60%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+      background-attachment: fixed;
+    }
+
+    /* Funkeln im Hintergrund */
+    .sparkles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .sparkle {
+      position: absolute; width: 3px; height: 3px; border-radius: 50%;
+      background: var(--gold-2);
+      box-shadow: 0 0 6px 1px rgba(246,217,122,0.8);
+      opacity: 0; animation: twinkle 4s infinite ease-in-out;
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: 0; transform: scale(0.4); }
+      50%     { opacity: 0.9; transform: scale(1); }
+    }
+
+    a { color: inherit; }
+
+    /* ── Login ── */
     #login-overlay {
-      position: fixed; inset: 0;
-      background: #f3f4f6;
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100;
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      background:
+        radial-gradient(800px 500px at 50% 0%, rgba(232,196,104,0.10), transparent 60%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-2));
     }
     #login-overlay.hidden { display: none; }
 
     .login-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 40px 36px;
+      position: relative;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      padding: 42px 34px 36px;
       width: 100%; max-width: 380px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55), inset 0 0 30px rgba(232,196,104,0.06);
+      backdrop-filter: blur(6px);
+      text-align: center;
     }
+    .login-card .crest { font-size: 3rem; line-height: 1; filter: drop-shadow(0 0 12px rgba(232,196,104,0.6)); }
     .login-card h1 {
-      font-size: 1.5rem; font-weight: 700;
-      margin-bottom: 6px; color: #111827;
+      font-size: 1.4rem; font-weight: 800; margin: 14px 0 6px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      letter-spacing: .02em;
     }
-    .login-card p { font-size: 0.9rem; color: #6b7280; margin-bottom: 28px; }
+    .login-card p { font-size: 0.88rem; color: var(--muted); margin-bottom: 26px; }
 
-    .field { margin-bottom: 16px; }
-    .field label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .field { margin-bottom: 16px; text-align: left; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--gold); margin-bottom: 6px; letter-spacing: .03em; }
     .field input {
-      width: 100%; padding: 10px 14px;
-      border: 1.5px solid #d1d5db; border-radius: 8px;
-      font-size: 0.95rem; outline: none; transition: border-color .2s;
+      width: 100%; padding: 12px 14px;
+      background: rgba(16,10,29,0.6);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.95rem; outline: none; color: var(--text);
+      transition: border-color .2s, box-shadow .2s;
     }
-    .field input:focus { border-color: #8b5cf6; }
+    .field input::placeholder { color: #7e6fa6; }
+    .field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,196,104,0.15); }
 
-    #login-error {
-      font-size: 0.85rem; color: #ef4444;
-      margin-bottom: 12px; display: none;
-    }
+    #login-error { font-size: 0.84rem; color: var(--danger); margin-bottom: 12px; display: none; }
 
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; border: none; transition: opacity .2s, background .2s;
+      padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; border: 1px solid transparent; transition: filter .15s, opacity .2s, background .2s, transform .1s;
+      font-family: inherit;
     }
+    .btn:active { transform: translateY(1px); }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-primary { background: #8b5cf6; color: #fff; width: 100%; padding: 12px; }
-    .btn-primary:hover:not(:disabled) { background: #7c3aed; }
-    .btn-ghost { background: transparent; color: #6b7280; font-size: 0.85rem; padding: 6px 10px; }
-    .btn-ghost:hover { color: #374151; }
-    .btn-danger { background: #fee2e2; color: #dc2626; }
-    .btn-danger:hover { background: #fecaca; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      color: #2a1c00; width: 100%; padding: 13px; font-weight: 800;
+      box-shadow: 0 8px 24px rgba(232,196,104,0.25);
+    }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.07); }
+    .btn-ghost { background: rgba(255,255,255,0.04); color: var(--muted); border-color: var(--border); font-size: 0.82rem; padding: 8px 12px; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border-strong); }
+    .btn-danger { background: rgba(255,138,138,0.12); color: var(--danger); border-color: rgba(255,138,138,0.3); }
+    .btn-danger:hover { background: rgba(255,138,138,0.2); }
 
-    /* ── Main App ── */
-    #app { display: none; max-width: 800px; margin: 0 auto; padding: 32px 16px 64px; }
+    /* ── App ── */
+    #app { display: none; max-width: 860px; margin: 0 auto; padding: 28px 16px 80px; position: relative; z-index: 1; }
     #app.visible { display: block; }
 
     .app-header {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+      margin-bottom: 26px; flex-wrap: wrap; gap: 12px;
     }
-    .app-header h1 { font-size: 1.4rem; font-weight: 700; }
-    .user-info { display: flex; align-items: center; gap: 10px; }
-    .user-info span { font-size: 0.85rem; color: #6b7280; }
+    .app-header .title { display: flex; align-items: center; gap: 12px; }
+    .app-header .crest { font-size: 2rem; filter: drop-shadow(0 0 10px rgba(232,196,104,0.55)); }
+    .app-header h1 {
+      font-size: 1.35rem; font-weight: 800; letter-spacing: .02em;
+      background: linear-gradient(90deg, var(--gold), var(--gold-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-info span { font-size: 0.82rem; color: var(--muted); }
 
-    /* ── Stats Grid ── */
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px; margin-bottom: 28px;
+    /* ── Truhen-Auswahl ── */
+    .chest-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .chest-tab {
+      position: relative; cursor: pointer; text-align: center;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1.5px solid var(--border); border-radius: 16px;
+      padding: 18px 12px; transition: border-color .2s, transform .12s, box-shadow .2s;
+      font-family: inherit; color: var(--text);
     }
+    .chest-tab:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+    .chest-tab .ct-emoji { font-size: 2rem; filter: drop-shadow(0 0 8px rgba(0,0,0,0.5)); }
+    .chest-tab .ct-name { font-size: 0.92rem; font-weight: 800; margin-top: 8px; }
+    .chest-tab .ct-sub  { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+    .chest-tab.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold), 0 12px 30px rgba(232,196,104,0.18);
+      background: linear-gradient(180deg, rgba(232,196,104,0.14), var(--panel-2));
+    }
+    .chest-tab[data-chest="nele"].active    { box-shadow: 0 0 0 1px var(--nele),    0 12px 30px rgba(224,163,255,0.2); border-color: var(--nele); }
+    .chest-tab[data-chest="andreas"].active { box-shadow: 0 0 0 1px var(--andreas), 0 12px 30px rgba(143,183,255,0.2); border-color: var(--andreas); }
+    .chest-tab[data-chest="gemeinsam"].active { box-shadow: 0 0 0 1px var(--gem), 0 12px 30px rgba(110,231,199,0.2); border-color: var(--gem); }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .stat-card {
-      background: #fff; border-radius: 12px; padding: 20px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border); border-radius: 14px; padding: 18px;
     }
-    .stat-card .label { font-size: 0.78rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
-    .stat-card .value { font-size: 1.6rem; font-weight: 700; color: #111827; }
+    .stat-card .label { font-size: 0.72rem; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 800; }
+    .stat-card.span2 { grid-column: span 2; }
+    .storage-bar-bg { background: rgba(16,10,29,0.7); border: 1px solid var(--border); border-radius: 99px; height: 9px; overflow: hidden; }
+    .storage-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gold), var(--gold-2)); width: 0%; transition: width .6s ease; }
+    .storage-bar-label { font-size: 0.74rem; color: var(--muted); margin-top: 8px; }
 
-    .storage-bar-wrap { margin-top: 10px; }
-    .storage-bar-bg {
-      background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden;
+    /* ── Sections ── */
+    .section {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: 22px; margin-bottom: 20px;
     }
-    .storage-bar-fill {
-      height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, #8b5cf6, #a78bfa);
-      transition: width .6s ease;
-    }
-    .storage-bar-label { font-size: 0.78rem; color: #6b7280; margin-top: 6px; }
+    .section h2 { font-size: 1rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-    /* ── Upload Zone ── */
-    .section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
-    .section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
+    .breadcrumb button {
+      background: none; border: none; color: var(--gold); cursor: pointer;
+      font: inherit; font-weight: 700; padding: 4px 6px; border-radius: 6px;
+    }
+    .breadcrumb button:hover { background: var(--gold-soft); }
+    .breadcrumb .sep { opacity: .6; }
 
     .drop-zone {
-      border: 2px dashed #d1d5db; border-radius: 10px;
-      padding: 40px 24px; text-align: center; cursor: pointer;
+      border: 2px dashed var(--border-strong); border-radius: 14px;
+      padding: 34px 22px; text-align: center; cursor: pointer;
       transition: border-color .2s, background .2s;
+      background: rgba(16,10,29,0.35);
     }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #8b5cf6; background: #f5f3ff;
-    }
-    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 10px; }
-    .drop-zone p { font-size: 0.9rem; color: #6b7280; }
-    .drop-zone strong { color: #8b5cf6; }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--gold); background: var(--gold-soft); }
+    .drop-zone .icon { font-size: 2.4rem; filter: drop-shadow(0 0 10px rgba(232,196,104,0.5)); }
+    .drop-zone p { font-size: 0.9rem; color: var(--muted); margin-top: 8px; }
+    .drop-zone strong { color: var(--gold-2); }
+    .drop-zone.locked { cursor: not-allowed; opacity: .55; border-style: solid; }
+    .drop-zone.locked:hover { border-color: var(--border-strong); background: rgba(16,10,29,0.35); }
     #file-input { display: none; }
 
-    /* ── Progress ── */
+    .lock-note { font-size: 0.82rem; color: var(--danger); margin-top: 12px; text-align: center; display: none; }
+    .lock-note.visible { display: block; }
+
+    .upload-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
     #progress-wrap { margin-top: 16px; display: none; }
     #progress-wrap.visible { display: block; }
-    #progress-filename { font-size: 0.85rem; color: #374151; margin-bottom: 8px; font-weight: 600; }
-    #progress-bg { background: #e5e7eb; border-radius: 99px; height: 10px; overflow: hidden; }
-    #progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #8b5cf6, #a78bfa); width: 0%; transition: width .3s ease; }
-    #progress-text { font-size: 0.8rem; color: #6b7280; margin-top: 6px; text-align: right; }
-
-    /* ── Feedback ── */
-    .feedback {
-      margin-top: 14px; padding: 12px 16px; border-radius: 8px;
-      font-size: 0.88rem; display: none;
+    #progress-filename { font-size: 0.84rem; color: var(--text); margin-bottom: 8px; font-weight: 700; }
+    #progress-bg { background: rgba(16,10,29,0.7); border: 1px solid var(--border); border-radius: 99px; height: 10px; overflow: hidden; }
+    #progress-fill {
+      height: 100%; border-radius: 99px; width: 35%;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--gold-2), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 1.1s linear infinite;
     }
-    .feedback.visible { display: block; }
-    .feedback.success { background: #ecfdf5; color: #065f46; }
-    .feedback.error   { background: #fef2f2; color: #991b1b; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    #progress-text { font-size: 0.78rem; color: var(--muted); margin-top: 6px; text-align: right; }
 
-    /* ── File List ── */
+    .feedback { margin-top: 14px; padding: 12px 16px; border-radius: 10px; font-size: 0.86rem; display: none; border: 1px solid transparent; }
+    .feedback.visible { display: block; }
+    .feedback.success { background: rgba(139,230,176,0.12); color: var(--ok); border-color: rgba(139,230,176,0.3); }
+    .feedback.error   { background: rgba(255,138,138,0.12); color: var(--danger); border-color: rgba(255,138,138,0.3); }
+
+    /* ── Filter ── */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-chip {
+      font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      padding: 7px 12px; border-radius: 99px; color: var(--muted);
+      background: rgba(16,10,29,0.5); border: 1px solid var(--border);
+      transition: all .15s;
+    }
+    .filter-chip:hover { color: var(--text); border-color: var(--border-strong); }
+    .filter-chip.active { color: #2a1c00; background: linear-gradient(135deg, var(--gold), var(--gold-2)); border-color: var(--gold); }
+
+    /* ── Beutel + Datei-Liste ── */
+    .beutel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .beutel-card {
+      position: relative; cursor: pointer; text-align: center;
+      background: rgba(16,10,29,0.45); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 10px; transition: border-color .15s, transform .1s;
+    }
+    .beutel-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .beutel-card .b-emoji { font-size: 1.8rem; }
+    .beutel-card .b-name { font-size: 0.84rem; font-weight: 700; margin-top: 6px; word-break: break-word; }
+    .beutel-card .b-count { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .beutel-card .b-del {
+      position: absolute; top: 6px; right: 6px; border: none; cursor: pointer;
+      background: rgba(255,138,138,0.14); color: var(--danger);
+      width: 24px; height: 24px; border-radius: 50%; font-size: 0.8rem; line-height: 1;
+      display: none;
+    }
+    .beutel-card:hover .b-del { display: block; }
+    .beutel-card .b-del:hover { background: rgba(255,138,138,0.28); }
+
     .file-list { list-style: none; }
     .file-list li {
       display: flex; align-items: center; gap: 12px;
-      padding: 12px 0; border-bottom: 1px solid #f3f4f6;
+      padding: 12px 4px; border-bottom: 1px solid rgba(232,196,104,0.1);
     }
     .file-list li:last-child { border-bottom: none; }
     .file-icon { font-size: 1.4rem; flex-shrink: 0; }
     .file-meta { flex: 1; min-width: 0; }
-    .file-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .file-sub  { font-size: 0.78rem; color: #9ca3af; margin-top: 2px; }
-    .file-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .file-actions a {
-      font-size: 0.8rem; font-weight: 600; color: #8b5cf6;
-      text-decoration: none; padding: 5px 10px; border-radius: 6px;
-      background: #f5f3ff; transition: background .15s;
+    .file-name { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-sub  { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
+    .file-sub .by { color: var(--gold); font-weight: 700; }
+    .file-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .file-actions a, .file-actions button {
+      font: inherit; font-size: 0.78rem; font-weight: 700; color: var(--gold);
+      text-decoration: none; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+      background: var(--gold-soft); border: 1px solid var(--border); transition: background .15s;
     }
-    .file-actions a:hover { background: #ede9fe; }
+    .file-actions a:hover, .file-actions button:hover { background: rgba(232,196,104,0.24); }
+    .file-actions .del { color: var(--danger); background: rgba(255,138,138,0.12); border-color: rgba(255,138,138,0.25); }
+    .file-actions .del:hover { background: rgba(255,138,138,0.24); }
 
-    .empty-state { text-align: center; padding: 32px; color: #9ca3af; font-size: 0.9rem; }
+    .empty-state { text-align: center; padding: 30px; color: var(--muted); font-size: 0.9rem; }
 
     .loading-spinner {
       display: inline-block; width: 18px; height: 18px;
-      border: 2px solid #e5e7eb; border-top-color: #8b5cf6;
-      border-radius: 50%; animation: spin .7s linear infinite;
+      border: 2px solid rgba(232,196,104,0.25); border-top-color: var(--gold);
+      border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 480px) {
+    /* ── Chronik ── */
+    .log-toggle {
+      width: 100%; text-align: left; font: inherit; font-size: 1rem; font-weight: 800;
+      cursor: pointer; background: none; border: none; color: var(--text);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .log-toggle .chev { transition: transform .2s; color: var(--gold); }
+    .log-toggle.open .chev { transform: rotate(180deg); }
+    #log-body { display: none; margin-top: 16px; }
+    #log-body.open { display: block; }
+    .log-list { list-style: none; max-height: 360px; overflow-y: auto; }
+    .log-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 4px; border-bottom: 1px solid rgba(232,196,104,0.08);
+      font-size: 0.84rem;
+    }
+    .log-list li:last-child { border-bottom: none; }
+    .log-ic { font-size: 1rem; flex-shrink: 0; }
+    .log-txt { flex: 1; min-width: 0; }
+    .log-txt b { color: var(--gold); }
+    .log-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    @media (max-width: 560px) {
       .app-header { flex-direction: column; align-items: flex-start; }
+      .chest-tabs { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stat-card.span2 { grid-column: span 2; }
+      .file-name { white-space: normal; }
+    }
+
+    /* ── INTRO: Truhe öffnet sich ── */
+    .ti-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      background:
+        radial-gradient(700px 500px at 50% 46%, rgba(232,196,104,0.10), transparent 62%),
+        linear-gradient(160deg, #0c0717, #140b24 55%, #1d1138);
+      transition: opacity .55s ease;
+    }
+    .ti-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+    .ti-glow {
+      position: absolute; top: 46%; left: 50%;
+      width: 460px; height: 460px; margin: -230px 0 0 -230px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(246,217,122,0.34), rgba(232,196,104,0.12) 42%, transparent 70%);
+      opacity: 0; animation: tiGlow 2.4s ease-out 1.35s forwards;
+    }
+    @keyframes tiGlow { 0% { opacity: 0; transform: scale(.4); } 35% { opacity: 1; } 100% { opacity: .85; transform: scale(1); } }
+
+    .ti-rays-wrap {
+      position: absolute; top: 46%; left: 50%;
+      width: 620px; height: 620px; margin: -310px 0 0 -310px;
+      animation: tiRaysSpin 26s linear 1.5s infinite;
+    }
+    .ti-rays {
+      position: absolute; inset: 0; border-radius: 50%; opacity: 0;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(246,217,122,0.20) 0deg 7deg,
+        transparent 7deg 22deg);
+      -webkit-mask: radial-gradient(circle, transparent 70px, #000 90px);
+      mask: radial-gradient(circle, transparent 70px, #000 90px);
+      animation: tiRaysIn 1.1s ease-out 1.5s both;
+    }
+    @keyframes tiRaysSpin { to { transform: rotate(360deg); } }
+    @keyframes tiRaysIn { 0% { opacity: 0; transform: scale(.5); } 100% { opacity: 1; transform: scale(1); } }
+
+    .ti-ring {
+      position: absolute; top: 46%; left: 50%; border-radius: 50%;
+      opacity: 0;
+    }
+    .ti-ring.r1 { width: 150px; height: 150px; margin: -75px 0 0 -75px;  border: 2px solid rgba(246,217,122,0.75); animation: tiRingExp 1.5s ease-out 1.50s both; }
+    .ti-ring.r2 { width: 150px; height: 150px; margin: -75px 0 0 -75px;  border: 1.6px solid rgba(224,163,255,0.6); animation: tiRingExp 1.6s ease-out 1.72s both; }
+    .ti-ring.r3 { width: 150px; height: 150px; margin: -75px 0 0 -75px;  border: 1.4px solid rgba(143,183,255,0.55); animation: tiRingExp 1.7s ease-out 1.96s both; }
+    @keyframes tiRingExp {
+      0%   { opacity: 0; transform: scale(.3); }
+      18%  { opacity: 1; }
+      100% { opacity: 0; transform: scale(3.4); }
+    }
+
+    .ti-flash {
+      position: absolute; top: 46%; left: 50%;
+      width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%;
+      background: radial-gradient(circle, #fff, rgba(246,217,122,0.85) 40%, transparent 72%);
+      opacity: 0; animation: tiFlash 0.9s ease-out 1.46s both;
+    }
+    @keyframes tiFlash {
+      0% { opacity: 0; transform: scale(.2); }
+      22% { opacity: 1; transform: scale(1.4); }
+      100% { opacity: 0; transform: scale(4); }
+    }
+
+    .ti-content { position: relative; text-align: center; z-index: 2; }
+
+    .ti-chest {
+      font-size: 92px; line-height: 1;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.6));
+      animation:
+        tiChestDrop 0.7s cubic-bezier(0.22,1,0.36,1) 0.15s both,
+        tiChestShake 0.7s ease-in-out 0.95s 1,
+        tiChestPop 0.7s cubic-bezier(0.22,1,0.36,1) 1.5s both;
+    }
+    @keyframes tiChestDrop {
+      0%   { opacity: 0; transform: translateY(-130px) scale(.35) rotate(-12deg); }
+      60%  { opacity: 1; }
+      80%  { transform: translateY(10px) scale(1.06) rotate(0); }
+      100% { transform: translateY(0) scale(1); }
+    }
+    @keyframes tiChestShake {
+      0%,100% { transform: rotate(0) translateX(0); }
+      20% { transform: rotate(-5deg) translateX(-3px); }
+      40% { transform: rotate(5deg) translateX(3px); }
+      60% { transform: rotate(-4deg) translateX(-2px); }
+      80% { transform: rotate(4deg) translateX(2px); }
+    }
+    @keyframes tiChestPop {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.28) translateY(-6px); }
+      55%  { transform: scale(0.96); }
+      100% { transform: scale(1.05); }
+    }
+
+    .ti-title {
+      margin-top: 22px; font-size: 2rem; font-weight: 900; letter-spacing: .04em;
+      background: linear-gradient(90deg, #e8c468, #fff3c9, #f6d97a);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      opacity: 0; animation: tiTextIn 0.85s cubic-bezier(0.22,1,0.36,1) 2.05s both;
+      text-shadow: 0 0 24px rgba(232,196,104,0.35);
+    }
+    .ti-divider {
+      height: 2px; width: 0; margin: 14px auto 12px;
+      background: linear-gradient(90deg, transparent, #e8c468, transparent);
+      animation: tiDivider 0.7s ease-out 2.45s both;
+    }
+    .ti-sub {
+      font-size: 0.95rem; color: #cdbdf0; letter-spacing: .03em;
+      opacity: 0; animation: tiTextIn 0.8s ease-out 2.55s both;
+    }
+    @keyframes tiTextIn {
+      0%   { opacity: 0; transform: translateY(16px); filter: blur(6px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+    @keyframes tiDivider { 0% { width: 0; opacity: 0; } 100% { width: 220px; opacity: 1; } }
+
+    .ti-particles { position: absolute; inset: 0; pointer-events: none; }
+    .ti-float {
+      position: absolute; top: 46%; left: 50%;
+      font-size: 24px; opacity: 0;
+      animation: tiFloat 1.7s cubic-bezier(0.16,0.7,0.3,1) both;
+    }
+    @keyframes tiFloat {
+      0%   { opacity: 0; transform: translate(0,0) scale(.3) rotate(0); }
+      15%  { opacity: 1; }
+      70%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--tr)); }
+    }
+    .ti-spark {
+      position: absolute; top: 46%; left: 50%; border-radius: 50%;
+      pointer-events: none; animation: tiSpark 0.95s cubic-bezier(0.18,0,0.4,1) both;
+    }
+    @keyframes tiSpark {
+      0%   { opacity: 0; transform: translate(0,0) scale(.2); }
+      20%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(1); }
+    }
+
+    @media (max-width: 560px) {
+      .ti-chest { font-size: 70px; }
+      .ti-title { font-size: 1.5rem; }
+      .ti-glow { width: 340px; height: 340px; margin: -170px 0 0 -170px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ti-overlay * { animation-duration: .01s !important; animation-delay: 0s !important; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── Login Overlay ── -->
+<!-- ── Intro: die Truhe öffnet sich ── -->
+<div class="ti-overlay" id="tiOverlay">
+  <div class="ti-glow"></div>
+  <div class="ti-rays-wrap"><div class="ti-rays"></div></div>
+  <div class="ti-ring r1"></div>
+  <div class="ti-ring r2"></div>
+  <div class="ti-ring r3"></div>
+  <div class="ti-flash"></div>
+  <div class="ti-particles" id="tiParticles"></div>
+  <div class="ti-content">
+    <div class="ti-chest">🧰</div>
+    <div class="ti-title">Schatzkammer</div>
+    <div class="ti-divider"></div>
+    <div class="ti-sub">von Nele &amp; Andreas</div>
+  </div>
+</div>
+
+<div class="sparkles" id="sparkles"></div>
+
+<script>
+(function () {
+  var overlay   = document.getElementById('tiOverlay');
+  var particles = document.getElementById('tiParticles');
+  if (!overlay) return;
+  var rand = function (a, b) { return a + Math.random() * (b - a); };
+
+  // Schätze fliegen beim Aufspringen der Truhe heraus
+  var treasures = ['💎','🪙','👑','💍','✨','💰','🔱','💎','🪙','✨','💍','👑','✨','🪙'];
+  treasures.forEach(function (emoji, i) {
+    var angle = (i / treasures.length) * Math.PI * 2 + rand(-0.25, 0.25);
+    var dist  = rand(120, 230);
+    var f = document.createElement('div');
+    f.className = 'ti-float';
+    f.textContent = emoji;
+    f.style.fontSize = rand(18, 30) + 'px';
+    f.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(1) + 'px');
+    f.style.setProperty('--ty', (Math.sin(angle) * dist - 40).toFixed(1) + 'px');
+    f.style.setProperty('--tr', rand(-220, 220).toFixed(0) + 'deg');
+    f.style.animationDelay = (1.5 + i * 0.04) + 's';
+    particles.appendChild(f);
+  });
+
+  // Goldener Funkenausbruch im Moment des Öffnens
+  setTimeout(function () {
+    for (var i = 0; i < 22; i++) {
+      var a  = (i / 22) * Math.PI * 2 + rand(-0.2, 0.2);
+      var d  = rand(70, 200);
+      var sz = rand(2, 5);
+      var ci = i % 3;
+      var bc = ci === 0 ? 'rgba(246,217,122,0.95)'
+             : ci === 1 ? 'rgba(255,255,255,0.92)'
+             :            'rgba(224,163,255,0.9)';
+      var s = document.createElement('div');
+      s.className = 'ti-spark';
+      s.style.cssText =
+        'width:' + sz + 'px;height:' + sz + 'px;background:' + bc + ';' +
+        'box-shadow:0 0 ' + (sz * 2.4) + 'px ' + bc + ';' +
+        'margin:' + (-sz / 2) + 'px 0 0 ' + (-sz / 2) + 'px;';
+      s.style.setProperty('--sx', (Math.cos(a) * d).toFixed(1) + 'px');
+      s.style.setProperty('--sy', (Math.sin(a) * d).toFixed(1) + 'px');
+      overlay.appendChild(s);
+    }
+  }, 1480);
+
+  // Auto-Ende nach ~4 s (inkl. Fade ≈ 4,5 s)
+  setTimeout(function () {
+    overlay.classList.add('fade-out');
+    setTimeout(function () { overlay.style.display = 'none'; }, 550);
+  }, 3950);
+})();
+</script>
+
+<!-- ── Login ── -->
 <div id="login-overlay">
   <div class="login-card">
-    <h1>Nele & Andreas 💜</h1>
-    <p>Bitte melde dich an, um Dateien hochzuladen.</p>
+    <div class="crest">🗝️</div>
+    <h1>Schatzkammer</h1>
+    <p>von Nele &amp; Andreas — bitte entsperre die Truhe.</p>
     <div class="field">
       <label for="email">E-Mail</label>
       <input type="email" id="email" placeholder="deine@email.de" autocomplete="username" />
@@ -182,80 +553,125 @@
       <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
     <div id="login-error"></div>
-    <button class="btn btn-primary" id="login-btn">Anmelden</button>
+    <button class="btn btn-primary" id="login-btn">🔓 Truhe öffnen</button>
   </div>
 </div>
 
 <!-- ── App ── -->
 <div id="app">
   <div class="app-header">
-    <h1>📁 Dateien</h1>
+    <div class="title">
+      <span class="crest">🧰</span>
+      <h1>Schatzkammer von Nele &amp; Andreas</h1>
+    </div>
     <div class="user-info">
       <span id="user-email"></span>
       <button class="btn btn-ghost btn-danger" id="logout-btn">Abmelden</button>
     </div>
   </div>
 
+  <!-- Truhen -->
+  <div class="chest-tabs" id="chest-tabs">
+    <button class="chest-tab" data-chest="nele">
+      <div class="ct-emoji">💜🧰</div>
+      <div class="ct-name">Neles Truhe</div>
+      <div class="ct-sub">privat</div>
+    </button>
+    <button class="chest-tab" data-chest="andreas">
+      <div class="ct-emoji">💙🧰</div>
+      <div class="ct-name">Andreas’ Truhe</div>
+      <div class="ct-sub">privat</div>
+    </button>
+    <button class="chest-tab active" data-chest="gemeinsam">
+      <div class="ct-emoji">💎🧰</div>
+      <div class="ct-name">Gemeinsame Truhe</div>
+      <div class="ct-sub">für beide</div>
+    </button>
+  </div>
+
   <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="label">Dateien</div>
+      <div class="label">Schätze hier</div>
       <div class="value" id="stat-count"><span class="loading-spinner"></span></div>
     </div>
     <div class="stat-card">
-      <div class="label">Gesamtgröße</div>
+      <div class="label">Größe der Truhe</div>
       <div class="value" id="stat-size"><span class="loading-spinner"></span></div>
     </div>
-    <div class="stat-card" style="grid-column: span 2;">
-      <div class="label">Speicher</div>
-      <div class="storage-bar-wrap">
-        <div class="storage-bar-bg">
-          <div class="storage-bar-fill" id="storage-bar" style="width:0%"></div>
-        </div>
-        <div class="storage-bar-label" id="storage-label">Wird geladen …</div>
-      </div>
+    <div class="stat-card span2">
+      <div class="label">Speicher gesamt</div>
+      <div class="storage-bar-bg"><div class="storage-bar-fill" id="storage-bar"></div></div>
+      <div class="storage-bar-label" id="storage-label">Wird geladen …</div>
     </div>
   </div>
 
   <!-- Upload -->
   <div class="section">
-    <h2>Datei hochladen</h2>
+    <h2 id="upload-title">✨ Schatz in die Truhe legen</h2>
     <div class="drop-zone" id="drop-zone">
-      <div class="icon">☁️</div>
-      <p><strong>Klicken</strong> oder Datei hierher ziehen</p>
-      <p style="margin-top:6px;font-size:0.8rem;">Alle Dateitypen erlaubt</p>
+      <div class="icon">📥</div>
+      <p><strong>Klicken</strong> oder Schätze hierher ziehen</p>
+      <p style="margin-top:6px;font-size:0.78rem;">Alle Dateitypen erlaubt · mehrere möglich</p>
     </div>
-    <input type="file" id="file-input" />
+    <input type="file" id="file-input" multiple />
+
+    <div class="upload-tools">
+      <button class="btn btn-ghost" id="new-beutel-btn">👝 Neuen Schatzbeutel anlegen</button>
+    </div>
+
+    <div class="lock-note" id="lock-note"></div>
 
     <div id="progress-wrap">
       <div id="progress-filename"></div>
       <div id="progress-bg"><div id="progress-fill"></div></div>
-      <div id="progress-text">0%</div>
+      <div id="progress-text">Wird in die Truhe gelegt …</div>
     </div>
 
     <div class="feedback" id="feedback"></div>
   </div>
 
-  <!-- File List -->
+  <!-- Inhalt -->
   <div class="section">
-    <h2>Hochgeladene Dateien</h2>
+    <h2>🪙 Inhalt</h2>
+    <div class="breadcrumb" id="breadcrumb"></div>
+
+    <div class="filter-bar" id="filter-bar"></div>
+
+    <div class="beutel-grid" id="beutel-grid" style="display:none;"></div>
+
     <ul class="file-list" id="file-list">
       <li><div class="empty-state"><span class="loading-spinner"></span></div></li>
     </ul>
   </div>
+
+  <!-- Chronik -->
+  <div class="section">
+    <button class="log-toggle" id="log-toggle">
+      <span>📜 Schatzkammer-Chronik</span>
+      <span class="chev">▾</span>
+    </button>
+    <div id="log-body">
+      <ul class="log-list" id="log-list">
+        <li><div class="empty-state"><span class="loading-spinner"></span></div></li>
+      </ul>
+    </div>
+  </div>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getDatabase, ref, set, remove, push, query, orderByChild, limitToLast, onValue }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
   // ── Config ──
-  const SUPABASE_URL    = "https://jmoawlnvcypnduvltzij.supabase.co";
-  const SUPABASE_KEY    = "sb_publishable_lmXbK7NTlyCD1N_m7O6lcA_KfJPVBmq";
-  const BUCKET          = "nele-andreas";
-  const STORAGE_QUOTA   = 1 * 1024 * 1024 * 1024; // 1 GB (anpassen falls nötig)
+  const SUPABASE_URL  = "https://jmoawlnvcypnduvltzij.supabase.co";
+  const SUPABASE_KEY  = "sb_publishable_lmXbK7NTlyCD1N_m7O6lcA_KfJPVBmq";
+  const BUCKET        = "nele-andreas";
+  const STORAGE_QUOTA = 1 * 1024 * 1024 * 1024; // 1 GB
 
   const firebaseConfig = {
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -267,40 +683,129 @@
     appId: "1:694973604970:web:331975714dca0cd32ad613"
   };
 
-  const app      = initializeApp(firebaseConfig);
+  const app      = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const auth     = getAuth(app);
+  const db       = getDatabase(app);
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const CHESTS = {
+    nele:      { label: "Neles Truhe",       emoji: "💜🧰" },
+    andreas:   { label: "Andreas’ Truhe",    emoji: "💙🧰" },
+    gemeinsam: { label: "Gemeinsame Truhe",  emoji: "💎🧰" }
+  };
+  const SKIP_NAMES = [".emptyFolderPlaceholder", ".beutel"];
+
+  // ── State ──
+  let currentUserKey = null;   // 'nele' | 'andreas' | null
+  let activeChest    = "gemeinsam";
+  let activeBeutel   = null;   // safe folder name or null
+  let activeFilter   = "all";
+
   // ── DOM ──
-  const loginOverlay  = document.getElementById("login-overlay");
-  const appEl         = document.getElementById("app");
-  const emailInput    = document.getElementById("email");
-  const pwInput       = document.getElementById("password");
-  const loginError    = document.getElementById("login-error");
-  const loginBtn      = document.getElementById("login-btn");
-  const logoutBtn     = document.getElementById("logout-btn");
-  const userEmailEl   = document.getElementById("user-email");
-  const dropZone      = document.getElementById("drop-zone");
-  const fileInput     = document.getElementById("file-input");
-  const progressWrap  = document.getElementById("progress-wrap");
-  const progressFill  = document.getElementById("progress-fill");
-  const progressText  = document.getElementById("progress-text");
-  const progressFname = document.getElementById("progress-filename");
-  const feedbackEl    = document.getElementById("feedback");
-  const fileList      = document.getElementById("file-list");
-  const statCount     = document.getElementById("stat-count");
-  const statSize      = document.getElementById("stat-size");
-  const storageBar    = document.getElementById("storage-bar");
-  const storageLabel  = document.getElementById("storage-label");
+  const $ = id => document.getElementById(id);
+  const loginOverlay = $("login-overlay");
+  const appEl        = $("app");
+  const emailInput   = $("email");
+  const pwInput      = $("password");
+  const loginError   = $("login-error");
+  const loginBtn     = $("login-btn");
+  const logoutBtn    = $("logout-btn");
+  const userEmailEl  = $("user-email");
+  const chestTabs    = $("chest-tabs");
+  const dropZone     = $("drop-zone");
+  const fileInput    = $("file-input");
+  const newBeutelBtn = $("new-beutel-btn");
+  const lockNote     = $("lock-note");
+  const progressWrap = $("progress-wrap");
+  const progressFname= $("progress-filename");
+  const feedbackEl   = $("feedback");
+  const fileList     = $("file-list");
+  const beutelGrid   = $("beutel-grid");
+  const breadcrumb   = $("breadcrumb");
+  const filterBar    = $("filter-bar");
+  const uploadTitle  = $("upload-title");
+  const statCount    = $("stat-count");
+  const statSize     = $("stat-size");
+  const storageBar   = $("storage-bar");
+  const storageLabel = $("storage-label");
+  const logToggle    = $("log-toggle");
+  const logBody      = $("log-body");
+  const logList      = $("log-list");
+
+  // ── Sparkles ──
+  (function makeSparkles() {
+    const c = $("sparkles");
+    for (let i = 0; i < 36; i++) {
+      const s = document.createElement("div");
+      s.className = "sparkle";
+      s.style.left = Math.random() * 100 + "%";
+      s.style.top  = Math.random() * 100 + "%";
+      s.style.animationDelay = (Math.random() * 4) + "s";
+      s.style.animationDuration = (3 + Math.random() * 3) + "s";
+      c.appendChild(s);
+    }
+  })();
+
+  // ── Helpers ──
+  function keyForEmail(email) {
+    const e = (email || "").toLowerCase();
+    if (e === "raederich@outlook.com") return "andreas";
+    if (e === "nele.busse@web.de")     return "nele";
+    return null;
+  }
+  function displayName(key) {
+    if (key === "nele")    return "Nele";
+    if (key === "andreas") return "Andreas";
+    return "Unbekannt";
+  }
+  function canWrite(chest) {
+    if (chest === "gemeinsam") return true;
+    return currentUserKey === chest;
+  }
+  function formatBytes(bytes) {
+    if (!bytes) return "0 B";
+    const k = 1024, sizes = ["B","KB","MB","GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(i > 1 ? 1 : 0) + " " + sizes[i];
+  }
+  function fileCategory(name) {
+    const ext = (name.split(".").pop() || "").toLowerCase();
+    if (["jpg","jpeg","png","gif","webp","svg","heic","bmp"].includes(ext)) return "image";
+    if (["mp4","mov","avi","mkv","webm","m4v"].includes(ext))               return "video";
+    if (["mp3","wav","ogg","flac","aac","m4a"].includes(ext))               return "audio";
+    if (["pdf","doc","docx","txt","odt","rtf","md","xls","xlsx","csv","ppt","pptx"].includes(ext)) return "doc";
+    if (["zip","rar","7z","tar","gz"].includes(ext))                        return "archive";
+    return "other";
+  }
+  function categoryIcon(cat) {
+    return { image:"🖼️", video:"🎬", audio:"🎵", doc:"📄", archive:"📦", other:"📎" }[cat] || "📎";
+  }
+  function fileIcon(name) { return categoryIcon(fileCategory(name)); }
+  function escHtml(str) {
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function safeName(name) { return name.replace(/[^a-zA-Z0-9._\- ]/g, "_").trim() || "schatz"; }
+  function metaKey(path) { return path.replace(/[.#$\[\]/]/g, "_"); }
+  function fmtDate(ts) {
+    const d = new Date(ts);
+    const p = n => String(n).padStart(2, "0");
+    return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
 
   // ── Auth ──
   onAuthStateChanged(auth, user => {
     if (user) {
+      currentUserKey = keyForEmail(user.email);
       loginOverlay.classList.add("hidden");
       appEl.classList.add("visible");
-      userEmailEl.textContent = user.email;
-      loadFiles();
+      userEmailEl.textContent = displayName(currentUserKey) + " · " + user.email;
+      buildFilterBar();
+      watchLog();
+      selectChest("gemeinsam");
+      refreshStorageTotal();
     } else {
+      currentUserKey = null;
       loginOverlay.classList.remove("hidden");
       appEl.classList.remove("visible");
     }
@@ -309,6 +814,7 @@
   loginBtn.addEventListener("click", async () => {
     loginError.style.display = "none";
     loginBtn.disabled = true;
+    const txt = loginBtn.textContent;
     loginBtn.innerHTML = '<span class="loading-spinner"></span>';
     try {
       await signInWithEmailAndPassword(auth, emailInput.value.trim(), pwInput.value);
@@ -317,57 +823,291 @@
       loginError.style.display = "block";
     }
     loginBtn.disabled = false;
-    loginBtn.textContent = "Anmelden";
+    loginBtn.textContent = txt;
   });
-
   pwInput.addEventListener("keydown", e => { if (e.key === "Enter") loginBtn.click(); });
-
   logoutBtn.addEventListener("click", () => signOut(auth));
 
-  // ── Drag & Drop ──
-  dropZone.addEventListener("click", () => fileInput.click());
-  dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+  // ── Truhen-Auswahl ──
+  chestTabs.addEventListener("click", e => {
+    const tab = e.target.closest(".chest-tab");
+    if (tab) selectChest(tab.dataset.chest);
+  });
+  function selectChest(chest) {
+    activeChest  = chest;
+    activeBeutel = null;
+    [...chestTabs.children].forEach(t =>
+      t.classList.toggle("active", t.dataset.chest === chest));
+    applyPermissionUI();
+    loadFiles();
+  }
+
+  function applyPermissionUI() {
+    const writable = canWrite(activeChest);
+    dropZone.classList.toggle("locked", !writable);
+    newBeutelBtn.style.display = writable ? "" : "none";
+    if (writable) {
+      lockNote.classList.remove("visible");
+      lockNote.textContent = "";
+    } else {
+      const owner = activeChest === "nele" ? "Nele" : "Andreas";
+      lockNote.textContent = `🔒 Nur ${owner} kann hier Schätze ablegen oder entfernen.`;
+      lockNote.classList.add("visible");
+    }
+    const loc = CHESTS[activeChest].label + (activeBeutel ? ` › 👝 ${activeBeutel}` : "");
+    uploadTitle.textContent = `✨ Schatz ablegen in: ${loc}`;
+  }
+
+  // ── Breadcrumb ──
+  function renderBreadcrumb() {
+    breadcrumb.innerHTML = "";
+    const root = document.createElement("button");
+    root.innerHTML = `${CHESTS[activeChest].emoji} ${escHtml(CHESTS[activeChest].label)}`;
+    root.addEventListener("click", () => { activeBeutel = null; applyPermissionUI(); loadFiles(); });
+    breadcrumb.appendChild(root);
+    if (activeBeutel) {
+      const sep = document.createElement("span");
+      sep.className = "sep"; sep.textContent = "›";
+      breadcrumb.appendChild(sep);
+      const cur = document.createElement("span");
+      cur.innerHTML = `👝 <b>${escHtml(activeBeutel)}</b>`;
+      breadcrumb.appendChild(cur);
+    }
+  }
+
+  // ── Filter ──
+  const FILTERS = [
+    ["all","Alle","✨"], ["image","Bilder","🖼️"], ["video","Videos","🎬"],
+    ["audio","Audio","🎵"], ["doc","Dokumente","📄"], ["archive","Archive","📦"],
+    ["other","Sonstige","📎"]
+  ];
+  function buildFilterBar() {
+    filterBar.innerHTML = "";
+    FILTERS.forEach(([key,label,ic]) => {
+      const b = document.createElement("button");
+      b.className = "filter-chip" + (key === activeFilter ? " active" : "");
+      b.textContent = `${ic} ${label}`;
+      b.addEventListener("click", () => {
+        activeFilter = key;
+        [...filterBar.children].forEach(c => c.classList.remove("active"));
+        b.classList.add("active");
+        loadFiles();
+      });
+      filterBar.appendChild(b);
+    });
+  }
+
+  // ── Listing helpers ──
+  async function listPath(prefix) {
+    const { data, error } = await supabase.storage.from(BUCKET).list(prefix, {
+      limit: 1000, sortBy: { column: "created_at", order: "desc" }
+    });
+    if (error || !data) return null;
+    return data;
+  }
+  function isFolder(entry) { return entry.id == null; }
+  function isRealFile(entry) {
+    return entry.id != null && !SKIP_NAMES.includes(entry.name);
+  }
+
+  // Summiert Größe/Anzahl einer ganzen Truhe (Wurzel + alle Beutel).
+  async function chestTotals(chest) {
+    let count = 0, size = 0;
+    const root = await listPath(chest);
+    if (root) {
+      for (const e of root) {
+        if (isFolder(e)) {
+          const sub = await listPath(`${chest}/${e.name}`);
+          if (sub) for (const f of sub) if (isRealFile(f)) { count++; size += f.metadata?.size || 0; }
+        } else if (isRealFile(e)) { count++; size += e.metadata?.size || 0; }
+      }
+    }
+    if (chest === "gemeinsam") {
+      const legacy = await listPath("");
+      if (legacy) for (const e of legacy)
+        if (!isFolder(e) && isRealFile(e)) { count++; size += e.metadata?.size || 0; }
+    }
+    return { count, size };
+  }
+
+  async function refreshStorageTotal() {
+    let total = 0;
+    for (const c of Object.keys(CHESTS)) {
+      const t = await chestTotals(c);
+      total += t.size;
+    }
+    const pct = Math.min(100, (total / STORAGE_QUOTA) * 100);
+    storageBar.style.width = pct.toFixed(1) + "%";
+    storageLabel.textContent =
+      `${formatBytes(total)} von ${formatBytes(STORAGE_QUOTA)} (${pct.toFixed(1)} %)`;
+  }
+
+  // ── Meta (Uploader) ──
+  async function readMeta(chest) {
+    return new Promise(res => {
+      onValue(ref(db, `treasure/meta/${chest}`),
+        s => res(s.val() || {}),
+        () => res({}),               // bei Regel-/Netzfehler einfach ohne Meta weiter
+        { onlyOnce: true });
+    });
+  }
+  function dbWrite(p) { return p.catch(() => {}); }   // DB-Fehler dürfen UX nicht abbrechen
+
+  // ── Hauptlisting ──
+  async function loadFiles() {
+    renderBreadcrumb();
+    fileList.innerHTML = '<li><div class="empty-state"><span class="loading-spinner"></span></div></li>';
+    beutelGrid.style.display = "none";
+    beutelGrid.innerHTML = "";
+    statCount.innerHTML = '<span class="loading-spinner"></span>';
+    statSize.innerHTML  = '<span class="loading-spinner"></span>';
+
+    const chest = activeChest;
+    const prefix = activeBeutel ? `${chest}/${activeBeutel}` : chest;
+    const entries = await listPath(prefix);
+    if (!entries) {
+      fileList.innerHTML = '<li><div class="empty-state">Die Truhe ließ sich nicht öffnen.</div></li>';
+      statCount.textContent = "–"; statSize.textContent = "–";
+      return;
+    }
+
+    let files   = entries.filter(isRealFile);
+    const folders = activeBeutel ? [] : entries.filter(isFolder);
+
+    // Legacy-Wurzeldateien in die gemeinsame Truhe holen
+    if (!activeBeutel && chest === "gemeinsam") {
+      const legacy = await listPath("");
+      if (legacy) {
+        for (const e of legacy) {
+          if (!isFolder(e) && isRealFile(e)) {
+            files.push({ ...e, __legacy: true });
+          }
+        }
+      }
+    }
+
+    // Truhen-Statistik (immer ganze Truhe, unabhängig vom Beutel)
+    const totals = await chestTotals(chest);
+    statCount.textContent = totals.count;
+    statSize.textContent  = formatBytes(totals.size);
+
+    const meta = await readMeta(chest);
+    const writable = canWrite(chest);
+
+    // Beutel-Kacheln
+    if (folders.length) {
+      beutelGrid.style.display = "grid";
+      for (const fo of folders) {
+        const sub = await listPath(`${chest}/${fo.name}`);
+        const cnt = sub ? sub.filter(isRealFile).length : 0;
+        const card = document.createElement("div");
+        card.className = "beutel-card";
+        card.innerHTML = `
+          <div class="b-emoji">👝</div>
+          <div class="b-name">${escHtml(fo.name)}</div>
+          <div class="b-count">${cnt} ${cnt === 1 ? "Schatz" : "Schätze"}</div>
+          ${writable ? '<button class="b-del" title="Beutel löschen">✕</button>' : ""}`;
+        card.addEventListener("click", e => {
+          if (e.target.classList.contains("b-del")) return;
+          activeBeutel = fo.name; applyPermissionUI(); loadFiles();
+        });
+        const del = card.querySelector(".b-del");
+        if (del) del.addEventListener("click", ev => {
+          ev.stopPropagation(); deleteBeutel(chest, fo.name, cnt);
+        });
+        beutelGrid.appendChild(card);
+      }
+    }
+
+    // Dateifilter
+    if (activeFilter !== "all")
+      files = files.filter(f => fileCategory(f.name) === activeFilter);
+
+    if (!files.length) {
+      fileList.innerHTML = folders.length
+        ? '<li><div class="empty-state">Keine losen Schätze – schau in die Beutel oben. 👝</div></li>'
+        : '<li><div class="empty-state">Diese Truhe ist noch leer. ✨</div></li>';
+      return;
+    }
+
+    fileList.innerHTML = "";
+    for (const f of files) {
+      const fullPath = f.__legacy ? f.name : `${prefix}/${f.name}`;
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fullPath);
+      const size = f.metadata?.size ? formatBytes(f.metadata.size) : "—";
+      const date = f.created_at
+        ? new Date(f.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" })
+        : "—";
+      const m = meta[metaKey(fullPath)];
+      const by = m?.by || "—";
+      const display = f.name.replace(/^\d{10,}_/, "");
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="file-icon">${fileIcon(f.name)}</div>
+        <div class="file-meta">
+          <div class="file-name" title="${escHtml(display)}">${escHtml(display)}</div>
+          <div class="file-sub">${size} · ${date} · <span class="by">von ${escHtml(by)}</span></div>
+        </div>
+        <div class="file-actions">
+          <a href="${escHtml(urlData.publicUrl)}" target="_blank" rel="noopener">Öffnen</a>
+          <a href="${escHtml(urlData.publicUrl)}" download="${escHtml(display)}">⬇</a>
+          ${writable ? '<button class="del">🗑</button>' : ""}
+        </div>`;
+      const delBtn = li.querySelector(".del");
+      if (delBtn) delBtn.addEventListener("click", () => deleteFile(chest, fullPath, display));
+      fileList.appendChild(li);
+    }
+  }
+
+  // ── Upload ──
+  dropZone.addEventListener("click", () => { if (canWrite(activeChest)) fileInput.click(); });
+  dropZone.addEventListener("dragover", e => {
+    e.preventDefault();
+    if (canWrite(activeChest)) dropZone.classList.add("drag-over");
+  });
   dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
   dropZone.addEventListener("drop", e => {
     e.preventDefault();
     dropZone.classList.remove("drag-over");
-    if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+    if (canWrite(activeChest) && e.dataTransfer.files.length)
+      uploadFiles([...e.dataTransfer.files]);
   });
   fileInput.addEventListener("change", () => {
-    if (fileInput.files.length) uploadFile(fileInput.files[0]);
+    if (fileInput.files.length) uploadFiles([...fileInput.files]);
+    fileInput.value = "";
   });
 
-  // ── Upload ──
-  async function uploadFile(file) {
+  async function uploadFiles(files) {
+    if (!canWrite(activeChest)) return;
     showFeedback("", "");
-    progressFname.textContent = file.name;
     progressWrap.classList.add("visible");
-    setProgress(0);
+    const chest = activeChest;
+    const beutel = activeBeutel;
+    let ok = 0, fail = 0;
 
-    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._\-]/g, "_")}`;
-
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-      onUploadProgress: (e) => {
-        if (e.total) setProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    });
+    for (const file of files) {
+      progressFname.textContent = `📥 ${file.name}`;
+      const base = beutel ? `${chest}/${beutel}` : chest;
+      const path = `${base}/${Date.now()}_${safeName(file.name)}`;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+        cacheControl: "3600", upsert: false
+      });
+      if (error) { fail++; continue; }
+      ok++;
+      const by = displayName(currentUserKey);
+      await dbWrite(set(ref(db, `treasure/meta/${chest}/${metaKey(path)}`),
+        { name: file.name, by, ts: Date.now() }));
+      await dbWrite(push(ref(db, "treasure/log"),
+        { action: "upload", chest, beutel: beutel || "", file: file.name, by, ts: Date.now() }));
+    }
 
     progressWrap.classList.remove("visible");
-    fileInput.value = "";
-
-    if (error) {
-      showFeedback("❌ " + (error.message || "Upload fehlgeschlagen."), "error");
-    } else {
-      showFeedback("✅ Datei erfolgreich hochgeladen!", "success");
-      loadFiles();
-    }
-  }
-
-  function setProgress(pct) {
-    progressFill.style.width = pct + "%";
-    progressText.textContent = pct + "%";
+    if (ok && !fail)      showFeedback(`✅ ${ok} Schatz/Schätze sicher verstaut!`, "success");
+    else if (ok && fail)  showFeedback(`⚠️ ${ok} hochgeladen, ${fail} fehlgeschlagen.`, "error");
+    else                  showFeedback(`❌ Upload fehlgeschlagen. Hast du Schreibrechte für diese Truhe?`, "error");
+    loadFiles();
+    refreshStorageTotal();
   }
 
   function showFeedback(msg, type) {
@@ -376,82 +1116,93 @@
     if (type) feedbackEl.classList.add("visible", type);
   }
 
-  // ── File List + Stats ──
-  async function loadFiles() {
-    fileList.innerHTML = '<li><div class="empty-state"><span class="loading-spinner"></span></div></li>';
-    statCount.innerHTML = '<span class="loading-spinner"></span>';
-    statSize.innerHTML  = '<span class="loading-spinner"></span>';
+  // ── Löschen ──
+  async function deleteFile(chest, fullPath, display) {
+    if (!canWrite(chest)) return;
+    if (!confirm(`„${display}" wirklich aus der Truhe entfernen?`)) return;
+    const { error } = await supabase.storage.from(BUCKET).remove([fullPath]);
+    if (error) { showFeedback("❌ Löschen fehlgeschlagen: " + error.message, "error"); return; }
+    await dbWrite(remove(ref(db, `treasure/meta/${chest}/${metaKey(fullPath)}`)));
+    await dbWrite(push(ref(db, "treasure/log"),
+      { action: "delete", chest, beutel: activeBeutel || "", file: display,
+        by: displayName(currentUserKey), ts: Date.now() }));
+    showFeedback("🗑 Schatz entfernt.", "success");
+    loadFiles();
+    refreshStorageTotal();
+  }
 
-    const { data, error } = await supabase.storage.from(BUCKET).list("", {
-      limit: 500,
-      sortBy: { column: "created_at", order: "desc" }
+  // ── Schatzbeutel ──
+  newBeutelBtn.addEventListener("click", async () => {
+    if (!canWrite(activeChest)) return;
+    const raw = prompt("Name des neuen Schatzbeutels:");
+    if (!raw) return;
+    const name = safeName(raw);
+    const placeholder = new Blob([""], { type: "text/plain" });
+    const { error } = await supabase.storage.from(BUCKET)
+      .upload(`${activeChest}/${name}/.beutel`, placeholder, { upsert: true });
+    if (error) { showFeedback("❌ Beutel konnte nicht angelegt werden: " + error.message, "error"); return; }
+    await dbWrite(push(ref(db, "treasure/log"),
+      { action: "upload", chest: activeChest, beutel: name, file: `👝 Beutel „${name}"`,
+        by: displayName(currentUserKey), ts: Date.now() }));
+    showFeedback(`👝 Schatzbeutel „${name}" angelegt.`, "success");
+    loadFiles();
+  });
+
+  async function deleteBeutel(chest, name, count) {
+    if (!canWrite(chest)) return;
+    if (count > 0) {
+      alert(`Der Beutel „${name}" enthält noch ${count} Schätze. Bitte zuerst leeren.`);
+      return;
+    }
+    if (!confirm(`Leeren Schatzbeutel „${name}" entfernen?`)) return;
+    const { error } = await supabase.storage.from(BUCKET)
+      .remove([`${chest}/${name}/.beutel`]);
+    if (error) { showFeedback("❌ Beutel konnte nicht entfernt werden: " + error.message, "error"); return; }
+    await dbWrite(push(ref(db, "treasure/log"),
+      { action: "delete", chest, beutel: name, file: `👝 Beutel „${name}"`,
+        by: displayName(currentUserKey), ts: Date.now() }));
+    showFeedback(`🗑 Beutel „${name}" entfernt.`, "success");
+    loadFiles();
+  }
+
+  // ── Chronik ──
+  logToggle.addEventListener("click", () => {
+    logToggle.classList.toggle("open");
+    logBody.classList.toggle("open");
+  });
+  function watchLog() {
+    const q = query(ref(db, "treasure/log"), orderByChild("ts"), limitToLast(120));
+    onValue(q, snap => {
+      const items = [];
+      snap.forEach(c => items.push(c.val()));
+      return renderLog(items);
+    }, () => {
+      logList.innerHTML = '<li><div class="empty-state">Chronik nicht verfügbar.</div></li>';
     });
-
-    if (error || !data) {
-      fileList.innerHTML = '<li><div class="empty-state">Fehler beim Laden der Dateien.</div></li>';
-      return;
+    function renderLog(items) {
+      items.reverse();
+      if (!items.length) {
+        logList.innerHTML = '<li><div class="empty-state">Noch keine Einträge in der Chronik.</div></li>';
+        return;
+      }
+      logList.innerHTML = "";
+      for (const it of items) {
+        const chestLabel = CHESTS[it.chest]?.label || it.chest || "?";
+        const where = it.beutel ? `${chestLabel} › 👝 ${it.beutel}` : chestLabel;
+        const ic = it.action === "delete" ? "🗑" : "📥";
+        const verb = it.action === "delete" ? "entfernte" : "legte";
+        const tail = it.action === "delete" ? "aus" : "in";
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="log-ic">${ic}</div>
+          <div class="log-txt">
+            <b>${escHtml(it.by || "—")}</b> ${verb}
+            „${escHtml(it.file || "?")}" ${tail} <b>${escHtml(where)}</b>
+            <div class="log-time">${it.ts ? fmtDate(it.ts) : ""}</div>
+          </div>`;
+        logList.appendChild(li);
+      }
     }
-
-    const files = data.filter(f => f.name !== ".emptyFolderPlaceholder");
-
-    // Stats
-    const totalBytes = files.reduce((s, f) => s + (f.metadata?.size ?? 0), 0);
-    statCount.textContent = files.length;
-    statSize.textContent  = formatBytes(totalBytes);
-    const pct = Math.min(100, (totalBytes / STORAGE_QUOTA) * 100);
-    storageBar.style.width  = pct.toFixed(1) + "%";
-    storageLabel.textContent = `${formatBytes(totalBytes)} von ${formatBytes(STORAGE_QUOTA)} genutzt (${pct.toFixed(1)} %)`;
-
-    // List
-    if (!files.length) {
-      fileList.innerHTML = '<li><div class="empty-state">Noch keine Dateien hochgeladen.</div></li>';
-      return;
-    }
-
-    fileList.innerHTML = "";
-    for (const f of files) {
-      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(f.name);
-      const size = f.metadata?.size ? formatBytes(f.metadata.size) : "—";
-      const date = f.created_at ? new Date(f.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" }) : "—";
-      const icon = fileIcon(f.name);
-
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div class="file-icon">${icon}</div>
-        <div class="file-meta">
-          <div class="file-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
-          <div class="file-sub">${size} · ${date}</div>
-        </div>
-        <div class="file-actions">
-          <a href="${escHtml(urlData.publicUrl)}" target="_blank" rel="noopener">Öffnen</a>
-          <a href="${escHtml(urlData.publicUrl)}" download="${escHtml(f.name)}">⬇</a>
-        </div>`;
-      fileList.appendChild(li);
-    }
-  }
-
-  // ── Helpers ──
-  function formatBytes(bytes) {
-    if (bytes === 0) return "0 B";
-    const k = 1024, sizes = ["B","KB","MB","GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return (bytes / Math.pow(k, i)).toFixed(i > 1 ? 1 : 0) + " " + sizes[i];
-  }
-
-  function fileIcon(name) {
-    const ext = name.split(".").pop().toLowerCase();
-    if (["jpg","jpeg","png","gif","webp","svg","heic"].includes(ext)) return "🖼️";
-    if (["mp4","mov","avi","mkv","webm"].includes(ext)) return "🎬";
-    if (["mp3","wav","ogg","flac","aac"].includes(ext)) return "🎵";
-    if (["pdf"].includes(ext)) return "📄";
-    if (["zip","rar","7z","tar","gz"].includes(ext)) return "📦";
-    if (["doc","docx","txt","odt"].includes(ext)) return "📝";
-    if (["xls","xlsx","csv"].includes(ext)) return "📊";
-    return "📎";
-  }
-
-  function escHtml(str) {
-    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 </script>
 </body>
