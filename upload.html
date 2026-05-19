@@ -64,6 +64,63 @@
       0%   { transform: translate3d(-2%, -1%, 0) scale(1); }
       100% { transform: translate3d(2%, 2%, 0) scale(1.06); }
     }
+    /* glitzernde Juwelen-Ebene + pulsierendes Farblicht */
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M34 28 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 z' fill='rgba(246,217,122,0.85)'/><path d='M150 44 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4 -6 -6 -2.4 6 -2.4 z' fill='rgba(255,255,255,0.8)'/><path d='M118 120 l40-14 -16 18 z' fill='rgba(192,132,252,0.5)' stroke='rgba(216,180,254,0.6)' stroke-width='0.6'/><path d='M60 150 l10 -16 10 16 -10 7 z' fill='rgba(122,167,255,0.45)' stroke='rgba(170,200,255,0.6)' stroke-width='0.6'/><path d='M170 150 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 z' fill='rgba(246,217,122,0.7)'/></svg>"),
+        radial-gradient(1.6px 1.6px at 22% 32%, rgba(246,217,122,0.95), transparent 60%),
+        radial-gradient(2px 2px at 64% 22%, rgba(255,255,255,0.85), transparent 60%),
+        radial-gradient(1.6px 1.6px at 82% 58%, rgba(192,132,252,0.9), transparent 60%),
+        radial-gradient(2.4px 2.4px at 12% 78%, rgba(122,167,255,0.85), transparent 60%);
+      background-size: 200px 200px, 260px 260px, 300px 300px, 240px 240px, 280px 280px;
+      animation: glitterDrift 26s linear infinite;
+      opacity: 0.7;
+    }
+    @keyframes glitterDrift {
+      0%   { background-position: 0 0, 20px 30px, 50px 10px, 80px 60px, 10px 90px; }
+      100% { background-position: 200px 160px, 220px 210px, 250px 190px, 280px 240px, 210px 270px; }
+    }
+
+    /* gemeinsame Magie-Keyframes (Gold/Juwelen) */
+    @keyframes goldHolo   { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+    @keyframes goldTextFlow { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+    @keyframes goldGlow {
+      0%,100% { box-shadow: 0 0 0 2px rgba(255,243,201,0.5), 0 6px 26px rgba(232,196,104,0.5), 0 0 46px rgba(246,217,122,0.32), inset 0 1px 0 rgba(255,255,255,0.6); }
+      50%     { box-shadow: 0 0 0 2px rgba(255,243,201,0.85), 0 10px 36px rgba(232,196,104,0.75), 0 0 70px rgba(192,132,252,0.45), inset 0 1px 0 rgba(255,255,255,0.75); }
+    }
+    @keyframes treasureBeat {
+      0%,100% { transform: scale(1); }
+      25%     { transform: scale(1.035); }
+      50%     { transform: scale(1.015); }
+      75%     { transform: scale(1.045); }
+    }
+    @keyframes btnSheen {
+      0%   { transform: translateX(-130%) skewX(-20deg); }
+      100% { transform: translateX(240%)  skewX(-20deg); }
+    }
+    @keyframes gemSpin {
+      0%   { transform: rotate(-14deg) scale(1); }
+      50%  { transform: rotate(14deg)  scale(1.18); }
+      100% { transform: rotate(-14deg) scale(1); }
+    }
+    @keyframes btnWiggle {
+      0%,100% { transform: scale(1.05) rotate(-1.2deg); }
+      25%     { transform: scale(1.06) rotate(1.6deg); }
+      50%     { transform: scale(1.07) rotate(-1.6deg); }
+      75%     { transform: scale(1.06) rotate(1.2deg); }
+    }
+    @keyframes borderShift {
+      0%   { border-color: rgba(232,196,104,0.7);  box-shadow: 0 14px 40px rgba(0,0,0,0.32), 0 0 36px rgba(232,196,104,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
+      33%  { border-color: rgba(192,132,252,0.6);  box-shadow: 0 14px 40px rgba(0,0,0,0.32), 0 0 40px rgba(192,132,252,0.2),  inset 0 1px 0 rgba(255,255,255,0.05); }
+      66%  { border-color: rgba(122,167,255,0.55); box-shadow: 0 14px 40px rgba(0,0,0,0.32), 0 0 40px rgba(122,167,255,0.2),  inset 0 1px 0 rgba(255,255,255,0.05); }
+      100% { border-color: rgba(232,196,104,0.7);  box-shadow: 0 14px 40px rgba(0,0,0,0.32), 0 0 36px rgba(232,196,104,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
+    }
+    @keyframes haloRot { to { transform: rotate(360deg); } }
+    @keyframes breath {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.006); }
+    }
 
     /* zarter Gold-Zierrahmen rund um die Schatzkammer */
     .vault-frame { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
@@ -151,16 +208,14 @@
       50%     { transform: translateY(-9px) rotate(1.5deg); }
     }
     .login-card h1 {
-      font-size: 1.7rem; font-weight: 900; margin: 16px 0 6px;
-      background: linear-gradient(90deg, var(--gold), var(--gold-3), var(--gold-2), var(--gold));
-      background-size: 220% auto;
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      letter-spacing: .03em;
-      animation: goldShimmer 5s linear infinite;
-      text-shadow: 0 0 26px rgba(232,196,104,0.25);
-    }
-    @keyframes goldShimmer {
-      to { background-position: 220% center; }
+      font-size: 1.8rem; font-weight: 900; margin: 16px 0 6px;
+      background: linear-gradient(90deg, #e8c468, #fff3c9, #c084fc, #f6d97a, #e8c468);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      letter-spacing: .035em;
+      animation: goldTextFlow 5s linear infinite;
+      filter: drop-shadow(0 2px 10px rgba(232,196,104,0.4));
     }
     .login-card p { font-size: 0.9rem; color: var(--muted); margin-bottom: 28px; }
 
@@ -183,47 +238,63 @@
     #login-error { font-size: 0.84rem; color: var(--danger); margin-bottom: 12px; display: none; }
 
     .btn {
-      position: relative; overflow: hidden;
+      position: relative; overflow: hidden; isolation: isolate;
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 11px 20px; border-radius: 13px; font-size: 0.9rem; font-weight: 800;
+      padding: 11px 20px; border-radius: 14px; font-size: 0.9rem; font-weight: 800;
       cursor: pointer; border: 1px solid transparent;
-      transition: filter .15s, opacity .2s, background .2s, transform .12s, box-shadow .2s;
-      font-family: inherit; letter-spacing: .01em;
+      transition: filter .18s, opacity .2s, background .25s, transform .14s, box-shadow .25s, border-color .25s;
+      font-family: inherit; letter-spacing: .02em;
     }
-    .btn::after {
-      content: ""; position: absolute; top: 0; left: -75%;
-      width: 55%; height: 100%;
-      background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent);
+    .btn::before {
+      content: ""; position: absolute; top: 0; left: -130%;
+      width: 45%; height: 100%; z-index: 2;
+      background: linear-gradient(110deg, transparent, rgba(255,255,255,0.55), transparent);
       transform: skewX(-20deg); pointer-events: none;
       transition: left .6s ease;
     }
-    .btn:hover:not(:disabled)::after { left: 130%; }
-    .btn:active { transform: translateY(2px) scale(0.99); }
+    .btn:hover:not(:disabled)::before { left: 240%; }
+    .btn:active:not(:disabled) { transform: scale(0.96); }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
+
     .btn-primary {
-      background: var(--grad-gold);
-      color: #2a1c00; width: 100%; padding: 15px; font-weight: 900; font-size: 0.98rem;
-      border-color: rgba(255,243,201,0.5);
-      box-shadow: 0 10px 30px rgba(232,196,104,0.34), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(160,110,10,0.4);
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      background: linear-gradient(115deg, #fff3c9 0%, #f6d97a 20%, #e8c468 40%, #c084fc 58%, #f6d97a 78%, #fff3c9 100%);
+      background-size: 300% 300%;
+      color: #2a1c00; width: 100%; padding: 16px; font-weight: 900; font-size: 1rem;
+      border: 2px solid rgba(255,255,255,0.7);
+      outline: 1.5px solid rgba(232,196,104,0.7); outline-offset: 2px;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(255,255,255,0.5);
+      animation: goldHolo 4s linear infinite, goldGlow 2.8s ease-in-out infinite, treasureBeat 1.8s ease-in-out infinite;
+    }
+    .btn-primary::before {
+      left: auto; width: 38%; transition: none;
+      animation: btnSheen 2.8s linear infinite;
+    }
+    .btn-primary::after {
+      content: "💎"; position: absolute; top: 3px; right: 10px;
+      font-size: 14px; z-index: 3; pointer-events: none;
+      filter: drop-shadow(0 0 6px rgba(246,217,122,0.95));
+      animation: gemSpin 2.1s ease-in-out infinite;
     }
     .btn-primary:hover:not(:disabled) {
-      filter: brightness(1.08);
-      transform: translateY(-2px);
-      box-shadow: 0 16px 40px rgba(232,196,104,0.45), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(160,110,10,0.4);
+      filter: brightness(1.08) saturate(1.18);
+      animation: goldHolo 2s linear infinite, goldGlow 1.5s ease-in-out infinite, btnWiggle .55s ease-in-out infinite;
     }
+
     .btn-ghost {
       background: rgba(255,255,255,0.05); color: var(--muted);
-      border: 1px solid var(--border); font-size: 0.84rem; padding: 10px 16px;
+      border: 1.5px solid var(--border); font-size: 0.84rem; padding: 10px 16px;
       backdrop-filter: blur(4px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .btn-ghost:hover:not(:disabled) {
-      color: var(--gold-2); border-color: var(--border-strong);
+      color: var(--gold-3); border-color: var(--border-strong);
       background: var(--gold-soft);
-      box-shadow: 0 0 18px rgba(246,217,122,0.22);
+      box-shadow: 0 0 0 1px rgba(255,243,201,0.4), 0 6px 22px rgba(246,217,122,0.3);
+      animation: btnWiggle .6s ease-in-out infinite;
     }
-    .btn-danger { background: rgba(255,138,138,0.13); color: var(--danger); border-color: rgba(255,138,138,0.32); }
-    .btn-danger:hover:not(:disabled) { background: rgba(255,138,138,0.24); box-shadow: 0 0 18px rgba(255,138,138,0.25); color: #ffb0b0; }
+
+    .btn-danger { background: rgba(255,138,138,0.13); color: var(--danger); border: 1.5px solid rgba(255,138,138,0.32); }
+    .btn-danger:hover:not(:disabled) { background: rgba(255,138,138,0.24); box-shadow: 0 0 22px rgba(255,138,138,0.3); color: #ffb0b0; animation: none; }
 
     /* ── App ── */
     #app { display: none; max-width: 880px; margin: 0 auto; padding: 34px 18px 90px; position: relative; z-index: 1; }
@@ -252,11 +323,13 @@
       animation: floatY 4s ease-in-out infinite;
     }
     .app-header h1 {
-      font-size: 1.5rem; font-weight: 900; letter-spacing: .025em;
-      background: linear-gradient(90deg, var(--gold), var(--gold-3), var(--gold-2), var(--gold));
-      background-size: 220% auto;
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      animation: goldShimmer 6s linear infinite;
+      font-size: 1.55rem; font-weight: 900; letter-spacing: .03em;
+      background: linear-gradient(90deg, #e8c468, #fff3c9, #c084fc, #f6d97a, #e8c468);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: goldTextFlow 6s linear infinite;
+      filter: drop-shadow(0 2px 8px rgba(232,196,104,0.35));
     }
     .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .user-info span { font-size: 0.82rem; color: var(--muted); }
@@ -341,9 +414,13 @@
     }
     .stat-card .label { font-size: 0.72rem; color: var(--gold-2); font-weight: 800; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
     .stat-card .value {
-      font-size: 1.7rem; font-weight: 900;
-      background: linear-gradient(180deg, #fff, var(--gold-2));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
+      font-size: 1.75rem; font-weight: 900;
+      background: linear-gradient(90deg, #fff3c9, #f6d97a, #c084fc, #f6d97a, #fff3c9);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: goldTextFlow 5s linear infinite;
+      filter: drop-shadow(0 1px 6px rgba(232,196,104,0.4));
     }
     .stat-card.span2 { grid-column: span 2; }
     .storage-bar-bg { background: rgba(11,7,22,0.75); border: 1px solid var(--border); border-radius: 99px; height: 12px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
@@ -361,16 +438,17 @@
     .section {
       position: relative;
       background: var(--grad-panel);
-      border: 1px solid var(--border); border-radius: 20px;
+      border: 1.5px solid var(--border); border-radius: 20px;
       padding: 26px; margin-bottom: 22px;
       box-shadow: 0 14px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.05);
       backdrop-filter: blur(4px);
+      animation: borderShift 14s linear infinite;
     }
     .section h2 {
-      font-size: 1.06rem; font-weight: 900; margin-bottom: 18px;
-      display: flex; align-items: center; gap: 10px; letter-spacing: .02em;
+      font-size: 1.12rem; font-weight: 900; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px; letter-spacing: .03em;
       color: var(--gold-3);
-      text-shadow: 0 0 16px rgba(232,196,104,0.25);
+      text-shadow: 0 0 18px rgba(232,196,104,0.4), 0 1px 0 rgba(0,0,0,0.3);
     }
 
     .breadcrumb { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.86rem; color: var(--muted); margin-bottom: 16px; }
@@ -383,35 +461,63 @@
 
     .drop-zone {
       position: relative; isolation: isolate;
-      border: 2px dashed var(--border-strong); border-radius: 18px;
-      padding: 44px 24px; text-align: center; cursor: pointer;
-      transition: border-color .25s, background .25s, transform .2s, box-shadow .25s;
-      background: rgba(11,7,22,0.4);
+      border: 2px solid var(--border-strong); border-radius: 22px;
+      padding: 52px 26px; text-align: center; cursor: pointer;
+      transition: transform .25s, box-shadow .3s, background .3s, border-color .3s;
+      background:
+        radial-gradient(320px 200px at 50% 38%, rgba(246,217,122,0.14), transparent 72%),
+        radial-gradient(260px 200px at 50% 100%, rgba(192,132,252,0.1), transparent 70%),
+        rgba(11,7,22,0.46);
+      box-shadow: inset 0 0 40px rgba(246,217,122,0.06), 0 16px 40px rgba(0,0,0,0.35);
       overflow: hidden;
     }
+    /* rotierender Lichtkranz */
     .drop-zone::before {
-      content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0;
-      background: radial-gradient(280px 160px at 50% 50%, rgba(246,217,122,0.22), transparent 70%);
+      content: ""; position: absolute; inset: -40%; z-index: -1;
+      background: conic-gradient(from 0deg,
+        transparent 0deg, rgba(246,217,122,0.5) 40deg, transparent 80deg,
+        transparent 180deg, rgba(192,132,252,0.4) 220deg, transparent 260deg, transparent 360deg);
+      filter: blur(26px); opacity: .35;
+      animation: haloRot 14s linear infinite;
       transition: opacity .3s;
     }
+    /* schimmernder Innensaum */
+    .drop-zone::after {
+      content: ""; position: absolute; inset: 6px; border-radius: 16px; z-index: -1;
+      border: 1px solid rgba(255,243,201,0.18);
+      box-shadow: inset 0 0 26px rgba(246,217,122,0.08);
+      pointer-events: none;
+    }
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--gold);
-      background: var(--gold-soft);
-      transform: scale(1.01);
-      box-shadow: 0 0 36px rgba(246,217,122,0.28), inset 0 0 30px rgba(246,217,122,0.1);
+      border-color: var(--gold-3);
+      transform: scale(1.015);
+      box-shadow: 0 0 50px rgba(246,217,122,0.4), inset 0 0 44px rgba(246,217,122,0.16);
     }
-    .drop-zone:hover::before, .drop-zone.drag-over::before { opacity: 1; }
+    .drop-zone:hover::before, .drop-zone.drag-over::before {
+      opacity: .85; animation-duration: 5s;
+    }
     .drop-zone .icon {
-      font-size: 3rem; line-height: 1; display: inline-block;
-      filter: drop-shadow(0 0 14px rgba(246,217,122,0.6));
-      transition: transform .25s;
+      line-height: 1; display: inline-flex;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)) drop-shadow(0 0 18px rgba(246,217,122,0.7));
+      transition: transform .3s;
+      animation: floatY 3.6s ease-in-out infinite;
     }
-    .drop-zone:hover .icon, .drop-zone.drag-over .icon { transform: translateY(-4px) scale(1.08); }
-    .drop-zone p { font-size: 0.92rem; color: var(--muted); margin-top: 10px; }
-    .drop-zone strong { color: var(--gold-2); }
-    .drop-zone.locked { cursor: not-allowed; opacity: .5; border-style: solid; }
-    .drop-zone.locked:hover { border-color: var(--border-strong); background: rgba(11,7,22,0.4); transform: none; box-shadow: none; }
-    .drop-zone.locked:hover::before { opacity: 0; }
+    .drop-zone .icon .chest-svg { width: 84px; height: 84px; }
+    .drop-zone:hover .icon, .drop-zone.drag-over .icon { transform: translateY(-6px) scale(1.12); }
+    .drop-zone p { font-size: 0.96rem; color: var(--muted); margin-top: 14px; }
+    .drop-zone strong {
+      background: linear-gradient(90deg, #f6d97a, #fff3c9, #f6d97a);
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: goldTextFlow 4s linear infinite;
+      font-weight: 900;
+    }
+    .drop-zone.locked { cursor: not-allowed; opacity: .5; animation: none; }
+    .drop-zone.locked::before { animation: none; opacity: .12; }
+    .drop-zone.locked .icon { animation: none; }
+    .drop-zone.locked:hover { border-color: var(--border-strong); transform: none; box-shadow: inset 0 0 40px rgba(246,217,122,0.06), 0 16px 40px rgba(0,0,0,0.35); }
+    .drop-zone.locked:hover::before { opacity: .12; }
     #file-input { display: none; }
 
     .lock-note {
@@ -452,8 +558,11 @@
     }
     .filter-chip:hover { color: var(--gold-2); border-color: var(--border-strong); transform: translateY(-1px); }
     .filter-chip.active {
-      color: #2a1c00; background: var(--grad-gold); border-color: rgba(255,243,201,0.5);
-      box-shadow: 0 6px 18px rgba(232,196,104,0.32);
+      color: #2a1c00; border-color: rgba(255,243,201,0.6);
+      background: linear-gradient(115deg, #fff3c9, #f6d97a, #e8c468, #c084fc, #f6d97a, #fff3c9);
+      background-size: 300% 100%;
+      box-shadow: 0 6px 18px rgba(232,196,104,0.36), 0 0 22px rgba(192,132,252,0.25);
+      animation: goldHolo 5s linear infinite;
     }
 
     /* ── Beutel + Datei-Liste ── */
@@ -551,6 +660,12 @@
       .stat-card.span2 { grid-column: span 2; }
       .file-name { white-space: normal; }
       .vault-frame i { width: 30px; height: 30px; }
+      body::after { opacity: .45; animation-duration: 40s; }
+      .btn-primary { animation: goldHolo 6s linear infinite, goldGlow 3.4s ease-in-out infinite; }
+      .btn-primary::after { animation: none; }
+      .section { animation: none; }
+      .drop-zone { animation: none; }
+      .drop-zone::before { animation-duration: 22s; }
     }
 
     /* ── INTRO: Truhe öffnet sich ── */
@@ -703,12 +818,10 @@
       .ti-glow { width: 380px; height: 380px; margin: -190px 0 0 -190px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .ti-overlay * { animation-duration: .01s !important; animation-delay: 0s !important; }
-      body::before, .login-card::before, .login-card .crest, .login-card h1,
-      .app-header .crest, .app-header h1, .chest-tab.active, .storage-bar-fill,
-      .sparkle, .chest-svg .chest-shine, .ti-title {
-        animation: none !important;
-      }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .btn::before, .btn-primary::before, .btn-primary::after { display: none !important; }
+      .ti-title, .ti-sub, .ti-chest { opacity: 1 !important; }
+      .ti-divider { width: 220px !important; opacity: 1 !important; }
     }
   </style>
 </head>
@@ -761,6 +874,31 @@
       <rect x="89" y="100" width="13" height="7" rx="2" fill="url(#cGold)"/>
       <path class="chest-shine" d="M31 29 l1.7 4.2 4.2 1.7 -4.2 1.7 -1.7 4.2 -1.7 -4.2 -4.2 -1.7 4.2 -1.7 z" fill="#fff7da"/>
       <path class="chest-shine" d="M93 37 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2 z" fill="#fff7da"/>
+    </symbol>
+    <symbol id="ic-chest-open" viewBox="0 0 120 110">
+      <ellipse class="chest-shine" cx="60" cy="58" rx="60" ry="50" fill="url(#cHalo)"/>
+      <path class="chest-shine" d="M40 58 L24 4 L96 4 L80 58 Z" fill="url(#cInner)" opacity="0.85"/>
+      <rect x="16" y="56" width="88" height="46" rx="7" fill="url(#cWood)" stroke="#22123f" stroke-width="1.5"/>
+      <rect x="18" y="50" width="84" height="14" rx="4" fill="url(#cInner)"/>
+      <circle cx="44" cy="56" r="6" fill="#f6d97a" stroke="#b8860b" stroke-width="0.8"/>
+      <circle cx="58" cy="58" r="5" fill="#c084fc"/>
+      <circle cx="72" cy="55" r="5.5" fill="#6ee7c7"/>
+      <circle cx="84" cy="58" r="4.2" fill="#7aa7ff"/>
+      <rect x="12" y="58" width="96" height="10" rx="3" fill="url(#cGold)"/>
+      <rect x="14" y="92" width="92" height="9" rx="3" fill="url(#cGold)"/>
+      <rect x="24" y="64" width="9" height="38" rx="2" fill="url(#cGold)" opacity="0.92"/>
+      <rect x="87" y="64" width="9" height="38" rx="2" fill="url(#cGold)" opacity="0.92"/>
+      <rect x="51" y="66" width="18" height="20" rx="4" fill="url(#cGold)" stroke="#8a5a08" stroke-width="1"/>
+      <circle cx="60" cy="73" r="3" fill="#22123f"/>
+      <g transform="rotate(-26 22 50)">
+        <path d="M16 52 L16 46 C16 24 33 14 60 14 C87 14 104 24 104 46 L104 52 Z" fill="url(#cLid)" stroke="#22123f" stroke-width="1.5"/>
+        <rect x="12" y="44" width="96" height="9" rx="3" fill="url(#cGold)"/>
+      </g>
+      <rect x="18" y="100" width="13" height="7" rx="2" fill="url(#cGold)"/>
+      <rect x="89" y="100" width="13" height="7" rx="2" fill="url(#cGold)"/>
+      <path class="chest-shine" d="M58 10 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 z" fill="#fff7da"/>
+      <path class="chest-shine" d="M40 26 l1.4 3.4 3.4 1.4 -3.4 1.4 -1.4 3.4 -1.4 -3.4 -3.4 -1.4 3.4 -1.4 z" fill="#fff7da"/>
+      <path class="chest-shine" d="M82 24 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2 z" fill="#fff7da"/>
     </symbol>
   </defs>
 </svg>
@@ -873,6 +1011,11 @@
 
   <!-- Truhen -->
   <div class="chest-tabs" id="chest-tabs">
+    <button class="chest-tab active" data-chest="gemeinsam">
+      <div class="ct-emoji"><svg class="chest-svg" viewBox="0 0 120 110" style="width:2.3rem;height:2.3rem"><use href="#ic-chest"/></svg></div>
+      <div class="ct-name">Gemeinsame Truhe</div>
+      <div class="ct-sub">für beide</div>
+    </button>
     <button class="chest-tab" data-chest="nele">
       <div class="ct-emoji">🌸</div>
       <div class="ct-name">Neles Truhe</div>
@@ -882,11 +1025,6 @@
       <div class="ct-emoji">🐾</div>
       <div class="ct-name">Andreas’ Truhe</div>
       <div class="ct-sub">privat</div>
-    </button>
-    <button class="chest-tab active" data-chest="gemeinsam">
-      <div class="ct-emoji"><svg class="chest-svg" viewBox="0 0 120 110" style="width:2.3rem;height:2.3rem"><use href="#ic-chest"/></svg></div>
-      <div class="ct-name">Gemeinsame Truhe</div>
-      <div class="ct-sub">für beide</div>
     </button>
   </div>
 
@@ -911,7 +1049,7 @@
   <div class="section">
     <h2 id="upload-title">✨ Schatz in die Truhe legen</h2>
     <div class="drop-zone" id="drop-zone">
-      <div class="icon">📥</div>
+      <div class="icon"><svg class="chest-svg" viewBox="0 0 120 110"><use href="#ic-chest-open"/></svg></div>
       <p><strong>Klicken</strong> oder Schätze hierher ziehen</p>
       <p style="margin-top:6px;font-size:0.78rem;">Alle Dateitypen erlaubt · mehrere möglich</p>
     </div>
