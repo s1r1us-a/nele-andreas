@@ -2127,32 +2127,40 @@
     color: #fff; border-color: transparent;
   }
   .survey-choices-editor {
-    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-    padding: 8px; border-radius: 10px;
-    background: rgba(232,115,138,0.04);
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 10px; border-radius: 12px;
+    background: rgba(232,115,138,0.05);
     margin-bottom: 8px;
   }
+  .survey-choices-label {
+    font-size: 11px; font-weight: 800; color: var(--text-mid);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .survey-choices-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
   .survey-choice-input {
-    flex: 1; min-width: 120px;
-    border: 1.5px solid var(--ui-modal-border); border-radius: 50px;
-    padding: 5px 12px; font-family: 'Quicksand', sans-serif; font-size: 12px;
+    width: 100%; box-sizing: border-box;
+    border: 1.5px solid var(--ui-modal-border); border-radius: 12px;
+    padding: 9px 13px; font-family: 'Quicksand', sans-serif; font-size: 13px;
     font-weight: 600; color: var(--ui-input-color); background: var(--ui-input-bg);
     outline: none;
   }
   .survey-choice-input:focus { border-color: #ff6b9d; }
   .survey-opt-add {
-    border: none; cursor: pointer;
+    display: block; width: 100%; cursor: pointer;
     background: linear-gradient(135deg, var(--rose,#e8738a), #c85070);
-    color: #fff; border-radius: 50%;
-    width: 26px; height: 26px; font-size: 16px; font-weight: 800;
-    line-height: 1; padding: 0;
-    display: inline-flex; align-items: center; justify-content: center;
-    transition: transform 0.15s ease;
+    color: #fff; border: none; border-radius: 50px;
+    padding: 10px 14px; font-family: 'Quicksand', sans-serif;
+    font-size: 13px; font-weight: 800;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 14px rgba(232,115,138,0.35);
   }
-  .survey-opt-add:hover { transform: scale(1.08); }
+  .survey-opt-add:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(232,115,138,0.45); }
+  .survey-opt-add:active { transform: translateY(0); }
   .survey-choice-hint {
-    font-size: 11px; font-weight: 700; color: var(--text-mid);
-    padding: 4px 10px; font-style: italic;
+    font-size: 12px; font-weight: 600; color: var(--text-mid);
+    padding: 6px 8px; font-style: italic; line-height: 1.4;
   }
   .survey-break-btn {
     display: inline-flex; align-items: center; gap: 4px;
@@ -4069,13 +4077,16 @@
       const hasBreak = _surveyHasBreakAfter(i);
       const choiceEditor = q.type === 'choice' ? `
         <div class="survey-choices-editor" data-qi="${i}">
-          ${(q.options || []).map((o, oi) =>
-            `<span class="survey-choice-chip">${mailEsc(o)}<button type="button" data-rm-opt="${oi}" data-qi="${i}">×</button></span>`
-          ).join('')}
+          <div class="survey-choices-label">Antwort-Optionen (${(q.options || []).length}/4)</div>
+          ${(q.options || []).length
+            ? `<div class="survey-choices-chips">${(q.options || []).map((o, oi) =>
+                `<span class="survey-choice-chip">${mailEsc(o)}<button type="button" data-rm-opt="${oi}" data-qi="${i}">×</button></span>`
+              ).join('')}</div>`
+            : ''}
           ${(q.options || []).length >= 4
-            ? '<span class="survey-choice-hint">Max. 4 Optionen</span>'
-            : `<input type="text" class="survey-choice-input" data-opt-input="${i}" placeholder="Option…" maxlength="60">
-               <button type="button" class="survey-opt-add" data-opt-add="${i}" title="Option hinzufügen">+</button>`}
+            ? '<div class="survey-choice-hint">Maximum erreicht – um eine andere Option hinzuzufügen, eine bestehende mit × entfernen.</div>'
+            : `<input type="text" class="survey-choice-input" data-opt-input="${i}" placeholder="Neue Option eintippen…" maxlength="60">
+               <button type="button" class="survey-opt-add" data-opt-add="${i}">➕ Option hinzufügen</button>`}
         </div>` : '';
       parts.push(`
         <div class="survey-question-card" data-qi="${i}">
