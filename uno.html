@@ -443,6 +443,9 @@
     box-shadow:0 6px 18px rgba(0,0,0,.55), inset 0 0 0 1.5px rgba(255,255,255,0.07);
   }
 
+  /* Wenn must-draw aktiv ist, den schwächeren drawable-Hint ausblenden */
+  .deck-pile.must-draw.drawable::after { display:none; }
+
   /* DECK glow when player MUST draw (keine spielbare Karte) */
   .deck-pile.must-draw::before {
     content:''; position:absolute; inset:-12px; border-radius:20px;
