@@ -2909,6 +2909,7 @@
       }
       currentCoins = finalBalance;
       await set(coinRef, finalBalance);
+      contributeToTopf(db, userKey, price, 'lootbox').catch(()=>{});
 
       // Lootbox-State aktualisieren
       lastBoxPurchase = Date.now();
