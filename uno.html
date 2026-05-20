@@ -70,7 +70,7 @@
   .auth-spinner { width:36px; height:36px; border:3px solid rgba(255,107,157,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
-  .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(13,1,24,0.96); backdrop-filter:blur(10px); }
+  .modal-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(13,1,24,0.96); backdrop-filter:blur(7px); }
   .modal-card { background:rgba(22,4,36,0.97); border:1.5px solid rgba(253,203,110,0.3); border-radius:28px; padding:40px 36px 36px; max-width:340px; width:90%; text-align:center; box-shadow:0 20px 70px rgba(253,203,110,0.15); }
   .modal-emoji { font-size:48px; margin-bottom:12px; display:block; filter:drop-shadow(0 0 16px rgba(253,203,110,0.6)); }
   .modal-title { font-family:'Dancing Script',cursive; font-size:32px; font-weight:700; background:linear-gradient(135deg,var(--uno-red),var(--uno-yellow) 35%,var(--uno-green) 65%,var(--uno-blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
@@ -90,7 +90,7 @@
   .coin-display .coin-num { font-family:'Dancing Script',cursive; font-size:18px; }
 
   /* TOAST */
-  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:rgba(15,3,28,0.97); border:1px solid rgba(253,203,110,0.3); color:var(--text); border-radius:50px; padding:12px 24px; font-size:14px; font-weight:600; z-index:999999; transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .4s; opacity:0; white-space:nowrap; max-width:88vw; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,0.6); backdrop-filter:blur(10px); }
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:rgba(15,3,28,0.97); border:1px solid rgba(253,203,110,0.3); color:var(--text); border-radius:50px; padding:12px 24px; font-size:14px; font-weight:600; z-index:999999; transition:transform .26s cubic-bezier(.22,1,.36,1),opacity .26s; opacity:0; white-space:nowrap; max-width:88vw; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,0.6); backdrop-filter:blur(6px); }
   .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
   /* PAGE */
@@ -308,13 +308,13 @@
     filter:drop-shadow(0 8px 18px rgba(253,203,110,0.5));
   }
   .my-hand .card:not(.playable) { filter:brightness(0.5) saturate(0.6); cursor:not-allowed; }
-  .my-hand .card.just-drawn { animation:cardDrawnFancy .35s cubic-bezier(.34,1.5,.64,1); }
+  .my-hand .card.just-drawn { animation:cardDrawnFancy .22s cubic-bezier(.34,1.5,.64,1); }
   @keyframes cardDrawnFancy {
     0%   { opacity:0; transform:scale(.7) translateY(20px); }
     60%  { opacity:1; transform:scale(1.08) translateY(-4px); }
     100% { opacity:1; transform:scale(1) translateY(0); }
   }
-  .my-hand .card.playing-out { animation:playingOut .28s cubic-bezier(.55,.05,.7,.4) forwards; }
+  .my-hand .card.playing-out { animation:playingOut .18s cubic-bezier(.55,.05,.7,.4) forwards; }
   @keyframes playingOut {
     0%   { transform:translateY(0) scale(1) rotate(0); opacity:1; filter:brightness(1); }
     40%  { transform:translateY(-30px) scale(1.08) rotate(4deg); filter:brightness(1.15); }
@@ -326,10 +326,15 @@
   /* COLOR PICKER */
   .color-picker-overlay {
     position:fixed; inset:0; z-index:99998;
-    display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+    opacity:0; pointer-events:none;
+    transition: opacity .22s ease-out, background .22s ease-out, backdrop-filter .22s ease-out;
   }
-  .color-picker-overlay.open { display:flex; }
+  .color-picker-overlay.open {
+    opacity:1; pointer-events:auto;
+    background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);
+  }
   .color-picker-card {
     background:rgba(14,3,26,0.98);
     border:1.5px solid rgba(253,203,110,0.3);
@@ -337,7 +342,7 @@
     padding:32px 28px;
     max-width:340px;
     text-align:center;
-    animation:resultPop .4s cubic-bezier(.22,1,.36,1);
+    animation:resultPop .28s cubic-bezier(.22,1,.36,1);
   }
   .color-picker-title { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--text); margin-bottom:16px; }
   .color-picker-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
@@ -369,9 +374,18 @@
   .color-dot.blue   { background:var(--uno-blue);   color:var(--uno-blue); }
 
   /* RESULT */
-  .result-overlay { position:fixed; inset:0; z-index:99999; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); }
-  .result-overlay.open { display:flex; }
-  .result-card { background:rgba(14,3,26,0.98); border:1.5px solid rgba(253,203,110,0.35); border-radius:32px; padding:44px 28px 28px; max-width:380px; width:92%; text-align:center; box-shadow:0 20px 80px rgba(253,203,110,0.18); animation:resultPop .5s cubic-bezier(.22,1,.36,1); position:relative; }
+  .result-overlay {
+    position:fixed; inset:0; z-index:99999;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+    opacity:0; pointer-events:none;
+    transition: opacity .24s ease-out, background .24s ease-out, backdrop-filter .24s ease-out;
+  }
+  .result-overlay.open {
+    opacity:1; pointer-events:auto;
+    background:rgba(0,0,0,0.75); backdrop-filter:blur(7px);
+  }
+  .result-card { background:rgba(14,3,26,0.98); border:1.5px solid rgba(253,203,110,0.35); border-radius:32px; padding:44px 28px 28px; max-width:380px; width:92%; text-align:center; box-shadow:0 20px 80px rgba(253,203,110,0.18); animation:resultPop .32s cubic-bezier(.22,1,.36,1); position:relative; }
   @keyframes resultPop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
   .result-emoji { font-size:72px; display:block; margin-bottom:12px; filter:drop-shadow(0 0 24px rgba(253,203,110,0.5)); }
   .result-title { font-family:'Dancing Script',cursive; font-size:36px; font-weight:700; color:var(--text); margin-bottom:8px; }
@@ -469,35 +483,35 @@
   @keyframes mustDrawCardPulse {
     0%, 100% {
       box-shadow:
-        0 0 0 2.5px rgba(253,203,110,0.95),
-        0 0 14px 2px rgba(253,203,110,0.55),
-        0 0 30px 6px rgba(253,203,110,0.22),
+        0 0 0 3px rgba(253,203,110,1),
+        0 0 22px 4px rgba(253,203,110,0.95),
+        0 0 48px 12px rgba(253,203,110,0.6),
         0 6px 14px rgba(0,0,0,0.5);
       transform: scale(1);
     }
     50% {
       box-shadow:
-        0 0 0 3.5px rgba(253,203,110,1),
-        0 0 24px 6px rgba(253,203,110,0.85),
-        0 0 56px 14px rgba(253,203,110,0.45),
+        0 0 0 4.5px rgba(253,203,110,1),
+        0 0 40px 10px rgba(253,203,110,1),
+        0 0 90px 26px rgba(253,203,110,0.75),
         0 6px 14px rgba(0,0,0,0.5);
-      transform: scale(1.045);
+      transform: scale(1.06);
     }
   }
   /* Sanft pulsierende Außen-Aura für den "Schein"-Effekt */
   .deck-pile.must-draw::before {
-    content:''; position:absolute; inset:-14px; border-radius:18px;
+    content:''; position:absolute; inset:-22px; border-radius:22px;
     background: radial-gradient(ellipse at center,
-      rgba(253,203,110,0.28) 0%,
-      rgba(253,203,110,0.12) 40%,
-      transparent 70%);
-    filter: blur(4px);
+      rgba(253,203,110,0.55) 0%,
+      rgba(253,203,110,0.28) 40%,
+      transparent 72%);
+    filter: blur(8px);
     animation: mustDrawAura 1.8s ease-in-out infinite;
     pointer-events:none; z-index:0;
   }
   @keyframes mustDrawAura {
-    0%, 100% { opacity:.55; transform:scale(.96); }
-    50%      { opacity:1;   transform:scale(1.12); }
+    0%, 100% { opacity:.7;  transform:scale(.96); }
+    50%      { opacity:1;   transform:scale(1.2); }
   }
   /* Kleiner Pfeil/Hand der nach unten auf den Stapel zeigt */
   .deck-pile.must-draw::after {
@@ -516,7 +530,7 @@
   }
   .deck-pile.must-draw .pile-label {
     color:#fdcb6e;
-    text-shadow:0 0 8px rgba(253,203,110,0.8), 0 1px 2px rgba(0,0,0,.6);
+    text-shadow:0 0 14px rgba(253,203,110,1), 0 0 22px rgba(253,203,110,0.6), 0 1px 2px rgba(0,0,0,.6);
     animation: mustDrawLabelPulse 1.3s ease-in-out infinite;
   }
   @keyframes mustDrawLabelPulse {
@@ -558,7 +572,7 @@
   @keyframes dirSpin { to { transform:translate(-50%,-50%) rotate(360deg); } }
 
   /* CARD JUST PLAYED HIGHLIGHT */
-  .discard-pile .card.entry { animation:discardLand .55s cubic-bezier(.34,1.45,.5,1) both; }
+  .discard-pile .card.entry { animation:discardLand .38s cubic-bezier(.34,1.45,.5,1) both; }
   @keyframes discardLand {
     0%   { transform:scale(1.35) rotate(15deg); filter:brightness(1.5) drop-shadow(0 0 14px rgba(253,203,110,.5)); }
     40%  { transform:scale(.92) rotate(-4deg); filter:brightness(1.15) drop-shadow(0 0 6px rgba(253,203,110,.3)); }
@@ -1382,40 +1396,40 @@ function flyCard(cardId, from, to, faceUp = true) {
 
   // Phase 1: Abheben (Anticipation) – Karte hebt elegant ab
   requestAnimationFrame(() => {
-    fly.style.transition = 'transform .18s cubic-bezier(.34,1.4,.64,1), opacity .18s ease-out';
+    fly.style.transition = 'transform .12s cubic-bezier(.34,1.4,.64,1), opacity .12s ease-out';
     fly.style.transform  = `translate(${dx*0.18}px, ${dy*0.18 - arcLift*0.45}px) scale(1.04) rotate(${midRot*0.4}deg)`;
     fly.style.opacity    = '1';
-    shadow.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+    shadow.style.transition = 'transform .12s ease-out, opacity .12s ease-out';
     shadow.style.transform  = `translate(${dx*0.18}px, ${dy*0.18 - 2}px) scale(.55)`;
     shadow.style.opacity    = '.35';
   });
 
   // Phase 2: Flugbahn (mittleres Drittel mit max. Höhe)
   setTimeout(() => {
-    fly.style.transition = 'transform .26s cubic-bezier(.42,.0,.58,1), opacity .26s';
+    fly.style.transition = 'transform .16s cubic-bezier(.42,.0,.58,1), opacity .16s';
     fly.style.transform  = `translate(${dx*0.62}px, ${dy*0.62 - arcLift}px) scale(1.08) rotate(${midRot}deg)`;
-    shadow.style.transition = 'transform .26s ease-in-out, opacity .26s';
+    shadow.style.transition = 'transform .16s ease-in-out, opacity .16s';
     shadow.style.transform  = `translate(${dx*0.62}px, ${dy*0.62}px) scale(.4)`;
     shadow.style.opacity    = '.2';
-  }, 180);
+  }, 100);
 
   // Phase 3: Landung mit weichem Settle (kleines Bouncen)
   setTimeout(() => {
-    fly.style.transition = 'transform .3s cubic-bezier(.22,1.25,.36,1), opacity .3s';
+    fly.style.transition = 'transform .18s cubic-bezier(.22,1.25,.36,1), opacity .18s';
     fly.style.transform  = `translate(${dx}px, ${dy}px) scale(1) rotate(${endRot}deg)`;
-    shadow.style.transition = 'transform .3s cubic-bezier(.22,1.25,.36,1), opacity .3s';
+    shadow.style.transition = 'transform .18s cubic-bezier(.22,1.25,.36,1), opacity .18s';
     shadow.style.transform  = `translate(${dx}px, ${dy}px) scale(1)`;
     shadow.style.opacity    = '.7';
-  }, 440);
+  }, 230);
 
   // Schatten ausblenden und alles entfernen
   setTimeout(() => {
-    shadow.style.transition = 'opacity .2s ease-out';
+    shadow.style.transition = 'opacity .14s ease-out';
     shadow.style.opacity = '0';
-    fly.style.transition = 'opacity .18s ease-out';
+    fly.style.transition = 'opacity .12s ease-out';
     fly.style.opacity = '0';
-  }, 760);
-  setTimeout(() => { fly.remove(); shadow.remove(); }, 960);
+  }, 400);
+  setTimeout(() => { fly.remove(); shadow.remove(); }, 540);
 }
 
 // Animiert eine Karte vom Deck zu einem Ziel.
@@ -1497,62 +1511,62 @@ function flyCardBack(from, to, opts = {}) {
 
   // Phase 1: Sanftes Abheben mit beginnender Drehung (Anticipation)
   requestAnimationFrame(() => {
-    fly.style.transition = 'transform .22s cubic-bezier(.4,1.4,.5,1), opacity .22s ease-out';
+    fly.style.transition = 'transform .14s cubic-bezier(.4,1.4,.5,1), opacity .14s ease-out';
     fly.style.transform  = `translate(${dx*0.22}px, ${dy*0.22 - arcLift*0.45}px) scale(1.06) rotate(${midRot*0.35}deg) rotateY(${useFlip ? 55 : 30}deg)`;
     fly.style.opacity    = '1';
 
-    shadow.style.transition = 'transform .22s ease-out, opacity .22s ease-out';
+    shadow.style.transition = 'transform .14s ease-out, opacity .14s ease-out';
     shadow.style.transform  = `translate(${dx*0.22}px, ${dy*0.22}px) scale(.5)`;
     shadow.style.opacity    = '.3';
 
-    trail.style.transition = 'transform .22s ease-out, opacity .22s';
+    trail.style.transition = 'transform .14s ease-out, opacity .14s';
     trail.style.transform  = `translate(${dx*0.22}px, ${dy*0.22 - arcLift*0.45}px) scale(1)`;
     trail.style.opacity    = '.9';
   });
 
   // Phase 2: Höchster Punkt der Flugbahn + mittendrin durch die "Kante" (90°)
   setTimeout(() => {
-    fly.style.transition = 'transform .3s cubic-bezier(.42,0,.58,1), opacity .3s';
+    fly.style.transition = 'transform .18s cubic-bezier(.42,0,.58,1), opacity .18s';
     fly.style.transform  = `translate(${dx*0.62}px, ${dy*0.62 - arcLift}px) scale(1.1) rotate(${midRot}deg) rotateY(${useFlip ? 110 : 60}deg)`;
-    shadow.style.transition = 'transform .3s ease-in-out, opacity .3s';
+    shadow.style.transition = 'transform .18s ease-in-out, opacity .18s';
     shadow.style.transform  = `translate(${dx*0.62}px, ${dy*0.62}px) scale(.35)`;
     shadow.style.opacity    = '.16';
-    trail.style.transition = 'transform .3s cubic-bezier(.42,0,.58,1), opacity .3s';
+    trail.style.transition = 'transform .18s cubic-bezier(.42,0,.58,1), opacity .18s';
     trail.style.transform  = `translate(${dx*0.62}px, ${dy*0.62 - arcLift}px) scale(.85)`;
     trail.style.opacity    = '.6';
-  }, 220);
+  }, 130);
 
   // Phase 3: Landung mit Settle (Flip endet, kleines Bouncen)
   setTimeout(() => {
-    fly.style.transition = 'transform .34s cubic-bezier(.22,1.3,.36,1), opacity .34s, filter .34s';
+    fly.style.transition = 'transform .2s cubic-bezier(.22,1.3,.36,1), opacity .2s, filter .2s';
     fly.style.transform  = `translate(${dx}px, ${dy}px) scale(${endScale}) rotate(${endRot}deg) rotateY(${endRotY}deg)`;
     fly.classList.remove('glow');
 
-    shadow.style.transition = 'transform .34s cubic-bezier(.22,1.3,.36,1), opacity .34s';
+    shadow.style.transition = 'transform .2s cubic-bezier(.22,1.3,.36,1), opacity .2s';
     shadow.style.transform  = `translate(${dx}px, ${dy}px) scale(1)`;
     shadow.style.opacity    = '.55';
 
-    trail.style.transition = 'transform .34s cubic-bezier(.22,1,.36,1), opacity .34s';
+    trail.style.transition = 'transform .2s cubic-bezier(.22,1,.36,1), opacity .2s';
     trail.style.transform  = `translate(${dx}px, ${dy}px) scale(.4)`;
     trail.style.opacity    = '0';
-  }, 520);
+  }, 290);
 
   // Ziel-Element nach Landung sanft einblenden
-  const arrival = 860;
+  const arrival = 480;
   setTimeout(() => {
     if (targetEl) {
-      targetEl.style.transition = 'opacity .22s ease-out, transform .22s ease-out';
+      targetEl.style.transition = 'opacity .16s ease-out, transform .16s ease-out';
       targetEl.style.opacity = '1';
     }
     if (typeof opts.onArrive === 'function') opts.onArrive();
     // nahtloser Fade-Out
-    fly.style.transition = 'opacity .18s ease-out';
+    fly.style.transition = 'opacity .12s ease-out';
     fly.style.opacity = '0';
-    shadow.style.transition = 'opacity .18s ease-out';
+    shadow.style.transition = 'opacity .12s ease-out';
     shadow.style.opacity = '0';
   }, arrival);
 
-  setTimeout(() => { fly.remove(); trail.remove(); shadow.remove(); }, arrival + 240);
+  setTimeout(() => { fly.remove(); trail.remove(); shadow.remove(); }, arrival + 160);
 }
 
 function showColorFlash(color) {
