@@ -896,10 +896,6 @@
       10% { opacity: 0.9; }
       100% { transform: translate(40vw, 70vh) rotate(360deg); opacity: 0; }
     }
-    @keyframes ripeGlow {
-      0%, 100% { filter: drop-shadow(0 0 2px rgba(255,210,80,0.4)); }
-      50% { filter: drop-shadow(0 0 8px rgba(255,210,80,0.9)); }
-    }
     @keyframes waterShimmer {
       0% { opacity: 0.9; transform: scale(0.6); }
       100% { opacity: 0; transform: scale(1.4); }
@@ -1132,7 +1128,9 @@
       z-index: 0;
     }
     .bed-slot[data-state="ready"] .plant-anim {
-      animation: windSway 3s ease-in-out infinite, ripeGlow 2s ease-in-out infinite !important;
+      animation: windSway 3s ease-in-out infinite !important;
+      text-shadow: 0 0 6px rgba(255,210,80,0.75);
+      will-change: transform;
     }
     /* Wachstumsbar: weicher Verlauf + Glanz */
     .growth-bar {
