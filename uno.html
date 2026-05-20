@@ -27,11 +27,11 @@
   body {
     min-height:100vh;
     background:
-      radial-gradient(ellipse at 12% 8%, rgba(214,48,49,0.28) 0%, transparent 48%),
-      radial-gradient(ellipse at 88% 10%, rgba(9,132,227,0.28) 0%, transparent 45%),
-      radial-gradient(ellipse at 15% 92%, rgba(0,184,148,0.22) 0%, transparent 50%),
-      radial-gradient(ellipse at 85% 90%, rgba(253,203,110,0.25) 0%, transparent 50%),
-      linear-gradient(160deg, #2a1456 0%, #3a1c6e 30%, #2c1860 60%, #1f1247 100%);
+      radial-gradient(ellipse at 10% 8%,  rgba(214,48,49,0.18)  0%, transparent 45%),
+      radial-gradient(ellipse at 90% 12%, rgba(9,132,227,0.16)  0%, transparent 45%),
+      radial-gradient(ellipse at 12% 92%, rgba(0,184,148,0.16)  0%, transparent 50%),
+      radial-gradient(ellipse at 88% 88%, rgba(253,203,110,0.22) 0%, transparent 50%),
+      linear-gradient(160deg, #fff5e6 0%, #ffe8d6 28%, #ffd9c2 60%, #ffe0e9 100%);
     background-attachment:fixed;
     font-family:'Quicksand',sans-serif;
     overflow-x:hidden;
@@ -39,21 +39,34 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* STARS BACKGROUND */
-  .stars { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
-  .star  { position:absolute; border-radius:50%; will-change:opacity,transform; }
-  .star.s { width:1px; height:1px; background:rgba(255,255,255,0.85); }
-  .star.m { width:2px; height:2px; background:white; }
-  .star.l { width:3px; height:3px; box-shadow:0 0 6px 1.5px currentColor; }
-  .star.l.red    { color:rgba(255,140,160,0.9); background:rgba(255,140,160,0.9); }
-  .star.l.yellow { color:rgba(255,220,140,0.9); background:rgba(255,220,140,0.9); }
-  .star.l.green  { color:rgba(120,230,180,0.9); background:rgba(120,230,180,0.9); }
-  .star.l.blue   { color:rgba(150,200,255,0.9); background:rgba(150,200,255,0.9); }
-  @keyframes starTwinkle { 0%,100%{opacity:.05;transform:scale(.7)} 50%{opacity:1;transform:scale(1.3)} }
-  @keyframes starFade { 0%{opacity:0} 18%{opacity:.7} 80%{opacity:.4} 100%{opacity:0} }
+  /* FLOATING UNO CARDS BACKGROUND */
+  .floating-cards { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .fcard {
+    position:absolute;
+    width:44px; height:62px;
+    border-radius:9px;
+    opacity:.22;
+    box-shadow:0 6px 14px rgba(0,0,0,0.10), inset 0 0 0 2px rgba(255,255,255,0.35);
+    will-change:transform,opacity;
+  }
+  .fcard::before {
+    content:''; position:absolute; inset:6px;
+    background:rgba(255,255,255,0.85);
+    border-radius:50% / 38%;
+    transform:rotate(-22deg);
+  }
+  .fcard.red    { background:linear-gradient(155deg,#ff5a5b,#d63031 60%,#a01618); }
+  .fcard.yellow { background:linear-gradient(155deg,#ffe389,#fdcb6e 60%,#c98f1d); }
+  .fcard.green  { background:linear-gradient(155deg,#3de0bb,#00b894 60%,#006d52); }
+  .fcard.blue   { background:linear-gradient(155deg,#54b6ff,#0984e3 60%,#02497d); }
+  @keyframes floatDrift {
+    0%   { transform:translate(0,0) rotate(var(--r0,0deg)); }
+    50%  { transform:translate(var(--dx,30px), var(--dy,-40px)) rotate(var(--r1,180deg)); }
+    100% { transform:translate(0,0) rotate(var(--r0,0deg)); }
+  }
 
   /* AUTH */
-  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:#0d0118; }
+  .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#fff5e6,#ffe0e9); }
   .auth-spinner { width:36px; height:36px; border:3px solid rgba(255,107,157,0.2); border-top-color:var(--rose); border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
@@ -83,7 +96,7 @@
   /* PAGE */
   .page { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:70px 12px 40px; }
   .page-title { font-family:'Dancing Script',cursive; font-size:clamp(34px,7vw,58px); font-weight:700; background:linear-gradient(135deg,var(--uno-red) 0%,var(--uno-yellow) 33%,var(--uno-green) 66%,var(--uno-blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; margin-bottom:4px; filter:drop-shadow(0 0 22px rgba(253,203,110,0.35)); letter-spacing:2px; }
-  .page-subtitle { font-size:12px; color:var(--text-mid); letter-spacing:2px; text-transform:uppercase; font-weight:500; text-align:center; margin-bottom:24px; }
+  .page-subtitle { font-size:12px; color:#7a3a55; letter-spacing:2px; text-transform:uppercase; font-weight:600; text-align:center; margin-bottom:24px; }
 
   /* LOBBY CARDS */
   .lobby-card, .waiting-card, .invite-card { background:var(--card-bg); backdrop-filter:blur(20px); border:1.5px solid var(--card-border); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 8px 50px rgba(0,0,0,0.5); text-align:center; }
@@ -135,7 +148,7 @@
 
   /* OPPONENT HAND */
   .opp-area { width:100%; display:flex; flex-direction:column; align-items:center; margin-bottom:10px; min-height:120px; }
-  .opp-name-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px; font-weight:700; color:var(--text-mid); letter-spacing:1px; text-transform:uppercase; }
+  .opp-name-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px; font-weight:700; color:#5a2a48; letter-spacing:1px; text-transform:uppercase; }
   .opp-name-row .ohcount { background:rgba(214,48,49,0.15); border:1px solid rgba(214,48,49,0.4); color:#ff8a8a; padding:2px 10px; border-radius:50px; font-size:12px; font-family:'Dancing Script',cursive; font-weight:700; }
   .opp-hand { display:flex; justify-content:center; min-height:80px; perspective:800px; }
   .opp-hand .card-back { width:42px; height:64px; margin-left:-22px; transform-origin:bottom center; transition:transform .3s; }
@@ -144,7 +157,7 @@
   /* TABLE (DECK + DISCARD) */
   .table-area { display:flex; gap:30px; align-items:center; justify-content:center; margin:8px 0 14px; perspective:900px; }
   .deck-pile, .discard-pile { width:80px; height:120px; position:relative; }
-  .pile-label { position:absolute; bottom:-22px; left:0; right:0; text-align:center; font-size:10px; letter-spacing:1.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700; }
+  .pile-label { position:absolute; bottom:-22px; left:0; right:0; text-align:center; font-size:10px; letter-spacing:1.5px; color:#6a3050; text-transform:uppercase; font-weight:800; }
   .deck-pile { cursor:pointer; transition:transform .2s; }
   .deck-pile.drawable:hover { transform:translateY(-4px) scale(1.04); filter:drop-shadow(0 4px 14px rgba(253,203,110,0.6)); }
   .deck-pile.drawable::after { content:''; position:absolute; inset:-6px; border:2px dashed rgba(253,203,110,0.7); border-radius:18px; animation:drawableHint 1.4s ease-in-out infinite; pointer-events:none; }
@@ -293,8 +306,13 @@
     filter:drop-shadow(0 8px 18px rgba(253,203,110,0.5));
   }
   .my-hand .card:not(.playable) { filter:brightness(0.5) saturate(0.6); cursor:not-allowed; }
-  .my-hand .card.just-drawn { animation:cardDrawn .55s cubic-bezier(.22,1,.36,1); }
-  @keyframes cardDrawn { 0%{transform:translateY(-80px) scale(.3) rotateY(180deg);opacity:0} 100%{transform:translateY(0) scale(1) rotateY(0);opacity:1} }
+  .my-hand .card.just-drawn { animation:cardDrawnFancy .7s cubic-bezier(.22,1,.36,1); transform-style:preserve-3d; }
+  @keyframes cardDrawnFancy {
+    0%   { transform:translateY(-110px) scale(.25) rotateY(180deg) rotateZ(-18deg); opacity:0; filter:drop-shadow(0 0 0 transparent); }
+    45%  { opacity:1; filter:drop-shadow(0 10px 22px rgba(253,203,110,.7)); }
+    70%  { transform:translateY(-10px) scale(1.08) rotateY(0deg) rotateZ(4deg); }
+    100% { transform:translateY(0) scale(1) rotateY(0deg) rotateZ(0); opacity:1; filter:none; }
+  }
   .my-hand .card.playing-out { animation:playingOut .35s ease-in forwards; }
   @keyframes playingOut { 0%{transform:translateY(0) scale(1)} 100%{transform:translateY(-160px) scale(.7) rotate(20deg);opacity:0} }
 
@@ -338,7 +356,7 @@
   .color-swatch.blue   { background:var(--uno-blue);   color:#fff; }
 
   /* CURRENT COLOR INDICATOR */
-  .color-indicator { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-mid); margin-top:8px; }
+  .color-indicator { display:flex; align-items:center; gap:6px; font-size:11px; color:#5a2a48; font-weight:600; margin-top:8px; }
   .color-dot { width:18px; height:18px; border-radius:50%; box-shadow:0 0 12px currentColor; border:1.5px solid rgba(255,255,255,0.3); transition:background .3s; }
   .color-dot.red    { background:var(--uno-red);    color:var(--uno-red); }
   .color-dot.yellow { background:var(--uno-yellow); color:var(--uno-yellow); }
@@ -384,9 +402,31 @@
   /* FLYING CARD (for play / draw animations) */
   .fly-card {
     position:fixed; z-index:99996; pointer-events:none;
-    transition:transform .55s cubic-bezier(.22,1,.36,1), opacity .55s;
+    transition:transform .7s cubic-bezier(.22,1,.36,1), opacity .7s, filter .7s;
+    transform-style:preserve-3d;
+    will-change:transform,opacity,filter;
+  }
+  .fly-card.glow {
+    filter:drop-shadow(0 0 18px rgba(253,203,110,0.85)) drop-shadow(0 0 6px rgba(253,203,110,0.5));
+  }
+  .fly-trail {
+    position:fixed; z-index:99995; pointer-events:none;
+    width:80px; height:120px; border-radius:14px;
+    background:radial-gradient(ellipse at center, rgba(253,203,110,.55) 0%, rgba(253,203,110,.15) 50%, transparent 75%);
+    opacity:0;
+    transition:transform .7s cubic-bezier(.22,1,.36,1), opacity .7s;
     will-change:transform,opacity;
   }
+
+  /* DECK glow while auto-draw is pending */
+  .deck-pile.auto-draw-pending::before {
+    content:''; position:absolute; inset:-10px; border-radius:18px;
+    border:3px solid rgba(214,48,49,0.85);
+    box-shadow:0 0 24px rgba(214,48,49,0.65), inset 0 0 16px rgba(214,48,49,0.45);
+    animation:autoDrawPulse .85s ease-in-out infinite;
+    pointer-events:none; z-index:4;
+  }
+  @keyframes autoDrawPulse { 0%,100%{opacity:.65;transform:scale(1)} 50%{opacity:1;transform:scale(1.06)} }
 
   /* DIRECTION INDICATOR */
   .direction-indicator {
@@ -447,7 +487,7 @@
 </head>
 <body>
 
-<div class="stars" id="starsContainer"></div>
+<div class="floating-cards" id="floatingCardsContainer"></div>
 
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
@@ -616,29 +656,31 @@
 </div>
 
 <script>
-// Stars background
+// Floating UNO-cards background
 (function() {
-  const container = document.getElementById('starsContainer');
-  const types = [
-    {cls:'s', count:110, anim:'starFade',    durMin:3,   durMax:8},
-    {cls:'m', count:55,  anim:'starFade',    durMin:4,   durMax:10},
-    {cls:'l red',    count:14, anim:'starTwinkle', durMin:2.5, durMax:5},
-    {cls:'l yellow', count:14, anim:'starTwinkle', durMin:3,   durMax:6},
-    {cls:'l green',  count:12, anim:'starTwinkle', durMin:2,   durMax:5},
-    {cls:'l blue',   count:14, anim:'starTwinkle', durMin:2.5, durMax:5},
-  ];
+  const container = document.getElementById('floatingCardsContainer');
+  if (!container) return;
+  const colors = ['red','yellow','green','blue'];
+  const count = 16;
   const frag = document.createDocumentFragment();
-  for (const t of types) {
-    for (let i = 0; i < t.count; i++) {
-      const el = document.createElement('div');
-      el.className = 'star ' + t.cls;
-      el.style.left = Math.random()*100 + '%';
-      el.style.top  = Math.random()*100 + '%';
-      const dur = t.durMin + Math.random()*(t.durMax - t.durMin);
-      const delay = Math.random()*t.durMax;
-      el.style.animation = `${t.anim} ${dur.toFixed(2)}s ${delay.toFixed(2)}s ease-in-out infinite`;
-      frag.appendChild(el);
-    }
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'fcard ' + colors[i % colors.length];
+    el.style.left = Math.random()*96 + '%';
+    el.style.top  = Math.random()*92 + '%';
+    const r0 = (Math.random()*60 - 30).toFixed(1) + 'deg';
+    const r1 = (Math.random()*360 - 180).toFixed(1) + 'deg';
+    const dx = (Math.random()*120 - 60).toFixed(0) + 'px';
+    const dy = (Math.random()*120 - 60).toFixed(0) + 'px';
+    el.style.setProperty('--r0', r0);
+    el.style.setProperty('--r1', r1);
+    el.style.setProperty('--dx', dx);
+    el.style.setProperty('--dy', dy);
+    el.style.transform = `rotate(${r0})`;
+    const dur = 22 + Math.random()*18;
+    const delay = -Math.random()*dur;
+    el.style.animation = `floatDrift ${dur.toFixed(1)}s ${delay.toFixed(1)}s ease-in-out infinite`;
+    frag.appendChild(el);
   }
   container.appendChild(frag);
 })();
@@ -688,6 +730,13 @@ let localState = null;       // used when mode === 'bot'
 let botTurnTimer = null;
 let botCatchTimer = null;
 let pveStatsCounted = false; // ensure single-count per bot game
+let autoDrawTimer = null;    // pending auto-draw for opponent +2/+4
+let autoDrawTriggeredFor = 0;// lastAction.ts already handled
+function cancelAutoDraw() {
+  if (autoDrawTimer) { clearTimeout(autoDrawTimer); autoDrawTimer = null; }
+  const deckEl = document.getElementById('deckPile');
+  if (deckEl) deckEl.classList.remove('auto-draw-pending');
+}
 
 // ── UTILITIES ─────────────────────────────────────────────────────────────
 function displayName(email) {
@@ -1039,7 +1088,7 @@ function animateOpponentAction(action) {
   } else if (action.type === 'draw') {
     // Cards flying from deck to opp hand
     for (let i=0;i<(action.count||1);i++) {
-      setTimeout(() => flyCardBack(getDeckPoint(), getOppHandPoint()), i*120);
+      setTimeout(() => flyCardBack(getDeckPoint(), getOppHandPoint()), i*160);
     }
   } else if (action.type === 'colorPick') {
     showColorFlash(action.color);
@@ -1048,6 +1097,40 @@ function animateOpponentAction(action) {
   } else if (action.type === 'uno') {
     if (action.by !== pkey(currentUser)) showUnoShout();
   }
+}
+
+// Schedule automatic drawing of penalty cards when opponent plays +2/+4.
+// If the player holds a counter (+2/+4), give them a 3-second window before auto-drawing.
+function maybeScheduleAutoDraw(state) {
+  if (!state || state.status !== 'running') { cancelAutoDraw(); return; }
+  const myK = pkey(currentUser);
+  const stack = state.drawStack || 0;
+  if (state.currentTurn !== currentUser || stack <= 0) { cancelAutoDraw(); return; }
+  const la = state.lastAction;
+  if (!la || la.by === myK) { cancelAutoDraw(); return; } // only react to opponent's penalty
+  if (la.ts && autoDrawTriggeredFor === la.ts) return;    // already handled
+  if (la.ts) autoDrawTriggeredFor = la.ts;
+
+  const top = state.discard[state.discard.length-1];
+  const hand = (state.hands && state.hands[myK]) || [];
+  const hasCounter = hand.some(id => canPlayCard(id, top, state.currentColor, stack));
+
+  cancelAutoDraw();
+  const deckEl = document.getElementById('deckPile');
+  if (deckEl) deckEl.classList.add('auto-draw-pending');
+
+  const delay = hasCounter ? 3000 : 900;
+  if (hasCounter) showToast(`Du musst +${stack} ziehen – oder schnell kontern! ⏱️`, 2600);
+
+  autoDrawTimer = setTimeout(() => {
+    autoDrawTimer = null;
+    if (deckEl) deckEl.classList.remove('auto-draw-pending');
+    if (isActing) return;
+    if (!gameState || gameState.status !== 'running') return;
+    if (gameState.currentTurn !== currentUser) return;
+    if ((gameState.drawStack||0) === 0) return;
+    onDrawClick();
+  }, delay);
 }
 
 function getElCenter(el) {
@@ -1074,18 +1157,48 @@ function flyCard(cardId, from, to, faceUp = true) {
   setTimeout(() => fly.remove(), 600);
 }
 
-function flyCardBack(from, to) {
+function flyCardBack(from, to, opts = {}) {
+  // opts.faceUpCardId: if provided, card flips mid-flight from back to that face
   const fly = buildBackEl();
-  fly.classList.add('fly-card');
+  fly.classList.add('fly-card','glow');
   fly.style.left = (from.x - 40) + 'px';
   fly.style.top  = (from.y - 60) + 'px';
-  fly.style.transform = 'scale(1)';
+  fly.style.transform = 'scale(1) rotateY(0deg)';
   document.body.appendChild(fly);
+
+  // Glow trail follows the card
+  const trail = document.createElement('div');
+  trail.className = 'fly-trail';
+  trail.style.left = (from.x - 40) + 'px';
+  trail.style.top  = (from.y - 60) + 'px';
+  document.body.appendChild(trail);
+
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const arcLift = 60 + Math.random()*20;
+  const midRot  = (Math.random()*30 - 15);
+  const endRot  = (Math.random()*40 - 20);
+  const endScale = 0.92;
+
+  // Phase 1: arc to midpoint with a lift + half flip
   requestAnimationFrame(() => {
-    fly.style.transform = `translate(${to.x - from.x}px, ${to.y - from.y}px) scale(0.55) rotate(${(Math.random()-.5)*40}deg)`;
-    fly.style.opacity = '0.4';
+    fly.style.transition = 'transform .35s cubic-bezier(.34,1.2,.64,1), opacity .35s';
+    fly.style.transform = `translate(${dx*0.55}px, ${dy*0.55 - arcLift}px) scale(1.05) rotate(${midRot}deg) rotateY(90deg)`;
+    trail.style.transition = 'transform .35s cubic-bezier(.34,1.2,.64,1), opacity .35s';
+    trail.style.transform = `translate(${dx*0.55}px, ${dy*0.55 - arcLift}px) scale(.9)`;
+    trail.style.opacity = '0.85';
   });
-  setTimeout(() => fly.remove(), 600);
+
+  // Phase 2: settle into target, flip completes
+  setTimeout(() => {
+    fly.style.transition = 'transform .35s cubic-bezier(.22,1,.36,1), opacity .35s, filter .35s';
+    fly.style.transform = `translate(${dx}px, ${dy}px) scale(${endScale}) rotate(${endRot}deg) rotateY(0deg)`;
+    fly.classList.remove('glow');
+    trail.style.transition = 'transform .35s cubic-bezier(.22,1,.36,1), opacity .35s';
+    trail.style.transform = `translate(${dx}px, ${dy}px) scale(.5)`;
+    trail.style.opacity = '0';
+  }, 340);
+
+  setTimeout(() => { fly.remove(); trail.remove(); }, 780);
 }
 
 function showColorFlash(color) {
@@ -1113,6 +1226,7 @@ async function onCardClick(cardId) {
   if (isActing) return;
   if (!gameState || gameState.status !== 'running') return;
   if (gameState.currentTurn !== currentUser) return;
+  cancelAutoDraw();
   const top = gameState.discard[gameState.discard.length-1];
   if (!canPlayCard(cardId, top, gameState.currentColor, gameState.drawStack||0)) {
     showToast('Diese Karte passt nicht 🚫'); return;
@@ -1128,6 +1242,10 @@ async function onCardClick(cardId) {
 
 async function playCard(cardId, chosenColor) {
   isActing = true;
+  cancelAutoDraw();
+  // Clear any lingering pass-button from a previous draw
+  const _passBtn = document.getElementById('passBtn');
+  if (_passBtn) { _passBtn.style.display = 'none'; _passBtn.onclick = null; }
   try {
     // Animate own card flying out
     const cardEl = document.querySelector(`#myHand .card[data-card-id="${cardId}"]`);
@@ -1211,6 +1329,7 @@ async function onDrawClick() {
   if (isActing) return;
   if (!gameState || gameState.status !== 'running') return;
   if (gameState.currentTurn !== currentUser) return;
+  cancelAutoDraw();
   isActing = true;
   try {
     const stackToDraw = gameState.drawStack || 0;
@@ -1219,8 +1338,9 @@ async function onDrawClick() {
     // Animations: cards flying from deck to my hand
     const from = getDeckPoint();
     const to = getMyHandPoint();
+    const stagger = drawCount > 1 ? 160 : 0;
     for (let i=0;i<drawCount;i++) {
-      setTimeout(() => flyCardBack(from, to), i*100);
+      setTimeout(() => flyCardBack(from, to), i*stagger);
     }
 
     let drawnCard = null;
@@ -1237,7 +1357,7 @@ async function onDrawClick() {
 
       // Reshuffle discard into deck if needed
       const needed = cnt;
-      if (deck.length < needed) {
+      if (deck.length < needed && discard.length > 1) {
         const keepTop = discard[discard.length-1];
         const reshuffled = shuffle(discard.slice(0, -1));
         deck = reshuffled.concat(deck);
@@ -1621,7 +1741,7 @@ function botTurn() {
     // Draw
     const cnt = drawStack > 0 ? drawStack : 1;
     let deck = state.deck;
-    if (deck.length < cnt) {
+    if (deck.length < cnt && state.discard.length > 1) {
       const keepTop = state.discard[state.discard.length-1];
       const reshuffled = shuffle(state.discard.slice(0,-1));
       deck = reshuffled.concat(deck);
@@ -1802,6 +1922,7 @@ function handleGameState(state) {
   if (state.status === 'running' || state.status === 'finished') {
     if (document.getElementById('gameSection').style.display === 'none') {
       initGame(state);
+      maybeScheduleAutoDraw(state);
     } else {
       // animate opponent actions (only if action by opponent and newer)
       const myK = pkey(currentUser);
@@ -1812,6 +1933,7 @@ function handleGameState(state) {
         lastSeenAction = state.lastAction.ts;
       }
       renderGame(state);
+      maybeScheduleAutoDraw(state);
     }
     if (state.status === 'finished') {
       updateOwnStats(state);
