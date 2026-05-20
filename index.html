@@ -2140,6 +2140,20 @@
     outline: none;
   }
   .survey-choice-input:focus { border-color: #ff6b9d; }
+  .survey-opt-add {
+    border: none; cursor: pointer;
+    background: linear-gradient(135deg, var(--rose,#e8738a), #c85070);
+    color: #fff; border-radius: 50%;
+    width: 26px; height: 26px; font-size: 16px; font-weight: 800;
+    line-height: 1; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: transform 0.15s ease;
+  }
+  .survey-opt-add:hover { transform: scale(1.08); }
+  .survey-choice-hint {
+    font-size: 11px; font-weight: 700; color: var(--text-mid);
+    padding: 4px 10px; font-style: italic;
+  }
   .survey-break-btn {
     display: inline-flex; align-items: center; gap: 4px;
     border: 1.5px solid var(--ui-modal-border); border-radius: 50px;
@@ -3800,8 +3814,12 @@
     const host = document.getElementById('surveyPageHost');
     if (!host) return;
     const total = pages.length;
+    if (total === 0) {
+      host.innerHTML = '<div style="font-size:13px;color:var(--text-mid);font-style:italic;padding:8px 4px;">Diese Umfrage enthält keine Fragen.</div>';
+      return;
+    }
     const currentIdx = Math.min(Math.max(_surveyCurrentPage, 1), total) - 1;
-    const pageItems = pages[currentIdx];
+    const pageItems = pages[currentIdx] || [];
     let questionsHtml = '';
     pageItems.forEach(({ q, index }) => {
       const inputHtml = _surveyQuestionInputHtml(q, index, done);
@@ -4016,12 +4034,25 @@
     _surveyRebalancePages();
   }
 
+  function _surveyEnforceMonotonic() {
+    // Seitennummern müssen entlang der Reihenfolge nicht-fallend sein
+    // (sonst sehen Empfänger auf Seite 1 z.B. eine Frage mit Label "2.").
+    let curPage = _surveyQuestions[0]?.page || 1;
+    if (curPage !== 1) { _surveyQuestions[0].page = 1; curPage = 1; }
+    for (let i = 1; i < _surveyQuestions.length; i++) {
+      const desired = _surveyQuestions[i].page || 1;
+      curPage = Math.max(curPage, desired);
+      _surveyQuestions[i].page = curPage;
+    }
+  }
+
   function _surveyMoveQuestion(i, dir) {
     const j = i + dir;
     if (j < 0 || j >= _surveyQuestions.length) return;
     const tmp = _surveyQuestions[i];
     _surveyQuestions[i] = _surveyQuestions[j];
     _surveyQuestions[j] = tmp;
+    _surveyEnforceMonotonic();
     _surveyRebalancePages();
   }
 
@@ -4041,7 +4072,10 @@
           ${(q.options || []).map((o, oi) =>
             `<span class="survey-choice-chip">${mailEsc(o)}<button type="button" data-rm-opt="${oi}" data-qi="${i}">×</button></span>`
           ).join('')}
-          <input type="text" class="survey-choice-input" data-opt-input="${i}" placeholder="${(q.options || []).length >= 4 ? 'Max. 4 Optionen' : 'Option +'}" maxlength="60" ${(q.options || []).length >= 4 ? 'disabled' : ''}>
+          ${(q.options || []).length >= 4
+            ? '<span class="survey-choice-hint">Max. 4 Optionen</span>'
+            : `<input type="text" class="survey-choice-input" data-opt-input="${i}" placeholder="Option…" maxlength="60">
+               <button type="button" class="survey-opt-add" data-opt-add="${i}" title="Option hinzufügen">+</button>`}
         </div>` : '';
       parts.push(`
         <div class="survey-question-card" data-qi="${i}">
@@ -4526,8 +4560,38 @@
     document.getElementById('surveyAddQBtn').addEventListener('click', surveyAddQuestion);
     // Event-Delegation für editierbare Fragenkarten
     const qList = document.getElementById('surveyQuestionList');
+    // Helper: aktuellen Wert aus dem Options-Input einer Karte holen + Option anhängen
+    function _addOptionFromInput(qi) {
+      const q = _surveyQuestions[qi];
+      if (!q) return;
+      if (!q.options) q.options = [];
+      if (q.options.length >= 4) { surveyErr('Maximal 4 Optionen pro Frage.'); return; }
+      const input = qList.querySelector(`input[data-opt-input="${qi}"]`);
+      const val = input ? (input.value || '').trim() : '';
+      if (!val) {
+        if (input) input.focus();
+        return;
+      }
+      if (q.options.includes(val)) {
+        surveyErr('Diese Option gibt es schon.');
+        if (input) { input.focus(); input.select(); }
+        return;
+      }
+      q.options.push(val);
+      surveyErr('');
+      renderSurveyQuestionList();
+      // Fokus zurück ins Eingabefeld (sofern noch nicht max. 4 erreicht)
+      const again = qList.querySelector(`input[data-opt-input="${qi}"]`);
+      if (again) again.focus();
+    }
+
     qList.addEventListener('click', e => {
       const t = e.target;
+      // Option hinzufügen (sichtbarer +-Button)
+      if (t.dataset.optAdd !== undefined) {
+        _addOptionFromInput(parseInt(t.dataset.optAdd, 10));
+        return;
+      }
       // Reorder / delete
       const act = t.dataset.act;
       if (act) {
@@ -4585,21 +4649,7 @@
       const t = e.target;
       if (t.dataset.optInput !== undefined && e.key === 'Enter') {
         e.preventDefault();
-        const qi = parseInt(t.dataset.optInput, 10);
-        const val = (t.value || '').trim();
-        if (!val) return;
-        const q = _surveyQuestions[qi];
-        if (!q) return;
-        if (!q.options) q.options = [];
-        if (q.options.length >= 4) { surveyErr('Maximal 4 Optionen pro Frage.'); return; }
-        q.options.push(val);
-        surveyErr('');
-        renderSurveyQuestionList();
-        // Fokus wieder auf das neue Optionsfeld der gleichen Karte (sofern noch nicht max.)
-        requestAnimationFrame(() => {
-          const again = document.querySelector(`input[data-opt-input="${qi}"]`);
-          if (again && !again.disabled) again.focus();
-        });
+        _addOptionFromInput(parseInt(t.dataset.optInput, 10));
       }
     });
     const delOv = document.getElementById('mailDeleteOverlay');
