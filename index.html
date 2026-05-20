@@ -1968,6 +1968,105 @@
   }
   .mail-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ---- Survey / Umfrage ---- */
+  .survey-add-question {
+    background: rgba(232,115,138,0.06);
+    border: 1.5px dashed var(--ui-modal-border);
+    border-radius: 16px; padding: 14px; margin-bottom: 14px; text-align: left;
+  }
+  .survey-add-label {
+    font-size: 11px; font-weight: 700; color: var(--text-mid);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .survey-select {
+    border: 1.5px solid var(--ui-modal-border); border-radius: 12px; padding: 9px 11px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ui-input-color); background: var(--ui-input-bg);
+    outline: none; flex: 1;
+  }
+  .survey-select:focus { border-color: #ff6b9d; }
+  .survey-question-card {
+    border: 1.5px solid var(--ui-modal-border); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 10px; background: var(--ui-input-bg);
+    text-align: left;
+  }
+  .survey-question-text {
+    font-size: 14px; font-weight: 700; color: var(--text-dark);
+    margin-bottom: 4px; word-break: break-word;
+  }
+  .survey-question-kind {
+    font-size: 11px; font-weight: 700; color: var(--text-mid);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .survey-question-options { font-size: 12px; color: var(--text-mid); margin-top: 4px; font-weight: 600; }
+  .survey-question-rm {
+    float: right; border: none; background: none; color: #c85070;
+    font-size: 16px; font-weight: 800; cursor: pointer; padding: 0; line-height: 1;
+  }
+  .survey-choice-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(232,115,138,0.12); border-radius: 50px;
+    padding: 4px 10px; font-size: 12px; font-weight: 600;
+    color: var(--text-dark); margin: 2px 4px 2px 0;
+  }
+  .survey-choice-chip button {
+    border: none; background: none; color: #c85070;
+    cursor: pointer; font-weight: 800; font-size: 13px; padding: 0;
+  }
+  .survey-form { text-align: left; }
+  .survey-form-title {
+    font-size: 17px; font-weight: 800; color: var(--text-dark);
+    margin: 6px 0 14px; word-break: break-word;
+  }
+  .survey-form-question { margin-bottom: 18px; }
+  .survey-form-qlabel {
+    font-size: 14px; font-weight: 700; color: var(--text-dark);
+    margin-bottom: 8px; display: block;
+  }
+  .survey-form-textarea {
+    width: 100%; min-height: 72px; border: 1.5px solid var(--ui-modal-border);
+    border-radius: 12px; padding: 10px 13px; font-family: 'Quicksand', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--ui-input-color);
+    background: var(--ui-input-bg); outline: none; resize: none; box-sizing: border-box;
+  }
+  .survey-form-textarea:focus { border-color: #ff6b9d; }
+  .survey-yesno { display: flex; gap: 8px; }
+  .survey-yesno-btn {
+    flex: 1; border: 1.5px solid var(--ui-modal-border); border-radius: 50px;
+    padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 13px;
+    font-weight: 700; cursor: pointer; background: transparent; color: var(--text-dark);
+    transition: all 0.2s ease;
+  }
+  .survey-yesno-btn.selected {
+    background: linear-gradient(135deg, var(--rose,#e8738a), #c85070); color: #fff;
+    border-color: transparent;
+  }
+  .survey-choice-radio { display: flex; flex-direction: column; gap: 6px; }
+  .survey-choice-opt {
+    border: 1.5px solid var(--ui-modal-border); border-radius: 12px;
+    padding: 10px 14px; font-family: 'Quicksand', sans-serif; font-size: 13px;
+    font-weight: 600; cursor: pointer; background: var(--ui-input-bg);
+    color: var(--text-dark); text-align: left; transition: all 0.2s ease;
+    width: 100%; box-sizing: border-box;
+  }
+  .survey-choice-opt.selected {
+    border-color: #e8738a; background: rgba(232,115,138,0.1); color: #c85070;
+  }
+  .survey-response-card {
+    border: 1.5px solid rgba(212,160,97,0.4); background: rgba(212,160,97,0.08);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; text-align: left;
+  }
+  .survey-response-qtext { font-size: 13px; font-weight: 700; color: var(--text-mid); margin-bottom: 4px; }
+  .survey-response-aval { font-size: 14px; font-weight: 600; color: var(--text-dark); word-break: break-word; }
+  .survey-answered-badge {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
+    color: #fff; background: linear-gradient(135deg, #34d399, #059669);
+    padding: 3px 10px; border-radius: 50px; margin-bottom: 10px; letter-spacing: 0.3px;
+  }
+  @media (max-width: 540px) {
+    #surveyTitle, #surveyQText, #surveyChoiceInput, .survey-select { font-size: 16px !important; }
+  }
+
   /* Auffällige „Neue Post"-Benachrichtigung */
   .mail-notify {
     position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 14px);
@@ -2362,6 +2461,7 @@
       <div class="mail-tabs">
         <button class="mail-tab active" id="mailTabInbox">📥 Posteingang</button>
         <button class="mail-tab" id="mailTabCompose">✏️ Schreiben</button>
+        <button class="mail-tab" id="mailTabSurvey" style="display:none;">📋 Umfrage</button>
       </div>
     </div>
     <div class="mail-modal-body">
@@ -2406,10 +2506,39 @@
         <div class="moment-modal-cost" id="mailCostNote">🪙 Versand kostet 100 Coins</div>
         <div class="moment-modal-error" id="mailError"></div>
       </div>
+      <div id="mailSurveyView" style="display:none;">
+        <div class="mail-recipient-row" id="mailSurveyRecipientRow" style="display:none;">
+          <button class="mail-tab active" data-surveyrcpt="nele">Nele</button>
+          <button class="mail-tab" data-surveyrcpt="andreas">Andreas</button>
+          <button class="mail-tab" data-surveyrcpt="both">Beide</button>
+        </div>
+        <input type="text" class="mail-subject-input" id="surveyTitle" placeholder="Titel der Umfrage…" maxlength="80">
+        <div id="surveyQuestionList"></div>
+        <div class="survey-add-question" id="surveyAddBlock">
+          <div class="survey-add-label">➕ Frage hinzufügen</div>
+          <input type="text" class="mail-subject-input" id="surveyQText" placeholder="Fragetext…" maxlength="120" style="margin-bottom:8px;">
+          <div class="mail-row" style="gap:6px;flex-wrap:wrap;">
+            <select id="surveyQKind" class="survey-select">
+              <option value="text">📝 Freitext</option>
+              <option value="choice">🔘 Mehrfachwahl</option>
+            </select>
+            <button class="mail-btn claim" id="surveyAddQBtn" style="padding:9px 16px;">+</button>
+          </div>
+          <div id="surveyChoiceOptions" style="display:none;margin-top:10px;">
+            <div id="surveyChoiceList"></div>
+            <div class="mail-row" style="gap:6px;margin-top:6px;">
+              <input type="text" class="mail-subject-input" id="surveyChoiceInput" placeholder="Option hinzufügen…" maxlength="60" style="flex:1;margin-bottom:0;">
+              <button class="mail-btn claim" id="surveyChoiceAddBtn" style="padding:9px 14px;">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="moment-modal-error" id="surveyError"></div>
+      </div>
     </div>
     <div class="mail-modal-footer">
       <button class="moment-cancel-btn" id="mailCloseBtn">Schließen</button>
       <button class="moment-save-btn" id="mailSendBtn" style="display:none;">Senden 💌</button>
+      <button class="moment-save-btn" id="surveySendBtn" style="display:none;">Umfrage senden 📋</button>
     </div>
   </div>
 </div>
@@ -2917,6 +3046,8 @@
   let _mailToastTimer = null;
   let _mailOpenId = null;         // aktuell geöffnete Nachricht (Detail-Ansicht)
   let _mailLastUnread = null;     // letzte bekannte Ungelesen-Zahl (für Live-Hinweis)
+  let _surveyQuestions = [];      // Fragen im Survey-Builder
+  let _surveyWorkingChoices = []; // Choice-Optionen für aktuelle Frage
   let autoclickInterval        = null;
   let autoclickFlushInterval   = null;
   let sabotageClickCounter     = 0;
@@ -3446,6 +3577,7 @@
       const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
       const fromHtml = m.isAdmin ? '<span class="mail-admin-pill">⚙️ Admin</span>' : `<span class="txt">${mailEsc(m.fromName || '?')}</span>`;
       const hasAtt = (m.attachments || []).length > 0;
+      const subjectPrefix = m.type === 'survey' ? '📋 ' : m.type === 'survey_response' ? '📊 ' : '';
       row.innerHTML = `
         <div class="mail-unread-dot${m.read ? ' placeholder' : ''}"></div>
         <div class="mail-row-main">
@@ -3453,7 +3585,7 @@
             <div class="mail-row-sender">${fromHtml}</div>
             <div class="mail-row-time">${when}</div>
           </div>
-          <div class="mail-row-subject">${mailEsc(_mailSubjectOf(m))}</div>
+          <div class="mail-row-subject">${subjectPrefix}${mailEsc(_mailSubjectOf(m))}</div>
         </div>
         ${hasAtt ? '<div class="mail-row-clip">📎</div>' : ''}`;
       row.addEventListener('click', () => openMailMessage(id));
@@ -3479,6 +3611,8 @@
     const id = _mailOpenId;
     const m = id && _mailMsgs[id];
     if (!box || !m) { showMailList(); return; }
+    if (m.type === 'survey') { renderSurveyForm(box, id, m); return; }
+    if (m.type === 'survey_response') { renderSurveyResponse(box, id, m); return; }
     const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
     const fromHtml = m.isAdmin ? '<span class="mail-admin-pill">⚙️ Admin</span>' : mailEsc(m.fromName || '?');
     const atts = m.attachments || [];
@@ -3503,6 +3637,242 @@
     box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
   }
 
+  // ---- Survey: Empfänger-Ansicht (Formular ausfüllen) ----
+  function renderSurveyForm(box, id, m) {
+    const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const qs = (m.survey && m.survey.questions) || [];
+    const done = !!m.answered;
+    let questionsHtml = '';
+    qs.forEach((q, i) => {
+      let inputHtml = '';
+      if (q.type === 'text') {
+        inputHtml = `<textarea class="survey-form-textarea" id="sqans_${i}" ${done ? 'disabled' : ''}></textarea>`;
+      } else if (q.type === 'choice') {
+        const opts = (q.options || []).map((opt, oi) =>
+          `<button class="survey-choice-opt${done ? ' disabled-opt' : ''}" data-qi="${i}" data-oi="${oi}" type="button">${mailEsc(opt)}</button>`
+        ).join('');
+        inputHtml = `<div class="survey-choice-radio" id="sqans_${i}">${opts}</div>`;
+      }
+      questionsHtml += `<div class="survey-form-question"><label class="survey-form-qlabel">${i+1}. ${mailEsc(q.text)}</label>${inputHtml}</div>`;
+    });
+    box.innerHTML = `
+      <div class="mail-card admin survey-form">
+        <div class="mail-from"><span class="mail-admin-pill">⚙️ Admin</span></div>
+        <div class="mail-time">${when}</div>
+        ${done ? '<span class="survey-answered-badge">✓ Bereits beantwortet</span>' : ''}
+        <div class="survey-form-title">📋 ${mailEsc(m.subject || 'Umfrage')}</div>
+        ${m.body ? `<div class="mail-body" style="margin-bottom:14px;">${mailEsc(m.body)}</div>` : ''}
+        <div id="surveyFormQuestions">${questionsHtml}</div>
+        <div class="moment-modal-error" id="surveyFormError"></div>
+        <div class="mail-card-btns">
+          ${!done ? `<button class="mail-btn claim" id="surveySubmitBtn">Abschicken ✓</button>` : ''}
+          <button class="mail-btn del" data-del="${id}">🗑️ Löschen</button>
+        </div>
+      </div>`;
+    document.getElementById('mailBackBtn').addEventListener('click', showMailList);
+    if (!done) {
+      box.querySelectorAll('.survey-choice-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qi = btn.dataset.qi;
+          box.querySelectorAll(`.survey-choice-opt[data-qi="${qi}"]`).forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+      });
+      const submitBtn = document.getElementById('surveySubmitBtn');
+      if (submitBtn) submitBtn.addEventListener('click', () => submitSurveyAnswer(id, m));
+    }
+    box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
+  }
+
+  async function submitSurveyAnswer(id, m) {
+    const myKey = (window.currentUser || '').toLowerCase();
+    if (!myKey) return;
+    const qs = (m.survey && m.survey.questions) || [];
+    const answers = [];
+    for (let i = 0; i < qs.length; i++) {
+      const q = qs[i];
+      let value = '';
+      if (q.type === 'text') {
+        const ta = document.getElementById(`sqans_${i}`);
+        value = ta ? ta.value.trim() : '';
+      } else if (q.type === 'choice') {
+        const sel = document.querySelector(`.survey-choice-opt.selected[data-qi="${i}"]`);
+        value = sel ? (q.options || [])[parseInt(sel.dataset.oi, 10)] || '' : '';
+      }
+      if (!value) {
+        const errEl = document.getElementById('surveyFormError');
+        if (errEl) errEl.textContent = `Bitte beantworte Frage ${i+1}.`;
+        return;
+      }
+      answers.push({ questionId: q.id || `q${i}`, questionText: q.text, type: q.type, value });
+    }
+    const submitBtn = document.getElementById('surveySubmitBtn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳…'; }
+    try {
+      const responseMsg = {
+        fromKey: myKey,
+        fromName: window.currentUser || myKey,
+        isAdmin: false,
+        sentAt: Date.now(),
+        type: 'survey_response',
+        subject: m.subject || 'Umfrage',
+        body: '',
+        read: false,
+        claimed: true,
+        attachments: [],
+        surveyResponse: { surveyTitle: m.subject || 'Umfrage', answers }
+      };
+      await push(ref(db, 'mailbox/andreas'), responseMsg);
+      await update(ref(db, `mailbox/${myKey}/${id}`), { answered: true, read: true });
+      mailToast('✅ Umfrage abgeschickt!');
+      showMailList();
+    } catch (e) {
+      console.error('submitSurveyAnswer Fehler:', e);
+      const errEl = document.getElementById('surveyFormError');
+      if (errEl) errEl.textContent = 'Fehler beim Senden – bitte nochmal versuchen.';
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Abschicken ✓'; }
+    }
+  }
+
+  // ---- Survey: Admin-Ansicht (Antworten lesen) ----
+  function renderSurveyResponse(box, id, m) {
+    const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const sr = m.surveyResponse || {};
+    const answers = sr.answers || [];
+    let answersHtml = '';
+    answers.forEach(a => {
+      const displayVal = mailEsc(String(a.value || ''));
+      answersHtml += `<div class="survey-response-card"><div class="survey-response-qtext">${mailEsc(a.questionText || '')}</div><div class="survey-response-aval">${displayVal}</div></div>`;
+    });
+    box.innerHTML = `
+      <div class="mail-card">
+        <div class="mail-from">${mailEsc(m.fromName || '?')}</div>
+        <div class="mail-time">${when}</div>
+        <div class="mail-detail-subject">📊 ${mailEsc(m.subject || 'Umfrage-Antwort')}</div>
+        <div style="margin:10px 0;">${answersHtml || '<em style="color:var(--text-mid);font-size:13px;">Keine Antworten.</em>'}</div>
+        <div class="mail-card-btns">
+          <button class="mail-btn del" data-del="${id}">🗑️ Löschen</button>
+        </div>
+      </div>`;
+    document.getElementById('mailBackBtn').addEventListener('click', showMailList);
+    box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
+  }
+
+  // ---- Survey: Builder (Admin erstellt Umfrage) ----
+  function surveyErr(msg) {
+    const el = document.getElementById('surveyError');
+    if (el) el.textContent = msg;
+  }
+
+  function _surveyKindLabel(kind) {
+    return kind === 'text' ? '📝 Freitext' : kind === 'choice' ? '🔘 Mehrfachwahl' : kind;
+  }
+
+  function renderSurveyChoiceList() {
+    const el = document.getElementById('surveyChoiceList');
+    if (!el) return;
+    el.innerHTML = _surveyWorkingChoices.map((opt, i) =>
+      `<span class="survey-choice-chip">${mailEsc(opt)}<button type="button" data-ci="${i}">×</button></span>`
+    ).join('');
+    el.querySelectorAll('button[data-ci]').forEach(b => b.addEventListener('click', () => {
+      _surveyWorkingChoices.splice(parseInt(b.dataset.ci, 10), 1);
+      renderSurveyChoiceList();
+    }));
+  }
+
+  function renderSurveyQuestionList() {
+    const el = document.getElementById('surveyQuestionList');
+    if (!el) return;
+    if (!_surveyQuestions.length) { el.innerHTML = ''; return; }
+    el.innerHTML = _surveyQuestions.map((q, i) => {
+      const optsHtml = q.type === 'choice' && q.options && q.options.length
+        ? `<div class="survey-question-options">${q.options.map(o => mailEsc(o)).join(' · ')}</div>` : '';
+      return `<div class="survey-question-card">
+        <button class="survey-question-rm" type="button" data-qi="${i}">×</button>
+        <div class="survey-question-text">${i+1}. ${mailEsc(q.text)}</div>
+        <div class="survey-question-kind">${_surveyKindLabel(q.type)}</div>
+        ${optsHtml}
+      </div>`;
+    }).join('');
+    el.querySelectorAll('button[data-qi]').forEach(b => b.addEventListener('click', () => {
+      _surveyQuestions.splice(parseInt(b.dataset.qi, 10), 1);
+      renderSurveyQuestionList();
+    }));
+  }
+
+  function surveyAddQuestion() {
+    surveyErr('');
+    const text = (document.getElementById('surveyQText').value || '').trim();
+    if (!text) { surveyErr('Bitte Fragetext eingeben.'); return; }
+    const kind = document.getElementById('surveyQKind').value;
+    if (kind === 'choice' && _surveyWorkingChoices.length < 2) { surveyErr('Mindestens 2 Optionen für Mehrfachwahl.'); return; }
+    const q = { id: 'q' + Date.now(), text, type: kind };
+    if (kind === 'choice') q.options = [..._surveyWorkingChoices];
+    _surveyQuestions.push(q);
+    document.getElementById('surveyQText').value = '';
+    _surveyWorkingChoices = [];
+    renderSurveyChoiceList();
+    document.getElementById('surveyChoiceOptions').style.display = 'none';
+    document.getElementById('surveyQKind').value = 'text';
+    renderSurveyQuestionList();
+  }
+
+  function renderMailSurvey() {
+    _surveyQuestions = [];
+    _surveyWorkingChoices = [];
+    const titleEl = document.getElementById('surveyTitle');
+    if (titleEl) titleEl.value = '';
+    const choiceOpts = document.getElementById('surveyChoiceOptions');
+    if (choiceOpts) choiceOpts.style.display = 'none';
+    const qKind = document.getElementById('surveyQKind');
+    if (qKind) qKind.value = 'text';
+    renderSurveyQuestionList();
+    renderSurveyChoiceList();
+    surveyErr('');
+    const srvRcptRow = document.getElementById('mailSurveyRecipientRow');
+    if (srvRcptRow && _mailAdminMode && window.mailIsAdmin) {
+      srvRcptRow.style.display = 'flex';
+      srvRcptRow.querySelectorAll('[data-surveyrcpt]').forEach(x => x.classList.toggle('active', x.dataset.surveyrcpt === _mailAdminRecipient));
+    }
+  }
+
+  async function surveySend() {
+    if (!_mailAdminActive()) return;
+    surveyErr('');
+    const title = (document.getElementById('surveyTitle').value || '').trim();
+    if (!title) { surveyErr('Bitte Titel der Umfrage eingeben.'); return; }
+    if (_surveyQuestions.length === 0) { surveyErr('Mindestens eine Frage hinzufügen.'); return; }
+    const recipients = _mailAdminRecipient === 'both' ? ['nele', 'andreas'] : [_mailAdminRecipient];
+    const sendBtn = document.getElementById('surveySendBtn');
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '⏳ Senden…'; }
+    try {
+      const msg = {
+        fromKey: 'admin',
+        fromName: 'Admin',
+        isAdmin: true,
+        sentAt: Date.now(),
+        type: 'survey',
+        subject: title,
+        body: '',
+        read: false,
+        claimed: true,
+        attachments: [],
+        answered: false,
+        survey: { questions: _surveyQuestions.map(q => ({ ...q })) }
+      };
+      for (const rcpt of recipients) {
+        await push(ref(db, `mailbox/${rcpt}`), msg);
+      }
+      _surveyQuestions = [];
+      mailToast('📋 Umfrage gesendet!');
+      switchMailView('inbox');
+    } catch (e) {
+      console.error('surveySend Fehler:', e);
+      surveyErr('Senden fehlgeschlagen – bitte nochmal versuchen.');
+    } finally {
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Umfrage senden 📋'; }
+    }
+  }
 
   function applyMailMode() {
     const adminMode = _mailAdminMode && window.mailIsAdmin;
@@ -3519,6 +3889,17 @@
       recLbl.style.display = '';
       const other = (window.currentUser || '').toLowerCase() === 'andreas' ? 'Nele' : 'Andreas';
       recLbl.textContent = 'An: ' + other;
+    }
+    const surveyTab = document.getElementById('mailTabSurvey');
+    if (surveyTab) surveyTab.style.display = adminMode ? '' : 'none';
+    const srvRcptRow = document.getElementById('mailSurveyRecipientRow');
+    if (srvRcptRow) {
+      if (_mailView === 'survey' && adminMode) {
+        srvRcptRow.style.display = 'flex';
+        srvRcptRow.querySelectorAll('[data-surveyrcpt]').forEach(x => x.classList.toggle('active', x.dataset.surveyrcpt === _mailAdminRecipient));
+      } else {
+        srvRcptRow.style.display = 'none';
+      }
     }
   }
 
@@ -3659,11 +4040,15 @@
     _mailView = v;
     document.getElementById('mailTabInbox').classList.toggle('active', v === 'inbox');
     document.getElementById('mailTabCompose').classList.toggle('active', v === 'compose');
+    document.getElementById('mailTabSurvey').classList.toggle('active', v === 'survey');
     document.getElementById('mailInboxView').style.display = v === 'inbox' ? '' : 'none';
     document.getElementById('mailComposeView').style.display = v === 'compose' ? '' : 'none';
+    document.getElementById('mailSurveyView').style.display = v === 'survey' ? '' : 'none';
     document.getElementById('mailSendBtn').style.display = v === 'compose' ? '' : 'none';
+    document.getElementById('surveySendBtn').style.display = v === 'survey' ? '' : 'none';
     if (v === 'inbox') showMailList();
-    else renderMailCompose();
+    else if (v === 'compose') renderMailCompose();
+    else if (v === 'survey') renderMailSurvey();
   }
 
   async function mailSend() {
@@ -3828,11 +4213,25 @@
     document.getElementById('mailBackBtn').addEventListener('click', showMailList);
     document.getElementById('mailTabInbox').addEventListener('click', () => switchMailView('inbox'));
     document.getElementById('mailTabCompose').addEventListener('click', () => switchMailView('compose'));
-    document.getElementById('mailAdminCheck').addEventListener('change', e => { _mailAdminMode = e.target.checked; applyMailMode(); mailRefreshAttachInputs(); });
+    document.getElementById('mailTabSurvey').addEventListener('click', () => switchMailView('survey'));
+    document.getElementById('mailAdminCheck').addEventListener('change', e => {
+      _mailAdminMode = e.target.checked;
+      applyMailMode();
+      mailRefreshAttachInputs();
+      if (!_mailAdminMode && _mailView === 'survey') switchMailView('compose');
+    });
     document.getElementById('mailRecipientRow').querySelectorAll('[data-mailrcpt]').forEach(b => {
       b.addEventListener('click', () => {
         _mailAdminRecipient = b.dataset.mailrcpt;
         document.getElementById('mailRecipientRow').querySelectorAll('[data-mailrcpt]').forEach(x => x.classList.toggle('active', x === b));
+        document.getElementById('mailSurveyRecipientRow').querySelectorAll('[data-surveyrcpt]').forEach(x => x.classList.toggle('active', x.dataset.surveyrcpt === _mailAdminRecipient));
+      });
+    });
+    document.getElementById('mailSurveyRecipientRow').querySelectorAll('[data-surveyrcpt]').forEach(b => {
+      b.addEventListener('click', () => {
+        _mailAdminRecipient = b.dataset.surveyrcpt;
+        document.getElementById('mailSurveyRecipientRow').querySelectorAll('[data-surveyrcpt]').forEach(x => x.classList.toggle('active', x === b));
+        document.getElementById('mailRecipientRow').querySelectorAll('[data-mailrcpt]').forEach(x => x.classList.toggle('active', x.dataset.mailrcpt === _mailAdminRecipient));
       });
     });
     document.getElementById('mailAttachType').addEventListener('change', mailRefreshAttachInputs);
@@ -3840,6 +4239,27 @@
     document.getElementById('mailAttachItem').addEventListener('change', _mailSetAttachQtyMax);
     document.getElementById('mailAttachAdd').addEventListener('click', mailAddAttachment);
     document.getElementById('mailSendBtn').addEventListener('click', mailSend);
+    document.getElementById('surveySendBtn').addEventListener('click', surveySend);
+    document.getElementById('surveyAddQBtn').addEventListener('click', surveyAddQuestion);
+    document.getElementById('surveyQKind').addEventListener('change', () => {
+      const isChoice = document.getElementById('surveyQKind').value === 'choice';
+      document.getElementById('surveyChoiceOptions').style.display = isChoice ? '' : 'none';
+      _surveyWorkingChoices = [];
+      renderSurveyChoiceList();
+    });
+    document.getElementById('surveyChoiceAddBtn').addEventListener('click', () => {
+      const inp = document.getElementById('surveyChoiceInput');
+      const val = (inp.value || '').trim();
+      if (!val) return;
+      if (_surveyWorkingChoices.length >= 4) { surveyErr('Maximal 4 Optionen erlaubt.'); return; }
+      _surveyWorkingChoices.push(val);
+      inp.value = '';
+      surveyErr('');
+      renderSurveyChoiceList();
+    });
+    document.getElementById('surveyChoiceInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('surveyChoiceAddBtn').click(); }
+    });
     const delOv = document.getElementById('mailDeleteOverlay');
     document.getElementById('mailDeleteNo').addEventListener('click', () => { _mailPendingDelete = null; delOv.classList.remove('open'); });
     document.getElementById('mailDeleteYes').addEventListener('click', doMailDelete);
