@@ -686,6 +686,10 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
+  function fmtNumber(val) {
+    return (Number(val) || 0).toLocaleString('de-DE');
+  }
+
   function fmtDate(ts) {
     if (!ts) return '–';
     const d = new Date(ts);
@@ -780,15 +784,15 @@
   }
 
   function renderStats(stats) {
-    document.getElementById('statAnzahl').textContent     = stats.anzahl;
-    document.getElementById('statDurchschnitt').textContent = stats.durchschnitt;
-    document.getElementById('statGroesste').textContent   = stats.groesste;
-    document.getElementById('statDieseWoche').textContent = stats.wocheGesamt;
-    document.getElementById('statDiesenMonat').textContent = stats.monatGesamt;
-    document.getElementById('statNeleGesamt').textContent = stats.totalNele;
-    document.getElementById('statAndreasGesamt').textContent = stats.totalAndreas;
-    document.getElementById('statNeleWoche').textContent  = stats.wocheNele;
-    document.getElementById('statAndreasWoche').textContent = stats.wocheAndreas;
+    document.getElementById('statAnzahl').textContent     = fmtNumber(stats.anzahl);
+    document.getElementById('statDurchschnitt').textContent = fmtNumber(stats.durchschnitt);
+    document.getElementById('statGroesste').textContent   = fmtNumber(stats.groesste);
+    document.getElementById('statDieseWoche').textContent = fmtNumber(stats.wocheGesamt);
+    document.getElementById('statDiesenMonat').textContent = fmtNumber(stats.monatGesamt);
+    document.getElementById('statNeleGesamt').textContent = fmtNumber(stats.totalNele);
+    document.getElementById('statAndreasGesamt').textContent = fmtNumber(stats.totalAndreas);
+    document.getElementById('statNeleWoche').textContent  = fmtNumber(stats.wocheNele);
+    document.getElementById('statAndreasWoche').textContent = fmtNumber(stats.wocheAndreas);
     document.getElementById('statSeit').textContent = stats.ersteTs ? fmtDate(stats.ersteTs) : '–';
 
     // Comparison bars
@@ -797,8 +801,8 @@
     const pctAndreas = total > 0 ? 100 - pctNele : 50;
     document.getElementById('barNele').style.width = pctNele + '%';
     document.getElementById('barAndreas').style.width = pctAndreas + '%';
-    document.getElementById('compNeleVal').textContent = `Nele: ${stats.totalNele} 🪙`;
-    document.getElementById('compAndreasVal').textContent = `Andreas: ${stats.totalAndreas} 🪙`;
+    document.getElementById('compNeleVal').textContent = `Nele: ${fmtNumber(stats.totalNele)} 🪙`;
+    document.getElementById('compAndreasVal').textContent = `Andreas: ${fmtNumber(stats.totalAndreas)} 🪙`;
   }
 
   function renderFeed(beitraege) {
@@ -818,9 +822,9 @@
           <div class="feed-avatar ${cls}">${avatar}</div>
           <div class="feed-info">
             <div class="feed-name">${name}</div>
-            <div class="feed-detail">${quelleLabel(b.quelle)} · ${b.ausgabe ?? '?'}🪙 Ausgabe · ${timeAgo(b.timestamp)}</div>
+            <div class="feed-detail">${quelleLabel(b.quelle)} · ${b.ausgabe == null ? '?' : fmtNumber(b.ausgabe)}🪙 Ausgabe · ${timeAgo(b.timestamp)}</div>
           </div>
-          <div class="feed-amount">+${b.beitrag ?? 0}🪙</div>
+          <div class="feed-amount">+${fmtNumber(b.beitrag ?? 0)}🪙</div>
         </div>`;
     }).join('');
   }
@@ -829,7 +833,7 @@
     const el = document.getElementById('topfAmount');
     const wasVal = topfVal;
     topfVal = val;
-    el.textContent = val;
+    el.textContent = fmtNumber(val);
 
     if (!firstTopfLoad && val > wasVal) {
       el.classList.remove('pulse');
@@ -856,7 +860,7 @@
 
     // Lifetime total (live)
     onValue(ref(db, 'savings/totalEver'), snap => {
-      document.getElementById('statLifetime').textContent = snap.val() || 0;
+      document.getElementById('statLifetime').textContent = fmtNumber(snap.val() || 0);
     });
 
     // Letzte Leerung (live)
@@ -881,7 +885,7 @@
     // Own coins
     onValue(ref(db, `coins/${userKey}`), snap => {
       currentCoins = snap.val() || 0;
-      document.getElementById('coinCount').textContent = currentCoins;
+      document.getElementById('coinCount').textContent = fmtNumber(currentCoins);
     });
   }
 
