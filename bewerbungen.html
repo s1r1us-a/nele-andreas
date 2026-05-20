@@ -23,6 +23,7 @@
     --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.25);
     --radius: 14px;
 
+    --st-Recherche-bg:#1d4d50;      --st-Recherche-fg:#7fe2d4;
     --st-Geplant-bg:#2c3553;        --st-Geplant-fg:#b7c0e0;
     --st-Beworben-bg:#1f3470;       --st-Beworben-fg:#9fb8ff;
     --st-Nachgefragt-bg:#3a2470;    --st-Nachgefragt-fg:#c8a8ff;
@@ -174,6 +175,7 @@
     letter-spacing: .02em;
     white-space: nowrap;
   }
+  .b-Recherche       { background: var(--st-Recherche-bg); color: var(--st-Recherche-fg); }
   .b-Geplant         { background: var(--st-Geplant-bg); color: var(--st-Geplant-fg); }
   .b-Beworben        { background: var(--st-Beworben-bg); color: var(--st-Beworben-fg); }
   .b-Nachgefragt     { background: var(--st-Nachgefragt-bg); color: var(--st-Nachgefragt-fg); }
@@ -225,6 +227,60 @@
     tbody td.row-actions { text-align: left; padding-top: 10px; }
     tbody td.muted::before, tbody td.name::before { content: attr(data-label) ": "; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; margin-right: 4px; }
   }
+
+  /* Research section */
+  .research {
+    background:
+      linear-gradient(135deg, rgba(127, 226, 212, 0.08), rgba(124, 140, 255, 0.06)),
+      var(--card);
+    border: 1px solid var(--st-Recherche-bg);
+    border-radius: var(--radius);
+    padding: 18px 20px 16px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-soft);
+  }
+  .research-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .research-title {
+    font-size: 13px; color: var(--st-Recherche-fg);
+    text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .research-title .count {
+    background: var(--st-Recherche-bg); color: var(--st-Recherche-fg);
+    padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .research-grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .rcard {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color .15s ease, transform .08s ease;
+  }
+  .rcard:hover { border-color: var(--st-Recherche-fg); transform: translateY(-1px); }
+  .rcard .rname { font-weight: 700; font-size: 14px; color: var(--ink); }
+  .rcard .rmeta { font-size: 12px; color: var(--ink-soft); }
+  .rcard .rnote { font-size: 12px; color: var(--ink-soft); font-style: italic; margin-top: 2px; }
+  .rcard .ractions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .rcard .ractions button {
+    padding: 5px 10px; font-size: 12px;
+    border: 1px solid var(--line); background: var(--card);
+    box-shadow: none;
+  }
+  .rcard .ractions button.go {
+    background: var(--st-Recherche-bg); color: var(--st-Recherche-fg);
+    border-color: transparent; font-weight: 600;
+  }
+  .rcard .ractions button.go:hover { filter: brightness(1.2); }
+  .rcard .ractions button.no:hover { background: rgba(255,107,122,0.12); color: var(--danger); border-color: transparent; }
 
   /* Modal */
   .modal-bg {
@@ -308,6 +364,7 @@
     </div>
     <div class="actions">
       <button class="primary" onclick="openEditor()">+ Neue Bewerbung</button>
+      <button onclick="openEditor(null, 'Neu Recherchiert')">+ Recherche</button>
       <button onclick="document.getElementById('importInput').click()">Import (.xlsx)</button>
       <input id="importInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importXlsx(event)" />
       <button onclick="exportXlsx()">Export (.xlsx)</button>
@@ -322,6 +379,7 @@
     „Verlauf löschen" verschwinden.
   </div>
 
+  <section class="research" id="research" style="display:none"></section>
   <section class="dashboard" id="dashboard"></section>
   <section class="locations" id="locations"></section>
 
@@ -419,6 +477,7 @@
 
 const STORAGE_KEY = 'bewerbungen_v1';
 const STATUSES = [
+  'Neu Recherchiert',
   'Geplant',
   'Beworben',
   'Nachgefragt',
@@ -430,6 +489,7 @@ const STATUSES = [
 ];
 
 const STATUS_CLASS = {
+  'Neu Recherchiert': 'b-Recherche',
   'Geplant': 'b-Geplant',
   'Beworben': 'b-Beworben',
   'Nachgefragt': 'b-Nachgefragt',
@@ -509,7 +569,10 @@ function render() {
   const so = document.getElementById('fStandort').value;
   const ie = document.getElementById('fInteresse').value;
 
-  const filtered = state.filter(r => {
+  const mainState = state.filter(r => r.status !== 'Neu Recherchiert');
+  const research = state.filter(r => r.status === 'Neu Recherchiert');
+
+  const filtered = mainState.filter(r => {
     if (st && r.status !== st) return false;
     if (so && r.standort !== so) return false;
     if (ie && r.interesse !== ie) return false;
@@ -531,12 +594,14 @@ function render() {
     return bd.localeCompare(ad);
   });
 
-  renderDashboard();
-  renderLocations();
+  renderResearch(research);
+  renderDashboard(mainState);
+  renderLocations(mainState);
   renderTable(filtered);
 
-  document.getElementById('subInfo').textContent =
-    `${state.length} Einträge · ${filtered.length} gefiltert`;
+  const sub = `${mainState.length} Bewerbungen · ${filtered.length} gefiltert` +
+              (research.length ? ` · ${research.length} in Recherche` : '');
+  document.getElementById('subInfo').textContent = sub;
 }
 
 function isDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
@@ -575,10 +640,10 @@ function renderTable(rows) {
   }).join('');
 }
 
-function renderDashboard() {
-  const total = state.length;
-  const c = (s) => state.filter(r => r.status === s).length;
-  const offen = state.filter(r => ['Beworben','Nachgefragt','Antwort erhalten','Vorstellungsgespräch'].includes(r.status)).length;
+function renderDashboard(mainState) {
+  const total = mainState.length;
+  const c = (s) => mainState.filter(r => r.status === s).length;
+  const offen = mainState.filter(r => ['Beworben','Nachgefragt','Antwort erhalten','Vorstellungsgespräch'].includes(r.status)).length;
   const stats = [
     { label: 'Gesamt',     value: total,                accent: total },
     { label: 'Offen',      value: offen,                accent: offen },
@@ -598,9 +663,9 @@ function renderDashboard() {
   `).join('');
 }
 
-function renderLocations() {
+function renderLocations(mainState) {
   const counts = {};
-  state.forEach(r => {
+  mainState.forEach(r => {
     const key = r.standort || '— ohne Standort —';
     counts[key] = (counts[key] || 0) + 1;
   });
@@ -647,12 +712,14 @@ function resetFilters() {
 }
 
 // ---------- Editor ----------
-function openEditor(id) {
+function openEditor(id, defaultStatus) {
   fillSelectOptions();
   editingId = id || null;
-  const r = id ? state.find(x => x.id === id) : blankRecord();
+  const r = id ? state.find(x => x.id === id) : blankRecord(defaultStatus);
   if (!r) return;
-  document.getElementById('modalTitle').textContent = id ? 'Bewerbung bearbeiten' : 'Neue Bewerbung';
+  const isResearch = !id && defaultStatus === 'Neu Recherchiert';
+  document.getElementById('modalTitle').textContent =
+    id ? 'Bewerbung bearbeiten' : (isResearch ? 'Neu recherchiertes Unternehmen' : 'Neue Bewerbung');
   document.getElementById('btnDelete').style.display = id ? 'inline-block' : 'none';
   setVal('fld_unternehmen', r.unternehmen);
   setVal('fld_standort', r.standort);
@@ -727,12 +794,63 @@ function changeStatus(id, newStatus) {
   toast('Status: ' + newStatus);
 }
 
-function blankRecord() {
+function blankRecord(defaultStatus) {
   return {
     id: null, unternehmen:'', standort:'', interesse:'',
     adresse:'', website:'', datumBewerbung:'', nachgefragt:'',
-    status: 'Geplant', kontakt:'', ergebnis:'', notizen:'',
+    status: defaultStatus || 'Geplant', kontakt:'', ergebnis:'', notizen:'',
   };
+}
+
+function renderResearch(items) {
+  const el = document.getElementById('research');
+  if (!items.length) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  el.style.display = 'block';
+  items.sort((a, b) => a.unternehmen.localeCompare(b.unternehmen));
+  el.innerHTML = `
+    <div class="research-head">
+      <div class="research-title">
+        🔍 Neu Recherchiert
+        <span class="count">${items.length} ungeprüft</span>
+      </div>
+      <button onclick="openEditor(null, 'Neu Recherchiert')">+ Recherche hinzufügen</button>
+    </div>
+    <div class="research-grid">
+      ${items.map(r => {
+        const link = r.website
+          ? (/^https?:/i.test(r.website)
+              ? `<a class="weblink" href="${escapeAttr(r.website)}" target="_blank" rel="noopener">${escapeHtml(r.website)} ↗</a>`
+              : escapeHtml(r.website))
+          : '';
+        const meta = [r.standort, r.adresse].filter(Boolean).map(escapeHtml).join(' · ');
+        return `
+          <div class="rcard">
+            <div class="rname">${escapeHtml(r.unternehmen || '(ohne Name)')}</div>
+            ${meta ? `<div class="rmeta">${meta}</div>` : ''}
+            ${link ? `<div class="rmeta">${link}</div>` : ''}
+            ${r.notizen ? `<div class="rnote">${escapeHtml(r.notizen)}</div>` : ''}
+            <div class="ractions">
+              <button class="go" onclick="promoteResearch('${r.id}')" title="Als Bewerbungs-Kandidat übernehmen">✓ Prüfen</button>
+              <button onclick="openEditor('${r.id}')">Bearbeiten</button>
+              <button class="no" onclick="confirmDelete('${r.id}')">✗ Verwerfen</button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function promoteResearch(id) {
+  const r = state.find(x => x.id === id);
+  if (!r) return;
+  r.status = 'Geplant';
+  save();
+  render();
+  toast('In Bewerbungs-Liste übernommen');
 }
 
 // ---------- Import / Export ----------
@@ -744,6 +862,7 @@ function exportJson() {
 
 // Excel status colors (light variants so it stays readable in Excel)
 const XLS_STATUS_FILL = {
+  'Neu Recherchiert':     { bg: 'CDEEEA', fg: '0F4D4A' },
   'Geplant':              { bg: 'E8EAF0', fg: '4B5675' },
   'Beworben':             { bg: 'DCE7FF', fg: '1F3B8C' },
   'Nachgefragt':          { bg: 'EBDCFF', fg: '4A1F9C' },
