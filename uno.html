@@ -148,7 +148,7 @@
   .deck-pile.drawable:hover { transform:translateY(-4px) scale(1.04); filter:drop-shadow(0 4px 14px rgba(253,203,110,0.6)); }
   .deck-pile.drawable::after { content:''; position:absolute; inset:-6px; border:2px dashed rgba(253,203,110,0.7); border-radius:18px; animation:drawableHint 1.4s ease-in-out infinite; pointer-events:none; }
   @keyframes drawableHint { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:.9;transform:scale(1.05)} }
-  .deck-pile .deck-count { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-family:'Dancing Script',cursive; font-size:30px; font-weight:700; text-shadow:0 2px 8px rgba(0,0,0,.8); z-index:2; pointer-events:none; }
+  .deck-pile .deck-count { position:absolute; top:-8px; right:-8px; color:#fff; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:800; background:rgba(10,10,20,0.92); border:1.5px solid #fdcb6e; border-radius:999px; padding:3px 9px; min-width:24px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.6); z-index:3; pointer-events:none; letter-spacing:0.5px; }
   .stack-counter { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#ef4444,#b91c1c); color:white; padding:4px 12px; border-radius:50px; font-weight:900; font-size:14px; box-shadow:0 4px 14px rgba(239,68,68,0.6); animation:stackShake .35s ease-out; white-space:nowrap; z-index:5; }
   @keyframes stackShake { 0%,100%{transform:translateX(-50%) scale(1)} 40%{transform:translateX(-50%) scale(1.25) rotate(-3deg)} 70%{transform:translateX(-50%) scale(.95) rotate(2deg)} }
 
@@ -610,6 +610,7 @@
     <div class="result-sub" id="resultSub"></div>
     <div class="result-coins" id="resultCoins"></div>
     <button class="btn-again" id="playAgainBtn">Nochmal spielen 🎴</button>
+    <button class="btn-secondary" id="backToMenuBtn" style="margin-top:10px;">Zum Hauptmenü 🏠</button>
   </div>
 </div>
 
@@ -1414,10 +1415,11 @@ async function surrender() {
   const winner = other(currentUser);
   if (mode === 'bot') {
     await mutateState(state => { if (!state) return state; state.status = 'finished'; state.winner = winner; return state; });
-    await finishGame(winner, 0);
+    // Bot: no coin transfer on surrender (PvE never deducts).
   } else {
+    // Only update the state; payout runs exactly once via the prizePaid
+    // transaction in the finished-state handler on either client.
     await update(ref(db, GAME_REF), { status:'finished', winner });
-    await finishGame(winner, gameState.bet);
   }
 }
 
@@ -1435,6 +1437,26 @@ async function playAgain() {
   }
 }
 
+async function backToMenu() {
+  document.getElementById('resultOverlay').classList.remove('open');
+  if (botTurnTimer) clearTimeout(botTurnTimer);
+  if (botCatchTimer) clearTimeout(botCatchTimer);
+  if (mode === 'bot') {
+    localState = null;
+    mode = 'pvp';
+    pveStatsCounted = false;
+    handleGameState(null);
+  } else {
+    // Clean up any finished PvP game node so both players return to lobby.
+    try {
+      const snap = await get(ref(db, GAME_REF));
+      const s = snap.val();
+      if (s && s.status === 'finished') await remove(ref(db, GAME_REF));
+    } catch(_) {}
+    showLobby('create');
+  }
+}
+
 // ── COINS & STATS ─────────────────────────────────────────────────────────
 const BOT_PRIZE = 1000;
 
@@ -1448,6 +1470,18 @@ async function finishGame(winner, bet) {
     return;
   }
   if (!bet) return;
+  // Atomic exactly-once payout via prizePaid flag on the game state.
+  // Either client (winner OR loser) can perform this transaction. Returning
+  // undefined aborts, so committed===true only on the client that flips the flag.
+  let didPay = false;
+  try {
+    const res = await runTransaction(ref(db, `${GAME_REF}/prizePaid`), v => {
+      if (v) return; // abort — already paid by other client
+      return true;
+    });
+    didPay = !!res.committed;
+  } catch(e) { didPay = false; }
+  if (!didPay) return;
   await runTransaction(ref(db, `coins/${pkey(winner)}`), c => (c||0) + bet*2);
   try { await runTransaction(ref(db, `stats/${pkey(winner)}/coinsEarned`), c => (c||0)+bet*2); } catch(e) {}
 }
@@ -1477,11 +1511,13 @@ async function updateOwnStats(state) {
   try { localStorage.setItem('unoLastStatsGameId', String(state.createdAt)); } catch(_) {}
   const isWinner = state.winner === currentUser;
   const bet = state.bet;
+  // coinsWon/coinsLost are NET (= bet). Wallet net change matches stats balance.
+  // Total wagered is tracked separately via countCoinsBet → uno/pvp/coinsBet.
   const paths = [
     { p: `stats/${myK}/uno/pvp/${isWinner ? 'gamesWon' : 'gamesLost'}`, fn: c => (c||0)+1 },
     { p: `stats/${myK}/coinsSpent`, fn: c => (c||0)+bet },
   ];
-  if (isWinner) paths.push({ p: `stats/${myK}/uno/pvp/coinsWon`,  fn: c => (c||0) + bet*2 });
+  if (isWinner) paths.push({ p: `stats/${myK}/uno/pvp/coinsWon`,  fn: c => (c||0) + bet });
   else         paths.push({ p: `stats/${myK}/uno/pvp/coinsLost`, fn: c => (c||0) + bet });
   for (const s of paths) { try { await runTransaction(ref(db, s.p), s.fn); } catch(e) {} }
 }
@@ -1728,7 +1764,7 @@ function showResult(state) {
   } else {
     const bet = state.bet || 0;
     coinsEl.textContent = win
-      ? `+${(bet*2).toLocaleString('de-DE')} 🪙`
+      ? `+${bet.toLocaleString('de-DE')} 🪙`
       : `-${bet.toLocaleString('de-DE')} 🪙`;
   }
   o.classList.add('open');
@@ -1778,11 +1814,17 @@ function handleGameState(state) {
     }
     if (state.status === 'finished') {
       updateOwnStats(state);
-      // Credit prize to winner (only on winner's client, dedup via createdAt)
-      if (state.winner === currentUser && state.createdAt !== lastCreditedGameId) {
+      // Prize payout: either client triggers finishGame; the prizePaid
+      // transaction ensures the winner is credited exactly once. Skip if
+      // we've already attempted from this client for this game.
+      if (state.createdAt !== lastCreditedGameId) {
         lastCreditedGameId = state.createdAt;
         try { localStorage.setItem('unoLastCreditedGameId', String(state.createdAt)); } catch(_) {}
-        finishGame(currentUser, state.bet || 0);
+        if (mode === 'bot') {
+          if (state.winner === currentUser) finishGame(currentUser, 0);
+        } else if (state.winner) {
+          finishGame(state.winner, state.bet || 0);
+        }
       }
       setTimeout(() => showResult(state), 900);
     }
@@ -1823,9 +1865,8 @@ document.getElementById('declineBtn').addEventListener('click', declineGame);
 document.getElementById('surrenderBtn').addEventListener('click', surrender);
 document.getElementById('playAgainBtn').addEventListener('click', playAgain);
 document.getElementById('newGameBtn').addEventListener('click', playAgain);
-document.getElementById('closeResultBtn').addEventListener('click', () => {
-  document.getElementById('resultOverlay').classList.remove('open');
-});
+document.getElementById('backToMenuBtn').addEventListener('click', backToMenu);
+document.getElementById('closeResultBtn').addEventListener('click', backToMenu);
 document.getElementById('deckPile').addEventListener('click', () => {
   if (document.getElementById('deckPile').classList.contains('drawable')) onDrawClick();
 });
