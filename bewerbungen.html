@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bewerbungs-Tracker · Nele</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --ink: #1f2742;
+    --ink-soft: #5b6480;
+    --line: #e6e9f2;
+    --accent: #5b6bf0;
+    --accent-soft: #eef0ff;
+    --shadow: 0 6px 24px rgba(33, 45, 89, 0.08);
+    --radius: 14px;
+
+    --st-Geplant-bg:#eceff5;        --st-Geplant-fg:#4b5675;
+    --st-Beworben-bg:#e3edff;       --st-Beworben-fg:#274bb2;
+    --st-Nachgefragt-bg:#f0e6ff;    --st-Nachgefragt-fg:#5b2ec2;
+    --st-Antwort-bg:#fff4cf;        --st-Antwort-fg:#7a5b00;
+    --st-Vorstellung-bg:#ffe3c8;    --st-Vorstellung-fg:#9a4a00;
+    --st-Zusage-bg:#d6f5dd;         --st-Zusage-fg:#1f6a36;
+    --st-Absage-bg:#ffd9d9;         --st-Absage-fg:#a02828;
+    --st-Nehmen-bg:#d4d7e0;         --st-Nehmen-fg:#3a4159;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 96px; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  }
+  header.top h1 {
+    margin: 0; font-size: 26px; letter-spacing: -0.01em;
+  }
+  header.top .sub { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  button, .btn {
+    border: 0; background: var(--card);
+    color: var(--ink); padding: 9px 14px;
+    font-size: 13px; font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform .08s ease, background .12s ease;
+    font-family: inherit;
+  }
+  button:hover, .btn:hover { transform: translateY(-1px); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.ghost   { background: transparent; box-shadow: none; color: var(--ink-soft); }
+  button.danger  { background: #fff; color: #a02828; }
+
+  /* Dashboard */
+  .dashboard {
+    display: grid; gap: 12px; margin-bottom: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+  .stat {
+    background: var(--card); border-radius: var(--radius);
+    padding: 14px 16px; box-shadow: var(--shadow);
+  }
+  .stat .label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+  .stat .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .stat .bar   { margin-top: 8px; height: 4px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; }
+  .stat .bar > i { display: block; height: 100%; background: var(--accent); }
+
+  .locations {
+    background: var(--card); border-radius: var(--radius);
+    padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 18px;
+  }
+  .locations h3 { margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+  .loc-row { display: grid; grid-template-columns: 130px 1fr 40px; gap: 10px; align-items: center; padding: 4px 0; font-size: 13px; }
+  .loc-row .lbar { background: var(--accent-soft); border-radius: 99px; height: 6px; overflow: hidden; }
+  .loc-row .lbar > i { display: block; height: 100%; background: var(--accent); }
+  .loc-row .lcnt { text-align: right; color: var(--ink-soft); }
+
+  /* Filter bar */
+  .filters {
+    display: grid; gap: 10px; grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    background: var(--card); padding: 12px; border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .filters input, .filters select {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 9px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .12s ease;
+  }
+  .filters input:focus, .filters select:focus { border-color: var(--accent); }
+
+  @media (max-width: 800px) {
+    .filters { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Table */
+  .table-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    background: #fafbff;
+    color: var(--ink-soft);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 1;
+  }
+  tbody tr { border-bottom: 1px solid var(--line); cursor: pointer; transition: background .1s ease; }
+  tbody tr:hover { background: #fafbff; }
+  tbody td { padding: 12px 14px; vertical-align: middle; }
+  tbody td.name { font-weight: 600; }
+  tbody td.muted { color: var(--ink-soft); }
+  tbody tr:last-child { border-bottom: 0; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    white-space: nowrap;
+  }
+  .b-Geplant         { background: var(--st-Geplant-bg); color: var(--st-Geplant-fg); }
+  .b-Beworben        { background: var(--st-Beworben-bg); color: var(--st-Beworben-fg); }
+  .b-Nachgefragt     { background: var(--st-Nachgefragt-bg); color: var(--st-Nachgefragt-fg); }
+  .b-Antwort         { background: var(--st-Antwort-bg); color: var(--st-Antwort-fg); }
+  .b-Vorstellung     { background: var(--st-Vorstellung-bg); color: var(--st-Vorstellung-fg); }
+  .b-Zusage          { background: var(--st-Zusage-bg); color: var(--st-Zusage-fg); }
+  .b-Absage          { background: var(--st-Absage-bg); color: var(--st-Absage-fg); }
+  .b-Nehmen          { background: var(--st-Nehmen-bg); color: var(--st-Nehmen-fg); }
+
+  .row-actions { white-space: nowrap; text-align: right; }
+  .row-actions button {
+    padding: 5px 9px; font-size: 12px;
+    background: transparent; box-shadow: none; color: var(--ink-soft);
+  }
+  .row-actions button:hover { background: var(--accent-soft); color: var(--accent); }
+  .row-actions button.del:hover { background: #ffe1e1; color: #a02828; }
+
+  .empty {
+    padding: 60px 20px; text-align: center; color: var(--ink-soft);
+  }
+
+  /* Mobile cards */
+  @media (max-width: 720px) {
+    table thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tbody tr { padding: 12px 14px; }
+    tbody td { padding: 4px 0; border: 0; }
+    tbody td.row-actions { text-align: left; padding-top: 8px; }
+    tbody td.muted::before, tbody td.name::before { content: attr(data-label) ": "; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; }
+  }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(31, 39, 66, 0.45);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 16px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px;
+    width: 100%; max-width: 620px;
+    max-height: 90vh; overflow-y: auto;
+    padding: 22px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal h2 { margin: 0 0 14px; font-size: 18px; }
+  .modal label {
+    display: block; margin-top: 12px;
+    font-size: 11px; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: .04em;
+    font-weight: 600;
+  }
+  .modal input, .modal select, .modal textarea {
+    width: 100%; margin-top: 4px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 9px 11px;
+    font-size: 14px; font-family: inherit;
+    color: var(--ink);
+    background: #fff;
+    outline: none;
+  }
+  .modal textarea { min-height: 80px; resize: vertical; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent); }
+  .modal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 20px; }
+
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 99px;
+    font-size: 13px; opacity: 0; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+  a.weblink { color: var(--accent); text-decoration: none; }
+  a.weblink:hover { text-decoration: underline; }
+
+  .hint {
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--accent-soft); padding: 10px 14px;
+    border-radius: 10px; margin-bottom: 16px;
+  }
+  .hint b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Bewerbungs-Tracker</h1>
+      <div class="sub" id="subInfo">Übersicht deiner Bewerbungen</div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="openEditor()">+ Neue Bewerbung</button>
+      <button onclick="document.getElementById('importInput').click()">Import (.xlsx)</button>
+      <input id="importInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importXlsx(event)" />
+      <button onclick="exportXlsx()">Export (.xlsx)</button>
+      <button onclick="exportJson()">Export (JSON)</button>
+      <button class="ghost" onclick="resetSeed()" title="Auf Original-Daten zurücksetzen">⟲ Reset</button>
+    </div>
+  </header>
+
+  <div class="hint">
+    <b>Speicherung:</b> Alles wird automatisch in deinem Browser gespeichert (localStorage).
+    Mache regelmäßig einen <b>Excel-Export</b> als Backup — Browserdaten könnten sonst durch
+    „Verlauf löschen" verschwinden.
+  </div>
+
+  <section class="dashboard" id="dashboard"></section>
+  <section class="locations" id="locations"></section>
+
+  <div class="filters">
+    <input id="fSearch" placeholder="🔍 Suchen (Firma, Adresse, Notiz, Kontakt…)" oninput="render()" />
+    <select id="fStatus" onchange="render()">
+      <option value="">Alle Status</option>
+    </select>
+    <select id="fStandort" onchange="render()">
+      <option value="">Alle Standorte</option>
+    </select>
+    <select id="fInteresse" onchange="render()">
+      <option value="">Alle Interessen</option>
+    </select>
+    <button class="ghost" onclick="resetFilters()">Filter zurücksetzen</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th>Unternehmen</th>
+          <th>Standort</th>
+          <th>Datum</th>
+          <th>Nachgefragt</th>
+          <th>Status</th>
+          <th>Interesse</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Editor Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Bewerbung bearbeiten</h2>
+    <label>Unternehmen</label>
+    <input id="fld_unternehmen" />
+    <div class="grid2">
+      <div>
+        <label>Standort</label>
+        <input id="fld_standort" />
+      </div>
+      <div>
+        <label>Interesse</label>
+        <select id="fld_interesse">
+          <option value=""></option>
+          <option>Sehr gerne</option>
+          <option>Gerne</option>
+          <option>Ja</option>
+          <option>Joa</option>
+          <option>Eher nicht</option>
+        </select>
+      </div>
+    </div>
+    <label>Adresse</label>
+    <input id="fld_adresse" />
+    <label>Website / Link</label>
+    <input id="fld_website" />
+    <div class="grid2">
+      <div>
+        <label>Datum Bewerbung</label>
+        <input id="fld_datum" type="date" />
+      </div>
+      <div>
+        <label>Nachgefragt am</label>
+        <input id="fld_nachgefragt" type="date" />
+      </div>
+    </div>
+    <label>Status</label>
+    <select id="fld_status"></select>
+    <label>Kontakt (Telefon / E-Mail / Ansprechpartner)</label>
+    <input id="fld_kontakt" />
+    <label>Ergebnis</label>
+    <input id="fld_ergebnis" />
+    <label>Notizen</label>
+    <textarea id="fld_notizen" placeholder="Gesprächsnotizen, Eindrücke, To-Dos…"></textarea>
+    <div class="foot">
+      <button class="danger" id="btnDelete" onclick="deleteCurrent()">Löschen</button>
+      <div>
+        <button class="ghost" onclick="closeEditor()">Abbrechen</button>
+        <button class="primary" onclick="saveCurrent()">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'bewerbungen_v1';
+const STATUSES = [
+  'Geplant',
+  'Beworben',
+  'Nachgefragt',
+  'Antwort erhalten',
+  'Vorstellungsgespräch',
+  'Zusage',
+  'Absage',
+  'Nehmen keine',
+];
+
+const STATUS_CLASS = {
+  'Geplant': 'b-Geplant',
+  'Beworben': 'b-Beworben',
+  'Nachgefragt': 'b-Nachgefragt',
+  'Antwort erhalten': 'b-Antwort',
+  'Vorstellungsgespräch': 'b-Vorstellung',
+  'Zusage': 'b-Zusage',
+  'Absage': 'b-Absage',
+  'Nehmen keine': 'b-Nehmen',
+};
+
+const SEED = [{"unternehmen":"Netempire","interesse":"Sehr gerne","website":"Jobs – Netempire Software GmbH","standort":"Rösrath","adresse":"Lüghauser Str. 16, 51503 Rösrath","datumBewerbung":"2026-02-18","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"SCOOP","interesse":"Gerne","website":"Jobs - SCOOP Software","standort":"Köln","adresse":"Eiler Str. 3P, 51107 Köln","datumBewerbung":"2026-02-25","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"bevutaIT","interesse":"Sehr gerne","website":"Unser Team rund um Köln und überall auf der Welt | bevuta IT","standort":"Köln","adresse":"Ettore-Bugatti-Straße 35, 51149 Köln","datumBewerbung":"2026-02-25","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"mobivention","interesse":"Gerne","website":"IT-Dienstleister für App Entwicklung, Web Apps & Backends","standort":"Köln","adresse":"Am bhf 132, 51147 Köln","datumBewerbung":"2026-02-25","nachgefragt":"2026-04-15","ergebnis":"","kontakt":""},{"unternehmen":"MaProTa Gmbh","interesse":"Sehr gerne","website":"Karriere - MaProTa GmbH","standort":"Rösrath","adresse":"Lüghauser Str. 16, 51503 Rösrath","datumBewerbung":"2026-03-11","nachgefragt":"","ergebnis":"","kontakt":"02205-9189170"},{"unternehmen":"BEWOTEC","interesse":"ja","website":"BEWOTEC Karriere – Jobs & Chancen in der Touristiksoftware","standort":"Rösrath","adresse":"Karl-Schiller-Straße 3, 51503 Rösrath","datumBewerbung":"2026-03-11","nachgefragt":"2026-04-15","ergebnis":"","kontakt":""},{"unternehmen":"ISIFIVE eG","interesse":"ja","website":"Team - ISIFIVE","standort":"Köln","adresse":"Rösrather Str. 702, 51107 Köln","datumBewerbung":"2026-03-11","nachgefragt":"2026-04-15","ergebnis":"","kontakt":""},{"unternehmen":"PRODATEC","interesse":"ja","website":"https://www.prodatec.de/karriere","standort":"Bergisch Gladbach","adresse":"Burggraben 7, 51429 Bergisch Gladbach","datumBewerbung":"2026-03-11","nachgefragt":"2026-04-15","ergebnis":"","kontakt":""},{"unternehmen":"INNEO","interesse":"Gerne","website":"https://jobs.inneo.com/stellenangebote.html","standort":"Köln","adresse":"Hansestraße 87, 51149 Köln","datumBewerbung":"2026-03-11","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"REWE Digital","interesse":"Gerne","website":"https://www.rewe-digital.com/de/jobs?location=K%C3%B6ln%2C%20Deutschland&range=25&sort=distance&city[]=K%C3%B6ln&page=1","standort":"Köln","adresse":"Humboldtstraße 140-144, 51149 Köln","datumBewerbung":"2026-03-11","nachgefragt":"2026-04-15","ergebnis":"","kontakt":""},{"unternehmen":"CLOUSALE","interesse":"Joa","website":"ClouSale: Jobs","standort":"Rösrath","adresse":"Hauptstraße 65-67, 51503 Rösrath","datumBewerbung":"2026-03-25","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Ditcon GmbH","interesse":"joa","website":"https://www.ditcon.de/","standort":"Köln","adresse":"Fuggerstraße 26, 51149 Köln","datumBewerbung":"2026-04-01","nachgefragt":"","ergebnis":"","kontakt":"FISI 02203 89860"},{"unternehmen":"Netrix IT works","interesse":"Gerne","website":"https://www.netrix-it.de/karriere/","standort":"Köln","adresse":"Hansestraße 97, 51149 Köln","datumBewerbung":"2026-04-01","nachgefragt":"","ergebnis":"","kontakt":"FISI"},{"unternehmen":"incs","interesse":"joa","website":"https://www.incs.org/ueber-uns/","standort":"Köln","adresse":"Edmund-Rumpler-Straße 6A, 51149 Köln","datumBewerbung":"2026-04-01","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"ableX GmbH","interesse":"Joa","website":"Q&A | ableX Data Solutions","standort":"Rösarth","adresse":"Karl-Schiller-Str. 1, 51503 Rösrath","datumBewerbung":"2026-04-01","nachgefragt":"","ergebnis":"","kontakt":"02205-9499950"},{"unternehmen":"CGI","interesse":"Ja","website":"Frequently Asked Questions (FAQ) | CGI.com","standort":"Köln","adresse":"Ettore-Bugatti-Straße 6-14, 51149 Köln","datumBewerbung":"2026-04-01","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"DerGrünePunkt","interesse":"Gerne","website":"Karriere | Grüner Punkt","standort":"Köln","adresse":"Edmund-Rumpler-Straße 7, 51149 Köln","datumBewerbung":"2026-04-01","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"It intouch","interesse":"Joa","website":"Karriere - Jobs als Mobile Developer bei IT intouch","standort":"Bergisch Gladbach","adresse":"Lustheide 85, 51427 Bergisch Gladbach","datumBewerbung":"2026-04-15","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"ED Computer & Design GmbH & Co. KG","interesse":"Joa eher Fisi","website":"https://www.edcud.de/systemhaus-dienstleistungen","standort":"Köln","adresse":"Lina-Bommer-Weg 4, 51149 Köln","datumBewerbung":"2026-04-15","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"CBS University of Applied Sciences","interesse":"ja","website":"https://www.cbs.de/ueber-uns/karriere-an-der-cbs/ausbildung-traineeship#traineeship","standort":"Köln Rhodenkirchen","adresse":"Bahnstraße 6-8 50996 Köln","datumBewerbung":"2026-04-15","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"CONVOTIS","interesse":"ja","website":"https://www.convotis.com/karriere/","standort":"Bergisch Gladbach","adresse":"Heinz-Fröling-Straße 15 ","datumBewerbung":"2026-04-22","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"HEES","interesse":"ja","website":"https://hees.de/karriere/initiativbewerbung/","standort":"Lohmar","adresse":"Hauptstraße 1b, 53797 Lohmar","datumBewerbung":"2026-04-22","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Loco-Soft","interesse":"ja","website":"https://loco-soft.de/kontakt","standort":"Lindlar","adresse":"Schlosserstraße 33 | D-51789 Lindlar","datumBewerbung":"2026-04-22","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"WARETRACKS","interesse":"","website":"https://www.waretracks.com/","standort":"Köln","adresse":"August-Horch-Straße 17, 51149 Köln","datumBewerbung":"2026-04-22","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Novum-RGI","interesse":"Gerne","website":"https://www.novum-rgi.com/contacts/","standort":"Köln","adresse":"Durchhäuserhof 65, 51107 Köln","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"genDis solution","interesse":"joa","website":"https://www.gendis.de/","standort":"Bergisch Gladbach","adresse":"Schloßstraße 20, 51429 Bergisch Gladbach","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":"Gibt es vermutlich nicht mehr"},{"unternehmen":"Praxcon","interesse":"ja","website":"https://www.praxcon.de/","standort":"Bergisch Gladbach","adresse":"Schau Ins Land 13, 51429 Bergisch Gladbach","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"kompaktwerk GmbH","interesse":"Eher nicht","website":"https://www.kompaktwerk.de/wir-sind-kompaktwerk/","standort":"Bergisch Gladbach","adresse":"Sattlerweg 12 b, 51429 Bergisch Gladbach","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"TecAlliance","interesse":"ja","website":"https://career.tecalliance.net/jobs?split_view=true&query=&location=Cologne","standort":"Köln","adresse":"Edmund-Rumpler-Straße 5, 51149 Köln","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Atos","interesse":"Ja","website":"https://atos.net/de/join-us?city=118&country=DE","standort":"Köln","adresse":"Von-der-Wettern-Straße 27, 51149 Köln","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Eulen-IT","interesse":"fisi","website":"https://www.eulen-it.de/karriere#dataItem-lkmqqnjt","standort":"Unterechbach","adresse":"Brodhausen 1, 51491 Overath","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":"bewerbung@eulen-it.de"},{"unternehmen":"Syntriq GmbH","interesse":"","website":"https://syntriq.de/karriere","standort":"Köln","adresse":"Frankfurter Str. 720/726, 51145 Köln","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"COPA-DATA","interesse":"","website":"https://www.copadata.com/de/karriere/","standort":"Köln","adresse":"Von-der-Wettern-Straße 27, 51149 Köln","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":"jobs-cdde@copadata.com"},{"unternehmen":"InTradeSys GmbH","interesse":"","website":"https://www.intradesys.com/jobs","standort":"Köln","adresse":"Dillenburger Str. 75, 51105 Köln","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"menten GmbH","interesse":"","website":"https://stellenportal.menten.com/de","standort":"Bergisch Gladbach","adresse":"An d. Gohrsmühle 25, 51465 Bergisch Gladbach","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"AB-Informatik GmbH, IT-Systemhaus Siegburg","interesse":"","website":"https://www.ab-informatik.net/","standort":"Siegburg","adresse":"Am Turm 26, 53721 Siegburg","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"IT-Center Engels","interesse":"","website":"https://www.itc-engels.de/impressum","standort":"Troisdorf","adresse":"Heidegraben 4a, 53842 Troisdorf","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"RA-MICRO Vertriebs GmbH Köln","interesse":"","website":"https://ra-micro-koeln.de/","standort":"Bergisch Gladbach","adresse":"Auf d. Kaule 23, 51427 Bergisch Gladbach","datumBewerbung":"2026-04-29","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Schönhofer Sales and Engineering GmbH","interesse":"","website":"https://www.schoenhofer.de/unternehmen/jobs/studierende","standort":"Siegburg","adresse":"Lindenstraße 92, 53721 Siegburg","datumBewerbung":"2026-05-06","nachgefragt":"","ergebnis":"","kontakt":"Melanie Krieger"},{"unternehmen":"VANTAiO GmbH & Co. KG","interesse":"","website":"https://www.vantaio.com/impressum","standort":"Siegburg","adresse":"Am Turm 36, 53721 Siegburg","datumBewerbung":"2026-05-06","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"360 Consulting GmbH","interesse":"","website":"https://www.360-consulting.de/","standort":"Köln","adresse":"Zollstockgürtel 65, 50969 Köln","datumBewerbung":"2026-05-06","nachgefragt":"","ergebnis":"","kontakt":"Frau Lisa SchuppeliusTel.: +49 (221) 99783106-33"},{"unternehmen":"SoCura","interesse":"","website":"https://www.socura.de/karriere/bei-der-socura-arbeiten/stellenangebote/","standort":"Köln","adresse":"Kaltenbornweg 3, 50679 Köln","datumBewerbung":"2026-05-08","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"SB Entwicklung GmbH","interesse":"","website":"https://sb-e.de/ueber-uns/#karriere","standort":"","adresse":"Mülheimer Str. 20, 53840 Troisdorf","datumBewerbung":"2026-05-09","nachgefragt":"","ergebnis":"","kontakt":"jobs@sb-e.de"},{"unternehmen":"ECKD GmbH","interesse":"","website":"https://eckd.de/standorte/#koeln","standort":"Köln","adresse":"Herzogstraße 32, 50667 Köln","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":"Frau Rabe"},{"unternehmen":"HTPS Solutions","interesse":"","website":"https://htps-solutions.de/impressum/","standort":"Neukischen-Selscheid","adresse":"Elsschlade 9, 53819 Neunkirchen-Seelscheid","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Demic Datentechnik GmbH","interesse":"","website":"https://www.demic-datentechnik.de/unternehmen/jobs-und-karriere","standort":"Neukischen-Selscheid","adresse":"Ohlenhohnstraße 48, 53819 Neunkirchen-Seelscheid","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"JOLA","interesse":"","website":"https://www.jola.de/jobs","standort":"Rösrath","adresse":"Ludwig-Erhard-Straße 7, 51503 Rösrath","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Förderturm Agentur GmbH","interesse":"","website":"https://www.foerderturm-agentur.de/impressum/","standort":"Rösrath","adresse":"Hauptstraße 226, 51503 Rösrath","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Systemhaus Kolb GmbH","interesse":"","website":"https://systemhaus-kolb.de/karriere/","standort":"Kürthen","adresse":"Kölner Str. 215, 51515 Kürten","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":"bewerbung@sh-kolb.de"},{"unternehmen":"plusserver GmbH","interesse":"","website":"https://karriere.plusserver.com/Initiativbewerbung-Quereinsteiger-mwd-de-f900.html","standort":"Köln","adresse":"Welserstraße 14, 51149 Köln","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"LVR-InfoKom","interesse":"","website":"https://www.lvr.de/infokom/karriere/ausbildung-und-studium/","standort":"Köln","adresse":"Hermann-Pünder-Str. 1, 50679 Köln","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"identpro Systems GmbH","interesse":"","website":"https://identpro.de/jobs-und-karriere/#bewerbung","standort":"Troisdorf","adresse":"Camp-Spich-Straße 4, 53842 Troisdorf, Germany","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"CIDEON Software & Services GmbH & Co. KG","interesse":"","website":"https://www.cideon.de/unternehmen/karriere/","standort":"Troisdorf","adresse":"Frankfurter Straße 35, 53840 Troisdorf","datumBewerbung":"2026-05-13","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Agheera","interesse":"ja","website":"https://www.agheera.com/privacy-notice","standort":"Köln","adresse":"August-Horch-Straße 5, 51149 Köln","datumBewerbung":"Nehmen keine","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"AOK","interesse":"Joa","website":"Intitiativbewerbung bei der Krankenkasse | AOK Karriere","standort":"Köln","adresse":"Lina-Bommer-Weg 9, 51149 Köln","datumBewerbung":"Nehmen keine","nachgefragt":"","ergebnis":"","kontakt":""},{"unternehmen":"Healex GmbH","interesse":"","website":"https://healex.systems/kontakt/","standort":"Köln","adresse":"Sophienstraße 3, 51149 Köln","datumBewerbung":"","nachgefragt":"","ergebnis":"","kontakt":""}];
+
+function deriveStatus(row) {
+  if (row.datumBewerbung === 'Nehmen keine') return 'Nehmen keine';
+  if (!row.datumBewerbung) return 'Geplant';
+  if (row.nachgefragt) return 'Nachgefragt';
+  return 'Beworben';
+}
+
+function uid() {
+  return (crypto.randomUUID && crypto.randomUUID()) ||
+         (Date.now() + '-' + Math.random().toString(16).slice(2));
+}
+
+function normalizeInteresse(s) {
+  if (!s) return '';
+  const t = s.toString().trim().toLowerCase();
+  if (t === 'sehr gerne') return 'Sehr gerne';
+  if (t === 'gerne') return 'Gerne';
+  if (t === 'ja') return 'Ja';
+  if (t === 'joa' || t === 'joa eher fisi' || t === 'fisi') return 'Joa';
+  if (t === 'eher nicht') return 'Eher nicht';
+  return s;
+}
+
+function buildSeedRecords() {
+  return SEED.map(r => ({
+    id: uid(),
+    unternehmen: r.unternehmen || '',
+    interesse: normalizeInteresse(r.interesse),
+    website: r.website || '',
+    standort: r.standort || '',
+    adresse: r.adresse || '',
+    datumBewerbung: (r.datumBewerbung && r.datumBewerbung !== 'Nehmen keine') ? r.datumBewerbung : (r.datumBewerbung === 'Nehmen keine' ? 'Nehmen keine' : ''),
+    nachgefragt: r.nachgefragt || '',
+    status: deriveStatus(r),
+    ergebnis: r.ergebnis || '',
+    kontakt: r.kontakt || '',
+    notizen: '',
+  }));
+}
+
+// ---------- State ----------
+let state = load();
+let editingId = null;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { console.warn(e); }
+  const seed = buildSeedRecords();
+  save(seed);
+  return seed;
+}
+function save(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s || state));
+}
+
+// ---------- Render ----------
+function render() {
+  // Populate selects (once)
+  fillSelectOptions();
+
+  const q = document.getElementById('fSearch').value.trim().toLowerCase();
+  const st = document.getElementById('fStatus').value;
+  const so = document.getElementById('fStandort').value;
+  const ie = document.getElementById('fInteresse').value;
+
+  const filtered = state.filter(r => {
+    if (st && r.status !== st) return false;
+    if (so && r.standort !== so) return false;
+    if (ie && r.interesse !== ie) return false;
+    if (q) {
+      const hay = [r.unternehmen, r.adresse, r.standort, r.notizen, r.kontakt, r.website, r.ergebnis]
+        .join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Sort: most recent application first; entries without date at the end
+  filtered.sort((a, b) => {
+    const ad = isDate(a.datumBewerbung) ? a.datumBewerbung : '';
+    const bd = isDate(b.datumBewerbung) ? b.datumBewerbung : '';
+    if (!ad && !bd) return a.unternehmen.localeCompare(b.unternehmen);
+    if (!ad) return 1;
+    if (!bd) return -1;
+    return bd.localeCompare(ad);
+  });
+
+  renderDashboard();
+  renderLocations();
+  renderTable(filtered);
+
+  document.getElementById('subInfo').textContent =
+    `${state.length} Einträge · ${filtered.length} gefiltert`;
+}
+
+function isDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
+
+function renderTable(rows) {
+  const tb = document.getElementById('tbody');
+  if (rows.length === 0) {
+    tb.innerHTML = `<tr><td colspan="7" class="empty">Keine Einträge gefunden.</td></tr>`;
+    return;
+  }
+  tb.innerHTML = rows.map(r => {
+    const cls = STATUS_CLASS[r.status] || 'b-Geplant';
+    const link = r.website && /^https?:/i.test(r.website)
+      ? `<a class="weblink" href="${escapeAttr(r.website)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>`
+      : '';
+    return `
+      <tr onclick="openEditor('${r.id}')">
+        <td class="name" data-label="Unternehmen">${escapeHtml(r.unternehmen)} ${link}</td>
+        <td class="muted" data-label="Standort">${escapeHtml(r.standort)}</td>
+        <td class="muted" data-label="Datum">${formatDate(r.datumBewerbung)}</td>
+        <td class="muted" data-label="Nachgefragt">${formatDate(r.nachgefragt)}</td>
+        <td data-label="Status"><span class="badge ${cls}">${escapeHtml(r.status)}</span></td>
+        <td class="muted" data-label="Interesse">${escapeHtml(r.interesse)}</td>
+        <td class="row-actions">
+          <button onclick="event.stopPropagation(); openEditor('${r.id}')">Bearbeiten</button>
+          <button class="del" onclick="event.stopPropagation(); confirmDelete('${r.id}')">Löschen</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function renderDashboard() {
+  const total = state.length;
+  const c = (s) => state.filter(r => r.status === s).length;
+  const offen = state.filter(r => ['Beworben','Nachgefragt','Antwort erhalten','Vorstellungsgespräch'].includes(r.status)).length;
+  const stats = [
+    { label: 'Gesamt',     value: total,                accent: total },
+    { label: 'Offen',      value: offen,                accent: offen },
+    { label: 'Beworben',   value: c('Beworben'),        accent: c('Beworben') },
+    { label: 'Nachgefragt',value: c('Nachgefragt'),     accent: c('Nachgefragt') },
+    { label: 'Vorstellung',value: c('Vorstellungsgespräch'), accent: c('Vorstellungsgespräch') },
+    { label: 'Zusage',     value: c('Zusage'),          accent: c('Zusage') },
+    { label: 'Absage',     value: c('Absage'),          accent: c('Absage') },
+  ];
+  const max = Math.max(1, ...stats.map(s => s.accent));
+  document.getElementById('dashboard').innerHTML = stats.map(s => `
+    <div class="stat">
+      <div class="label">${s.label}</div>
+      <div class="value">${s.value}</div>
+      <div class="bar"><i style="width:${(s.accent / max * 100).toFixed(0)}%"></i></div>
+    </div>
+  `).join('');
+}
+
+function renderLocations() {
+  const counts = {};
+  state.forEach(r => {
+    const key = r.standort || '— ohne Standort —';
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  const arr = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const max = Math.max(1, ...arr.map(x => x[1]));
+  document.getElementById('locations').innerHTML = `
+    <h3>Verteilung nach Standort</h3>
+    ${arr.map(([k,v]) => `
+      <div class="loc-row">
+        <div>${escapeHtml(k)}</div>
+        <div class="lbar"><i style="width:${(v/max*100).toFixed(0)}%"></i></div>
+        <div class="lcnt">${v}</div>
+      </div>`).join('')}
+  `;
+}
+
+function fillSelectOptions() {
+  const sStatus = document.getElementById('fStatus');
+  const sStand  = document.getElementById('fStandort');
+  const sInt    = document.getElementById('fInteresse');
+  const fldSt   = document.getElementById('fld_status');
+
+  const standorte = [...new Set(state.map(r => r.standort).filter(Boolean))].sort();
+  const interessen = [...new Set(state.map(r => r.interesse).filter(Boolean))].sort();
+
+  const cur = { st: sStatus.value, so: sStand.value, ie: sInt.value };
+
+  sStatus.innerHTML = `<option value="">Alle Status</option>` +
+    STATUSES.map(s => `<option ${cur.st===s?'selected':''}>${s}</option>`).join('');
+  sStand.innerHTML = `<option value="">Alle Standorte</option>` +
+    standorte.map(s => `<option ${cur.so===s?'selected':''}>${escapeHtml(s)}</option>`).join('');
+  sInt.innerHTML = `<option value="">Alle Interessen</option>` +
+    interessen.map(s => `<option ${cur.ie===s?'selected':''}>${escapeHtml(s)}</option>`).join('');
+
+  fldSt.innerHTML = STATUSES.map(s => `<option>${s}</option>`).join('');
+}
+
+function resetFilters() {
+  document.getElementById('fSearch').value = '';
+  document.getElementById('fStatus').value = '';
+  document.getElementById('fStandort').value = '';
+  document.getElementById('fInteresse').value = '';
+  render();
+}
+
+// ---------- Editor ----------
+function openEditor(id) {
+  fillSelectOptions();
+  editingId = id || null;
+  const r = id ? state.find(x => x.id === id) : blankRecord();
+  if (!r) return;
+  document.getElementById('modalTitle').textContent = id ? 'Bewerbung bearbeiten' : 'Neue Bewerbung';
+  document.getElementById('btnDelete').style.display = id ? 'inline-block' : 'none';
+  setVal('fld_unternehmen', r.unternehmen);
+  setVal('fld_standort', r.standort);
+  setVal('fld_interesse', r.interesse);
+  setVal('fld_adresse', r.adresse);
+  setVal('fld_website', r.website);
+  setVal('fld_datum', isDate(r.datumBewerbung) ? r.datumBewerbung : '');
+  setVal('fld_nachgefragt', isDate(r.nachgefragt) ? r.nachgefragt : '');
+  setVal('fld_status', r.status);
+  setVal('fld_kontakt', r.kontakt);
+  setVal('fld_ergebnis', r.ergebnis);
+  setVal('fld_notizen', r.notizen);
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeEditor() {
+  document.getElementById('modalBg').classList.remove('open');
+  editingId = null;
+}
+
+function saveCurrent() {
+  const data = {
+    unternehmen: getVal('fld_unternehmen').trim(),
+    standort:    getVal('fld_standort').trim(),
+    interesse:   getVal('fld_interesse'),
+    adresse:     getVal('fld_adresse').trim(),
+    website:     getVal('fld_website').trim(),
+    datumBewerbung: getVal('fld_datum'),
+    nachgefragt: getVal('fld_nachgefragt'),
+    status:      getVal('fld_status'),
+    kontakt:     getVal('fld_kontakt').trim(),
+    ergebnis:    getVal('fld_ergebnis').trim(),
+    notizen:     getVal('fld_notizen'),
+  };
+  if (!data.unternehmen) { toast('Bitte Unternehmen angeben'); return; }
+  if (editingId) {
+    const i = state.findIndex(r => r.id === editingId);
+    state[i] = { ...state[i], ...data };
+    toast('Gespeichert');
+  } else {
+    state.push({ id: uid(), ...data });
+    toast('Hinzugefügt');
+  }
+  save();
+  closeEditor();
+  render();
+}
+
+function deleteCurrent() {
+  if (!editingId) return;
+  if (!confirm('Diese Bewerbung wirklich löschen?')) return;
+  state = state.filter(r => r.id !== editingId);
+  save();
+  closeEditor();
+  render();
+  toast('Gelöscht');
+}
+
+function confirmDelete(id) {
+  if (!confirm('Diese Bewerbung wirklich löschen?')) return;
+  state = state.filter(r => r.id !== id);
+  save(); render(); toast('Gelöscht');
+}
+
+function blankRecord() {
+  return {
+    id: null, unternehmen:'', standort:'', interesse:'',
+    adresse:'', website:'', datumBewerbung:'', nachgefragt:'',
+    status: 'Geplant', kontakt:'', ergebnis:'', notizen:'',
+  };
+}
+
+// ---------- Import / Export ----------
+function exportJson() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  download(blob, 'bewerbungen-backup-' + isoToday() + '.json');
+  toast('JSON-Backup heruntergeladen');
+}
+
+function exportXlsx() {
+  const rows = state.map(r => ({
+    'Unternehmen':     r.unternehmen,
+    'Interesse':       r.interesse,
+    'Website':         r.website,
+    'Standort':        r.standort,
+    'Adresse':         r.adresse,
+    'Datum Bewerbung': r.datumBewerbung,
+    'Nachgefragt':     r.nachgefragt,
+    'Status':          r.status,
+    'Ergebnis':        r.ergebnis,
+    'Kontakt':         r.kontakt,
+    'Notizen':         r.notizen,
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [
+    {wch:32},{wch:14},{wch:30},{wch:18},{wch:34},
+    {wch:14},{wch:14},{wch:18},{wch:18},{wch:24},{wch:40}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Bewerbungen');
+  XLSX.writeFile(wb, 'Bewerbungen-' + isoToday() + '.xlsx');
+  toast('Excel-Datei heruntergeladen');
+}
+
+function importXlsx(ev) {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+      const existingKeys = new Set(state.map(r => keyOf(r)));
+      let added = 0, updated = 0;
+      rows.forEach(row => {
+        const rec = {
+          unternehmen: (row['Unternehmen']     || '').toString().trim(),
+          interesse:   normalizeInteresse(row['Interesse'] || ''),
+          website:     (row['Website']         || '').toString().trim(),
+          standort:    (row['Standort']        || '').toString().trim(),
+          adresse:     (row['Adresse']         || '').toString().trim(),
+          datumBewerbung: toIsoDate(row['Datum Bewerbung']),
+          nachgefragt: toIsoDate(row['Nachgefragt']),
+          status:      (row['Status'] || '').toString().trim(),
+          ergebnis:    (row['Ergebnis'] || '').toString().trim(),
+          kontakt:     (row['Kontakt'] || '').toString().trim(),
+          notizen:     (row['Notizen'] || '').toString(),
+        };
+        if (!rec.unternehmen) return;
+        if (!STATUSES.includes(rec.status)) rec.status = deriveStatus(rec);
+        const k = keyOf(rec);
+        const existing = state.find(r => keyOf(r) === k);
+        if (existing) {
+          Object.assign(existing, rec);
+          updated++;
+        } else {
+          state.push({ id: uid(), ...rec });
+          added++;
+        }
+      });
+      save(); render();
+      toast(`Import: ${added} neu, ${updated} aktualisiert`);
+    } catch (err) {
+      console.error(err);
+      alert('Import fehlgeschlagen: ' + err.message);
+    }
+    ev.target.value = '';
+  };
+  rd.readAsArrayBuffer(f);
+}
+
+function keyOf(r) {
+  return (r.unternehmen || '').toLowerCase().trim() + '|' + (r.adresse || '').toLowerCase().trim();
+}
+
+function toIsoDate(v) {
+  if (!v) return '';
+  if (typeof v === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    if (v.toLowerCase().includes('nehmen')) return 'Nehmen keine';
+    // try dd.mm.yyyy
+    const m = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+    if (m) {
+      let y = m[3]; if (y.length === 2) y = '20' + y;
+      return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    }
+    return v;
+  }
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  return '';
+}
+
+function resetSeed() {
+  if (!confirm('Alle Daten verwerfen und auf die ursprüngliche Excel-Liste zurücksetzen?\nMache vorher ein Backup, falls du Änderungen behalten willst.')) return;
+  state = buildSeedRecords();
+  save(); render();
+  toast('Auf Originaldaten zurückgesetzt');
+}
+
+// ---------- Helpers ----------
+function setVal(id, v) { document.getElementById(id).value = v || ''; }
+function getVal(id) { return document.getElementById(id).value; }
+function escapeHtml(s) {
+  return (s == null ? '' : String(s))
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/"/g,'&quot;'); }
+function formatDate(s) {
+  if (!s) return '';
+  if (!isDate(s)) return s;
+  const [y,m,d] = s.split('-');
+  return `${d}.${m}.${y}`;
+}
+function isoToday() { return new Date().toISOString().slice(0,10); }
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+}
+let toastT;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ESC to close modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeEditor();
+});
+// click outside modal closes
+document.getElementById('modalBg').addEventListener('click', e => {
+  if (e.target.id === 'modalBg') closeEditor();
+});
+
+render();
+</script>
+</body>
+</html>
