@@ -71,8 +71,12 @@
   .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 99999; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 10px 16px; background: var(--ui-topbar-bg); border-bottom: 1px solid var(--ui-topbar-border); box-shadow: 0 2px 12px rgba(232,115,138,0.1); backdrop-filter: blur(8px); transition: background 0.4s ease, border-color 0.4s ease; }
   .top-bar-btn { background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 7px 16px; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; text-decoration: none; display: inline-block; }
   .top-bar-btn:hover { color: var(--rose); border-color: var(--rose); background: var(--ui-btn-bg); }
-  .coin-display { display: flex; align-items: center; gap: 6px; background: var(--ui-coin-bg); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: var(--gold); transition: background 0.4s ease; }
-  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 18px; }
+  .coin-display { display: flex; align-items: center; gap: 6px; background: var(--ui-coin-bg); border: 1.5px solid rgba(212,160,97,0.35); border-radius: 50px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: var(--gold); transition: transform 0.2s ease, background 0.4s ease; text-decoration: none; }
+  @media (hover: hover) { .coin-display:hover { transform: scale(1.03); } }
+  .coin-display .coin-icon { font-size: 16px; }
+  .coin-display .coin-count { font-family: 'Dancing Script', cursive; font-size: 18px; display: inline-block; min-width: 3.8em; text-align: left; font-variant-numeric: tabular-nums; }
+  .savings-display { background: var(--ui-piggy-bg, rgba(232,115,138,0.14)); border-color: rgba(232,115,138,0.4); box-shadow: 0 3px 14px rgba(232,115,138,0.2); color: var(--rose, #e8738a); }
+  @media (hover: hover) { .savings-display:hover { border-color: rgba(232,115,138,0.65); } }
 
   /* AUTH */
   .auth-loading { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:var(--cream); }
@@ -946,10 +950,10 @@
   }
 
   @media (max-width: 600px) {
-    .top-bar { padding: 8px 12px; gap: 4px; flex-wrap: nowrap; }
+    .top-bar { padding: 8px 12px; gap: 4px; flex-wrap: wrap; }
     .top-bar-btn { padding: 6px 10px; font-size: 11px; }
     .coin-display { padding: 5px 10px; font-size: 11px; }
-    .coin-display .coin-count { font-size: 16px; }
+    .coin-display .coin-count { font-size: 16px; min-width: 0; }
     .page { padding: 70px 12px 50px; }
     .page-title { font-size: 48px; }
     .page-subtitle { font-size: 11px; letter-spacing: 1.5px; }
@@ -1052,7 +1056,8 @@
 <!-- Top Bar -->
 <div class="top-bar" id="topBar" style="display:none;">
   <a href="index.html" class="top-bar-btn">← Zurück</a>
-  <div class="coin-display"><span>🪙</span><span class="coin-count" id="coinCount">0</span></div>
+  <div class="coin-display"><span class="coin-icon">🪙</span><span class="coin-count" id="coinCount">0</span></div>
+  <a href="sparschwein.html" class="coin-display savings-display" id="savingsDisplay" title="Zum Sparschwein"><span class="coin-icon">🐷</span><span class="coin-count" id="savingsCount">0</span></a>
   <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
 </div>
 
@@ -1845,6 +1850,16 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
+  function formatCoins(val) {
+    const n = Number(val) || 0;
+    return n.toLocaleString('de-DE');
+  }
+
+  function renderSavingsCount(val) {
+    const el = document.getElementById('savingsCount');
+    if (el) el.textContent = formatCoins(val);
+  }
+
   const THEME_GRADIENTS = {
     sakura:  'radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,163,181,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%)',
     ocean:   'radial-gradient(ellipse at 20% 20%, rgba(42,157,143,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.15) 0%, transparent 50%), linear-gradient(160deg, #f0fafa 0%, #e0f7f5 40%, #e8f8f7 70%, #f0fdf9 100%)',
@@ -2409,7 +2424,7 @@
         const val = raw === null || raw === undefined ? 0 : Number(raw);
         if (Number.isFinite(val)) {
           currentCoins = val;
-          document.getElementById('coinCount').textContent = val;
+          document.getElementById('coinCount').textContent = formatCoins(val);
           renderThemes();
           updateLootboxUI();
           renderBoosterShop();
@@ -2418,6 +2433,9 @@
           console.warn('NaN in coins DB erkannt, setze auf 0');
           set(ref(db, `coins/${userKey}`), 0);
         }
+      });
+      onValue(ref(db, 'savings/topf'), snap => {
+        renderSavingsCount(snap.val() || 0);
       });
 
     } else {
