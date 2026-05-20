@@ -2063,8 +2063,129 @@
     color: #fff; background: linear-gradient(135deg, #34d399, #059669);
     padding: 3px 10px; border-radius: 50px; margin-bottom: 10px; letter-spacing: 0.3px;
   }
+  /* Editor v2: editierbare Karten + Seitenumbrüche */
+  .survey-section-label {
+    font-size: 11px; font-weight: 800; color: var(--text-mid);
+    letter-spacing: 1.2px; text-transform: uppercase;
+    text-align: left; margin: 14px 0 6px;
+  }
+  .survey-section-label:first-of-type { margin-top: 4px; }
+  .survey-add-btn {
+    display: block; width: 100%;
+    background: rgba(232,115,138,0.06);
+    border: 1.5px dashed var(--ui-modal-border);
+    border-radius: 16px; padding: 12px; margin-top: 4px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700;
+    color: #c85070; cursor: pointer; transition: all 0.2s ease;
+  }
+  .survey-add-btn:hover {
+    background: rgba(232,115,138,0.12); border-color: #e8738a;
+  }
+  .survey-card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .survey-card-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose,#e8738a), #c85070);
+    color: #fff; font-weight: 800; font-size: 13px;
+  }
+  .survey-card-tools { display: flex; gap: 2px; }
+  .survey-card-tools button {
+    border: none; background: transparent; cursor: pointer;
+    width: 28px; height: 28px; border-radius: 8px;
+    font-size: 14px; color: var(--text-mid);
+    transition: all 0.15s ease;
+  }
+  .survey-card-tools button:hover {
+    background: rgba(232,115,138,0.12); color: #c85070;
+  }
+  .survey-card-tools button:disabled {
+    opacity: 0.3; cursor: not-allowed;
+  }
+  .survey-card-tools button:disabled:hover {
+    background: transparent; color: var(--text-mid);
+  }
+  .survey-q-text {
+    width: 100%; box-sizing: border-box;
+    border: 1.5px solid var(--ui-modal-border); border-radius: 12px;
+    padding: 9px 12px; font-family: 'Quicksand', sans-serif; font-size: 14px;
+    font-weight: 600; color: var(--ui-input-color); background: var(--ui-input-bg);
+    outline: none; margin-bottom: 8px;
+  }
+  .survey-q-text:focus { border-color: #ff6b9d; }
+  .survey-kind-chips { display: flex; gap: 6px; margin-bottom: 8px; }
+  .survey-kind-chip {
+    flex: 1; border: 1.5px solid var(--ui-modal-border); border-radius: 50px;
+    padding: 7px 10px; font-family: 'Quicksand', sans-serif; font-size: 12px;
+    font-weight: 700; cursor: pointer; background: transparent;
+    color: var(--text-dark); transition: all 0.2s ease;
+  }
+  .survey-kind-chip.active {
+    background: linear-gradient(135deg, var(--rose,#e8738a), #c85070);
+    color: #fff; border-color: transparent;
+  }
+  .survey-choices-editor {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    padding: 8px; border-radius: 10px;
+    background: rgba(232,115,138,0.04);
+    margin-bottom: 8px;
+  }
+  .survey-choice-input {
+    flex: 1; min-width: 120px;
+    border: 1.5px solid var(--ui-modal-border); border-radius: 50px;
+    padding: 5px 12px; font-family: 'Quicksand', sans-serif; font-size: 12px;
+    font-weight: 600; color: var(--ui-input-color); background: var(--ui-input-bg);
+    outline: none;
+  }
+  .survey-choice-input:focus { border-color: #ff6b9d; }
+  .survey-break-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1.5px solid var(--ui-modal-border); border-radius: 50px;
+    padding: 5px 12px; font-family: 'Quicksand', sans-serif; font-size: 11px;
+    font-weight: 700; cursor: pointer; background: transparent;
+    color: var(--text-mid); transition: all 0.2s ease;
+  }
+  .survey-break-btn:hover { border-color: #e8738a; color: #c85070; }
+  .survey-break-btn.active {
+    background: rgba(232,115,138,0.15); border-color: #e8738a; color: #c85070;
+  }
+  .survey-page-divider {
+    text-align: center; font-size: 11px; font-weight: 800;
+    color: #c85070; letter-spacing: 1.5px; text-transform: uppercase;
+    margin: 14px 0; padding: 6px 0;
+    border-top: 1.5px dashed rgba(232,115,138,0.4);
+    position: relative;
+  }
+  .survey-page-divider span {
+    background: var(--ui-modal-bg, #fff8f5);
+    padding: 0 12px; position: relative; top: -14px;
+  }
+  /* Recipient-side: Seitennavigation */
+  .survey-progress {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; padding: 8px 12px;
+    background: rgba(232,115,138,0.08); border-radius: 12px;
+    font-size: 12px; font-weight: 700; color: #c85070;
+  }
+  .survey-dots { display: inline-flex; gap: 6px; }
+  .survey-dots span {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid #e8738a; background: transparent;
+    transition: all 0.2s ease;
+  }
+  .survey-dots span.active {
+    background: linear-gradient(135deg, var(--rose,#e8738a), #c85070);
+    border-color: transparent;
+  }
+  .survey-dots span.done {
+    background: rgba(232,115,138,0.4); border-color: rgba(232,115,138,0.4);
+  }
+  .survey-pager { display: flex; gap: 8px; margin-top: 14px; }
+  .survey-pager .mail-btn { flex: 1; }
   @media (max-width: 540px) {
-    #surveyTitle, #surveyQText, #surveyChoiceInput, .survey-select { font-size: 16px !important; }
+    #surveyTitle, .survey-q-text, .survey-choice-input { font-size: 16px !important; }
   }
 
   /* Auffällige „Neue Post"-Benachrichtigung */
@@ -2512,26 +2633,11 @@
           <button class="mail-tab" data-surveyrcpt="andreas">Andreas</button>
           <button class="mail-tab" data-surveyrcpt="both">Beide</button>
         </div>
+        <div class="survey-section-label">📌 Titel</div>
         <input type="text" class="mail-subject-input" id="surveyTitle" placeholder="Titel der Umfrage…" maxlength="80">
+        <div class="survey-section-label">❓ Fragen</div>
         <div id="surveyQuestionList"></div>
-        <div class="survey-add-question" id="surveyAddBlock">
-          <div class="survey-add-label">➕ Frage hinzufügen</div>
-          <input type="text" class="mail-subject-input" id="surveyQText" placeholder="Fragetext…" maxlength="120" style="margin-bottom:8px;">
-          <div class="mail-row" style="gap:6px;flex-wrap:wrap;">
-            <select id="surveyQKind" class="survey-select">
-              <option value="text">📝 Freitext</option>
-              <option value="choice">🔘 Mehrfachwahl</option>
-            </select>
-            <button class="mail-btn claim" id="surveyAddQBtn" style="padding:9px 16px;">+</button>
-          </div>
-          <div id="surveyChoiceOptions" style="display:none;margin-top:10px;">
-            <div id="surveyChoiceList"></div>
-            <div class="mail-row" style="gap:6px;margin-top:6px;">
-              <input type="text" class="mail-subject-input" id="surveyChoiceInput" placeholder="Option hinzufügen…" maxlength="60" style="flex:1;margin-bottom:0;">
-              <button class="mail-btn claim" id="surveyChoiceAddBtn" style="padding:9px 14px;">+</button>
-            </div>
-          </div>
-        </div>
+        <button type="button" class="survey-add-btn" id="surveyAddQBtn">➕ Frage hinzufügen</button>
         <div class="moment-modal-error" id="surveyError"></div>
       </div>
     </div>
@@ -3046,8 +3152,10 @@
   let _mailToastTimer = null;
   let _mailOpenId = null;         // aktuell geöffnete Nachricht (Detail-Ansicht)
   let _mailLastUnread = null;     // letzte bekannte Ungelesen-Zahl (für Live-Hinweis)
-  let _surveyQuestions = [];      // Fragen im Survey-Builder
-  let _surveyWorkingChoices = []; // Choice-Optionen für aktuelle Frage
+  let _surveyQuestions = [];      // Fragen im Survey-Builder ({ id, text, type, options?, page })
+  let _surveyCurrentPage = 1;     // aktuelle Seite beim Beantworten
+  let _surveyAnswers = {};        // { [questionIndex]: value } - In-Memory-Cache während Navigation
+  let _surveyOpenMsgId = null;    // welche Umfrage gerade geöffnet ist (für Reset)
   let autoclickInterval        = null;
   let autoclickFlushInterval   = null;
   let sabotageClickCounter     = 0;
@@ -3637,24 +3745,146 @@
     box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
   }
 
-  // ---- Survey: Empfänger-Ansicht (Formular ausfüllen) ----
+  // ---- Survey: Empfänger-Ansicht (Formular ausfüllen, mehrseitig) ----
+  function _surveyPageCount(qs) {
+    if (!qs || !qs.length) return 1;
+    return Math.max(1, ...qs.map(q => q.page || 1));
+  }
+
+  function _surveyGetPages(qs) {
+    const total = _surveyPageCount(qs);
+    const pages = [];
+    for (let p = 1; p <= total; p++) pages.push([]);
+    qs.forEach((q, idx) => {
+      const p = q.page || 1;
+      pages[p - 1].push({ q, index: idx });
+    });
+    return pages.filter(p => p.length > 0);
+  }
+
+  function _surveyReadDOMAnswer(qIndex, q) {
+    if (q.type === 'text') {
+      const ta = document.getElementById(`sqans_${qIndex}`);
+      return ta ? ta.value.trim() : '';
+    }
+    if (q.type === 'choice') {
+      const sel = document.querySelector(`.survey-choice-opt.selected[data-qi="${qIndex}"]`);
+      if (!sel) return '';
+      return (q.options || [])[parseInt(sel.dataset.oi, 10)] || '';
+    }
+    return '';
+  }
+
+  function _surveyCachePage(pageItems) {
+    pageItems.forEach(({ q, index }) => {
+      _surveyAnswers[index] = _surveyReadDOMAnswer(index, q);
+    });
+  }
+
+  function _surveyQuestionInputHtml(q, index, done) {
+    const cachedVal = _surveyAnswers[index] || '';
+    if (q.type === 'text') {
+      return `<textarea class="survey-form-textarea" id="sqans_${index}" ${done ? 'disabled' : ''}>${mailEsc(cachedVal)}</textarea>`;
+    }
+    if (q.type === 'choice') {
+      const opts = (q.options || []).map((opt, oi) => {
+        const isSelected = !done && cachedVal === opt;
+        return `<button class="survey-choice-opt${done ? ' disabled-opt' : ''}${isSelected ? ' selected' : ''}" data-qi="${index}" data-oi="${oi}" type="button">${mailEsc(opt)}</button>`;
+      }).join('');
+      return `<div class="survey-choice-radio" id="sqans_${index}">${opts}</div>`;
+    }
+    return '';
+  }
+
+  function _renderSurveyPage(id, m, pages, done) {
+    const host = document.getElementById('surveyPageHost');
+    if (!host) return;
+    const total = pages.length;
+    const currentIdx = Math.min(Math.max(_surveyCurrentPage, 1), total) - 1;
+    const pageItems = pages[currentIdx];
+    let questionsHtml = '';
+    pageItems.forEach(({ q, index }) => {
+      const inputHtml = _surveyQuestionInputHtml(q, index, done);
+      questionsHtml += `<div class="survey-form-question"><label class="survey-form-qlabel">${index + 1}. ${mailEsc(q.text)}</label>${inputHtml}</div>`;
+    });
+    let progressHtml = '';
+    if (total > 1) {
+      const dots = pages.map((_, i) => {
+        const cls = i === currentIdx ? 'active' : (i < currentIdx ? 'done' : '');
+        return `<span class="${cls}"></span>`;
+      }).join('');
+      progressHtml = `<div class="survey-progress"><span>Seite ${currentIdx + 1} / ${total}</span><span class="survey-dots">${dots}</span></div>`;
+    }
+    let pagerHtml = '';
+    if (!done && total > 1) {
+      const showBack = currentIdx > 0;
+      const isLast = currentIdx === total - 1;
+      pagerHtml = `<div class="survey-pager">
+        ${showBack ? '<button class="mail-btn" id="surveyPrevBtn">← Zurück</button>' : ''}
+        ${isLast
+          ? '<button class="mail-btn claim" id="surveySubmitBtn">Abschicken ✓</button>'
+          : '<button class="mail-btn claim" id="surveyNextBtn">Weiter →</button>'}
+      </div>`;
+    } else if (!done) {
+      pagerHtml = `<div class="survey-pager"><button class="mail-btn claim" id="surveySubmitBtn">Abschicken ✓</button></div>`;
+    }
+    host.innerHTML = `
+      ${progressHtml}
+      <div id="surveyFormQuestions">${questionsHtml}</div>
+      <div class="moment-modal-error" id="surveyFormError"></div>
+      ${pagerHtml}
+    `;
+    // Choice-Buttons binden
+    if (!done) {
+      host.querySelectorAll('.survey-choice-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qi = btn.dataset.qi;
+          host.querySelectorAll(`.survey-choice-opt[data-qi="${qi}"]`).forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+      });
+      const nextBtn = document.getElementById('surveyNextBtn');
+      if (nextBtn) nextBtn.addEventListener('click', () => {
+        _surveyCachePage(pageItems);
+        // Validierung der aktuellen Seite
+        for (const { q, index } of pageItems) {
+          if (!_surveyAnswers[index]) {
+            const errEl = document.getElementById('surveyFormError');
+            if (errEl) errEl.textContent = `Bitte beantworte Frage ${index + 1}.`;
+            return;
+          }
+        }
+        _surveyCurrentPage++;
+        _renderSurveyPage(id, m, pages, done);
+      });
+      const prevBtn = document.getElementById('surveyPrevBtn');
+      if (prevBtn) prevBtn.addEventListener('click', () => {
+        _surveyCachePage(pageItems);
+        _surveyCurrentPage--;
+        _renderSurveyPage(id, m, pages, done);
+      });
+      const submitBtn = document.getElementById('surveySubmitBtn');
+      if (submitBtn) submitBtn.addEventListener('click', () => {
+        _surveyCachePage(pageItems);
+        submitSurveyAnswer(id, m, pages);
+      });
+    }
+  }
+
   function renderSurveyForm(box, id, m) {
     const when = new Date(m.sentAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
     const qs = (m.survey && m.survey.questions) || [];
     const done = !!m.answered;
-    let questionsHtml = '';
-    qs.forEach((q, i) => {
-      let inputHtml = '';
-      if (q.type === 'text') {
-        inputHtml = `<textarea class="survey-form-textarea" id="sqans_${i}" ${done ? 'disabled' : ''}></textarea>`;
-      } else if (q.type === 'choice') {
-        const opts = (q.options || []).map((opt, oi) =>
-          `<button class="survey-choice-opt${done ? ' disabled-opt' : ''}" data-qi="${i}" data-oi="${oi}" type="button">${mailEsc(opt)}</button>`
-        ).join('');
-        inputHtml = `<div class="survey-choice-radio" id="sqans_${i}">${opts}</div>`;
-      }
-      questionsHtml += `<div class="survey-form-question"><label class="survey-form-qlabel">${i+1}. ${mailEsc(q.text)}</label>${inputHtml}</div>`;
-    });
+    // Pages bauen (bei "done" alle in einer Seite zusammenführen → bestehendes Single-Page-Verhalten)
+    const pages = done
+      ? [qs.map((q, idx) => ({ q, index: idx }))]
+      : _surveyGetPages(qs);
+    // State pro Nachricht zurücksetzen
+    if (_surveyOpenMsgId !== id) {
+      _surveyOpenMsgId = id;
+      _surveyCurrentPage = 1;
+      _surveyAnswers = {};
+    }
     box.innerHTML = `
       <div class="mail-card admin survey-form">
         <div class="mail-from"><span class="mail-admin-pill">⚙️ Admin</span></div>
@@ -3662,46 +3892,32 @@
         ${done ? '<span class="survey-answered-badge">✓ Bereits beantwortet</span>' : ''}
         <div class="survey-form-title">📋 ${mailEsc(m.subject || 'Umfrage')}</div>
         ${m.body ? `<div class="mail-body" style="margin-bottom:14px;">${mailEsc(m.body)}</div>` : ''}
-        <div id="surveyFormQuestions">${questionsHtml}</div>
-        <div class="moment-modal-error" id="surveyFormError"></div>
-        <div class="mail-card-btns">
-          ${!done ? `<button class="mail-btn claim" id="surveySubmitBtn">Abschicken ✓</button>` : ''}
+        <div id="surveyPageHost"></div>
+        <div class="mail-card-btns" style="margin-top:14px;">
           <button class="mail-btn del" data-del="${id}">🗑️ Löschen</button>
         </div>
       </div>`;
     document.getElementById('mailBackBtn').addEventListener('click', showMailList);
-    if (!done) {
-      box.querySelectorAll('.survey-choice-opt').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const qi = btn.dataset.qi;
-          box.querySelectorAll(`.survey-choice-opt[data-qi="${qi}"]`).forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-        });
-      });
-      const submitBtn = document.getElementById('surveySubmitBtn');
-      if (submitBtn) submitBtn.addEventListener('click', () => submitSurveyAnswer(id, m));
-    }
+    _renderSurveyPage(id, m, pages, done);
     box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => requestMailDelete(b.dataset.del)));
   }
 
-  async function submitSurveyAnswer(id, m) {
+  async function submitSurveyAnswer(id, m, pages) {
     const myKey = (window.currentUser || '').toLowerCase();
     if (!myKey) return;
     const qs = (m.survey && m.survey.questions) || [];
     const answers = [];
     for (let i = 0; i < qs.length; i++) {
       const q = qs[i];
-      let value = '';
-      if (q.type === 'text') {
-        const ta = document.getElementById(`sqans_${i}`);
-        value = ta ? ta.value.trim() : '';
-      } else if (q.type === 'choice') {
-        const sel = document.querySelector(`.survey-choice-opt.selected[data-qi="${i}"]`);
-        value = sel ? (q.options || [])[parseInt(sel.dataset.oi, 10)] || '' : '';
-      }
+      const value = (_surveyAnswers[i] || '').trim();
       if (!value) {
+        // Auf die Seite der unbeantworteten Frage springen
+        if (pages && pages.length > 1) {
+          _surveyCurrentPage = q.page || 1;
+          _renderSurveyPage(id, m, pages, false);
+        }
         const errEl = document.getElementById('surveyFormError');
-        if (errEl) errEl.textContent = `Bitte beantworte Frage ${i+1}.`;
+        if (errEl) errEl.textContent = `Bitte beantworte Frage ${i + 1}.`;
         return;
       }
       answers.push({ questionId: q.id || `q${i}`, questionText: q.text, type: q.type, value });
@@ -3725,6 +3941,9 @@
       await push(ref(db, 'mailbox/andreas'), responseMsg);
       await update(ref(db, `mailbox/${myKey}/${id}`), { answered: true, read: true });
       mailToast('✅ Umfrage abgeschickt!');
+      _surveyOpenMsgId = null;
+      _surveyAnswers = {};
+      _surveyCurrentPage = 1;
       showMailList();
     } catch (e) {
       console.error('submitSurveyAnswer Fehler:', e);
@@ -3764,70 +3983,115 @@
     if (el) el.textContent = msg;
   }
 
-  function _surveyKindLabel(kind) {
-    return kind === 'text' ? '📝 Freitext' : kind === 'choice' ? '🔘 Mehrfachwahl' : kind;
+  function _surveyRebalancePages() {
+    // Lücken in der Seitennummerierung schließen (z.B. [1,1,3,3] → [1,1,2,2])
+    if (!_surveyQuestions.length) return;
+    const used = [...new Set(_surveyQuestions.map(q => q.page || 1))].sort((a, b) => a - b);
+    const remap = {};
+    used.forEach((p, i) => { remap[p] = i + 1; });
+    _surveyQuestions.forEach(q => { q.page = remap[q.page || 1]; });
   }
 
-  function renderSurveyChoiceList() {
-    const el = document.getElementById('surveyChoiceList');
-    if (!el) return;
-    el.innerHTML = _surveyWorkingChoices.map((opt, i) =>
-      `<span class="survey-choice-chip">${mailEsc(opt)}<button type="button" data-ci="${i}">×</button></span>`
-    ).join('');
-    el.querySelectorAll('button[data-ci]').forEach(b => b.addEventListener('click', () => {
-      _surveyWorkingChoices.splice(parseInt(b.dataset.ci, 10), 1);
-      renderSurveyChoiceList();
-    }));
+  function _surveyHasBreakAfter(i) {
+    const cur = _surveyQuestions[i];
+    const next = _surveyQuestions[i + 1];
+    if (!cur || !next) return false;
+    return (next.page || 1) > (cur.page || 1);
+  }
+
+  function _surveyToggleBreakAfter(i) {
+    if (i < 0 || i >= _surveyQuestions.length - 1) return;
+    const hasBreak = _surveyHasBreakAfter(i);
+    if (hasBreak) {
+      // Umbruch entfernen: alle nachfolgenden Fragen -1 Seite
+      for (let j = i + 1; j < _surveyQuestions.length; j++) {
+        _surveyQuestions[j].page = Math.max(1, (_surveyQuestions[j].page || 1) - 1);
+      }
+    } else {
+      // Umbruch einfügen: alle nachfolgenden Fragen +1 Seite
+      for (let j = i + 1; j < _surveyQuestions.length; j++) {
+        _surveyQuestions[j].page = (_surveyQuestions[j].page || 1) + 1;
+      }
+    }
+    _surveyRebalancePages();
+  }
+
+  function _surveyMoveQuestion(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= _surveyQuestions.length) return;
+    const tmp = _surveyQuestions[i];
+    _surveyQuestions[i] = _surveyQuestions[j];
+    _surveyQuestions[j] = tmp;
+    _surveyRebalancePages();
   }
 
   function renderSurveyQuestionList() {
     const el = document.getElementById('surveyQuestionList');
     if (!el) return;
-    if (!_surveyQuestions.length) { el.innerHTML = ''; return; }
-    el.innerHTML = _surveyQuestions.map((q, i) => {
-      const optsHtml = q.type === 'choice' && q.options && q.options.length
-        ? `<div class="survey-question-options">${q.options.map(o => mailEsc(o)).join(' · ')}</div>` : '';
-      return `<div class="survey-question-card">
-        <button class="survey-question-rm" type="button" data-qi="${i}">×</button>
-        <div class="survey-question-text">${i+1}. ${mailEsc(q.text)}</div>
-        <div class="survey-question-kind">${_surveyKindLabel(q.type)}</div>
-        ${optsHtml}
-      </div>`;
-    }).join('');
-    el.querySelectorAll('button[data-qi]').forEach(b => b.addEventListener('click', () => {
-      _surveyQuestions.splice(parseInt(b.dataset.qi, 10), 1);
-      renderSurveyQuestionList();
-    }));
+    if (!_surveyQuestions.length) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text-mid);font-style:italic;padding:8px 4px;">Noch keine Fragen. Klick unten auf „➕ Frage hinzufügen".</div>';
+      return;
+    }
+    const parts = [];
+    _surveyQuestions.forEach((q, i) => {
+      const isLast = i === _surveyQuestions.length - 1;
+      const hasBreak = _surveyHasBreakAfter(i);
+      const choiceEditor = q.type === 'choice' ? `
+        <div class="survey-choices-editor" data-qi="${i}">
+          ${(q.options || []).map((o, oi) =>
+            `<span class="survey-choice-chip">${mailEsc(o)}<button type="button" data-rm-opt="${oi}" data-qi="${i}">×</button></span>`
+          ).join('')}
+          <input type="text" class="survey-choice-input" data-opt-input="${i}" placeholder="${(q.options || []).length >= 4 ? 'Max. 4 Optionen' : 'Option +'}" maxlength="60" ${(q.options || []).length >= 4 ? 'disabled' : ''}>
+        </div>` : '';
+      parts.push(`
+        <div class="survey-question-card" data-qi="${i}">
+          <div class="survey-card-head">
+            <span class="survey-card-num">${i + 1}</span>
+            <div class="survey-card-tools">
+              <button type="button" data-act="up" data-qi="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
+              <button type="button" data-act="down" data-qi="${i}" ${isLast ? 'disabled' : ''} title="Nach unten">↓</button>
+              <button type="button" data-act="del" data-qi="${i}" title="Löschen">🗑️</button>
+            </div>
+          </div>
+          <input type="text" class="survey-q-text" data-qtext="${i}" value="${mailEsc(q.text || '')}" placeholder="Fragetext…" maxlength="120">
+          <div class="survey-kind-chips">
+            <button type="button" class="survey-kind-chip${q.type === 'text' ? ' active' : ''}" data-kind="text" data-qi="${i}">📝 Freitext</button>
+            <button type="button" class="survey-kind-chip${q.type === 'choice' ? ' active' : ''}" data-kind="choice" data-qi="${i}">🔘 Auswahl</button>
+          </div>
+          ${choiceEditor}
+          ${!isLast ? `<button type="button" class="survey-break-btn${hasBreak ? ' active' : ''}" data-break="${i}">📄 Seitenumbruch danach</button>` : ''}
+        </div>
+        ${hasBreak ? `<div class="survey-page-divider"><span>Seite ${(_surveyQuestions[i + 1].page || 1)}</span></div>` : ''}
+      `);
+    });
+    el.innerHTML = parts.join('');
   }
 
   function surveyAddQuestion() {
     surveyErr('');
-    const text = (document.getElementById('surveyQText').value || '').trim();
-    if (!text) { surveyErr('Bitte Fragetext eingeben.'); return; }
-    const kind = document.getElementById('surveyQKind').value;
-    if (kind === 'choice' && _surveyWorkingChoices.length < 2) { surveyErr('Mindestens 2 Optionen für Mehrfachwahl.'); return; }
-    const q = { id: 'q' + Date.now(), text, type: kind };
-    if (kind === 'choice') q.options = [..._surveyWorkingChoices];
-    _surveyQuestions.push(q);
-    document.getElementById('surveyQText').value = '';
-    _surveyWorkingChoices = [];
-    renderSurveyChoiceList();
-    document.getElementById('surveyChoiceOptions').style.display = 'none';
-    document.getElementById('surveyQKind').value = 'text';
+    const lastPage = _surveyQuestions.length
+      ? (_surveyQuestions[_surveyQuestions.length - 1].page || 1)
+      : 1;
+    _surveyQuestions.push({
+      id: 'q' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      text: '',
+      type: 'text',
+      page: lastPage,
+    });
     renderSurveyQuestionList();
+    // Fokus auf das neue Textfeld
+    requestAnimationFrame(() => {
+      const inputs = document.querySelectorAll('.survey-q-text');
+      const last = inputs[inputs.length - 1];
+      if (last) last.focus();
+    });
   }
 
   function renderMailSurvey() {
     _surveyQuestions = [];
-    _surveyWorkingChoices = [];
     const titleEl = document.getElementById('surveyTitle');
     if (titleEl) titleEl.value = '';
-    const choiceOpts = document.getElementById('surveyChoiceOptions');
-    if (choiceOpts) choiceOpts.style.display = 'none';
-    const qKind = document.getElementById('surveyQKind');
-    if (qKind) qKind.value = 'text';
     renderSurveyQuestionList();
-    renderSurveyChoiceList();
     surveyErr('');
     const srvRcptRow = document.getElementById('mailSurveyRecipientRow');
     if (srvRcptRow && _mailAdminMode && window.mailIsAdmin) {
@@ -3842,6 +4106,19 @@
     const title = (document.getElementById('surveyTitle').value || '').trim();
     if (!title) { surveyErr('Bitte Titel der Umfrage eingeben.'); return; }
     if (_surveyQuestions.length === 0) { surveyErr('Mindestens eine Frage hinzufügen.'); return; }
+    // Pro Frage validieren
+    for (let i = 0; i < _surveyQuestions.length; i++) {
+      const q = _surveyQuestions[i];
+      if (!q.text || !q.text.trim()) {
+        surveyErr(`Frage ${i + 1}: Bitte Fragetext eingeben.`);
+        return;
+      }
+      if (q.type === 'choice' && (!q.options || q.options.length < 2)) {
+        surveyErr(`Frage ${i + 1}: Mindestens 2 Auswahl-Optionen nötig.`);
+        return;
+      }
+    }
+    _surveyRebalancePages();
     const recipients = _mailAdminRecipient === 'both' ? ['nele', 'andreas'] : [_mailAdminRecipient];
     const sendBtn = document.getElementById('surveySendBtn');
     if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '⏳ Senden…'; }
@@ -3858,7 +4135,13 @@
         claimed: true,
         attachments: [],
         answered: false,
-        survey: { questions: _surveyQuestions.map(q => ({ ...q })) }
+        survey: {
+          questions: _surveyQuestions.map(q => {
+            const out = { id: q.id, text: q.text.trim(), type: q.type, page: q.page || 1 };
+            if (q.type === 'choice') out.options = (q.options || []).slice();
+            return out;
+          }),
+        },
       };
       for (const rcpt of recipients) {
         await push(ref(db, `mailbox/${rcpt}`), msg);
@@ -4241,24 +4524,83 @@
     document.getElementById('mailSendBtn').addEventListener('click', mailSend);
     document.getElementById('surveySendBtn').addEventListener('click', surveySend);
     document.getElementById('surveyAddQBtn').addEventListener('click', surveyAddQuestion);
-    document.getElementById('surveyQKind').addEventListener('change', () => {
-      const isChoice = document.getElementById('surveyQKind').value === 'choice';
-      document.getElementById('surveyChoiceOptions').style.display = isChoice ? '' : 'none';
-      _surveyWorkingChoices = [];
-      renderSurveyChoiceList();
+    // Event-Delegation für editierbare Fragenkarten
+    const qList = document.getElementById('surveyQuestionList');
+    qList.addEventListener('click', e => {
+      const t = e.target;
+      // Reorder / delete
+      const act = t.dataset.act;
+      if (act) {
+        const qi = parseInt(t.dataset.qi, 10);
+        if (act === 'up') { _surveyMoveQuestion(qi, -1); renderSurveyQuestionList(); }
+        else if (act === 'down') { _surveyMoveQuestion(qi, 1); renderSurveyQuestionList(); }
+        else if (act === 'del') {
+          _surveyQuestions.splice(qi, 1);
+          _surveyRebalancePages();
+          renderSurveyQuestionList();
+        }
+        surveyErr('');
+        return;
+      }
+      // Typ wechseln
+      if (t.dataset.kind) {
+        const qi = parseInt(t.dataset.qi, 10);
+        const newKind = t.dataset.kind;
+        if (_surveyQuestions[qi].type === newKind) return;
+        _surveyQuestions[qi].type = newKind;
+        if (newKind === 'choice' && !_surveyQuestions[qi].options) _surveyQuestions[qi].options = [];
+        renderSurveyQuestionList();
+        surveyErr('');
+        return;
+      }
+      // Option entfernen
+      if (t.dataset.rmOpt !== undefined) {
+        const qi = parseInt(t.dataset.qi, 10);
+        const oi = parseInt(t.dataset.rmOpt, 10);
+        if (_surveyQuestions[qi] && _surveyQuestions[qi].options) {
+          _surveyQuestions[qi].options.splice(oi, 1);
+          renderSurveyQuestionList();
+          surveyErr('');
+        }
+        return;
+      }
+      // Seitenumbruch toggle
+      if (t.dataset.break !== undefined) {
+        const qi = parseInt(t.dataset.break, 10);
+        _surveyToggleBreakAfter(qi);
+        renderSurveyQuestionList();
+        surveyErr('');
+        return;
+      }
     });
-    document.getElementById('surveyChoiceAddBtn').addEventListener('click', () => {
-      const inp = document.getElementById('surveyChoiceInput');
-      const val = (inp.value || '').trim();
-      if (!val) return;
-      if (_surveyWorkingChoices.length >= 4) { surveyErr('Maximal 4 Optionen erlaubt.'); return; }
-      _surveyWorkingChoices.push(val);
-      inp.value = '';
-      surveyErr('');
-      renderSurveyChoiceList();
+    qList.addEventListener('input', e => {
+      const t = e.target;
+      if (t.dataset.qtext !== undefined) {
+        const qi = parseInt(t.dataset.qtext, 10);
+        if (_surveyQuestions[qi]) _surveyQuestions[qi].text = t.value;
+        return;
+      }
     });
-    document.getElementById('surveyChoiceInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('surveyChoiceAddBtn').click(); }
+    qList.addEventListener('keydown', e => {
+      const t = e.target;
+      if (t.dataset.optInput !== undefined && e.key === 'Enter') {
+        e.preventDefault();
+        const qi = parseInt(t.dataset.optInput, 10);
+        const val = (t.value || '').trim();
+        if (!val) return;
+        const q = _surveyQuestions[qi];
+        if (!q) return;
+        if (!q.options) q.options = [];
+        if (q.options.length >= 4) { surveyErr('Maximal 4 Optionen pro Frage.'); return; }
+        q.options.push(val);
+        surveyErr('');
+        renderSurveyQuestionList();
+        // Fokus wieder auf das neue Optionsfeld der gleichen Karte (sofern noch nicht max.)
+        requestAnimationFrame(() => {
+          const again = document.querySelector(`input[data-opt-input="${qi}"]`);
+          if (again && !again.disabled) again.focus();
+        });
+      }
     });
     const delOv = document.getElementById('mailDeleteOverlay');
     document.getElementById('mailDeleteNo').addEventListener('click', () => { _mailPendingDelete = null; delOv.classList.remove('open'); });
