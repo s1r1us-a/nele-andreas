@@ -306,12 +306,10 @@
     filter:drop-shadow(0 8px 18px rgba(253,203,110,0.5));
   }
   .my-hand .card:not(.playable) { filter:brightness(0.5) saturate(0.6); cursor:not-allowed; }
-  .my-hand .card.just-drawn { animation:cardDrawnFancy .7s cubic-bezier(.22,1,.36,1); transform-style:preserve-3d; }
+  .my-hand .card.just-drawn { animation:cardDrawnFancy .22s ease-out; }
   @keyframes cardDrawnFancy {
-    0%   { transform:translateY(-110px) scale(.25) rotateY(180deg) rotateZ(-18deg); opacity:0; filter:drop-shadow(0 0 0 transparent); }
-    45%  { opacity:1; filter:drop-shadow(0 10px 22px rgba(253,203,110,.7)); }
-    70%  { transform:translateY(-10px) scale(1.08) rotateY(0deg) rotateZ(4deg); }
-    100% { transform:translateY(0) scale(1) rotateY(0deg) rotateZ(0); opacity:1; filter:none; }
+    0%   { opacity:0; transform:scale(.96); }
+    100% { opacity:1; transform:scale(1); }
   }
   .my-hand .card.playing-out { animation:playingOut .35s ease-in forwards; }
   @keyframes playingOut { 0%{transform:translateY(0) scale(1)} 100%{transform:translateY(-160px) scale(.7) rotate(20deg);opacity:0} }
@@ -1085,6 +1083,12 @@ function animateOpponentAction(action) {
   if (!action) return;
   if (action.type === 'play' && action.cardId) {
     flyCard(action.cardId, getOppHandPoint(), getDiscardPoint(), true);
+    try {
+      const pc = parseCard(action.cardId);
+      if (pc && (pc.kind === 'draw2' || pc.kind === 'wild4' || pc.kind === 'skip' || pc.kind === 'reverse')) {
+        setTimeout(() => showActionEffect(pc.kind, pc.color), 500);
+      }
+    } catch(e) {}
   } else if (action.type === 'draw') {
     // Cards flying from deck to opp hand
     for (let i=0;i<(action.count||1);i++) {
@@ -1202,17 +1206,68 @@ function flyCardBack(from, to, opts = {}) {
 }
 
 function showColorFlash(color) {
+  const strong = color==='red'?'rgba(214,48,49,.85)'
+              : color==='yellow'?'rgba(253,203,110,.85)'
+              : color==='green'?'rgba(0,184,148,.85)'
+              : 'rgba(9,132,227,.85)';
+  const mid    = color==='red'?'rgba(214,48,49,.35)'
+              : color==='yellow'?'rgba(253,203,110,.35)'
+              : color==='green'?'rgba(0,184,148,.35)'
+              : 'rgba(9,132,227,.35)';
   const overlay = document.createElement('div');
-  overlay.style.cssText = `position:fixed;inset:0;z-index:99995;pointer-events:none;background:radial-gradient(circle,${
-    color==='red'?'rgba(214,48,49,.45)':color==='yellow'?'rgba(253,203,110,.45)':color==='green'?'rgba(0,184,148,.45)':'rgba(9,132,227,.45)'
-  } 0%,transparent 70%);animation:colorFlashAnim .8s ease-out forwards;`;
+  overlay.style.cssText = `position:fixed;inset:0;z-index:99995;pointer-events:none;`
+    + `background:radial-gradient(ellipse at center, transparent 25%, ${mid} 65%, ${strong} 100%);`
+    + `box-shadow:inset 0 0 220px 40px ${strong};`
+    + `animation:colorFlashAnim 1.2s ease-out forwards;`;
   document.body.appendChild(overlay);
   if (!document.getElementById('colorFlashStyle')) {
     const s = document.createElement('style'); s.id='colorFlashStyle';
-    s.textContent = '@keyframes colorFlashAnim { 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }';
+    s.textContent = '@keyframes colorFlashAnim { 0%{opacity:0} 25%{opacity:1} 75%{opacity:.9} 100%{opacity:0} }';
     document.head.appendChild(s);
   }
-  setTimeout(() => overlay.remove(), 900);
+  setTimeout(() => overlay.remove(), 1250);
+}
+
+function showActionEffect(kind, color) {
+  const palette = {
+    red:    ['#d63031','#ff6b6b'],
+    yellow: ['#fdcb6e','#ffeaa7'],
+    green:  ['#00b894','#55efc4'],
+    blue:   ['#0984e3','#74b9ff'],
+    wild:   ['#2d3436','#636e72'],
+  };
+  const meta = {
+    draw2:   { label:'+2',                   sub:'Zwei Karten ziehen!' },
+    wild4:   { label:'+4',                   sub:'Vier Karten ziehen!' },
+    skip:    { label:'⏭ AUSSETZEN',          sub:'Eine Runde pausieren' },
+    reverse: { label:'🔄 RICHTUNGSWECHSEL',  sub:'Spielrichtung gedreht' },
+  }[kind];
+  if (!meta) return;
+  const [c1, c2] = palette[color] || palette.wild;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = `position:fixed;inset:0;z-index:99994;pointer-events:none;display:grid;place-items:center;`;
+  const card = document.createElement('div');
+  card.style.cssText = `font-family:'Arial Black',sans-serif;color:#fff;text-align:center;padding:32px 56px;border-radius:28px;`
+    + `background:linear-gradient(135deg, ${c1}, ${c2});`
+    + `box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 80px ${c1}, inset 0 0 40px rgba(255,255,255,.2);`
+    + `border:3px solid rgba(255,255,255,.35);`
+    + `text-shadow:0 3px 12px rgba(0,0,0,.5);`
+    + `animation:actionEffectAnim 1.4s cubic-bezier(.22,1,.36,1) forwards;`;
+  card.innerHTML = `<div style="font-size:64px;line-height:1;letter-spacing:1px;">${meta.label}</div>`
+    + `<div style="font-family:'Dancing Script',cursive;font-size:24px;margin-top:10px;font-weight:700;">${meta.sub}</div>`;
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+  if (!document.getElementById('actionEffectStyle')) {
+    const s = document.createElement('style'); s.id='actionEffectStyle';
+    s.textContent = '@keyframes actionEffectAnim {'
+      + '0%{transform:scale(.3) rotate(-8deg);opacity:0}'
+      + '25%{transform:scale(1.2) rotate(3deg);opacity:1}'
+      + '40%{transform:scale(1) rotate(0);opacity:1}'
+      + '75%{transform:scale(1) rotate(0);opacity:1}'
+      + '100%{transform:scale(1.08) rotate(0);opacity:0}}';
+    document.head.appendChild(s);
+  }
+  setTimeout(() => wrap.remove(), 1450);
 }
 
 function showUnoShout() {
@@ -1255,6 +1310,14 @@ async function playCard(cardId, chosenColor) {
       cardEl.classList.add('playing-out');
       flyCard(cardId, from, to, true);
     }
+
+    try {
+      const pc = parseCard(cardId);
+      if (pc && (pc.kind === 'draw2' || pc.kind === 'wild4' || pc.kind === 'skip' || pc.kind === 'reverse')) {
+        const eff = pc.color === 'wild' ? (chosenColor || 'wild') : pc.color;
+        setTimeout(() => showActionEffect(pc.kind, eff), 450);
+      }
+    } catch(e) {}
 
     await mutateState(state => {
       if (!state || state.status !== 'running') return state;
@@ -2005,6 +2068,7 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
   sw.addEventListener('click', async () => {
     const color = sw.dataset.color;
     document.getElementById('colorPickerOverlay').classList.remove('open');
+    showColorFlash(color);
     if (pendingWildCardId) {
       await playCard(pendingWildCardId, color);
     }
