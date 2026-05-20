@@ -4,27 +4,33 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bewerbungs-Tracker · Nele</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
-    --bg: #f4f6fb;
-    --card: #ffffff;
-    --ink: #1f2742;
-    --ink-soft: #5b6480;
-    --line: #e6e9f2;
-    --accent: #5b6bf0;
-    --accent-soft: #eef0ff;
-    --shadow: 0 6px 24px rgba(33, 45, 89, 0.08);
+    --bg: #0f1320;
+    --bg-2: #131829;
+    --card: #1a2036;
+    --card-2: #222a45;
+    --ink: #e9ecf7;
+    --ink-soft: #8b95b7;
+    --line: #2a3251;
+    --line-soft: #222a45;
+    --accent: #7c8cff;
+    --accent-2: #a78bff;
+    --accent-soft: rgba(124, 140, 255, 0.14);
+    --danger: #ff6b7a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.25);
     --radius: 14px;
 
-    --st-Geplant-bg:#eceff5;        --st-Geplant-fg:#4b5675;
-    --st-Beworben-bg:#e3edff;       --st-Beworben-fg:#274bb2;
-    --st-Nachgefragt-bg:#f0e6ff;    --st-Nachgefragt-fg:#5b2ec2;
-    --st-Antwort-bg:#fff4cf;        --st-Antwort-fg:#7a5b00;
-    --st-Vorstellung-bg:#ffe3c8;    --st-Vorstellung-fg:#9a4a00;
-    --st-Zusage-bg:#d6f5dd;         --st-Zusage-fg:#1f6a36;
-    --st-Absage-bg:#ffd9d9;         --st-Absage-fg:#a02828;
-    --st-Nehmen-bg:#d4d7e0;         --st-Nehmen-fg:#3a4159;
+    --st-Geplant-bg:#2c3553;        --st-Geplant-fg:#b7c0e0;
+    --st-Beworben-bg:#1f3470;       --st-Beworben-fg:#9fb8ff;
+    --st-Nachgefragt-bg:#3a2470;    --st-Nachgefragt-fg:#c8a8ff;
+    --st-Antwort-bg:#5a4500;        --st-Antwort-fg:#ffdf86;
+    --st-Vorstellung-bg:#6b3700;    --st-Vorstellung-fg:#ffc188;
+    --st-Zusage-bg:#1a5a32;         --st-Zusage-fg:#86f3a8;
+    --st-Absage-bg:#5e1c22;         --st-Absage-fg:#ff9aa3;
+    --st-Nehmen-bg:#373d54;         --st-Nehmen-fg:#a3acc8;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -34,32 +40,52 @@
     background: var(--bg);
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
   }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 96px; }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    background:
+      radial-gradient(60vw 60vh at 10% -10%, rgba(124,140,255,0.18), transparent 60%),
+      radial-gradient(50vw 50vh at 110% 10%, rgba(167,139,255,0.14), transparent 60%);
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 20px 96px; }
+
   header.top {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 22px;
   }
   header.top h1 {
-    margin: 0; font-size: 26px; letter-spacing: -0.01em;
+    margin: 0; font-size: 28px; letter-spacing: -0.02em; font-weight: 700;
+    background: linear-gradient(135deg, #ffffff 0%, #b9c0e2 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   header.top .sub { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
 
   .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   button, .btn {
-    border: 0; background: var(--card);
-    color: var(--ink); padding: 9px 14px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    padding: 9px 14px;
     font-size: 13px; font-weight: 500;
     border-radius: 10px;
     cursor: pointer;
-    box-shadow: var(--shadow);
-    transition: transform .08s ease, background .12s ease;
+    box-shadow: var(--shadow-soft);
+    transition: transform .08s ease, background .15s ease, border-color .15s ease;
     font-family: inherit;
   }
-  button:hover, .btn:hover { transform: translateY(-1px); }
-  button.primary { background: var(--accent); color: #fff; }
-  button.ghost   { background: transparent; box-shadow: none; color: var(--ink-soft); }
-  button.danger  { background: #fff; color: #a02828; }
+  button:hover, .btn:hover { transform: translateY(-1px); background: var(--card-2); border-color: #3a4570; }
+  button.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff; border-color: transparent;
+    box-shadow: 0 6px 18px rgba(124, 140, 255, 0.4);
+  }
+  button.primary:hover { background: linear-gradient(135deg, #8b99ff, #b69aff); }
+  button.ghost   { background: transparent; box-shadow: none; border-color: transparent; color: var(--ink-soft); }
+  button.ghost:hover { background: var(--card); color: var(--ink); }
+  button.danger  { background: var(--card); color: var(--danger); border-color: rgba(255,107,122,0.3); }
+  button.danger:hover { background: rgba(255,107,122,0.1); }
 
   /* Dashboard */
   .dashboard {
@@ -67,71 +93,81 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
   .stat {
-    background: var(--card); border-radius: var(--radius);
-    padding: 14px 16px; box-shadow: var(--shadow);
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px; box-shadow: var(--shadow-soft);
+    position: relative; overflow: hidden;
   }
-  .stat .label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
-  .stat .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
-  .stat .bar   { margin-top: 8px; height: 4px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; }
-  .stat .bar > i { display: block; height: 100%; background: var(--accent); }
+  .stat::after {
+    content: ""; position: absolute; top: 0; right: 0; width: 60%; height: 100%;
+    background: radial-gradient(circle at top right, rgba(124,140,255,0.10), transparent 70%);
+    pointer-events: none;
+  }
+  .stat .label { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .stat .value { font-size: 28px; font-weight: 700; margin-top: 4px; letter-spacing: -0.02em; }
+  .stat .bar   { margin-top: 8px; height: 4px; background: var(--line-soft); border-radius: 99px; overflow: hidden; }
+  .stat .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 99px; }
 
   .locations {
-    background: var(--card); border-radius: var(--radius);
-    padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 18px;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow-soft); margin-bottom: 18px;
   }
-  .locations h3 { margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
-  .loc-row { display: grid; grid-template-columns: 130px 1fr 40px; gap: 10px; align-items: center; padding: 4px 0; font-size: 13px; }
-  .loc-row .lbar { background: var(--accent-soft); border-radius: 99px; height: 6px; overflow: hidden; }
-  .loc-row .lbar > i { display: block; height: 100%; background: var(--accent); }
-  .loc-row .lcnt { text-align: right; color: var(--ink-soft); }
+  .locations h3 { margin: 0 0 12px; font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .loc-row { display: grid; grid-template-columns: 160px 1fr 40px; gap: 12px; align-items: center; padding: 5px 0; font-size: 13px; }
+  .loc-row .lbar { background: var(--line-soft); border-radius: 99px; height: 6px; overflow: hidden; }
+  .loc-row .lbar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 99px; }
+  .loc-row .lcnt { text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
   /* Filter bar */
   .filters {
     display: grid; gap: 10px; grid-template-columns: 2fr 1fr 1fr 1fr auto;
-    background: var(--card); padding: 12px; border-radius: var(--radius);
-    box-shadow: var(--shadow); margin-bottom: 16px;
+    background: var(--card); border: 1px solid var(--line);
+    padding: 12px; border-radius: var(--radius);
+    box-shadow: var(--shadow-soft); margin-bottom: 16px;
   }
   .filters input, .filters select {
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--bg-2);
     border-radius: 9px;
     padding: 9px 12px;
     font-size: 13px;
     font-family: inherit;
     color: var(--ink);
     outline: none;
-    transition: border-color .12s ease;
+    transition: border-color .12s ease, background .12s ease;
   }
-  .filters input:focus, .filters select:focus { border-color: var(--accent); }
+  .filters input::placeholder { color: var(--ink-soft); }
+  .filters input:focus, .filters select:focus { border-color: var(--accent); background: var(--card-2); }
 
   @media (max-width: 800px) {
     .filters { grid-template-columns: 1fr 1fr; }
   }
 
   /* Table */
-  .table-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   thead th {
-    background: #fafbff;
+    background: var(--bg-2);
     color: var(--ink-soft);
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: .05em;
+    letter-spacing: .06em;
     text-align: left;
     padding: 12px 14px;
     border-bottom: 1px solid var(--line);
+    font-weight: 600;
     position: sticky; top: 0; z-index: 1;
   }
-  tbody tr { border-bottom: 1px solid var(--line); cursor: pointer; transition: background .1s ease; }
-  tbody tr:hover { background: #fafbff; }
+  tbody tr { border-bottom: 1px solid var(--line-soft); cursor: pointer; transition: background .12s ease; }
+  tbody tr:hover { background: var(--card-2); }
   tbody td { padding: 12px 14px; vertical-align: middle; }
-  tbody td.name { font-weight: 600; }
+  tbody td.name { font-weight: 600; color: var(--ink); }
   tbody td.muted { color: var(--ink-soft); }
   tbody tr:last-child { border-bottom: 0; }
 
   .badge {
     display: inline-block;
-    padding: 3px 9px;
+    padding: 4px 10px;
     border-radius: 99px;
     font-size: 11px;
     font-weight: 600;
@@ -147,13 +183,34 @@
   .b-Absage          { background: var(--st-Absage-bg); color: var(--st-Absage-fg); }
   .b-Nehmen          { background: var(--st-Nehmen-bg); color: var(--st-Nehmen-fg); }
 
+  /* Status select (inline in table) */
+  .status-select {
+    appearance: none; -webkit-appearance: none;
+    border: 1px solid transparent;
+    border-radius: 99px;
+    padding: 4px 26px 4px 11px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .02em;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: filter .15s ease, border-color .15s ease;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  .status-select:hover { filter: brightness(1.15); border-color: rgba(255,255,255,0.12); }
+  .status-select:focus { border-color: var(--accent); }
+  .status-select option { background: var(--card); color: var(--ink); }
+
   .row-actions { white-space: nowrap; text-align: right; }
   .row-actions button {
     padding: 5px 9px; font-size: 12px;
-    background: transparent; box-shadow: none; color: var(--ink-soft);
+    background: transparent; box-shadow: none; border: 1px solid transparent;
+    color: var(--ink-soft);
   }
-  .row-actions button:hover { background: var(--accent-soft); color: var(--accent); }
-  .row-actions button.del:hover { background: #ffe1e1; color: #a02828; }
+  .row-actions button:hover { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .row-actions button.del:hover { background: rgba(255,107,122,0.12); color: var(--danger); }
 
   .empty {
     padding: 60px 20px; text-align: center; color: var(--ink-soft);
@@ -163,68 +220,82 @@
   @media (max-width: 720px) {
     table thead { display: none; }
     table, tbody, tr, td { display: block; width: 100%; }
-    tbody tr { padding: 12px 14px; }
+    tbody tr { padding: 14px 16px; }
     tbody td { padding: 4px 0; border: 0; }
-    tbody td.row-actions { text-align: left; padding-top: 8px; }
-    tbody td.muted::before, tbody td.name::before { content: attr(data-label) ": "; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; }
+    tbody td.row-actions { text-align: left; padding-top: 10px; }
+    tbody td.muted::before, tbody td.name::before { content: attr(data-label) ": "; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; margin-right: 4px; }
   }
 
   /* Modal */
   .modal-bg {
     position: fixed; inset: 0;
-    background: rgba(31, 39, 66, 0.45);
+    background: rgba(8, 11, 22, 0.65);
     display: none; align-items: center; justify-content: center;
     z-index: 50; padding: 16px;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(6px);
   }
   .modal-bg.open { display: flex; }
   .modal {
-    background: #fff; border-radius: 16px;
-    width: 100%; max-width: 620px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px;
+    width: 100%; max-width: 640px;
     max-height: 90vh; overflow-y: auto;
-    padding: 22px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 24px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    color: var(--ink);
   }
-  .modal h2 { margin: 0 0 14px; font-size: 18px; }
+  .modal h2 { margin: 0 0 16px; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
   .modal label {
-    display: block; margin-top: 12px;
+    display: block; margin-top: 14px;
     font-size: 11px; color: var(--ink-soft);
-    text-transform: uppercase; letter-spacing: .04em;
+    text-transform: uppercase; letter-spacing: .06em;
     font-weight: 600;
   }
   .modal input, .modal select, .modal textarea {
-    width: 100%; margin-top: 4px;
+    width: 100%; margin-top: 5px;
     border: 1px solid var(--line);
     border-radius: 9px;
-    padding: 9px 11px;
+    padding: 10px 12px;
     font-size: 14px; font-family: inherit;
     color: var(--ink);
-    background: #fff;
+    background: var(--bg-2);
     outline: none;
+    transition: border-color .12s ease, background .12s ease;
   }
-  .modal textarea { min-height: 80px; resize: vertical; }
-  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent); }
+  .modal select option { background: var(--card); color: var(--ink); }
+  .modal textarea { min-height: 84px; resize: vertical; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent); background: var(--card-2); }
   .modal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .modal .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 20px; }
+  .modal .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 24px; }
 
   .toast {
     position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
-    background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 99px;
-    font-size: 13px; opacity: 0; pointer-events: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff; padding: 10px 18px; border-radius: 99px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none;
     transition: opacity .2s ease, transform .2s ease;
     z-index: 100;
+    box-shadow: 0 8px 24px rgba(124,140,255,0.4);
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
-  a.weblink { color: var(--accent); text-decoration: none; }
+  a.weblink { color: var(--accent); text-decoration: none; font-weight: 500; }
   a.weblink:hover { text-decoration: underline; }
 
   .hint {
     font-size: 12px; color: var(--ink-soft);
-    background: var(--accent-soft); padding: 10px 14px;
+    background: var(--accent-soft); border: 1px solid rgba(124,140,255,0.18);
+    padding: 11px 14px;
     border-radius: 10px; margin-bottom: 16px;
   }
   .hint b { color: var(--ink); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--card-2); border-radius: 99px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: #2f3a5e; }
 </style>
 </head>
 <body>
@@ -481,13 +552,20 @@ function renderTable(rows) {
     const link = r.website && /^https?:/i.test(r.website)
       ? `<a class="weblink" href="${escapeAttr(r.website)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>`
       : '';
+    const opts = STATUSES.map(s =>
+      `<option value="${escapeAttr(s)}" ${s===r.status?'selected':''}>${escapeHtml(s)}</option>`
+    ).join('');
     return `
       <tr onclick="openEditor('${r.id}')">
         <td class="name" data-label="Unternehmen">${escapeHtml(r.unternehmen)} ${link}</td>
         <td class="muted" data-label="Standort">${escapeHtml(r.standort)}</td>
         <td class="muted" data-label="Datum">${formatDate(r.datumBewerbung)}</td>
         <td class="muted" data-label="Nachgefragt">${formatDate(r.nachgefragt)}</td>
-        <td data-label="Status"><span class="badge ${cls}">${escapeHtml(r.status)}</span></td>
+        <td data-label="Status">
+          <select class="status-select ${cls}" title="Status ändern"
+                  onclick="event.stopPropagation()"
+                  onchange="changeStatus('${r.id}', this.value)">${opts}</select>
+        </td>
         <td class="muted" data-label="Interesse">${escapeHtml(r.interesse)}</td>
         <td class="row-actions">
           <button onclick="event.stopPropagation(); openEditor('${r.id}')">Bearbeiten</button>
@@ -639,6 +717,16 @@ function confirmDelete(id) {
   save(); render(); toast('Gelöscht');
 }
 
+function changeStatus(id, newStatus) {
+  const r = state.find(x => x.id === id);
+  if (!r || !STATUSES.includes(newStatus)) return;
+  if (r.status === newStatus) return;
+  r.status = newStatus;
+  save();
+  render();
+  toast('Status: ' + newStatus);
+}
+
 function blankRecord() {
   return {
     id: null, unternehmen:'', standort:'', interesse:'',
@@ -654,27 +742,154 @@ function exportJson() {
   toast('JSON-Backup heruntergeladen');
 }
 
+// Excel status colors (light variants so it stays readable in Excel)
+const XLS_STATUS_FILL = {
+  'Geplant':              { bg: 'E8EAF0', fg: '4B5675' },
+  'Beworben':             { bg: 'DCE7FF', fg: '1F3B8C' },
+  'Nachgefragt':          { bg: 'EBDCFF', fg: '4A1F9C' },
+  'Antwort erhalten':     { bg: 'FFF1B8', fg: '6B4E00' },
+  'Vorstellungsgespräch': { bg: 'FFDDB8', fg: '8A3F00' },
+  'Zusage':               { bg: 'CFF0D8', fg: '14552B' },
+  'Absage':               { bg: 'FFD0D0', fg: '8A1F1F' },
+  'Nehmen keine':         { bg: 'CFD3DE', fg: '2E344A' },
+};
+
+const XLS_INT_FILL = {
+  'Sehr gerne': { bg: 'D6F5DD', fg: '1F6A36' },
+  'Gerne':      { bg: 'E3F0FF', fg: '274BB2' },
+  'Ja':         { bg: 'EEF0FF', fg: '3D44A0' },
+  'Joa':        { bg: 'FFF4D6', fg: '7A5B00' },
+  'Eher nicht': { bg: 'FFE1E1', fg: 'A02828' },
+};
+
 function exportXlsx() {
-  const rows = state.map(r => ({
-    'Unternehmen':     r.unternehmen,
-    'Interesse':       r.interesse,
-    'Website':         r.website,
-    'Standort':        r.standort,
-    'Adresse':         r.adresse,
-    'Datum Bewerbung': r.datumBewerbung,
-    'Nachgefragt':     r.nachgefragt,
-    'Status':          r.status,
-    'Ergebnis':        r.ergebnis,
-    'Kontakt':         r.kontakt,
-    'Notizen':         r.notizen,
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
+  // Sort by date desc for the export (same as table)
+  const rows = [...state].sort((a, b) => {
+    const ad = isDate(a.datumBewerbung) ? a.datumBewerbung : '';
+    const bd = isDate(b.datumBewerbung) ? b.datumBewerbung : '';
+    if (!ad && !bd) return a.unternehmen.localeCompare(b.unternehmen);
+    if (!ad) return 1;
+    if (!bd) return -1;
+    return bd.localeCompare(ad);
+  });
+
+  const headers = ['Unternehmen','Status','Interesse','Standort','Adresse',
+                   'Datum Bewerbung','Nachgefragt','Website','Kontakt','Ergebnis','Notizen'];
+
+  const aoa = [headers, ...rows.map(r => [
+    r.unternehmen, r.status, r.interesse, r.standort, r.adresse,
+    r.datumBewerbung, r.nachgefragt, r.website, r.kontakt, r.ergebnis, r.notizen
+  ])];
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Column widths
   ws['!cols'] = [
-    {wch:32},{wch:14},{wch:30},{wch:18},{wch:34},
-    {wch:14},{wch:14},{wch:18},{wch:18},{wch:24},{wch:40}
+    {wch:34},{wch:22},{wch:14},{wch:20},{wch:38},
+    {wch:16},{wch:14},{wch:34},{wch:26},{wch:18},{wch:44}
   ];
+
+  // Default row height
+  ws['!rows'] = [{ hpt: 30 }, ...rows.map(() => ({ hpt: 22 }))];
+
+  const borderColor = 'D9DEEA';
+  const thin = { style: 'thin', color: { rgb: borderColor } };
+  const allBorders = { top: thin, bottom: thin, left: thin, right: thin };
+
+  // Header styling
+  for (let c = 0; c < headers.length; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if (!ws[addr]) continue;
+    ws[addr].s = {
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { patternType: 'solid', fgColor: { rgb: '3B4A8F' } },
+      alignment: { vertical: 'center', horizontal: 'left', wrapText: false },
+      border: {
+        top: { style: 'thin', color: { rgb: '2A3568' } },
+        bottom: { style: 'medium', color: { rgb: '2A3568' } },
+        left: { style: 'thin', color: { rgb: '2A3568' } },
+        right: { style: 'thin', color: { rgb: '2A3568' } },
+      },
+    };
+  }
+
+  // Data row styling
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const rowIdx = i + 1;
+    const zebra = (i % 2 === 0) ? 'FFFFFF' : 'F6F8FC';
+
+    for (let c = 0; c < headers.length; c++) {
+      const addr = XLSX.utils.encode_cell({ r: rowIdx, c });
+      if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+      ws[addr].s = {
+        font: { name: 'Calibri', sz: 11, color: { rgb: '1F2742' } },
+        fill: { patternType: 'solid', fgColor: { rgb: zebra } },
+        alignment: { vertical: 'center', horizontal: 'left', wrapText: true },
+        border: allBorders,
+      };
+    }
+
+    // Bold the company name
+    const nameAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 0 });
+    ws[nameAddr].s.font = { ...ws[nameAddr].s.font, bold: true };
+
+    // Status pill-style fill
+    const stAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 1 });
+    const stFill = XLS_STATUS_FILL[r.status];
+    if (stFill && ws[stAddr]) {
+      ws[stAddr].s = {
+        font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: stFill.fg } },
+        fill: { patternType: 'solid', fgColor: { rgb: stFill.bg } },
+        alignment: { vertical: 'center', horizontal: 'center' },
+        border: allBorders,
+      };
+    }
+
+    // Interesse fill
+    const intAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 2 });
+    const intFill = XLS_INT_FILL[r.interesse];
+    if (intFill && ws[intAddr]) {
+      ws[intAddr].s = {
+        font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: intFill.fg } },
+        fill: { patternType: 'solid', fgColor: { rgb: intFill.bg } },
+        alignment: { vertical: 'center', horizontal: 'center' },
+        border: allBorders,
+      };
+    }
+
+    // Website as hyperlink
+    const webAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 });
+    if (r.website && /^https?:/i.test(r.website) && ws[webAddr]) {
+      ws[webAddr].l = { Target: r.website, Tooltip: 'Website öffnen' };
+      ws[webAddr].s.font = { ...ws[webAddr].s.font, color: { rgb: '274BB2' }, underline: true };
+    }
+
+    // Dates: format as date if ISO
+    [5, 6].forEach(c => {
+      const addr = XLSX.utils.encode_cell({ r: rowIdx, c });
+      if (ws[addr] && isDate(ws[addr].v)) {
+        ws[addr].s.alignment = { vertical: 'center', horizontal: 'center' };
+      }
+    });
+  }
+
+  // Freeze top row
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+  ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2' }];
+
+  // Autofilter
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range({
+    s: { r: 0, c: 0 }, e: { r: rows.length, c: headers.length - 1 }
+  }) };
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Bewerbungen');
+  wb.Props = {
+    Title: 'Bewerbungen',
+    Author: 'Bewerbungs-Tracker',
+    CreatedDate: new Date(),
+  };
   XLSX.writeFile(wb, 'Bewerbungen-' + isoToday() + '.xlsx');
   toast('Excel-Datei heruntergeladen');
 }
