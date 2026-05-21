@@ -718,7 +718,7 @@
       <button class="btn-primary" id="createGameBtn">Gegen Nele 🎴</button>
       <div class="or-divider">oder</div>
       <button class="btn-bot" id="botGameBtn">🤖 Gegen Bot spielen</button>
-      <div class="bet-hint" style="margin-top:8px;margin-bottom:0;">Sieg gegen Bot = +1000 🪙 · Verlust = 0 🪙</div>
+      <div class="bet-hint" style="margin-top:8px;margin-bottom:0;">Du &amp; der Bot setzen je 1000 🪙 · Sieg = +1000 🪙 · Verlust = −1000 🪙</div>
     </div>
 
     <div class="stats-panel" id="statsPanel">
@@ -2042,7 +2042,7 @@ async function surrender() {
   const winner = other(currentUser);
   if (mode === 'bot') {
     await mutateState(state => { if (!state) return state; state.status = 'finished'; state.winner = winner; return state; });
-    // Bot: no coin transfer on surrender (PvE never deducts).
+    // Bot: stake was already deducted at game start — surrender just forfeits it.
   } else {
     // Only update the state; payout runs exactly once via the prizePaid
     // transaction in the finished-state handler on either client.
@@ -2085,14 +2085,15 @@ async function backToMenu() {
 }
 
 // ── COINS & STATS ─────────────────────────────────────────────────────────
-const BOT_PRIZE = 1000;
+const BOT_BET = 1000;
 
 async function finishGame(winner, bet) {
   if (mode === 'bot') {
-    // PvE: only credit on player win, never deduct
+    // PvE: player and bot each staked BOT_BET — winner takes the whole pot.
+    // The player's stake was already deducted at game start in startBotGame.
     if (winner === currentUser) {
-      await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) + BOT_PRIZE);
-      try { await runTransaction(ref(db, `stats/${pkey(currentUser)}/coinsEarned`), c => (c||0) + BOT_PRIZE); } catch(e) {}
+      await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) + BOT_BET*2);
+      try { await runTransaction(ref(db, `stats/${pkey(currentUser)}/coinsEarned`), c => (c||0) + BOT_BET*2); } catch(e) {}
     }
     return;
   }
@@ -2126,8 +2127,10 @@ async function updateOwnStats(state) {
     const isWinner = state.winner === currentUser;
     const paths = [
       { p: `stats/${myK}/uno/pve/${isWinner ? 'gamesWon' : 'gamesLost'}`, fn: c => (c||0)+1 },
+      { p: `stats/${myK}/uno/pve/coinsBet`, fn: c => (c||0) + BOT_BET },
     ];
-    if (isWinner) paths.push({ p: `stats/${myK}/uno/pve/coinsWon`, fn: c => (c||0) + BOT_PRIZE });
+    if (isWinner) paths.push({ p: `stats/${myK}/uno/pve/coinsWon`,  fn: c => (c||0) + BOT_BET });
+    else          paths.push({ p: `stats/${myK}/uno/pve/coinsLost`, fn: c => (c||0) + BOT_BET });
     for (const s of paths) { try { await runTransaction(ref(db, s.p), s.fn); } catch(e) {} }
     return;
   }
@@ -2192,11 +2195,15 @@ document.querySelectorAll('.stats-tab').forEach(btn => {
 });
 
 // ── BOT MODE ──────────────────────────────────────────────────────────────
-function startBotGame() {
+async function startBotGame() {
+  if (currentCoins < BOT_BET) { showToast('Nicht genug Coins! 😅'); return; }
   if (botTurnTimer)  clearTimeout(botTurnTimer);
   if (botCatchTimer) clearTimeout(botCatchTimer);
   mode = 'bot';
   pveStatsCounted = false;
+  // Player stakes BOT_BET into the pot; the bot's matching stake is virtual.
+  await runTransaction(ref(db, `coins/${pkey(currentUser)}`), c => (c||0) - BOT_BET);
+  try { await runTransaction(ref(db, `stats/${pkey(currentUser)}/coinsSpent`), c => (c||0) + BOT_BET); } catch(e) {}
   const dealt = dealNewGame();
   // hands: keys "andreas"/"nele" → für Bot brauchen wir "bot" + currentUser-Key
   const myK = pkey(currentUser);
@@ -2211,7 +2218,7 @@ function startBotGame() {
   localState = {
     status: 'running',
     createdBy: currentUser,
-    bet: 0,
+    bet: BOT_BET,
     createdAt: Date.now(),
     currentTurn,
     currentColor: dealt.currentColor,
@@ -2405,14 +2412,10 @@ function showResult(state) {
     ? `Du hast ${opp} besiegt!`
     : `${winnerName} hat alle Karten zuerst losgeworden.`;
   const coinsEl = document.getElementById('resultCoins');
-  if (mode === 'bot') {
-    coinsEl.textContent = win ? `+${BOT_PRIZE.toLocaleString('de-DE')} 🪙` : '0 🪙 (kein Risiko 🛡️)';
-  } else {
-    const bet = state.bet || 0;
-    coinsEl.textContent = win
-      ? `+${bet.toLocaleString('de-DE')} 🪙`
-      : `-${bet.toLocaleString('de-DE')} 🪙`;
-  }
+  const bet = state.bet || 0;
+  coinsEl.textContent = win
+    ? `+${bet.toLocaleString('de-DE')} 🪙`
+    : `-${bet.toLocaleString('de-DE')} 🪙`;
   o.classList.add('open');
   if (win) spawnKonfetti();
 }
