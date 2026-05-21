@@ -394,7 +394,7 @@
   <div id="lobbySection" style="width:100%;max-width:400px;">
     <div class="lobby-card" id="createCard">
       <div class="lobby-title">Neue Schlacht 🌊</div>
-      <div class="lobby-sub">Setze deinen Einsatz und fordere Nele heraus</div>
+      <div class="lobby-sub" id="lobbySub">Setze deinen Einsatz und fordere deinen Gegner heraus</div>
       <div class="bet-label">Dein Einsatz</div>
       <input class="bet-input" type="number" id="betInput" placeholder="500" min="50" step="50">
       <div class="bet-hint" id="betHint">Mindestens 50 🪙</div>
@@ -1523,6 +1523,7 @@ onAuthStateChanged(auth, user => {
   document.getElementById('topBar').style.display = 'flex';
   document.getElementById('mainPage').style.display = 'flex';
   logoutBtn.textContent = currentUser + ' ausloggen';
+  document.getElementById('lobbySub').textContent = `Setze deinen Einsatz und fordere ${other(currentUser)} heraus`;
 
   onValue(ref(db, `coins/${pkey(currentUser)}`), snap => {
     const val = Number(snap.val()) || 0;
