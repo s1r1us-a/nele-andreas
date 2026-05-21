@@ -545,7 +545,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, get, query, orderByKey, startAt, endBefore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const app = initializeApp({
@@ -840,15 +840,31 @@
   // STATE
   let allData = {};
   let activeRange = 0;
+  let dataVersion = 0;          // bumped on every data mutation; invalidates aggCache
+  const aggCache = new Map();   // key = `${dataVersion}|${activeRange}` -> aggregates
+  let renderScheduled = false;
   const WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
   const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 
+  function scheduleRender() {
+    if (renderScheduled) return;
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+      renderScheduled = false;
+      renderAll(filteredDates());
+    });
+  }
+
   document.querySelectorAll('.ftab').forEach(btn => {
     btn.addEventListener('click', () => {
+      const newRange = parseInt(btn.dataset.range);
+      if (newRange === activeRange) return;
       document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      activeRange = parseInt(btn.dataset.range);
-      renderAll(filteredDates());
+      activeRange = newRange;
+      // load wider click data if needed for new range
+      if (clicksLoaded) loadClicksIfNeeded();
+      scheduleRender();
     });
   });
 
@@ -868,6 +884,35 @@
 
   let clicksLoaded = false;
   let clicksLoading = false;
+  let clicksLoadedFrom = null; // earliest date (YYYY-MM-DD) for which clicks are loaded
+
+  // Per-day precomputed weekday index (avoids new Date() in hot loops)
+  function annotateDay(date, entry) {
+    if (entry._wd === undefined) {
+      entry._wd = new Date(date + 'T12:00:00').getDay();
+    }
+    return entry;
+  }
+
+  // Recompute hourly buckets per day from raw clicks. Called when clicks load.
+  function recomputeHourBuckets(date) {
+    const e = allData[date];
+    if (!e) return;
+    const hA = new Array(24).fill(0), hN = new Array(24).fill(0);
+    for (const c of e.clicks) {
+      const h = getGermanHour(c.time);
+      if (c.user && c.user.toLowerCase() === 'andreas') hA[h]++;
+      else hN[h]++;
+    }
+    e._hA = hA; e._hN = hN;
+  }
+
+  function rangeCutoff(rangeDays) {
+    if (!rangeDays) return '0000-00-00';
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - rangeDays);
+    return getGermanDate(cutoff);
+  }
 
   async function loadData() {
     const loader = document.getElementById('dataLoading');
@@ -876,6 +921,8 @@
 
     allData = {};
     clicksLoaded = false;
+    clicksLoadedFrom = null;
+    aggCache.clear();
 
     setLoadProgress(40, 'Lade Tagesdaten…');
     const ds = await get(ref(db,'moments/daily'));
@@ -885,9 +932,12 @@
       ds.forEach(daySnap => {
         const date = daySnap.key, val = daySnap.val();
         if (!val) return;
-        allData[date] = { a:val.andreas||0, n:val.nele||0, clicks:[] };
+        const entry = { a:val.andreas||0, n:val.nele||0, clicks:[] };
+        annotateDay(date, entry);
+        allData[date] = entry;
       });
     }
+    dataVersion++;
 
     setLoadProgress(100, 'Alles geladen ✨');
     await new Promise(r => setTimeout(r, 400));
@@ -899,27 +949,67 @@
   }
 
   async function loadClicksIfNeeded() {
-    if (clicksLoaded || clicksLoading) return;
-    clicksLoading = true;
+    if (clicksLoading) return;
+    const cutoff = rangeCutoff(activeRange);
+    // already covers this range?
+    if (clicksLoaded && clicksLoadedFrom !== null && clicksLoadedFrom <= cutoff) return;
 
-    document.getElementById('hourWrap').innerHTML =
-      '<div class="nodata" id="hourLoadingHint">⏳ Lade Uhrzeitdaten…</div>';
+    clicksLoading = true;
+    if (!clicksLoaded) {
+      document.getElementById('hourWrap').innerHTML =
+        '<div class="nodata" id="hourLoadingHint">⏳ Lade Uhrzeitdaten…</div>';
+    }
 
     try {
-      const cs = await get(ref(db,'moments/clicks'));
+      // Strategy:
+      //   - First load: fetch clicks from `cutoff` onward (or all if range=Alle).
+      //   - Subsequent loads to widen the window: only fetch the OLDER missing
+      //     slice [cutoff .. clicksLoadedFrom) so already-loaded clicks aren't
+      //     duplicated. Pass `endBefore(clicksLoadedFrom)` for that.
+      let startKey, endKey;
+      if (!clicksLoaded) {
+        startKey = activeRange === 0 ? null : cutoff;
+        endKey = null;
+      } else {
+        // widening only; we already returned early if range was already covered
+        startKey = activeRange === 0 ? null : cutoff;
+        endKey = clicksLoadedFrom; // exclusive
+      }
+
+      let q = ref(db,'moments/clicks');
+      const constraints = [orderByKey()];
+      if (startKey) constraints.push(startAt(startKey));
+      if (endKey) constraints.push(endBefore(endKey));
+      q = query(q, ...constraints);
+      const cs = await get(q);
+
+      const touched = new Set();
       if (cs.exists()) {
         cs.forEach(daySnap => {
           const date = daySnap.key;
-          if (!allData[date]) allData[date] = { a:0, n:0, clicks:[] };
+          if (!allData[date]) {
+            const entry = { a:0, n:0, clicks:[] };
+            annotateDay(date, entry);
+            allData[date] = entry;
+          }
+          // Fresh slice → start clean for these days
+          allData[date].clicks = [];
           daySnap.forEach(c => {
             const v = c.val();
             if (!v||!v.user||!v.time) return;
             allData[date].clicks.push({ user:v.user, time:v.time });
           });
+          touched.add(date);
         });
       }
+      touched.forEach(d => recomputeHourBuckets(d));
+
+      const newFrom = startKey === null ? '0000-00-00' : startKey;
+      clicksLoadedFrom = !clicksLoadedFrom || newFrom < clicksLoadedFrom ? newFrom : clicksLoadedFrom;
       clicksLoaded = true;
-      renderHour(filteredDates());
+      dataVersion++;
+      aggCache.clear();
+      renderAll(filteredDates());
     } catch(e) {
       document.getElementById('hourWrap').innerHTML =
         '<div class="nodata">Fehler beim Laden der Uhrzeitdaten 🌸</div>';
@@ -927,15 +1017,109 @@
     clicksLoading = false;
   }
 
-  // Animated counter
+  // Animated counter - cancels any prior interval on the same element
   function animCount(el, target) {
+    if (el._countIv) { clearInterval(el._countIv); el._countIv = null; }
     const start = parseInt(el.textContent.replace(/\D/g,''))||0;
+    if (start === target) { el.textContent = target.toLocaleString('de-DE'); return; }
     const steps=40, dur=700; let i=0;
-    const iv = setInterval(()=>{
+    el._countIv = setInterval(()=>{
       i++;
       el.textContent = Math.round(start+(target-start)*(i/steps)).toLocaleString('de-DE');
-      if(i>=steps){clearInterval(iv);el.textContent=target.toLocaleString('de-DE');}
+      if(i>=steps){clearInterval(el._countIv);el._countIv=null;el.textContent=target.toLocaleString('de-DE');}
     }, dur/steps);
+  }
+
+  // Single-pass aggregator over `dates`, memoized per (dataVersion, activeRange).
+  // Renders consume this object — no further loops over `dates` needed.
+  function getAggregates(dates) {
+    const key = dataVersion + '|' + activeRange;
+    const cached = aggCache.get(key);
+    if (cached) return cached;
+
+    const hrA = new Array(24).fill(0), hrN = new Array(24).fill(0);
+    const wdA = new Array(7).fill(0),  wdN = new Array(7).fill(0);
+    const moA = {}, moN = {};
+    let tA=0, tN=0, recA=0, recAN='', recN=0, recNN='', wA=0, wN=0, wT=0;
+
+    for (let i=0; i<dates.length; i++) {
+      const d = dates[i];
+      const v = allData[d];
+      if (!v) continue;
+      const a = v.a, n = v.n;
+      tA += a; tN += n;
+      if (a > recA) { recA = a; recAN = d; }
+      if (n > recN) { recN = n; recNN = d; }
+      if (a !== 0 || n !== 0) {
+        if (a > n) wA++; else if (n > a) wN++; else wT++;
+      }
+      const wd = v._wd !== undefined ? v._wd : new Date(d+'T12:00:00').getDay();
+      wdA[wd] += a; wdN[wd] += n;
+      const mo = d.slice(0,7);
+      moA[mo] = (moA[mo]||0) + a; moN[mo] = (moN[mo]||0) + n;
+      // hourly buckets from pre-aggregated per-day arrays (cheap)
+      if (clicksLoaded && v._hA) {
+        const eA = v._hA, eN = v._hN;
+        for (let h=0; h<24; h++) { hrA[h] += eA[h]; hrN[h] += eN[h]; }
+      }
+    }
+
+    // Trend: first vs second half averages
+    const mid = Math.floor(dates.length/2);
+    let pA=0, pN=0, cA=0, cN=0;
+    for (let i=0; i<dates.length; i++) {
+      const v = allData[dates[i]]; if (!v) continue;
+      if (i < mid) { pA += v.a; pN += v.n; } else { cA += v.a; cN += v.n; }
+    }
+
+    // Streaks: scan entire allData once (independent of filter)
+    const streak = calcStreaksAll();
+
+    const agg = {
+      dates, tA, tN, recA, recAN, recN, recNN, wA, wN, wT,
+      hrA, hrN, wdA, wdN, moA, moN, streak,
+      trend: { prevA: pA, prevN: pN, currA: cA, currN: cN },
+    };
+    aggCache.set(key, agg);
+    return agg;
+  }
+
+  // Streaks operate on the full dataset, not the filter — they're a global stat.
+  // Cached per dataVersion separately so filter changes don't recompute.
+  let _streakCache = { ver: -1, val: { current:0, longest:0 } };
+  function calcStreaksAll() {
+    if (_streakCache.ver === dataVersion) return _streakCache.val;
+    const all = Object.keys(allData).sort();
+    let longest=0, cur=0;
+    for (let i=0; i<all.length; i++) {
+      const v = allData[all[i]];
+      if (v.a>0 || v.n>0) {
+        if (i===0) cur=1;
+        else {
+          const prev = new Date(all[i-1]+'T12:00:00');
+          const curr = new Date(all[i]+'T12:00:00');
+          cur = (curr-prev)/86400000 === 1 ? cur+1 : 1;
+        }
+        if (cur>longest) longest=cur;
+      } else { cur=0; }
+    }
+    const todayDE = getGermanDate();
+    const yestDE  = getGermanDate(Date.now()-86400000);
+    let current=0;
+    for (let i=all.length-1; i>=0; i--) {
+      const d = all[i];
+      if (current===0 && d!==todayDE && d!==yestDE) break;
+      const v = allData[d];
+      if (v.a>0 || v.n>0) {
+        if (current===0) { current=1; continue; }
+        const prev = new Date(all[i+1]+'T12:00:00');
+        const curr2 = new Date(d+'T12:00:00');
+        if ((prev-curr2)/86400000 === 1) current++;
+        else break;
+      } else break;
+    }
+    _streakCache = { ver: dataVersion, val: { current, longest } };
+    return _streakCache.val;
   }
 
   function trendHTML(curr, prev) {
@@ -953,81 +1137,41 @@
       document.getElementById('funFact').innerHTML='<span class="funfact-icon">🌸</span>Noch keine Daten vorhanden.';
       return;
     }
-    renderSummary(dates);
-    renderInsights(dates);
-    renderStreaks(dates);
-    renderWins(dates);
-    renderFunFact(dates);
+    const agg = getAggregates(dates);
+    // Phase 1: above-the-fold (cheap) renders run immediately
+    renderSummary(agg);
+    renderInsights(agg);
+    renderStreaks(agg);
+    renderWins(agg);
+    renderFunFact(agg);
+    renderWeek(agg);
     renderDaily(dates);
-    renderWeek(dates);
-    renderHour(dates);
-    renderTable(dates);
+    // Phase 2: heavier renders deferred so the UI updates first
+    setTimeout(() => {
+      renderHour(agg);
+      renderTable(dates);
+    }, 0);
   }
 
-  // Streak calculator
-  function calcStreaks(dates) {
-    if (!dates.length) return { current:0, longest:0 };
-    const sorted = [...dates].sort();
-    let longest=0, cur=0;
-    for (let i=0; i<sorted.length; i++) {
-      const v=allData[sorted[i]];
-      if (v.a>0||v.n>0) {
-        if (i===0) { cur=1; }
-        else {
-          const prev=new Date(sorted[i-1]+'T12:00:00');
-          const curr=new Date(sorted[i]+'T12:00:00');
-          cur = (curr-prev)/86400000===1 ? cur+1 : 1;
-        }
-        longest=Math.max(longest,cur);
-      } else { cur=0; }
-    }
-    // Current streak from today/yesterday
-    const all = Object.keys(allData).sort();
-    const todayDE = getGermanDate();
-    const yestDE  = getGermanDate(Date.now()-86400000);
-    let current=0;
-    for (let i=all.length-1; i>=0; i--) {
-      const d=all[i];
-      if (current===0 && d!==todayDE && d!==yestDE) break;
-      const v=allData[d];
-      if (v.a>0||v.n>0) {
-        if (current===0){current=1;continue;}
-        const prev=new Date(all[i+1]+'T12:00:00');
-        const curr2=new Date(d+'T12:00:00');
-        if ((prev-curr2)/86400000===1) current++;
-        else break;
-      } else break;
-    }
-    return { current, longest };
-  }
+  function renderSummary(agg) {
+    const dates = agg.dates;
+    animCount(document.getElementById('sumA'), agg.tA);
+    animCount(document.getElementById('sumN'), agg.tN);
+    animCount(document.getElementById('sumDays'), dates.length);
 
-  function renderSummary(dates) {
-    let tA=0,tN=0;
-    dates.forEach(d=>{tA+=allData[d].a;tN+=allData[d].n;});
-    animCount(document.getElementById('sumA'),tA);
-    animCount(document.getElementById('sumN'),tN);
-    animCount(document.getElementById('sumDays'),dates.length);
-
-    // Averages
-    const avgA = dates.length ? (tA/dates.length).toFixed(1) : 0;
-    const avgN = dates.length ? (tN/dates.length).toFixed(1) : 0;
+    const avgA = dates.length ? (agg.tA/dates.length).toFixed(1) : 0;
+    const avgN = dates.length ? (agg.tN/dates.length).toFixed(1) : 0;
     document.getElementById('avgA').textContent = `Ø ${avgA}/Tag`;
     document.getElementById('avgN').textContent = `Ø ${avgN}/Tag`;
 
-    // Trend
-    const mid=Math.floor(dates.length/2);
-    let pA=0,pN=0,cA=0,cN=0;
-    dates.slice(0,mid).forEach(d=>{pA+=allData[d].a;pN+=allData[d].n;});
-    dates.slice(mid).forEach(d=>{cA+=allData[d].a;cN+=allData[d].n;});
-    document.getElementById('trendA').innerHTML=trendHTML(cA,pA);
-    document.getElementById('trendN').innerHTML=trendHTML(cN,pN);
+    document.getElementById('trendA').innerHTML = trendHTML(agg.trend.currA, agg.trend.prevA);
+    document.getElementById('trendN').innerHTML = trendHTML(agg.trend.currN, agg.trend.prevN);
 
-    const { current } = calcStreaks(dates);
-    animCount(document.getElementById('sumStreak'),current);
+    animCount(document.getElementById('sumStreak'), agg.streak.current);
   }
 
-  function renderStreaks(dates) {
-    const { current, longest } = calcStreaks(dates);
+  function renderStreaks(agg) {
+    const { current, longest } = agg.streak;
     const html = `
       <div style="display:flex;gap:12px;">
         <div style="flex:1;text-align:center;padding:12px 8px;background:rgba(34,163,90,0.08);border-radius:14px;border:1px solid rgba(34,163,90,0.15);">
@@ -1044,15 +1188,8 @@
     document.getElementById('streakWrap').innerHTML = html;
   }
 
-  function renderWins(dates) {
-    let wA=0, wN=0, wT=0;
-    dates.forEach(d=>{
-      const v=allData[d];
-      if (v.a===0 && v.n===0) return;
-      if (v.a>v.n) wA++;
-      else if (v.n>v.a) wN++;
-      else wT++;
-    });
+  function renderWins(agg) {
+    const wA = agg.wA, wN = agg.wN, wT = agg.wT;
     const total = wA + wN + wT;
     const wrap = document.getElementById('winsWrap');
     if (total === 0) {
@@ -1096,125 +1233,104 @@
     wrap.innerHTML = html;
   }
 
-  function renderInsights(dates) {
-    let recA=0,recAN='',recN=0,recNN='',wA=0,wN=0;
-    const hrA=new Array(24).fill(0),hrN=new Array(24).fill(0);
-    const moA={},moN={};
+  function renderInsights(agg) {
+    const { recA, recAN, recN, recNN, wA, wN, hrA, hrN, moA, moN } = agg;
+    const fmt = d => d ? new Date(d+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}) : '–';
+    document.getElementById('recA').textContent = recA>0 ? `🐾 ${recA}x · ${fmt(recAN)}` : '🐾 –';
+    document.getElementById('recN').textContent = recN>0 ? `🌸 ${recN}x · ${fmt(recNN)}` : '🌸 –';
+    document.getElementById('winsA').textContent = `🐾 ${wA} Siege`;
+    document.getElementById('winsN').textContent = `🌸 ${wN} Siege`;
 
-    dates.forEach(d=>{
-      const v=allData[d];
-      if(v.a>recA){recA=v.a;recAN=d;}
-      if(v.n>recN){recN=v.n;recNN=d;}
-      if(v.a>v.n)wA++; else if(v.n>v.a)wN++;
-      const mo=d.slice(0,7);
-      moA[mo]=(moA[mo]||0)+v.a; moN[mo]=(moN[mo]||0)+v.n;
-      if (clicksLoaded) {
-        v.clicks.forEach(c=>{
-          const h=getGermanHour(c.time);
-          if(c.user.toLowerCase()==='andreas')hrA[h]++;else hrN[h]++;
-        });
-      }
-    });
+    // argmax over 24 buckets — cheap
+    let phA=0, phN=0;
+    for (let i=1;i<24;i++) { if (hrA[i]>hrA[phA]) phA=i; if (hrN[i]>hrN[phN]) phN=i; }
+    const hasH = hrA[phA] > 0 || hrN[phN] > 0;
+    document.getElementById('peakHA').textContent = clicksLoaded ? (hasH && hrA[phA]>0 ? `🐾 ${phA}:00 Uhr` : '🐾 –') : '🐾 lädt…';
+    document.getElementById('peakHN').textContent = clicksLoaded ? (hasH && hrN[phN]>0 ? `🌸 ${phN}:00 Uhr` : '🌸 –') : '🌸 lädt…';
 
-    const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'–';
-    document.getElementById('recA').textContent=recA>0?`🐾 ${recA}x · ${fmt(recAN)}`:'🐾 –';
-    document.getElementById('recN').textContent=recN>0?`🌸 ${recN}x · ${fmt(recNN)}`:'🌸 –';
-    document.getElementById('winsA').textContent=`🐾 ${wA} Siege`;
-    document.getElementById('winsN').textContent=`🌸 ${wN} Siege`;
-
-    const phA=hrA.indexOf(Math.max(...hrA)),phN=hrN.indexOf(Math.max(...hrN));
-    const hasH=hrA.some(v=>v>0)||hrN.some(v=>v>0);
-    document.getElementById('peakHA').textContent=clicksLoaded?(hasH&&hrA[phA]>0?`🐾 ${phA}:00 Uhr`:'🐾 –'):'🐾 lädt…';
-    document.getElementById('peakHN').textContent=clicksLoaded?(hasH&&hrN[phN]>0?`🌸 ${phN}:00 Uhr`:'🌸 –'):'🌸 lädt…';
-
-    const bestMA=Object.keys(moA).sort((a,b)=>moA[b]-moA[a])[0];
-    const bestMN=Object.keys(moN).sort((a,b)=>moN[b]-moN[a])[0];
-    const fmtMo=m=>m?new Date(m+'-01').toLocaleDateString('de-DE',{month:'short',year:'2-digit'}):'–';
-    document.getElementById('peakMA').textContent=bestMA?`🐾 ${fmtMo(bestMA)}`:'🐾 –';
-    document.getElementById('peakMN').textContent=bestMN?`🌸 ${fmtMo(bestMN)}`:'🌸 –';
+    const bestMA = Object.keys(moA).sort((a,b)=>moA[b]-moA[a])[0];
+    const bestMN = Object.keys(moN).sort((a,b)=>moN[b]-moN[a])[0];
+    const fmtMo = m => m ? new Date(m+'-01').toLocaleDateString('de-DE',{month:'short',year:'2-digit'}) : '–';
+    document.getElementById('peakMA').textContent = bestMA ? `🐾 ${fmtMo(bestMA)}` : '🐾 –';
+    document.getElementById('peakMN').textContent = bestMN ? `🌸 ${fmtMo(bestMN)}` : '🌸 –';
   }
 
-  function renderFunFact(dates) {
-    if (!dates.length) return;
+  function renderFunFact(agg) {
+    if (!agg.dates.length) return;
+    const { tA, tN, recA, recAN, recN, recNN, hrA, hrN, wdA, wdN } = agg;
     const facts = [];
-    let tA=0,tN=0,recA=0,recN=0,recAN='',recNN='';
-    const hrA=new Array(24).fill(0),hrN=new Array(24).fill(0);
-    const wdA=new Array(7).fill(0),wdN=new Array(7).fill(0);
 
-    dates.forEach(d=>{
-      const v=allData[d];
-      tA+=v.a; tN+=v.n;
-      if(v.a>recA){recA=v.a;recAN=d;}
-      if(v.n>recN){recN=v.n;recNN=d;}
-      const wd=new Date(d+'T12:00:00').getDay();
-      wdA[wd]+=v.a; wdN[wd]+=v.n;
-      v.clicks.forEach(c=>{
-        if (!clicksLoaded) return;
-        const h=getGermanHour(c.time);
-        if(c.user.toLowerCase()==='andreas')hrA[h]++;else hrN[h]++;
-      });
-    });
+    let phA=0, phN=0, pdA=0, pdN=0;
+    for (let i=1;i<24;i++) { if (hrA[i]>hrA[phA]) phA=i; if (hrN[i]>hrN[phN]) phN=i; }
+    for (let i=1;i<7;i++)  { if (wdA[i]>wdA[pdA]) pdA=i; if (wdN[i]>wdN[pdN]) pdN=i; }
+    const total = tA + tN;
+    const fmt = d => new Date(d+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
 
-    const phA=hrA.indexOf(Math.max(...hrA));
-    const phN=hrN.indexOf(Math.max(...hrN));
-    const pdA=wdA.indexOf(Math.max(...wdA));
-    const pdN=wdN.indexOf(Math.max(...wdN));
-    const total=tA+tN;
-    const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-
-    if(total>0) facts.push(`🐾 Andreas & 🌸 Nele haben zusammen schon <b>${total.toLocaleString('de-DE')}</b> Momente gesammelt!`);
-    if(hrA[phA]>0&&hrN[phN]>0) facts.push(`⏰ Andreas klickt am liebsten um <b>${phA}:00 Uhr</b>, Nele um <b>${phN}:00 Uhr</b>.`);
-    if(recA>0&&recAN) facts.push(`🏆 Andreas' bester Tag war der <b>${fmt(recAN)}</b> mit <b>${recA}</b> Klicks.`);
-    if(recN>0&&recNN) facts.push(`🏆 Neles bester Tag war der <b>${fmt(recNN)}</b> mit <b>${recN}</b> Klicks.`);
-    if(wdA[pdA]>0&&wdN[pdN]>0) facts.push(`📅 Andreas mag <b>${WD[pdA]}e</b> am liebsten, Nele die <b>${WD[pdN]}e</b>.`);
-    if(tA>tN) facts.push(`🐾 Andreas liegt vorne – um <b>${(tA-tN).toLocaleString('de-DE')}</b> Momente!`);
-    else if(tN>tA) facts.push(`🌸 Nele liegt vorne – um <b>${(tN-tA).toLocaleString('de-DE')}</b> Momente!`);
-    else if(tA>0) facts.push(`🤝 Absoluter Gleichstand – beide haben <b>${tA.toLocaleString('de-DE')}</b> Momente!`);
+    if (total>0) facts.push(`🐾 Andreas & 🌸 Nele haben zusammen schon <b>${total.toLocaleString('de-DE')}</b> Momente gesammelt!`);
+    if (hrA[phA]>0 && hrN[phN]>0) facts.push(`⏰ Andreas klickt am liebsten um <b>${phA}:00 Uhr</b>, Nele um <b>${phN}:00 Uhr</b>.`);
+    if (recA>0 && recAN) facts.push(`🏆 Andreas' bester Tag war der <b>${fmt(recAN)}</b> mit <b>${recA}</b> Klicks.`);
+    if (recN>0 && recNN) facts.push(`🏆 Neles bester Tag war der <b>${fmt(recNN)}</b> mit <b>${recN}</b> Klicks.`);
+    if (wdA[pdA]>0 && wdN[pdN]>0) facts.push(`📅 Andreas mag <b>${WD[pdA]}e</b> am liebsten, Nele die <b>${WD[pdN]}e</b>.`);
+    if (tA>tN) facts.push(`🐾 Andreas liegt vorne – um <b>${(tA-tN).toLocaleString('de-DE')}</b> Momente!`);
+    else if (tN>tA) facts.push(`🌸 Nele liegt vorne – um <b>${(tN-tA).toLocaleString('de-DE')}</b> Momente!`);
+    else if (tA>0) facts.push(`🤝 Absoluter Gleichstand – beide haben <b>${tA.toLocaleString('de-DE')}</b> Momente!`);
 
     const fact = facts[Math.floor(Math.random()*facts.length)] || '🌸 Noch nicht genug Daten für einen Fun Fact.';
     document.getElementById('funFact').innerHTML = `<span class="funfact-icon">✨</span>${fact}`;
   }
 
   function renderDaily(dates) {
-    const show=dates.slice(-60);
-    const maxV=Math.max(...show.map(d=>Math.max(allData[d].a,allData[d].n)),1);
-    const H=130;
-    const avgs=show.map((d,i)=>{
-      const w=show.slice(Math.max(0,i-6),i+1);
-      return w.reduce((s,x)=>s+allData[x].a+allData[x].n,0)/w.length;
-    });
-    const avgLast=Math.round(avgs[avgs.length-1]);
-
-    let html='<div class="cscroll"><div class="bchart">';
-    show.forEach((d,i)=>{
-      const a=allData[d].a,n=allData[d].n;
-      const hA=Math.max(3,Math.round(a/maxV*H));
-      const hN=Math.max(3,Math.round(n/maxV*H));
-      const tip=`${d.slice(5)}: 🐾${a} / 🌸${n}`;
-      html+=`<div class="bgrp" ontouchstart="this.classList.toggle('tip-active')">
-        <div class="tooltip">${tip}</div>
+    const show = dates.slice(-60);
+    // Precompute sums + running 7-day window in O(n)
+    const sums = new Array(show.length);
+    let maxV = 1;
+    for (let i=0; i<show.length; i++) {
+      const v = allData[show[i]];
+      sums[i] = v.a + v.n;
+      if (v.a > maxV) maxV = v.a;
+      if (v.n > maxV) maxV = v.n;
+    }
+    let avgLast = 0;
+    if (show.length) {
+      const last = show.length - 1;
+      const startIdx = Math.max(0, last - 6);
+      let s = 0;
+      for (let i=startIdx; i<=last; i++) s += sums[i];
+      avgLast = Math.round(s / (last - startIdx + 1));
+    }
+    const H = 130;
+    let html = '<div class="cscroll"><div class="bchart">';
+    for (let i=0; i<show.length; i++) {
+      const d = show[i], v = allData[d], a = v.a, n = v.n;
+      const hA = Math.max(3, Math.round(a/maxV*H));
+      const hN = Math.max(3, Math.round(n/maxV*H));
+      const ds = d.slice(5);
+      html += `<div class="bgrp" ontouchstart="this.classList.toggle('tip-active')">
+        <div class="tooltip">${ds}: 🐾${a} / 🌸${n}</div>
         <div class="bpair">
           <div class="bar bar-a" style="height:${hA}px"></div>
           <div class="bar bar-n" style="height:${hN}px"></div>
         </div>
-        <div class="blabel">${d.slice(5)}</div>
+        <div class="blabel">${ds}</div>
       </div>`;
-    });
-    html+='</div></div>';
-    html+=`<div style="text-align:center;font-size:11px;color:var(--gold);margin-top:8px;font-weight:600;">Ø 7-Tage-Schnitt: ${avgLast} Klicks/Tag gesamt</div>`;
-    if(dates.length>60) html+=`<div style="text-align:center;font-size:11px;color:var(--text-mid);margin-top:4px;font-weight:600;">Zeigt die letzten 60 Tage</div>`;
-    document.getElementById('dailyWrap').innerHTML=html;
+    }
+    html += '</div></div>';
+    html += `<div style="text-align:center;font-size:11px;color:var(--gold);margin-top:8px;font-weight:600;">Ø 7-Tage-Schnitt: ${avgLast} Klicks/Tag gesamt</div>`;
+    if (dates.length>60) html += `<div style="text-align:center;font-size:11px;color:var(--text-mid);margin-top:4px;font-weight:600;">Zeigt die letzten 60 Tage</div>`;
+    document.getElementById('dailyWrap').innerHTML = html;
   }
 
-  function renderWeek(dates) {
-    const wdA=new Array(7).fill(0),wdN=new Array(7).fill(0);
-    dates.forEach(d=>{const wd=new Date(d+'T12:00:00').getDay();wdA[wd]+=allData[d].a;wdN[wd]+=allData[d].n;});
-    const maxV=Math.max(...wdA,...wdN,1),H=110;
-    let html='<div class="wchart">';
-    WD.forEach((label,i)=>{
-      const hA=Math.max(3,Math.round(wdA[i]/maxV*H));
-      const hN=Math.max(3,Math.round(wdN[i]/maxV*H));
-      html+=`<div class="wgrp" ontouchstart="this.classList.toggle('tip-active')">
+  function renderWeek(agg) {
+    const { wdA, wdN } = agg;
+    let maxV = 1;
+    for (let i=0;i<7;i++) { if (wdA[i]>maxV) maxV=wdA[i]; if (wdN[i]>maxV) maxV=wdN[i]; }
+    const H = 110;
+    let html = '<div class="wchart">';
+    for (let i=0; i<7; i++) {
+      const label = WD[i];
+      const hA = Math.max(3, Math.round(wdA[i]/maxV*H));
+      const hN = Math.max(3, Math.round(wdN[i]/maxV*H));
+      html += `<div class="wgrp" ontouchstart="this.classList.toggle('tip-active')">
         <div class="tooltip">${label}: 🐾${wdA[i]} / 🌸${wdN[i]}</div>
         <div class="wpair">
           <div class="bar bar-a" style="height:${hA}px"></div>
@@ -1222,38 +1338,37 @@
         </div>
         <div class="wlabel">${label}</div>
       </div>`;
-    });
-    html+='</div>';
-    document.getElementById('weekWrap').innerHTML=html;
+    }
+    html += '</div>';
+    document.getElementById('weekWrap').innerHTML = html;
   }
 
-  function renderHour(dates) {
+  function renderHour(agg) {
     if (!clicksLoaded) {
       const wrap = document.getElementById('hourWrap');
       wrap.innerHTML = '<div class="nodata" style="cursor:pointer" onclick="window._loadHour()">Uhrzeit-Statistik antippen zum Laden ⏰</div>';
       window._loadHour = () => loadClicksIfNeeded();
       if (!window._hourObserver) {
         window._hourObserver = new IntersectionObserver(entries => {
-          if (entries[0].isIntersecting) { loadClicksIfNeeded(); window._hourObserver.disconnect(); }
+          if (entries[0].isIntersecting) {
+            loadClicksIfNeeded();
+            if (window._hourObserver) { window._hourObserver.disconnect(); window._hourObserver = null; }
+          }
         }, { threshold: 0.2 });
         window._hourObserver.observe(wrap);
       }
       return;
     }
-    const hA=new Array(24).fill(0),hN=new Array(24).fill(0);
-    let hasC=false;
-    dates.forEach(d=>allData[d].clicks.forEach(c=>{
-      const h=getGermanHour(c.time);
-      if(c.user.toLowerCase()==='andreas')hA[h]++;else hN[h]++;
-      hasC=true;
-    }));
-    if(!hasC){document.getElementById('hourWrap').innerHTML='<div class="nodata">Uhrzeitdaten erst ab Aktivierung verfügbar 🌸</div>';return;}
-    const maxV=Math.max(...hA,...hN,1),H=86;
-    let html='<div class="hscroll"><div class="hchart">';
-    for(let i=0;i<24;i++){
-      const bA=Math.max(2,Math.round(hA[i]/maxV*H));
-      const bN=Math.max(2,Math.round(hN[i]/maxV*H));
-      html+=`<div class="hgrp" ontouchstart="this.classList.toggle('tip-active')">
+    const hA = agg.hrA, hN = agg.hrN;
+    let maxV = 1, hasC = false;
+    for (let i=0;i<24;i++) { if (hA[i]>maxV) maxV=hA[i]; if (hN[i]>maxV) maxV=hN[i]; if (hA[i]>0||hN[i]>0) hasC=true; }
+    if (!hasC) { document.getElementById('hourWrap').innerHTML = '<div class="nodata">Uhrzeitdaten erst ab Aktivierung verfügbar 🌸</div>'; return; }
+    const H = 86;
+    let html = '<div class="hscroll"><div class="hchart">';
+    for (let i=0; i<24; i++) {
+      const bA = Math.max(2, Math.round(hA[i]/maxV*H));
+      const bN = Math.max(2, Math.round(hN[i]/maxV*H));
+      html += `<div class="hgrp" ontouchstart="this.classList.toggle('tip-active')">
         <div class="tooltip">${i}:00 🐾${hA[i]}/🌸${hN[i]}</div>
         <div class="hpair">
           <div class="hbar bar-a" style="height:${bA}px"></div>
@@ -1262,53 +1377,67 @@
         <div class="hlabel">${i}</div>
       </div>`;
     }
-    html+='</div></div>';
-    document.getElementById('hourWrap').innerHTML=html;
+    html += '</div></div>';
+    document.getElementById('hourWrap').innerHTML = html;
   }
+
+  // Days are kept on each month-group element as a data attribute so toggleMonth
+  // can build the body on demand without re-running the grouping logic.
+  function buildMonthBody(mo, days) {
+    let body = '<table class="dtable"><thead><tr><th>Tag</th><th>🐾</th><th>🌸</th><th>Führung</th></tr></thead><tbody>';
+    for (let i=0; i<days.length; i++) {
+      const d = days[i], v = allData[d], a = v.a, n = v.n;
+      const label = new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
+      let w='–', rowClass='';
+      if (a>n) { w = `<span style="color:var(--rose)">🐾 +${a-n}</span>`; rowClass='win-a'; }
+      else if (n>a) { w = `<span style="color:var(--nele)">🌸 +${n-a}</span>`; rowClass='win-n'; }
+      else if (a>0) { w = '🤝'; rowClass='win-tie'; }
+      body += `<tr class="${rowClass}"><td>${label}</td><td class="tda">${a}</td><td class="tdn">${n}</td><td>${w}</td></tr>`;
+    }
+    body += '</tbody></table>';
+    return body;
+  }
+
+  // Stash per-month day lists so toggleMonth can render them lazily.
+  let _monthDays = {};
 
   function renderTable(dates) {
     if (!dates.length) { document.getElementById('tableWrap').innerHTML='<div class="nodata">Keine Daten 🌸</div>'; return; }
 
-    // Group by month
     const byMonth = {};
-    [...dates].reverse().forEach(d => {
+    for (let i=dates.length-1; i>=0; i--) {
+      const d = dates[i];
       const mo = d.slice(0,7);
-      if (!byMonth[mo]) byMonth[mo] = [];
-      byMonth[mo].push(d);
-    });
+      (byMonth[mo] || (byMonth[mo] = [])).push(d);
+    }
+    _monthDays = byMonth;
 
     const sortedMonths = Object.keys(byMonth).sort().reverse();
 
     let html = '<div style="overflow-x:auto">';
-    sortedMonths.forEach((mo, idx) => {
+    for (let idx=0; idx<sortedMonths.length; idx++) {
+      const mo = sortedMonths[idx];
       const days = byMonth[mo];
-      const moTotalA = days.reduce((s,d)=>s+allData[d].a,0);
-      const moTotalN = days.reduce((s,d)=>s+allData[d].n,0);
+      let moTotalA = 0, moTotalN = 0;
+      for (let i=0; i<days.length; i++) { const v = allData[days[i]]; moTotalA += v.a; moTotalN += v.n; }
       const moLabel = new Date(mo+'-01').toLocaleDateString('de-DE',{month:'long',year:'numeric'});
       const collapsed = idx > 0 ? 'collapsed' : '';
-      const bodyHeight = days.length * 44 + 48; // approx height for transition
-      html+=`<div class="month-group ${collapsed}" id="mg-${mo}">
+      const bodyHeight = days.length * 44 + 48;
+      // Only the first (open) month renders its rows immediately; others stay
+      // empty until toggleMonth fills them on click.
+      const bodyInner = idx === 0 ? buildMonthBody(mo, days) : '';
+      html += `<div class="month-group ${collapsed}" id="mg-${mo}" data-mo="${mo}">
         <div class="month-header" onclick="toggleMonth('${mo}')">
           <span style="flex:1">${moLabel}</span>
           <span class="month-summary" style="color:var(--rose)">🐾 ${moTotalA}</span>
           <span class="month-summary" style="color:var(--nele);margin-left:10px">🌸 ${moTotalN}</span>
           <span class="month-arrow">▼</span>
         </div>
-        <div class="month-body" style="max-height:${bodyHeight}px">
-          <table class="dtable"><thead><tr><th>Tag</th><th>🐾</th><th>🌸</th><th>Führung</th></tr></thead><tbody>`;
-      days.forEach(d=>{
-        const a=allData[d].a,n=allData[d].n;
-        const label=new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
-        let w='–', rowClass='';
-        if(a>n){w=`<span style="color:var(--rose)">🐾 +${a-n}</span>`;rowClass='win-a';}
-        else if(n>a){w=`<span style="color:var(--nele)">🌸 +${n-a}</span>`;rowClass='win-n';}
-        else if(a>0){w='🤝';rowClass='win-tie';}
-        html+=`<tr class="${rowClass}"><td>${label}</td><td class="tda">${a}</td><td class="tdn">${n}</td><td>${w}</td></tr>`;
-      });
-      html+='</tbody></table></div></div>';
-    });
-    html+='</div>';
-    document.getElementById('tableWrap').innerHTML=html;
+        <div class="month-body" style="max-height:${bodyHeight}px">${bodyInner}</div>
+      </div>`;
+    }
+    html += '</div>';
+    document.getElementById('tableWrap').innerHTML = html;
   }
 
   window.toggleMonth = function(mo) {
@@ -1316,7 +1445,11 @@
     if (!group) return;
     const body = group.querySelector('.month-body');
     if (group.classList.contains('collapsed')) {
-      // expand: set explicit height then let CSS handle it
+      // Lazy build the body the first time this month is opened
+      if (!body.firstChild) {
+        const days = _monthDays[mo];
+        if (days) body.innerHTML = buildMonthBody(mo, days);
+      }
       const table = body.querySelector('table');
       const rows = table ? table.querySelectorAll('tr').length : 0;
       body.style.maxHeight = (rows * 44 + 48) + 'px';
