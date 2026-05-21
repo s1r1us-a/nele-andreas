@@ -2527,14 +2527,9 @@
 
   async function updateStats(coinsEarned, coinsSpent, boxesOpened) {
     if (!userKey) return;
-    const statsRef = ref(db, 'stats/' + userKey);
-    const snap = await get(statsRef);
-    const d = snap.val() || {};
-    await set(statsRef, {
-      coinsEarned:  (d.coinsEarned  || 0) + coinsEarned,
-      coinsSpent:   (d.coinsSpent   || 0) + coinsSpent,
-      boxesOpened:  (d.boxesOpened  || 0) + boxesOpened,
-    });
+    if (coinsEarned) await runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c||0) + coinsEarned);
+    if (coinsSpent)  await runTransaction(ref(db, `stats/${userKey}/coinsSpent`),  c => (c||0) + coinsSpent);
+    if (boxesOpened) await runTransaction(ref(db, `stats/${userKey}/boxesOpened`), c => (c||0) + boxesOpened);
   }
 
   async function loadBoxState() {
