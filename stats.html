@@ -518,6 +518,42 @@
     <div id="winsWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
   </div>
 
+  <!-- Head-to-Head Gesamt-Bilanz -->
+  <div class="card" id="h2hCard">
+    <div class="card-title">🏆 Spiele-Bilanz</div>
+    <div id="h2hWrap"><div class="skeleton skel-bar"></div></div>
+  </div>
+
+  <!-- Schiffe versenken -->
+  <div class="card">
+    <div class="card-title">🚢 Schiffe versenken</div>
+    <div id="bsWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
+  </div>
+
+  <!-- Uno PvP -->
+  <div class="card">
+    <div class="card-title">🃏 Uno – Head-to-Head</div>
+    <div id="unoPvpWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
+  </div>
+
+  <!-- Uno PvE -->
+  <div class="card">
+    <div class="card-title">🤖 Uno – gegen Bot</div>
+    <div id="unoPveWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
+  </div>
+
+  <!-- 4 Gewinnt -->
+  <div class="card">
+    <div class="card-title">🟡 4 Gewinnt</div>
+    <div id="vgWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
+  </div>
+
+  <!-- Coin-Wirtschaft -->
+  <div class="card">
+    <div class="card-title">🪙 Coin-Wirtschaft</div>
+    <div id="coinsWrap"><div class="skeleton skel-bar"></div><div class="skeleton skel-bar"></div></div>
+  </div>
+
   <!-- Daily Chart -->
   <div class="card">
     <div class="card-title">Klicks pro Tag</div>
@@ -843,6 +879,7 @@
   let dataVersion = 0;          // bumped on every data mutation; invalidates aggCache
   const aggCache = new Map();   // key = `${dataVersion}|${activeRange}` -> aggregates
   let renderScheduled = false;
+  let gameStats = { andreas: {}, nele: {} };
   const WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
   const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 
@@ -925,7 +962,10 @@
     aggCache.clear();
 
     setLoadProgress(40, 'Lade Tagesdaten…');
-    const ds = await get(ref(db,'moments/daily'));
+    const [ds, gs] = await Promise.all([
+      get(ref(db,'moments/daily')),
+      get(ref(db,'stats')).catch(() => null),
+    ]);
 
     setLoadProgress(80, 'Verarbeite Daten…');
     if (ds.exists()) {
@@ -937,6 +977,8 @@
         allData[date] = entry;
       });
     }
+    const gv = gs && gs.exists() ? gs.val() : {};
+    gameStats = { andreas: gv.andreas || {}, nele: gv.nele || {} };
     dataVersion++;
 
     setLoadProgress(100, 'Alles geladen ✨');
@@ -1116,6 +1158,9 @@
         const curr2 = new Date(d+'T12:00:00');
         if ((prev-curr2)/86400000 === 1) current++;
         else break;
+      } else if (current===0 && d===todayDE) {
+        // Heute noch keine Klicks — Streak darf trotzdem ab gestern weiterlaufen.
+        continue;
       } else break;
     }
     _streakCache = { ver: dataVersion, val: { current, longest } };
@@ -1143,6 +1188,7 @@
     renderInsights(agg);
     renderStreaks(agg);
     renderWins(agg);
+    renderGames();
     renderFunFact(agg);
     renderWeek(agg);
     renderDaily(dates);
@@ -1231,6 +1277,168 @@
       <div class="wintotal">Insgesamt ${total} ${total===1?'gespielter Tag':'gespielte Tage'}</div>`;
 
     wrap.innerHTML = html;
+  }
+
+  // ───── Spiel-Statistiken ─────
+  function _gnum(obj, ...path) {
+    let v = obj;
+    for (const k of path) {
+      if (v == null || typeof v !== 'object') return 0;
+      v = v[k];
+    }
+    return Number.isFinite(Number(v)) ? Number(v) : 0;
+  }
+
+  function _fmtN(n) { return Number(n).toLocaleString('de-DE'); }
+
+  function _fmtPct1(v) {
+    return v.toLocaleString('de-DE', { minimumFractionDigits:1, maximumFractionDigits:1 });
+  }
+
+  // Rendert eine Sieg/Niederlage-Karte für ein PvP-Spiel mit winbar
+  function _pvpHtml(wAndreas, wNele, opts={}) {
+    const total = wAndreas + wNele;
+    if (total === 0) {
+      return `<div class="nodata">Noch keine ${opts.label || 'Partien'} gespielt 🌸</div>`;
+    }
+    const pctA = wAndreas/total*100;
+    const pctN = wNele/total*100;
+    let html = '<div class="winbar">';
+    if (wAndreas>0) html += `<div class="winbar-seg winbar-a" style="width:${pctA}%"></div>`;
+    if (wNele>0)    html += `<div class="winbar-seg winbar-n" style="width:${pctN}%"></div>`;
+    html += '</div>';
+    html += `
+      <div class="winrow">
+        <div class="winrow-name winrow-name-a">🐾 Andreas</div>
+        <div class="winrow-count winrow-count-a">${wAndreas}</div>
+        <div class="winrow-unit">${wAndreas===1?'Sieg':'Siege'}</div>
+        <div class="winrow-pct">${_fmtPct1(pctA)}%</div>
+      </div>
+      <div class="winrow">
+        <div class="winrow-name winrow-name-n">🌸 Nele</div>
+        <div class="winrow-count winrow-count-n">${wNele}</div>
+        <div class="winrow-unit">${wNele===1?'Sieg':'Siege'}</div>
+        <div class="winrow-pct">${_fmtPct1(pctN)}%</div>
+      </div>
+      <div class="wintotal">Insgesamt ${total} ${total===1?'gespielte Partie':'gespielte Partien'}</div>`;
+    return html;
+  }
+
+  // PvE-Karte: Andreas und Nele spielen unabhängig gegen den Bot.
+  function _pveHtml(wonA, lostA, wonN, lostN) {
+    const totalA = wonA + lostA, totalN = wonN + lostN;
+    if (totalA === 0 && totalN === 0) {
+      return `<div class="nodata">Noch keine Bot-Partien gespielt 🌸</div>`;
+    }
+    const rateA = totalA ? _fmtPct1(wonA/totalA*100) : '–';
+    const rateN = totalN ? _fmtPct1(wonN/totalN*100) : '–';
+    return `
+      <div class="winrow">
+        <div class="winrow-name winrow-name-a">🐾 Andreas</div>
+        <div class="winrow-count winrow-count-a">${wonA}</div>
+        <div class="winrow-unit">Sieg${wonA===1?'':'e'} / ${lostA} Niederl.</div>
+        <div class="winrow-pct">${totalA ? rateA+'%' : '–'}</div>
+      </div>
+      <div class="winrow">
+        <div class="winrow-name winrow-name-n">🌸 Nele</div>
+        <div class="winrow-count winrow-count-n">${wonN}</div>
+        <div class="winrow-unit">Sieg${wonN===1?'':'e'} / ${lostN} Niederl.</div>
+        <div class="winrow-pct">${totalN ? rateN+'%' : '–'}</div>
+      </div>
+      <div class="wintotal">${_fmtN(totalA+totalN)} Bot-Partien gespielt</div>`;
+  }
+
+  function renderGames() {
+    const A = gameStats.andreas || {};
+    const N = gameStats.nele || {};
+
+    // Schiffe versenken (PvP)
+    const bsA = _gnum(A,'schiffeVersenken','gamesWon');
+    const bsN = _gnum(N,'schiffeVersenken','gamesWon');
+    document.getElementById('bsWrap').innerHTML = _pvpHtml(bsA, bsN, {label:'Seeschlachten'});
+
+    // Uno PvP – die beiden Werte gegen einander: A's gamesWon == N's gamesLost im Idealfall
+    const unoPvpA = _gnum(A,'uno','pvp','gamesWon');
+    const unoPvpN = _gnum(N,'uno','pvp','gamesWon');
+    document.getElementById('unoPvpWrap').innerHTML = _pvpHtml(unoPvpA, unoPvpN, {label:'Uno-Partien'});
+
+    // Uno PvE
+    const unoPveAW = _gnum(A,'uno','pve','gamesWon');
+    const unoPveAL = _gnum(A,'uno','pve','gamesLost');
+    const unoPveNW = _gnum(N,'uno','pve','gamesWon');
+    const unoPveNL = _gnum(N,'uno','pve','gamesLost');
+    document.getElementById('unoPveWrap').innerHTML = _pveHtml(unoPveAW, unoPveAL, unoPveNW, unoPveNL);
+
+    // 4 Gewinnt (PvP)
+    const vgA = _gnum(A,'vierGewinnt','gamesWon');
+    const vgN = _gnum(N,'vierGewinnt','gamesWon');
+    document.getElementById('vgWrap').innerHTML = _pvpHtml(vgA, vgN, {label:'4-Gewinnt-Partien'});
+
+    // Coin-Wirtschaft
+    const earnedA = _gnum(A,'coinsEarned');
+    const earnedN = _gnum(N,'coinsEarned');
+    const spentA  = _gnum(A,'coinsSpent');
+    const spentN  = _gnum(N,'coinsSpent');
+    const balA = earnedA - spentA;
+    const balN = earnedN - spentN;
+    const boxesA = _gnum(A,'boxesOpened');
+    const boxesN = _gnum(N,'boxesOpened');
+    const zombiesA = _gnum(A,'zombieKills');
+    const zombiesN = _gnum(N,'zombieKills');
+    const bal = (v) => `<span style="color:${v>=0?'var(--green,#5a8c5e)':'#c45c5c'};font-weight:700;">${v>=0?'+':''}${_fmtN(v)} 🪙</span>`;
+    document.getElementById('coinsWrap').innerHTML = `
+      <div class="winrow">
+        <div class="winrow-name winrow-name-a">🐾 Andreas</div>
+        <div class="winrow-count winrow-count-a">${_fmtN(earnedA)} 🪙</div>
+        <div class="winrow-unit">verdient · ${_fmtN(spentA)} 🪙 ausgegeben</div>
+        <div class="winrow-pct">${bal(balA)}</div>
+      </div>
+      <div class="winrow">
+        <div class="winrow-name winrow-name-n">🌸 Nele</div>
+        <div class="winrow-count winrow-count-n">${_fmtN(earnedN)} 🪙</div>
+        <div class="winrow-unit">verdient · ${_fmtN(spentN)} 🪙 ausgegeben</div>
+        <div class="winrow-pct">${bal(balN)}</div>
+      </div>
+      <div class="wintotal">
+        📦 Boxen: 🐾 ${_fmtN(boxesA)} · 🌸 ${_fmtN(boxesN)} &nbsp;|&nbsp;
+        🧟 Zombies: 🐾 ${_fmtN(zombiesA)} · 🌸 ${_fmtN(zombiesN)}
+      </div>`;
+
+    // Head-to-Head Gesamt-Bilanz (echte PvP-Spiele)
+    const totalA = bsA + unoPvpA + vgA;
+    const totalN = bsN + unoPvpN + vgN;
+    const totalGames = totalA + totalN;
+    const h2hWrap = document.getElementById('h2hWrap');
+    if (totalGames === 0) {
+      h2hWrap.innerHTML = `<div class="nodata">Noch keine Head-to-Head-Partien gespielt 🌸</div>`;
+    } else {
+      const leader = totalA > totalN ? '🐾 Andreas führt' : (totalN > totalA ? '🌸 Nele führt' : '🤝 Gleichstand');
+      const diff = Math.abs(totalA - totalN);
+      const diffTxt = totalA === totalN ? '' : ` · ${diff} ${diff===1?'Sieg':'Siege'} Vorsprung`;
+      const pctA = totalA/totalGames*100, pctN = totalN/totalGames*100;
+      let bar = '<div class="winbar">';
+      if (totalA>0) bar += `<div class="winbar-seg winbar-a" style="width:${pctA}%"></div>`;
+      if (totalN>0) bar += `<div class="winbar-seg winbar-n" style="width:${pctN}%"></div>`;
+      bar += '</div>';
+      h2hWrap.innerHTML = `
+        <div style="text-align:center;font-family:'Dancing Script',cursive;font-size:24px;font-weight:700;color:var(--gold);margin-bottom:10px;">
+          ${leader}${diffTxt}
+        </div>
+        ${bar}
+        <div class="winrow">
+          <div class="winrow-name winrow-name-a">🐾 Andreas</div>
+          <div class="winrow-count winrow-count-a">${totalA}</div>
+          <div class="winrow-unit">${totalA===1?'Sieg':'Siege'} gesamt</div>
+          <div class="winrow-pct">${_fmtPct1(pctA)}%</div>
+        </div>
+        <div class="winrow">
+          <div class="winrow-name winrow-name-n">🌸 Nele</div>
+          <div class="winrow-count winrow-count-n">${totalN}</div>
+          <div class="winrow-unit">${totalN===1?'Sieg':'Siege'} gesamt</div>
+          <div class="winrow-pct">${_fmtPct1(pctN)}%</div>
+        </div>
+        <div class="wintotal">Aus Schiffe versenken, Uno (Head-to-Head) und 4 Gewinnt</div>`;
+    }
   }
 
   function renderInsights(agg) {
