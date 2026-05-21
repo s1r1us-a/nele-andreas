@@ -711,7 +711,7 @@
   <div id="lobbySection" style="width:100%;max-width:400px;">
     <div class="lobby-card" id="createCard">
       <div class="lobby-title">Neue Runde 🎴</div>
-      <div class="lobby-sub">Setze deinen Einsatz und fordere Nele heraus</div>
+      <div class="lobby-sub" id="createSub">Setze deinen Einsatz und fordere Nele heraus</div>
       <div class="bet-label">Dein Einsatz</div>
       <input class="bet-input" type="number" id="betInput" placeholder="500" min="50" step="50">
       <div class="bet-hint" id="betHint">Mindestens 50 🪙</div>
@@ -2498,6 +2498,10 @@ function showLobby(view, state = null) {
   }
   if (view==='create') {
     document.getElementById('betHint').textContent = `Mindestens 50 🪙 · Du hast ${currentCoins.toLocaleString('de-DE')} 🪙`;
+    document.getElementById('createSub').textContent = `Setze deinen Einsatz und fordere ${otherName} heraus`;
+    document.getElementById('createGameBtn').textContent = `Gegen ${otherName} 🎴`;
+    const pvpTab = document.querySelector('.stats-tab[data-tab="pvp"]');
+    if (pvpTab) pvpTab.textContent = `PvP (${otherName})`;
   }
   prevMyHandIds = [];
   lastSeenAction = 0;
