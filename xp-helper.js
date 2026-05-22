@@ -16,17 +16,16 @@ export const XP_VALUES = {
   game_loss:         10,
   uno_call:           3,
   slot_spin:          1,
-  slot_jackpot:      20,
+  slot_jackpot:     200,
   farm_feed:          2,
-  farm_beehive:      15,
-  quiz_correct:       5,
-  quiz_perfect:      20,
-  booster_bought:     5
+  farm_beehive:      50,
+  booster_bought:   150,
+  booster_used:     100
 };
 
 // Deutsche Anzeigetexte für das XP-Info-Modal.
 export const XP_LABELS = {
-  heart_batch10:      '10 Herzklicks',
+  heart_batch10:      '10 Momenten Klicks',
   autoclick_batch100: 'Auto-Klicker (je 100 Klicks)',
   game_start:         'Spiel gestartet',
   game_win:           'Spiel gewonnen',
@@ -36,9 +35,8 @@ export const XP_LABELS = {
   slot_jackpot:       'Slot: Jackpot',
   farm_feed:          'Farm: Tier gefüttert',
   farm_beehive:       'Farm: Bienenstock abholen',
-  quiz_correct:       'Quiz: richtige Antwort',
-  quiz_perfect:       'Quiz: Perfektrunde',
-  booster_bought:     'Booster gekauft'
+  booster_bought:     'Booster gekauft',
+  booster_used:       'Booster verwendet'
 };
 
 // Level-Meilenstein-Badges. IDs landen bei Claim in shop/{key}/badges.
