@@ -7,6 +7,7 @@
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, runTransaction, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { awardXp, XP_VALUES } from "./xp-helper.js";
 
 // Auf der Moment-Seite (index.html) nichts tun – dort klickt die
 // vorhandene Logik bereits, sonst würde doppelt geklickt.
@@ -52,6 +53,7 @@ if (!document.getElementById('heartBtn')) {
   let pendMoments            = 0;   // akkumulierte Momente bis zum Flush
   let pendCoins              = 0;
   let pendLastClick          = null;
+  let xpClickAccumulator     = 0;   // zählt Klicks für XP (je 100 → XP)
 
   // Headless: kein sichtbarer Zähler -> nur akkumulieren, gebündelt schreiben.
   function autoClickTick() {
@@ -68,6 +70,12 @@ if (!document.getElementById('heartBtn')) {
     pendMoments  += momentBoost;
     pendCoins    += coinAmount;
     pendLastClick = { name: userKey === 'andreas' ? 'Andreas' : 'Nele', time: Date.now() };
+
+    xpClickAccumulator++;
+    if (xpClickAccumulator >= 100) {
+      xpClickAccumulator -= 100;
+      awardXp(db, userKey, XP_VALUES.autoclick_batch100);
+    }
   }
 
   function flushAutoclicks() {

@@ -883,6 +883,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, onValue, remove, runTransaction, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { contributeToTopf } from './savings-helper.js';
+import { awardXp, XP_VALUES } from './xp-helper.js';
 
 const app = initializeApp({
   apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1934,6 +1935,7 @@ async function callUno() {
     return state;
   });
   showUnoShout();
+  awardXp(db, myK, XP_VALUES.uno_call);
 }
 
 async function catchUno() {
@@ -2125,6 +2127,8 @@ async function updateOwnStats(state) {
     lastStatsGameId = state.createdAt;
     try { localStorage.setItem('unoLastStatsGameId', String(state.createdAt)); } catch(_) {}
     const isWinner = state.winner === currentUser;
+    awardXp(db, myK, XP_VALUES.game_start + (isWinner ? XP_VALUES.game_win : XP_VALUES.game_loss))
+      .then(r => { if (r.leveledUp && typeof showToast === 'function') showToast('🎉 Level ' + r.newLevel + ' erreicht!'); });
     const paths = [
       { p: `stats/${myK}/uno/pve/${isWinner ? 'gamesWon' : 'gamesLost'}`, fn: c => (c||0)+1 },
       { p: `stats/${myK}/uno/pve/coinsBet`, fn: c => (c||0) + BOT_BET },
@@ -2140,6 +2144,8 @@ async function updateOwnStats(state) {
   lastStatsGameId = state.createdAt;
   try { localStorage.setItem('unoLastStatsGameId', String(state.createdAt)); } catch(_) {}
   const isWinner = state.winner === currentUser;
+  awardXp(db, myK, XP_VALUES.game_start + (isWinner ? XP_VALUES.game_win : XP_VALUES.game_loss))
+    .then(r => { if (r.leveledUp && typeof showToast === 'function') showToast('🎉 Level ' + r.newLevel + ' erreicht!'); });
   const bet = state.bet;
   // coinsWon/coinsLost are NET (= bet). Wallet net change matches stats balance.
   // Total wagered is tracked separately via countCoinsBet → uno/pvp/coinsBet.

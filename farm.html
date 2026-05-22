@@ -2918,6 +2918,7 @@
   import { getDatabase, ref, set, get, onValue, runTransaction, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
+  import { awardXp, XP_VALUES } from './xp-helper.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -4735,6 +4736,8 @@
         window.renderShop('animals');
         window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
         window.showToast(`Bienenstock Level ${beehive.level}! 🎉`);
+        const xpRes = await awardXp(db, userKey, XP_VALUES.farm_levelup);
+        if (xpRes.leveledUp) window.showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
     } else {
         window.showToast('Nicht genug Münzen!');
     }
@@ -6151,9 +6154,10 @@
           a.isProducing = true; 
           a.fedAt = Date.now(); 
           a.rewardReady = false; 
-          await saveFarmData(); 
-          window.openAnimalStats(a.id); 
-          window.showToast(`🍎 ${a.name} wurde gefüttert!`); 
+          await saveFarmData();
+          window.openAnimalStats(a.id);
+          window.showToast(`🍎 ${a.name} wurde gefüttert!`);
+          awardXp(db, userKey, XP_VALUES.farm_feed);
           
           const el = document.getElementById('animal-' + a.id);
           if (el) {
@@ -6288,6 +6292,7 @@
       const activeTab = document.querySelector('.stall-tab.active');
       window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
       window.showToast(`🍎 ${a.name} wurde gefüttert!`);
+      awardXp(db, userKey, XP_VALUES.farm_feed);
       const el = document.getElementById('animal-' + a.id);
       if (el) {
         const heart = document.createElement('div');
@@ -6357,6 +6362,7 @@
     }
     if (fedCount === 0 && skippedCount === 0) { window.showToast('Keine hungrigen Tiere.'); return; }
     if (fedCount > 0) await saveFarmData();
+    if (fedCount > 0) awardXp(db, userKey, XP_VALUES.farm_feed * fedCount);
     window.renderStall(filterSpecies);
     if (fedCount === 0) {
       window.showToast(`🥕 Kein Futter im Inventar (${skippedCount} hungrig).`);
