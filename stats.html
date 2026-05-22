@@ -584,13 +584,17 @@
   const db = getDatabase(app);
   const auth = getAuth(app);
 
-  // German date helper
+  // German date helper. Formatter-Instanzen werden wiederverwendet, da
+  // `new Intl.DateTimeFormat` pro Aufruf teuer ist und diese Helfer in
+  // Schleifen über alle Klicks laufen.
+  const _germanDateFmt = new Intl.DateTimeFormat('sv-SE', { timeZone:'Europe/Berlin' });
+  const _germanHourFmt = new Intl.DateTimeFormat('de-DE', { hour:'numeric', timeZone:'Europe/Berlin' });
   function getGermanDate(ts) {
     const d = ts ? new Date(ts) : new Date();
-    return new Intl.DateTimeFormat('sv-SE', { timeZone:'Europe/Berlin' }).format(d);
+    return _germanDateFmt.format(d);
   }
   function getGermanHour(ts) {
-    return parseInt(new Intl.DateTimeFormat('de-DE',{hour:'numeric',timeZone:'Europe/Berlin'}).format(new Date(ts)));
+    return parseInt(_germanHourFmt.format(new Date(ts)));
   }
 
   // AUTH
