@@ -2963,6 +2963,9 @@
         console.warn('Stats-Update fehlgeschlagen:', statsErr.message);
       }
 
+      const xpRes = await awardXp(db, userKey, XP_VALUES.box_bought);
+      if (xpRes.leveledUp) showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
+
       icon.classList.remove('shake');
       icon.classList.add('burst');
       await new Promise(r => setTimeout(r, 300));
