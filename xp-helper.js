@@ -34,7 +34,7 @@ export const XP_LABELS = {
   uno_call:           'UNO: „Uno"-Ruf (1 Karte übrig)',
   slot_jackpot:       'Slot: Jackpot',
   farm_feed:          'Farm: Tier gefüttert',
-  farm_levelup:       'Farm: Tier-Level-Up',
+  farm_levelup:       'Farm: Bienenstock-Upgrade',
   quiz_correct:       'Quiz: richtige Antwort',
   quiz_perfect:       'Quiz: Perfektrunde',
   savings_contrib:    'Sparschwein-Beitrag',
