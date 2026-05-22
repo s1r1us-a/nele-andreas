@@ -20,7 +20,8 @@ export const XP_VALUES = {
   farm_feed:          2,
   farm_beehive:      50,
   booster_bought:   150,
-  booster_used:     100
+  booster_used:     100,
+  box_bought:        50
 };
 
 // Deutsche Anzeigetexte für das XP-Info-Modal.
@@ -36,7 +37,8 @@ export const XP_LABELS = {
   farm_feed:          'Farm: Tier gefüttert',
   farm_beehive:       'Farm: Bienenstock abholen',
   booster_bought:     'Booster gekauft',
-  booster_used:       'Booster verwendet'
+  booster_used:       'Booster verwendet',
+  box_bought:         'Box gekauft'
 };
 
 // Level-Meilenstein-Badges. IDs landen bei Claim in shop/{key}/badges.
