@@ -2394,7 +2394,7 @@
     // Coins) garantiert aktiv ist, auch wenn das Badge-Laden scheitert.
     onValue(ref(db, `xp/${key}`), snap => {
       const xp = snap.val() || {};
-      xpState.total     = xp.total || 0;
+      xpState.total     = Number.isFinite(Number(xp.total)) ? Number(xp.total) : 0;
       xpState.unclaimed = xp.unclaimed || {};
       renderLevel(xpState.total);
       renderLevelBadges(xpState.total, xpState.unclaimed);
