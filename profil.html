@@ -585,6 +585,12 @@
     .admin-tabs { display:flex; flex-wrap:wrap; gap:6px; position:sticky; top:0; background:var(--ui-modal-bg,#fff); padding-bottom:10px; margin-bottom:12px; border-bottom:1.5px solid rgba(212,160,97,0.25); z-index:2; }
     .admin-tab { flex:1 1 auto; border:1.5px solid rgba(212,160,97,0.3); background:rgba(212,160,97,0.08); color:var(--text-mid); border-radius:50px; padding:8px 12px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.15s ease; }
     .admin-tab.active { background:linear-gradient(135deg,var(--gold),#c87830); color:#fff; border-color:transparent; }
+    .anc-type-row { display:flex; gap:8px; }
+    .anc-type-btn { flex:1; border:1.5px solid rgba(212,160,97,0.35); background:rgba(212,160,97,0.08); color:var(--text-mid); border-radius:50px; padding:9px 10px; font-family:'Quicksand',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.15s ease; }
+    .anc-type-btn.active.is-info { background:#3b82f6; color:#fff; border-color:transparent; }
+    .anc-type-btn.active.is-warning { background:#f59e0b; color:#fff; border-color:transparent; }
+    .anc-textarea { width:100%; min-height:88px; resize:vertical; box-sizing:border-box; }
+    .anc-hint { font-size:11px; color:var(--text-mid); font-weight:600; }
 
     /* TOAST */
     .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-dark); color: #fff; border-radius: 50px; padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; opacity: 0; white-space: nowrap; }
@@ -1518,6 +1524,63 @@
     showToast(themeId === 'sakura' ? '↩️ Theme zurückgesetzt!' : '🎨 Theme aktiviert!');
   }
 
+  // --- Live-Meldung: Modal an alle Spieler senden ---
+  let announceType = 'info';
+  let announceText = '';
+
+  async function sendAnnouncement(type, text) {
+    if (!isAdmin()) { showToast('❌ Keine Admin-Rechte'); return; }
+    const t = (text || '').trim();
+    if (!t) { showToast('❌ Bitte einen Text eingeben'); return; }
+    try {
+      const id = Date.now();
+      await set(ref(db, 'admin/announcement'), { id, type, text: t, ts: id });
+      announceText = '';
+      showToast('📢 Meldung an alle gesendet!');
+      document.getElementById('adminOverlay').classList.remove('open');
+    } catch (e) {
+      console.error('Live-Meldung senden fehlgeschlagen:', e);
+      showToast('❌ Senden fehlgeschlagen (siehe Konsole)');
+    }
+  }
+
+  function renderAnnouncementSection(box) {
+    const typeRow = document.createElement('div');
+    typeRow.className = 'anc-type-row';
+    [
+      { id: 'info',    label: 'ℹ️ Info' },
+      { id: 'warning', label: '⚠️ Warnung' }
+    ].forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'anc-type-btn is-' + opt.id + (announceType === opt.id ? ' active' : '');
+      btn.textContent = opt.label;
+      btn.addEventListener('click', () => { announceType = opt.id; renderAdminPanel(); });
+      typeRow.appendChild(btn);
+    });
+    box.appendChild(typeRow);
+
+    const ta = document.createElement('textarea');
+    ta.className = 'redeem-field anc-textarea';
+    ta.maxLength = 300;
+    ta.placeholder = 'Meldungstext für alle Spieler…';
+    ta.value = announceText;
+    ta.addEventListener('input', () => { announceText = ta.value; });
+    box.appendChild(ta);
+
+    const hint = document.createElement('div');
+    hint.className = 'anc-hint';
+    hint.textContent = 'Wird sofort allen Spielern (Nele & Andreas) auf jeder Seite angezeigt.';
+    box.appendChild(hint);
+
+    const sendBtn = document.createElement('button');
+    sendBtn.type = 'button';
+    sendBtn.className = 'admin-action-btn';
+    sendBtn.textContent = '📢 Meldung senden';
+    sendBtn.addEventListener('click', () => sendAnnouncement(announceType, announceText));
+    box.appendChild(sendBtn);
+  }
+
   // Seiten, die gesperrt werden können (ohne index & profil).
   const LOCKABLE_PAGES = [
     { key: 'farm',           label: 'Farm' },
@@ -1560,6 +1623,7 @@
         { label: '🐑 Cult of the Lamb-Theme aktivieren', onClick: () => adminSetTheme('cult-of-the-lamb') },
         { label: '↩️ Theme zurücksetzen (Sakura)', onClick: () => adminSetTheme('sakura') }
     ] },
+    { id: 'announce', title: '📢 Live-Meldung', kind: 'announcement' },
     { id: 'codes', title: '🎟️ Einlöse-Codes', kind: 'redeemCodes' }
   ];
 
@@ -1733,6 +1797,8 @@
       });
     } else if (section.kind === 'redeemCodes') {
       renderRedeemCodesSection(box);
+    } else if (section.kind === 'announcement') {
+      renderAnnouncementSection(box);
     } else {
       (section.actions || []).forEach(a => {
         const btn = document.createElement('button');
@@ -2943,6 +3009,7 @@
 </script>
 <script type="module" src="presence.js"></script>
 <script type="module" src="message-notify.js"></script>
+<script type="module" src="announcement.js"></script>
 <div class="minecraft-crawler" aria-hidden="true">🟩</div>
 <div class="thing-crawler" aria-hidden="true">🖐️</div>
 <div class="squid-game-crawler" aria-hidden="true">🦑</div>
