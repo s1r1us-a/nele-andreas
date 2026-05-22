@@ -2390,6 +2390,24 @@
 
     });
 
+    // XP / Level live — Listener VOR dem await anhängen, damit er (wie die
+    // Coins) garantiert aktiv ist, auch wenn das Badge-Laden scheitert.
+    onValue(ref(db, `xp/${key}`), snap => {
+      const xp = snap.val() || {};
+      xpState.total     = xp.total || 0;
+      xpState.unclaimed = xp.unclaimed || {};
+      renderLevel(xpState.total);
+      renderLevelBadges(xpState.total, xpState.unclaimed);
+      if (!isReadOnly) {
+        renderClaimButton(xpState.unclaimed);
+        reconcileRewards(db, key).then(newLevels => {
+          if (newLevels && newLevels.length) {
+            showToast('🎉 Level ' + newLevels[newLevels.length - 1] + ' erreicht! Belohnungen warten auf dich.');
+          }
+        });
+      }
+    });
+
     const [badgesSnap, slotBadgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
       get(ref(db, `shop/${key}/badges`)),
       get(ref(db, `slotbadges/${key}`)),
@@ -2405,6 +2423,7 @@
     renderBadges();
     renderSlotBadges();
     renderFrames();
+    renderLevelBadges(xpState.total, xpState.unclaimed);
     updateBadgePill();
     updateAvatarDisplay();
 
@@ -2431,23 +2450,6 @@
     onValue(ref(db, `boosters/${oppKey}/active_sabotage`), snap => {
       activeSabotageOnOpponent = snap.val() || null;
       renderBoosters();
-    });
-
-    // XP / Level live
-    onValue(ref(db, `xp/${key}`), snap => {
-      const xp = snap.val() || {};
-      xpState.total     = xp.total || 0;
-      xpState.unclaimed = xp.unclaimed || {};
-      renderLevel(xpState.total);
-      renderLevelBadges(xpState.total, xpState.unclaimed);
-      if (!isReadOnly) {
-        renderClaimButton(xpState.unclaimed);
-        reconcileRewards(db, key).then(newLevels => {
-          if (newLevels && newLevels.length) {
-            showToast('🎉 Level ' + newLevels[newLevels.length - 1] + ' erreicht! Belohnungen warten auf dich.');
-          }
-        });
-      }
     });
   }
 
