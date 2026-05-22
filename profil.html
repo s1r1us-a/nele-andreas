@@ -1191,7 +1191,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { XP_VALUES, XP_LABELS, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
+  import { awardXp, XP_VALUES, XP_LABELS, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1465,6 +1465,7 @@
       await set(ref(db, `boosters/${key}/inventory/${boosterId}`), count - 1);
       await set(ref(db, `boosters/${key}/active_spam`), null);
       await set(ref(db, `boosters/${key}/active_sabotage`), null);
+      await awardXp(db, key, XP_VALUES.booster_used);
       showToast('🛡️ Hack abgewehrt!');
       return;
     }
@@ -1498,6 +1499,7 @@
       await set(ref(db, `boosters/${key}/${def.activeKey}`), { activatedAt: Date.now(), durationMs: def.durationMs });
       showToast(`🚀 ${def.name} aktiviert! Viel Spaß!`);
     }
+    await awardXp(db, key, XP_VALUES.booster_used);
   }
 
   async function adminApplyHackToSelf(boosterId) {
