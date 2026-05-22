@@ -91,11 +91,19 @@ export async function awardXp(db, userKey, amount) {
   }
   let oldTotal = 0;
   try {
+    // XP-Booster: +50% auf alles, solange aktiv (boosters/<key>/active_xp).
+    let effectiveAmount = amount;
+    try {
+      const boost = (await get(ref(db, `boosters/${userKey}/active_xp`))).val();
+      if (boost && boost.activatedAt && Date.now() < boost.activatedAt + (boost.durationMs || 0)) {
+        effectiveAmount = Math.round(amount * 1.5);
+      }
+    } catch (e) { /* Booster-Lookup optional – im Zweifel ohne Bonus weiter */ }
     const res = await runTransaction(ref(db, `xp/${userKey}/total`), cur => {
       oldTotal = Number(cur) || 0;
-      return oldTotal + amount;
+      return oldTotal + effectiveAmount;
     });
-    const newTotal = (res && res.snapshot && res.snapshot.val()) || (oldTotal + amount);
+    const newTotal = (res && res.snapshot && res.snapshot.val()) || (oldTotal + effectiveAmount);
     const oldLevel = levelFromTotal(oldTotal);
     const newLevel = levelFromTotal(newTotal);
     return { leveledUp: newLevel > oldLevel, oldLevel, newLevel };
