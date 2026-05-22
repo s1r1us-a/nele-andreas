@@ -2164,43 +2164,59 @@
     el.addEventListener('animationend', () => el.classList.remove(kind), { once: true });
   }
 
+  function slotLockRef() {
+    return ref(db, `loveslots/${userKey}/spinLock`);
+  }
+
   async function acquireSlotLock({ auto=false } = {}) {
     const now = Date.now();
-    const lockRef = ref(db, `slotlocks/${userKey}`);
-    const res = await runTransaction(lockRef, cur => {
-      const lastSeen = Number(cur?.updatedAt || cur?.startedAt || 0);
-      const stale = !cur || !lastSeen || (now - lastSeen) > SLOT_LOCK_TTL_MS;
-      if (!stale && cur.clientId !== slotClientId) return;
-      return {
-        clientId: slotClientId,
-        owner: currentUser,
-        auto: !!auto,
-        startedAt: now,
-        updatedAt: now
-      };
-    });
-    return res.committed && res.snapshot.val()?.clientId === slotClientId;
+    try {
+      const res = await runTransaction(slotLockRef(), cur => {
+        const lastSeen = Number(cur?.updatedAt || cur?.startedAt || 0);
+        const stale = !cur || !lastSeen || (now - lastSeen) > SLOT_LOCK_TTL_MS;
+        if (!stale && cur.clientId !== slotClientId) return;
+        return {
+          clientId: slotClientId,
+          owner: currentUser,
+          auto: !!auto,
+          startedAt: now,
+          updatedAt: now
+        };
+      });
+      return res.committed && res.snapshot.val()?.clientId === slotClientId;
+    } catch (err) {
+      console.warn('Slot lock unavailable; continuing without cross-device lock:', err);
+      return true;
+    }
   }
 
   async function refreshSlotLock(auto=false) {
     if (!userKey) return;
     const now = Date.now();
-    await runTransaction(ref(db, `slotlocks/${userKey}`), cur => {
-      if (!cur || cur.clientId !== slotClientId) return cur;
-      return { ...cur, auto: !!auto, updatedAt: now };
-    });
+    try {
+      await runTransaction(slotLockRef(), cur => {
+        if (!cur || cur.clientId !== slotClientId) return cur;
+        return { ...cur, auto: !!auto, updatedAt: now };
+      });
+    } catch (err) {
+      console.warn('Slot lock refresh failed:', err);
+    }
   }
 
   async function releaseSlotLock() {
     if (!userKey) return;
-    await runTransaction(ref(db, `slotlocks/${userKey}`), cur => {
-      if (!cur || cur.clientId !== slotClientId) return cur;
-      return null;
-    });
+    try {
+      await runTransaction(slotLockRef(), cur => {
+        if (!cur || cur.clientId !== slotClientId) return cur;
+        return null;
+      });
+    } catch (err) {
+      console.warn('Slot lock release failed:', err);
+    }
   }
 
   function initSlotLockListener() {
-    onValue(ref(db, `slotlocks/${userKey}`), snap => {
+    onValue(slotLockRef(), snap => {
       const lock = snap.val();
       const lockSeenAt = Number(lock?.updatedAt || lock?.startedAt || 0);
       const active = lock?.clientId &&
@@ -2216,6 +2232,11 @@
           renderAutoSpinBtn();
         }, remaining);
       }
+      setButtonsDisabled(isSpinning);
+      renderAutoSpinBtn();
+    }, err => {
+      console.warn('Slot lock listener unavailable:', err);
+      slotLockedElsewhere = false;
       setButtonsDisabled(isSpinning);
       renderAutoSpinBtn();
     });
@@ -2504,7 +2525,7 @@
       return;
     }
     slotLockHeartbeat = setInterval(() => {
-      refreshSlotLock(auto).catch(err => console.warn('Slot lock refresh failed:', err));
+      refreshSlotLock(auto);
     }, 15000);
     isSpinning = true;
     setButtonsDisabled(true);
@@ -2577,7 +2598,7 @@
       autoSpinStopping = false;
       clearInterval(slotLockHeartbeat);
       slotLockHeartbeat = null;
-      releaseSlotLock().catch(err => console.warn('Slot lock release failed:', err));
+      releaseSlotLock();
       setButtonsDisabled(false);
       renderAutoSpinBtn();
     }
