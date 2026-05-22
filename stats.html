@@ -953,37 +953,45 @@
     clicksLoadedFrom = null;
     aggCache.clear();
 
-    setLoadProgress(40, 'Lade Tagesdaten…');
-    const [ds, gs] = await Promise.all([
-      get(ref(db,'moments/daily')),
-      get(ref(db,'stats')).catch(() => null),
-    ]);
+    try {
+      setLoadProgress(40, 'Lade Tagesdaten…');
+      const [ds, gs] = await Promise.all([
+        get(ref(db,'moments/daily')),
+        get(ref(db,'stats')).catch(() => null),
+      ]);
 
-    setLoadProgress(80, 'Verarbeite Daten…');
-    if (ds.exists()) {
-      ds.forEach(daySnap => {
-        const date = daySnap.key, val = daySnap.val();
-        if (!val) return;
-        const entry = { a:val.andreas||0, n:val.nele||0, clicks:[] };
-        annotateDay(date, entry);
-        allData[date] = entry;
-      });
+      setLoadProgress(80, 'Verarbeite Daten…');
+      if (ds.exists()) {
+        ds.forEach(daySnap => {
+          const date = daySnap.key, val = daySnap.val();
+          if (!val) return;
+          const entry = { a:val.andreas||0, n:val.nele||0, clicks:[] };
+          annotateDay(date, entry);
+          allData[date] = entry;
+        });
+      }
+      const gv = gs && gs.exists() ? gs.val() : {};
+      gameStats = { andreas: gv.andreas || {}, nele: gv.nele || {} };
+      dataVersion++;
+
+      setLoadProgress(100, 'Alles geladen ✨');
+      await new Promise(r => setTimeout(r, 400));
+
+      loader.classList.add('fade-out');
+      setTimeout(() => { loader.classList.remove('active','fade-out'); }, 400);
+
+      renderAll(filteredDates());
+
+      // Uhrzeitdaten sind jetzt auf CLICKS_MAX_DAYS begrenzt und damit klein –
+      // proaktiv laden, damit "Aktivste Stunde" sich ohne Scrollen auflöst.
+      loadClicksIfNeeded();
+    } catch (e) {
+      // Ohne diesen Zweig bliebe das Overlay bei einem fehlgeschlagenen Abruf
+      // dauerhaft hängen.
+      setLoadProgress(100, 'Fehler beim Laden der Daten 🌸');
+      const hint = loader.querySelector('.dl-hint');
+      if (hint) hint.textContent = 'Bitte Seite neu laden';
     }
-    const gv = gs && gs.exists() ? gs.val() : {};
-    gameStats = { andreas: gv.andreas || {}, nele: gv.nele || {} };
-    dataVersion++;
-
-    setLoadProgress(100, 'Alles geladen ✨');
-    await new Promise(r => setTimeout(r, 400));
-
-    loader.classList.add('fade-out');
-    setTimeout(() => { loader.classList.remove('active','fade-out'); }, 400);
-
-    renderAll(filteredDates());
-
-    // Uhrzeitdaten sind jetzt auf CLICKS_MAX_DAYS begrenzt und damit klein –
-    // proaktiv laden, damit "Aktivste Stunde" sich ohne Scrollen auflöst.
-    loadClicksIfNeeded();
   }
 
   // Klickdaten (ein DB-Knoten pro Klick) werden für die Uhrzeit-Statistik
@@ -1060,6 +1068,10 @@
     } catch(e) {
       document.getElementById('hourWrap').innerHTML =
         '<div class="nodata">Fehler beim Laden der Uhrzeitdaten 🌸</div>';
+      // clicksLoaded bleibt false -> renderInsights würde die Karte sonst auf
+      // "lädt…" stehen lassen. Endzustand direkt setzen.
+      document.getElementById('peakHA').textContent = '🐾 –';
+      document.getElementById('peakHN').textContent = '🌸 –';
     }
     clicksLoading = false;
   }
@@ -1111,12 +1123,16 @@
       }
     }
 
-    // Trend: first vs second half averages
-    const mid = Math.floor(dates.length/2);
+    // Trend: gleich große Hälften vergleichen (erste `half` Tage vs. letzte
+    // `half` Tage). Bei ungerader Tageszahl bleibt der mittlere Tag außen vor,
+    // damit der Vergleich nicht durch eine längere Hälfte verzerrt wird.
+    const half = Math.floor(dates.length/2);
     let pA=0, pN=0, cA=0, cN=0;
-    for (let i=0; i<dates.length; i++) {
-      const v = allData[dates[i]]; if (!v) continue;
-      if (i < mid) { pA += v.a; pN += v.n; } else { cA += v.a; cN += v.n; }
+    for (let i=0; i<half; i++) {
+      const v = allData[dates[i]]; if (v) { pA += v.a; pN += v.n; }
+    }
+    for (let i=dates.length-half; i<dates.length; i++) {
+      const v = allData[dates[i]]; if (v) { cA += v.a; cN += v.n; }
     }
 
     // Streaks: scan entire allData once (independent of filter)
@@ -1247,8 +1263,6 @@
       wrap.innerHTML = '<div class="nodata">Noch keine gespielten Tage 🌸</div>';
       return;
     }
-    const pct = n => Math.round(n/total*100);
-    const pA = pct(wA), pN = pct(wN), pT = pct(wT);
     const fmtPct = v => v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
     const exactA = total ? fmtPct(wA/total*100) : '0,0';
     const exactN = total ? fmtPct(wN/total*100) : '0,0';
@@ -1407,8 +1421,17 @@
     document.getElementById('peakMN').textContent = bestMN ? `🌸 ${fmtMo(bestMN)}` : '🌸 –';
   }
 
+  // Einmal pro Datenstand gewählter Fun Fact, damit er bei wiederholten
+  // renderAll-Läufen (z.B. nach dem Nachladen der Klickdaten) nicht springt.
+  let _funFactCache = { key: null, html: null };
+
   function renderFunFact(agg) {
     if (!agg.dates.length) return;
+    const cacheKey = dataVersion + '|' + activeRange;
+    if (_funFactCache.key === cacheKey) {
+      document.getElementById('funFact').innerHTML = _funFactCache.html;
+      return;
+    }
     const { tA, tN, recA, recAN, recN, recNN, hrA, hrN, wdA, wdN } = agg;
     const facts = [];
 
@@ -1428,7 +1451,9 @@
     else if (tA>0) facts.push(`🤝 Absoluter Gleichstand – beide haben <b>${tA.toLocaleString('de-DE')}</b> Momente!`);
 
     const fact = facts[Math.floor(Math.random()*facts.length)] || '🌸 Noch nicht genug Daten für einen Fun Fact.';
-    document.getElementById('funFact').innerHTML = `<span class="funfact-icon">✨</span>${fact}`;
+    const html = `<span class="funfact-icon">✨</span>${fact}`;
+    _funFactCache = { key: cacheKey, html };
+    document.getElementById('funFact').innerHTML = html;
   }
 
   function renderDaily(dates) {
@@ -1511,6 +1536,8 @@
       }
       return;
     }
+    // Klicks sind geladen -> einen evtl. noch laufenden Observer aufräumen.
+    if (window._hourObserver) { window._hourObserver.disconnect(); window._hourObserver = null; }
     const hA = agg.hrA, hN = agg.hrN;
     let maxV = 1, hasC = false;
     for (let i=0;i<24;i++) { if (hA[i]>maxV) maxV=hA[i]; if (hN[i]>maxV) maxV=hN[i]; if (hA[i]>0||hN[i]>0) hasC=true; }
