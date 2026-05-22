@@ -536,10 +536,11 @@
     document.querySelectorAll('.quiz-opt-btn').forEach(b => b.onclick = null);
     const q = playQuestions[currentQIdx];
     const isCorrect = chosen === q.correct;
+    const playerKey = (window.currentUser || '').toLowerCase();
     if (isCorrect) {
       score++;
       btnEl.classList.add('correct');
-      awardXp(db, (window.currentUser || '').toLowerCase(), XP_VALUES.quiz_correct);
+      awardXp(db, playerKey, XP_VALUES.quiz_correct);
     }
     else {
       btnEl.classList.add('wrong');

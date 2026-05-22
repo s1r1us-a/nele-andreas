@@ -2162,7 +2162,9 @@
   // ============== SLOT STATS ==============
   async function updateSlotStats(result, win, betAmount) {
     const path = `loveslots/${userKey}`;
-    awardXp(db, userKey, XP_VALUES.slot_spin);
+    const spinXp = await awardXp(db, userKey, XP_VALUES.slot_spin);
+    if (spinXp.error && typeof showToast === 'function') showToast('⚠️ XP konnte nicht gespeichert werden', true);
+    else if (spinXp.leveledUp && typeof showToast === 'function') showToast('🎉 Level ' + spinXp.newLevel + ' erreicht!');
     await runTransaction(ref(db, `${path}/totalSpins`),   c => (c || 0) + 1);
     await runTransaction(ref(db, `${path}/totalWagered`), c => (c || 0) + betAmount);
     await runTransaction(ref(db, `${path}/totalWon`),     c => (c || 0) + win);

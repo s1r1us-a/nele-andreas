@@ -21,7 +21,6 @@ export const XP_VALUES = {
   farm_beehive:      15,
   quiz_correct:       5,
   quiz_perfect:      20,
-  savings_contrib:    3,
   booster_bought:     5
 };
 
@@ -39,7 +38,6 @@ export const XP_LABELS = {
   farm_beehive:       'Farm: Bienenstock abholen',
   quiz_correct:       'Quiz: richtige Antwort',
   quiz_perfect:       'Quiz: Perfektrunde',
-  savings_contrib:    'Sparschwein-Beitrag',
   booster_bought:     'Booster gekauft'
 };
 
@@ -67,9 +65,10 @@ export function xpForLevel(n) {
 
 // Aktuelles Level aus der Gesamt-XP.
 export function levelFromTotal(totalXp) {
+  const total = Number.isFinite(Number(totalXp)) ? Number(totalXp) : 0;
   let level = 1;
   let cumulative = 0;
-  while (cumulative + xpForLevel(level) <= totalXp) {
+  while (cumulative + xpForLevel(level) <= total) {
     cumulative += xpForLevel(level);
     level++;
     if (level >= MAX_LEVEL) break;
@@ -79,19 +78,23 @@ export function levelFromTotal(totalXp) {
 
 // XP-Fortschritt innerhalb des aktuellen Levels.
 export function currentXpInLevel(totalXp, level) {
+  const total = Number.isFinite(Number(totalXp)) ? Number(totalXp) : 0;
   let cumulative = 0;
   for (let i = 1; i < level; i++) cumulative += xpForLevel(i);
-  return totalXp - cumulative;
+  return total - cumulative;
 }
 
 // Vergibt XP. Race-sicher via runTransaction. Liefert Level-Up-Info zurück,
 // damit die aufrufende Seite einen Toast zeigen kann (rein kosmetisch).
 export async function awardXp(db, userKey, amount) {
-  if (!userKey || !amount || amount <= 0) return { leveledUp: false };
+  if (!userKey || !amount || amount <= 0) {
+    console.warn('XP: awardXp mit ungültigen Argumenten', { userKey, amount });
+    return { leveledUp: false };
+  }
   let oldTotal = 0;
   try {
     const res = await runTransaction(ref(db, `xp/${userKey}/total`), cur => {
-      oldTotal = cur || 0;
+      oldTotal = Number(cur) || 0;
       return oldTotal + amount;
     });
     const newTotal = (res && res.snapshot && res.snapshot.val()) || (oldTotal + amount);
@@ -100,7 +103,7 @@ export async function awardXp(db, userKey, amount) {
     return { leveledUp: newLevel > oldLevel, oldLevel, newLevel };
   } catch (e) {
     console.warn('XP: awardXp fehlgeschlagen', e);
-    return { leveledUp: false };
+    return { leveledUp: false, error: true };
   }
 }
 
