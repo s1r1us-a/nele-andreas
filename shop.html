@@ -1224,6 +1224,7 @@
   import { getDatabase, ref, runTransaction, onValue, set, get, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
+  import { awardXp, XP_VALUES } from './xp-helper.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -2159,6 +2160,8 @@
       await runTransaction(invRef, n => (n||0) + 1);
       const b = SHOP_BOOSTERS[pendingBuy.id];
       showToast(`${b ? b.emoji + ' ' + b.name : 'Booster'} gekauft! Im Profil oder Spiel aktivieren ✨`);
+      const xpRes = await awardXp(db, userKey, XP_VALUES.booster_bought);
+      if (xpRes.leveledUp) showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
       return;
     }
 

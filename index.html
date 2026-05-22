@@ -2752,6 +2752,7 @@
   import { getDatabase, ref, runTransaction, onValue, set, get, query, orderByChild, equalTo, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
+  import { awardXp, XP_VALUES } from './xp-helper.js';
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
     authDomain: "nele-und-andreas.firebaseapp.com",
@@ -4734,8 +4735,14 @@
     if (!auto) {
       const clickDate = getGermanDate(now);
       set(ref(db, `moments/clicks/${clickDate}/${now}_${userKey}`), { user, time: now });
+      heartXpCounter++;
+      if (heartXpCounter >= 10) {
+        heartXpCounter -= 10;
+        awardXp(db, userKey, XP_VALUES.heart_batch10);
+      }
     }
   }
+  let heartXpCounter = 0;
 
   document.getElementById('heartBtn').addEventListener('click', () => performClick());
 

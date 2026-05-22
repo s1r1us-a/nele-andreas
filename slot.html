@@ -1439,6 +1439,7 @@
   import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
+  import { awardXp, XP_VALUES } from './xp-helper.js';
 
   // Three.js wird dynamisch geladen — bei Fehler greift der CSS-Fallback
   let THREE = null;
@@ -2169,7 +2170,11 @@
       await runTransaction(ref(db, `${path}/biggestWin`), c => Math.max(c || 0, win));
     }
     const key = result.join('');
-    if (key === '👸👸👸') await runTransaction(ref(db, `${path}/jackpotCount`),     c => (c || 0) + 1);
+    if (key === '👸👸👸') {
+      await runTransaction(ref(db, `${path}/jackpotCount`), c => (c || 0) + 1);
+      const xpRes = await awardXp(db, userKey, XP_VALUES.slot_jackpot);
+      if (xpRes.leveledUp && typeof showToast === 'function') showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
+    }
     if (key === '🧮🧮🧮') await runTransaction(ref(db, `${path}/ramanujanCount`),   c => (c || 0) + 1);
     if (key === '🧦🧦🧦') await runTransaction(ref(db, `${path}/laufmaschenCount`), c => (c || 0) + 1);
 

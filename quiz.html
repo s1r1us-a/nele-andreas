@@ -352,6 +352,7 @@
 <script type="module" id="quizScript">
   import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { awardXp, XP_VALUES } from './xp-helper.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -535,7 +536,11 @@
     document.querySelectorAll('.quiz-opt-btn').forEach(b => b.onclick = null);
     const q = playQuestions[currentQIdx];
     const isCorrect = chosen === q.correct;
-    if (isCorrect) { score++; btnEl.classList.add('correct'); }
+    if (isCorrect) {
+      score++;
+      btnEl.classList.add('correct');
+      awardXp(db, (window.currentUser || '').toLowerCase(), XP_VALUES.quiz_correct);
+    }
     else {
       btnEl.classList.add('wrong');
       document.querySelectorAll('.quiz-opt-btn')[q.correct].classList.add('correct');
@@ -554,6 +559,7 @@
 
     // Save result
     const wrongCount = 5 - score;
+    if (wrongCount === 0 && score > 0) awardXp(db, playerKey, XP_VALUES.quiz_perfect);
     const entry = { score, wrong: wrongCount, date: Date.now(), answers: userAnswers.map(a => ({ question: a.question, chosen: a.chosen, correct: a.correct, isCorrect: a.isCorrect, options: a.options })) };
     const hsKey = user === 'Andreas' ? 'hs_andreas_on_nele' : 'hs_nele_on_andreas';
     await push(ref(db, `quiz/highscore/${hsKey}`), entry);

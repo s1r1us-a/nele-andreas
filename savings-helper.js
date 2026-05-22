@@ -1,4 +1,5 @@
 import { ref, runTransaction, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { awardXp, XP_VALUES } from "./xp-helper.js";
 
 const SPAR_RATE = 0.01;
 
@@ -18,6 +19,7 @@ export async function contributeToTopf(db, userKey, amount, quelle = 'unbekannt'
       sparRate: SPAR_RATE,
       timestamp: Date.now()
     });
+    awardXp(db, userKey, XP_VALUES.savings_contrib);
   } catch (e) {
     console.warn('Sparschwein: Einzahlung fehlgeschlagen', e);
   }

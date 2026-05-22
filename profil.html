@@ -268,6 +268,40 @@
     .badge-equipped-star { position: absolute; top: 3px; right: 3px; font-size: 9px; z-index: 5; }
 
     /* ============================================ */
+    /*  XP / LEVEL-SYSTEM                           */
+    /* ============================================ */
+    .profile-level-section { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 12px; width: 100%; max-width: 280px; }
+    .level-badge-label { font-family: 'Quicksand', sans-serif; font-size: 11px; letter-spacing: 2px; font-weight: 700; color: var(--text-mid); }
+    .level-badge-label span { font-family: 'Dancing Script', cursive; font-size: 23px; letter-spacing: 0; color: var(--rose); font-weight: 700; margin-left: 4px; }
+    .xp-bar-wrap { width: 100%; }
+    .xp-bar-track { width: 100%; height: 10px; background: rgba(0,0,0,0.08); border-radius: 50px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg,#e8a0b8,#f5c89b,#e8a0b8); background-size: 200% 100%; animation: xpShimmer 2.6s linear infinite; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+    @keyframes xpShimmer { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
+    .xp-bar-text { font-family: 'Quicksand', sans-serif; font-size: 10px; font-weight: 600; color: var(--text-mid); text-align: center; margin-top: 2px; }
+    .xp-next-reward { font-family: 'Quicksand', sans-serif; font-size: 10px; font-weight: 600; color: var(--gold); text-align: center; }
+    .xp-info-btn { background: none; border: none; font-family: 'Quicksand', sans-serif; font-size: 10px; font-weight: 600; color: var(--text-mid); text-decoration: underline; cursor: pointer; padding: 2px; }
+    .xp-info-btn:hover { color: var(--rose); }
+    .claim-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; background: linear-gradient(135deg,#c87830,#ffe3a3); border: none; border-radius: 50px; padding: 9px 20px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: #5a3a10; cursor: pointer; box-shadow: 0 3px 14px rgba(212,150,60,0.5); animation: claimPulse 1.8s ease-in-out infinite; }
+    @keyframes claimPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    .xp-info-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100000; padding: 20px; }
+    .xp-info-card { background: var(--ui-card-bg); border: 1.5px solid var(--ui-card-border); border-radius: 22px; padding: 22px; max-width: 360px; width: 100%; max-height: 80vh; overflow-y: auto; }
+    .xp-info-title { font-family: 'Dancing Script', cursive; font-size: 24px; font-weight: 700; color: var(--rose); text-align: center; margin-bottom: 14px; }
+    .xp-info-table { width: 100%; border-collapse: collapse; font-family: 'Quicksand', sans-serif; }
+    .xp-info-table th { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); text-align: left; padding: 6px 8px; border-bottom: 1.5px solid var(--ui-card-border); }
+    .xp-info-table td { font-size: 12px; font-weight: 600; color: var(--text-mid); padding: 7px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .xp-info-table td:last-child { text-align: right; color: var(--gold); font-weight: 700; }
+    .xp-info-close { display: block; width: 100%; margin-top: 14px; background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 9px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-mid); cursor: pointer; }
+    .xp-info-close:hover { border-color: var(--rose); color: var(--rose); }
+    .claim-confirm-btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(135deg,#c87830,#ffe3a3); border: none; border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: #5a3a10; cursor: pointer; }
+    .claim-confirm-btn:disabled { opacity: 0.6; cursor: default; }
+    .claim-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); font-family: 'Quicksand', sans-serif; }
+    .claim-row-level { font-size: 12px; font-weight: 700; color: var(--rose); white-space: nowrap; }
+    .claim-row-reward { font-size: 12px; font-weight: 600; color: var(--text-mid); text-align: right; }
+    .claim-empty { font-size: 12px; color: var(--text-mid); text-align: center; padding: 12px; }
+    .badge-item.level-pending { background: rgba(212,160,97,0.12); border: 1.5px solid var(--gold); cursor: default; box-shadow: 0 0 12px rgba(255,200,90,0.5); animation: claimPulse 1.8s ease-in-out infinite; }
+    .badge-item.level-pending .badge-item-name { color: var(--gold); font-weight: 700; }
+
+    /* ============================================ */
     /*  BADGE & FRAME RARITY DESIGN                 */
     /* ============================================ */
     .badge-item, .frame-item { isolation: isolate; }
@@ -992,6 +1026,23 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="xp-info-overlay" id="xpInfoModal" style="display:none;">
+  <div class="xp-info-card">
+    <div class="xp-info-title">⭐ XP-Übersicht</div>
+    <table class="xp-info-table" id="xpInfoTable"></table>
+    <button class="xp-info-close" id="xpInfoClose" type="button">Schließen</button>
+  </div>
+</div>
+
+<div class="xp-info-overlay" id="claimModal" style="display:none;">
+  <div class="xp-info-card">
+    <div class="xp-info-title">🎁 Belohnungen abholen</div>
+    <div id="claimList"></div>
+    <button class="claim-confirm-btn" id="claimConfirm" type="button">Alle abholen ✨</button>
+    <button class="xp-info-close" id="claimClose" type="button">Schließen</button>
+  </div>
+</div>
+
 <div class="page" id="profilePage" style="display:none;">
 
   <a href="index.html" class="back-btn">← Zurück</a>
@@ -1005,9 +1056,21 @@
       <span id="activeBadgeEmoji">🐾</span>
       <span id="activeBadgeName"></span>
     </div>
+    <div class="profile-level-section" id="profileLevelSection" style="display:none;">
+      <div class="level-badge-label">LEVEL <span id="profileLevel">1</span></div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-track"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+        <div class="xp-bar-text" id="xpBarText">0 / 100 XP</div>
+      </div>
+      <div class="xp-next-reward" id="nextRewardLine">Nächste Belohnung: <span id="nextRewardText">…</span></div>
+      <button id="xpInfoBtn" class="xp-info-btn" type="button">ℹ️ Wofür gibt es XP?</button>
+    </div>
     <div class="profile-coins" id="profileCoins" style="display:none;">
       🪙 <span class="coin-num" id="profileCoinCount">0</span>
     </div>
+    <button id="claimRewardsBtn" class="claim-btn" type="button" style="display:none;">
+      🎁 Belohnungen abholen <span id="claimCount">(0)</span>
+    </button>
     <div id="readonlyBadge" style="display:none;" class="readonly-badge">👁️ Nur ansehen</div>
     <br>
     <a id="visitOtherBtn" class="visit-other-btn" href="#" style="display:none;">👤 <span id="visitOtherLabel">Profil besuchen</span></a>
@@ -1048,6 +1111,14 @@
     <div class="section-label">🎰 Slot-Automaten Badges<span class="badge-count" id="slotBadgeCount">–</span></div>
     <div class="section-hint">Nur in der Slotmaschine zu gewinnen 🎰</div>
     <div class="badge-grid" id="slotBadgeGrid">
+      <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
+    </div>
+  </div>
+
+  <div class="section" id="levelBadgeSection">
+    <div class="section-label">⭐ Level-Badges<span class="badge-count" id="levelBadgeCount">–</span></div>
+    <div class="section-hint">Verdient durch Level-Aufstiege ✨</div>
+    <div class="badge-grid" id="levelBadgeGrid">
       <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
     </div>
   </div>
@@ -1114,6 +1185,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { XP_VALUES, XP_LABELS, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -2040,7 +2112,7 @@
     const emoji = document.getElementById('activeBadgeEmoji');
     const name  = document.getElementById('activeBadgeName');
     if (!equippedBadge) { pill.style.display = 'none'; return; }
-    const b = [...ALL_BADGES, ...SLOT_BADGES].find(x => x.id === equippedBadge);
+    const b = [...ALL_BADGES, ...SLOT_BADGES, ...LEVEL_BADGE_LIST].find(x => x.id === equippedBadge);
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;
@@ -2124,6 +2196,7 @@
     await set(ref(db, `shop/${key}/equippedBadge`), equippedBadge);
     renderBadges();
     renderSlotBadges();
+    renderLevelBadges(xpState.total, xpState.unclaimed);
     updateBadgePill();
   }
 
@@ -2133,6 +2206,162 @@
     await set(ref(db, `shop/${key}/equippedFrame`), equippedFrame);
     renderFrames();
     updateAvatarDisplay();
+  }
+
+  // ─── XP / LEVEL-SYSTEM ──────────────────────────────────────────────────
+  const LEVEL_BADGE_LIST = Object.values(LEVEL_BADGES);
+  let xpState = { total: 0, unclaimed: {} };
+
+  function renderLevel(total) {
+    const section = document.getElementById('profileLevelSection');
+    if (section) section.style.display = 'flex';
+    const level = levelFromTotal(total);
+    const lvlEl = document.getElementById('profileLevel');
+    if (lvlEl) lvlEl.textContent = level;
+    const fill = document.getElementById('xpBarFill');
+    const text = document.getElementById('xpBarText');
+    const rewardLine = document.getElementById('nextRewardLine');
+    if (level >= MAX_LEVEL) {
+      if (fill) fill.style.width = '100%';
+      if (text) text.textContent = 'MAX';
+      if (rewardLine) rewardLine.textContent = 'Maximales Level erreicht ✨';
+      return;
+    }
+    const inLevel = currentXpInLevel(total, level);
+    const need    = xpForLevel(level);
+    const pct = need > 0 ? Math.max(0, Math.min(100, (inLevel / need) * 100)) : 0;
+    if (fill) fill.style.width = pct.toFixed(1) + '%';
+    if (text) text.textContent = inLevel.toLocaleString('de-DE') + ' / ' + need.toLocaleString('de-DE') + ' XP';
+    const nextLevel = level + 1;
+    const coins = nextLevel * COIN_PER_LEVEL;
+    const badge = LEVEL_BADGES[nextLevel];
+    let txt = '💰 ' + coins.toLocaleString('de-DE') + ' Münzen';
+    if (badge) txt += ' + ' + badge.emoji + ' ' + badge.name;
+    txt += ' (Level ' + nextLevel + ')';
+    const span = document.getElementById('nextRewardText');
+    if (span) span.textContent = txt;
+    else if (rewardLine) rewardLine.textContent = 'Nächste Belohnung: ' + txt;
+  }
+
+  function renderLevelBadges(total, unclaimed) {
+    const grid = document.getElementById('levelBadgeGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const pendingBadgeIds = {};
+    Object.values(unclaimed || {}).forEach(r => { if (r && r.badgeId) pendingBadgeIds[r.badgeId] = true; });
+    const levels = Object.keys(LEVEL_BADGES).map(Number).sort((a, b) => a - b);
+    levels.forEach(lvl => {
+      const b = LEVEL_BADGES[lvl];
+      const isOwned    = ownedBadges.includes(b.id);
+      const isEquipped = equippedBadge === b.id;
+      const isPending  = !isOwned && !isReadOnly && !!pendingBadgeIds[b.id];
+      const el = document.createElement('div');
+      let cls = 'badge-item ';
+      if (isOwned)        cls += 'owned rarity-' + b.rarity;
+      else if (isPending) cls += 'level-pending';
+      else                cls += 'locked';
+      if (isEquipped) cls += ' equipped';
+      el.className = cls;
+      const emoji = (isOwned || isPending) ? b.emoji : '❓';
+      const name  = isOwned ? b.name : (isPending ? 'Abholen!' : '???');
+      el.innerHTML = `
+        ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
+        <span class="badge-item-emoji">${emoji}</span>
+        <div class="badge-item-name">${name}</div>
+        <div class="badge-rarity-dot ${b.rarity}"></div>`;
+      if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
+      grid.appendChild(el);
+    });
+    const countEl = document.getElementById('levelBadgeCount');
+    if (countEl) {
+      const owned = levels.filter(l => ownedBadges.includes(LEVEL_BADGES[l].id)).length;
+      countEl.textContent = owned + ' / ' + levels.length;
+      countEl.classList.toggle('complete', owned === levels.length && levels.length > 0);
+    }
+  }
+
+  function renderClaimButton(unclaimed) {
+    const btn = document.getElementById('claimRewardsBtn');
+    if (!btn) return;
+    const count = Object.keys(unclaimed || {}).length;
+    btn.style.display = count > 0 ? 'inline-flex' : 'none';
+    const cEl = document.getElementById('claimCount');
+    if (cEl) cEl.textContent = '(' + count + ')';
+  }
+
+  function buildXpInfoTable() {
+    const tbl = document.getElementById('xpInfoTable');
+    if (!tbl) return;
+    let html = '<thead><tr><th>Aktion</th><th>XP</th></tr></thead><tbody>';
+    Object.keys(XP_VALUES).forEach(k => {
+      html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>+' + XP_VALUES[k] + '</td></tr>';
+    });
+    tbl.innerHTML = html + '</tbody>';
+  }
+
+  function openClaimModal() {
+    const list = document.getElementById('claimList');
+    if (!list) return;
+    list.innerHTML = '';
+    const levels = Object.keys(xpState.unclaimed || {}).map(Number).sort((a, b) => a - b);
+    if (!levels.length) {
+      list.innerHTML = '<div class="claim-empty">Keine Belohnungen.</div>';
+    } else {
+      levels.forEach(lvl => {
+        const r = xpState.unclaimed[lvl] || {};
+        const badge = r.badgeId ? LEVEL_BADGES[lvl] : null;
+        const row = document.createElement('div');
+        row.className = 'claim-row';
+        row.innerHTML = '<span class="claim-row-level">Level ' + lvl + '</span>' +
+          '<span class="claim-row-reward">💰 ' + (r.coins || 0).toLocaleString('de-DE') +
+          (badge ? ' &nbsp; ' + badge.emoji + ' ' + badge.name : '') + '</span>';
+        list.appendChild(row);
+      });
+    }
+    const confirmBtn = document.getElementById('claimConfirm');
+    if (confirmBtn) confirmBtn.style.display = levels.length ? 'block' : 'none';
+    const modal = document.getElementById('claimModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  async function doClaimAll() {
+    const btn = document.getElementById('claimConfirm');
+    if (btn) btn.disabled = true;
+    const key = currentUser.toLowerCase();
+    const levels = Object.keys(xpState.unclaimed || {}).map(Number).sort((a, b) => a - b);
+    try {
+      for (const lvl of levels) {
+        await claimReward(db, key, lvl, xpState.unclaimed[lvl]);
+      }
+      const bSnap = await get(ref(db, `shop/${key}/badges`));
+      ownedBadges = bSnap.val() || [];
+      renderBadges();
+      renderLevelBadges(xpState.total, {});
+    } catch (e) {
+      console.warn('Claim fehlgeschlagen', e);
+    }
+    if (btn) btn.disabled = false;
+    const modal = document.getElementById('claimModal');
+    if (modal) modal.style.display = 'none';
+    showToast('🎉 Belohnungen abgeholt!');
+  }
+
+  buildXpInfoTable();
+  {
+    const xpInfoBtn   = document.getElementById('xpInfoBtn');
+    const xpInfoModal = document.getElementById('xpInfoModal');
+    const xpInfoClose = document.getElementById('xpInfoClose');
+    if (xpInfoBtn)   xpInfoBtn.addEventListener('click', () => { if (xpInfoModal) xpInfoModal.style.display = 'flex'; });
+    if (xpInfoClose) xpInfoClose.addEventListener('click', () => { if (xpInfoModal) xpInfoModal.style.display = 'none'; });
+    if (xpInfoModal) xpInfoModal.addEventListener('click', e => { if (e.target === xpInfoModal) xpInfoModal.style.display = 'none'; });
+    const claimBtn     = document.getElementById('claimRewardsBtn');
+    const claimModal   = document.getElementById('claimModal');
+    const claimClose   = document.getElementById('claimClose');
+    const claimConfirm = document.getElementById('claimConfirm');
+    if (claimBtn)     claimBtn.addEventListener('click', openClaimModal);
+    if (claimClose)   claimClose.addEventListener('click', () => { if (claimModal) claimModal.style.display = 'none'; });
+    if (claimModal)   claimModal.addEventListener('click', e => { if (e.target === claimModal) claimModal.style.display = 'none'; });
+    if (claimConfirm) claimConfirm.addEventListener('click', doClaimAll);
   }
 
   async function loadData(key) {
@@ -2202,6 +2431,23 @@
     onValue(ref(db, `boosters/${oppKey}/active_sabotage`), snap => {
       activeSabotageOnOpponent = snap.val() || null;
       renderBoosters();
+    });
+
+    // XP / Level live
+    onValue(ref(db, `xp/${key}`), snap => {
+      const xp = snap.val() || {};
+      xpState.total     = xp.total || 0;
+      xpState.unclaimed = xp.unclaimed || {};
+      renderLevel(xpState.total);
+      renderLevelBadges(xpState.total, xpState.unclaimed);
+      if (!isReadOnly) {
+        renderClaimButton(xpState.unclaimed);
+        reconcileRewards(db, key).then(newLevels => {
+          if (newLevels && newLevels.length) {
+            showToast('🎉 Level ' + newLevels[newLevels.length - 1] + ' erreicht! Belohnungen warten auf dich.');
+          }
+        });
+      }
     });
   }
 
