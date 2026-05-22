@@ -4736,8 +4736,6 @@
         window.renderShop('animals');
         window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
         window.showToast(`Bienenstock Level ${beehive.level}! 🎉`);
-        const xpRes = await awardXp(db, userKey, XP_VALUES.farm_levelup);
-        if (xpRes.leveledUp) window.showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
     } else {
         window.showToast('Nicht genug Münzen!');
     }
@@ -5827,6 +5825,8 @@
     await saveFarmData();
     window.openBeehive();
     window.showToast(`🍯 ${beehive.level}x Honig erhalten!`);
+    const xpRes = await awardXp(db, userKey, XP_VALUES.farm_beehive);
+    if (xpRes.leveledUp) window.showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
     updateFarmDOM();
   }
 
