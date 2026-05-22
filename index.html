@@ -2994,6 +2994,10 @@
         updateAutoclicker();
         updateBoosterBanner();
       });
+      onValue(ref(db, `boosters/${boosterKey}/active_xp`), snap => {
+        activeBoosterXp = snap.val() || null;
+        updateBoosterBanner();
+      });
       onValue(ref(db, `boosters/${boosterKey}/active_sabotage`), snap => {
         activeSabotage = snap.val() || null;
         handleSabotageState();
@@ -3159,6 +3163,7 @@
   let activeBoosterCoin        = null;
   let activeBoosterMoments     = null;
   let activeBoosterAutoclicker = null;
+  let activeBoosterXp          = null;
   let activeSabotage           = null;   // Sabotage GEGEN den aktuellen Spieler (Opfer-Sicht)
   let sabotageOnOpponent       = null;   // Sabotage GEGEN den Gegner (Angreifer-Sicht)
   let opponentSabotageFxInterval = null;
@@ -3202,6 +3207,7 @@
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                        durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                        durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
     autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 2 Minuten lang 10×/Sekunde automatisch für dich', durationMs: 2 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
+    xp_booster:          { emoji: '🌟', name: 'XP-Booster',       desc: '+50% XP auf alles für 6 Stunden',                        durationMs: 6 * 60 * 60 * 1000, target: 'self',    activeKey: 'active_xp' },
     sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
     spam_booster:        { emoji: '📺', name: 'Popup-Hack',       desc: 'Spammt den Gegner 90 Sek. lang mit nervigen Hacker-Popups zu – auf jeder Seite', durationMs: 90 * 1000, target: 'opponent', activeKey: 'active_spam' },
     anti_hack_booster:   { emoji: '🛡️', name: 'Gegen-Hack',       desc: 'Bricht einen laufenden Hack sofort ab – manuell hier aktivieren', target: 'self' },
@@ -3215,9 +3221,10 @@
   function formatCountdown(ms) {
     if (ms <= 0) return '00:00';
     const totalSec = Math.ceil(ms / 1000);
-    const min = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const h   = Math.floor(totalSec / 3600);
+    const min = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
     const sec = (totalSec % 60).toString().padStart(2, '0');
-    return `${min}:${sec}`;
+    return h > 0 ? `${h}:${min}:${sec}` : `${min}:${sec}`;
   }
 
   // ---- AUTO-KLICKER ----
@@ -3380,6 +3387,8 @@
       out.push({ id:'moments_booster', emoji:'💫', text:'Momenten-Booster aktiv – ×2 Momente!', until: activeBoosterMoments.activatedAt + activeBoosterMoments.durationMs });
     if (isBoosterActive(activeBoosterAutoclicker))
       out.push({ id:'autoclicker_booster', emoji:'🤖', text:'Auto-Klicker aktiv – klickt für dich!', until: activeBoosterAutoclicker.activatedAt + activeBoosterAutoclicker.durationMs });
+    if (isBoosterActive(activeBoosterXp))
+      out.push({ id:'xp_booster', emoji:'🌟', text:'XP-Booster aktiv – +50% XP!', until: activeBoosterXp.activatedAt + activeBoosterXp.durationMs });
     if (isBoosterActive(activeSabotage))
       out.push({ id:'sabotage_booster', emoji:'💻', text:`Gehackt von ${activeSabotage.from || 'Gegner'} – nur jeder 10. Klick zählt`, until: activeSabotage.activatedAt + activeSabotage.durationMs });
     return out;

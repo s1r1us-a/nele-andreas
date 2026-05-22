@@ -1152,6 +1152,17 @@
 
     <div class="lootbox-card">
       <div class="lootbox-emoji-wrap">
+        <span class="lootbox-icon" style="cursor:default;">🌟</span>
+      </div>
+      <div class="lootbox-name">XP-Booster</div>
+      <div class="lootbox-desc">+50% XP auf alles für 6 Stunden 🌟</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Erst ab Level 10 · Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
+      <div class="lootbox-price">🪙 30.000 Coins</div>
+      <button class="btn-open-box" id="buyXpBoosterBtn">🌟 Booster kaufen</button>
+    </div>
+
+    <div class="lootbox-card">
+      <div class="lootbox-emoji-wrap">
         <span class="lootbox-icon" style="cursor:default;">🤖</span>
       </div>
       <div class="lootbox-name">Auto-Klicker</div>
@@ -1224,7 +1235,7 @@
   import { getDatabase, ref, runTransaction, onValue, set, get, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
-  import { awardXp, XP_VALUES } from './xp-helper.js';
+  import { awardXp, XP_VALUES, levelFromTotal } from './xp-helper.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1822,6 +1833,7 @@
   let currentUser = null;
   let userKey = null;
   let currentCoins = 0;
+  let currentLevel = 1;
   let ownedThemes = ['sakura'];
   let activeTheme = 'sakura';
   let activeThemeMobile = null;
@@ -2061,6 +2073,7 @@
 
   // ---- BOOSTER SHOP ----
   const MOMENTS_BOOSTER_PRICE     = 10000;
+  const XP_BOOSTER_PRICE          = 30000;
   const AUTOCLICKER_BOOSTER_PRICE = 15000;
   const SABOTAGE_BOOSTER_PRICE    = 12000;
   const SPAM_BOOSTER_PRICE        = 20000;
@@ -2068,6 +2081,7 @@
 
   const SHOP_BOOSTERS = {
     moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster', price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
+    xp_booster:          { btnId: 'buyXpBoosterBtn',          emoji: '🌟', name: 'XP-Booster',       price: XP_BOOSTER_PRICE,          minLevel: 10, confirm: 'Möchtest du einen XP-Booster kaufen? +50% XP auf alles für 6 Stunden. Er landet in deinem Profil-Inventar.' },
     autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',     price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
     sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '💻', name: 'Hack',             price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du einen Hack kaufen? Er landet in deinem Profil-Inventar.' },
     spam_booster:        { btnId: 'buySpamBoosterBtn',        emoji: '📺', name: 'Popup-Hack',       price: SPAM_BOOSTER_PRICE,        confirm: 'Möchtest du einen Popup-Hack kaufen? Er landet in deinem Profil-Inventar.' },
@@ -2078,15 +2092,17 @@
     Object.values(SHOP_BOOSTERS).forEach(b => {
       const btn = document.getElementById(b.btnId);
       if (!btn) return;
-      const canAfford = currentCoins >= b.price;
-      btn.disabled = !canAfford;
-      btn.title = canAfford ? '' : 'Zu wenig Coins';
+      const meetsLevel = !b.minLevel || currentLevel >= b.minLevel;
+      const canAfford  = currentCoins >= b.price;
+      btn.disabled = !canAfford || !meetsLevel;
+      btn.title = !meetsLevel ? `Erst ab Level ${b.minLevel}` : (canAfford ? '' : 'Zu wenig Coins');
     });
   }
 
   function handleBuyBoosterClick(id) {
     const b = SHOP_BOOSTERS[id];
     if (!b) return;
+    if (b.minLevel && currentLevel < b.minLevel) { showToast(`🔒 Erst ab Level ${b.minLevel} verfügbar!`); return; }
     pendingBuy = { kind: 'booster', id, price: b.price };
     document.getElementById('confirmEmoji').textContent = b.emoji;
     document.getElementById('confirmText').textContent = b.confirm;
@@ -2151,6 +2167,8 @@
     if (!pendingBuy || !userKey) return;
 
     if (pendingBuy.kind === 'booster') {
+      const sb = SHOP_BOOSTERS[pendingBuy.id];
+      if (sb && sb.minLevel && currentLevel < sb.minLevel) { showToast(`🔒 Erst ab Level ${sb.minLevel} verfügbar!`); return; }
       const price = pendingBuy.price;
       if (currentCoins < price) { showToast('❌ Nicht genug Coins!'); return; }
       await runTransaction(ref(db, `coins/${userKey}`), c => (c||0) - price);
@@ -2436,6 +2454,10 @@
           console.warn('NaN in coins DB erkannt, setze auf 0');
           set(ref(db, `coins/${userKey}`), 0);
         }
+      });
+      onValue(ref(db, `xp/${userKey}/total`), snap => {
+        currentLevel = levelFromTotal(snap.val() || 0);
+        renderBoosterShop();
       });
       onValue(ref(db, 'savings/topf'), snap => {
         renderSavingsCount(snap.val() || 0);
