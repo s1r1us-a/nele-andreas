@@ -1555,7 +1555,12 @@
   let autoSpinActive = false;
   let autoSpinArmed = false;
   let autoSpinStopping = false;
+  let slotLockedElsewhere = false;
+  let slotLockExpiryTimer = null;
+  let slotLockHeartbeat = null;
   let wakeLockSentinel = null;
+  const slotClientId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const SLOT_LOCK_TTL_MS = 45000;
   const AUTOSPIN_WIN_STOP_FACTOR = 50; // Autospin stoppt bei Gewinn >= 50× Einsatz (einsatz-relativ, fair für High Roller)
   const WIN_MODAL_MIN = 5000; // Ab diesem Gewinn erscheint das wegklickbare Gewinn-Modal
   let activeTheme = 'sakura';
@@ -2159,6 +2164,63 @@
     el.addEventListener('animationend', () => el.classList.remove(kind), { once: true });
   }
 
+  async function acquireSlotLock({ auto=false } = {}) {
+    const now = Date.now();
+    const lockRef = ref(db, `slotlocks/${userKey}`);
+    const res = await runTransaction(lockRef, cur => {
+      const lastSeen = Number(cur?.updatedAt || cur?.startedAt || 0);
+      const stale = !cur || !lastSeen || (now - lastSeen) > SLOT_LOCK_TTL_MS;
+      if (!stale && cur.clientId !== slotClientId) return;
+      return {
+        clientId: slotClientId,
+        owner: currentUser,
+        auto: !!auto,
+        startedAt: now,
+        updatedAt: now
+      };
+    });
+    return res.committed && res.snapshot.val()?.clientId === slotClientId;
+  }
+
+  async function refreshSlotLock(auto=false) {
+    if (!userKey) return;
+    const now = Date.now();
+    await runTransaction(ref(db, `slotlocks/${userKey}`), cur => {
+      if (!cur || cur.clientId !== slotClientId) return cur;
+      return { ...cur, auto: !!auto, updatedAt: now };
+    });
+  }
+
+  async function releaseSlotLock() {
+    if (!userKey) return;
+    await runTransaction(ref(db, `slotlocks/${userKey}`), cur => {
+      if (!cur || cur.clientId !== slotClientId) return cur;
+      return null;
+    });
+  }
+
+  function initSlotLockListener() {
+    onValue(ref(db, `slotlocks/${userKey}`), snap => {
+      const lock = snap.val();
+      const lockSeenAt = Number(lock?.updatedAt || lock?.startedAt || 0);
+      const active = lock?.clientId &&
+        lock.clientId !== slotClientId &&
+        Date.now() - lockSeenAt <= SLOT_LOCK_TTL_MS;
+      slotLockedElsewhere = !!active;
+      clearTimeout(slotLockExpiryTimer);
+      if (slotLockedElsewhere) {
+        const remaining = Math.max(0, SLOT_LOCK_TTL_MS - (Date.now() - lockSeenAt) + 250);
+        slotLockExpiryTimer = setTimeout(() => {
+          slotLockedElsewhere = false;
+          setButtonsDisabled(isSpinning);
+          renderAutoSpinBtn();
+        }, remaining);
+      }
+      setButtonsDisabled(isSpinning);
+      renderAutoSpinBtn();
+    });
+  }
+
   // ============== SLOT STATS ==============
   async function updateSlotStats(result, win, betAmount) {
     const path = `loveslots/${userKey}`;
@@ -2386,7 +2448,7 @@
 
   // ============== SPIN ENGINE ==============
   function setButtonsDisabled(disabled) {
-    document.querySelectorAll('.arcade-btn[data-bet]').forEach(b => b.disabled = disabled);
+    document.querySelectorAll('.arcade-btn[data-bet]').forEach(b => b.disabled = disabled || slotLockedElsewhere);
   }
 
   // Großer Autospin-Button: Scharfschalter ↔ Stopp, abhängig vom Spielzustand.
@@ -2395,7 +2457,12 @@
     if (!btn) return;
     const small = btn.querySelector('small');
     btn.classList.remove('is-armed', 'is-running', 'is-stopping');
-    if (autoSpinActive) {
+    if (slotLockedElsewhere) {
+      btn.firstChild.textContent = '🎰 BELEGT ';
+      if (small) small.textContent = 'Läuft in anderem Tab/Gerät';
+      btn.setAttribute('aria-pressed', 'false');
+      btn.disabled = true;
+    } else if (autoSpinActive) {
       // Lauf aktiv → Stopp-Button, einziger klickbarer Button.
       btn.firstChild.textContent = '⏹ STOPP ';
       btn.classList.add('is-running');
@@ -2421,12 +2488,24 @@
       btn.firstChild.textContent = '🔁 AUTOSPIN ';
       if (small) small.textContent = 'Antippen zum Scharfschalten';
       btn.setAttribute('aria-pressed', 'false');
-      btn.disabled = isSpinning;
+      btn.disabled = isSpinning || slotLockedElsewhere;
     }
   }
 
   async function doSpin({ betAmount, spinCount, multiplier=1, auto=false }) {
     if (isSpinning) return;
+    const lockAcquired = await acquireSlotLock({ auto });
+    if (!lockAcquired) {
+      showToast('Slotmaschine läuft schon in einem anderen Tab/Gerät.', true);
+      autoSpinActive = false;
+      autoSpinArmed = false;
+      autoSpinStopping = false;
+      renderAutoSpinBtn();
+      return;
+    }
+    slotLockHeartbeat = setInterval(() => {
+      refreshSlotLock(auto).catch(err => console.warn('Slot lock refresh failed:', err));
+    }, 15000);
     isSpinning = true;
     setButtonsDisabled(true);
     renderAutoSpinBtn();
@@ -2437,6 +2516,7 @@
       if (auto) await acquireWakeLock();
       let i = 0;
       while (auto ? autoSpinActive : i < spinCount) {
+        await refreshSlotLock(auto);
         // 1. Coin-Check
         const coinsSnap = await get(ref(db, `coins/${userKey}`));
         const have = coinsSnap.val() || 0;
@@ -2495,6 +2575,9 @@
       isSpinning = false;
       if (auto) { autoSpinActive = false; autoSpinArmed = false; releaseWakeLock(); }
       autoSpinStopping = false;
+      clearInterval(slotLockHeartbeat);
+      slotLockHeartbeat = null;
+      releaseSlotLock().catch(err => console.warn('Slot lock release failed:', err));
       setButtonsDisabled(false);
       renderAutoSpinBtn();
     }
@@ -2603,6 +2686,7 @@
       });
 
       initStatsListener();
+      initSlotLockListener();
 
     } else {
       currentUser = null;
