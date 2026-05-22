@@ -6,6 +6,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, set, update, onValue, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { levelFromTotal } from "./xp-helper.js";
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -118,6 +119,7 @@ const dotEl  = document.getElementById('otherPresenceDot');
 const textEl = document.getElementById('otherPresenceText');
 let otherData = null;
 let otherName = '';
+let otherLevel = null;  // Level des anderen Spielers (für die Presence-Pill, nur PC)
 
 function classify(data) {
   if (!data || typeof data.ts !== 'number' || (Date.now() - data.ts) > STALE_MS) return 'offline';
@@ -187,7 +189,12 @@ function renderOther() {
         textEl.style.display = 'none';
       }
     } else {
-      textEl.textContent = where ? otherName + ': ' + where : otherName + ' ' + labels[status];
+      if (where) {
+        const lvlPart = (otherLevel != null) ? ' (Lvl ' + otherLevel + ')' : '';
+        textEl.textContent = otherName + lvlPart + ': ' + where;
+      } else {
+        textEl.textContent = otherName + ' ' + labels[status];
+      }
       textEl.style.display = '';
     }
   }
@@ -199,6 +206,10 @@ function startWatchingOther(meKey) {
   otherName = otherKey.charAt(0).toUpperCase() + otherKey.slice(1);
   onValue(ref(db, 'presence/' + otherKey), snap => {
     otherData = snap.val();
+    renderOther();
+  });
+  onValue(ref(db, 'xp/' + otherKey + '/total'), snap => {
+    otherLevel = levelFromTotal(snap.val() || 0);
     renderOther();
   });
   // Lokaler Tick, damit "still -> stale -> offline" auch ohne neues
