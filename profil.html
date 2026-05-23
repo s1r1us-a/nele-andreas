@@ -8,7 +8,10 @@
     // Theme sofort (vor dem ersten Paint) aus dem letzten bekannten Wert
     // setzen, damit es ohne Flackern aktiv ist. Firebase korrigiert danach.
     try {
-      var t = localStorage.getItem('activeTheme');
+      var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+      var spec = localStorage.getItem('activeTheme' + dev);
+      var anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+      var t = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
       if (t) document.documentElement.setAttribute('data-theme', t);
     } catch (e) {}
   </script>
@@ -2733,8 +2736,15 @@
   // Theme sofort vollständig aus localStorage anwenden (Variablen, Gradient),
   // ohne auf die Firebase-Antwort zu warten. Firebase korrigiert danach nur
   // noch im Hintergrund.
+  function _resolveCachedThemeProfil() {
+    const dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+    const spec = localStorage.getItem('activeTheme' + dev);
+    if (spec) return spec;
+    const anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    return anyDev ? null : localStorage.getItem('activeTheme');
+  }
   try {
-    const cachedTheme = localStorage.getItem('activeTheme');
+    const cachedTheme = _resolveCachedThemeProfil();
     if (cachedTheme) applyProfilTheme(cachedTheme);
   } catch (e) {}
   // ── END THEME SYSTEM ────────────────────────────────────────────────────
