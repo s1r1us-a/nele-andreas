@@ -752,6 +752,12 @@
     color: #2a1808;
   }
   .arcade-gold small { opacity: 0.75; }
+  .arcade-red {
+    --grad: linear-gradient(135deg, #b8003c 0%, #6a0030 100%);
+    --glow: rgba(184,0,60,0.55); --glow-hover: rgba(184,0,60,0.75);
+    color: #fff5fa;
+  }
+  .arcade-red small { opacity: 0.8; }
 
   /* AUTOSPIN BUTTON — Scharfschalter / Stopp */
   .arcade-auto {
@@ -1249,7 +1255,7 @@
       <!-- Cabinet Marquee (Premium Header) -->
       <div class="cabinet-marquee">
         <span class="marquee-bulb left"></span>
-        <span class="cabinet-marquee-text">♛ Royal Reels ♛</span>
+        <span class="cabinet-marquee-text">♛ Princess Spin ♛</span>
         <span class="marquee-bulb right"></span>
       </div>
 
@@ -1294,6 +1300,10 @@
         <button class="arcade-btn arcade-gold" data-bet="1000" data-spins="1" data-multiplier="10">
           HIGH ROLLER
           <small>1000 🪙 · Gewinne ×10</small>
+        </button>
+        <button class="arcade-btn arcade-red" data-bet="10000" data-spins="1" data-multiplier="100">
+          INSANE ROLLER
+          <small>10 000 🪙 · Gewinne ×100</small>
         </button>
         <button id="autoSpinBtn" class="arcade-btn arcade-auto" type="button" aria-pressed="false">
           🔁 AUTOSPIN
@@ -2112,7 +2122,7 @@
       container.classList.add('win-flash');
       setTimeout(() => container.classList.remove('win-flash'), 2400);
     } else {
-      lastWinEl.textContent = 'Knapp daneben — nochmal?';
+      lastWinEl.textContent = 'Sad Princess';
       lastWinEl.className = 'last-win';
     }
 
@@ -2244,9 +2254,9 @@
   }
 
   // ============== SLOT STATS ==============
-  async function updateSlotStats(result, win, betAmount) {
+  async function updateSlotStats(result, win, betAmount, multiplier = 1) {
     const path = `loveslots/${userKey}`;
-    const spinXp = await awardXp(db, userKey, XP_VALUES.slot_spin);
+    const spinXp = await awardXp(db, userKey, Math.round(XP_VALUES.slot_spin * multiplier * 1.5));
     if (spinXp.error && typeof showToast === 'function') showToast('⚠️ XP konnte nicht gespeichert werden', true);
     await runTransaction(ref(db, `${path}/totalSpins`),   c => (c || 0) + 1);
     await runTransaction(ref(db, `${path}/totalWagered`), c => (c || 0) + betAmount);
@@ -2258,7 +2268,7 @@
     const key = result.join('');
     if (key === '👸👸👸') {
       await runTransaction(ref(db, `${path}/jackpotCount`), c => (c || 0) + 1);
-      await awardXp(db, userKey, XP_VALUES.slot_jackpot);
+      await awardXp(db, userKey, XP_VALUES.slot_jackpot * multiplier);
     }
     if (key === '🧮🧮🧮') await runTransaction(ref(db, `${path}/ramanujanCount`),   c => (c || 0) + 1);
     if (key === '🧦🧦🧦') await runTransaction(ref(db, `${path}/laufmaschenCount`), c => (c || 0) + 1);
@@ -2565,7 +2575,7 @@
         await triggerWinEffect(win, meta);
 
         // 7. Stats + Badges — läuft bei JEDEM Spin (auch Autospin) identisch
-        await updateSlotStats(result, win, perSpin);
+        await updateSlotStats(result, win, perSpin, multiplier);
         const comboBadge     = await checkComboBadges(result, meta);
         const milestoneBadge = await checkMilestoneBadges(win);
 
