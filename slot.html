@@ -915,6 +915,11 @@
     margin-bottom: 14px;
     text-align: center;
   }
+  .daily-stats { margin-top: 14px; margin-bottom: 0; }
+  .daily-stats h2 { color: #f9b6d1; }
+  .daily-stats h2 #daily-date-label {
+    font-size: 12px; opacity: 0.7; letter-spacing: 0.04em;
+  }
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1315,15 +1320,15 @@
         <summary>💰 Auszahlungstabelle</summary>
         <table>
           <tr><th>Kombi</th><th>Gewinn</th></tr>
-          <tr class="jackpot"><td class="payout-symbols">👸 👸 👸</td><td>75.000 🪙 + Badge</td></tr>
-          <tr class="special"><td class="payout-symbols">🧮 🧮 🧮</td><td>30.000 🪙 + Badge</td></tr>
-          <tr class="special"><td class="payout-symbols">🧦 🧦 🧦</td><td>12.000 🪙</td></tr>
-          <tr><td class="payout-symbols">💎 💎 💎</td><td>8.000 🪙</td></tr>
-          <tr><td class="payout-symbols">⭐ ⭐ ⭐</td><td>3.000 🪙</td></tr>
-          <tr><td class="payout-symbols">🔔 🔔 🔔</td><td>1.500 🪙</td></tr>
-          <tr><td class="payout-symbols">🍀 🍀 🍀</td><td>500 🪙</td></tr>
-          <tr><td>2× 👸 (irgendwo)</td><td>500 🪙</td></tr>
-          <tr><td>2× 🧮 (irgendwo)</td><td>200 🪙</td></tr>
+          <tr class="jackpot"><td class="payout-symbols">👸 👸 👸</td><td>150.000 🪙 + Badge</td></tr>
+          <tr class="special"><td class="payout-symbols">🧮 🧮 🧮</td><td>60.000 🪙 + Badge</td></tr>
+          <tr class="special"><td class="payout-symbols">🧦 🧦 🧦</td><td>20.000 🪙</td></tr>
+          <tr><td class="payout-symbols">💎 💎 💎</td><td>12.000 🪙</td></tr>
+          <tr><td class="payout-symbols">⭐ ⭐ ⭐</td><td>5.000 🪙</td></tr>
+          <tr><td class="payout-symbols">🔔 🔔 🔔</td><td>2.500 🪙</td></tr>
+          <tr><td class="payout-symbols">🍀 🍀 🍀</td><td>1.000 🪙</td></tr>
+          <tr><td>2× 👸 (irgendwo)</td><td>1.000 🪙</td></tr>
+          <tr><td>2× 🧮 (irgendwo)</td><td>400 🪙</td></tr>
           <tr><td>Zwei gleiche andere</td><td>100 🪙</td></tr>
         </table>
       </details>
@@ -1365,6 +1370,51 @@
       </details>
     </div>
   </div>
+
+  <!-- DAILY STATS -->
+  <section class="lifetime-stats daily-stats">
+    <h2>📅 Heute (<span id="daily-date-label">—</span>)</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Spins</div>
+        <div class="stat-value" id="daily-total-spins">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Eingeworfen</div>
+        <div class="stat-value" id="daily-wagered">0 🪙</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Gewonnen</div>
+        <div class="stat-value" id="daily-won">0 🪙</div>
+      </div>
+      <div class="stat-card highlighted">
+        <div class="stat-label">Netto-Bilanz</div>
+        <div class="stat-value" id="daily-net">0 🪙</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Auszahlungs-Quote</div>
+        <div class="stat-value" id="daily-rtp">—</div>
+        <div class="stat-bar"><div class="stat-bar-fill" id="daily-rtp-bar"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Verlust-Quote</div>
+        <div class="stat-value" id="daily-loss-rate">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Größter Gewinn</div>
+        <div class="stat-value" id="daily-biggest">0 🪙</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ø pro Spin</div>
+        <div class="stat-value" id="daily-avg">—</div>
+      </div>
+    </div>
+    <div class="special-counters">
+      <span>👸 Jackpots: <b id="daily-jackpots">0</b></span>
+      <span>🧮 Ramanujan: <b id="daily-ramanujan">0</b></span>
+      <span>🧦 Laufmaschen: <b id="daily-laufmaschen">0</b></span>
+    </div>
+  </section>
 
   <!-- LIFETIME STATS -->
   <section class="lifetime-stats">
@@ -1515,13 +1565,13 @@
   const FILLER_SYMBOL = '⚫';
 
   const PAYOUTS = {
-    '👸👸👸': { coins: 75000, badge: 'prinzesschen-krone',  badgeName: '👸 Prinzesschen-Krone', badgeDesc: '3× Prinzesschen in der Slotmaschine getroffen', effect: 'jackpot',     label: '👸 PRINZESSCHEN-JACKPOT' },
-    '🧮🧮🧮': { coins: 30000, badge: 'ramanujan',            badgeName: '🧮 Ramanujan',          badgeDesc: '3× Ramanujan in der Slotmaschine getroffen',     effect: 'ramanujan',    label: '🧮 RAMANUJAN!' },
-    '🧦🧦🧦': { coins: 12000, badge: 'laufmaschen-koenigin', badgeName: '🧦 Laufmaschen-Königin', badgeDesc: '3× Laufmasche in der Slotmaschine getroffen',    effect: 'laufmasche',  label: '🧦 LAUFMASCHEN-PECH!' },
-    '💎💎💎': { coins: 8000,  badge: 'diamant-trio',         badgeName: '💎 Diamant-Trio',        badgeDesc: '3× Diamant in der Slotmaschine getroffen',       effect: 'big',         label: '💎 DIAMANT-TRIO!' },
-    '⭐⭐⭐': { coins: 3000,  badge: 'sternenstaub',         badgeName: '⭐ Sternenstaub',        badgeDesc: '3× Stern in der Slotmaschine getroffen',         effect: 'normal',      label: '⭐ STERN-TRIO!' },
-    '🔔🔔🔔': { coins: 1500,  badge: 'glockenklang',         badgeName: '🔔 Glockenklang',        badgeDesc: '3× Glocke in der Slotmaschine getroffen',        effect: 'normal',      label: '🔔 GLOCKEN-TRIO!' },
-    '🍀🍀🍀': { coins: 500,   badge: 'glueckspilz',          badgeName: '🍀 Glückspilz',          badgeDesc: '3× Kleeblatt in der Slotmaschine getroffen',     effect: 'small',       label: '🍀 KLEEBLATT-TRIO!' }
+    '👸👸👸': { coins: 150000, badge: 'prinzesschen-krone',  badgeName: '👸 Prinzesschen-Krone', badgeDesc: '3× Prinzesschen in der Slotmaschine getroffen', effect: 'jackpot',     label: '👸 PRINZESSCHEN-JACKPOT' },
+    '🧮🧮🧮': { coins: 60000,  badge: 'ramanujan',            badgeName: '🧮 Ramanujan',          badgeDesc: '3× Ramanujan in der Slotmaschine getroffen',     effect: 'ramanujan',    label: '🧮 RAMANUJAN!' },
+    '🧦🧦🧦': { coins: 20000,  badge: 'laufmaschen-koenigin', badgeName: '🧦 Laufmaschen-Königin', badgeDesc: '3× Laufmasche in der Slotmaschine getroffen',    effect: 'laufmasche',  label: '🧦 LAUFMASCHEN-PECH!' },
+    '💎💎💎': { coins: 12000,  badge: 'diamant-trio',         badgeName: '💎 Diamant-Trio',        badgeDesc: '3× Diamant in der Slotmaschine getroffen',       effect: 'big',         label: '💎 DIAMANT-TRIO!' },
+    '⭐⭐⭐': { coins: 5000,   badge: 'sternenstaub',         badgeName: '⭐ Sternenstaub',        badgeDesc: '3× Stern in der Slotmaschine getroffen',         effect: 'normal',      label: '⭐ STERN-TRIO!' },
+    '🔔🔔🔔': { coins: 2500,   badge: 'glockenklang',         badgeName: '🔔 Glockenklang',        badgeDesc: '3× Glocke in der Slotmaschine getroffen',        effect: 'normal',      label: '🔔 GLOCKEN-TRIO!' },
+    '🍀🍀🍀': { coins: 1000,   badge: 'glueckspilz',          badgeName: '🍀 Glückspilz',          badgeDesc: '3× Kleeblatt in der Slotmaschine getroffen',     effect: 'small',       label: '🍀 KLEEBLATT-TRIO!' }
   };
 
   // Geteilter Slot-Badge-Katalog (auch in profil.html / index.html dupliziert).
@@ -1951,8 +2001,8 @@
 
     const counts = {};
     result.forEach(s => counts[s] = (counts[s] || 0) + 1);
-    if (counts['👸'] === 2) return { amount: 500, meta: { effect: 'small', label: '2× Prinzesschen' } };
-    if (counts['🧮'] === 2) return { amount: 200, meta: { effect: 'small', label: '2× Ramanujan' } };
+    if (counts['👸'] === 2) return { amount: 1000, meta: { effect: 'small', label: '2× Prinzesschen' } };
+    if (counts['🧮'] === 2) return { amount: 400, meta: { effect: 'small', label: '2× Ramanujan' } };
     if (Object.entries(counts).some(([symbol, c]) => symbol !== FILLER_SYMBOL && c === 2)) return { amount: 100, meta: { effect: 'small', label: 'Zwei gleiche' } };
     return { amount: 0, meta: null };
   }
@@ -2280,6 +2330,10 @@
   }
 
   // ============== SLOT STATS ==============
+  // Tagesschlüssel YYYY-MM-DD nach Europe/Berlin (DST-sicher, identisch zum Pattern in autoclicker.js)
+  const getGermanDate = () =>
+    new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date());
+
   async function updateSlotStats(result, win, betAmount, multiplier = 1) {
     const path = `loveslots/${userKey}`;
     const spinXp = await awardXp(db, userKey, Math.round(XP_VALUES.slot_spin * multiplier * 1.5));
@@ -2312,55 +2366,108 @@
       await runTransaction(ref(db, `${path}/winStreak`), () => 0);
     }
 
-    // Verschiedene Spieltage zählen (lokales Datum als YYYY-MM-DD)
-    const today = new Date();
-    const dayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    // Verschiedene Spieltage zählen (Europe/Berlin-Datum als YYYY-MM-DD)
+    const dayStr = getGermanDate();
     const lastDaySnap = await get(ref(db, `${path}/lastSpinDay`));
     if (lastDaySnap.val() !== dayStr) {
       await runTransaction(ref(db, `${path}/daysPlayed`), c => (c || 0) + 1);
       await set(ref(db, `${path}/lastSpinDay`), dayStr);
     }
 
+    // Daily-Stats: bei Tageswechsel komplett zurücksetzen, dann inkrementieren
+    const dailyPath = `${path}/daily`;
+    const dailyDateSnap = await get(ref(db, `${dailyPath}/date`));
+    if (dailyDateSnap.val() !== dayStr) {
+      await set(ref(db, dailyPath), {
+        date: dayStr,
+        totalSpins: 0,
+        totalWagered: 0,
+        totalWon: 0,
+        biggestWin: 0,
+        jackpotCount: 0,
+        ramanujanCount: 0,
+        laufmaschenCount: 0,
+      });
+    }
+    await runTransaction(ref(db, `${dailyPath}/totalSpins`),   c => (c || 0) + 1);
+    await runTransaction(ref(db, `${dailyPath}/totalWagered`), c => (c || 0) + betAmount);
+    await runTransaction(ref(db, `${dailyPath}/totalWon`),     c => (c || 0) + win);
+    if (win > 0) {
+      await runTransaction(ref(db, `${dailyPath}/biggestWin`), c => Math.max(c || 0, win));
+    }
+    if (key === '👸👸👸') await runTransaction(ref(db, `${dailyPath}/jackpotCount`),     c => (c || 0) + 1);
+    if (key === '🧮🧮🧮') await runTransaction(ref(db, `${dailyPath}/ramanujanCount`),   c => (c || 0) + 1);
+    if (key === '🧦🧦🧦') await runTransaction(ref(db, `${dailyPath}/laufmaschenCount`), c => (c || 0) + 1);
+
     await set(ref(db, `${path}/lastSpinAt`), Date.now());
+  }
+
+  function renderStats(idPrefix, s) {
+    const wagered = s.totalWagered || 0;
+    const won     = s.totalWon || 0;
+    const spins   = s.totalSpins || 0;
+    const net     = won - wagered;
+    const rtp     = wagered > 0 ? (won / wagered) * 100 : 0;
+    const loss    = rtp >= 100 ? 0 : (100 - rtp);
+    const avg     = spins > 0 ? wagered / spins : 0;
+
+    document.getElementById(`${idPrefix}-total-spins`).textContent = spins.toLocaleString('de-DE');
+    document.getElementById(`${idPrefix}-wagered`).textContent     = `${fmt(wagered)} 🪙`;
+    document.getElementById(`${idPrefix}-won`).textContent         = `${fmt(won)} 🪙`;
+
+    const netEl = document.getElementById(`${idPrefix}-net`);
+    netEl.textContent = `${net >= 0 ? '+' : ''}${fmt(net)} 🪙`;
+    netEl.classList.toggle('negative', net < 0);
+    netEl.classList.toggle('positive', net > 0);
+
+    document.getElementById(`${idPrefix}-rtp`).textContent       = wagered > 0 ? `${rtp.toFixed(2)} %` : '—';
+    document.getElementById(`${idPrefix}-loss-rate`).textContent = wagered > 0 ? `${loss.toFixed(2)} %` : '—';
+    document.getElementById(`${idPrefix}-biggest`).textContent   = `${fmt(s.biggestWin || 0)} 🪙`;
+    document.getElementById(`${idPrefix}-avg`).textContent       = spins > 0 ? `${fmt(avg)} 🪙` : '—';
+
+    document.getElementById(`${idPrefix}-jackpots`).textContent     = s.jackpotCount || 0;
+    document.getElementById(`${idPrefix}-ramanujan`).textContent    = s.ramanujanCount || 0;
+    document.getElementById(`${idPrefix}-laufmaschen`).textContent  = s.laufmaschenCount || 0;
+
+    const bar = document.getElementById(`${idPrefix}-rtp-bar`);
+    bar.style.width = `${Math.min(rtp, 150)}%`;
+    bar.classList.remove('rtp-low', 'rtp-mid', 'rtp-high');
+    if      (wagered === 0)  { /* keine Klasse */ }
+    else if (rtp < 90)       bar.classList.add('rtp-low');
+    else if (rtp <= 100)     bar.classList.add('rtp-mid');
+    else                     bar.classList.add('rtp-high');
+  }
+
+  let lastSeenDay = null;
+  let dayCheckInterval = null;
+  let latestStatsSnapshot = {};
+
+  function applyDailyForToday() {
+    const today = getGermanDate();
+    const dailyRaw = latestStatsSnapshot.daily || {};
+    const dailyForToday = (dailyRaw.date === today) ? dailyRaw : {};
+    renderStats('daily', dailyForToday);
+    document.getElementById('daily-date-label').textContent = today;
   }
 
   function initStatsListener() {
     onValue(ref(db, `loveslots/${userKey}`), snap => {
       const s = snap.val() || {};
-      const wagered = s.totalWagered || 0;
-      const won     = s.totalWon || 0;
-      const spins   = s.totalSpins || 0;
-      const net     = won - wagered;
-      const rtp     = wagered > 0 ? (won / wagered) * 100 : 0;
-      const loss    = rtp >= 100 ? 0 : (100 - rtp);
-      const avg     = spins > 0 ? wagered / spins : 0;
-
-      document.getElementById('stat-total-spins').textContent = spins.toLocaleString('de-DE');
-      document.getElementById('stat-wagered').textContent     = `${fmt(wagered)} 🪙`;
-      document.getElementById('stat-won').textContent         = `${fmt(won)} 🪙`;
-
-      const netEl = document.getElementById('stat-net');
-      netEl.textContent = `${net >= 0 ? '+' : ''}${fmt(net)} 🪙`;
-      netEl.classList.toggle('negative', net < 0);
-      netEl.classList.toggle('positive', net > 0);
-
-      document.getElementById('stat-rtp').textContent       = wagered > 0 ? `${rtp.toFixed(2)} %` : '—';
-      document.getElementById('stat-loss-rate').textContent = wagered > 0 ? `${loss.toFixed(2)} %` : '—';
-      document.getElementById('stat-biggest').textContent   = `${fmt(s.biggestWin || 0)} 🪙`;
-      document.getElementById('stat-avg').textContent       = spins > 0 ? `${fmt(avg)} 🪙` : '—';
-
-      document.getElementById('stat-jackpots').textContent     = s.jackpotCount || 0;
-      document.getElementById('stat-ramanujan').textContent    = s.ramanujanCount || 0;
-      document.getElementById('stat-laufmaschen').textContent  = s.laufmaschenCount || 0;
-
-      const rtpBar = document.getElementById('stat-rtp-bar');
-      rtpBar.style.width = `${Math.min(rtp, 150)}%`;
-      rtpBar.classList.remove('rtp-low', 'rtp-mid', 'rtp-high');
-      if      (wagered === 0)        { /* keine Klasse */ }
-      else if (rtp < 90)             rtpBar.classList.add('rtp-low');
-      else if (rtp <= 100)           rtpBar.classList.add('rtp-mid');
-      else                            rtpBar.classList.add('rtp-high');
+      latestStatsSnapshot = s;
+      renderStats('stat', s);
+      applyDailyForToday();
     });
+
+    // Auto-Refresh um Mitternacht: alle 60 Sek prüfen, ob der Tag gewechselt hat.
+    lastSeenDay = getGermanDate();
+    if (dayCheckInterval) clearInterval(dayCheckInterval);
+    dayCheckInterval = setInterval(() => {
+      const today = getGermanDate();
+      if (today !== lastSeenDay) {
+        lastSeenDay = today;
+        applyDailyForToday();
+      }
+    }, 60000);
   }
 
   // ============== BADGES ==============

@@ -999,19 +999,6 @@
 
 <div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
 
-<div class="booster-confirm-overlay" id="boosterConfirmOverlay">
-  <div class="booster-confirm-card">
-    <span class="booster-confirm-emoji" id="boosterConfirmEmoji">⚡</span>
-    <div class="booster-confirm-title" id="boosterConfirmTitle">Booster aktivieren?</div>
-    <div class="booster-confirm-text" id="boosterConfirmText"></div>
-    <div class="booster-confirm-warn">⚠️ Der Timer startet sofort und läuft auch wenn du die Seite verlässt!</div>
-    <div class="booster-confirm-btns">
-      <button class="booster-confirm-no" id="boosterConfirmNo">Abbrechen</button>
-      <button class="booster-confirm-yes" id="boosterConfirmYes">Jetzt aktivieren 🚀</button>
-    </div>
-  </div>
-</div>
-
 <div class="booster-confirm-overlay" id="adminOverlay">
   <div class="booster-confirm-card admin-card">
     <span class="booster-confirm-emoji">🛠️</span>
@@ -1149,13 +1136,8 @@
     </div>
   </div>
 
-  <div class="section" id="boosterSection">
-    <div class="section-label">🚀 Booster Inventar</div>
-    <div class="section-hint">Aktiviere einen Booster wenn du ihn brauchst ✨</div>
-    <div class="booster-list" id="boosterList">
-      <div class="booster-empty">Lade Booster…</div>
-    </div>
-    <button id="adminBtn" style="display:none;margin-top:14px;" class="booster-activate-btn">🛠️ Admin</button>
+  <div class="section" id="adminSection" style="display:none;">
+    <button id="adminBtn" style="display:none;margin:0 auto;" class="booster-activate-btn">🛠️ Admin</button>
   </div>
 
   <div class="account-section" id="accountSection">
@@ -1314,15 +1296,7 @@
   let ownedFrames    = [];
   let equippedBadge  = null;
   let equippedFrame  = null;
-  let boosterInventory = {};
-  let activeBoosterCoin        = null; // { activatedAt, durationMs }
-  let activeBoosterMoments     = null;
-  let activeBoosterAutoclicker = null;
-  let activeBoosterXp          = null;
-  let activeSabotageOnOpponent = null; // Sabotage, die der aktuelle User dem Gegner verpasst hat
-  let pendingBoosterId     = null;
   let pendingDeleteCodeId  = null;
-  let boosterCountdownInterval = null;
 
   const BOOSTER_DEFS = {
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                       durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
@@ -1334,189 +1308,11 @@
     anti_hack_booster:   { emoji: '🛡️', name: 'Gegen-Hack',       desc: 'Bricht einen laufenden Hack sofort ab – manuell hier aktivieren', target: 'self' },
   };
 
-  function getActiveData(id) {
-    if (id === 'coins_booster')       return activeBoosterCoin;
-    if (id === 'moments_booster')     return activeBoosterMoments;
-    if (id === 'autoclicker_booster') return activeBoosterAutoclicker;
-    if (id === 'xp_booster')          return activeBoosterXp;
-    if (id === 'sabotage_booster')    return activeSabotageOnOpponent;
-    return null;
-  }
-
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3000);
-  }
-
-  function formatCountdown(ms) {
-    if (ms <= 0) return '00:00';
-    const totalSec = Math.ceil(ms / 1000);
-    const h   = Math.floor(totalSec / 3600);
-    const min = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
-    const sec = (totalSec % 60).toString().padStart(2, '0');
-    return h > 0 ? `${h}:${min}:${sec}` : `${min}:${sec}`;
-  }
-
-  function isBoosterActive(boosterData) {
-    if (!boosterData || !boosterData.activatedAt) return false;
-    return Date.now() < boosterData.activatedAt + boosterData.durationMs;
-  }
-
-  function isSabotagePending(data) {
-    return !!(data && data.pending && !data.activatedAt);
-  }
-
-  function renderBoosters() {
-    const list = document.getElementById('boosterList');
-    list.innerHTML = '';
-    const ids = Object.keys(BOOSTER_DEFS);
-    const anyActive  = ids.some(id => isBoosterActive(getActiveData(id)));
-    const anyPending = ids.some(id => isSabotagePending(getActiveData(id)));
-    const anyInv     = ids.some(id => (boosterInventory[id] || 0) > 0);
-
-    if (!anyInv && !anyActive && !anyPending) {
-      list.innerHTML = '<div class="booster-empty">Noch keine Booster im Inventar 📦<br><span style="font-size:10px;opacity:0.7">Aus Lootboxen oder im Shop erhältlich</span></div>';
-      return;
-    }
-
-    ids.forEach(id => {
-      const def        = BOOSTER_DEFS[id];
-      const count      = boosterInventory[id] || 0;
-      const activeData = getActiveData(id);
-      const active     = isBoosterActive(activeData);
-      const pending    = isSabotagePending(activeData);
-
-      if (count === 0 && !active && !pending) return;
-
-      const el = document.createElement('div');
-      el.className = 'booster-item';
-
-      const label = def.target === 'opponent' ? 'Beim Gegner' : 'Aktiv';
-      let rightSide = '';
-      if (pending) {
-        rightSide = `<div class="booster-active-badge" id="boosterTimer_${id}">⏳ Wartet auf Gegner</div>`;
-      } else if (active && activeData) {
-        const remaining = (activeData.activatedAt + activeData.durationMs) - Date.now();
-        rightSide = `<div class="booster-active-badge" id="boosterTimer_${id}">✓ ${label} ${formatCountdown(remaining)}</div>`;
-      } else if (count > 0) {
-        rightSide = `
-          <span class="booster-count">×${count}</span>
-          <button class="booster-activate-btn" data-id="${id}">Aktivieren</button>
-        `;
-      }
-
-      el.innerHTML = `
-        <div class="booster-emoji">${def.emoji}</div>
-        <div class="booster-info">
-          <div class="booster-name">${def.name}</div>
-          <div class="booster-desc">${def.desc}</div>
-        </div>
-        ${rightSide}
-      `;
-      list.appendChild(el);
-    });
-
-    // Event listeners
-    list.querySelectorAll('.booster-activate-btn').forEach(btn => {
-      btn.addEventListener('click', () => openBoosterConfirm(btn.dataset.id));
-    });
-
-    // Countdown interval neu starten
-    if (boosterCountdownInterval) clearInterval(boosterCountdownInterval);
-    if (anyActive) {
-      boosterCountdownInterval = setInterval(() => {
-        let needRerender = false;
-        ids.forEach(id => {
-          const el = document.getElementById(`boosterTimer_${id}`);
-          if (!el) return;
-          const data = getActiveData(id);
-          if (!data || !data.activatedAt) return;
-          const remaining = (data.activatedAt + data.durationMs) - Date.now();
-          if (remaining <= 0) {
-            needRerender = true;
-          } else {
-            const label = BOOSTER_DEFS[id].target === 'opponent' ? 'Beim Gegner' : 'Aktiv';
-            el.textContent = `✓ ${label} ${formatCountdown(remaining)}`;
-          }
-        });
-        if (needRerender) { clearInterval(boosterCountdownInterval); renderBoosters(); }
-      }, 1000);
-    }
-  }
-
-  function openBoosterConfirm(boosterId) {
-    const def = BOOSTER_DEFS[boosterId];
-    if (!def) return;
-    pendingBoosterId = boosterId;
-    document.getElementById('boosterConfirmEmoji').textContent = def.emoji;
-    if (def.target === 'opponent') {
-      const opp = currentUser === 'Andreas' ? 'Nele' : 'Andreas';
-      document.getElementById('boosterConfirmTitle').textContent = `${opp} sabotieren?`;
-      document.getElementById('boosterConfirmText').textContent  = def.activeKey === 'active_spam'
-        ? def.desc + '. ' + opp + ' wird sofort seitenübergreifend mit Popups zugespammt.'
-        : def.desc + '. ' + opp + ' bekommt einen Hinweis – der Effekt startet, sobald er/sie ihn wegklickt.';
-    } else {
-      document.getElementById('boosterConfirmTitle').textContent = `${def.name} aktivieren?`;
-      document.getElementById('boosterConfirmText').textContent  = def.desc + '.';
-    }
-    document.getElementById('boosterConfirmOverlay').classList.add('open');
-  }
-
-  async function activateBooster(boosterId) {
-    if (!currentUser) return;
-    const key  = currentUser.toLowerCase();
-    const def  = BOOSTER_DEFS[boosterId];
-    if (!def) return;
-    const count = boosterInventory[boosterId] || 0;
-    if (count <= 0) { showToast('❌ Kein Booster im Inventar!'); return; }
-
-    // Gegen-Hack: manuell – bricht laufenden Popup-/alten Hack gegen einen selbst ab
-    if (boosterId === 'anti_hack_booster') {
-      const spam = (await get(ref(db, `boosters/${key}/active_spam`))).val();
-      const sab  = (await get(ref(db, `boosters/${key}/active_sabotage`))).val();
-      const spamOn = spam && spam.activatedAt && Date.now() < spam.activatedAt + (spam.durationMs || 90000);
-      const sabOn  = sab && (sab.pending || (sab.activatedAt && Date.now() < sab.activatedAt + (sab.durationMs || 90000)));
-      if (!spamOn && !sabOn) { showToast('🛡️ Aktuell läuft kein Hack gegen dich.'); return; }
-      await set(ref(db, `boosters/${key}/inventory/${boosterId}`), count - 1);
-      await set(ref(db, `boosters/${key}/active_spam`), null);
-      await set(ref(db, `boosters/${key}/active_sabotage`), null);
-      await awardXp(db, key, XP_VALUES.booster_used);
-      showToast('🛡️ Hack abgewehrt!');
-      return;
-    }
-
-    // Gegner-Booster: nicht erneut starten, solange einer noch läuft/wartet
-    // (sonst würde der laufende Effekt beim Opfer zurückgesetzt). Prüfung VOR
-    // dem Inventar-Abzug, damit kein Booster verloren geht.
-    if (def.target === 'opponent') {
-      const oppKey   = key === 'andreas' ? 'nele' : 'andreas';
-      const existing = (await get(ref(db, `boosters/${oppKey}/${def.activeKey}`))).val();
-      const stillActive = existing && (
-        existing.pending ||
-        (existing.activatedAt && Date.now() < existing.activatedAt + (existing.durationMs || 0))
-      );
-      if (stillActive) { showToast('💻 Gegner wird bereits gehackt!'); return; }
-    }
-
-    // Inventar um 1 verringern
-    await set(ref(db, `boosters/${key}/inventory/${boosterId}`), count - 1);
-
-    if (def.target === 'opponent') {
-      const opponentKey = key === 'andreas' ? 'nele' : 'andreas';
-      if (def.activeKey === 'active_spam') {
-        await set(ref(db, `boosters/${opponentKey}/active_spam`), { durationMs: def.durationMs, from: currentUser, pending: true });
-        showToast(`📺 ${def.name} gestartet! Der Gegner wird benachrichtigt.`);
-      } else {
-        await set(ref(db, `boosters/${opponentKey}/${def.activeKey}`), { durationMs: def.durationMs, from: currentUser, pending: true });
-        showToast(`💻 ${def.name} gestartet! Der Gegner wird benachrichtigt.`);
-      }
-    } else {
-      await set(ref(db, `boosters/${key}/${def.activeKey}`), { activatedAt: Date.now(), durationMs: def.durationMs });
-      showToast(`🚀 ${def.name} aktiviert! Viel Spaß!`);
-    }
-    await awardXp(db, key, XP_VALUES.booster_used);
   }
 
   async function adminApplyHackToSelf(boosterId) {
@@ -2182,17 +1978,6 @@
   document.getElementById('adminClose').addEventListener('click', () =>
     document.getElementById('adminOverlay').classList.remove('open'));
 
-  document.getElementById('boosterConfirmYes').addEventListener('click', async () => {
-    document.getElementById('boosterConfirmOverlay').classList.remove('open');
-    if (pendingBoosterId) {
-      await activateBooster(pendingBoosterId);
-      pendingBoosterId = null;
-    }
-  });
-  document.getElementById('boosterConfirmNo').addEventListener('click', () => {
-    document.getElementById('boosterConfirmOverlay').classList.remove('open');
-    pendingBoosterId = null;
-  });
   document.getElementById('codeDeleteYes').addEventListener('click', confirmDeleteRedeemCode);
   document.getElementById('codeDeleteNo').addEventListener('click', () => {
     document.getElementById('codeDeleteOverlay').classList.remove('open');
@@ -2533,34 +2318,6 @@
     updateBadgePill();
     updateAvatarDisplay();
 
-    // Booster live hören
-    onValue(ref(db, `boosters/${key}/inventory`), snap => {
-      const data = snap.val() || {};
-      boosterInventory = {};
-      Object.keys(BOOSTER_DEFS).forEach(id => { boosterInventory[id] = data[id] || 0; });
-      renderBoosters();
-    });
-    onValue(ref(db, `boosters/${key}/active_coins`), snap => {
-      activeBoosterCoin = snap.val() || null;
-      renderBoosters();
-    });
-    onValue(ref(db, `boosters/${key}/active_moments`), snap => {
-      activeBoosterMoments = snap.val() || null;
-      renderBoosters();
-    });
-    onValue(ref(db, `boosters/${key}/active_autoclicker`), snap => {
-      activeBoosterAutoclicker = snap.val() || null;
-      renderBoosters();
-    });
-    onValue(ref(db, `boosters/${key}/active_xp`), snap => {
-      activeBoosterXp = snap.val() || null;
-      renderBoosters();
-    });
-    const oppKey = key === 'andreas' ? 'nele' : 'andreas';
-    onValue(ref(db, `boosters/${oppKey}/active_sabotage`), snap => {
-      activeSabotageOnOpponent = snap.val() || null;
-      renderBoosters();
-    });
   }
 
   // Account toggle
@@ -3045,7 +2802,9 @@
       get(ref(db, `shop/${loggedInUserName.toLowerCase()}/activeTheme`)).then(snap => {
         if (snap.val()) applyProfilTheme(snap.val());
       }).catch(()=>{});
+      const adminSection = document.getElementById('adminSection');
       const adminBtn = document.getElementById('adminBtn');
+      if (adminSection) adminSection.style.display = isAdmin() ? 'block' : 'none';
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
     }
     document.getElementById('profilePage').style.display = 'block';
