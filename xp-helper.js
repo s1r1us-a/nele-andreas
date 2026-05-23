@@ -108,6 +108,18 @@ export async function awardXp(db, userKey, amount) {
     const newTotal = (res && res.snapshot && res.snapshot.val()) || (oldTotal + effectiveAmount);
     const oldLevel = levelFromTotal(oldTotal);
     const newLevel = levelFromTotal(newTotal);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('xp:gained', {
+        detail: { amount: effectiveAmount, boosted: effectiveAmount !== amount }
+      }));
+      if (newLevel > oldLevel) {
+        for (let lvl = oldLevel + 1; lvl <= newLevel; lvl++) {
+          window.dispatchEvent(new CustomEvent('xp:levelup', {
+            detail: { newLevel: lvl, prevLevel: lvl - 1, finalLevel: newLevel }
+          }));
+        }
+      }
+    }
     return { leveledUp: newLevel > oldLevel, oldLevel, newLevel };
   } catch (e) {
     console.warn('XP: awardXp fehlgeschlagen', e);

@@ -1192,6 +1192,7 @@
   import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { awardXp, XP_VALUES, XP_LABELS, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
+  import './level-up-feedback.js';
 
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -1629,9 +1630,34 @@
         { label: '🐑 Cult of the Lamb-Theme aktivieren', onClick: () => adminSetTheme('cult-of-the-lamb') },
         { label: '↩️ Theme zurücksetzen (Sakura)', onClick: () => adminSetTheme('sakura') }
     ] },
+    { id: 'feedback', title: '🧪 XP-Feedback testen', actions: [
+        { label: '🎉 Level-Up Modal testen',           onClick: () => adminTestLevelUpModal() },
+        { label: '🎉🎉🎉 Multi-Level Test (3 Stufen)', onClick: () => adminTestMultiLevelUp() },
+        { label: '✨ +5 XP Floating-Text',             onClick: () => adminTestXpFloat(false, 5) },
+        { label: '✨ +25 XP (Booster) Float',          onClick: () => adminTestXpFloat(true, 25) }
+    ] },
     { id: 'announce', title: '📢 Live-Meldung', kind: 'announcement' },
     { id: 'codes', title: '🎟️ Einlöse-Codes', kind: 'redeemCodes' }
   ];
+
+  function adminTestLevelUpModal() {
+    let lvl = 42;
+    try {
+      const stored = Number(window._lastTestLevel) || 0;
+      lvl = stored > 0 ? stored + 1 : 42;
+      window._lastTestLevel = lvl;
+    } catch(_) {}
+    window.dispatchEvent(new CustomEvent('xp:levelup', { detail: { newLevel: lvl, prevLevel: lvl - 1, finalLevel: lvl } }));
+  }
+  function adminTestMultiLevelUp() {
+    const base = 50;
+    for (let i = 0; i < 3; i++) {
+      window.dispatchEvent(new CustomEvent('xp:levelup', { detail: { newLevel: base + i, prevLevel: base + i - 1, finalLevel: base + 2 } }));
+    }
+  }
+  function adminTestXpFloat(boosted, amount) {
+    window.dispatchEvent(new CustomEvent('xp:gained', { detail: { amount: amount, boosted: !!boosted } }));
+  }
 
   // IDs müssen exakt mit shop.html übereinstimmen (SHOP_BOOSTERS / THEMES / FARM_*-Pools),
   // sonst landet die Belohnung beim Einlösen unter einem unbekannten Inventar-Pfad.
@@ -2472,11 +2498,7 @@
       renderLevelBadges(xpState.total, xpState.unclaimed);
       if (!isReadOnly) {
         renderClaimButton(xpState.unclaimed);
-        reconcileRewards(db, key).then(newLevels => {
-          if (newLevels && newLevels.length) {
-            showToast('🎉 Level ' + newLevels[newLevels.length - 1] + ' erreicht! Belohnungen warten auf dich.');
-          }
-        });
+        reconcileRewards(db, key);
       }
     });
 
