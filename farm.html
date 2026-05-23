@@ -4578,7 +4578,7 @@
             const isFav = bakeryFavorites.has(r.id);
             let btnState = canBake && freeSlots > 0 ? '' : 'disabled';
             let btnText = freeSlots === 0 ? 'Ofen voll' : 'Backen';
-            html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
+            html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startBakingAll('${r.id}')" ${btnState} title="Alle freien Ofen-Slots mit diesem Rezept füllen">⏩ Alle</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
         });
         content.innerHTML = html;
     } else {
@@ -4621,10 +4621,55 @@
       }
       
       oven.slots[freeIndex] = { state: 'baking', item: recipeId, startedAt: Date.now() };
-      await saveFarmData(); 
+      await saveFarmData();
       updateFarmDOM();
-      window.renderBakery('oven'); 
+      window.renderBakery('oven');
       window.showToast('Backofen gestartet! 🔥');
+  }
+
+  // Füllt alle freien Ofen-Slots mit demselben Rezept, solange Zutaten reichen.
+  window.startBakingAll = async function(recipeId) {
+      const r = bakeryRecipes[recipeId];
+      if (!r) return;
+      const _haveFor = (cat, item) => {
+          if (cat === 'bakery' && item === 'milk') {
+              return (inventory.items.milk || 0) + (inventory.bakery.oatmilk || 0);
+          }
+          return inventory[cat][item] || 0;
+      };
+      const _canConsume = () => {
+          for (const cat in r.req) {
+              for (const item in r.req[cat]) {
+                  if (_haveFor(cat, item) < r.req[cat][item]) return false;
+              }
+          }
+          return true;
+      };
+      const _consume = () => {
+          for (const cat in r.req) {
+              for (const item in r.req[cat]) {
+                  if (item === 'milk' && (inventory.items.milk || 0) < r.req[cat][item]) {
+                      inventory.bakery.oatmilk -= r.req[cat][item];
+                  } else {
+                      inventory[cat][item] -= r.req[cat][item];
+                  }
+              }
+          }
+      };
+      let started = 0;
+      while (true) {
+          const freeIndex = oven.slots.findIndex(s => s.state === 'empty');
+          if (freeIndex === -1) break;
+          if (!_canConsume()) break;
+          _consume();
+          oven.slots[freeIndex] = { state: 'baking', item: recipeId, startedAt: Date.now() };
+          started++;
+      }
+      if (started === 0) { window.showToast('Keine Zutaten oder Slots frei.'); return; }
+      await saveFarmData();
+      updateFarmDOM();
+      window.renderBakery('oven');
+      window.showToast(`${started}× ${r.name} im Ofen 🔥`);
   }
 
   window.collectBakery = async function(index) {
@@ -5077,7 +5122,7 @@
         const isFav = weavingFavorites.has(r.id);
         let btnState = canWeave && freeSlots > 0 ? '' : 'disabled';
         let btnText = freeSlots === 0 ? 'Voll' : 'Weben';
-        html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
+        html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startWeavingAll('${r.id}')" ${btnState} title="Alle freien Webstühle mit diesem Rezept füllen">⏩ Alle</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
       });
       content.innerHTML = html;
     } else {
@@ -5117,6 +5162,41 @@
     await saveFarmData();
     window.renderWeaving('looms');
     updateFarmDOM();
+  }
+
+  // Füllt alle freien Webstühle mit demselben Rezept, solange Zutaten reichen.
+  window.startWeavingAll = async function(recipeId) {
+    const r = weavingRecipes[recipeId];
+    if (!r) return;
+    const _canConsume = () => {
+      for (const cat in r.req) {
+        for (const item in r.req[cat]) {
+          if ((inventory[cat][item] || 0) < r.req[cat][item]) return false;
+        }
+      }
+      return true;
+    };
+    const _consume = () => {
+      for (const cat in r.req) {
+        for (const item in r.req[cat]) {
+          inventory[cat][item] -= r.req[cat][item];
+        }
+      }
+    };
+    let started = 0;
+    while (true) {
+      const freeIndex = loom.slots.findIndex(s => s.state === 'empty');
+      if (freeIndex === -1) break;
+      if (!_canConsume()) break;
+      _consume();
+      loom.slots[freeIndex] = { state: 'weaving', item: recipeId, startedAt: Date.now() };
+      started++;
+    }
+    if (started === 0) { window.showToast('Keine Zutaten oder Slots frei.'); return; }
+    await saveFarmData();
+    window.renderWeaving('looms');
+    updateFarmDOM();
+    window.showToast(`${started}× ${r.name} im Webstuhl 🪡`);
   }
 
   window.collectWeaving = async function(index) {
@@ -5167,7 +5247,7 @@
           <div class="item-name">${r.name}${equippableTag}</div>
           <div style="margin-top:4px;">${reqHtml}</div>
           <div style="font-size:10px;color:var(--text-mid);margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 ${r.sellPrice.toLocaleString('de-DE')} 🪙</div>
-        </div></div><button class="btn-generic btn-buy" onclick="window.startForging('${r.id}')" ${canForge ? '' : 'disabled'}>${freeSlots === 0 ? 'Voll' : 'Schmieden'}</button></div>`;
+        </div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startForging('${r.id}')" ${canForge ? '' : 'disabled'}>${freeSlots === 0 ? 'Voll' : 'Schmieden'}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startForgingAll('${r.id}')" ${canForge ? '' : 'disabled'} title="Alle freien Werkbänke mit diesem Rezept füllen">⏩ Alle</button></div></div>`;
       });
       content.innerHTML = html;
     } else {
@@ -5224,6 +5304,40 @@
     document.getElementById('tabForgeSlots').classList.add('active');
     document.getElementById('tabForgeRecipes').classList.remove('active');
     window.showToast('Schmieden gestartet! 🔥');
+  };
+
+  // Füllt alle freien Werkbänke mit demselben Rezept, solange Erze reichen.
+  window.startForgingAll = async function(recipeId) {
+    if (isVisitMode) return;
+    const r = jewelryRecipes[recipeId];
+    if (!r) return;
+    const _canConsume = () => {
+      for (const [oreId, needed] of Object.entries(r.req)) {
+        if ((inventory.ores[oreId] || 0) < needed) return false;
+      }
+      return true;
+    };
+    const _consume = () => {
+      for (const [oreId, needed] of Object.entries(r.req)) {
+        inventory.ores[oreId] -= needed;
+      }
+    };
+    let started = 0;
+    while (true) {
+      const freeIndex = forgeSlots.findIndex(s => s.state === 'empty');
+      if (freeIndex === -1) break;
+      if (!_canConsume()) break;
+      _consume();
+      forgeSlots[freeIndex] = { state: 'forging', item: recipeId, startedAt: Date.now() };
+      started++;
+    }
+    if (started === 0) { window.showToast('Nicht genug Erze oder Slots frei.'); return; }
+    await saveFarmData();
+    updateFarmDOM();
+    window.renderForge('slots');
+    document.getElementById('tabForgeSlots').classList.add('active');
+    document.getElementById('tabForgeRecipes').classList.remove('active');
+    window.showToast(`${started}× ${r.name} in der Werkbank 🔥`);
   };
 
   window.collectForge = async function(index) {

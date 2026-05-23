@@ -2743,6 +2743,25 @@
     const anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
     return anyDev ? null : localStorage.getItem('activeTheme');
   }
+  // Firebase-Theme device-aware laden (analog index.html). Verhindert, dass
+  // ein veralteter Legacy-Pfad das per "für beide" gesetzte Theme überschreibt.
+  function _loadProfilThemeDeviceAware(userKey) {
+    Promise.all([
+      get(ref(db, `shop/${userKey}/activeThemeMobile`)),
+      get(ref(db, `shop/${userKey}/activeThemeDesktop`)),
+      get(ref(db, `shop/${userKey}/activeTheme`))
+    ]).then(([m, d, l]) => {
+      const mob = m.val(), desk = d.val(), legacy = l.val();
+      try {
+        if (mob)  localStorage.setItem('activeThemeMobile',  mob);
+        if (desk) localStorage.setItem('activeThemeDesktop', desk);
+      } catch (e) {}
+      const isMobile = window.matchMedia('(max-width: 600px)').matches;
+      const specific = isMobile ? mob : desk;
+      const theme = specific || ((mob || desk) ? null : legacy);
+      if (theme) applyProfilTheme(theme);
+    }).catch(()=>{});
+  }
   try {
     const cachedTheme = _resolveCachedThemeProfil();
     if (cachedTheme) applyProfilTheme(cachedTheme);
@@ -2787,10 +2806,8 @@
       const ci = document.getElementById('commentInputWrap'); if (ci) ci.style.display = 'block';
       loadComments(otherUser.toLowerCase());
       loadData(otherUser.toLowerCase());
-      // Theme laden (vom eingeloggten User)
-      get(ref(db, `shop/${loggedInUserName.toLowerCase()}/activeTheme`)).then(snap => {
-        if (snap.val()) applyProfilTheme(snap.val());
-      }).catch(()=>{});
+      // Theme laden (vom eingeloggten User) — device-aware wie index.html
+      _loadProfilThemeDeviceAware(loggedInUserName.toLowerCase());
     } else {
       // ---- EIGENES PROFIL ----
       isReadOnly  = false;
@@ -2808,10 +2825,8 @@
       const cl2 = document.getElementById('commentsLabel'); if (cl2) cl2.textContent = '💬 Kommentare auf deinem Profil';
       loadComments(loggedInUserName.toLowerCase());
       loadData(loggedInUserName.toLowerCase());
-      // Theme laden
-      get(ref(db, `shop/${loggedInUserName.toLowerCase()}/activeTheme`)).then(snap => {
-        if (snap.val()) applyProfilTheme(snap.val());
-      }).catch(()=>{});
+      // Theme laden — device-aware wie index.html
+      _loadProfilThemeDeviceAware(loggedInUserName.toLowerCase());
       const adminSection = document.getElementById('adminSection');
       const adminBtn = document.getElementById('adminBtn');
       if (adminSection) adminSection.style.display = isAdmin() ? 'block' : 'none';

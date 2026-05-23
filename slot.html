@@ -2992,9 +2992,22 @@
       logoutBtn.textContent = currentUser + ' ausloggen';
       document.getElementById('mainPage').removeAttribute('style');
 
-      // Theme aus Shop laden, falls vorhanden — leichte Anpassung der Akzent-Farbe
-      const shopSnap = await get(ref(db, `shop/${userKey}/activeTheme`));
-      activeTheme = shopSnap.val() || 'sakura';
+      // Theme aus Shop laden — device-aware (Mobile/Desktop/Legacy) wie index.html,
+      // damit "für beide aktivieren" nicht vom alten Legacy-Wert überschrieben wird.
+      const [mSnap, dSnap, lSnap] = await Promise.all([
+        get(ref(db, `shop/${userKey}/activeThemeMobile`)),
+        get(ref(db, `shop/${userKey}/activeThemeDesktop`)),
+        get(ref(db, `shop/${userKey}/activeTheme`))
+      ]);
+      const mob = mSnap.val(), desk = dSnap.val(), legacy = lSnap.val();
+      try {
+        if (mob)  localStorage.setItem('activeThemeMobile',  mob);
+        if (desk) localStorage.setItem('activeThemeDesktop', desk);
+      } catch (e) {}
+      const isMobile = window.matchMedia('(max-width: 600px)').matches;
+      const specific = isMobile ? mob : desk;
+      const resolvedTheme = specific || ((mob || desk) ? null : legacy);
+      activeTheme = resolvedTheme || 'sakura';
       document.documentElement.setAttribute('data-theme', activeTheme);
       if (typeof window.applySlotTheme === 'function') window.applySlotTheme(activeTheme);
 
