@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎰 Slotmaschine – Nele & Andreas</title>
+<script>
+  // Theme sofort (vor dem ersten Paint) aus dem letzten bekannten Wert setzen.
+  try {
+    var dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+    var spec = localStorage.getItem('activeTheme' + dev);
+    var anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    var t = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
+    if (t) document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="princess-theme.css">
 <style>
@@ -46,14 +56,42 @@
     --slot-accent-glow: rgba(212,160,97,0.55);
     --slot-win: #4ade80;
     --slot-loss: #f87171;
+
+    /* Theme-fähige UI-Variablen für Body, Top-Bar, Coin-Display, Statistiken.
+       Defaults entsprechen dem ursprünglichen dunkel-goldenen Look. Themes
+       überschreiben diese via applyThemeOnPage(). */
+    --ui-page-bg: radial-gradient(ellipse at 50% 0%, var(--slot-bg-1) 0%, var(--slot-bg-2) 70%);
+    --ui-topbar-bg: rgba(15,8,22,0.92);
+    --ui-topbar-border: rgba(212,160,97,0.25);
+    --ui-btn-bg: rgba(212,160,97,0.12);
+    --ui-btn-border: rgba(212,160,97,0.35);
+    --ui-btn-text: var(--slot-text-light);
+    --ui-btn-bg-hover: rgba(212,160,97,0.25);
+    --ui-btn-border-hover: var(--slot-accent);
+    --ui-coin-bg: rgba(212,160,97,0.12);
+    --ui-coin-border: rgba(212,160,97,0.4);
+    --ui-coin-text: var(--slot-accent);
+    --ui-stat-card-bg: rgba(15,8,22,0.7);
+    --ui-stat-card-border: rgba(212,160,97,0.2);
+    --ui-stat-card-bg-h: linear-gradient(135deg, rgba(212,160,97,0.12) 0%, rgba(212,160,97,0.04) 100%);
+    --ui-stat-card-border-h: rgba(212,160,97,0.45);
+    --ui-stat-label: var(--slot-text-dim);
+    --ui-stat-value: var(--slot-text-light);
+    --ui-stat-accent: var(--slot-accent);
+    --ui-special-bg: rgba(15,8,22,0.5);
+    --ui-special-border: rgba(212,160,97,0.15);
   }
+  /* Wenn ein Theme aktiv ist, den dunkel-goldenen Body-Glow ausblenden,
+     damit helle Themes nicht durch den Schleier gedimmt werden. */
+  html[data-theme]:not([data-theme=""]) body::before { opacity: 0; }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     min-height: 100vh;
     font-family: 'Quicksand', sans-serif;
     color: var(--slot-text-light);
-    background: radial-gradient(ellipse at 50% 0%, var(--slot-bg-1) 0%, var(--slot-bg-2) 70%);
+    background: var(--ui-page-bg);
+    background-attachment: fixed;
     overflow-x: hidden;
     overflow-y: auto;
   }
@@ -109,27 +147,27 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px;
     padding: 10px 16px;
-    background: rgba(15,8,22,0.92);
-    border-bottom: 1px solid rgba(212,160,97,0.25);
+    background: var(--ui-topbar-bg);
+    border-bottom: 1px solid var(--ui-topbar-border);
     box-shadow: 0 2px 16px rgba(0,0,0,0.5);
     backdrop-filter: blur(10px);
   }
   .top-bar-btn {
-    background: rgba(212,160,97,0.12);
-    border: 1.5px solid rgba(212,160,97,0.35);
+    background: var(--ui-btn-bg);
+    border: 1.5px solid var(--ui-btn-border);
     border-radius: 50px;
     padding: 7px 16px;
     font-family: 'Quicksand', sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: var(--slot-text-light);
+    color: var(--ui-btn-text);
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
   }
   .top-bar-btn:hover {
-    background: rgba(212,160,97,0.25);
-    border-color: var(--slot-accent);
+    background: var(--ui-btn-bg-hover);
+    border-color: var(--ui-btn-border-hover);
   }
   .top-bar-right {
     display: flex; align-items: center; gap: 8px;
@@ -145,12 +183,12 @@
   .mute-btn.muted { opacity: 0.55; }
   .coin-display {
     display: flex; align-items: center; gap: 6px;
-    background: rgba(212,160,97,0.12);
-    border: 1.5px solid rgba(212,160,97,0.4);
+    background: var(--ui-coin-bg);
+    border: 1.5px solid var(--ui-coin-border);
     border-radius: 50px;
     padding: 6px 14px;
     font-weight: 700;
-    color: var(--slot-accent);
+    color: var(--ui-coin-text);
   }
   .coin-count {
     font-family: 'Orbitron', monospace;
@@ -911,7 +949,7 @@
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: var(--slot-accent);
+    color: var(--ui-stat-accent);
     margin-bottom: 14px;
     text-align: center;
   }
@@ -929,19 +967,19 @@
     .stats-grid { grid-template-columns: repeat(4, 1fr); }
   }
   .stat-card {
-    background: rgba(15,8,22,0.7);
-    border: 1.5px solid rgba(212,160,97,0.2);
+    background: var(--ui-stat-card-bg);
+    border: 1.5px solid var(--ui-stat-card-border);
     border-radius: 14px;
     padding: 12px 14px;
     transition: all 0.3s ease;
   }
   .stat-card.highlighted {
-    background: linear-gradient(135deg, rgba(212,160,97,0.12) 0%, rgba(212,160,97,0.04) 100%);
-    border-color: rgba(212,160,97,0.45);
+    background: var(--ui-stat-card-bg-h);
+    border-color: var(--ui-stat-card-border-h);
   }
   .stat-label {
     font-size: 10px;
-    color: var(--slot-text-dim);
+    color: var(--ui-stat-label);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     font-weight: 600;
@@ -951,7 +989,7 @@
     font-family: 'Orbitron', monospace;
     font-size: 18px;
     font-weight: 800;
-    color: var(--slot-text-light);
+    color: var(--ui-stat-value);
     line-height: 1.1;
   }
   .stat-value.positive { color: var(--slot-win); }
@@ -980,13 +1018,13 @@
     display: flex; flex-wrap: wrap; gap: 14px;
     justify-content: center;
     padding: 12px 16px;
-    background: rgba(15,8,22,0.5);
+    background: var(--ui-special-bg);
     border-radius: 12px;
-    border: 1px solid rgba(212,160,97,0.15);
+    border: 1px solid var(--ui-special-border);
     font-size: 13px;
-    color: var(--slot-text-dim);
+    color: var(--ui-stat-label);
   }
-  .special-counters b { color: var(--slot-accent); font-family: 'Orbitron', monospace; }
+  .special-counters b { color: var(--ui-stat-accent); font-family: 'Orbitron', monospace; }
 
   /* TOAST / ERROR */
   .toast {
@@ -1182,6 +1220,133 @@
   body::-webkit-scrollbar-track { background: var(--slot-bg-2); }
   body::-webkit-scrollbar-thumb { background: rgba(212,160,97,0.3); border-radius: 4px; }
 </style>
+<script>
+  // ── THEME SUPPORT (Body, Top-Bar, Coin-Display, Statistik-Sektion) ──────
+  // Die Slot-Maschine selbst (Frame, Aura, Reels, Symbole) bleibt unverändert
+  // im dunkel-goldenen Look — diese Variablen färben nur den Rest der Seite.
+  const SLOT_THEME_GRADIENTS = {
+    sakura:  'radial-gradient(ellipse at 20% 20%, rgba(232,115,138,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,163,181,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff8f0 0%, #fde8ed 40%, #fff0f5 70%, #fff8e8 100%)',
+    ocean:   'radial-gradient(ellipse at 20% 20%, rgba(42,157,143,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.15) 0%, transparent 50%), linear-gradient(160deg, #f0fafa 0%, #e0f7f5 40%, #e8f8f7 70%, #f0fdf9 100%)',
+    forest:  'radial-gradient(ellipse at 20% 20%, rgba(74,124,89,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(125,184,144,0.15) 0%, transparent 50%), linear-gradient(160deg, #f4faf5 0%, #e8f5ec 40%, #ebf5ee 70%, #f0faf2 100%)',
+    midnight:'radial-gradient(ellipse at 20% 20%, rgba(124,92,191,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.2) 0%, transparent 50%), linear-gradient(160deg, #1a1030 0%, #2a1f4a 100%)',
+    golden:  'radial-gradient(ellipse at 20% 20%, rgba(217,119,6,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,191,36,0.15) 0%, transparent 50%), linear-gradient(160deg, #fffbeb 0%, #fef3c7 40%, #fef9e8 70%, #fffdf0 100%)',
+    candy:   'radial-gradient(ellipse at 20% 20%, rgba(236,72,153,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(249,168,212,0.15) 0%, transparent 50%), linear-gradient(160deg, #fff0f7 0%, #fce7f3 40%, #fdf4fb 70%, #fff5fa 100%)',
+    sunset:  'radial-gradient(ellipse at 20% 20%, rgba(249,115,22,0.18) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(251,146,60,0.18) 0%, transparent 50%), linear-gradient(160deg, #fff7ed 0%, #fed7aa 35%, #ffd0b3 60%, #fff0e0 100%)',
+    aurora:  'radial-gradient(ellipse at 15% 20%, rgba(78,205,196,0.32) 0%, transparent 55%), radial-gradient(ellipse at 85% 30%, rgba(192,132,252,0.28) 0%, transparent 55%), radial-gradient(ellipse at 50% 90%, rgba(94,234,212,0.22) 0%, transparent 60%), linear-gradient(160deg, #06141f 0%, #0a2433 50%, #102d3d 100%)',
+    ice:     'radial-gradient(ellipse at 20% 20%, rgba(103,232,249,0.22) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.18) 0%, transparent 50%), linear-gradient(160deg, #f0fbff 0%, #cffafe 40%, #e0f2fe 70%, #f0fbff 100%)',
+    fire:    'radial-gradient(ellipse at 15% 25%, rgba(220,38,38,0.18) 0%, transparent 50%), radial-gradient(ellipse at 85% 70%, rgba(234,88,12,0.22) 0%, transparent 50%), linear-gradient(160deg, #fff5ed 0%, #ffe4ce 30%, #ffd0b3 60%, #fff7ed 100%)',
+    cosmic:  'radial-gradient(ellipse at 25% 25%, rgba(129,140,248,0.32) 0%, transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(167,139,250,0.28) 0%, transparent 55%), radial-gradient(ellipse at 60% 40%, rgba(252,211,77,0.1) 0%, transparent 30%), linear-gradient(160deg, #050214 0%, #0d0828 50%, #1a0f3d 100%)',
+    royal:   'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(245,158,11,0.18) 0%, transparent 50%), linear-gradient(160deg, #0a0a0a 0%, #1a1610 40%, #14110a 70%, #0a0a0a 100%)',
+    rainbow: 'radial-gradient(ellipse at 15% 15%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 22%, rgba(255,215,0,0.50) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(0,230,118,0.45) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(41,98,255,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(213,0,249,0.55) 0%, transparent 55%), linear-gradient(160deg, #ffe0ee 0%, #fff2c9 25%, #c9ffd9 50%, #c9dcff 75%, #efc9ff 100%)',
+    neon:    'radial-gradient(ellipse at 18% 22%, rgba(240,171,252,0.70) 0%, transparent 55%), radial-gradient(ellipse at 82% 78%, rgba(34,211,238,0.70) 0%, transparent 55%), radial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.45) 0%, transparent 60%), linear-gradient(160deg, #1a0540 0%, #2d0a5c 50%, #3a0f6c 100%)',
+    prinzesschen: 'radial-gradient(ellipse at 18% 20%, rgba(255,20,147,0.55) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,132,252,0.45) 0%, transparent 55%), radial-gradient(ellipse at 50% 60%, rgba(251,191,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(255,138,198,0.55) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(233,30,99,0.45) 0%, transparent 55%), linear-gradient(160deg, #ffe4f3 0%, #ffd6ec 25%, #ffc1de 50%, #f9d6ff 75%, #fff0f8 100%)',
+    schattenfuerstin: 'radial-gradient(ellipse at 18% 20%, rgba(76,29,107,0.22) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(192,192,192,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(45,27,61,0.20) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(92,26,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.90) 0%, transparent 55%), linear-gradient(160deg, #030306 0%, #06060b 25%, #08070d 50%, #050508 75%, #020203 100%)',
+    wednesday: 'radial-gradient(ellipse at 18% 20%, rgba(74,45,107,0.26) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(191,191,208,0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 60%, rgba(36,23,51,0.24) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(60,40,90,0.16) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #020103 0%, #050409 25%, #07060d 50%, #040308 75%, #010102 100%)',
+    minecraft: 'radial-gradient(circle at 22% 16%, rgba(255,255,255,0.32) 0%, transparent 20%), radial-gradient(circle at 70% 11%, rgba(255,255,255,0.24) 0%, transparent 18%), linear-gradient(180deg, #79c7f2 0%, #8fd0f5 34%, #69b8ee 48%, #5fb04a 58%, #4e9e3a 70%, #7c5230 84%, #5a3c22 100%)',
+    'squid-game': 'radial-gradient(ellipse at 18% 20%, rgba(237,27,118,0.28) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(36,159,140,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 62%, rgba(42,15,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(237,27,118,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #050409 0%, #07060b 25%, #0d0a12 50%, #08060c 75%, #030205 100%)',
+    'cult-of-the-lamb': 'radial-gradient(ellipse at 18% 20%, rgba(194,16,46,0.30) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(240,168,60,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 62%, rgba(42,16,24,0.32) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(194,16,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.95) 0%, transparent 55%), linear-gradient(160deg, #050304 0%, #0b0608 25%, #14090c 50%, #0a0507 75%, #030203 100%)',
+    'ultra-performance': '#0d1117'
+  };
+
+  // Pro Theme: Akzentfarbe (für Buttons/Coin/Stat-Highlights), Textfarben.
+  // is_dark steuert helle vs. dunkle Karten/Top-Bar.
+  const SLOT_THEME_PALETTE = {
+    sakura:           { accent:'#e8738a', text:'#5a2d3a', textDim:'#8b5565', dark:false },
+    ocean:            { accent:'#2a9d8f', text:'#1a3a3a', textDim:'#2a7a72', dark:false },
+    forest:           { accent:'#4a7c59', text:'#1e3a26', textDim:'#3a6b4a', dark:false },
+    midnight:         { accent:'#a78bfa', text:'#f0ecff', textDim:'#c4b5fd', dark:true  },
+    golden:           { accent:'#d97706', text:'#3d1a00', textDim:'#92580e', dark:false },
+    candy:            { accent:'#ec4899', text:'#4a0030', textDim:'#9d174d', dark:false },
+    sunset:           { accent:'#f97316', text:'#5a1a1a', textDim:'#a14040', dark:false },
+    aurora:           { accent:'#4ecdc4', text:'#e0fffb', textDim:'#99e0d8', dark:true  },
+    ice:              { accent:'#06b6d4', text:'#0c2a3e', textDim:'#0369a1', dark:false },
+    fire:             { accent:'#dc2626', text:'#4a0a00', textDim:'#9a3412', dark:false },
+    cosmic:           { accent:'#818cf8', text:'#e0e7ff', textDim:'#a5b4fc', dark:true  },
+    royal:            { accent:'#fbbf24', text:'#fef3c7', textDim:'#fcd34d', dark:true  },
+    rainbow:          { accent:'#ec4899', text:'#2e1a4a', textDim:'#6d28d9', dark:false },
+    neon:             { accent:'#f0abfc', text:'#fae8ff', textDim:'#f0abfc', dark:true  },
+    prinzesschen:     { accent:'#ff1493', text:'#7a1856', textDim:'#c2185b', dark:false },
+    schattenfuerstin: { accent:'#a78bd9', text:'#e8e6f0', textDim:'#a78bd9', dark:true  },
+    wednesday:        { accent:'#8b6fc4', text:'#e9e7f2', textDim:'#9a86c4', dark:true  },
+    minecraft:        { accent:'#5fb04a', text:'#2b2417', textDim:'#4a6b34', dark:false },
+    'squid-game':     { accent:'#ed1b76', text:'#f3eef2', textDim:'#e589b3', dark:true  },
+    'cult-of-the-lamb':{accent:'#c2102e', text:'#f6efe0', textDim:'#d98a6b', dark:true  },
+    'ultra-performance':{accent:'#5aa0e0',text:'#e6edf3', textDim:'#9fb3c8', dark:true  }
+  };
+
+  function _hexToRgb(hex) {
+    const h = hex.replace('#','');
+    const n = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+    return [(n>>16)&255, (n>>8)&255, n&255];
+  }
+  function _rgba(hex, a) {
+    const [r,g,b] = _hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function applySlotTheme(themeId) {
+    const pal = SLOT_THEME_PALETTE[themeId];
+    const grad = SLOT_THEME_GRADIENTS[themeId];
+    if (!pal || !grad) return;
+    const root = document.documentElement;
+    const set = (k,v) => root.style.setProperty(k, v);
+
+    set('--ui-page-bg', grad);
+
+    if (pal.dark) {
+      set('--ui-topbar-bg',         'rgba(10,8,18,0.92)');
+      set('--ui-topbar-border',     _rgba(pal.accent, 0.30));
+      set('--ui-btn-bg',            _rgba(pal.accent, 0.12));
+      set('--ui-btn-border',        _rgba(pal.accent, 0.40));
+      set('--ui-btn-text',          pal.text);
+      set('--ui-btn-bg-hover',      _rgba(pal.accent, 0.25));
+      set('--ui-btn-border-hover',  pal.accent);
+      set('--ui-coin-bg',           _rgba(pal.accent, 0.14));
+      set('--ui-coin-border',       _rgba(pal.accent, 0.45));
+      set('--ui-coin-text',         pal.accent);
+      set('--ui-stat-card-bg',      'rgba(10,8,18,0.65)');
+      set('--ui-stat-card-border',  _rgba(pal.accent, 0.22));
+      set('--ui-stat-card-bg-h',    `linear-gradient(135deg, ${_rgba(pal.accent,0.18)} 0%, ${_rgba(pal.accent,0.05)} 100%)`);
+      set('--ui-stat-card-border-h',_rgba(pal.accent, 0.50));
+      set('--ui-stat-label',        pal.textDim);
+      set('--ui-stat-value',        pal.text);
+      set('--ui-stat-accent',       pal.accent);
+      set('--ui-special-bg',        'rgba(10,8,18,0.5)');
+      set('--ui-special-border',    _rgba(pal.accent, 0.18));
+    } else {
+      set('--ui-topbar-bg',         'rgba(255,255,255,0.88)');
+      set('--ui-topbar-border',     _rgba(pal.accent, 0.28));
+      set('--ui-btn-bg',            'rgba(255,255,255,0.92)');
+      set('--ui-btn-border',        _rgba(pal.accent, 0.38));
+      set('--ui-btn-text',          pal.text);
+      set('--ui-btn-bg-hover',      _rgba(pal.accent, 0.18));
+      set('--ui-btn-border-hover',  pal.accent);
+      set('--ui-coin-bg',           'rgba(255,255,255,0.92)');
+      set('--ui-coin-border',       _rgba(pal.accent, 0.45));
+      set('--ui-coin-text',         pal.accent);
+      set('--ui-stat-card-bg',      'rgba(255,255,255,0.82)');
+      set('--ui-stat-card-border',  _rgba(pal.accent, 0.22));
+      set('--ui-stat-card-bg-h',    `linear-gradient(135deg, ${_rgba(pal.accent,0.18)} 0%, ${_rgba(pal.accent,0.06)} 100%)`);
+      set('--ui-stat-card-border-h',_rgba(pal.accent, 0.50));
+      set('--ui-stat-label',        pal.textDim);
+      set('--ui-stat-value',        pal.text);
+      set('--ui-stat-accent',       pal.accent);
+      set('--ui-special-bg',        'rgba(255,255,255,0.78)');
+      set('--ui-special-border',    _rgba(pal.accent, 0.22));
+    }
+  }
+  window.applySlotTheme = applySlotTheme;
+
+  // Sofort aus localStorage anwenden, damit Body/Top-Bar/Stats vor Firebase
+  // schon im richtigen Theme stehen.
+  try {
+    const dev = window.matchMedia('(max-width: 600px)').matches ? 'Mobile' : 'Desktop';
+    const spec = localStorage.getItem('activeTheme' + dev);
+    const anyDev = localStorage.getItem('activeThemeMobile') || localStorage.getItem('activeThemeDesktop');
+    const cached = spec || (anyDev ? null : localStorage.getItem('activeTheme'));
+    if (cached) applySlotTheme(cached);
+  } catch (e) {}
+</script>
 </head>
 <body>
 
@@ -2831,6 +2996,7 @@
       const shopSnap = await get(ref(db, `shop/${userKey}/activeTheme`));
       activeTheme = shopSnap.val() || 'sakura';
       document.documentElement.setAttribute('data-theme', activeTheme);
+      if (typeof window.applySlotTheme === 'function') window.applySlotTheme(activeTheme);
 
       // Reels jetzt rendern (nachdem die Page sichtbar ist und Layout-Größen stimmen)
       requestAnimationFrame(() => { initReels().catch(err => console.error('initReels:', err)); });
