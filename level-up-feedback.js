@@ -292,7 +292,7 @@ function openLevelUpModal(detail) {
         <div class="levelup-level-label">Du hast erreicht</div>
         <div class="levelup-level-number">Level ${detail.newLevel}</div>
       </div>
-      <div class="levelup-congrats">🎉 Glückwunsch, du wirst immer stärker! 🎉</div>
+      <div class="levelup-congrats">🎉 Glückwunsch! 🎉</div>
       <button type="button" class="levelup-close-btn">Weiter</button>
     </div>
   `;
