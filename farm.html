@@ -2919,6 +2919,7 @@
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
   import { awardXp, XP_VALUES } from './xp-helper.js';
+  import './level-up-feedback.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -5825,8 +5826,7 @@
     await saveFarmData();
     window.openBeehive();
     window.showToast(`🍯 ${beehive.level}x Honig erhalten!`);
-    const xpRes = await awardXp(db, userKey, XP_VALUES.farm_beehive);
-    if (xpRes.leveledUp) window.showToast('🎉 Level ' + xpRes.newLevel + ' erreicht!');
+    await awardXp(db, userKey, XP_VALUES.farm_beehive);
     updateFarmDOM();
   }
 
