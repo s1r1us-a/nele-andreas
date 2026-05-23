@@ -656,59 +656,148 @@
     .tail { animation: tailBob 1.1s ease-in-out infinite; transform-origin: center; } @keyframes tailBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
     /* ── BLUT-ANIMATION (Schlachten) ── */
+    /* Vollbild-Rotflash mit mehreren Pulsen, ~3.5s */
     @keyframes bloodFlash {
       0%   { opacity: 0; }
-      10%  { opacity: 0.92; }
-      40%  { opacity: 0.85; }
+      5%   { opacity: 0.95; }
+      15%  { opacity: 0.70; }
+      22%  { opacity: 0.95; }
+      32%  { opacity: 0.65; }
+      42%  { opacity: 0.88; }
+      60%  { opacity: 0.55; }
+      80%  { opacity: 0.35; }
       100% { opacity: 0; }
     }
     .blood-overlay {
       position: fixed; inset: 0; z-index: 99998;
       background:
-        radial-gradient(circle at 50% 50%, rgba(127,29,29,0.55) 0%, rgba(69,10,10,0.95) 100%),
+        radial-gradient(circle at 50% 50%, rgba(127,29,29,0.65) 0%, rgba(69,10,10,0.98) 100%),
         linear-gradient(180deg, #7f1d1d, #450a0a);
       pointer-events: none;
-      animation: bloodFlash 1.4s cubic-bezier(.2,.6,.3,1) forwards;
+      animation: bloodFlash 3.5s cubic-bezier(.2,.6,.3,1) forwards;
       mix-blend-mode: multiply;
     }
+    /* Dunkle Vignette - schließt sich um den Player */
+    @keyframes darkVignette {
+      0%   { opacity: 0; }
+      15%  { opacity: 0.95; }
+      70%  { opacity: 0.85; }
+      100% { opacity: 0; }
+    }
+    .dark-vignette {
+      position: fixed; inset: 0; z-index: 99997;
+      background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.95) 100%);
+      pointer-events: none;
+      animation: darkVignette 4s ease-in-out forwards;
+    }
+    /* Blutspritzer - bleiben länger sichtbar */
     @keyframes bloodSplat {
       0%   { transform: scale(0) rotate(var(--rot, 0deg)); opacity: 0; }
-      20%  { transform: scale(1.15) rotate(var(--rot, 0deg)); opacity: 1; }
-      60%  { transform: scale(1) rotate(var(--rot, 0deg)); opacity: 0.95; }
+      8%   { transform: scale(1.25) rotate(var(--rot, 0deg)); opacity: 1; }
+      30%  { transform: scale(1) rotate(var(--rot, 0deg)); opacity: 0.98; }
+      75%  { transform: scale(1) rotate(var(--rot, 0deg)); opacity: 0.9; }
       100% { transform: scale(1) rotate(var(--rot, 0deg)); opacity: 0; }
     }
     .blood-splat {
       position: fixed; z-index: 99999; pointer-events: none;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-      animation: bloodSplat 1.6s ease-out forwards;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+      animation: bloodSplat 3.2s ease-out forwards;
     }
+    /* Tropfen die runterlaufen */
     @keyframes bloodDrip {
       0%   { transform: translateY(-100%) scaleY(0.6); opacity: 0; }
-      10%  { opacity: 1; }
-      100% { transform: translateY(110vh) scaleY(1.4); opacity: 0.95; }
+      8%   { opacity: 1; }
+      100% { transform: translateY(115vh) scaleY(1.5); opacity: 0.95; }
     }
     .blood-drip {
       position: fixed; top: 0; z-index: 99999; pointer-events: none;
       background: linear-gradient(180deg, #7f1d1d 0%, #b91c1c 40%, #450a0a 100%);
       border-radius: 50% 50% 8px 8px / 30% 30% 100% 100%;
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6));
-      animation: bloodDrip 1.8s cubic-bezier(.4,.05,.7,.3) forwards;
+      animation: bloodDrip 2.4s cubic-bezier(.4,.05,.7,.3) forwards;
     }
-    @keyframes screenShake {
+    /* Blut-Pool am unteren Rand der wächst */
+    @keyframes bloodPoolGrow {
+      0%   { transform: scaleY(0); opacity: 0; }
+      20%  { transform: scaleY(0.4); opacity: 0.9; }
+      50%  { transform: scaleY(1); opacity: 1; }
+      85%  { transform: scaleY(1); opacity: 0.95; }
+      100% { transform: scaleY(1); opacity: 0; }
+    }
+    .blood-pool {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 99998;
+      height: 22vh;
+      background:
+        radial-gradient(ellipse at 20% 0%, transparent 60%, rgba(69,10,10,0.7) 100%),
+        radial-gradient(ellipse at 80% 0%, transparent 60%, rgba(69,10,10,0.7) 100%),
+        linear-gradient(180deg, transparent 0%, #7f1d1d 30%, #450a0a 100%);
+      transform-origin: bottom;
+      pointer-events: none;
+      filter: drop-shadow(0 -4px 8px rgba(127,29,29,0.6));
+      animation: bloodPoolGrow 4s cubic-bezier(.3,.7,.4,1) forwards;
+    }
+    .blood-pool::before {
+      content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 16px;
+      background:
+        radial-gradient(circle at 10% 50%, #7f1d1d 4px, transparent 5px),
+        radial-gradient(circle at 25% 30%, #7f1d1d 6px, transparent 7px),
+        radial-gradient(circle at 40% 60%, #7f1d1d 5px, transparent 6px),
+        radial-gradient(circle at 55% 40%, #7f1d1d 7px, transparent 8px),
+        radial-gradient(circle at 70% 55%, #7f1d1d 5px, transparent 6px),
+        radial-gradient(circle at 85% 35%, #7f1d1d 6px, transparent 7px);
+    }
+    /* Pulsierender Schädel in der Mitte */
+    @keyframes skullAppear {
+      0%   { transform: translate(-50%, -50%) scale(0) rotate(-25deg); opacity: 0; filter: blur(8px); }
+      15%  { transform: translate(-50%, -50%) scale(1.8) rotate(8deg); opacity: 1; filter: blur(0); }
+      25%  { transform: translate(-50%, -50%) scale(1.4) rotate(-5deg); opacity: 1; }
+      40%  { transform: translate(-50%, -50%) scale(1.55) rotate(3deg); opacity: 1; }
+      55%  { transform: translate(-50%, -50%) scale(1.45) rotate(-2deg); opacity: 0.98; }
+      75%  { transform: translate(-50%, -50%) scale(1.5) rotate(0deg); opacity: 0.85; }
+      100% { transform: translate(-50%, -50%) scale(2.2) rotate(0deg); opacity: 0; filter: blur(4px); }
+    }
+    .death-skull {
+      position: fixed; top: 50%; left: 50%; z-index: 100000;
+      font-size: clamp(120px, 28vw, 280px);
+      pointer-events: none;
+      filter: drop-shadow(0 0 30px #7f1d1d) drop-shadow(0 0 60px rgba(127,29,29,0.6));
+      animation: skullAppear 3s cubic-bezier(.34,1.56,.64,1) forwards;
+      transform-origin: center;
+    }
+    /* Mehrstufiger Screen-Shake - Initial Hard */
+    @keyframes screenShakeHard {
       0%, 100% { transform: translate(0, 0); }
-      10% { transform: translate(-6px, 3px); }
-      20% { transform: translate(5px, -4px); }
-      30% { transform: translate(-4px, -2px); }
-      40% { transform: translate(6px, 2px); }
-      50% { transform: translate(-3px, 4px); }
-      60% { transform: translate(4px, -3px); }
-      70% { transform: translate(-5px, 2px); }
-      80% { transform: translate(3px, -2px); }
+      5%  { transform: translate(-14px, 8px); }
+      10% { transform: translate(12px, -10px); }
+      15% { transform: translate(-10px, -7px); }
+      20% { transform: translate(13px, 9px); }
+      25% { transform: translate(-8px, 11px); }
+      30% { transform: translate(11px, -8px); }
+      35% { transform: translate(-12px, 5px); }
+      40% { transform: translate(9px, -11px); }
+      45% { transform: translate(-7px, 8px); }
+      50% { transform: translate(10px, -5px); }
+      55% { transform: translate(-9px, 7px); }
+      60% { transform: translate(7px, -6px); }
+      65% { transform: translate(-6px, 4px); }
+      70% { transform: translate(5px, -5px); }
+      75% { transform: translate(-4px, 3px); }
+      80% { transform: translate(4px, -3px); }
+      85% { transform: translate(-3px, 2px); }
+      90% { transform: translate(2px, -2px); }
+      95% { transform: translate(-1px, 1px); }
+    }
+    /* Nachbeben - leichter, länger */
+    @keyframes screenShakeSoft {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-3px, 1px); }
+      30% { transform: translate(2px, -2px); }
+      50% { transform: translate(-2px, 2px); }
+      70% { transform: translate(3px, -1px); }
       90% { transform: translate(-2px, 1px); }
     }
-    .screen-shaking {
-      animation: screenShake 0.6s cubic-bezier(.36,.07,.19,.97) both;
-    }
+    .screen-shaking-hard { animation: screenShakeHard 1.2s cubic-bezier(.36,.07,.19,.97) both; }
+    .screen-shaking-soft { animation: screenShakeSoft 1.5s ease-in-out both; }
 
     /* ── MODALS SYSTEM ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 16px; }
@@ -6268,15 +6357,41 @@
   };
 
   window.triggerBloodFlash = function() {
+    // 1) Vollbild-Rotflash (3.5s, mehrere Pulse via CSS)
     const overlay = document.createElement('div');
     overlay.className = 'blood-overlay';
     overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
     document.body.appendChild(overlay);
 
-    const shakeTarget = document.querySelector('.farm-container, #farmContainer, main') || document.body;
-    shakeTarget.classList.add('screen-shaking');
-    setTimeout(() => shakeTarget.classList.remove('screen-shaking'), 650);
+    // 2) Dunkle Vignette - schließt sich um den Player (4s)
+    const vignette = document.createElement('div');
+    vignette.className = 'dark-vignette';
+    vignette.addEventListener('animationend', () => vignette.remove(), { once: true });
+    document.body.appendChild(vignette);
 
+    // 3) Zwei-Phasen Screen-Shake: erst hart, dann nachbeben
+    const shakeTarget = document.querySelector('.farm-container, #farmContainer, main') || document.body;
+    shakeTarget.classList.add('screen-shaking-hard');
+    setTimeout(() => {
+      shakeTarget.classList.remove('screen-shaking-hard');
+      shakeTarget.classList.add('screen-shaking-soft');
+      setTimeout(() => shakeTarget.classList.remove('screen-shaking-soft'), 1500);
+    }, 1200);
+
+    // 4) Schädel in der Mitte (3s)
+    const skull = document.createElement('div');
+    skull.className = 'death-skull';
+    skull.textContent = '💀';
+    skull.addEventListener('animationend', () => skull.remove(), { once: true });
+    document.body.appendChild(skull);
+
+    // 5) Blut-Pool sammelt sich am unteren Rand (4s, wächst)
+    const pool = document.createElement('div');
+    pool.className = 'blood-pool';
+    pool.addEventListener('animationend', () => pool.remove(), { once: true });
+    document.body.appendChild(pool);
+
+    // 6) Massive Blutspritzer in 3 Wellen über 2 Sekunden
     const splatSvg = (size) => `
       <svg viewBox="0 0 200 200" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
         <g fill="#7f1d1d">
@@ -6295,31 +6410,37 @@
           <path d="M100 50 C115 70 135 65 140 90 C150 115 125 125 120 145 C105 165 85 158 78 140 C68 115 50 105 60 88 C72 65 90 70 100 50 Z"/>
         </g>
       </svg>`;
-    const splatterCount = 7 + Math.floor(Math.random() * 4);
-    for (let i = 0; i < splatterCount; i++) {
-      const splat = document.createElement('div');
-      splat.className = 'blood-splat';
-      const size = 140 + Math.floor(Math.random() * 180);
-      splat.style.width = size + 'px';
-      splat.style.height = size + 'px';
-      splat.style.left = (Math.random() * 90 - 5) + 'vw';
-      splat.style.top  = (Math.random() * 85 - 5) + 'vh';
-      splat.style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-      splat.style.animationDelay = (Math.random() * 0.25) + 's';
-      splat.innerHTML = splatSvg(size);
-      splat.addEventListener('animationend', () => splat.remove(), { once: true });
-      document.body.appendChild(splat);
-    }
+    const spawnSplatter = (waveDelay) => {
+      const count = 10 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < count; i++) {
+        const splat = document.createElement('div');
+        splat.className = 'blood-splat';
+        const size = 150 + Math.floor(Math.random() * 220);
+        splat.style.width = size + 'px';
+        splat.style.height = size + 'px';
+        splat.style.left = (Math.random() * 95 - 8) + 'vw';
+        splat.style.top  = (Math.random() * 90 - 8) + 'vh';
+        splat.style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
+        splat.style.animationDelay = (waveDelay + Math.random() * 0.3) + 's';
+        splat.innerHTML = splatSvg(size);
+        splat.addEventListener('animationend', () => splat.remove(), { once: true });
+        document.body.appendChild(splat);
+      }
+    };
+    spawnSplatter(0);     // sofort
+    setTimeout(() => spawnSplatter(0), 700);   // 2. Welle
+    setTimeout(() => spawnSplatter(0), 1500);  // 3. Welle
 
-    const dripCount = 6 + Math.floor(Math.random() * 4);
-    for (let i = 0; i < dripCount; i++) {
+    // 7) Kontinuierlicher Blutregen - viele Tropfen über 3 Sekunden gestaffelt
+    const totalDrips = 35 + Math.floor(Math.random() * 15);
+    for (let i = 0; i < totalDrips; i++) {
       const drip = document.createElement('div');
       drip.className = 'blood-drip';
       drip.style.left = (Math.random() * 100) + 'vw';
-      drip.style.height = (60 + Math.random() * 90) + 'px';
-      drip.style.width = (8 + Math.random() * 10) + 'px';
-      drip.style.animationDelay = (0.15 + Math.random() * 0.5) + 's';
-      drip.style.animationDuration = (1.4 + Math.random() * 0.9) + 's';
+      drip.style.height = (50 + Math.random() * 110) + 'px';
+      drip.style.width = (7 + Math.random() * 12) + 'px';
+      drip.style.animationDelay = (Math.random() * 2.8) + 's';
+      drip.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
       drip.addEventListener('animationend', () => drip.remove(), { once: true });
       document.body.appendChild(drip);
     }
@@ -6367,7 +6488,7 @@
       document.getElementById('confirmButtons').innerHTML =
         `<button class="btn-generic btn-buy" onclick="window.closeAllModals()">OK</button>`;
       window.showSpecificModal('modalConfirm');
-    }, mode === 'slaughter' ? 1500 : 200);
+    }, mode === 'slaughter' ? 3800 : 200);
   };
 
   window.renderWardrobeGrid = function(animalId) {
