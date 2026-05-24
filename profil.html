@@ -288,8 +288,33 @@
     @keyframes xpShimmer { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
     .xp-bar-text { font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-mid); text-align: center; margin-top: 6px; }
     .xp-next-reward { font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 600; color: var(--gold); text-align: center; }
-    .xp-info-btn { background: none; border: none; font-family: 'Quicksand', sans-serif; font-size: 11px; font-weight: 600; color: var(--text-mid); text-decoration: underline; cursor: pointer; padding: 3px; }
-    .xp-info-btn:hover { color: var(--rose); }
+    .xp-info-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 5px 14px;
+      background: var(--ui-card-bg);
+      border: 1.5px solid var(--ui-card-border);
+      border-radius: 999px;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-mid);
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .xp-info-btn:hover {
+      color: var(--rose);
+      border-color: var(--rose);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 12px rgba(232,115,138,0.28);
+    }
+    .xp-info-btn:active { transform: translateY(0); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .xp-info-btn .xp-info-btn-icon { font-size: 13px; line-height: 1; }
+    .xp-info-btn .xp-info-btn-text { letter-spacing: 0.2px; }
     .claim-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; background: linear-gradient(135deg,#c87830,#ffe3a3); border: none; border-radius: 50px; padding: 9px 20px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: #5a3a10; cursor: pointer; box-shadow: 0 3px 14px rgba(212,150,60,0.5); animation: claimPulse 1.8s ease-in-out infinite; }
     @keyframes claimPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     .xp-info-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100000; padding: 20px; }
@@ -1074,7 +1099,10 @@
         <div class="xp-bar-text" id="xpBarText">0 / 100 XP</div>
       </div>
       <div class="xp-next-reward" id="nextRewardLine">Nächste Belohnung: <span id="nextRewardText">…</span></div>
-      <button id="xpInfoBtn" class="xp-info-btn" type="button">ℹ️ Wofür gibt es XP?</button>
+      <button id="xpInfoBtn" class="xp-info-btn" type="button">
+        <span class="xp-info-btn-icon">ℹ️</span>
+        <span class="xp-info-btn-text">Wofür gibt es XP?</span>
+      </button>
     </div>
   </div>
 
@@ -1188,7 +1216,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { awardXp, XP_VALUES, XP_LABELS, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
+  import { awardXp, XP_VALUES, XP_LABELS, XP_DISPLAY, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
   import './level-up-feedback.js';
 
   const app = initializeApp({
@@ -2195,7 +2223,8 @@
     if (!tbl) return;
     let html = '<thead><tr><th>Aktion</th><th>XP</th></tr></thead><tbody>';
     Object.keys(XP_VALUES).forEach(k => {
-      html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>+' + XP_VALUES[k] + '</td></tr>';
+      const display = XP_DISPLAY[k] ? XP_DISPLAY[k] : ('+' + XP_VALUES[k]);
+      html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>' + display + '</td></tr>';
     });
     tbl.innerHTML = html + '</tbody>';
   }

@@ -9,20 +9,46 @@ export const COIN_PER_LEVEL = 500;   // Münzen pro Level-Up = Level × COIN_PER
 
 // XP-Werte je Aktion (einzige Pflegestelle).
 export const XP_VALUES = {
-  heart_batch10:      5,
-  autoclick_batch100: 3,
-  game_start:         5,
-  game_win:          25,
-  game_loss:         10,
-  uno_call:           3,
-  slot_spin:          1,
-  slot_jackpot:     200,
-  farm_feed:          2,
-  farm_beehive:      50,
-  booster_bought:   150,
-  booster_used:     100,
-  box_bought:        50
+  heart_batch10:       5,
+  autoclick_batch100:  3,
+  game_start:          5,
+  game_win:           25,
+  game_loss:          10,
+  uno_call:            3,
+  slot_spin:           1,
+  slot_jackpot:      200,
+  slot_bigwin:        30,
+  farm_feed:           2,
+  farm_beehive:       50,
+  farm_animal_bought: 40,
+  farm_harvest:        3,
+  farm_bakery:         8,
+  farm_weaving:        8,
+  farm_forge:          8,
+  farm_mine_ore:       5,
+  booster_bought:    150,
+  booster_used:      100,
+  box_bought:         50,
+  theme_bought:       75
 };
+
+// Anzeige-Overrides fürs XP-Info-Modal, wenn der echte XP-Wert variabel ist
+// (z. B. abhängig von Wachstumszeit oder Bet-Multiplikator). Wird vom Modal
+// bevorzugt vor `+XP_VALUES[k]` angezeigt.
+export const XP_DISPLAY = {
+  farm_harvest: '1–24 (je 5 Min Wachstumszeit)',
+  slot_spin:    '1 × Bet-Multiplikator',
+  slot_jackpot: '200 × Bet-Multiplikator',
+  slot_bigwin:  '30 × Bet-Multiplikator'
+};
+
+// XP pro geernteter Pflanze, skaliert mit Wachstumszeit (1 XP je 5 Min,
+// mindestens 1). Hält die Belohnung fair: Radieschen (5 Min) → 1 XP,
+// Blaubeere (2 h) → 24 XP.
+export function xpForHarvest(growTimeSec) {
+  const sec = Number(growTimeSec) || 0;
+  return Math.max(1, Math.round(sec / 300));
+}
 
 // Deutsche Anzeigetexte für das XP-Info-Modal.
 export const XP_LABELS = {
@@ -34,11 +60,19 @@ export const XP_LABELS = {
   uno_call:           'UNO: „Uno"-Ruf (1 Karte übrig)',
   slot_spin:          'Slot: Spin',
   slot_jackpot:       'Slot: Jackpot',
+  slot_bigwin:        'Slot: Big-Win (≥ 50× Bet)',
   farm_feed:          'Farm: Tier gefüttert',
   farm_beehive:       'Farm: Bienenstock abholen',
+  farm_animal_bought: 'Farm: Tier gekauft',
+  farm_harvest:       'Farm: Pflanze geerntet (je nach Wachstumszeit)',
+  farm_bakery:        'Farm: Bäckerei abgeholt',
+  farm_weaving:       'Farm: Weberei abgeholt',
+  farm_forge:         'Farm: Schmiede abgeholt',
+  farm_mine_ore:      'Farm: Erz aus Mine abgeholt',
   booster_bought:     'Booster gekauft',
   booster_used:       'Booster verwendet',
-  box_bought:         'Box gekauft'
+  box_bought:         'Box gekauft',
+  theme_bought:       'Theme gekauft'
 };
 
 // Level-Meilenstein-Badges. IDs landen bei Claim in shop/{key}/badges.
