@@ -1403,7 +1403,19 @@
 
   async function adminSetTheme(themeId) {
     if (!isAdmin()) return;
-    await set(ref(db, 'shop/andreas/activeTheme'), themeId);
+    await Promise.all([
+      set(ref(db, 'shop/andreas/activeTheme'),        themeId),
+      set(ref(db, 'shop/andreas/activeThemeMobile'),  themeId),
+      set(ref(db, 'shop/andreas/activeThemeDesktop'), themeId),
+      set(ref(db, 'shop/nele/activeTheme'),           themeId),
+      set(ref(db, 'shop/nele/activeThemeMobile'),     themeId),
+      set(ref(db, 'shop/nele/activeThemeDesktop'),    themeId),
+    ]);
+    try {
+      localStorage.setItem('activeTheme',        themeId);
+      localStorage.setItem('activeThemeMobile',  themeId);
+      localStorage.setItem('activeThemeDesktop', themeId);
+    } catch (e) {}
     applyProfilTheme(themeId);
     document.getElementById('adminOverlay').classList.remove('open');
     showToast(themeId === 'sakura' ? '↩️ Theme zurückgesetzt!' : '🎨 Theme aktiviert!');
