@@ -3215,6 +3215,8 @@
   let _autoCoinsContributed    = 0;
   let _autoCoinsWritten        = 0;
   let _autoLastClick           = null;
+  let _xpAutoAccum             = 0;   // zählt Auto-Klicks für XP (je 100 → autoclick_batch100)
+  let heartXpCounter           = 0;   // zählt manuelle Heart-Klicks (je 10 → heart_batch10)
   function _recalcAutoPending() {
     window._pending = window._pending || {};
     window._pending.moments = Math.max(0, _autoTarget - _momentsTotalBase);
@@ -3276,6 +3278,12 @@
     heartCount.classList.add('bump');
     _recalcAutoPending();
     renderHeartCount();
+    _xpAutoAccum++;
+    if (_xpAutoAccum >= 100) {
+      _xpAutoAccum -= 100;
+      const userKey = user.toLowerCase();
+      awardXp(db, userKey, XP_VALUES.autoclick_batch100);
+    }
   }
 
   function flushAutoclicks() {
@@ -3308,6 +3316,7 @@
       _autoContributed = 0; _autoWritten = 0;
       _autoCoinsContributed = 0; _autoCoinsWritten = 0;
       _autoLastClick = null;
+      _xpAutoAccum = 0;
       autoclickInterval = setInterval(() => {
         if (!isBoosterActive(activeBoosterAutoclicker)) { updateAutoclicker(); return; }
         autoClickTick();
@@ -4822,7 +4831,6 @@
       }
     }
   }
-  let heartXpCounter = 0;
 
   document.getElementById('heartBtn').addEventListener('click', () => performClick());
 

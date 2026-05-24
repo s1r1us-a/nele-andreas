@@ -2390,6 +2390,7 @@
     // Zu owned hinzufügen
     ownedThemes.push(themeId);
     await set(ref(db, `shop/${userKey}/owned`), ownedThemes);
+    await awardXp(db, userKey, XP_VALUES.theme_bought);
     showToast(`🎉 „${t.name}" gekauft!`);
     renderThemes();
     // Gerät wählen (Modal)
