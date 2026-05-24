@@ -1203,6 +1203,30 @@ html[data-theme="genderfluid"] .premium-tag {
   box-shadow: 0 2px 12px rgba(190,24,214,0.65);
 }
 
+/* ---------- Hauptbild / Image-Frame ---------- */
+html[data-theme="genderfluid"] .image-wrapper {
+  background: rgba(9,5,26,0.55);
+  filter: drop-shadow(0 0 32px rgba(190,24,214,0.65)) drop-shadow(0 0 60px rgba(51,62,189,0.40));
+}
+html[data-theme="genderfluid"] .image-frame {
+  border: 3px solid transparent;
+  border-radius: 50%;
+  background-clip: padding-box;
+  box-shadow:
+    0 0 0 3px #FF76A4,
+    0 0 0 6px #ffffff,
+    0 0 0 9px #BE18D6,
+    0 0 0 12px #000000,
+    0 0 0 15px #333EBD,
+    0 0 30px rgba(190,24,214,0.60),
+    0 0 60px rgba(51,62,189,0.35);
+  animation: gfBorderShift 8s linear infinite;
+}
+html[data-theme="genderfluid"] .image-frame img {
+  opacity: 1;
+  border-radius: 50%;
+}
+
 /* ---------- Primär-Buttons ---------- */
 html[data-theme="genderfluid"] .btn-buy:not(:disabled),
 html[data-theme="genderfluid"] .btn-activate,
@@ -1217,19 +1241,26 @@ html[data-theme="genderfluid"] .moment-save-btn,
 html[data-theme="genderfluid"] .booster-activate-btn,
 html[data-theme="genderfluid"] .visit-other-btn,
 html[data-theme="genderfluid"] .account-btn,
-html[data-theme="genderfluid"] .comment-send-btn {
+html[data-theme="genderfluid"] .comment-send-btn,
+html[data-theme="genderfluid"] .heart-btn {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #FF76A4 0%, #e8a0c8 20%, #ffffff 38%, #BE18D6 58%, #1a0d3d 76%, #333EBD 100%) !important;
+  background: linear-gradient(135deg,
+    #FF76A4 0%, #FF76A4 15%,
+    #ffffff 22%, #ffffff 34%,
+    #BE18D6 41%, #BE18D6 55%,
+    #000000 62%, #000000 74%,
+    #333EBD 81%, #333EBD 100%
+  ) !important;
   background-size: 300% 300% !important;
-  border: 2px solid rgba(255,255,255,0.55) !important;
-  outline: 1.5px solid rgba(190,24,214,0.55);
+  border: 2px solid rgba(255,255,255,0.60) !important;
+  outline: 1.5px solid rgba(190,24,214,0.65);
   outline-offset: 2px;
   color: #fff !important;
   font-weight: 800 !important;
   letter-spacing: 0.8px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.70), 0 0 10px rgba(255,255,255,0.60);
-  animation: gfFlow 5s linear infinite, gfGlow 3s ease-in-out infinite;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.80), 0 0 12px rgba(255,255,255,0.55);
+  animation: gfFlow 4s linear infinite, gfGlow 3s ease-in-out infinite;
 }
 html[data-theme="genderfluid"] .btn-buy:not(:disabled)::before,
 html[data-theme="genderfluid"] .btn-activate::before,
@@ -1244,7 +1275,8 @@ html[data-theme="genderfluid"] .moment-save-btn::before,
 html[data-theme="genderfluid"] .booster-activate-btn::before,
 html[data-theme="genderfluid"] .visit-other-btn::before,
 html[data-theme="genderfluid"] .account-btn::before,
-html[data-theme="genderfluid"] .comment-send-btn::before {
+html[data-theme="genderfluid"] .comment-send-btn::before,
+html[data-theme="genderfluid"] .heart-btn::before {
   content: '';
   position: absolute; top: 0; bottom: 0; left: 0;
   width: 30%;
@@ -1259,7 +1291,8 @@ html[data-theme="genderfluid"] .btn-open-box:not(:disabled)::after,
 html[data-theme="genderfluid"] .play-quiz-btn::after,
 html[data-theme="genderfluid"] .save-moment-btn::after,
 html[data-theme="genderfluid"] .moment-save-btn::after,
-html[data-theme="genderfluid"] .booster-activate-btn::after {
+html[data-theme="genderfluid"] .booster-activate-btn::after,
+html[data-theme="genderfluid"] .heart-btn::after {
   content: '⚧️';
   position: absolute; top: 2px; right: 7px;
   font-size: 13px;
@@ -1288,8 +1321,9 @@ html[data-theme="genderfluid"] .confirm-yes,
 html[data-theme="genderfluid"] .btn-open-box:not(:disabled),
 html[data-theme="genderfluid"] .play-quiz-btn,
 html[data-theme="genderfluid"] .save-moment-btn,
-html[data-theme="genderfluid"] .moment-save-btn {
-  animation: gfFlow 5s linear infinite, gfGlow 3s ease-in-out infinite, gfPulse 1.8s ease-in-out infinite;
+html[data-theme="genderfluid"] .moment-save-btn,
+html[data-theme="genderfluid"] .heart-btn {
+  animation: gfFlow 4s linear infinite, gfGlow 3s ease-in-out infinite, gfPulse 1.8s ease-in-out infinite;
 }
 html[data-theme="genderfluid"] .btn-buy:not(:disabled):hover,
 html[data-theme="genderfluid"] .btn-activate:hover,
@@ -1304,7 +1338,8 @@ html[data-theme="genderfluid"] .moment-save-btn:hover,
 html[data-theme="genderfluid"] .booster-activate-btn:hover,
 html[data-theme="genderfluid"] .visit-other-btn:hover,
 html[data-theme="genderfluid"] .account-btn:hover,
-html[data-theme="genderfluid"] .comment-send-btn:hover {
+html[data-theme="genderfluid"] .comment-send-btn:hover,
+html[data-theme="genderfluid"] .heart-btn:hover {
   animation: gfFlow 2.5s linear infinite, gfGlow 1.5s ease-in-out infinite, gfSway 0.5s ease-in-out infinite;
   box-shadow: 0 0 0 3px rgba(255,255,255,0.75), 0 8px 38px rgba(255,118,164,0.90), 0 0 70px rgba(190,24,214,0.55), inset 0 0 20px rgba(255,255,255,0.50) !important;
   filter: brightness(1.10) saturate(1.20);
@@ -1322,7 +1357,8 @@ html[data-theme="genderfluid"] .moment-save-btn:active,
 html[data-theme="genderfluid"] .booster-activate-btn:active,
 html[data-theme="genderfluid"] .visit-other-btn:active,
 html[data-theme="genderfluid"] .account-btn:active,
-html[data-theme="genderfluid"] .comment-send-btn:active {
+html[data-theme="genderfluid"] .comment-send-btn:active,
+html[data-theme="genderfluid"] .heart-btn:active {
   transform: scale(0.96);
 }
 html[data-theme="genderfluid"] .btn-activate.is-active {
@@ -1377,14 +1413,6 @@ html[data-theme="genderfluid"] .lbtn:hover {
   border-color: #FF76A4 !important;
   transform: scale(1.04) rotate(-0.6deg);
   box-shadow: 0 0 0 2px rgba(255,255,255,0.30), 0 4px 22px rgba(255,118,164,0.55);
-}
-
-/* ---------- Heart button ---------- */
-html[data-theme="genderfluid"] .heart-btn {
-  filter: drop-shadow(0 0 8px rgba(190,24,214,0.60)) saturate(1.2);
-}
-html[data-theme="genderfluid"] .heart-btn:hover {
-  animation: gfPulse 1s ease-in-out infinite;
 }
 
 /* ---------- Owned/User badges ---------- */
