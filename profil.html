@@ -588,11 +588,11 @@
     .booster-confirm-yes.danger { background: linear-gradient(135deg,#e85070,#c83a58); box-shadow:0 4px 14px rgba(232,80,112,0.4); }
 
     /* Rarity-Varianten für das Badge-Bestätigungs-Modal — dynamisch gesetzt */
-    .booster-confirm-card.rarity-bronze    { border-color: rgba(190,140,90,0.85);  background: linear-gradient(135deg, rgba(220,182,142,0.18), #fff 60%); }
-    .booster-confirm-card.rarity-common    { border-color: rgba(186,190,206,0.85); background: linear-gradient(135deg, rgba(236,236,244,0.22), #fff 60%); }
-    .booster-confirm-card.rarity-rare      { border-color: rgba(120,170,255,0.95); background: linear-gradient(135deg, rgba(150,185,235,0.18), #fff 60%); box-shadow: 0 16px 60px rgba(108,142,191,0.30); }
-    .booster-confirm-card.rarity-legendary { border-color: rgba(255,210,110,1);    background: linear-gradient(135deg, rgba(255,215,130,0.22), rgba(214,162,99,0.14) 60%, #fff); box-shadow: 0 16px 60px rgba(255,180,80,0.35); }
-    .booster-confirm-card.rarity-mythic    { border-color: rgba(232,190,255,1);    background: linear-gradient(135deg, rgba(255,185,242,0.20), rgba(155,205,255,0.18) 50%, rgba(195,255,225,0.18)); box-shadow: 0 16px 60px rgba(190,140,255,0.40); }
+    .booster-confirm-card.rarity-bronze    { border-color: rgba(190,140,90,0.85);  background-image: linear-gradient(135deg, rgba(220,182,142,0.28), transparent 70%); }
+    .booster-confirm-card.rarity-common    { border-color: rgba(186,190,206,0.85); background-image: linear-gradient(135deg, rgba(236,236,244,0.30), transparent 70%); }
+    .booster-confirm-card.rarity-rare      { border-color: rgba(120,170,255,0.95); background-image: linear-gradient(135deg, rgba(150,185,235,0.28), transparent 70%); box-shadow: 0 16px 60px rgba(108,142,191,0.30); }
+    .booster-confirm-card.rarity-legendary { border-color: rgba(255,210,110,1);    background-image: linear-gradient(135deg, rgba(255,215,130,0.32), rgba(214,162,99,0.20) 55%, transparent 90%); box-shadow: 0 16px 60px rgba(255,180,80,0.35); }
+    .booster-confirm-card.rarity-mythic    { border-color: rgba(232,190,255,1);    background-image: linear-gradient(135deg, rgba(255,185,242,0.26), rgba(155,205,255,0.24) 50%, rgba(195,255,225,0.22)); box-shadow: 0 16px 60px rgba(190,140,255,0.40); }
     .booster-confirm-card.rarity-bronze    .booster-confirm-emoji { filter: drop-shadow(0 0 6px rgba(160,110,60,0.55)); }
     .booster-confirm-card.rarity-common    .booster-confirm-emoji { filter: drop-shadow(0 0 4px rgba(180,180,195,0.6)); }
     .booster-confirm-card.rarity-rare      .booster-confirm-emoji { filter: drop-shadow(0 0 8px rgba(108,142,191,0.85)); }
@@ -2048,11 +2048,13 @@
   document.getElementById('badgeEquipYes').addEventListener('click', () => {
     const id = pendingEquipBadgeId;
     document.getElementById('badgeEquipOverlay').classList.remove('open');
+    document.body.style.overflow = '';
     pendingEquipBadgeId = null;
     if (id) applyEquipBadge(id);
   });
   document.getElementById('badgeEquipNo').addEventListener('click', () => {
     document.getElementById('badgeEquipOverlay').classList.remove('open');
+    document.body.style.overflow = '';
     pendingEquipBadgeId = null;
   });
 
@@ -2196,6 +2198,7 @@
     card.classList.remove('rarity-bronze', 'rarity-common', 'rarity-rare', 'rarity-legendary', 'rarity-mythic');
     if (b.rarity) card.classList.add('rarity-' + b.rarity);
     document.getElementById('badgeEquipOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
 
   async function equipFrame(frameId) {
