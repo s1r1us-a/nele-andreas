@@ -6,15 +6,20 @@
 const STYLE_TAG_ID = '__levelup_feedback_styles__';
 const STYLES = `
 @keyframes xpFloatUp {
-  0%   { transform: translate(0, 0) scale(0.85); opacity: 0; }
-  15%  { transform: translate(0, -8px) scale(1.05); opacity: 1; }
-  80%  { transform: translate(0, -48px) scale(1); opacity: 1; }
-  100% { transform: translate(0, -70px) scale(0.9); opacity: 0; }
+  0%   { transform: translate(calc(-50% + var(--drift, 0px)), -92%)  scale(0.55) rotate(var(--rot, 0deg)); opacity: 0; }
+  20%  { transform: translate(calc(-50% + var(--drift, 0px)), -118%) scale(1.18) rotate(calc(var(--rot, 0deg) * 0.4)); opacity: 1; }
+  80%  { transform: translate(calc(-50% + var(--drift, 0px)), -180%) scale(1)    rotate(0deg); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--drift, 0px)), -240%) scale(0.9)  rotate(0deg); opacity: 0; }
+}
+@keyframes xpSparkle {
+  0%   { transform: scale(0)   rotate(0deg);   opacity: 0; }
+  30%  { transform: scale(1.4) rotate(90deg);  opacity: 1; }
+  70%  { transform: scale(1)   rotate(180deg); opacity: 1; }
+  100% { transform: scale(0)   rotate(270deg); opacity: 0; }
 }
 .xp-float {
   position: fixed;
-  right: 22px;
-  z-index: 999999;
+  z-index: 2147483000;
   pointer-events: none;
   font-family: 'Quicksand', system-ui, sans-serif;
   font-weight: 800;
@@ -27,12 +32,25 @@ const STYLES = `
   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
   animation: xpFloatUp 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   white-space: nowrap;
+  will-change: transform, opacity;
+  transform: translate(-50%, -100%);
 }
 .xp-float.boosted {
   background: linear-gradient(135deg, #fbbf24, #f59e0b, #fde047);
   color: #4a2e00;
   box-shadow: 0 4px 18px rgba(251,191,36,0.6), 0 0 28px rgba(253,224,71,0.6);
   text-shadow: 0 1px 1px rgba(255,255,255,0.5);
+}
+.xp-float.boosted::before {
+  content: '✨';
+  position: absolute;
+  top: -14px;
+  right: -10px;
+  font-size: 18px;
+  animation: xpSparkle 1.2s ease-out forwards;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(253,224,71,0.85));
+  transform-origin: center;
 }
 @keyframes levelupOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes levelupOverlayOut { from { opacity: 1; } to { opacity: 0; } }
@@ -215,26 +233,72 @@ function injectStyles() {
 }
 injectStyles();
 
-const FLOAT_STACK_OFFSET_PX = 38;
 const FLOAT_LIFETIME_MS     = 1200;
+const FLOAT_STACK_OFFSET_PX = 24;
 const CONFETTI_RESPAWN_MS   = 900;
+const POINTER_FRESH_MS      = 1500;
+const BUCKET_CELL_PX        = 40;
 
-let floatStackCount = 0;
 const levelUpQueue = [];
 let modalOpen = false;
 let activeConfettiInterval = null;
 let activeModalEl = null;
 
+// Letzte Pointer-Position merken, damit jedes xp:gained-Event seinen Ursprung
+// am Klick statt oben rechts hat. capture: true, damit stopPropagation in
+// Spielen (Slot/UNO) den Listener nicht aushebelt.
+const lastPointer = { x: 0, y: 0, t: 0 };
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', (e) => {
+    lastPointer.x = e.clientX;
+    lastPointer.y = e.clientY;
+    lastPointer.t = Date.now();
+  }, { capture: true, passive: true });
+}
+
+function resolveOrigin() {
+  if (Date.now() - lastPointer.t < POINTER_FRESH_MS) {
+    return { x: lastPointer.x, y: lastPointer.y };
+  }
+  const heart = typeof document !== 'undefined' ? document.getElementById('heartBtn') : null;
+  if (heart) {
+    const r = heart.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  const vw = (typeof window !== 'undefined' ? window.innerWidth  : 800);
+  const vh = (typeof window !== 'undefined' ? window.innerHeight : 600);
+  return { x: vw / 2, y: vh - 120 };
+}
+
+// Mehrere XP-Events am selben Ort stapeln sich nach oben statt sich exakt zu
+// überlagern. Bucket-Größe 40 px gruppiert nahe Klicks zusammen.
+const stackBuckets = new Map();
+function bucketKey(x, y) {
+  return Math.round(x / BUCKET_CELL_PX) + ',' + Math.round(y / BUCKET_CELL_PX);
+}
+
 function showFloatingXp(amount, boosted) {
+  const { x, y } = resolveOrigin();
+  const key = bucketKey(x, y);
+  const stackIdx = stackBuckets.get(key) || 0;
+  stackBuckets.set(key, stackIdx + 1);
+
+  const drift = ((Math.random() * 30 - 15) | 0);
+  const rot   = (Math.random() * 12 - 6).toFixed(1);
+
   const el = document.createElement('div');
   el.className = 'xp-float' + (boosted ? ' boosted' : '');
   el.textContent = (boosted ? '✨ +' : '+') + amount + ' XP';
-  el.style.top = (72 + floatStackCount * FLOAT_STACK_OFFSET_PX) + 'px';
-  floatStackCount++;
+  el.style.setProperty('--drift', drift + 'px');
+  el.style.setProperty('--rot', rot + 'deg');
+  el.style.left = x + 'px';
+  el.style.top  = Math.max(80, y - 12 - stackIdx * FLOAT_STACK_OFFSET_PX) + 'px';
   document.body.appendChild(el);
+
   setTimeout(() => {
     el.remove();
-    floatStackCount = Math.max(0, floatStackCount - 1);
+    const n = (stackBuckets.get(key) || 1) - 1;
+    if (n <= 0) stackBuckets.delete(key); else stackBuckets.set(key, n);
   }, FLOAT_LIFETIME_MS);
 }
 
