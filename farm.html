@@ -2936,7 +2936,7 @@
   import { getDatabase, ref, set, get, onValue, runTransaction, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
-  import { awardXp, XP_VALUES } from './xp-helper.js';
+  import { awardXp, XP_VALUES, xpForHarvest } from './xp-helper.js';
   import './level-up-feedback.js';
 
   const firebaseConfig = {
@@ -5594,30 +5594,33 @@
     const slot = beds[bedIndex][slotIndex];
     if (slot.state === 'empty') { currentTargetSlot = { b: bedIndex, s: slotIndex }; window.openFieldSeedMenu(); } 
     else if (slot.state === 'growing') { window.openPlantStatus(bedIndex, slotIndex); } 
-    else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; if (!itemDef) return; inventory.crops[itemId] = (inventory.crops[itemId] || 0) + 1; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); awardXp(db, userKey, XP_VALUES.farm_harvest); }
+    else if (slot.state === 'ready') { const itemId = slot.item; const itemDef = shopItems[itemId]; if (!itemDef) return; inventory.crops[itemId] = (inventory.crops[itemId] || 0) + 1; beds[bedIndex][slotIndex] = { state: 'empty', item: null, plantedAt: 0 }; document.getElementById(`slot-${bedIndex}-${slotIndex}`).innerHTML = ''; await saveFarmData(); window.showToast(`${itemDef.icon} Geerntet!`); awardXp(db, userKey, xpForHarvest(itemDef.growTime)); }
   }
 
   window.harvestAll = async function() {
     if (isVisitMode) return;
     let count = 0;
+    let xpSum = 0;
     for (let b = 0; b < unlockedBeds; b++) {
       if (!beds[b]) continue;
       for (let s = 0; s < beds[b].length; s++) {
         const slot = beds[b][s];
         if (slot && slot.state === 'ready') {
           const itemId = slot.item;
+          const itemDef = shopItems[itemId];
           inventory.crops[itemId] = (inventory.crops[itemId] || 0) + 1;
           beds[b][s] = { state: 'empty', item: null, plantedAt: 0 };
           const domSlot = document.getElementById(`slot-${b}-${s}`);
           if (domSlot) domSlot.innerHTML = '';
           count++;
+          if (itemDef) xpSum += xpForHarvest(itemDef.growTime);
         }
       }
     }
     if (count > 0) {
       await saveFarmData();
       window.showToast(`🌾 ${count} Pflanze${count > 1 ? 'n' : ''} geerntet!`);
-      awardXp(db, userKey, XP_VALUES.farm_harvest * count);
+      if (xpSum > 0) awardXp(db, userKey, xpSum);
     } else {
       window.showToast('Noch nichts zum Ernten bereit.');
     }

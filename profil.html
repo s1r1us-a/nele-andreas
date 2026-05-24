@@ -1216,7 +1216,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { awardXp, XP_VALUES, XP_LABELS, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
+  import { awardXp, XP_VALUES, XP_LABELS, XP_DISPLAY, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
   import './level-up-feedback.js';
 
   const app = initializeApp({
@@ -2223,7 +2223,8 @@
     if (!tbl) return;
     let html = '<thead><tr><th>Aktion</th><th>XP</th></tr></thead><tbody>';
     Object.keys(XP_VALUES).forEach(k => {
-      html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>+' + XP_VALUES[k] + '</td></tr>';
+      const display = XP_DISPLAY[k] ? XP_DISPLAY[k] : ('+' + XP_VALUES[k]);
+      html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>' + display + '</td></tr>';
     });
     tbl.innerHTML = html + '</tbody>';
   }

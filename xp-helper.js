@@ -32,6 +32,24 @@ export const XP_VALUES = {
   theme_bought:       75
 };
 
+// Anzeige-Overrides fürs XP-Info-Modal, wenn der echte XP-Wert variabel ist
+// (z. B. abhängig von Wachstumszeit oder Bet-Multiplikator). Wird vom Modal
+// bevorzugt vor `+XP_VALUES[k]` angezeigt.
+export const XP_DISPLAY = {
+  farm_harvest: '1–24 (je 5 Min Wachstumszeit)',
+  slot_spin:    '1 × Bet-Multiplikator',
+  slot_jackpot: '200 × Bet-Multiplikator',
+  slot_bigwin:  '30 × Bet-Multiplikator'
+};
+
+// XP pro geernteter Pflanze, skaliert mit Wachstumszeit (1 XP je 5 Min,
+// mindestens 1). Hält die Belohnung fair: Radieschen (5 Min) → 1 XP,
+// Blaubeere (2 h) → 24 XP.
+export function xpForHarvest(growTimeSec) {
+  const sec = Number(growTimeSec) || 0;
+  return Math.max(1, Math.round(sec / 300));
+}
+
 // Deutsche Anzeigetexte für das XP-Info-Modal.
 export const XP_LABELS = {
   heart_batch10:      '10 Momenten Klicks',
@@ -46,7 +64,7 @@ export const XP_LABELS = {
   farm_feed:          'Farm: Tier gefüttert',
   farm_beehive:       'Farm: Bienenstock abholen',
   farm_animal_bought: 'Farm: Tier gekauft',
-  farm_harvest:       'Farm: Pflanze geerntet',
+  farm_harvest:       'Farm: Pflanze geerntet (je nach Wachstumszeit)',
   farm_bakery:        'Farm: Bäckerei abgeholt',
   farm_weaving:       'Farm: Weberei abgeholt',
   farm_forge:         'Farm: Schmiede abgeholt',
