@@ -3192,6 +3192,10 @@
     setTimeout(() => el.remove(), 1200);
   }
 
+  window.fmtCoins = function(n) {
+    return Number(n).toLocaleString('de-DE');
+  }
+
   // ── NEUE ITEMS (BALANCED) ──
   const shopItems = {
     radish:    { id: 'radish',    name: 'Radieschen',  icon: '🧅', price: 5,  sellPrice: 15,  growTime: 300  },
@@ -3527,7 +3531,7 @@
 
       onValue(ref(db, `coins/${userKey}`), snap => {
         currentCoins = Number(snap.val()) || 0;
-        document.getElementById('globalCoins').textContent = currentCoins.toLocaleString('de-DE');
+        document.getElementById('globalCoins').textContent = window.fmtCoins(currentCoins);
       });
 
       // ── GESCHENKE LISTENER ──
@@ -4596,7 +4600,7 @@
             const isFav = bakeryFavorites.has(r.id);
             let btnState = canBake && freeSlots > 0 ? '' : 'disabled';
             let btnText = freeSlots === 0 ? 'Ofen voll' : 'Backen';
-            html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startBakingAll('${r.id}')" ${btnState} title="Alle freien Ofen-Slots mit diesem Rezept füllen">⏩ Alle</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
+            html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top: 4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${window.fmtCoins(r.sellPrice)} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startBaking('${r.id}')" ${btnState}>${btnText}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startBakingAll('${r.id}')" ${btnState} title="Alle freien Ofen-Slots mit diesem Rezept füllen">⏩ Alle</button><button class="fav-btn" onclick="window.toggleFavorite('bakery','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
         });
         content.innerHTML = html;
     } else {
@@ -4723,8 +4727,7 @@
       } else {
         for (let i = unlockedBeds; i < MAX_BEDS; i++) {
           const cost = bedPrices[i];
-          const label = cost >= 1000 ? (cost / 1000) + 'k' : cost;
-          list.insertAdjacentHTML('beforeend', `<div class="item-row"><div class="item-info"><span class="item-icon">🌾</span><div><div class="item-name">Feld ${i + 1}</div><div class="item-price">${label} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBed()">Kaufen</button></div>`);
+          list.insertAdjacentHTML('beforeend', `<div class="item-row"><div class="item-info"><span class="item-icon">🌾</span><div><div class="item-name">Feld ${i + 1}</div><div class="item-price">${window.fmtCoins(cost)} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBed()">Kaufen</button></div>`);
           break;
         }
         if (unlockedBeds < MAX_BEDS - 1) {
@@ -4737,7 +4740,7 @@
     if (tabType === 'seeds') {
       document.getElementById('tabSeeds').classList.add('active');
       let seedsHtml = '';
-      Object.values(shopItems).forEach(item => { seedsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${item.price} 🪙 | ⏱️ ${Math.round(item.growTime/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
+      Object.values(shopItems).forEach(item => { seedsHtml += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}samen</div><div class="item-price">${window.fmtCoins(item.price)} 🪙 | ⏱️ ${Math.round(item.growTime/60)} Min</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'seed')">Kaufen</button></div>`; });
       list.innerHTML = seedsHtml;
     } else if (tabType === 'animals') {
       document.getElementById('tabAnimals').classList.add('active');
@@ -4748,10 +4751,10 @@
       
       if (beehive.level === 0) {
         beehivePrice = 800;
-        beehiveHtml = `<div class="item-row"><div class="item-info"><span class="item-icon">🐝</span><div><div class="item-name">Bienenstock</div><div class="item-price">800 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBeehive()">Kaufen</button></div>`;
+        beehiveHtml = `<div class="item-row"><div class="item-info"><span class="item-icon">🐝</span><div><div class="item-name">Bienenstock</div><div class="item-price">${window.fmtCoins(800)} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.buyBeehive()">Kaufen</button></div>`;
       } else if (beehive.level < 5) {
         beehivePrice = beehive.level * 1500;
-        beehiveHtml = `<div class="item-row"><div class="item-info"><span class="item-icon">🐝</span><div><div class="item-name">Bienenstock (Lv. ${beehive.level} ➔ ${beehive.level+1})</div><div class="item-price">${beehivePrice} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.upgradeBeehive(${beehivePrice})">Upgraden</button></div>`;
+        beehiveHtml = `<div class="item-row"><div class="item-info"><span class="item-icon">🐝</span><div><div class="item-name">Bienenstock (Lv. ${beehive.level} ➔ ${beehive.level+1})</div><div class="item-price">${window.fmtCoins(beehivePrice)} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.upgradeBeehive(${beehivePrice})">Upgraden</button></div>`;
       } else {
         beehivePrice = 999999;
         beehiveHtml = `<div style="text-align:center; padding: 10px; color: var(--text-mid); font-weight: bold; margin-bottom: 8px;">🐝 Bienenstock (Max. Level 5)</div>`;
@@ -4762,7 +4765,7 @@
       Object.values(animalItems).forEach(item => { 
         itemsToRender.push({ 
           price: item.price, 
-          html: `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}</div><div class="item-price">${item.price} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'animal')">Kaufen</button></div>` 
+          html: `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><div class="item-name">${item.name}</div><div class="item-price">${window.fmtCoins(item.price)} 🪙</div></div></div><button class="btn-generic btn-buy" onclick="window.openConfirmBuy('${item.id}', 'animal')">Kaufen</button></div>`
         }); 
       });
 
@@ -4784,7 +4787,7 @@
         await saveFarmData();
         updateFarmDOM();
         window.renderShop('animals');
-        window.showFloatingNumber("-800 🪙", "#ef4444");
+        window.showFloatingNumber("-" + window.fmtCoins(800) + " 🪙", "#ef4444");
     } else {
         window.showToast('Nicht genug Münzen!');
     }
@@ -4799,7 +4802,7 @@
         await saveFarmData();
         updateFarmDOM();
         window.renderShop('animals');
-        window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
+        window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444");
         window.showToast(`Bienenstock Level ${beehive.level}! 🎉`);
     } else {
         window.showToast('Nicht genug Münzen!');
@@ -4811,7 +4814,7 @@
       if (currentCoins < cost) { window.showToast('Nicht genug Münzen! 🪙'); return; }
       if (!confirmed && cost >= 50000) {
           document.getElementById('confirmTitle').textContent = 'Feld kaufen?';
-          document.getElementById('confirmText').innerHTML = `Möchtest du <b>Feld ${unlockedBeds + 1}</b> für <b>${cost.toLocaleString('de-DE')} 🪙</b> kaufen?`;
+          document.getElementById('confirmText').innerHTML = `Möchtest du <b>Feld ${unlockedBeds + 1}</b> für <b>${window.fmtCoins(cost)} 🪙</b> kaufen?`;
           document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.buyBed(true)">Kaufen ✓</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Abbrechen</button>`;
           window.showSpecificModal('modalConfirm');
           return;
@@ -4824,7 +4827,7 @@
       updateFarmDOM();
       window.renderShop('fields');
       window.showSpecificModal('modalShop');
-      window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
+      window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444");
   }
 
   window.openConfirmBuy = function(itemId, type) { 
@@ -4836,24 +4839,24 @@
         <div style="text-align:center; margin-bottom:10px;">
           <span style="font-size:28px">${itemToBuy.icon}</span><br>
           <strong style="color:var(--text-dark); font-size:15px;">${itemToBuy.name}samen</strong><br>
-          <span style="font-size:12px; color:var(--text-mid);">${itemToBuy.price} 🪙 pro Stück</span>
+          <span style="font-size:12px; color:var(--text-mid);">${window.fmtCoins(itemToBuy.price)} 🪙 pro Stück</span>
         </div>
         <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin:10px 0 8px;">
           <button class="sell-qty-btn" type="button" onclick="window.buyQtyChange(-1)">−</button>
           <input class="sell-qty-input" type="number" id="buyQtyInput" min="1" value="1" oninput="window.buyQtyUpdate()">
           <button class="sell-qty-btn" type="button" onclick="window.buyQtyChange(1)">+</button>
         </div>
-        <div id="buyQtyTotal" style="font-family:'Dancing Script', cursive; font-size:24px; color:var(--gold); font-weight:700; text-align:center;">${itemToBuy.price} 🪙</div>
+        <div id="buyQtyTotal" style="font-family:'Dancing Script', cursive; font-size:24px; color:var(--gold); font-weight:700; text-align:center;">${window.fmtCoins(itemToBuy.price)} 🪙</div>
       `;
       document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.buyQtyMax()" style="background: linear-gradient(135deg, #c084fc, #a855f7);">Max kaufen</button><button class="btn-generic btn-buy" onclick="window.processBuyInput()">Kaufen ✓</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`;
     }
-    else { itemToBuy = animalItems[itemId]; document.getElementById('confirmTitle').textContent = "Tier adoptieren 🐾"; document.getElementById('confirmText').innerHTML = `Wie soll dein neues Tier heißen?<br><br><span style="font-size:28px">${itemToBuy.icon}</span><br><br><input type="text" id="newAnimalName" class="name-input" placeholder="Name eingeben..." autocomplete="off" maxlength="20">`; document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.processBuyAnimal()">Adoptieren (${itemToBuy.price} 🪙)</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`; setTimeout(() => { const input = document.getElementById('newAnimalName'); if(input) input.focus(); }, 100); }
+    else { itemToBuy = animalItems[itemId]; document.getElementById('confirmTitle').textContent = "Tier adoptieren 🐾"; document.getElementById('confirmText').innerHTML = `Wie soll dein neues Tier heißen?<br><br><span style="font-size:28px">${itemToBuy.icon}</span><br><br><input type="text" id="newAnimalName" class="name-input" placeholder="Name eingeben..." autocomplete="off" maxlength="20">`; document.getElementById('confirmButtons').innerHTML = `<button class="btn-generic btn-buy" onclick="window.processBuyAnimal()">Adoptieren (${window.fmtCoins(itemToBuy.price)} 🪙)</button><button class="btn-generic btn-cancel" onclick="window.showSpecificModal('modalShop')">Zurück</button>`; setTimeout(() => { const input = document.getElementById('newAnimalName'); if(input) input.focus(); }, 100); }
     window.showSpecificModal('modalConfirm');
   }
 
   window.processBuy = async function(amount) {
     const cost = itemToBuy.price * amount;
-    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); contributeToTopf(db, userKey, cost, 'farm').catch(()=>{}); await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + cost + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
+    if (currentCoins >= cost) { await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost); contributeToTopf(db, userKey, cost, 'farm').catch(()=>{}); await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err)); inventory.seeds[itemToBuy.id] += amount; await saveFarmData(); window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444"); window.showSpecificModal('modalShop'); }
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
@@ -4870,7 +4873,7 @@
     const total = itemToBuy.price * val;
     const totalEl = document.getElementById('buyQtyTotal');
     if (totalEl) {
-      totalEl.textContent = `${total} 🪙`;
+      totalEl.textContent = `${window.fmtCoins(total)} 🪙`;
       totalEl.style.color = (currentCoins >= total) ? 'var(--gold)' : '#ef4444';
     }
   }
@@ -4921,7 +4924,7 @@
         renderAnimalDOM(newAnimal);
         await saveFarmData();
         window.closeAllModals();
-        window.showFloatingNumber("-" + cost + " 🪙", "#ef4444");
+        window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444");
         awardXp(db, userKey, XP_VALUES.farm_animal_bought);
     }
     else { window.showToast('Nicht genug Münzen! 🪙'); }
@@ -4932,38 +4935,38 @@
     let html = '';
 
     let cropsRows = '';
-    Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; cropsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; cropsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${window.fmtCoins(item.sellPrice)} 🪙)</button></div>`; } });
     if (cropsRows) html += `<div class="section-title">🧺 Ernte</div><div class="item-list">${cropsRows}</div>`;
 
     let itemsRows = '';
-    if (inventory.items.honey > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 300)">Verkaufen (300 🪙)</button></div>`; }
-    if (inventory.items.wool > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><div><span class="item-name">Wolle</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.wool}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'wool', 600)">Verkaufen (600 🪙)</button></div>`; }
-    if (inventory.items.egg > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><div><span class="item-name">Ei</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.egg}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'egg', 200)">Verkaufen (200 🪙)</button></div>`; }
-    if (inventory.items.milk > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Kuhmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (300 🪙)</button></div>`; }
-    if (inventory.items.diamond > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (1100 🪙)</button></div>`; }
-    if (inventory.items.fertilizer > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (60 🪙)</button></div>`; }
-    if (inventory.items.firefly > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><div><span class="item-name">Glühwürmchen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.firefly}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'firefly', 10)">Verkaufen (10 🪙)</button></div>`; }
-    if ((inventory.items.feather || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪶</span><div><span class="item-name">Feder</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.feather}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'feather', 250)">Verkaufen (250 🪙)</button></div>`; }
-    if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (400 🪙)</button></div>`; }
-    if ((inventory.items.truffle || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (1200 🪙)</button></div>`; }
-    if ((inventory.items.horseshoe || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧲</span><div><span class="item-name">Hufeisen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.horseshoe}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'horseshoe', 1500)">Verkaufen (1500 🪙)</button></div>`; }
-    if ((inventory.items.rainbowessence || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🌈</span><div><span class="item-name">Regenbogen-Essenz</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.rainbowessence}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'rainbowessence', 1500)">Verkaufen (1500 🪙)</button></div>`; }
+    if (inventory.items.honey > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 300)">Verkaufen (${window.fmtCoins(300)} 🪙)</button></div>`; }
+    if (inventory.items.wool > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><div><span class="item-name">Wolle</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.wool}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'wool', 600)">Verkaufen (${window.fmtCoins(600)} 🪙)</button></div>`; }
+    if (inventory.items.egg > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><div><span class="item-name">Ei</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.egg}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'egg', 200)">Verkaufen (${window.fmtCoins(200)} 🪙)</button></div>`; }
+    if (inventory.items.milk > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Kuhmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (${window.fmtCoins(300)} 🪙)</button></div>`; }
+    if (inventory.items.diamond > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (${window.fmtCoins(1100)} 🪙)</button></div>`; }
+    if (inventory.items.fertilizer > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (${window.fmtCoins(60)} 🪙)</button></div>`; }
+    if (inventory.items.firefly > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><div><span class="item-name">Glühwürmchen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.firefly}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'firefly', 10)">Verkaufen (${window.fmtCoins(10)} 🪙)</button></div>`; }
+    if ((inventory.items.feather || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪶</span><div><span class="item-name">Feder</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.feather}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'feather', 250)">Verkaufen (${window.fmtCoins(250)} 🪙)</button></div>`; }
+    if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (${window.fmtCoins(400)} 🪙)</button></div>`; }
+    if ((inventory.items.truffle || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (${window.fmtCoins(1200)} 🪙)</button></div>`; }
+    if ((inventory.items.horseshoe || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧲</span><div><span class="item-name">Hufeisen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.horseshoe}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'horseshoe', 1500)">Verkaufen (${window.fmtCoins(1500)} 🪙)</button></div>`; }
+    if ((inventory.items.rainbowessence || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🌈</span><div><span class="item-name">Regenbogen-Essenz</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.rainbowessence}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'rainbowessence', 1500)">Verkaufen (${window.fmtCoins(1500)} 🪙)</button></div>`; }
     if (itemsRows) html += `<div class="section-title">🎒 Tierprodukte & Items</div><div class="item-list">${itemsRows}</div>`;
 
     let bakeryRows = '';
-    Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; bakeryRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; bakeryRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${window.fmtCoins(item.sellPrice)} 🪙)</button></div>`; } });
     if (bakeryRows) html += `<div class="section-title">🍩 Backwaren</div><div class="item-list">${bakeryRows}</div>`;
 
     let accRows = '';
-    Object.keys(inventory.accessories || {}).forEach(key => { if (inventory.accessories[key] > 0) { hasItems = true; const item = weavingRecipes[key]; accRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.accessories[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('accessories', '${key}', ${item.sellPrice})">Verkaufen (${item.sellPrice} 🪙)</button></div>`; } });
+    Object.keys(inventory.accessories || {}).forEach(key => { if (inventory.accessories[key] > 0) { hasItems = true; const item = weavingRecipes[key]; accRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.accessories[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('accessories', '${key}', ${item.sellPrice})">Verkaufen (${window.fmtCoins(item.sellPrice)} 🪙)</button></div>`; } });
     if (accRows) html += `<div class="section-title">👒 Accessoires</div><div class="item-list">${accRows}</div>`;
 
     let oresRows = '';
-    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; oresRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><div><span class="item-name">${o.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('ores','${key}',${oreSellPrices[key]})">Verkaufen (${oreSellPrices[key]} 🪙)</button></div>`; } });
+    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; oresRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><div><span class="item-name">${o.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('ores','${key}',${oreSellPrices[key]})">Verkaufen (${window.fmtCoins(oreSellPrices[key])} 🪙)</button></div>`; } });
     if (oresRows) html += `<div class="section-title">⛏️ Erze</div><div class="item-list">${oresRows}</div>`;
 
     let jewRows = '';
-    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; jewRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><span class="item-name">${r.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('jewelry','${key}',${r.sellPrice})">Verkaufen (${r.sellPrice.toLocaleString('de-DE')} 🪙)</button></div>`; } });
+    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; jewRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><span class="item-name">${r.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('jewelry','${key}',${r.sellPrice})">Verkaufen (${window.fmtCoins(r.sellPrice)} 🪙)</button></div>`; } });
     if (jewRows) html += `<div class="section-title">💎 Schmuck</div><div class="item-list">${jewRows}</div>`;
 
     if (!hasItems) {
@@ -5017,7 +5020,7 @@
     if (val < 1) val = 1;
     if (val > pendingSell.stock) val = pendingSell.stock;
     input.value = val;
-    document.getElementById('sellQtyTotal').textContent = '+' + (val * pendingSell.price) + ' 🪙';
+    document.getElementById('sellQtyTotal').textContent = '+' + window.fmtCoins(val * pendingSell.price) + ' 🪙';
   }
 
   window.sellQtyChange = function(delta) {
@@ -5050,7 +5053,7 @@
       await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
       await runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
       await saveFarmData();
-      window.showFloatingNumber("+" + total + " 🪙", "#22c55e");
+      window.showFloatingNumber("+" + window.fmtCoins(total) + " 🪙", "#22c55e");
     } finally {
       isSelling = false;
       pendingSell = null;
@@ -5142,7 +5145,7 @@
         const isFav = weavingFavorites.has(r.id);
         let btnState = canWeave && freeSlots > 0 ? '' : 'disabled';
         let btnText = freeSlots === 0 ? 'Voll' : 'Weben';
-        html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${r.sellPrice} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startWeavingAll('${r.id}')" ${btnState} title="Alle freien Webstühle mit diesem Rezept füllen">⏩ Alle</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
+        html += `<div class="item-row${isFav ? ' is-favorite' : ''}"><div class="item-info"><span class="item-icon">${r.icon}</span><div><div class="item-name">${r.name}</div><div style="margin-top:4px;">${reqHtml}</div><div style="font-size:10px; color:var(--text-mid); margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 Wert: ${window.fmtCoins(r.sellPrice)} 🪙</div></div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startWeaving('${r.id}')" ${btnState}>${btnText}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startWeavingAll('${r.id}')" ${btnState} title="Alle freien Webstühle mit diesem Rezept füllen">⏩ Alle</button><button class="fav-btn" onclick="window.toggleFavorite('weaving','${r.id}')" title="Favorit">${isFav ? '⭐' : '☆'}</button></div></div>`;
       });
       content.innerHTML = html;
     } else {
@@ -5267,7 +5270,7 @@
         html += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div>
           <div class="item-name">${r.name}${equippableTag}</div>
           <div style="margin-top:4px;">${reqHtml}</div>
-          <div style="font-size:10px;color:var(--text-mid);margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 ${r.sellPrice.toLocaleString('de-DE')} 🪙</div>
+          <div style="font-size:10px;color:var(--text-mid);margin-top:2px;">⏱️ ${Math.round(r.time/60)} Min | 💰 ${window.fmtCoins(r.sellPrice)} 🪙</div>
         </div></div><div class="recipe-actions"><button class="btn-generic btn-buy" onclick="window.startForging('${r.id}')" ${canForge ? '' : 'disabled'}>${freeSlots === 0 ? 'Voll' : 'Schmieden'}</button><button class="btn-generic btn-buy" style="padding:6px 8px;" onclick="window.startForgingAll('${r.id}')" ${canForge ? '' : 'disabled'} title="Alle freien Werkbänke mit diesem Rezept füllen">⏩ Alle</button></div></div>`;
       });
       content.innerHTML = html;
@@ -6109,7 +6112,7 @@
       const qty = Math.floor(find.min + Math.random() * (find.max - find.min + 1));
       if (find.type === 'coins') {
         acc.dogCoins += qty;
-        return `🐕 Fundsache: ${qty} 🪙`;
+        return `🐕 Fundsache: ${window.fmtCoins(qty)} 🪙`;
       } else if (find.type === 'item') {
         inventory.items[find.key] = (inventory.items[find.key] || 0) + qty;
         return `🐕 Fundsache: ${qty}× ${find.icon} ${find.name}!`;
@@ -6206,8 +6209,8 @@
       <div id="defaultAnimalView">
         ${mainActionHtml}
         <button class="btn-feed-large btn-wardrobe" style="margin-top: 15px;" onclick="window.renderWardrobeGrid(${id})">👕 Garderobe öffnen</button>
-        <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(217,119,6,0.3);" onclick="window.confirmRetire(${id})">🌅 In den Ruhestand schicken (+${retireRefund} 🪙)</button>
-        <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #7f1d1d, #450a0a); box-shadow: 0 4px 14px rgba(127,29,29,0.4); color: #fff;" onclick="window.confirmSlaughter(${id})">🔪 Schlachten (+${slaughterRefund} 🪙)</button>
+        <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(217,119,6,0.3);" onclick="window.confirmRetire(${id})">🌅 In den Ruhestand schicken (+${window.fmtCoins(retireRefund)} 🪙)</button>
+        <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #7f1d1d, #450a0a); box-shadow: 0 4px 14px rgba(127,29,29,0.4); color: #fff;" onclick="window.confirmSlaughter(${id})">🔪 Schlachten (+${window.fmtCoins(slaughterRefund)} 🪙)</button>
       </div>
       <div id="wardrobeView" style="display:none;"></div>
     `;
@@ -6220,7 +6223,7 @@
     const refund = Math.floor(animalItems[a.species].price * 0.5);
     document.getElementById('confirmTitle').textContent = 'Ruhestand bestätigen 🌅';
     document.getElementById('confirmText').innerHTML =
-      `Möchtest du <b>${a.name}</b> in den wohlverdienten Ruhestand schicken?<br><br>Du erhältst <b>${refund} 🪙</b> zurück.`;
+      `Möchtest du <b>${a.name}</b> in den wohlverdienten Ruhestand schicken?<br><br>Du erhältst <b>${window.fmtCoins(refund)} 🪙</b> zurück.`;
     document.getElementById('confirmButtons').innerHTML =
       `<button class="btn-generic btn-buy" style="background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="window.executeRemoveAnimal(${id}, 'retire')">Ja, Ruhestand ✓</button>
        <button class="btn-generic btn-cancel" onclick="window.openAnimalStats(${id})">Abbrechen</button>`;
@@ -6232,7 +6235,7 @@
     const refund = animalItems[a.species].price;
     document.getElementById('confirmTitle').textContent = 'Schlachten bestätigen 🔪';
     document.getElementById('confirmText').innerHTML =
-      `Wirklich <b>${a.name}</b> zum Schlachter schicken?<br><br>Du erhältst <b>${refund} 🪙</b>.<br><span style="color:#7f1d1d;font-size:12px;">Diese Aktion ist endgültig.</span>`;
+      `Wirklich <b>${a.name}</b> zum Schlachter schicken?<br><br>Du erhältst <b>${window.fmtCoins(refund)} 🪙</b>.<br><span style="color:#7f1d1d;font-size:12px;">Diese Aktion ist endgültig.</span>`;
     document.getElementById('confirmButtons').innerHTML =
       `<button class="btn-generic btn-buy" style="background:linear-gradient(135deg,#7f1d1d,#450a0a);color:#fff;" onclick="window.executeRemoveAnimal(${id}, 'slaughter')">Ja, schlachten</button>
        <button class="btn-generic btn-cancel" onclick="window.openAnimalStats(${id})">Abbrechen</button>`;
@@ -6285,15 +6288,15 @@
       .catch(err => console.error('Stats-Fehler:', err));
     await saveFarmData();
 
-    window.showFloatingNumber("+" + refund + " 🪙", "#22c55e");
+    window.showFloatingNumber("+" + window.fmtCoins(refund) + " 🪙", "#22c55e");
 
     setTimeout(() => {
       document.getElementById('confirmTitle').textContent =
         mode === 'slaughter' ? 'Zum Schlachter geschickt 🔪' : 'Ruhestand 🌅';
       document.getElementById('confirmText').innerHTML =
         mode === 'slaughter'
-          ? `Du hast <b>${a.name}</b> geschlachtet.<br><br><b>+${refund} 🪙</b>`
-          : `Du hast <b>${a.name}</b> in den wohlverdienten Ruhestand geschickt.<br><br><b>+${refund} 🪙</b>`;
+          ? `Du hast <b>${a.name}</b> geschlachtet.<br><br><b>+${window.fmtCoins(refund)} 🪙</b>`
+          : `Du hast <b>${a.name}</b> in den wohlverdienten Ruhestand geschickt.<br><br><b>+${window.fmtCoins(refund)} 🪙</b>`;
       document.getElementById('confirmButtons').innerHTML =
         `<button class="btn-generic btn-buy" onclick="window.closeAllModals()">OK</button>`;
       window.showSpecificModal('modalConfirm');
@@ -7160,7 +7163,7 @@
     const qtys = section === 'gift' ? giftQtys : section === 'offer' ? offerQtys : requestQtys;
     const coins = section === 'offer' ? offerCoins : section === 'request' ? requestCoins : 0;
     let html = '';
-    if (coins > 0) html += `<div class="trade-chip trade-coin-chip">🪙 ${coins.toLocaleString('de-DE')} <button class="trade-chip-remove" onclick="window._clearCoins('${section}')">✕</button></div>`;
+    if (coins > 0) html += `<div class="trade-chip trade-coin-chip">🪙 ${window.fmtCoins(coins)} <button class="trade-chip-remove" onclick="window._clearCoins('${section}')">✕</button></div>`;
     Object.entries(qtys).forEach(([k, qty]) => {
       const [cat, ...rest] = k.split('__'); const id = rest.join('__');
       html += `<div class="trade-chip">${getItemLabel(cat, id)} ×${qty} <button class="trade-chip-remove" onclick="window._tradeStep('${section}','${cat}','${id}',${-qty})">✕</button></div>`;
@@ -7271,8 +7274,8 @@
       </div>`;
     });
     myTrades.forEach(([id, t]) => {
-      const offerList = (t.offer || []).map(it => it.coins ? '🪙 ' + it.coins : getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
-      const reqList  = (t.request || []).map(it => it.coins ? '🪙 ' + it.coins : getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
+      const offerList = (t.offer || []).map(it => it.coins ? '🪙 ' + window.fmtCoins(it.coins) : getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
+      const reqList  = (t.request || []).map(it => it.coins ? '🪙 ' + window.fmtCoins(it.coins) : getItemLabel(it.category, it.itemId) + ' ×' + it.qty).join(' · ');
       html += `<div class="trade-inbox-card">
         <div class="trade-inbox-title">🤝 Angebot von ${t.fromName}</div>
         <div class="trade-inbox-detail"><strong>Bekomme:</strong> ${offerList}<br><strong>Gebe:</strong> ${reqList}</div>
@@ -7318,8 +7321,8 @@
     const requestItems = qtysToArray(requestQtys);
     if (!offerItems.length && offerCoins <= 0) { window.showToast('Füge etwas zum Angebot hinzu!'); return; }
     if (!requestItems.length && requestCoins <= 0) { window.showToast('Was möchtest du dafür?'); return; }
-    const offerParts = [...offerItems.map(b => b.label + ' ×' + b.qty), ...(offerCoins > 0 ? ['🪙 ' + offerCoins + ' Münzen'] : [])];
-    const reqParts   = [...requestItems.map(b => b.label + ' ×' + b.qty), ...(requestCoins > 0 ? ['🪙 ' + requestCoins + ' Münzen'] : [])];
+    const offerParts = [...offerItems.map(b => b.label + ' ×' + b.qty), ...(offerCoins > 0 ? ['🪙 ' + window.fmtCoins(offerCoins) + ' Münzen'] : [])];
+    const reqParts   = [...requestItems.map(b => b.label + ' ×' + b.qty), ...(requestCoins > 0 ? ['🪙 ' + window.fmtCoins(requestCoins) + ' Münzen'] : [])];
     const sub = '<strong>Du bietest:</strong><br>' + offerParts.join('<br>') + '<br><br><strong>Du möchtest:</strong><br>' + reqParts.join('<br>');
     window.openSendConfirm('🤝', 'Handelsangebot an ' + getOtherName() + '?', sub, window.sendTrade);
   };
@@ -7428,8 +7431,8 @@
     pendingTradeId = tradeId;
     const t = pendingTrades[tradeId];
     if (!t) return;
-    const offerList = (t.offer || []).map(it => it.coins ? '🪙 ' + it.coins + ' Münzen' : getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join('<br>');
-    const reqList = (t.request || []).map(it => it.coins ? '🪙 ' + it.coins + ' Münzen' : getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join('<br>');
+    const offerList = (t.offer || []).map(it => it.coins ? '🪙 ' + window.fmtCoins(it.coins) + ' Münzen' : getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join('<br>');
+    const reqList = (t.request || []).map(it => it.coins ? '🪙 ' + window.fmtCoins(it.coins) + ' Münzen' : getItemLabel(it.category, it.itemId) + ' × ' + it.qty).join('<br>');
     document.getElementById('tradeConfirmContent').innerHTML = `
       <div style="background:rgba(16,185,129,0.08);border:1.5px solid rgba(16,185,129,0.2);border-radius:14px;padding:12px 14px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#059669;margin-bottom:6px;">✅ Du bekommst</div>
