@@ -999,6 +999,46 @@ html[data-theme="schattenfuerstin"] .stats-divider {
 /*  Aktiv wenn  html[data-theme="genderfluid"]                   */
 /* ============================================================ */
 
+/* CSS-Variablen-Override — Theme greift auch ohne applyTheme() (z.B. aus Cache) */
+html[data-theme="genderfluid"] {
+  --rose:       #FF76A4;
+  --rose-light: #ffb3cf;
+  --rose-pale:  #1a0d3d;
+  --cream:      #0f0828;
+  --gold:       #BE18D6;
+  --warm:       #1e0e45;
+  --text-dark:  #f0e6ff;
+  --text-mid:   #c98ae0;
+
+  --ui-card-bg:             rgba(15,8,38,0.90);
+  --ui-card-border:         rgba(190,24,214,0.40);
+  --ui-card-hover-shadow:   rgba(51,62,189,0.55);
+  --ui-topbar-bg:           rgba(9,5,26,0.97);
+  --ui-topbar-border:       rgba(255,118,164,0.30);
+  --ui-btn-bg:              rgba(20,10,50,0.92);
+  --ui-btn-border:          rgba(255,118,164,0.50);
+  --ui-btn-text:            #f0e6ff;
+  --ui-coin-bg:             rgba(20,10,50,0.92);
+  --ui-modal-bg:            #0f0828;
+  --ui-modal-overlay:       rgba(0,0,0,0.94);
+  --ui-modal-border:        rgba(190,24,214,0.45);
+  --ui-active-badge-bg:     rgba(20,10,50,0.88);
+  --ui-input-bg:            #1a0d3d;
+  --ui-input-color:         #f0e6ff;
+  --ui-preview-btn-border:  rgba(190,24,214,0.45);
+  --ui-disabled-btn:        #2a1050;
+  --ui-owned-badge-bg:      rgba(255,118,164,0.18);
+  --ui-owned-badge-border:  rgba(255,118,164,0.45);
+  --ui-owned-badge-color:   #f5c6dc;
+  --ui-toast-bg:            #1a0d3d;
+  --ui-confirm-no-border:   rgba(190,24,214,0.40);
+  --ui-lootbox-odds-bg:     rgba(190,24,214,0.10);
+  --ui-lootbox-odds-border: rgba(190,24,214,0.30);
+  --ui-quote-card-bg:       rgba(15,8,38,0.90);
+  --ui-quote-card-border:   rgba(190,24,214,0.35);
+  --ui-stat-bar-bg:         rgba(190,24,214,0.15);
+}
+
 @keyframes gfFlow {
   0%   { background-position: 0% 50%; }
   100% { background-position: 300% 50%; }
