@@ -5164,6 +5164,8 @@
   const SQUIDGAME_IMG = "squid-game.png";
   // Cult-of-the-Lamb-Theme: ersetzt nur für dieses eine Theme das Startbild.
   const LAMB_IMG = "IMG_7098.jpeg";
+  // Genderfluid-Theme: ersetzt das Startbild mit der Pride-Flagge.
+  const GENDERFLUID_IMG = "D535EEC7-516D-4DCB-82CB-EC138EB7335D.png";
   function getDeviceType() {
     return window.matchMedia('(max-width: 600px)').matches ? 'mobile' : 'desktop';
   }
@@ -5199,6 +5201,7 @@
                   : (themeId === 'minecraft') ? MINECRAFT_IMG
                   : (themeId === 'squid-game') ? SQUIDGAME_IMG
                   : (themeId === 'cult-of-the-lamb') ? LAMB_IMG
+                  : (themeId === 'genderfluid') ? GENDERFLUID_IMG
                   : mainImg.dataset.origSrc;
     }
     // Zitat-Box exklusiv für Wednesday
@@ -5219,6 +5222,9 @@
       } else if (themeId === 'cult-of-the-lamb') {
         qText.textContent = 'Gemeinsam gründen wir unsere eigene kleine Sekte – für immer treu.';
         qAuthor.textContent = 'Das Lamm';
+      } else if (themeId === 'genderfluid') {
+        qText.textContent = 'Ich bin alles, was ich bin – und du liebst mich für genau das.';
+        qAuthor.textContent = '⚧️ Pride & Love';
       } else {
         qText.textContent = qText.dataset.orig;
         qAuthor.textContent = qAuthor.dataset.orig;
@@ -5237,23 +5243,26 @@
                         : isMc ? 'Gemeinsam craften wir Erinnerungen ⛏️'
                         : isSg ? 'Gemeinsam überstehen wir jedes Spiel 🦑'
                         : isLamb ? 'Gemeinsam folgen wir dem roten Lamm 🐑'
+                        : isGf ? 'Für jede Facette deiner Identität ⚧️'
                         : fText.dataset.orig;
     }
     const fHearts = document.querySelector('.footer-hearts');
     if (fHearts) {
       if (!fHearts.dataset.orig) fHearts.dataset.orig = fHearts.textContent;
-      fHearts.textContent = isWed ? '💀 · 🖐️' : isMc ? '🧱 · ⛏️' : isSg ? '🦑 · 🟢' : isLamb ? '🐑 · 🩸' : fHearts.dataset.orig;
+      fHearts.textContent = isWed ? '💀 · 🖐️' : isMc ? '🧱 · ⛏️' : isSg ? '🦑 · 🟢' : isLamb ? '🐑 · 🩸' : isGf ? '♂️ · ♀️' : fHearts.dataset.orig;
     }
     const wedDots = ['💀', '🖐️', '💀'];
     const mcDots = ['🟩', '⛏️', '🟫'];
     const sgDots = ['🟢', '🔺', '🟪'];
     const lambDots = ['🩸', '🐑', '🕯️'];
+    const gfDots = ['♂️', '⚧️', '♀️'];
     document.querySelectorAll('.hearts-row .heart-dot').forEach((dot, i) => {
       if (!dot.dataset.orig) dot.dataset.orig = dot.textContent;
       dot.textContent = isWed ? (wedDots[i] || '💀')
                       : isMc ? (mcDots[i] || '🟩')
                       : isSg ? (sgDots[i] || '🦑')
                       : isLamb ? (lambDots[i] || '🐑')
+                      : isGf ? (gfDots[i] || '⚧️')
                       : dot.dataset.orig;
     });
     const heartBtn = document.getElementById('heartBtn');
