@@ -324,6 +324,8 @@
     .xp-info-table th { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); text-align: left; padding: 6px 8px; border-bottom: 1.5px solid var(--ui-card-border); }
     .xp-info-table td { font-size: 12px; font-weight: 600; color: var(--text-mid); padding: 7px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); }
     .xp-info-table td:last-child { text-align: right; color: var(--gold); font-weight: 700; }
+    .xp-info-table tr.xp-info-cat td { font-family: 'Dancing Script', cursive; font-size: 16px; font-weight: 700; color: var(--rose); text-align: left; padding: 12px 8px 4px; border-bottom: 1.5px solid var(--ui-card-border); background: transparent; letter-spacing: 0.3px; }
+    .xp-info-table tr.xp-info-cat:first-child td { padding-top: 4px; }
     .xp-info-close { display: block; width: 100%; margin-top: 14px; background: var(--ui-btn-bg); border: 1.5px solid var(--ui-btn-border); border-radius: 50px; padding: 9px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-mid); cursor: pointer; }
     .xp-info-close:hover { border-color: var(--rose); color: var(--rose); }
     .claim-confirm-btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(135deg,#c87830,#ffe3a3); border: none; border-radius: 50px; padding: 10px; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; color: #5a3a10; cursor: pointer; }
@@ -2221,10 +2223,27 @@
   function buildXpInfoTable() {
     const tbl = document.getElementById('xpInfoTable');
     if (!tbl) return;
+    const categories = [
+      { label: '💖 Momente & Klicks', keys: ['heart_batch10', 'autoclick_batch100'] },
+      { label: '🎮 Spiele',           keys: ['game_start', 'game_win', 'game_loss', 'uno_call'] },
+      { label: '🎰 Slot-Automat',     keys: ['slot_spin', 'slot_jackpot', 'slot_bigwin'] },
+      { label: '🌾 Farm',             keys: ['farm_feed', 'farm_beehive', 'farm_animal_bought', 'farm_harvest', 'farm_bakery', 'farm_weaving', 'farm_forge', 'farm_mine_ore'] },
+      { label: '🛍️ Shop',             keys: ['booster_bought', 'booster_used', 'box_bought', 'theme_bought'] }
+    ];
+    const seen = new Set();
+    categories.forEach(c => c.keys.forEach(k => seen.add(k)));
+    const rest = Object.keys(XP_VALUES).filter(k => !seen.has(k));
+    if (rest.length) categories.push({ label: '✨ Sonstiges', keys: rest });
+
     let html = '<thead><tr><th>Aktion</th><th>XP</th></tr></thead><tbody>';
-    Object.keys(XP_VALUES).forEach(k => {
-      const display = XP_DISPLAY[k] ? XP_DISPLAY[k] : ('+' + XP_VALUES[k]);
-      html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>' + display + '</td></tr>';
+    categories.forEach(cat => {
+      const keys = cat.keys.filter(k => k in XP_VALUES);
+      if (!keys.length) return;
+      html += '<tr class="xp-info-cat"><td colspan="2">' + cat.label + '</td></tr>';
+      keys.forEach(k => {
+        const display = XP_DISPLAY[k] ? XP_DISPLAY[k] : ('+' + XP_VALUES[k]);
+        html += '<tr><td>' + (XP_LABELS[k] || k) + '</td><td>' + display + '</td></tr>';
+      });
     });
     tbl.innerHTML = html + '</tbody>';
   }
