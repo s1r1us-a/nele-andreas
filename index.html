@@ -964,6 +964,8 @@
   @keyframes boosterPulse { 0%,100%{box-shadow:0 3px 14px rgba(212,160,97,0.18)} 50%{box-shadow:0 4px 20px rgba(212,160,97,0.4)} }
   .booster-banner-emoji { font-size: 18px; }
   .booster-banner-timer { margin-left: auto; font-family: 'Dancing Script', cursive; font-size: 18px; }
+  .banner-cancel-btn { background: transparent; border: 1.5px solid rgba(212,160,97,0.5); color: var(--gold); width: 26px; height: 26px; border-radius: 50%; font-size: 14px; font-weight: 700; line-height: 1; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+  .banner-cancel-btn:hover { background: rgba(232,115,138,0.15); border-color: var(--rose, #e8738a); color: var(--rose, #e8738a); transform: scale(1.05); }
 
   .footer { margin-top: 50px; text-align: center; }
   .footer-text { font-family: 'Dancing Script', cursive; font-size: 20px; color: var(--ui-btn-text); font-weight: 600; }
@@ -2597,6 +2599,19 @@
   </div>
 </div>
 
+<!-- Modal: Aktiven XP-Booster abbrechen -->
+<div class="moment-modal-overlay" id="xpCancelOverlay">
+  <div class="moment-modal-card">
+    <span class="modal-emoji">🌟</span>
+    <div class="modal-title">XP-Booster abbrechen?</div>
+    <p style="font-size:14px;color:var(--text-dark);line-height:1.6;margin:6px 0 22px;">Die Restzeit verfällt — Coins und Booster werden nicht erstattet.</p>
+    <div class="moment-modal-btns">
+      <button class="moment-cancel-btn" id="xpCancelNo">Doch nicht</button>
+      <button class="moment-save-btn" id="xpCancelYes">Ja, abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Briefkasten -->
 <div class="moment-modal-overlay mail-modal-overlay" id="mailboxOverlay">
   <div class="moment-modal-card mail-modal-card mail-modal-shell">
@@ -2998,6 +3013,7 @@
       onValue(ref(db, `boosters/${boosterKey}/active_xp`), snap => {
         activeBoosterXp = snap.val() || null;
         updateBoosterBanner();
+        renderInGameBoosterPanel();
       });
       onValue(ref(db, `boosters/${boosterKey}/active_sabotage`), snap => {
         activeSabotage = snap.val() || null;
@@ -3208,7 +3224,10 @@
     coins_booster:       { emoji: '⚡', name: 'Coin-Booster',     desc: 'Doppelte Coins für 10 Minuten',                        durationMs: 10 * 60 * 1000, target: 'self',     activeKey: 'active_coins' },
     moments_booster:     { emoji: '💫', name: 'Momenten-Booster', desc: 'Doppelte Momente für 3 Minuten',                        durationMs: 3 * 60 * 1000,  target: 'self',     activeKey: 'active_moments' },
     autoclicker_booster: { emoji: '🤖', name: 'Auto-Klicker',     desc: 'Klickt 2 Minuten lang 10×/Sekunde automatisch für dich', durationMs: 2 * 60 * 1000,  target: 'self',     activeKey: 'active_autoclicker' },
-    xp_booster:          { emoji: '🌟', name: 'XP-Booster',       desc: '+50% XP auf alles für 6 Stunden',                        durationMs: 6 * 60 * 60 * 1000, target: 'self',    activeKey: 'active_xp' },
+    xp_booster:          { emoji: '🌟', name: 'XP-Booster +50%',  desc: '+50% XP auf alles für 6 Stunden',                        durationMs: 6 * 60 * 60 * 1000, target: 'self',    activeKey: 'active_xp', multiplier: 1.5 },
+    xp_booster_100:      { emoji: '🌟', name: 'XP-Booster +100%', desc: '+100% XP auf alles für 6 Stunden',                       durationMs: 6 * 60 * 60 * 1000, target: 'self',    activeKey: 'active_xp', multiplier: 2.0 },
+    xp_booster_150:      { emoji: '🌟', name: 'XP-Booster +150%', desc: '+150% XP auf alles für 6 Stunden',                       durationMs: 6 * 60 * 60 * 1000, target: 'self',    activeKey: 'active_xp', multiplier: 2.5 },
+    xp_booster_200:      { emoji: '🌟', name: 'XP-Booster +200%', desc: '+200% XP auf alles für 6 Stunden',                       durationMs: 6 * 60 * 60 * 1000, target: 'self',    activeKey: 'active_xp', multiplier: 3.0 },
     sabotage_booster:    { emoji: '💻', name: 'Hack',             desc: 'Beim Gegner zählt 90 Sekunden lang nur jeder 10. Klick', durationMs: 90 * 1000,      target: 'opponent', activeKey: 'active_sabotage' },
     spam_booster:        { emoji: '📺', name: 'Popup-Hack',       desc: 'Spammt den Gegner 90 Sek. lang mit nervigen Hacker-Popups zu – auf jeder Seite', durationMs: 90 * 1000, target: 'opponent', activeKey: 'active_spam' },
     anti_hack_booster:   { emoji: '🛡️', name: 'Gegen-Hack',       desc: 'Bricht einen laufenden Hack sofort ab – manuell hier aktivieren', target: 'self' },
@@ -3388,8 +3407,11 @@
       out.push({ id:'moments_booster', emoji:'💫', text:'Momenten-Booster aktiv – ×2 Momente!', until: activeBoosterMoments.activatedAt + activeBoosterMoments.durationMs });
     if (isBoosterActive(activeBoosterAutoclicker))
       out.push({ id:'autoclicker_booster', emoji:'🤖', text:'Auto-Klicker aktiv – klickt für dich!', until: activeBoosterAutoclicker.activatedAt + activeBoosterAutoclicker.durationMs });
-    if (isBoosterActive(activeBoosterXp))
-      out.push({ id:'xp_booster', emoji:'🌟', text:'XP-Booster aktiv – +50% XP!', until: activeBoosterXp.activatedAt + activeBoosterXp.durationMs });
+    if (isBoosterActive(activeBoosterXp)) {
+      const xpMult = (typeof activeBoosterXp.multiplier === 'number' && activeBoosterXp.multiplier > 0) ? activeBoosterXp.multiplier : 1.5;
+      const xpPct  = Math.round((xpMult - 1) * 100);
+      out.push({ id:'xp_booster', emoji:'🌟', text:`XP-Booster aktiv – +${xpPct}% XP!`, until: activeBoosterXp.activatedAt + activeBoosterXp.durationMs, cancellable: true });
+    }
     if (isBoosterActive(activeSabotage))
       out.push({ id:'sabotage_booster', emoji:'💻', text:`Gehackt von ${activeSabotage.from || 'Gegner'} – nur jeder 10. Klick zählt`, until: activeSabotage.activatedAt + activeSabotage.durationMs });
     return out;
@@ -3412,9 +3434,22 @@
     entries.forEach(e => {
       const el = document.createElement('div');
       el.className = 'booster-banner-item';
-      el.innerHTML = `<span class="booster-banner-emoji">${e.emoji}</span><span>${e.text}</span><span class="booster-banner-timer" id="bannerTimer_${e.id}">${formatCountdown(e.until - Date.now())}</span>`;
+      const cancelBtn = e.cancellable
+        ? `<button class="banner-cancel-btn" data-cancel-xp="1" aria-label="XP-Booster abbrechen" title="Abbrechen">✕</button>`
+        : '';
+      el.innerHTML = `<span class="booster-banner-emoji">${e.emoji}</span><span>${e.text}</span><span class="booster-banner-timer" id="bannerTimer_${e.id}">${formatCountdown(e.until - Date.now())}</span>${cancelBtn}`;
       banner.appendChild(el);
     });
+    if (!banner._cancelWired) {
+      banner.addEventListener('click', ev => {
+        const btn = ev.target.closest('[data-cancel-xp]');
+        if (!btn) return;
+        ev.stopPropagation();
+        const overlay = document.getElementById('xpCancelOverlay');
+        if (overlay) overlay.classList.add('open');
+      });
+      banner._cancelWired = true;
+    }
     updateHeartFx();
 
     if (!boosterBannerInterval) {
@@ -3446,18 +3481,23 @@
       return;
     }
     list.innerHTML = '';
+    const xpLive = isBoosterActive(activeBoosterXp);
     ids.forEach(id => {
       const def = BOOSTER_DEFS[id];
       const count = boosterInventoryIndex[id] || 0;
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--ui-modal-border);';
+      const blocked = def.activeKey === 'active_xp' && xpLive;
+      const btnHtml = blocked
+        ? `<button class="moment-save-btn" style="flex:0 0 auto;padding:10px 16px;font-size:13px;opacity:0.55;cursor:not-allowed;" disabled title="Im Banner abbrechen">Läuft bereits</button>`
+        : `<button class="moment-save-btn" style="flex:0 0 auto;padding:10px 16px;font-size:13px;" data-bid="${id}">Aktivieren</button>`;
       row.innerHTML = `
         <div style="font-size:26px;">${def.emoji}</div>
         <div style="flex:1;text-align:left;min-width:0;">
           <div style="font-weight:700;font-size:14px;color:var(--text-dark);">${def.name} <span style="color:var(--gold);">×${count}</span></div>
           <div style="font-size:11px;color:var(--ui-btn-text);">${def.desc}</div>
         </div>
-        <button class="moment-save-btn" style="flex:0 0 auto;padding:10px 16px;font-size:13px;" data-bid="${id}">Aktivieren</button>
+        ${btnHtml}
       `;
       list.appendChild(row);
     });
@@ -3522,13 +3562,26 @@
       if (stillActive) { alert('💻 Gegner wird bereits gehackt!'); return; }
     }
 
+    // XP-Booster: nicht stackbar. Wenn bereits einer läuft, blockieren BEVOR
+    // das Inventar dezimiert wird – sonst ginge der Booster verloren.
+    if (def.activeKey === 'active_xp') {
+      const curXp = (await get(ref(db, `boosters/${key}/active_xp`))).val();
+      const xpLive = curXp && curXp.activatedAt && Date.now() < curXp.activatedAt + (curXp.durationMs || 0);
+      if (xpLive) { alert('🌟 Es läuft bereits ein XP-Booster. Erst im Banner abbrechen oder ablaufen lassen.'); return; }
+    }
+
     if (def.target === 'opponent') {
       const opponentKey = key === 'andreas' ? 'nele' : 'andreas';
       await set(ref(db, `boosters/${key}/inventory/${id}`), count - 1);
       await set(ref(db, `boosters/${opponentKey}/${def.activeKey}`), { durationMs: def.durationMs, from: user, pending: true });
     } else {
       await set(ref(db, `boosters/${key}/inventory/${id}`), count - 1);
-      await set(ref(db, `boosters/${key}/${def.activeKey}`), { activatedAt: Date.now(), durationMs: def.durationMs });
+      const payload = { activatedAt: Date.now(), durationMs: def.durationMs };
+      if (def.activeKey === 'active_xp') {
+        payload.multiplier = def.multiplier;
+        payload.sourceId   = id;
+      }
+      await set(ref(db, `boosters/${key}/${def.activeKey}`), payload);
     }
     await awardXp(db, key, XP_VALUES.booster_used);
   }
@@ -3550,6 +3603,21 @@
       const panelEl = document.getElementById('boosterPanelOverlay');
       if (panelEl) panelEl.classList.remove('open');
       if (pendingInGameBoosterId) { await activateInGameBooster(pendingInGameBoosterId); pendingInGameBoosterId = null; }
+    });
+
+    // XP-Booster-Abbrechen-Modal
+    const xpOv  = document.getElementById('xpCancelOverlay');
+    const xpYes = document.getElementById('xpCancelYes');
+    const xpNo  = document.getElementById('xpCancelNo');
+    if (xpOv)  xpOv.addEventListener('click', e => { if (e.target === xpOv) xpOv.classList.remove('open'); });
+    if (xpNo)  xpNo.addEventListener('click', () => xpOv && xpOv.classList.remove('open'));
+    if (xpYes) xpYes.addEventListener('click', async () => {
+      if (xpOv) xpOv.classList.remove('open');
+      const user = window.currentUser;
+      if (!user) return;
+      const key = user.toLowerCase();
+      try { await set(ref(db, `boosters/${key}/active_xp`), null); }
+      catch (e) { console.warn('XP-Abbruch fehlgeschlagen:', e); }
     });
   }
   wireBoosterPanel();
