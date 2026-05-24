@@ -106,12 +106,15 @@ export async function awardXp(db, userKey, amount) {
   }
   let oldTotal = 0;
   try {
-    // XP-Booster: +50% auf alles, solange aktiv (boosters/<key>/active_xp).
+    // XP-Booster: aktiver Booster multipliziert das gewonnene XP. Vier Stufen
+    // (+50% / +100% / +150% / +200%) teilen sich den Slot boosters/<key>/active_xp.
+    // Legacy-Datensätze ohne `multiplier` werden als +50% interpretiert.
     let effectiveAmount = amount;
     try {
       const boost = (await get(ref(db, `boosters/${userKey}/active_xp`))).val();
       if (boost && boost.activatedAt && Date.now() < boost.activatedAt + (boost.durationMs || 0)) {
-        effectiveAmount = Math.round(amount * 1.5);
+        const mult = (typeof boost.multiplier === 'number' && boost.multiplier > 0) ? boost.multiplier : 1.5;
+        effectiveAmount = Math.round(amount * mult);
       }
     } catch (e) { /* Booster-Lookup optional – im Zweifel ohne Bonus weiter */ }
     const res = await runTransaction(ref(db, `xp/${userKey}/total`), cur => {

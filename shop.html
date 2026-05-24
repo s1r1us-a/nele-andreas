@@ -245,6 +245,67 @@
   .confirm-yes:hover { transform: scale(1.03); }
   .confirm-no { flex: 1; background: transparent; border: 1.5px solid var(--ui-confirm-no-border); border-radius: 50px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 600; color: var(--ui-btn-text); cursor: pointer; transition: all 0.2s ease; }
   .confirm-no:hover { border-color: var(--rose); color: var(--rose); }
+
+  /* XP-Booster Shop-Kachel und Modal */
+  .lootbox-card.xp-shop-tile {
+    position: relative;
+    border-width: 2px;
+    border-image: linear-gradient(135deg, #f5a3b5, #d4a061, #a78bfa, #f5a3b5) 1;
+    box-shadow: 0 6px 30px rgba(232,115,138,0.18), 0 0 0 1px rgba(212,160,97,0.18);
+    background: linear-gradient(180deg, var(--ui-card-bg) 0%, rgba(245,163,181,0.06) 100%);
+    overflow: visible;
+  }
+  .xp-shop-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--rose, #e8738a), #c85070);
+    color: #fff;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 5px 14px;
+    border-radius: 50px;
+    box-shadow: 0 4px 14px rgba(232,115,138,0.4);
+    white-space: nowrap;
+  }
+  .xp-shop-modal-card { max-width: 460px; }
+  .xp-shop-active-banner {
+    background: linear-gradient(135deg, rgba(212,160,97,0.18), rgba(232,115,138,0.18));
+    border: 1.5px solid rgba(212,160,97,0.45);
+    border-radius: 16px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .xp-shop-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: left; }
+  .xp-shop-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--ui-card-bg);
+    border: 1.5px solid var(--ui-card-border);
+    border-radius: 18px;
+    padding: 12px 14px;
+  }
+  .xp-shop-row-info { flex: 1; min-width: 0; }
+  .xp-shop-row-name { font-weight: 800; font-size: 14px; color: var(--text-dark); margin-bottom: 2px; }
+  .xp-shop-row-meta { font-size: 11px; color: var(--ui-btn-text); font-weight: 500; }
+  .xp-shop-row-price { font-size: 13px; font-weight: 800; color: var(--gold); margin-top: 4px; }
+  .xp-shop-row-btn {
+    flex: 0 0 auto;
+    background: linear-gradient(135deg, var(--gold), #c87830);
+    border: none; border-radius: 50px; padding: 10px 16px;
+    font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700;
+    color: #fff; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(212,160,97,0.35);
+    transition: transform 0.2s ease;
+  }
+  .xp-shop-row-btn:hover:not(:disabled) { transform: scale(1.05); }
+  .xp-shop-row-btn:disabled { background: var(--ui-disabled-btn); box-shadow: none; cursor: default; opacity: 0.65; }
   .device-buttons { display: flex; flex-direction: column; gap: 10px; }
   .device-buttons .device-choice { flex: none; width: 100%; }
 
@@ -282,7 +343,18 @@
   .lootbox-name { font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
   .lootbox-desc { font-size: 12px; color: var(--ui-btn-text); font-weight: 500; margin-bottom: 16px; }
   .lootbox-odds { background: var(--ui-lootbox-odds-bg); border: 1px solid var(--ui-lootbox-odds-border); border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; text-align: left; }
+  details.lootbox-odds { padding: 0; }
+  details.lootbox-odds > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; user-select: none; margin: 0; border-radius: 14px; }
+  details.lootbox-odds > summary::-webkit-details-marker { display: none; }
+  details.lootbox-odds > summary:hover { background: rgba(212,160,97,0.08); }
+  .lootbox-odds-toggle { font-size: 14px; color: var(--gold); transition: transform 0.2s ease; display: inline-block; }
+  details.lootbox-odds[open] .lootbox-odds-toggle { transform: rotate(180deg); }
+  .lootbox-odds-body { padding: 4px 16px 12px; border-top: 1px solid var(--ui-lootbox-odds-border); margin-top: 4px; }
+  .lootbox-odds-cat { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; font-weight: 800; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin: 10px 0 4px; padding-top: 4px; border-bottom: 1px dashed var(--ui-lootbox-odds-border); padding-bottom: 4px; }
+  .lootbox-odds-cat:first-child { margin-top: 4px; }
+  .lootbox-odds-cat > span { font-size: 10px; color: var(--ui-btn-text); font-weight: 700; letter-spacing: 0; text-transform: none; }
   .lootbox-odds-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ui-btn-text); font-weight: 700; margin-bottom: 8px; }
+  details.lootbox-odds > summary.lootbox-odds-title { margin-bottom: 0; }
   .lootbox-odds-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ui-btn-text); font-weight: 500; padding: 2px 0; }
   .lootbox-odds-row span:last-child { font-weight: 700; color: var(--gold); }
   .lootbox-price { font-size: 15px; font-weight: 700; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -1010,6 +1082,20 @@
   </div>
 </div>
 
+<!-- XP-Booster Shop Modal -->
+<div class="confirm-overlay" id="xpShopOverlay">
+  <div class="confirm-card xp-shop-modal-card">
+    <span class="confirm-emoji">🌟</span>
+    <div class="confirm-title">XP-Booster</div>
+    <div class="confirm-text">Wähle eine Stufe. Jeder Booster läuft 6 Stunden. Nur ein XP-Booster gleichzeitig.</div>
+    <div id="xpShopActiveBanner" class="xp-shop-active-banner" style="display:none;"></div>
+    <div id="xpShopList" class="xp-shop-list"></div>
+    <div class="confirm-buttons">
+      <button class="confirm-no" id="xpShopClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Device Theme Modal -->
 <div class="confirm-overlay" id="deviceThemeOverlay">
   <div class="confirm-card">
@@ -1099,34 +1185,51 @@
       </div>
       <div class="lootbox-name">Mysteriöse Box</div>
       <div class="lootbox-desc">Enthält Coins, Farm-Items, Erze, Booster, exklusive Badges oder seltene Profilrahmen 👀</div>
-      <div class="lootbox-desc" style="margin-top:-10px;">⏳ 5 Minuten Cooldown zwischen Käufen · Preis steigt täglich mit jedem Kauf</div>
-      <div class="lootbox-odds">
-        <div class="lootbox-odds-title">Mögliche Gewinne</div>
-        <div class="lootbox-odds-row"><span>500 🪙</span><span>15%</span></div>
-        <div class="lootbox-odds-row"><span>1.500 🪙</span><span>13%</span></div>
-        <div class="lootbox-odds-row"><span>3.000 🪙</span><span>9%</span></div>
-        <div class="lootbox-odds-row"><span>7.500 🪙</span><span>5%</span></div>
-        <div class="lootbox-odds-row"><span>15.000 🪙</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>25.000 🪙 (Mega-Jackpot)</span><span>1%</span></div>
-        <div class="lootbox-odds-row"><span>🌱 Farm-Samen</span><span>8%</span></div>
-        <div class="lootbox-odds-row"><span>🥚 Farm-Item (Gewöhnlich)</span><span>6%</span></div>
-        <div class="lootbox-odds-row"><span>💎 Farm-Item (Selten)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>🟤 Erz (Häufig: Kupfer/Eisen)</span><span>8%</span></div>
-        <div class="lootbox-odds-row"><span>🥈 Erz (Selten: Silber/Gold)</span><span>5%</span></div>
-        <div class="lootbox-odds-row"><span>💜 Erz (Episch: Amethyst/Smaragd)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🥉 Badge (Bronze)</span><span>4%</span></div>
-        <div class="lootbox-odds-row"><span>🥈 Badge (Silber)</span><span>2,5%</span></div>
-        <div class="lootbox-odds-row"><span>💎 Badge (Saphir)</span><span>1%</span></div>
-        <div class="lootbox-odds-row"><span>👑 Badge (Gold)</span><span>0,4%</span></div>
-        <div class="lootbox-odds-row"><span>🌟 Badge (Mythisch)</span><span>0,1%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Silber)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>🖼️ Rahmen (Saphir)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🌈 Rahmen (Gold)</span><span>1%</span></div>
-        <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>3%</span></div>
-        <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>🤖 Auto-Klicker (2 Min.)</span><span>2%</span></div>
-        <div class="lootbox-odds-row"><span>💻 Hack (90 Sek.)</span><span>2%</span></div>
-      </div>
+      <div class="lootbox-desc" style="margin-top:-10px;">⏳ 10 Minuten Cooldown zwischen Käufen · Preis steigt täglich mit jedem Kauf</div>
+      <details class="lootbox-odds">
+        <summary class="lootbox-odds-title">Mögliche Gewinne <span class="lootbox-odds-toggle">▾</span></summary>
+        <div class="lootbox-odds-body">
+          <div class="lootbox-odds-cat">🪙 Coins <span>45%</span></div>
+          <div class="lootbox-odds-row"><span>1.500 🪙</span><span>15%</span></div>
+          <div class="lootbox-odds-row"><span>4.500 🪙</span><span>13%</span></div>
+          <div class="lootbox-odds-row"><span>9.000 🪙</span><span>9%</span></div>
+          <div class="lootbox-odds-row"><span>22.500 🪙</span><span>5%</span></div>
+          <div class="lootbox-odds-row"><span>45.000 🪙</span><span>2%</span></div>
+          <div class="lootbox-odds-row"><span>75.000 🪙 (Mega-Jackpot)</span><span>1%</span></div>
+
+          <div class="lootbox-odds-cat">🌱 Farm & Erze <span>32%</span></div>
+          <div class="lootbox-odds-row"><span>🌱 Farm-Samen</span><span>8%</span></div>
+          <div class="lootbox-odds-row"><span>🥚 Farm-Item (Gewöhnlich)</span><span>6%</span></div>
+          <div class="lootbox-odds-row"><span>💎 Farm-Item (Selten)</span><span>3%</span></div>
+          <div class="lootbox-odds-row"><span>🟤 Erz (Häufig: Kupfer/Eisen)</span><span>8%</span></div>
+          <div class="lootbox-odds-row"><span>🥈 Erz (Selten: Silber/Gold)</span><span>5%</span></div>
+          <div class="lootbox-odds-row"><span>💜 Erz (Episch: Amethyst/Smaragd)</span><span>2%</span></div>
+
+          <div class="lootbox-odds-cat">🏆 Badges <span>8%</span></div>
+          <div class="lootbox-odds-row"><span>🥉 Badge (Bronze)</span><span>4%</span></div>
+          <div class="lootbox-odds-row"><span>🥈 Badge (Silber)</span><span>2,5%</span></div>
+          <div class="lootbox-odds-row"><span>💎 Badge (Saphir)</span><span>1%</span></div>
+          <div class="lootbox-odds-row"><span>👑 Badge (Gold)</span><span>0,4%</span></div>
+          <div class="lootbox-odds-row"><span>🌟 Badge (Mythisch)</span><span>0,1%</span></div>
+
+          <div class="lootbox-odds-cat">🖼️ Profilrahmen <span>6%</span></div>
+          <div class="lootbox-odds-row"><span>🖼️ Rahmen (Silber)</span><span>3%</span></div>
+          <div class="lootbox-odds-row"><span>🖼️ Rahmen (Saphir)</span><span>2%</span></div>
+          <div class="lootbox-odds-row"><span>🌈 Rahmen (Gold)</span><span>1%</span></div>
+
+          <div class="lootbox-odds-cat">⚡ Booster <span>9%</span></div>
+          <div class="lootbox-odds-row"><span>⚡ Coin-Booster (10 Min.)</span><span>1,5%</span></div>
+          <div class="lootbox-odds-row"><span>💫 Momenten-Booster (3 Min.)</span><span>1,5%</span></div>
+          <div class="lootbox-odds-row"><span>🤖 Auto-Klicker (2 Min.)</span><span>1,5%</span></div>
+          <div class="lootbox-odds-row"><span>💻 Hack (90 Sek.)</span><span>1%</span></div>
+          <div class="lootbox-odds-row"><span>📺 Popup-Hack (90 Sek.)</span><span>1%</span></div>
+          <div class="lootbox-odds-row"><span>🛡️ Gegen-Hack</span><span>1%</span></div>
+          <div class="lootbox-odds-row"><span>🌟 XP-Booster +50% (6 h)</span><span>0,8%</span></div>
+          <div class="lootbox-odds-row"><span>🌟 XP-Booster +100% (6 h)</span><span>0,5%</span></div>
+          <div class="lootbox-odds-row"><span>🌟 XP-Booster +150% (6 h)</span><span>0,15%</span></div>
+          <div class="lootbox-odds-row"><span>🌟 XP-Booster +200% (6 h)</span><span>0,05%</span></div>
+        </div>
+      </details>
       <div class="lootbox-price" id="lootboxPrice">🪙 500 Coins</div>
       <div class="lootbox-price-info" id="lootboxPriceInfo" style="font-size:11px;color:var(--text-mid);font-weight:500;margin-top:-10px;margin-bottom:16px;display:none;">Preis steigt pro Kauf um 150 🪙 · Reset um Mitternacht</div>
       <div class="lootbox-cooldown" id="lootboxCooldown" style="font-size:13px;color:var(--text-mid);font-weight:600;margin-bottom:12px;min-height:20px;"></div>
@@ -1150,15 +1253,16 @@
       <button class="btn-open-box" id="buyMomentsBoosterBtn">💫 Booster kaufen</button>
     </div>
 
-    <div class="lootbox-card">
+    <div class="lootbox-card xp-shop-tile">
+      <div class="xp-shop-badge">✨ XP-BOOSTER ✨</div>
       <div class="lootbox-emoji-wrap">
         <span class="lootbox-icon" style="cursor:default;">🌟</span>
       </div>
       <div class="lootbox-name">XP-Booster</div>
-      <div class="lootbox-desc">+50% XP auf alles für 6 Stunden 🌟</div>
-      <div class="lootbox-desc" style="margin-top:-10px;">Erst ab Level 10 · Wandert direkt in dein Profil-Inventar · Mehrfach kaufbar</div>
-      <div class="lootbox-price">🪙 30.000 Coins</div>
-      <button class="btn-open-box" id="buyXpBoosterBtn">🌟 Booster kaufen</button>
+      <div class="lootbox-desc">4 Varianten – von +50% bis +200% XP für 6 Stunden</div>
+      <div class="lootbox-desc" style="margin-top:-10px;">Nicht stackbar · Mehrfach kaufbar · Auf der Hauptseite abbrechbar</div>
+      <div class="lootbox-price">🪙 ab 30.000 Coins</div>
+      <button class="btn-open-box" id="openXpShopBtn">🌟 XP-Booster wählen</button>
     </div>
 
     <div class="lootbox-card">
@@ -2075,22 +2179,33 @@
   // ---- BOOSTER SHOP ----
   const MOMENTS_BOOSTER_PRICE     = 10000;
   const XP_BOOSTER_PRICE          = 30000;
+  const XP_BOOSTER_100_PRICE      = 80000;
+  const XP_BOOSTER_150_PRICE      = 130000;
+  const XP_BOOSTER_200_PRICE      = 180000;
   const AUTOCLICKER_BOOSTER_PRICE = 15000;
   const SABOTAGE_BOOSTER_PRICE    = 12000;
   const SPAM_BOOSTER_PRICE        = 20000;
   const ANTI_HACK_BOOSTER_PRICE   = 15000;
 
+  // XP-Booster-Varianten – im XP-Shop-Modal gelistet, kein eigener Shop-Button
+  // pro Variante. `btnId: null` signalisiert renderBoosterShop(), die Einträge
+  // zu überspringen; das Modal kümmert sich um Buy-Buttons selbst.
   const SHOP_BOOSTERS = {
-    moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster', price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
-    xp_booster:          { btnId: 'buyXpBoosterBtn',          emoji: '🌟', name: 'XP-Booster',       price: XP_BOOSTER_PRICE,          minLevel: 10, confirm: 'Möchtest du einen XP-Booster kaufen? +50% XP auf alles für 6 Stunden. Er landet in deinem Profil-Inventar.' },
-    autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',     price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
-    sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '💻', name: 'Hack',             price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du einen Hack kaufen? Er landet in deinem Profil-Inventar.' },
-    spam_booster:        { btnId: 'buySpamBoosterBtn',        emoji: '📺', name: 'Popup-Hack',       price: SPAM_BOOSTER_PRICE,        confirm: 'Möchtest du einen Popup-Hack kaufen? Er landet in deinem Profil-Inventar.' },
-    anti_hack_booster:   { btnId: 'buyAntiHackBoosterBtn',    emoji: '🛡️', name: 'Gegen-Hack',       price: ANTI_HACK_BOOSTER_PRICE,   confirm: 'Möchtest du einen Gegen-Hack kaufen? Er landet in deinem Profil-Inventar und wird manuell aktiviert.' },
+    moments_booster:     { btnId: 'buyMomentsBoosterBtn',     emoji: '💫', name: 'Momenten-Booster',  price: MOMENTS_BOOSTER_PRICE,     confirm: 'Möchtest du einen Momenten-Booster kaufen? Er landet in deinem Profil-Inventar.' },
+    xp_booster:          { btnId: null,                       emoji: '🌟', name: 'XP-Booster +50%',   price: XP_BOOSTER_PRICE,          minLevel: 10, multiplier: 1.5, pct: 50,  confirm: 'Möchtest du einen XP-Booster (+50%) kaufen? +50% XP auf alles für 6 Stunden. Er landet in deinem Profil-Inventar.' },
+    xp_booster_100:      { btnId: null,                       emoji: '🌟', name: 'XP-Booster +100%',  price: XP_BOOSTER_100_PRICE,      minLevel: 15, multiplier: 2.0, pct: 100, confirm: 'Möchtest du einen XP-Booster (+100%) kaufen? +100% XP auf alles für 6 Stunden. Er landet in deinem Profil-Inventar.' },
+    xp_booster_150:      { btnId: null,                       emoji: '🌟', name: 'XP-Booster +150%',  price: XP_BOOSTER_150_PRICE,      minLevel: 20, multiplier: 2.5, pct: 150, confirm: 'Möchtest du einen XP-Booster (+150%) kaufen? +150% XP auf alles für 6 Stunden. Er landet in deinem Profil-Inventar.' },
+    xp_booster_200:      { btnId: null,                       emoji: '🌟', name: 'XP-Booster +200%',  price: XP_BOOSTER_200_PRICE,      minLevel: 25, multiplier: 3.0, pct: 200, confirm: 'Möchtest du einen XP-Booster (+200%) kaufen? +200% XP auf alles für 6 Stunden. Er landet in deinem Profil-Inventar.' },
+    autoclicker_booster: { btnId: 'buyAutoclickerBoosterBtn', emoji: '🤖', name: 'Auto-Klicker',      price: AUTOCLICKER_BOOSTER_PRICE, confirm: 'Möchtest du einen Auto-Klicker kaufen? Er landet in deinem Profil-Inventar.' },
+    sabotage_booster:    { btnId: 'buySabotageBoosterBtn',    emoji: '💻', name: 'Hack',              price: SABOTAGE_BOOSTER_PRICE,    confirm: 'Möchtest du einen Hack kaufen? Er landet in deinem Profil-Inventar.' },
+    spam_booster:        { btnId: 'buySpamBoosterBtn',        emoji: '📺', name: 'Popup-Hack',        price: SPAM_BOOSTER_PRICE,        confirm: 'Möchtest du einen Popup-Hack kaufen? Er landet in deinem Profil-Inventar.' },
+    anti_hack_booster:   { btnId: 'buyAntiHackBoosterBtn',    emoji: '🛡️', name: 'Gegen-Hack',        price: ANTI_HACK_BOOSTER_PRICE,   confirm: 'Möchtest du einen Gegen-Hack kaufen? Er landet in deinem Profil-Inventar und wird manuell aktiviert.' },
   };
+  const XP_BOOSTER_IDS = ['xp_booster', 'xp_booster_100', 'xp_booster_150', 'xp_booster_200'];
 
   function renderBoosterShop() {
     Object.values(SHOP_BOOSTERS).forEach(b => {
+      if (!b.btnId) return; // XP-Booster werden im XP-Modal gerendert
       const btn = document.getElementById(b.btnId);
       if (!btn) return;
       const meetsLevel = !b.minLevel || currentLevel >= b.minLevel;
@@ -2098,6 +2213,7 @@
       btn.disabled = !canAfford || !meetsLevel;
       btn.title = !meetsLevel ? `Erst ab Level ${b.minLevel}` : (canAfford ? '' : 'Zu wenig Coins');
     });
+    renderXpShopModal();
   }
 
   function handleBuyBoosterClick(id) {
@@ -2112,8 +2228,88 @@
   }
 
   Object.entries(SHOP_BOOSTERS).forEach(([id, b]) => {
+    if (!b.btnId) return;
     const btn = document.getElementById(b.btnId);
     if (btn) btn.addEventListener('click', () => handleBuyBoosterClick(id));
+  });
+
+  // ---- XP-BOOSTER SHOP-MODAL ----
+  let xpShopBannerTimer = null;
+
+  function renderXpShopModal() {
+    const list = document.getElementById('xpShopList');
+    if (!list) return;
+    list.innerHTML = '';
+    XP_BOOSTER_IDS.forEach(id => {
+      const b = SHOP_BOOSTERS[id];
+      if (!b) return;
+      const meetsLevel = !b.minLevel || currentLevel >= b.minLevel;
+      const canAfford  = currentCoins >= b.price;
+      const disabled   = !meetsLevel || !canAfford;
+      const blockHint  = !meetsLevel ? `🔒 Erst ab Level ${b.minLevel}` : (!canAfford ? '❌ Zu wenig Coins' : '');
+      const row = document.createElement('div');
+      row.className = 'xp-shop-row';
+      row.innerHTML = `
+        <div style="font-size:30px;">${b.emoji}</div>
+        <div class="xp-shop-row-info">
+          <div class="xp-shop-row-name">${b.name}</div>
+          <div class="xp-shop-row-meta">+${b.pct}% XP · 6 Stunden${b.minLevel ? ' · ab Level ' + b.minLevel : ''}</div>
+          <div class="xp-shop-row-price">🪙 ${b.price.toLocaleString('de-DE')} Coins</div>
+        </div>
+        <button class="xp-shop-row-btn" data-xpbid="${id}" ${disabled ? 'disabled' : ''} title="${blockHint}">${disabled ? '🔒' : 'Kaufen'}</button>
+      `;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('button[data-xpbid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('xpShopOverlay').classList.remove('open');
+        handleBuyBoosterClick(btn.dataset.xpbid);
+      });
+    });
+  }
+
+  async function refreshXpShopActiveBanner() {
+    const el = document.getElementById('xpShopActiveBanner');
+    if (!el || !userKey) { if (el) el.style.display = 'none'; return; }
+    let active = null;
+    try { active = (await get(ref(db, `boosters/${userKey}/active_xp`))).val(); } catch (e) {}
+    if (xpShopBannerTimer) { clearInterval(xpShopBannerTimer); xpShopBannerTimer = null; }
+    if (!active || !active.activatedAt) { el.style.display = 'none'; return; }
+    const until = active.activatedAt + (active.durationMs || 0);
+    if (Date.now() >= until) { el.style.display = 'none'; return; }
+    const mult = (typeof active.multiplier === 'number' && active.multiplier > 0) ? active.multiplier : 1.5;
+    const pct  = Math.round((mult - 1) * 100);
+    const fmt = ms => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+      return (h > 0 ? `${h}:${String(m).padStart(2,'0')}:` : `${m}:`) + String(r).padStart(2,'0');
+    };
+    el.style.display = '';
+    el.textContent = `🌟 XP-Booster (+${pct}%) läuft noch ${fmt(until - Date.now())} – neue Käufe landen im Inventar.`;
+    xpShopBannerTimer = setInterval(() => {
+      const r = until - Date.now();
+      if (r <= 0) { clearInterval(xpShopBannerTimer); xpShopBannerTimer = null; el.style.display = 'none'; return; }
+      el.textContent = `🌟 XP-Booster (+${pct}%) läuft noch ${fmt(r)} – neue Käufe landen im Inventar.`;
+    }, 1000);
+  }
+
+  const openXpShopBtn = document.getElementById('openXpShopBtn');
+  const xpShopOv      = document.getElementById('xpShopOverlay');
+  const xpShopClose   = document.getElementById('xpShopClose');
+  if (openXpShopBtn) openXpShopBtn.addEventListener('click', () => {
+    renderXpShopModal();
+    refreshXpShopActiveBanner();
+    if (xpShopOv) xpShopOv.classList.add('open');
+  });
+  if (xpShopClose) xpShopClose.addEventListener('click', () => {
+    if (xpShopOv) xpShopOv.classList.remove('open');
+    if (xpShopBannerTimer) { clearInterval(xpShopBannerTimer); xpShopBannerTimer = null; }
+  });
+  if (xpShopOv) xpShopOv.addEventListener('click', e => {
+    if (e.target === xpShopOv) {
+      xpShopOv.classList.remove('open');
+      if (xpShopBannerTimer) { clearInterval(xpShopBannerTimer); xpShopBannerTimer = null; }
+    }
   });
 
   function handleActivate(themeId) {
@@ -2497,9 +2693,9 @@
     { id: 'galaxy',      name: 'Galaxy',      emoji: '🔮', rarity: 'legendary', rarityLabel: 'Gold',   cssClass: 'frame-galaxy',     gradient: 'linear-gradient(135deg,#1a1030,#7c5cbf,#a78bfa)' },
   ];
 
-  const BOX_BASE_PRICE = 500;
-  const BOX_PRICE_INCREMENT = 150;
-  const BOX_COOLDOWN_MS = 5 * 60 * 1000; // 5 Minuten
+  const BOX_BASE_PRICE = 2500;
+  const BOX_PRICE_INCREMENT = 500;
+  const BOX_COOLDOWN_MS = 10 * 60 * 1000; // 10 Minuten
 
   let ownedBadges = [];
   let ownedFrames = [];
@@ -2663,13 +2859,13 @@
 
   function rollLootbox() {
     const r = Math.random() * 100;
-    // Coins (Min 500, Max 25.000 Mega-Jackpot)
-    if (r < 15)  return { type: 'coins', amount: 500 };
-    if (r < 28)  return { type: 'coins', amount: 1500 };
-    if (r < 37)  return { type: 'coins', amount: 3000 };
-    if (r < 42)  return { type: 'coins', amount: 7500 };
-    if (r < 44)  return { type: 'coins', amount: 15000 };
-    if (r < 45)  return { type: 'coins', amount: 25000 };
+    // Coins (Min 1.500, Max 75.000 Mega-Jackpot – an höheren Box-Preis angepasst)
+    if (r < 15)  return { type: 'coins', amount: 1500 };
+    if (r < 28)  return { type: 'coins', amount: 4500 };
+    if (r < 37)  return { type: 'coins', amount: 9000 };
+    if (r < 42)  return { type: 'coins', amount: 22500 };
+    if (r < 44)  return { type: 'coins', amount: 45000 };
+    if (r < 45)  return { type: 'coins', amount: 75000 };
     // Farm-Saaten/Items (gehen automatisch ins Farm-Inventar)
     if (r < 53)  return { type: 'farm', category: 'seeds' };
     if (r < 59)  return { type: 'farm', category: 'items_common' };
@@ -2688,12 +2884,17 @@
     if (r < 88)  return { type: 'frame', rarity: 'common' };
     if (r < 90)  return { type: 'frame', rarity: 'rare' };
     if (r < 91)  return { type: 'frame', rarity: 'legendary' };
-    // Booster (Band 91–100, je ~2–3 %)
-    if (r < 93)   return { type: 'booster', boosterId: 'coins_booster' };
-    if (r < 95)   return { type: 'booster', boosterId: 'moments_booster' };
-    if (r < 97)   return { type: 'booster', boosterId: 'autoclicker_booster' };
-    if (r < 98.5) return { type: 'booster', boosterId: 'sabotage_booster' };
-    return                { type: 'booster', boosterId: 'spam_booster' };
+    // Booster (Band 91–100, alle 10 Varianten enthalten – Premium-XP sehr selten)
+    if (r < 92.5)  return { type: 'booster', boosterId: 'coins_booster' };       // 1,5 %
+    if (r < 94.0)  return { type: 'booster', boosterId: 'moments_booster' };     // 1,5 %
+    if (r < 95.5)  return { type: 'booster', boosterId: 'autoclicker_booster' };// 1,5 %
+    if (r < 96.5)  return { type: 'booster', boosterId: 'sabotage_booster' };    // 1,0 %
+    if (r < 97.5)  return { type: 'booster', boosterId: 'spam_booster' };        // 1,0 %
+    if (r < 98.5)  return { type: 'booster', boosterId: 'anti_hack_booster' };   // 1,0 %
+    if (r < 99.3)  return { type: 'booster', boosterId: 'xp_booster' };          // 0,8 %  (+50%)
+    if (r < 99.8)  return { type: 'booster', boosterId: 'xp_booster_100' };      // 0,5 %  (+100%)
+    if (r < 99.95) return { type: 'booster', boosterId: 'xp_booster_150' };      // 0,15 % (+150%)
+    return                { type: 'booster', boosterId: 'xp_booster_200' };      // 0,05 % (+200%)
   }
 
   function pickFromPool(pool, ownedList) {
