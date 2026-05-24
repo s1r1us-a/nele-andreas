@@ -49,8 +49,13 @@
     html[data-theme="neon"] body::before,
     html[data-theme="prinzesschen"] body::before,
     html[data-theme="schattenfuerstin"] body::before,
+    html[data-theme="genderfluid"] body::before,
     html[data-theme="minecraft"] body::before,
     html[data-theme="wednesday"] body::before { opacity:1; }
+    html[data-theme="genderfluid"] body::before { background: radial-gradient(ellipse 58% 48% at 22% 18%, rgba(255,118,164,0.35), transparent 70%), radial-gradient(ellipse 52% 48% at 78% 22%, rgba(190,24,214,0.28), transparent 70%), radial-gradient(ellipse 62% 52% at 50% 62%, rgba(51,62,189,0.22), transparent 72%), radial-gradient(ellipse 52% 48% at 18% 86%, rgba(255,118,164,0.25), transparent 72%), radial-gradient(ellipse 52% 48% at 82% 84%, rgba(190,24,214,0.28), transparent 70%); animation: bgGfProfil 10s ease-in-out infinite; mix-blend-mode: screen; }
+    @keyframes bgGfProfil { 0%{filter:hue-rotate(-15deg) saturate(1.2);opacity:0.60;transform:translate(-2%,-1%) scale(1)} 100%{filter:hue-rotate(20deg) saturate(1.6);opacity:1;transform:translate(2%,1%) scale(1.05)} }
+    html[data-theme="genderfluid"] body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'><text x='14' y='44' font-size='22' fill='rgba(255,118,164,0.18)' font-family='serif'>&#9794;</text><text x='90' y='100' font-size='22' fill='rgba(190,24,214,0.18)' font-family='serif'>&#9792;</text><text x='50' y='145' font-size='20' fill='rgba(51,62,189,0.16)' font-family='serif'>&#9895;</text><circle cx='130' cy='30' r='1.5' fill='rgba(255,118,164,0.90)'/><circle cx='30' cy='130' r='1.2' fill='rgba(190,24,214,0.85)'/><circle cx='80' cy='70' r='1.0' fill='rgba(255,255,255,0.70)'/></svg>"), radial-gradient(1.5px 1.5px at 28% 68%, rgba(255,118,164,0.95), transparent 60%), radial-gradient(2px 2px at 58% 32%, rgba(255,255,255,0.80), transparent 60%), radial-gradient(1.5px 1.5px at 76% 62%, rgba(190,24,214,0.90), transparent 60%), radial-gradient(2px 2px at 88% 16%, rgba(51,62,189,0.85), transparent 60%); background-size: 160px 160px, 230px 230px, 250px 250px, 200px 200px, 220px 220px; animation: bgGfDriftProfil 28s linear infinite; opacity: 0.90; }
+    @keyframes bgGfDriftProfil { 0%{background-position:0 0, 20px 30px, 50px 10px, 80px 60px, 10px 90px} 100%{background-position:90px 100px, 110px 130px, 140px 110px, 170px 160px, 100px 190px} }
     html[data-theme="aurora"] body::before { background: radial-gradient(ellipse at 30% 0%, rgba(94,234,212,0.22), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(192,132,252,0.22), transparent 55%); animation: bgAuroraProfil 14s ease-in-out infinite alternate; mix-blend-mode: screen; }
     @keyframes bgAuroraProfil { 0%{transform:translateX(-6%) translateY(-3%)} 100%{transform:translateX(6%) translateY(3%)} }
     html[data-theme="cosmic"] body::before { background: radial-gradient(2px 2px at 15% 25%, rgba(255,255,255,0.9), transparent 60%), radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.7), transparent 60%), radial-gradient(2px 2px at 60% 40%, rgba(252,211,77,0.85), transparent 60%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.8), transparent 60%), radial-gradient(1.5px 1.5px at 90% 20%, rgba(165,180,252,0.9), transparent 60%); animation: bgCosmicProfil 4s ease-in-out infinite alternate; }
@@ -1498,6 +1503,7 @@
         { label: '📺 Popup-Hack auf mich',  onClick: () => adminApplyHackToSelf('spam_booster') }
     ] },
     { id: 'theme', title: '🎨 Theme', actions: [
+        { label: '⚧️ Genderfluid-Theme aktivieren', onClick: () => adminSetTheme('genderfluid') },
         { label: '🧱 Minecraft-Theme aktivieren', onClick: () => adminSetTheme('minecraft') },
         { label: '🦑 Squid Game-Theme aktivieren', onClick: () => adminSetTheme('squid-game') },
         { label: '🐑 Cult of the Lamb-Theme aktivieren', onClick: () => adminSetTheme('cult-of-the-lamb') },
@@ -1563,7 +1569,8 @@
       { id: 'wednesday',         emoji: '🦇', name: 'Wednesday' },
       { id: 'minecraft',         emoji: '🧱', name: 'Minecraft' },
       { id: 'squid-game',        emoji: '🦑', name: 'Squid Game' },
-      { id: 'cult-of-the-lamb',  emoji: '🐑', name: 'Cult of the Lamb' }
+      { id: 'cult-of-the-lamb',  emoji: '🐑', name: 'Cult of the Lamb' },
+      { id: 'genderfluid',       emoji: '⚧️', name: 'Genderfluid' }
     ],
     farm: {
       seeds: [
@@ -2600,6 +2607,7 @@
     minecraft: 'radial-gradient(circle at 22% 16%, rgba(255,255,255,0.32) 0%, transparent 20%), radial-gradient(circle at 70% 11%, rgba(255,255,255,0.24) 0%, transparent 18%), linear-gradient(180deg, #79c7f2 0%, #8fd0f5 34%, #69b8ee 48%, #5fb04a 58%, #4e9e3a 70%, #7c5230 84%, #5a3c22 100%)',
     'squid-game': 'radial-gradient(ellipse at 18% 20%, rgba(237,27,118,0.28) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(36,159,140,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 62%, rgba(42,15,36,0.30) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(237,27,118,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.94) 0%, transparent 55%), linear-gradient(160deg, #050409 0%, #07060b 25%, #0d0a12 50%, #08060c 75%, #030205 100%)',
     'cult-of-the-lamb': 'radial-gradient(ellipse at 18% 20%, rgba(194,16,46,0.30) 0%, transparent 55%), radial-gradient(ellipse at 82% 22%, rgba(240,168,60,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 62%, rgba(42,16,24,0.32) 0%, transparent 60%), radial-gradient(ellipse at 18% 85%, rgba(194,16,46,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(0,0,0,0.95) 0%, transparent 55%), linear-gradient(160deg, #050304 0%, #0b0608 25%, #14090c 50%, #0a0507 75%, #030203 100%)',
+    genderfluid: 'radial-gradient(ellipse at 15% 18%, rgba(255,118,164,0.55) 0%, transparent 52%), radial-gradient(ellipse at 82% 20%, rgba(190,24,214,0.45) 0%, transparent 52%), radial-gradient(ellipse at 50% 58%, rgba(51,62,189,0.35) 0%, transparent 58%), radial-gradient(ellipse at 15% 86%, rgba(255,118,164,0.45) 0%, transparent 52%), radial-gradient(ellipse at 85% 84%, rgba(190,24,214,0.45) 0%, transparent 52%), linear-gradient(160deg, #0f0828 0%, #150a32 25%, #1a0d3d 50%, #120825 75%, #09051a 100%)',
     'ultra-performance': '#0d1117'
   };
   const _P_THEME_VARS = {
@@ -2623,6 +2631,7 @@
     minecraft: { rose:'#5fb04a','rose-light':'#8fd0f5','rose-pale':'#dff0d2', cream:'#cfe9f7', gold:'#c8a14a', warm:'#7c5230', 'text-dark':'#2b2417','text-mid':'#4a6b34' },
     'squid-game': { rose:'#249f8c','rose-light':'#ed1b76','rose-pale':'#14121c', cream:'#07060b', gold:'#ed1b76', warm:'#2a0f24', 'text-dark':'#f3eef2','text-mid':'#e589b3' },
     'cult-of-the-lamb': { rose:'#c2102e','rose-light':'#f0a83c','rose-pale':'#1a0e12', cream:'#0b0608', gold:'#f0a83c', warm:'#2a1018', 'text-dark':'#f6efe0','text-mid':'#d98a6b' },
+    genderfluid: { rose:'#FF76A4','rose-light':'#ffb3cf','rose-pale':'#1a0d3d', cream:'#0f0828', gold:'#BE18D6', warm:'#1e0e45', 'text-dark':'#f0e6ff','text-mid':'#c98ae0' },
     'ultra-performance': { rose:'#5aa0e0','rose-light':'#7fb8ec','rose-pale':'#16202c', cream:'#0d1117', gold:'#8ab4d8', warm:'#161c24', 'text-dark':'#e6edf3','text-mid':'#9fb3c8' }
   };
   const _P_DARK_UI = {
@@ -2804,6 +2813,26 @@
       'ui-card-hover-shadow': 'rgba(240,168,60,0.55)',
       'ui-active-badge-bg':   'rgba(240,168,60,0.26)',
       'ui-toast-bg':          '#24121a',
+    },
+    genderfluid: {
+      'ui-card-bg':           'rgba(15,8,38,0.90)',
+      'ui-card-border':       'rgba(190,24,214,0.40)',
+      'ui-topbar-bg':         'rgba(9,5,26,0.97)',
+      'ui-topbar-border':     'rgba(255,118,164,0.30)',
+      'ui-btn-bg':            'rgba(20,10,50,0.92)',
+      'ui-btn-border':        'rgba(255,118,164,0.50)',
+      'ui-btn-text':          '#f0e6ff',
+      'ui-coin-bg':           'rgba(20,10,50,0.92)',
+      'ui-modal-bg':          '#0f0828',
+      'ui-modal-overlay':     'rgba(0,0,0,0.94)',
+      'ui-modal-border':      'rgba(190,24,214,0.45)',
+      'ui-input-bg':          '#1a0d3d',
+      'ui-input-color':       '#f0e6ff',
+      'ui-quote-card-bg':     '#150a32',
+      'ui-quote-card-border': 'rgba(190,24,214,0.35)',
+      'ui-card-hover-shadow': 'rgba(51,62,189,0.55)',
+      'ui-active-badge-bg':   'rgba(20,10,50,0.88)',
+      'ui-toast-bg':          '#1a0d3d',
     },
     'ultra-performance': {
       'ui-card-bg':           '#161c24',
