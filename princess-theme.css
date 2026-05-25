@@ -1109,21 +1109,30 @@ html[data-theme="genderfluid"] .bg-gradient::before {
   will-change: background-position;
 }
 
-/* ---------- Hauptbild: einzelner Multi-Layer Pride-Glow statt 5 starrer Ringe ---------- */
+/* ---------- Hauptbild: rechteckiger Frame, PNG füllt die Box, mehrlagiger Pride-Glow ---------- */
 html[data-theme="genderfluid"] .image-wrapper {
   background: rgba(15,8,38,0.55);
+  padding: 0 !important;
+  border-radius: 0 !important;
   filter: drop-shadow(0 0 40px rgba(190,24,214,0.7));
 }
 html[data-theme="genderfluid"] .image-frame {
+  border-radius: 0 !important;
   box-shadow:
     0 0 34px 10px rgba(255,118,164,0.85),
     0 0 85px 28px rgba(190,24,214,0.55),
     0 0 160px 65px rgba(51,62,189,0.40);
 }
-html[data-theme="genderfluid"] .image-frame img { opacity: 1; }
+html[data-theme="genderfluid"] .image-frame img {
+  border-radius: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  opacity: 1;
+}
 html[data-theme="genderfluid"] .image-wrapper::after {
   content: ''; position: absolute; inset: 0;
-  border-radius: inherit; pointer-events: none; z-index: 0;
+  border-radius: 0 !important; pointer-events: none; z-index: 0;
   box-shadow:
     0 0 64px 22px rgba(255,118,164,0.95),
     0 0 145px 54px rgba(190,24,214,0.85),
