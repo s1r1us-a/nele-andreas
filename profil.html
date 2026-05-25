@@ -1279,7 +1279,8 @@
   }
 
   // Themes, die nur der Admin sehen darf – dürfen NICHT auf Neles Account geschrieben werden.
-  const ADMIN_ONLY_THEMES = new Set(['genderfluid', 'non-binary']);
+  // Aktuell leer; neue Admin-only-Themes hier ergänzen, dann landen sie nur auf Andreas' Account.
+  const ADMIN_ONLY_THEMES = new Set();
 
   const ALL_BADGES = [
     { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'bronze',    desc: 'Aus einer Lootbox im Shop gewonnen' },
@@ -1536,14 +1537,9 @@
         { label: '💻 Hack auf mich',        onClick: () => adminApplyHackToSelf('sabotage_booster') },
         { label: '📺 Popup-Hack auf mich',  onClick: () => adminApplyHackToSelf('spam_booster') }
     ] },
-    { id: 'theme', title: '🎨 Theme', actions: [
-        { label: '💛 Non-Binary-Theme aktivieren', onClick: () => adminSetTheme('non-binary') },
-        { label: '⚧️ Genderfluid-Theme aktivieren', onClick: () => adminSetTheme('genderfluid') },
-        { label: '🧱 Minecraft-Theme aktivieren', onClick: () => adminSetTheme('minecraft') },
-        { label: '🦑 Squid Game-Theme aktivieren', onClick: () => adminSetTheme('squid-game') },
-        { label: '🐑 Cult of the Lamb-Theme aktivieren', onClick: () => adminSetTheme('cult-of-the-lamb') },
-        { label: '↩️ Theme zurücksetzen (Sakura)', onClick: () => adminSetTheme('sakura') }
-    ] },
+    // Themes werden im Shop gekauft & aktiviert. Hier nur Platzhalter für zukünftige
+    // Admin-only-Themes — Aktionen wieder ergänzen, sobald wieder welche existieren.
+    { id: 'theme', title: '🎨 Theme', actions: [] },
     { id: 'feedback', title: '🧪 XP-Feedback testen', actions: [
         { label: '🎉 Level-Up Modal testen',           onClick: () => adminTestLevelUpModal() },
         { label: '🎉🎉🎉 Multi-Level Test (3 Stufen)', onClick: () => adminTestMultiLevelUp() },
