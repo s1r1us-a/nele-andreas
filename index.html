@@ -266,6 +266,53 @@
   html[data-theme="squid-game"] .save-moment-btn.disabled::before,
   html[data-theme="squid-game"] .save-moment-btn.disabled::after { opacity: 0; }
 
+  /* --- GENDERFLUID Menü- & Speichern-Buttons: dunkle Pride-Neon-Pille (analog Squid-Game) --- */
+  html[data-theme="genderfluid"] .menu-btn,
+  html[data-theme="genderfluid"] .save-moment-btn,
+  html[data-theme="genderfluid"] .booster-open-btn {
+    position: relative;
+    background: linear-gradient(135deg, rgba(15,8,38,0.96) 0%, rgba(40,16,70,0.96) 52%, rgba(15,8,38,0.96) 100%) !important;
+    border: 1.5px solid rgba(255,118,164,0.62) !important;
+    color: #f0e6ff !important;
+    text-shadow: 0 0 10px rgba(255,118,164,0.55) !important;
+    box-shadow: 0 0 14px 3px rgba(255,118,164,0.50),
+                0 0 36px 11px rgba(190,24,214,0.30),
+                inset 0 0 18px rgba(255,118,164,0.14) !important;
+  }
+  html[data-theme="genderfluid"] .menu-btn::before,
+  html[data-theme="genderfluid"] .save-moment-btn::before {
+    content: ''; position: absolute; top: 50%; right: 18px; transform: translateY(-50%);
+    width: 58px; height: 20px; pointer-events: none; z-index: 0; opacity: 0.55;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 58 20'><text x='0' y='16' font-size='16' fill='rgba(255,118,164,0.95)' font-family='serif'>&#9794;</text><text x='20' y='16' font-size='16' fill='rgba(255,255,255,0.85)' font-family='serif'>&#9895;</text><text x='40' y='16' font-size='16' fill='rgba(190,24,214,0.95)' font-family='serif'>&#9792;</text></svg>") no-repeat center / contain;
+  }
+  html[data-theme="genderfluid"] .menu-btn::after,
+  html[data-theme="genderfluid"] .save-moment-btn::after,
+  html[data-theme="genderfluid"] .booster-open-btn::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    pointer-events: none; z-index: 0;
+    box-shadow: 0 0 30px 10px rgba(255,118,164,0.92),
+                0 0 62px 22px rgba(190,24,214,0.6);
+    opacity: 0; transition: opacity 0.25s ease; will-change: opacity;
+  }
+  html[data-theme="genderfluid"] .menu-btn:hover,
+  html[data-theme="genderfluid"] .save-moment-btn:hover,
+  html[data-theme="genderfluid"] .booster-open-btn:hover {
+    border-color: rgba(190,24,214,0.95) !important;
+  }
+  html[data-theme="genderfluid"] .menu-btn:hover::after,
+  html[data-theme="genderfluid"] .save-moment-btn:hover::after,
+  html[data-theme="genderfluid"] .booster-open-btn:hover::after { opacity: 1; }
+  html[data-theme="genderfluid"] .save-moment-btn.disabled {
+    box-shadow: none !important; color: #7a6088 !important;
+  }
+  html[data-theme="genderfluid"] .save-moment-btn.disabled::before,
+  html[data-theme="genderfluid"] .save-moment-btn.disabled::after { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-theme="genderfluid"] .menu-btn::after,
+    html[data-theme="genderfluid"] .save-moment-btn::after,
+    html[data-theme="genderfluid"] .booster-open-btn::after { transition: none !important; }
+  }
+
   /* "Moment sammeln" – der coolste Button (Pink↔Teal-Verlauf, nicht bei Boostern) */
   html[data-theme="squid-game"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage) {
     position: relative;
