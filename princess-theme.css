@@ -1136,37 +1136,41 @@ html[data-theme="genderfluid"] {
 /* ---------- Page background (Pride-Indigo + wandernde Flaggen-Tönung + driftende ♂♀⚧-Symbole) ---------- */
 html[data-theme="genderfluid"] .bg-gradient {
   background:
-    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--gf-flag) 28%, transparent), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--gf-flag-soft) 24%, transparent), transparent 70%),
-    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(15,8,40,0.72), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--gf-flag) 22%, transparent), transparent 70%),
-    linear-gradient(160deg, #0f0828 0%, #150a32 35%, #1a0d3d 65%, #09051a 100%) !important;
+    radial-gradient(ellipse 60% 50% at 20% 15%, color-mix(in srgb, var(--gf-flag) 38%, transparent), transparent 72%),
+    radial-gradient(ellipse 55% 50% at 80% 22%, color-mix(in srgb, var(--gf-flag-soft) 34%, transparent), transparent 72%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(15,8,40,0.62), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 82% 85%, color-mix(in srgb, var(--gf-flag) 30%, transparent), transparent 72%),
+    linear-gradient(160deg,
+      #2a0e3e 0%,
+      #1a0d3d 35%,
+      #1e0e45 65%,
+      #150a32 100%) !important;
 }
 html[data-theme="genderfluid"] .bg-gradient::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--gf-flag-soft) 30%, transparent), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--gf-flag) 26%, transparent), transparent 70%),
-    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(15,8,40,0.55), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--gf-flag-soft) 28%, transparent), transparent 70%);
+    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--gf-flag-soft) 32%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--gf-flag) 28%, transparent), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(15,8,40,0.45), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--gf-flag-soft) 30%, transparent), transparent 70%);
   animation: gfBgIdx 11s ease-in-out infinite alternate;
   will-change: transform, filter;
 }
-/* Subtile horizontale Flaggenstreifen, die langsam vertikal driften */
+/* Klare 5-Streifen-Genderfluid-Flagge, die langsam vertikal vorbeizieht. */
 html[data-theme="genderfluid"] .bg-gradient::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><text x='34' y='62' font-size='36' fill='rgba(255,118,164,0.28)' font-family='serif'>&#9794;</text><text x='152' y='80' font-size='36' fill='rgba(190,24,214,0.26)' font-family='serif'>&#9792;</text><text x='30' y='200' font-size='36' fill='rgba(51,62,189,0.26)' font-family='serif'>&#9895;</text><circle cx='200' cy='180' r='3' fill='rgba(255,255,255,0.65)'/><circle cx='80' cy='140' r='2' fill='rgba(255,118,164,0.85)'/><circle cx='200' cy='40' r='2.4' fill='rgba(190,24,214,0.80)'/></svg>"),
-    linear-gradient(0deg,
-      rgba(255,118,164,0.10) 0%, rgba(255,118,164,0.10) 20%,
-      rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 40%,
-      rgba(190,24,214,0.10)  40%, rgba(190,24,214,0.10)  60%,
-      rgba(15,8,40,0.18)     60%, rgba(15,8,40,0.18)     80%,
-      rgba(51,62,189,0.10)   80%, rgba(51,62,189,0.10)   100%);
-  background-size: 280px 280px, 100% 240px;
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><text x='34' y='62' font-size='36' fill='rgba(255,118,164,0.30)' font-family='serif'>&#9794;</text><text x='152' y='80' font-size='36' fill='rgba(190,24,214,0.28)' font-family='serif'>&#9792;</text><text x='30' y='200' font-size='36' fill='rgba(51,62,189,0.28)' font-family='serif'>&#9895;</text><circle cx='200' cy='180' r='3' fill='rgba(255,255,255,0.70)'/><circle cx='80' cy='140' r='2' fill='rgba(255,118,164,0.90)'/><circle cx='200' cy='40' r='2.4' fill='rgba(190,24,214,0.85)'/></svg>"),
+    linear-gradient(180deg,
+      rgba(255,118,164,0.32) 0%,   rgba(255,118,164,0.32) 20%,
+      rgba(255,255,255,0.30) 20%,  rgba(255,255,255,0.30) 40%,
+      rgba(190,24,214,0.36)  40%,  rgba(190,24,214,0.36)  60%,
+      rgba(0,0,0,0.55)       60%,  rgba(0,0,0,0.55)       80%,
+      rgba(51,62,189,0.36)   80%,  rgba(51,62,189,0.36)   100%);
+  background-size: 280px 280px, 100% 220vh;
   background-repeat: repeat, repeat-y;
-  animation: gfSymbolDrift 24s linear infinite;
-  opacity: 0.7;
+  animation: gfSymbolDrift 60s linear infinite;
+  opacity: 0.55;
   will-change: background-position;
 }
 
@@ -1317,14 +1321,14 @@ html[data-theme="genderfluid"] .game-invite-title,
 html[data-theme="genderfluid"] .booster-confirm-title,
 html[data-theme="genderfluid"] .moment-modal-title,
 html[data-theme="genderfluid"] .dl-title {
-  background: linear-gradient(90deg, #FF76A4, #ffffff, #BE18D6, #333EBD, #FF76A4) !important;
+  background: linear-gradient(90deg, #FF76A4, #ffd5e8, #BE18D6, #6e7be0, #FF76A4) !important;
   background-size: 300% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   animation: gfFlow 6s linear infinite;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.75)) drop-shadow(0 0 8px rgba(190,24,214,0.40));
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.85)) drop-shadow(0 0 10px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(190,24,214,0.55));
 }
 
 /* ---------- Premium tag ---------- */
@@ -1394,14 +1398,15 @@ html[data-theme="genderfluid"] .visit-other-btn,
 html[data-theme="genderfluid"] .account-btn,
 html[data-theme="genderfluid"] .comment-send-btn {
   position: relative;
-  background: linear-gradient(135deg, #0f0828 0%, #FF76A4 18%, #ffffff 36%, #BE18D6 54%, #1a0d3d 72%, #333EBD 90%, #0f0828 100%) !important;
-  background-size: 300% 300% !important;
+  background: linear-gradient(135deg, #FF76A4 0%, #BE18D6 50%, #333EBD 100%) !important;
+  background-size: 200% 200% !important;
   border: 1.5px solid var(--gf-flag) !important;
-  color: #fff0f7 !important;
-  text-shadow: 0 0 12px var(--gf-flag);
+  color: #ffffff !important;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.55), 0 0 14px rgba(0,0,0,0.35);
   box-shadow: 0 0 18px 4px var(--gf-flag),
               0 0 46px 15px var(--gf-flag-soft),
-              0 0 96px 34px var(--gf-flag) !important;
+              0 0 60px 20px var(--gf-flag) !important;
   animation: gfHeartSheen 8s ease infinite;
 }
 html[data-theme="genderfluid"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage)::after,
@@ -1463,6 +1468,8 @@ html[data-theme="genderfluid"] .comment-send-btn:active {
 html[data-theme="genderfluid"] .btn-activate.is-active {
   background: linear-gradient(135deg, #333EBD 0%, #BE18D6 50%, #FF76A4 100%) !important;
   border-color: rgba(255,255,255,0.85) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.4);
 }
 
 /* ---------- Quiz-Antwort-Buttons (ruhig, dunkler Pride-Akzent) ---------- */
@@ -1560,8 +1567,8 @@ html[data-theme="genderfluid"] .stat-label {
 }
 html[data-theme="genderfluid"] .stat-count { text-shadow: 0 0 10px rgba(255,118,164,0.45); }
 html[data-theme="genderfluid"] .stat-count-andreas { color: #FF76A4 !important; }
-html[data-theme="genderfluid"] .stat-count-nele { color: #6e7be0 !important; }
-html[data-theme="genderfluid"] .stat-pct { opacity: 0.75; color: #c98ae0 !important; }
+html[data-theme="genderfluid"] .stat-count-nele { color: #8a96ff !important; }
+html[data-theme="genderfluid"] .stat-pct { opacity: 0.9; color: #e0baee !important; }
 html[data-theme="genderfluid"] .stat-bar-wrap {
   border: 1px solid rgba(255,118,164,0.35);
   background: rgba(0,0,0,0.55) !important;
@@ -1591,8 +1598,8 @@ html[data-theme="genderfluid"] .stats-divider {
     animation-duration: 16s, 16s;
   }
   html[data-theme="genderfluid"] .bg-gradient::before {
-    animation-duration: 40s;
-    opacity: 0.55;
+    animation-duration: 90s;
+    opacity: 0.45;
   }
   html[data-theme="genderfluid"] .bg-gradient::after {
     animation-duration: 16s;
@@ -1773,36 +1780,40 @@ html[data-theme="non-binary"] {
 /* ---------- Page background (Schwarz + wandernde Yellow/Purple-Tönung + driftende NB-Symbole) ---------- */
 html[data-theme="non-binary"] .bg-gradient {
   background:
-    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--nb-flag) 30%, transparent), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--nb-flag-soft) 26%, transparent), transparent 70%),
-    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(10,10,10,0.72), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--nb-flag) 22%, transparent), transparent 70%),
-    linear-gradient(160deg, #0a0a0a 0%, #141414 35%, #1a1a1a 65%, #050505 100%) !important;
+    radial-gradient(ellipse 60% 50% at 20% 15%, color-mix(in srgb, var(--nb-flag) 40%, transparent), transparent 72%),
+    radial-gradient(ellipse 55% 50% at 80% 22%, color-mix(in srgb, var(--nb-flag-soft) 36%, transparent), transparent 72%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(10,10,10,0.60), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 82% 85%, color-mix(in srgb, var(--nb-flag) 30%, transparent), transparent 72%),
+    linear-gradient(160deg,
+      #0a0a0a 0%,
+      #181028 40%,
+      #1a1230 60%,
+      #050505 100%) !important;
 }
 html[data-theme="non-binary"] .bg-gradient::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--nb-flag-soft) 30%, transparent), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--nb-flag) 28%, transparent), transparent 70%),
-    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(10,10,10,0.55), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--nb-flag-soft) 28%, transparent), transparent 70%);
+    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--nb-flag-soft) 34%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--nb-flag) 32%, transparent), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(10,10,10,0.45), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--nb-flag-soft) 32%, transparent), transparent 70%);
   animation: nbBgIdx 11s ease-in-out infinite alternate;
   will-change: transform, filter;
 }
-/* Subtile horizontale 4-Streifen-Flagge (Gelb/Weiß/Purple/Schwarz), die langsam vertikal driftet */
+/* Klare 4-Streifen-Non-Binary-Flagge (Gelb/Weiß/Purple/Schwarz), die langsam vertikal vorbeizieht. */
 html[data-theme="non-binary"] .bg-gradient::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><text x='34' y='62' font-size='36' fill='rgba(252,244,52,0.32)' font-family='serif'>&#9895;</text><text x='152' y='80' font-size='36' fill='rgba(156,89,209,0.28)' font-family='serif'>&#9794;</text><text x='30' y='200' font-size='36' fill='rgba(255,255,255,0.18)' font-family='serif'>&#9792;</text><circle cx='200' cy='180' r='3' fill='rgba(252,244,52,0.85)'/><circle cx='80' cy='140' r='2' fill='rgba(255,255,255,0.75)'/><circle cx='200' cy='40' r='2.4' fill='rgba(156,89,209,0.85)'/></svg>"),
-    linear-gradient(0deg,
-      rgba(252,244,52,0.12) 0%, rgba(252,244,52,0.12) 25%,
-      rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.08) 50%,
-      rgba(156,89,209,0.12) 50%, rgba(156,89,209,0.12) 75%,
-      rgba(20,20,20,0.22)   75%, rgba(20,20,20,0.22)   100%);
-  background-size: 280px 280px, 100% 240px;
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><text x='34' y='62' font-size='36' fill='rgba(252,244,52,0.34)' font-family='serif'>&#9895;</text><text x='152' y='80' font-size='36' fill='rgba(156,89,209,0.30)' font-family='serif'>&#9794;</text><text x='30' y='200' font-size='36' fill='rgba(255,255,255,0.22)' font-family='serif'>&#9792;</text><circle cx='200' cy='180' r='3' fill='rgba(252,244,52,0.90)'/><circle cx='80' cy='140' r='2' fill='rgba(255,255,255,0.80)'/><circle cx='200' cy='40' r='2.4' fill='rgba(156,89,209,0.90)'/></svg>"),
+    linear-gradient(180deg,
+      rgba(252,244,52,0.28) 0%,   rgba(252,244,52,0.28) 25%,
+      rgba(255,255,255,0.26) 25%, rgba(255,255,255,0.26) 50%,
+      rgba(156,89,209,0.34) 50%,  rgba(156,89,209,0.34) 75%,
+      rgba(0,0,0,0.65)      75%,  rgba(0,0,0,0.65)      100%);
+  background-size: 280px 280px, 100% 220vh;
   background-repeat: repeat, repeat-y;
-  animation: nbSymbolDrift 24s linear infinite;
-  opacity: 0.7;
+  animation: nbSymbolDrift 60s linear infinite;
+  opacity: 0.50;
   will-change: background-position;
 }
 
@@ -1953,22 +1964,23 @@ html[data-theme="non-binary"] .game-invite-title,
 html[data-theme="non-binary"] .booster-confirm-title,
 html[data-theme="non-binary"] .moment-modal-title,
 html[data-theme="non-binary"] .dl-title {
-  background: linear-gradient(90deg, #FCF434, #ffffff, #9C59D1, #2C2C2C, #FCF434) !important;
+  background: linear-gradient(90deg, #FCF434, #ffffff, #9C59D1, #d8c984, #FCF434) !important;
   background-size: 300% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   animation: nbFlow 6s linear infinite;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.85)) drop-shadow(0 0 8px rgba(252,244,52,0.40));
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.95)) drop-shadow(0 0 10px rgba(0,0,0,0.55)) drop-shadow(0 0 14px rgba(252,244,52,0.45));
 }
 
 /* ---------- Premium tag ---------- */
 html[data-theme="non-binary"] .premium-tag {
-  background: linear-gradient(90deg, #FCF434, #9C59D1, #ffffff, #2C2C2C, #FCF434) !important;
+  background: linear-gradient(90deg, #FCF434, #9C59D1, #FCF434) !important;
   background-size: 300% 100% !important;
   animation: nbFlow 4s linear infinite;
   color: #0a0a0a !important;
+  text-shadow: 0 0 4px rgba(255,255,255,0.7), 0 0 1px rgba(255,255,255,0.9);
   box-shadow: 0 2px 12px rgba(252,244,52,0.65);
 }
 
@@ -2030,15 +2042,15 @@ html[data-theme="non-binary"] .visit-other-btn,
 html[data-theme="non-binary"] .account-btn,
 html[data-theme="non-binary"] .comment-send-btn {
   position: relative;
-  background: linear-gradient(135deg, #0a0a0a 0%, #FCF434 18%, #ffffff 36%, #9C59D1 54%, #1a1a1a 72%, #2C2C2C 90%, #0a0a0a 100%) !important;
-  background-size: 300% 300% !important;
+  background: linear-gradient(135deg, #FCF434 0%, #9C59D1 55%, #FCF434 100%) !important;
+  background-size: 200% 200% !important;
   border: 1.5px solid var(--nb-flag) !important;
-  color: #0a0a0a !important;
+  color: #1a1230 !important;
   font-weight: 800;
-  text-shadow: 0 0 12px rgba(255,255,255,0.7);
+  text-shadow: 0 0 1px #fff, 0 1px 2px rgba(255,255,255,0.85), 0 0 12px rgba(255,255,255,0.55);
   box-shadow: 0 0 18px 4px var(--nb-flag),
               0 0 46px 15px var(--nb-flag-soft),
-              0 0 96px 34px var(--nb-flag) !important;
+              0 0 60px 20px var(--nb-flag) !important;
   animation: nbHeartSheen 8s ease infinite;
 }
 html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage)::after,
@@ -2100,7 +2112,8 @@ html[data-theme="non-binary"] .comment-send-btn:active {
 html[data-theme="non-binary"] .btn-activate.is-active {
   background: linear-gradient(135deg, #2C2C2C 0%, #9C59D1 50%, #FCF434 100%) !important;
   border-color: rgba(255,255,255,0.85) !important;
-  color: #fff8d6 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.75), 0 0 4px rgba(0,0,0,0.5);
 }
 
 /* ---------- Quiz-Antwort-Buttons ---------- */
@@ -2163,10 +2176,11 @@ html[data-theme="non-binary"] .badge-pill {
 
 /* ---------- Toast ---------- */
 html[data-theme="non-binary"] .toast {
-  background: linear-gradient(135deg, #FCF434, #9C59D1, #2C2C2C) !important;
+  background: linear-gradient(135deg, #FCF434, #9C59D1, #FCF434) !important;
   box-shadow: 0 6px 26px rgba(252,244,52,0.60);
   color: #0a0a0a !important;
   font-weight: 800;
+  text-shadow: 0 0 4px rgba(255,255,255,0.8), 0 0 1px rgba(255,255,255,0.9);
 }
 
 /* ---------- "Wer sammelt mehr?" – NB-Karte mit ⚧/♂/♀-Wasserzeichen ---------- */
@@ -2198,8 +2212,8 @@ html[data-theme="non-binary"] .stat-label {
 }
 html[data-theme="non-binary"] .stat-count { text-shadow: 0 0 10px rgba(252,244,52,0.45); }
 html[data-theme="non-binary"] .stat-count-andreas { color: #FCF434 !important; }
-html[data-theme="non-binary"] .stat-count-nele { color: #c89cef !important; }
-html[data-theme="non-binary"] .stat-pct { opacity: 0.75; color: #d8c984 !important; }
+html[data-theme="non-binary"] .stat-count-nele { color: #d7b3ff !important; }
+html[data-theme="non-binary"] .stat-pct { opacity: 0.9; color: #ead08a !important; }
 html[data-theme="non-binary"] .stat-bar-wrap {
   border: 1px solid rgba(252,244,52,0.35);
   background: rgba(0,0,0,0.55) !important;
@@ -2229,8 +2243,8 @@ html[data-theme="non-binary"] .stats-divider {
     animation-duration: 16s, 16s;
   }
   html[data-theme="non-binary"] .bg-gradient::before {
-    animation-duration: 40s;
-    opacity: 0.55;
+    animation-duration: 90s;
+    opacity: 0.40;
   }
   html[data-theme="non-binary"] .bg-gradient::after {
     animation-duration: 16s;
