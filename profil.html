@@ -1279,7 +1279,7 @@
   }
 
   // Themes, die nur der Admin sehen darf – dürfen NICHT auf Neles Account geschrieben werden.
-  const ADMIN_ONLY_THEMES = new Set(['genderfluid']);
+  const ADMIN_ONLY_THEMES = new Set(['genderfluid', 'non-binary']);
 
   const ALL_BADGES = [
     { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'bronze',    desc: 'Aus einer Lootbox im Shop gewonnen' },
@@ -1537,6 +1537,7 @@
         { label: '📺 Popup-Hack auf mich',  onClick: () => adminApplyHackToSelf('spam_booster') }
     ] },
     { id: 'theme', title: '🎨 Theme', actions: [
+        { label: '💛 Non-Binary-Theme aktivieren', onClick: () => adminSetTheme('non-binary') },
         { label: '⚧️ Genderfluid-Theme aktivieren', onClick: () => adminSetTheme('genderfluid') },
         { label: '🧱 Minecraft-Theme aktivieren', onClick: () => adminSetTheme('minecraft') },
         { label: '🦑 Squid Game-Theme aktivieren', onClick: () => adminSetTheme('squid-game') },
@@ -1604,7 +1605,8 @@
       { id: 'minecraft',         emoji: '🧱', name: 'Minecraft' },
       { id: 'squid-game',        emoji: '🦑', name: 'Squid Game' },
       { id: 'cult-of-the-lamb',  emoji: '🐑', name: 'Cult of the Lamb' },
-      { id: 'genderfluid',       emoji: '⚧️', name: 'Genderfluid' }
+      { id: 'genderfluid',       emoji: '⚧️', name: 'Genderfluid' },
+      { id: 'non-binary',        emoji: '💛', name: 'Non-Binary' }
     ],
     farm: {
       seeds: [
@@ -3046,6 +3048,7 @@
 <div class="squid-game-crawler" aria-hidden="true">🦑</div>
 <div class="lamb-crawler" aria-hidden="true">🐑</div>
 <div class="gf-crawler" aria-hidden="true">⚧️</div>
+<div class="nb-crawler" aria-hidden="true">💛</div>
 <div class="lamb-sigil" aria-hidden="true"></div>
 </body>
 <script type="module" src="autoclicker.js"></script>

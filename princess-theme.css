@@ -1634,6 +1634,644 @@ html[data-theme="genderfluid"] .stats-divider {
 }
 
 /* ============================================================ */
+/*  NON-BINARY THEME  💛                                          */
+/*  Pride-Flagge: Yellow / Weiß / Purple / Schwarz                */
+/*  Aktiv wenn  html[data-theme="non-binary"]                     */
+/* ============================================================ */
+
+/* CSS-Variablen-Override — Theme greift auch ohne applyTheme() (z.B. aus Cache) */
+html[data-theme="non-binary"] {
+  --rose:       #FCF434;
+  --rose-light: #fff7a3;
+  --rose-pale:  #1a1a1a;
+  --cream:      #0a0a0a;
+  --gold:       #9C59D1;
+  --warm:       #2a2424;
+  --text-dark:  #fff8d6;
+  --text-mid:   #d8c984;
+
+  --ui-card-bg:             rgba(10,10,10,0.92);
+  --ui-card-border:         rgba(252,244,52,0.42);
+  --ui-card-hover-shadow:   rgba(156,89,209,0.55);
+  --ui-topbar-bg:           rgba(5,5,5,0.97);
+  --ui-topbar-border:       rgba(252,244,52,0.32);
+  --ui-btn-bg:              rgba(20,18,12,0.92);
+  --ui-btn-border:          rgba(252,244,52,0.55);
+  --ui-btn-text:            #fff8d6;
+  --ui-coin-bg:             rgba(20,18,12,0.92);
+  --ui-modal-bg:            #0a0a0a;
+  --ui-modal-overlay:       rgba(0,0,0,0.95);
+  --ui-modal-border:        rgba(252,244,52,0.48);
+  --ui-active-badge-bg:     rgba(20,18,12,0.88);
+  --ui-input-bg:            #1a1a1a;
+  --ui-input-color:         #fff8d6;
+  --ui-preview-btn-border:  rgba(156,89,209,0.50);
+  --ui-disabled-btn:        #2a2424;
+  --ui-owned-badge-bg:      rgba(252,244,52,0.18);
+  --ui-owned-badge-border:  rgba(252,244,52,0.48);
+  --ui-owned-badge-color:   #fff7a3;
+  --ui-toast-bg:            #1a1a1a;
+  --ui-confirm-no-border:   rgba(156,89,209,0.42);
+  --ui-lootbox-odds-bg:     rgba(252,244,52,0.10);
+  --ui-lootbox-odds-border: rgba(252,244,52,0.30);
+  --ui-quote-card-bg:       rgba(10,10,10,0.92);
+  --ui-quote-card-border:   rgba(252,244,52,0.35);
+  --ui-stat-bar-bg:         rgba(252,244,52,0.16);
+
+  /* Globaler Flaggenfarben-Zyklus: alle Komponenten, die var(--nb-flag) /
+     var(--nb-flag-soft) nutzen, wandern automatisch synchron mit. */
+  animation:
+    nbFlagCycle 10s linear infinite,
+    nbFlagCycleSoft 10s linear infinite;
+}
+
+/* ---------- Animierbare Flaggen-Farb-Properties ----------
+   --nb-flag wandert Yellow → Weiß → Purple → Schwarz,
+   --nb-flag-soft ist 50% phasenversetzt für tiefere Glow-Effekte.        */
+@property --nb-flag {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #FCF434;
+}
+@property --nb-flag-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #9C59D1;
+}
+@keyframes nbFlagCycle {
+  0%   { --nb-flag: #FCF434; }
+  25%  { --nb-flag: #ffffff; }
+  50%  { --nb-flag: #9C59D1; }
+  75%  { --nb-flag: #2C2C2C; }
+  100% { --nb-flag: #FCF434; }
+}
+@keyframes nbFlagCycleSoft {
+  0%   { --nb-flag-soft: #9C59D1; }
+  25%  { --nb-flag-soft: #2C2C2C; }
+  50%  { --nb-flag-soft: #FCF434; }
+  75%  { --nb-flag-soft: #ffffff; }
+  100% { --nb-flag-soft: #9C59D1; }
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes nbFlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+@keyframes nbBgIdx {
+  0%   { filter: hue-rotate(-10deg) saturate(1.2); opacity: 0.60; transform: translate(-2%, -1%) scale(1); }
+  100% { filter: hue-rotate(15deg)  saturate(1.55); opacity: 1;    transform: translate(2%,  1%)  scale(1.05); }
+}
+@keyframes nbBadgeMorphLeft {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  33%      { opacity: 0; transform: scale(0.7) rotate(-12deg); }
+  66%      { opacity: 0; transform: scale(0.7) rotate(12deg); }
+}
+@keyframes nbBadgeMorphCenter {
+  0%, 100% { opacity: 0; transform: scale(0.7) rotate(12deg); }
+  33%      { opacity: 1; transform: scale(1) rotate(0deg); }
+  66%      { opacity: 0; transform: scale(0.7) rotate(-12deg); }
+}
+@keyframes nbBadgeMorphRight {
+  0%, 100% { opacity: 0; transform: scale(0.7) rotate(-12deg); }
+  33%      { opacity: 0; transform: scale(0.7) rotate(12deg); }
+  66%      { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes nbSymbolDrift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 280px 280px, 0 -240px; }
+}
+@keyframes nbGlowPulse {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+@keyframes nbHeartGlow {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+@keyframes nbHeartSheen {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes nbTap {
+  0%, 100% { transform: rotate(8deg) translateY(0); }
+  25%      { transform: rotate(-5deg) translateY(-4px); }
+  50%      { transform: rotate(11deg) translateY(0); }
+  72%      { transform: rotate(2deg) translateY(-3px); }
+}
+@keyframes nbCrawl {
+  0%   { transform: translateX(-12vw) rotate(0deg); }
+  50%  { transform: translateX(50vw)  rotate(8deg); }
+  100% { transform: translateX(112vw) rotate(0deg); }
+}
+@keyframes nbCoinPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(252,244,52,0.50), 0 0 24px rgba(156,89,209,0.25); }
+  50%      { box-shadow: 0 0 20px rgba(252,244,52,0.85), 0 0 44px rgba(156,89,209,0.55); }
+}
+
+/* ---------- Page background (Schwarz + wandernde Yellow/Purple-Tönung + driftende NB-Symbole) ---------- */
+html[data-theme="non-binary"] .bg-gradient {
+  background:
+    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--nb-flag) 30%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--nb-flag-soft) 26%, transparent), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(10,10,10,0.72), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--nb-flag) 22%, transparent), transparent 70%),
+    linear-gradient(160deg, #0a0a0a 0%, #141414 35%, #1a1a1a 65%, #050505 100%) !important;
+}
+html[data-theme="non-binary"] .bg-gradient::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 25% 20%, color-mix(in srgb, var(--nb-flag-soft) 30%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 75% 25%, color-mix(in srgb, var(--nb-flag) 28%, transparent), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 50% 65%, rgba(10,10,10,0.55), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, color-mix(in srgb, var(--nb-flag-soft) 28%, transparent), transparent 70%);
+  animation: nbBgIdx 11s ease-in-out infinite alternate;
+  will-change: transform, filter;
+}
+/* Subtile horizontale 4-Streifen-Flagge (Gelb/Weiß/Purple/Schwarz), die langsam vertikal driftet */
+html[data-theme="non-binary"] .bg-gradient::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><text x='34' y='62' font-size='36' fill='rgba(252,244,52,0.32)' font-family='serif'>&#9895;</text><text x='152' y='80' font-size='36' fill='rgba(156,89,209,0.28)' font-family='serif'>&#9794;</text><text x='30' y='200' font-size='36' fill='rgba(255,255,255,0.18)' font-family='serif'>&#9792;</text><circle cx='200' cy='180' r='3' fill='rgba(252,244,52,0.85)'/><circle cx='80' cy='140' r='2' fill='rgba(255,255,255,0.75)'/><circle cx='200' cy='40' r='2.4' fill='rgba(156,89,209,0.85)'/></svg>"),
+    linear-gradient(0deg,
+      rgba(252,244,52,0.12) 0%, rgba(252,244,52,0.12) 25%,
+      rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.08) 50%,
+      rgba(156,89,209,0.12) 50%, rgba(156,89,209,0.12) 75%,
+      rgba(20,20,20,0.22)   75%, rgba(20,20,20,0.22)   100%);
+  background-size: 280px 280px, 100% 240px;
+  background-repeat: repeat, repeat-y;
+  animation: nbSymbolDrift 24s linear infinite;
+  opacity: 0.7;
+  will-change: background-position;
+}
+
+/* ---------- Hauptbild: rechteckiger Frame, wandernde NB-Aurora ---------- */
+html[data-theme="non-binary"] .image-wrapper {
+  background: rgba(10,10,10,0.55);
+  padding: 0 !important;
+  border-radius: 0 !important;
+  filter: drop-shadow(0 0 40px var(--nb-flag-soft));
+}
+html[data-theme="non-binary"] .image-frame {
+  border-radius: 0 !important;
+  border: 2px solid var(--nb-flag) !important;
+  box-shadow:
+    0 0 34px 10px var(--nb-flag),
+    0 0 85px 28px var(--nb-flag-soft),
+    0 0 160px 65px var(--nb-flag);
+}
+html[data-theme="non-binary"] .image-frame img {
+  border-radius: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  opacity: 1;
+}
+html[data-theme="non-binary"] .image-wrapper::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: 0 !important; pointer-events: none; z-index: 0;
+  box-shadow:
+    0 0 64px 22px var(--nb-flag),
+    0 0 145px 54px var(--nb-flag-soft),
+    0 0 270px 110px var(--nb-flag);
+  opacity: 0;
+  animation: nbGlowPulse 2.6s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* ---------- Crawler & Mob (💛 am unteren Rand + Bild) ---------- */
+.nb-mob, .nb-crawler { display: none; }
+html[data-theme="non-binary"] .nb-mob {
+  display: block; position: absolute; bottom: -16px; right: 4px;
+  font-size: 30px; z-index: 5; pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(252,244,52,0.75));
+  transform-origin: bottom center;
+  animation: nbTap 2.6s ease-in-out infinite;
+}
+html[data-theme="non-binary"] .nb-crawler {
+  display: block; position: fixed; bottom: 10px; left: 0;
+  font-size: 34px; z-index: 3; pointer-events: none;
+  filter: drop-shadow(0 2px 5px rgba(252,244,52,0.65));
+  animation: nbCrawl 26s linear infinite;
+}
+html[data-theme="non-binary"] .footer-text {
+  color: #fff7a3; text-shadow: 0 0 10px rgba(252,244,52,0.55);
+}
+
+/* ---------- Morphing-Badge: ⚧ ♂ ♀ wechseln in den NB-Farben ---------- */
+.nb-morph { display: none; }
+html[data-theme="non-binary"] .nb-morph {
+  display: block;
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  width: 56px;
+  height: 56px;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,
+    color-mix(in srgb, var(--nb-flag-soft) 40%, transparent) 0%,
+    rgba(10,10,10,0.88) 60%,
+    rgba(5,5,5,0.96) 100%);
+  border: 1.5px solid var(--nb-flag);
+  box-shadow: 0 0 18px 4px var(--nb-flag),
+              0 0 40px 12px var(--nb-flag-soft);
+}
+html[data-theme="non-binary"] .nb-morph span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: serif;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--nb-flag);
+  text-shadow: 0 0 12px var(--nb-flag-soft),
+               0 0 24px var(--nb-flag);
+  will-change: opacity, transform;
+}
+html[data-theme="non-binary"] .nb-morph .nb-left   { animation: nbBadgeMorphLeft   6s ease-in-out infinite; }
+html[data-theme="non-binary"] .nb-morph .nb-center { animation: nbBadgeMorphCenter 6s ease-in-out infinite; }
+html[data-theme="non-binary"] .nb-morph .nb-right  { animation: nbBadgeMorphRight  6s ease-in-out infinite; }
+
+/* ---------- Coin display & Top-bar ---------- */
+html[data-theme="non-binary"] .coin-display {
+  border: 1.5px solid rgba(252,244,52,0.55) !important;
+  background: linear-gradient(135deg, #141414, #1a1a1a) !important;
+  color: #fff8d6 !important;
+  animation: nbCoinPulse 2.8s ease-in-out infinite;
+}
+html[data-theme="non-binary"] .top-bar {
+  border-bottom: 1.5px solid rgba(252,244,52,0.35);
+  box-shadow: 0 2px 22px rgba(252,244,52,0.22), 0 0 40px rgba(156,89,209,0.18);
+}
+
+/* ---------- Cards & Surfaces ---------- */
+html[data-theme="non-binary"] .theme-card,
+html[data-theme="non-binary"] .lootbox-card,
+html[data-theme="non-binary"] .confirm-card,
+html[data-theme="non-binary"] .reward-card,
+html[data-theme="non-binary"] .modal-card,
+html[data-theme="non-binary"] .moment-modal-card,
+html[data-theme="non-binary"] .booster-confirm-card,
+html[data-theme="non-binary"] .quote-card,
+html[data-theme="non-binary"] .stat-card,
+html[data-theme="non-binary"] .vg-card,
+html[data-theme="non-binary"] .scard,
+html[data-theme="non-binary"] .icard,
+html[data-theme="non-binary"] .quiz-card,
+html[data-theme="non-binary"] .quiz-panel,
+html[data-theme="non-binary"] .quiz-hs-item {
+  border: 1.5px solid rgba(252,244,52,0.45) !important;
+  background: rgba(10,10,10,0.92) !important;
+  color: #fff8d6;
+  box-shadow: 0 8px 30px rgba(252,244,52,0.20), inset 0 0 20px rgba(156,89,209,0.06);
+}
+
+/* ---------- Headlines: Yellow → Weiß → Purple → Schwarz Gradient ---------- */
+html[data-theme="non-binary"] .page-title,
+html[data-theme="non-binary"] .modal-title,
+html[data-theme="non-binary"] .modal-subtitle,
+html[data-theme="non-binary"] .lootbox-name,
+html[data-theme="non-binary"] .reward-title,
+html[data-theme="non-binary"] .confirm-title,
+html[data-theme="non-binary"] .theme-name,
+html[data-theme="non-binary"] .card-title,
+html[data-theme="non-binary"] .section-title,
+html[data-theme="non-binary"] .profile-title,
+html[data-theme="non-binary"] .profile-subtitle,
+html[data-theme="non-binary"] .header-title,
+html[data-theme="non-binary"] .top-title,
+html[data-theme="non-binary"] .vg-section-title,
+html[data-theme="non-binary"] .quiz-card-title,
+html[data-theme="non-binary"] .quiz-modal-title,
+html[data-theme="non-binary"] .quiz-hs-title,
+html[data-theme="non-binary"] .game-invite-title,
+html[data-theme="non-binary"] .booster-confirm-title,
+html[data-theme="non-binary"] .moment-modal-title,
+html[data-theme="non-binary"] .dl-title {
+  background: linear-gradient(90deg, #FCF434, #ffffff, #9C59D1, #2C2C2C, #FCF434) !important;
+  background-size: 300% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: nbFlow 6s linear infinite;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.85)) drop-shadow(0 0 8px rgba(252,244,52,0.40));
+}
+
+/* ---------- Premium tag ---------- */
+html[data-theme="non-binary"] .premium-tag {
+  background: linear-gradient(90deg, #FCF434, #9C59D1, #ffffff, #2C2C2C, #FCF434) !important;
+  background-size: 300% 100% !important;
+  animation: nbFlow 4s linear infinite;
+  color: #0a0a0a !important;
+  box-shadow: 0 2px 12px rgba(252,244,52,0.65);
+}
+
+/* ---------- Menü- & Speichern-Buttons: dunkle Yellow-Neon-Pille ---------- */
+html[data-theme="non-binary"] .menu-btn,
+html[data-theme="non-binary"] .save-moment-btn,
+html[data-theme="non-binary"] .booster-open-btn {
+  position: relative;
+  background: linear-gradient(135deg, rgba(10,10,10,0.96) 0%, rgba(26,22,12,0.96) 52%, rgba(10,10,10,0.96) 100%) !important;
+  border: 1.5px solid var(--nb-flag) !important;
+  color: #fff8d6 !important;
+  text-shadow: 0 0 10px var(--nb-flag) !important;
+  box-shadow: 0 0 14px 3px var(--nb-flag),
+              0 0 36px 11px var(--nb-flag-soft),
+              inset 0 0 18px color-mix(in srgb, var(--nb-flag) 22%, transparent) !important;
+}
+html[data-theme="non-binary"] .menu-btn::before,
+html[data-theme="non-binary"] .save-moment-btn::before {
+  content: ''; position: absolute; top: 50%; right: 18px; transform: translateY(-50%);
+  width: 58px; height: 20px; pointer-events: none; z-index: 0; opacity: 0.6;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 58 20'><text x='0' y='16' font-size='16' fill='rgba(252,244,52,0.95)' font-family='serif'>&#9895;</text><text x='20' y='16' font-size='16' fill='rgba(255,255,255,0.90)' font-family='serif'>&#9794;</text><text x='40' y='16' font-size='16' fill='rgba(156,89,209,0.95)' font-family='serif'>&#9792;</text></svg>") no-repeat center / contain;
+}
+html[data-theme="non-binary"] .menu-btn::after,
+html[data-theme="non-binary"] .save-moment-btn::after,
+html[data-theme="non-binary"] .booster-open-btn::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; z-index: 0;
+  box-shadow: 0 0 30px 10px var(--nb-flag),
+              0 0 62px 22px var(--nb-flag-soft);
+  opacity: 0; transition: opacity 0.25s ease; will-change: opacity;
+}
+html[data-theme="non-binary"] .menu-btn:hover,
+html[data-theme="non-binary"] .save-moment-btn:hover,
+html[data-theme="non-binary"] .booster-open-btn:hover {
+  filter: brightness(1.15);
+}
+html[data-theme="non-binary"] .menu-btn:hover::after,
+html[data-theme="non-binary"] .save-moment-btn:hover::after,
+html[data-theme="non-binary"] .booster-open-btn:hover::after { opacity: 1; }
+html[data-theme="non-binary"] .save-moment-btn.disabled {
+  box-shadow: none !important; color: #7d7755 !important;
+}
+html[data-theme="non-binary"] .save-moment-btn.disabled::before,
+html[data-theme="non-binary"] .save-moment-btn.disabled::after { opacity: 0; }
+
+/* ---------- "Moment sammeln" + alle Primär-Buttons: NB-Multi-Color-Sheen ---------- */
+html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage),
+html[data-theme="non-binary"] .btn-buy:not(:disabled),
+html[data-theme="non-binary"] .btn-activate,
+html[data-theme="non-binary"] .login-btn,
+html[data-theme="non-binary"] .confirm-yes,
+html[data-theme="non-binary"] .reward-close,
+html[data-theme="non-binary"] .btn-open-box:not(:disabled),
+html[data-theme="non-binary"] .play-quiz-btn,
+html[data-theme="non-binary"] .quiz-save-btn,
+html[data-theme="non-binary"] .moment-save-btn,
+html[data-theme="non-binary"] .booster-activate-btn,
+html[data-theme="non-binary"] .visit-other-btn,
+html[data-theme="non-binary"] .account-btn,
+html[data-theme="non-binary"] .comment-send-btn {
+  position: relative;
+  background: linear-gradient(135deg, #0a0a0a 0%, #FCF434 18%, #ffffff 36%, #9C59D1 54%, #1a1a1a 72%, #2C2C2C 90%, #0a0a0a 100%) !important;
+  background-size: 300% 300% !important;
+  border: 1.5px solid var(--nb-flag) !important;
+  color: #0a0a0a !important;
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(255,255,255,0.7);
+  box-shadow: 0 0 18px 4px var(--nb-flag),
+              0 0 46px 15px var(--nb-flag-soft),
+              0 0 96px 34px var(--nb-flag) !important;
+  animation: nbHeartSheen 8s ease infinite;
+}
+html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage)::after,
+html[data-theme="non-binary"] .btn-buy:not(:disabled)::after,
+html[data-theme="non-binary"] .confirm-yes::after,
+html[data-theme="non-binary"] .btn-open-box:not(:disabled)::after,
+html[data-theme="non-binary"] .play-quiz-btn::after,
+html[data-theme="non-binary"] .moment-save-btn::after,
+html[data-theme="non-binary"] .booster-activate-btn::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; z-index: 0;
+  box-shadow: 0 0 40px 14px var(--nb-flag),
+              0 0 92px 34px var(--nb-flag-soft),
+              0 0 175px 72px var(--nb-flag);
+  opacity: 0; animation: nbHeartGlow 2s ease-in-out infinite;
+  will-change: opacity;
+}
+html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage):hover,
+html[data-theme="non-binary"] .btn-buy:not(:disabled):hover,
+html[data-theme="non-binary"] .btn-activate:hover,
+html[data-theme="non-binary"] .login-btn:hover,
+html[data-theme="non-binary"] .confirm-yes:hover,
+html[data-theme="non-binary"] .reward-close:hover,
+html[data-theme="non-binary"] .btn-open-box:not(:disabled):hover,
+html[data-theme="non-binary"] .play-quiz-btn:hover,
+html[data-theme="non-binary"] .quiz-save-btn:hover,
+html[data-theme="non-binary"] .moment-save-btn:hover,
+html[data-theme="non-binary"] .booster-activate-btn:hover,
+html[data-theme="non-binary"] .visit-other-btn:hover,
+html[data-theme="non-binary"] .account-btn:hover,
+html[data-theme="non-binary"] .comment-send-btn:hover {
+  filter: brightness(1.18) saturate(1.15);
+}
+html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage):hover::after,
+html[data-theme="non-binary"] .btn-buy:not(:disabled):hover::after,
+html[data-theme="non-binary"] .confirm-yes:hover::after,
+html[data-theme="non-binary"] .btn-open-box:not(:disabled):hover::after,
+html[data-theme="non-binary"] .play-quiz-btn:hover::after,
+html[data-theme="non-binary"] .moment-save-btn:hover::after,
+html[data-theme="non-binary"] .booster-activate-btn:hover::after {
+  animation-duration: 1s;
+}
+html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage):active,
+html[data-theme="non-binary"] .btn-buy:not(:disabled):active,
+html[data-theme="non-binary"] .btn-activate:active,
+html[data-theme="non-binary"] .login-btn:active,
+html[data-theme="non-binary"] .confirm-yes:active,
+html[data-theme="non-binary"] .reward-close:active,
+html[data-theme="non-binary"] .btn-open-box:not(:disabled):active,
+html[data-theme="non-binary"] .play-quiz-btn:active,
+html[data-theme="non-binary"] .quiz-save-btn:active,
+html[data-theme="non-binary"] .moment-save-btn:active,
+html[data-theme="non-binary"] .booster-activate-btn:active,
+html[data-theme="non-binary"] .visit-other-btn:active,
+html[data-theme="non-binary"] .account-btn:active,
+html[data-theme="non-binary"] .comment-send-btn:active {
+  transform: scale(0.96);
+}
+html[data-theme="non-binary"] .btn-activate.is-active {
+  background: linear-gradient(135deg, #2C2C2C 0%, #9C59D1 50%, #FCF434 100%) !important;
+  border-color: rgba(255,255,255,0.85) !important;
+  color: #fff8d6 !important;
+}
+
+/* ---------- Quiz-Antwort-Buttons ---------- */
+html[data-theme="non-binary"] .quiz-opt-btns button,
+html[data-theme="non-binary"] .quiz-correct-btn {
+  border: 1.5px solid rgba(252,244,52,0.55) !important;
+  background: linear-gradient(135deg, #1a1a1a, #0d0d0d) !important;
+  color: #fff8d6 !important;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+html[data-theme="non-binary"] .quiz-opt-btns button:hover,
+html[data-theme="non-binary"] .quiz-correct-btn:hover {
+  border-color: #FCF434 !important;
+  box-shadow: 0 4px 22px rgba(252,244,52,0.55);
+}
+
+/* ---------- Sekundär-Buttons ---------- */
+html[data-theme="non-binary"] .btn-preview,
+html[data-theme="non-binary"] .confirm-no,
+html[data-theme="non-binary"] .moment-cancel-btn,
+html[data-theme="non-binary"] .back-btn,
+html[data-theme="non-binary"] .forgot-btn,
+html[data-theme="non-binary"] .top-bar-btn,
+html[data-theme="non-binary"] .quiz-tab,
+html[data-theme="non-binary"] .ftab,
+html[data-theme="non-binary"] .lbtn {
+  background: rgba(20,18,12,0.88) !important;
+  border: 1.5px solid var(--nb-flag-soft) !important;
+  color: #fff8d6 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 2px 12px var(--nb-flag-soft);
+  transition: filter 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+html[data-theme="non-binary"] .btn-preview:hover,
+html[data-theme="non-binary"] .confirm-no:hover,
+html[data-theme="non-binary"] .moment-cancel-btn:hover,
+html[data-theme="non-binary"] .back-btn:hover,
+html[data-theme="non-binary"] .forgot-btn:hover,
+html[data-theme="non-binary"] .top-bar-btn:hover,
+html[data-theme="non-binary"] .quiz-tab:hover,
+html[data-theme="non-binary"] .ftab:hover,
+html[data-theme="non-binary"] .lbtn:hover {
+  background: #1a1a1a !important;
+  color: var(--nb-flag) !important;
+  filter: brightness(1.15);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.18), 0 4px 22px var(--nb-flag);
+}
+
+/* ---------- Owned/User badges ---------- */
+html[data-theme="non-binary"] .owned-badge,
+html[data-theme="non-binary"] .user-badge,
+html[data-theme="non-binary"] .readonly-badge,
+html[data-theme="non-binary"] .active-badge-pill,
+html[data-theme="non-binary"] .badge-pill {
+  background: rgba(252,244,52,0.15) !important;
+  border-color: rgba(252,244,52,0.50) !important;
+  color: #fff7a3 !important;
+}
+
+/* ---------- Toast ---------- */
+html[data-theme="non-binary"] .toast {
+  background: linear-gradient(135deg, #FCF434, #9C59D1, #2C2C2C) !important;
+  box-shadow: 0 6px 26px rgba(252,244,52,0.60);
+  color: #0a0a0a !important;
+  font-weight: 800;
+}
+
+/* ---------- "Wer sammelt mehr?" – NB-Karte mit ⚧/♂/♀-Wasserzeichen ---------- */
+html[data-theme="non-binary"] .stats-section {
+  position: relative; overflow: hidden;
+  border-radius: 22px !important;
+  border: 1.5px solid rgba(252,244,52,0.55) !important;
+  background: linear-gradient(165deg, rgba(10,10,10,0.94) 0%, rgba(28,24,8,0.94) 55%, rgba(5,5,5,0.96) 100%) !important;
+  box-shadow: 0 0 22px 4px rgba(252,244,52,0.34),
+              0 0 60px 16px rgba(156,89,209,0.20),
+              inset 0 0 28px rgba(252,244,52,0.10) !important;
+}
+html[data-theme="non-binary"] .stats-section::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  opacity: 0.5;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><text x='12' y='66' font-size='52' fill='rgba(252,244,52,0.42)' font-family='serif'>&#9895;</text><text x='110' y='90' font-size='52' fill='rgba(156,89,209,0.40)' font-family='serif'>&#9794;</text><text x='62' y='180' font-size='52' fill='rgba(255,255,255,0.22)' font-family='serif'>&#9792;</text></svg>") no-repeat center / 78% auto;
+}
+html[data-theme="non-binary"] .stats-section > * { position: relative; z-index: 1; }
+html[data-theme="non-binary"] .stats-title,
+html[data-theme="non-binary"] .stats-today-title {
+  color: #fff7a3 !important; letter-spacing: 3px;
+  text-shadow: 0 0 12px rgba(252,244,52,0.6);
+  background: none !important; -webkit-text-fill-color: currentColor !important;
+  animation: none !important; filter: none !important;
+}
+html[data-theme="non-binary"] .stat-label {
+  color: #fff8d6 !important;
+  text-shadow: 0 0 8px rgba(252,244,52,0.4);
+}
+html[data-theme="non-binary"] .stat-count { text-shadow: 0 0 10px rgba(252,244,52,0.45); }
+html[data-theme="non-binary"] .stat-count-andreas { color: #FCF434 !important; }
+html[data-theme="non-binary"] .stat-count-nele { color: #c89cef !important; }
+html[data-theme="non-binary"] .stat-pct { opacity: 0.75; color: #d8c984 !important; }
+html[data-theme="non-binary"] .stat-bar-wrap {
+  border: 1px solid rgba(252,244,52,0.35);
+  background: rgba(0,0,0,0.55) !important;
+}
+html[data-theme="non-binary"] .stat-bar-andreas {
+  background: linear-gradient(90deg, #fff7a3, #FCF434) !important;
+  box-shadow: 0 0 12px rgba(252,244,52,0.7);
+}
+html[data-theme="non-binary"] .stat-bar-nele {
+  background: linear-gradient(90deg, #c89cef, #9C59D1) !important;
+  box-shadow: 0 0 12px rgba(156,89,209,0.7);
+}
+html[data-theme="non-binary"] .stats-verdict {
+  color: #fff7a3 !important; text-shadow: 0 0 10px rgba(252,244,52,0.5);
+  background: none !important; -webkit-text-fill-color: currentColor !important;
+  animation: none !important; filter: none !important;
+}
+html[data-theme="non-binary"] .stats-divider {
+  border-top: 1px solid rgba(252,244,52,0.4) !important;
+}
+
+/* ============================================================ */
+/*  MOBILE-DROSSELUNG  (max-width: 600px)                        */
+/* ============================================================ */
+@media (max-width: 600px) {
+  html[data-theme="non-binary"] {
+    animation-duration: 16s, 16s;
+  }
+  html[data-theme="non-binary"] .bg-gradient::before {
+    animation-duration: 40s;
+    opacity: 0.55;
+  }
+  html[data-theme="non-binary"] .bg-gradient::after {
+    animation-duration: 16s;
+  }
+  html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage) {
+    animation-duration: 10s;
+  }
+  html[data-theme="non-binary"] .nb-morph {
+    width: 48px; height: 48px;
+    bottom: 14px; left: 14px;
+  }
+  html[data-theme="non-binary"] .nb-morph span { font-size: 28px; }
+}
+
+/* ============================================================ */
+/*  ACCESSIBILITY: reduced-motion                                */
+/* ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="non-binary"],
+  html[data-theme="non-binary"] .bg-gradient::before,
+  html[data-theme="non-binary"] .bg-gradient::after,
+  html[data-theme="non-binary"] .image-wrapper::after,
+  html[data-theme="non-binary"] .heart-btn,
+  html[data-theme="non-binary"] .heart-btn::after,
+  html[data-theme="non-binary"] .menu-btn::after,
+  html[data-theme="non-binary"] .save-moment-btn::after,
+  html[data-theme="non-binary"] .booster-open-btn::after,
+  html[data-theme="non-binary"] .nb-crawler,
+  html[data-theme="non-binary"] .nb-mob,
+  html[data-theme="non-binary"] .nb-morph span,
+  html[data-theme="non-binary"] .coin-display { animation: none !important; }
+  html[data-theme="non-binary"] .image-wrapper::after,
+  html[data-theme="non-binary"] .heart-btn:not(.boost-glow-auto):not(.boost-glow-sabotage)::after,
+  html[data-theme="non-binary"] .menu-btn::after,
+  html[data-theme="non-binary"] .save-moment-btn:not(.disabled)::after { opacity: 1; }
+  html[data-theme="non-binary"] .nb-morph .nb-center { opacity: 1; }
+  html[data-theme="non-binary"] .nb-morph .nb-left,
+  html[data-theme="non-binary"] .nb-morph .nb-right { opacity: 0; }
+}
+
+/* ============================================================ */
 /* ULTRA PERFORMANCE THEME                                       */
 /* Dunkel, kühl-blau. Maximal renderschonend für schwache        */
 /* Geräte: keinerlei Animationen, Transitions, Blur, Schatten    */
