@@ -52,10 +52,10 @@
     html[data-theme="genderfluid"] body::before,
     html[data-theme="minecraft"] body::before,
     html[data-theme="wednesday"] body::before { opacity:1; }
-    html[data-theme="genderfluid"] body::before { background: radial-gradient(ellipse 58% 48% at 22% 18%, rgba(255,118,164,0.35), transparent 70%), radial-gradient(ellipse 52% 48% at 78% 22%, rgba(190,24,214,0.28), transparent 70%), radial-gradient(ellipse 62% 52% at 50% 62%, rgba(51,62,189,0.22), transparent 72%), radial-gradient(ellipse 52% 48% at 18% 86%, rgba(255,118,164,0.25), transparent 72%), radial-gradient(ellipse 52% 48% at 82% 84%, rgba(190,24,214,0.28), transparent 70%); animation: bgGfProfil 10s ease-in-out infinite; mix-blend-mode: screen; }
+    html[data-theme="genderfluid"] body::before { background: radial-gradient(ellipse 60% 50% at 25% 20%, rgba(255,118,164,0.22), transparent 70%), radial-gradient(ellipse 55% 50% at 75% 25%, rgba(190,24,214,0.18), transparent 70%), radial-gradient(ellipse 65% 55% at 50% 65%, rgba(15,8,40,0.70), transparent 70%), radial-gradient(ellipse 55% 50% at 80% 85%, rgba(51,62,189,0.20), transparent 70%); animation: bgGfProfil 11s ease-in-out infinite alternate; }
     @keyframes bgGfProfil { 0%{filter:hue-rotate(-15deg) saturate(1.2);opacity:0.60;transform:translate(-2%,-1%) scale(1)} 100%{filter:hue-rotate(20deg) saturate(1.6);opacity:1;transform:translate(2%,1%) scale(1.05)} }
-    html[data-theme="genderfluid"] body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'><text x='14' y='44' font-size='22' fill='rgba(255,118,164,0.18)' font-family='serif'>&#9794;</text><text x='90' y='100' font-size='22' fill='rgba(190,24,214,0.18)' font-family='serif'>&#9792;</text><text x='50' y='145' font-size='20' fill='rgba(51,62,189,0.16)' font-family='serif'>&#9895;</text><circle cx='130' cy='30' r='1.5' fill='rgba(255,118,164,0.90)'/><circle cx='30' cy='130' r='1.2' fill='rgba(190,24,214,0.85)'/><circle cx='80' cy='70' r='1.0' fill='rgba(255,255,255,0.70)'/></svg>"), radial-gradient(1.5px 1.5px at 28% 68%, rgba(255,118,164,0.95), transparent 60%), radial-gradient(2px 2px at 58% 32%, rgba(255,255,255,0.80), transparent 60%), radial-gradient(1.5px 1.5px at 76% 62%, rgba(190,24,214,0.90), transparent 60%), radial-gradient(2px 2px at 88% 16%, rgba(51,62,189,0.85), transparent 60%); background-size: 160px 160px, 230px 230px, 250px 250px, 200px 200px, 220px 220px; animation: bgGfDriftProfil 28s linear infinite; opacity: 0.90; }
-    @keyframes bgGfDriftProfil { 0%{background-position:0 0, 20px 30px, 50px 10px, 80px 60px, 10px 90px} 100%{background-position:90px 100px, 110px 130px, 140px 110px, 170px 160px, 100px 190px} }
+    html[data-theme="genderfluid"] body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><text x='34' y='62' font-size='36' fill='rgba(255,118,164,0.28)' font-family='serif'>&#9794;</text><text x='152' y='80' font-size='36' fill='rgba(190,24,214,0.26)' font-family='serif'>&#9792;</text><text x='30' y='200' font-size='36' fill='rgba(51,62,189,0.26)' font-family='serif'>&#9895;</text><circle cx='200' cy='180' r='3' fill='rgba(255,255,255,0.65)'/><circle cx='80' cy='140' r='2' fill='rgba(255,118,164,0.85)'/><circle cx='200' cy='40' r='2.4' fill='rgba(190,24,214,0.80)'/></svg>"); background-size: 280px 280px; animation: bgGfDriftProfil 24s linear infinite; opacity: 0.7; }
+    @keyframes bgGfDriftProfil { 0%{background-position:0 0} 100%{background-position:280px 280px} }
     html[data-theme="aurora"] body::before { background: radial-gradient(ellipse at 30% 0%, rgba(94,234,212,0.22), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(192,132,252,0.22), transparent 55%); animation: bgAuroraProfil 14s ease-in-out infinite alternate; mix-blend-mode: screen; }
     @keyframes bgAuroraProfil { 0%{transform:translateX(-6%) translateY(-3%)} 100%{transform:translateX(6%) translateY(3%)} }
     html[data-theme="cosmic"] body::before { background: radial-gradient(2px 2px at 15% 25%, rgba(255,255,255,0.9), transparent 60%), radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.7), transparent 60%), radial-gradient(2px 2px at 60% 40%, rgba(252,211,77,0.85), transparent 60%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.8), transparent 60%), radial-gradient(1.5px 1.5px at 90% 20%, rgba(165,180,252,0.9), transparent 60%); animation: bgCosmicProfil 4s ease-in-out infinite alternate; }
@@ -1278,6 +1278,9 @@
     return !!(u && u.email && u.email.toLowerCase() === ADMIN_EMAIL);
   }
 
+  // Themes, die nur der Admin sehen darf – dürfen NICHT auf Neles Account geschrieben werden.
+  const ADMIN_ONLY_THEMES = new Set(['genderfluid']);
+
   const ALL_BADGES = [
     { id: 'pfotchen',     emoji: '🐾', name: 'Pfötchen',        rarity: 'bronze',    desc: 'Aus einer Lootbox im Shop gewonnen' },
     { id: 'kirschblute',  emoji: '🌸', name: 'Kirschblüte',     rarity: 'bronze',    desc: 'Aus einer Lootbox im Shop gewonnen' },
@@ -1403,14 +1406,27 @@
 
   async function adminSetTheme(themeId) {
     if (!isAdmin()) return;
-    await Promise.all([
+    const adminOnly = ADMIN_ONLY_THEMES.has(themeId);
+    const writes = [
       set(ref(db, 'shop/andreas/activeTheme'),        themeId),
       set(ref(db, 'shop/andreas/activeThemeMobile'),  themeId),
       set(ref(db, 'shop/andreas/activeThemeDesktop'), themeId),
-      set(ref(db, 'shop/nele/activeTheme'),           themeId),
-      set(ref(db, 'shop/nele/activeThemeMobile'),     themeId),
-      set(ref(db, 'shop/nele/activeThemeDesktop'),    themeId),
-    ]);
+    ];
+    if (adminOnly) {
+      // Admin-only Theme: Nele aktiv auf Sakura zurücksetzen, falls ein Leak hängt.
+      writes.push(
+        set(ref(db, 'shop/nele/activeTheme'),         'sakura'),
+        set(ref(db, 'shop/nele/activeThemeMobile'),   'sakura'),
+        set(ref(db, 'shop/nele/activeThemeDesktop'),  'sakura'),
+      );
+    } else {
+      writes.push(
+        set(ref(db, 'shop/nele/activeTheme'),         themeId),
+        set(ref(db, 'shop/nele/activeThemeMobile'),   themeId),
+        set(ref(db, 'shop/nele/activeThemeDesktop'),  themeId),
+      );
+    }
+    await Promise.all(writes);
     try {
       localStorage.setItem('activeTheme',        themeId);
       localStorage.setItem('activeThemeMobile',  themeId);
@@ -1418,7 +1434,13 @@
     } catch (e) {}
     applyProfilTheme(themeId);
     document.getElementById('adminOverlay').classList.remove('open');
-    showToast(themeId === 'sakura' ? '↩️ Theme zurückgesetzt!' : '🎨 Theme aktiviert!');
+    showToast(
+      themeId === 'sakura'
+        ? '↩️ Theme zurückgesetzt!'
+        : adminOnly
+          ? '🎨 Admin-Theme aktiviert (nur du)!'
+          : '🎨 Theme aktiviert!'
+    );
   }
 
   // --- Live-Meldung: Modal an alle Spieler senden ---
@@ -3023,6 +3045,7 @@
 <div class="thing-crawler" aria-hidden="true">🖐️</div>
 <div class="squid-game-crawler" aria-hidden="true">🦑</div>
 <div class="lamb-crawler" aria-hidden="true">🐑</div>
+<div class="gf-crawler" aria-hidden="true">⚧️</div>
 <div class="lamb-sigil" aria-hidden="true"></div>
 </body>
 <script type="module" src="autoclicker.js"></script>
