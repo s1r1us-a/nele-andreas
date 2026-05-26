@@ -1479,15 +1479,15 @@
           <small>100 🪙</small>
         </button>
         <button class="arcade-btn arcade-gold" data-bet="1000" data-spins="1" data-multiplier="10">
-          HIGH ROLLER
+          HIGH SPIN
           <small>1000 🪙 · Gewinne ×10</small>
         </button>
         <button class="arcade-btn arcade-red" data-bet="10000" data-spins="1" data-multiplier="100">
-          INSANE ROLLER
+          INSANE SPIN
           <small>10 000 🪙 · Gewinne ×100</small>
         </button>
         <button class="arcade-btn arcade-royal" data-bet="100000" data-spins="1" data-multiplier="1000">
-          ROYAL ROLLER
+          ROYAL SPIN
           <small>100 000 🪙 · Gewinne ×1000</small>
         </button>
         <button id="autoSpinBtn" class="arcade-btn arcade-auto" type="button" aria-pressed="false">
@@ -2822,10 +2822,10 @@
       btn.setAttribute('aria-pressed', 'true');
       btn.disabled = true;
     } else if (autoSpinArmed && !isSpinning) {
-      // Scharf geschaltet, wartet auf SPIN / HIGH ROLLER.
+      // Scharf geschaltet, wartet auf SPIN / HIGH SPIN.
       btn.firstChild.textContent = '🔁 AUTOSPIN · AN ';
       btn.classList.add('is-armed');
-      if (small) small.textContent = 'Jetzt SPIN oder HIGH ROLLER wählen';
+      if (small) small.textContent = 'Jetzt einen Spin-Modus wählen';
       btn.setAttribute('aria-pressed', 'true');
       btn.disabled = false;
     } else {
