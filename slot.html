@@ -796,6 +796,13 @@
     color: #fff5fa;
   }
   .arcade-red small { opacity: 0.8; }
+  .arcade-royal {
+    --grad: linear-gradient(135deg, #6b1f8a 0%, #2d0a4a 100%);
+    --glow: rgba(180,100,220,0.5); --glow-hover: rgba(220,150,255,0.7);
+    color: #fff5fa;
+    border-color: #f0c674;
+  }
+  .arcade-royal small { opacity: 0.9; }
 
   /* AUTOSPIN BUTTON — Scharfschalter / Stopp */
   .arcade-auto {
@@ -1478,6 +1485,10 @@
         <button class="arcade-btn arcade-red" data-bet="10000" data-spins="1" data-multiplier="100">
           INSANE ROLLER
           <small>10 000 🪙 · Gewinne ×100</small>
+        </button>
+        <button class="arcade-btn arcade-royal" data-bet="100000" data-spins="1" data-multiplier="1000">
+          ROYAL ROLLER
+          <small>100 000 🪙 · Gewinne ×1000</small>
         </button>
         <button id="autoSpinBtn" class="arcade-btn arcade-auto" type="button" aria-pressed="false">
           🔁 AUTOSPIN
