@@ -4623,7 +4623,12 @@
                 slotsHtml += `<div style="display:flex; align-items:center; gap:10px; padding: 8px 12px; border: 2px solid var(--ui-card-border); border-radius: 10px; margin-bottom: 6px; background: rgba(255,255,255,0.6);"><span style="font-size:22px; animation: pulse 2s infinite;">🔥</span><div style="flex:1; min-width:0;"><div style="font-size:12px; font-weight:700; color:var(--text-dark);">${r.name}</div><div style="width: 100%; height: 5px; background: rgba(0,0,0,0.1); border-radius: 4px; margin-top:4px; overflow:hidden;"><div id="ovenProgressBar-${index}" style="height:100%; background:var(--gold); width:${pct}%; transition: width 1s linear;"></div></div></div><div id="ovenTimer-${index}" style="font-size: 13px; font-weight: bold; color: var(--gold); font-variant-numeric: tabular-nums; white-space:nowrap;">${m<10?'0':''}${m}:${s<10?'0':''}${s}</div></div>`;
             }
         });
-        content.innerHTML = slotsHtml;
+        const readyCount = oven.slots.filter(s => s.state === 'ready').length;
+        let headerHtml = '';
+        if (readyCount > 0) {
+            headerHtml = `<button class="btn-generic" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 8px 12px; font-size:12px; width:100%; margin-bottom:8px;" onclick="window.collectBakeryAll()">✅ Alle abholen (${readyCount})</button>`;
+        }
+        content.innerHTML = headerHtml + slotsHtml;
     }
   }
 
@@ -4708,6 +4713,27 @@
           window.showToast(r.name + ' fertig! ' + r.icon);
           awardXp(db, userKey, XP_VALUES.farm_bakery);
       }
+  }
+
+  window.collectBakeryAll = async function() {
+      let collected = 0;
+      for (let i = 0; i < oven.slots.length; i++) {
+          const slot = oven.slots[i];
+          if (slot && slot.state === 'ready') {
+              const r = bakeryRecipes[slot.item];
+              if (!r) { oven.slots[i] = { state: 'empty', item: null, startedAt: 0 }; continue; }
+              inventory.bakery[slot.item] = (inventory.bakery[slot.item] || 0) + 1;
+              oven.slots[i] = { state: 'empty', item: null, startedAt: 0 };
+              awardXp(db, userKey, XP_VALUES.farm_bakery);
+              collected++;
+          }
+      }
+      if (collected === 0) { window.showToast('Nichts zum Abholen bereit.'); return; }
+      await saveFarmData();
+      updateFarmDOM();
+      window.renderBakery('oven');
+      window.showFloatingNumber('+' + collected + ' 🥖', '#d97706');
+      window.showToast(collected + '× Backwaren abgeholt! 🧑‍🍳');
   }
 
   // ── SHOP & SELL ──
@@ -5168,7 +5194,12 @@
           slotsHtml += `<div style="display:flex; align-items:center; gap:10px; padding: 8px 12px; border: 2px solid var(--ui-card-border); border-radius: 10px; margin-bottom: 6px; background: rgba(255,255,255,0.6);"><span style="font-size:22px; animation: pulse 2s infinite;">🪡</span><div style="flex:1; min-width:0;"><div style="font-size:12px; font-weight:700; color:var(--text-dark);">${r.name}</div><div style="width: 100%; height: 5px; background: rgba(0,0,0,0.1); border-radius: 4px; margin-top:4px; overflow:hidden;"><div id="loomProgressBar-${index}" style="height:100%; background:#9f7aea; width:${pct}%; transition: width 1s linear;"></div></div></div><div id="loomTimer-${index}" style="font-size: 13px; font-weight: bold; color: #7c6fa0; font-variant-numeric: tabular-nums; white-space:nowrap;">${m<10?'0':''}${m}:${s<10?'0':''}${s}</div></div>`;
         }
       });
-      content.innerHTML = slotsHtml;
+      const readyCount = loom.slots.filter(s => s.state === 'ready').length;
+      let headerHtml = '';
+      if (readyCount > 0) {
+        headerHtml = `<button class="btn-generic" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 8px 12px; font-size:12px; width:100%; margin-bottom:8px;" onclick="window.collectWeavingAll()">✅ Alle abholen (${readyCount})</button>`;
+      }
+      content.innerHTML = headerHtml + slotsHtml;
     }
   }
 
@@ -5236,6 +5267,28 @@
     window.renderWeaving('looms');
     updateFarmDOM();
     awardXp(db, userKey, XP_VALUES.farm_weaving);
+  }
+
+  window.collectWeavingAll = async function() {
+    if (!inventory.accessories) inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0 };
+    let collected = 0;
+    for (let i = 0; i < loom.slots.length; i++) {
+      const slot = loom.slots[i];
+      if (slot && slot.state === 'ready') {
+        const r = weavingRecipes[slot.item];
+        if (!r) { loom.slots[i] = { state: 'empty', item: null, startedAt: 0 }; continue; }
+        inventory.accessories[slot.item] = (inventory.accessories[slot.item] || 0) + 1;
+        loom.slots[i] = { state: 'empty', item: null, startedAt: 0 };
+        awardXp(db, userKey, XP_VALUES.farm_weaving);
+        collected++;
+      }
+    }
+    if (collected === 0) { window.showToast('Nichts zum Abholen bereit.'); return; }
+    await saveFarmData();
+    updateFarmDOM();
+    window.renderWeaving('looms');
+    window.showFloatingNumber('+' + collected + ' 🧵', '#9f7aea');
+    window.showToast(collected + '× Webwaren abgeholt! 🧵');
   }
 
   // ── SCHMUCKWERKSTATT LOGIK ──
@@ -5306,7 +5359,12 @@
           </div>`;
         }
       });
-      content.innerHTML = html || '<div style="text-align:center;padding:20px;color:var(--text-mid);">Alle Werkbänke leer.</div>';
+      const readyCount = forgeSlots.filter(s => s.state === 'ready').length;
+      let headerHtml = '';
+      if (readyCount > 0) {
+        headerHtml = `<button class="btn-generic" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 8px 12px; font-size:12px; width:100%; margin-bottom:8px;" onclick="window.collectForgeAll()">✅ Alle abholen (${readyCount})</button>`;
+      }
+      content.innerHTML = headerHtml + (html || '<div style="text-align:center;padding:20px;color:var(--text-mid);">Alle Werkbänke leer.</div>');
     }
   };
 
@@ -5377,6 +5435,28 @@
     window.renderForge('slots');
     updateFarmDOM();
     awardXp(db, userKey, XP_VALUES.farm_forge);
+  };
+
+  window.collectForgeAll = async function() {
+    if (isVisitMode) return;
+    let collected = 0;
+    for (let i = 0; i < forgeSlots.length; i++) {
+      const slot = forgeSlots[i];
+      if (slot && slot.state === 'ready') {
+        const r = jewelryRecipes[slot.item];
+        if (!r) { forgeSlots[i] = { state: 'empty', item: null, startedAt: 0 }; continue; }
+        inventory.jewelry[slot.item] = (inventory.jewelry[slot.item] || 0) + 1;
+        forgeSlots[i] = { state: 'empty', item: null, startedAt: 0 };
+        awardXp(db, userKey, XP_VALUES.farm_forge);
+        collected++;
+      }
+    }
+    if (collected === 0) { window.showToast('Nichts zum Abholen bereit.'); return; }
+    await saveFarmData();
+    updateFarmDOM();
+    window.renderForge('slots');
+    window.showFloatingNumber('+' + collected + ' 💎', '#d97706');
+    window.showToast(collected + '× Schmuck abgeholt! 💎');
   };
 
   // ── TIMERS & LOOP ──
