@@ -3318,14 +3318,14 @@
 
   // Sonder-Boni
   const SPECIAL_BONUSES = {
-    goldenharvest: { icon:'🪙', name:'Goldene Ernte',   desc:'10% Chance auf doppelten Coin-Wert pro Ernte.' },
-    earlybird:    { icon:'🌅', name:'Frühaufsteher',    desc:'Schnellere Produktion bei Tag.' },
-    nightowl:     { icon:'🌙', name:'Nachtschwärmer',   desc:'Schnellere Produktion bei Nacht.' },
-    luckycharm:   { icon:'🍀', name:'Glücksbringer',    desc:'+20 zum Glück-Wert.' },
-    ironstomach:  { icon:'🛡️', name:'Eisenmagen',       desc:'Braucht nur halb so oft Futter.' },
-    harvester:    { icon:'🌻', name:'Erntehelfer',      desc:'+5% Ertrag aller Artgenossen.' },
-    beefriend:    { icon:'🐝', name:'Bienenfreund',     desc:'+10% Honig-Produktion.' },
-    sparkle:      { icon:'💫', name:'Funkenwurf',       desc:'1% Chance auf Sternenstaub-Bonus.' },
+    goldenharvest: { icon:'🪙', name:'Goldene Ernte',   desc:'10% Chance auf 50–200 Bonus-Coins pro Ernte.' },
+    earlybird:    { icon:'🌅', name:'Frühaufsteher',    desc:'+50% Tempo zwischen 6:00 und 18:00.' },
+    nightowl:     { icon:'🌙', name:'Nachtschwärmer',   desc:'+50% Tempo zwischen 18:00 und 6:00.' },
+    luckycharm:   { icon:'🍀', name:'Glücksbringer',    desc:'+20 zum Glück-Wert (Cap 120).' },
+    ironstomach:  { icon:'🛡️', name:'Eisenmagen',       desc:'+40% Produktionstempo (robuster Magen).' },
+    harvester:    { icon:'🌻', name:'Erntehelfer',      desc:'+5% Ertrag je weiterem Artgenossen mit Erntehelfer.' },
+    beefriend:    { icon:'🐝', name:'Bienenfreund',     desc:'12% Chance auf +1 Honig pro Tier-Ernte.' },
+    sparkle:      { icon:'💫', name:'Funkenwurf',       desc:'1% Chance auf +1 Glühwürmchen pro Ernte.' },
     twinblessing: { icon:'👯', name:'Zwillingssegen',   desc:'5% Chance auf Zwillinge bei Geburt.' }
   };
 
@@ -6533,6 +6533,11 @@
     let qty = Math.floor(yMult);
     if (Math.random() < (yMult - qty)) qty += 1;
     qty = Math.max(1, qty);
+    // Erntehelfer: +5% Menge je weiterem Artgenossen mit demselben Bonus
+    if (a.bonuses && a.bonuses.includes('harvester')) {
+      const peers = animals.filter(o => o !== a && o.species === a.species && o.bonuses && o.bonuses.includes('harvester')).length;
+      if (peers > 0) qty = Math.max(qty, Math.round(qty * (1 + 0.05 * peers)));
+    }
     const luck = effectiveLuck(a);
     if (Math.random() * 100 < luck) {
       const bonusCoins = 20 + Math.floor(Math.random() * 80);
@@ -6543,8 +6548,12 @@
       acc.dogCoins += 50 + Math.floor(Math.random() * 150);
     }
     // Bienenfreund: Honig-Chance
-    if (a.bonuses && a.bonuses.includes('beefriend') && a.species !== 'bee' && Math.random() < 0.12) {
+    if (a.bonuses && a.bonuses.includes('beefriend') && Math.random() < 0.12) {
       inventory.items.honey = (inventory.items.honey || 0) + 1;
+    }
+    // Funkenwurf: 1% Chance auf +1 Glühwürmchen
+    if (a.bonuses && a.bonuses.includes('sparkle') && Math.random() < 0.01) {
+      inventory.items.firefly = (inventory.items.firefly || 0) + 1;
     }
     const itemMap = {
       rabbit:  ['fertilizer',     '🪴 Dünger erhalten!'],
