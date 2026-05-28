@@ -6058,6 +6058,8 @@
       } else if (!hidden && document.getElementById('modalLab').classList.contains('active')) {
         const elTimer = document.getElementById('labCountdown');
         if (elTimer) elTimer.textContent = fmtHM(rem);
+        const elCost = document.getElementById('labSkipCost');
+        if (elCost) elCost.textContent = window.fmtCoins(labSkipCost(rem));
       }
     }
 
@@ -8140,6 +8142,11 @@
     window.showSpecificModal('modalLab');
   };
 
+  const SKIP_COST_PER_HOUR = 3000;
+  function labSkipCost(remSec) {
+    return Math.max(1, Math.ceil(remSec / 3600)) * SKIP_COST_PER_HOUR;
+  }
+
   function renderLab() {
     const c = document.getElementById('modalLabContent');
     if (!c) return;
@@ -8160,6 +8167,8 @@
           </div>
           <div id="labCountdown" style="margin-top:14px; font-size:34px; font-weight:800; color:var(--gold); font-variant-numeric:tabular-nums;">${fmtHM(rem)}</div>
           <div style="margin-top:6px; font-size:11px; color:var(--text-mid);">verbleibend</div>
+          <button class="btn-feed-large" style="margin-top:18px; background:linear-gradient(135deg,#f59e0b,#ef4444);" onclick="window.skipBreeding()">⚡ Sofort fertig (<span id="labSkipCost">${window.fmtCoins(labSkipCost(rem))}</span> 🪙)</button>
+          <div style="margin-top:6px; font-size:10px; color:var(--text-mid);">Beendet die Paarung sofort – sehr teuer!</div>
         </div>
       `;
       return;
@@ -8357,10 +8366,29 @@
       doneAt: Date.now() + breedSec*1000,
       seed: seed
     };
+    // Eltern ziehen ins Labor → von der Farm entfernen (Snapshot in lab.active reicht für collectBaby)
+    animals = animals.filter(a => a.id !== A.id && a.id !== B.id);
+    window.animals = animals;
     await saveFarmData();
     updateLabBadge();
+    updateFarmDOM();
     renderLab();
-    window.showToast(`💞 ${A.name} und ${B.name} sind im Labor. Komm in ${Math.round(breedSec/3600)}h wieder!`);
+    window.showToast(`💞 ${A.name} und ${B.name} ziehen ins Labor – in ${Math.round(breedSec/3600)}h kommt ihr Baby zur Welt!`);
+  };
+
+  window.skipBreeding = async function() {
+    if (!lab.active || lab.active.doneAt <= Date.now()) return;
+    const rem = Math.max(0, Math.floor((lab.active.doneAt - Date.now()) / 1000));
+    const cost = labSkipCost(rem);
+    if (currentCoins < cost) { window.showToast(`Nicht genug Coins – du brauchst ${window.fmtCoins(cost)} 🪙`); return; }
+    await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
+    await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
+    lab.active.doneAt = Date.now();
+    await saveFarmData();
+    window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444");
+    window.showToast('⚡ Paarung abgeschlossen – das Baby ist bereit!');
+    updateLabBadge();
+    renderLab();
   };
 
   window.collectBaby = async function() {
