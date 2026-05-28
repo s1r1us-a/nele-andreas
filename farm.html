@@ -6624,12 +6624,12 @@
         if(a.species === 'unicorn') rewardIcon = '🌈';
         if(a.species === 'dog')   rewardIcon = '🎁';
         mainActionHtml = `<button class="btn-feed-large" style="background: linear-gradient(135deg, #22c55e, #16a34a);" onclick="window.collectAnimalReward()"> ${rewardIcon} Belohnung abholen!</button>`;
-    } else if (a.isProducing) { 
-        const elapsedSec = Math.floor((Date.now() - a.fedAt) / 1000); 
-        const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); 
-        const m = Math.floor(rem / 60); const s = rem % 60; 
-        const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; 
-        mainActionHtml = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`; 
+    } else if (a.isProducing) {
+        const elapsedSec = Math.floor((Date.now() - a.fedAt) / 1000);
+        const rem = Math.max(0, animalProductionTime(a) - elapsedSec);
+        const m = Math.floor(rem / 60); const s = rem % 60;
+        const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        mainActionHtml = `<div style="text-align:center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 14px; margin-top: 10px;"><div style="font-size: 14px; color: var(--text-mid); font-weight: bold;">Verdaut Futter...</div><div id="animalTimerDisplay" style="font-size: 28px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; margin-top: 5px;">${timeStr}</div></div>`;
     } else { 
         let foodNeed = ''; 
         if(a.species === 'rabbit') foodNeed = 'carrot';
@@ -6977,7 +6977,7 @@
         statusHtml = `<span class="stall-status-badge stall-badge-ready">${rewardIcons[a.species]||'🎁'} Bereit!</span>`;
         actionHtml = `<button class="stall-action-btn stall-btn-collect" onclick="event.stopPropagation();window.stallCollectDirect(${a.id})">Abholen</button>`;
       } else if (a.isProducing) {
-        const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - Math.floor((Date.now()-a.fedAt)/1000));
+        const rem = Math.max(0, animalProductionTime(a) - Math.floor((Date.now()-a.fedAt)/1000));
         const mm = String(Math.floor(rem/60)).padStart(2,'0');
         const ss = String(rem%60).padStart(2,'0');
         cardClass  = 'stall-card-producing';
