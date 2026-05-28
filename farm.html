@@ -3015,6 +3015,7 @@
     <button class="close-btn" onclick="closeAllModals()">✕</button>
     <div id="stallHeader"></div>
     <div class="stall-filter-tabs" id="stallFilterTabs"></div>
+    <div id="stallSubFilter"></div>
     <div id="stallAnimalList"></div>
   </div>
 
@@ -6945,9 +6946,14 @@
       sellBtnHtml = `<button class="btn-feed-large" style="margin-top:10px;background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.confirmSellBred(${id}, ${sellPrice})">💰 Genetik-Tier verkaufen (+${window.fmtCoins(sellPrice)} 🪙)</button>`;
     }
 
+    const placeBtnHtml = a.onFarm
+      ? `<button class="btn-feed-large" style="margin-top:10px;background:linear-gradient(135deg,#60a5fa,#3b82f6);" onclick="window.stallPlaceFromModal(${id}, false)">🏠 In den Stall schicken</button>`
+      : `<button class="btn-feed-large" style="margin-top:10px;background:linear-gradient(135deg,#84cc16,#65a30d);" onclick="window.stallPlaceFromModal(${id}, true)">🌿 Auf die Wiese stellen</button>`;
+
     actionContainer.innerHTML = `
       <div id="defaultAnimalView">
         ${mainActionHtml}
+        ${placeBtnHtml}
         ${geneticsHtml}
         <button class="btn-feed-large btn-wardrobe" style="margin-top: 15px;" onclick="window.renderWardrobeGrid(${id})">👕 Garderobe öffnen</button>
         ${sellBtnHtml}
@@ -6972,6 +6978,13 @@
     if (!sec) return;
     sec.style.display = 'block';
     if (btn) btn.style.display = 'none';
+  };
+
+  // Platziert ein Tier aus dem Detail-Modal heraus (Wiese↔Stall) und frischt das Modal auf,
+  // damit der Button-Text sofort umschlägt. Nutzt die bestehende stallSetPlacement-Logik.
+  window.stallPlaceFromModal = async function(id, toFarm) {
+    await window.stallSetPlacement(id, toFarm);
+    if (document.getElementById('modalAnimal').classList.contains('active')) window.openAnimalStats(id);
   };
 
   function isBreedingParent(id) {
@@ -7267,17 +7280,22 @@
       if (!counts[sp]) return;
       tabsHtml += `<button class="stall-tab ${filterSpecies===sp && !geneticOnly?'active':''}" data-filter="${sp}" onclick="window.renderStall('${sp}')">${animalItems[sp].icon} ${counts[sp]}</button>`;
     });
-    // Genetik-Toggle: nur bei aktivem Tierart-Filter UND wenn diese Art gezüchtete Tiere hat.
-    // Erlaubt "Genetik je Art" (z.B. nur gezüchtete Hasen) zusätzlich zum globalen 🧬-Tab.
-    if (isSpeciesFilter) {
-      const speciesGenCount = animals.filter(a => a.species === filterSpecies && a.generation > 1).length;
-      if (speciesGenCount) {
-        tabsHtml += geneticOnly
-          ? `<button class="stall-tab active" onclick="window.renderStall('${filterSpecies}', false)">🧬 Genetik (${speciesGenCount}) ✕</button>`
-          : `<button class="stall-tab" onclick="window.renderStall('${filterSpecies}', true)">🧬 Nur Genetik (${speciesGenCount})</button>`;
-      }
-    }
     tabsEl.innerHTML = tabsHtml;
+
+    // Genetik-Umschalter in eigener, gut sichtbarer Zeile (nicht im scrollbaren Tab-Band):
+    // nur bei aktivem Tierart-Filter UND wenn diese Art gezüchtete Tiere hat. Erlaubt
+    // "Genetik je Art" (z.B. nur gezüchtete Hasen) zusätzlich zum globalen 🧬-Tab.
+    const subEl = document.getElementById('stallSubFilter');
+    const speciesGenCount = isSpeciesFilter ? animals.filter(a => a.species === filterSpecies && a.generation > 1).length : 0;
+    if (isSpeciesFilter && speciesGenCount > 0) {
+      subEl.innerHTML = `
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button class="stall-tab ${!geneticOnly?'active':''}" style="flex:1;justify-content:center;text-align:center;" onclick="window.renderStall('${filterSpecies}', false)">Alle (${counts[filterSpecies]})</button>
+          <button class="stall-tab ${geneticOnly?'active':''}" style="flex:1;justify-content:center;text-align:center;" onclick="window.renderStall('${filterSpecies}', true)">🧬 Nur Genetik (${speciesGenCount})</button>
+        </div>`;
+    } else {
+      subEl.innerHTML = '';
+    }
 
     const filtered = stallScope(filterSpecies, geneticOnly);
     const listEl = document.getElementById('stallAnimalList');
