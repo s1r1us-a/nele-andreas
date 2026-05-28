@@ -832,6 +832,34 @@
     .sell-qty-yes { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 14px rgba(34,197,94,0.35); }
     .sell-qty-no { background: #f1f5f9; color: var(--text-mid); }
 
+    /* ── VERKAUFSKORB ── */
+    .sell-cart-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; border: none; border-radius: 14px; padding: 12px 16px; margin-bottom: 12px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--rose), #c85070); color: white; box-shadow: 0 4px 14px rgba(232,115,138,0.35); transition: transform 0.15s; }
+    .sell-cart-bar:active { transform: scale(0.97); }
+    .sell-cart-bar .cart-bar-total { font-family: 'Dancing Script', cursive; font-size: 18px; }
+    .cart-overlay { position: fixed; inset: 0; z-index: 595; background: rgba(0,0,0,0.45); backdrop-filter: blur(3px); display: none; align-items: flex-end; justify-content: center; padding: 16px; }
+    .cart-overlay.show { display: flex; }
+    .cart-sheet { background: #fff; border-radius: 22px 22px 16px 16px; padding: 20px 18px 18px; width: 100%; max-width: 400px; max-height: 82vh; overflow-y: auto; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
+    .cart-title { font-family: 'Dancing Script', cursive; font-size: 24px; color: var(--text-dark); text-align: center; margin-bottom: 14px; }
+    .cart-row { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.6); border: 1.5px solid var(--ui-card-border); border-radius: 12px; padding: 8px 10px; }
+    .cart-row .cart-row-name { font-weight: 700; color: var(--text-dark); font-size: 13px; }
+    .cart-row .cart-row-unit { font-size: 11px; color: var(--gold); font-weight: 700; }
+    .cart-stepper { display: flex; align-items: center; gap: 6px; }
+    .cart-step-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ui-card-border); background: #fde8ed; color: var(--rose); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; }
+    .cart-step-btn:active { transform: scale(0.9); }
+    .cart-qty-input { width: 42px; text-align: center; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-dark); border: 2px solid var(--ui-card-border); border-radius: 10px; padding: 4px 2px; outline: none; }
+    .cart-qty-input:focus { border-color: var(--rose); }
+    .cart-row-sub { font-size: 13px; font-weight: 700; color: var(--text-mid); min-width: 64px; text-align: right; }
+    .cart-row-remove { background: #fde8ed; color: var(--rose); border: none; width: 28px; height: 28px; border-radius: 8px; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+    .cart-row-remove:active { transform: scale(0.9); }
+    .cart-cat-sub { text-align: right; font-size: 12px; color: var(--text-mid); font-weight: 600; margin: 2px 4px 8px; }
+    .cart-total { font-family: 'Dancing Script', cursive; font-size: 26px; color: var(--gold); font-weight: 700; text-align: center; margin: 16px 0 16px; }
+    .cart-actions { display: flex; gap: 10px; }
+    .cart-actions button { flex: 1; border: none; border-radius: 14px; padding: 14px; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.15s; }
+    .cart-actions button:active { transform: scale(0.96); }
+    .cart-sell-all { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 14px rgba(34,197,94,0.35); }
+    .cart-clear { background: #f1f5f9; color: var(--text-mid); }
+    .cart-empty { text-align: center; color: var(--text-mid); padding: 24px 8px; font-size: 14px; }
+
     /* ── GARDEROBE GRID ── */
     .wardrobe-grid {
       display: grid;
@@ -2040,9 +2068,17 @@
       <button class="sell-qty-all" id="sellQtyAllBtn" onclick="window.sellQtySelectAll()">Alle verkaufen 🛒</button>
       <div class="sell-qty-btns-row">
         <button class="sell-qty-no" onclick="window.closeSellQty()">Abbrechen</button>
-        <button class="sell-qty-yes" onclick="window.sellQtyConfirm()">Verkaufen ✓</button>
+        <button class="sell-qty-yes" onclick="window.sellQtyConfirm()">In den Korb 🧺</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="cart-overlay" id="cartOverlay" onclick="window.closeCart()">
+  <div class="cart-sheet" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="window.closeCart()">✕</button>
+    <div class="cart-title">Verkaufskorb 🧺</div>
+    <div id="cartContent"></div>
   </div>
 </div>
 
@@ -2946,7 +2982,8 @@
   <div class="modal-card" id="modalSell" onclick="event.stopPropagation()">
     <button class="close-btn" onclick="closeAllModals()">✕</button>
     <div class="modal-title">Marktstand 💰</div>
-    <p style="text-align: center; font-size: 13px; color: var(--text-mid); margin-bottom: 12px;">Verkaufe Ernte und Waren mit Gewinn!</p>
+    <p style="text-align: center; font-size: 13px; color: var(--text-mid); margin-bottom: 12px;">Lege Waren in den Korb und verkaufe sie zusammen!</p>
+    <button class="sell-cart-bar" id="sellCartBar" style="display:none;" onclick="window.openCart()"></button>
     <div class="item-list" id="sellList"></div>
   </div>
 
@@ -5336,43 +5373,72 @@
     else { window.showToast('Nicht genug Münzen! 🪙'); }
   }
 
+  // Tierprodukte/Items mit festen Preisen (Reihenfolge = Anzeigereihenfolge)
+  const productItems = {
+    honey:          { icon: '🍯', name: 'Honig',            price: 300 },
+    wool:           { icon: '🧶', name: 'Wolle',            price: 600 },
+    egg:            { icon: '🥚', name: 'Ei',               price: 200 },
+    milk:           { icon: '🥛', name: 'Kuhmilch',         price: 300 },
+    diamond:        { icon: '💎', name: 'Diamant',          price: 1100 },
+    fertilizer:     { icon: '🪴', name: 'Dünger',           price: 60 },
+    firefly:        { icon: '🫙', name: 'Glühwürmchen',     price: 10 },
+    feather:        { icon: '🪶', name: 'Feder',            price: 250 },
+    goatmilk:       { icon: '🥛', name: 'Ziegenmilch',      price: 400 },
+    truffle:        { icon: '🍄', name: 'Trüffel',          price: 1200 },
+    horseshoe:      { icon: '🧲', name: 'Hufeisen',         price: 1500 },
+    rainbowessence: { icon: '🌈', name: 'Regenbogen-Essenz', price: 1500 },
+  };
+
+  // Einheitliche Icon/Name-Auflösung für alle verkaufbaren Kategorien
+  function getItemMeta(category, itemId) {
+    if (category === 'crops' && shopItems[itemId]) return { icon: shopItems[itemId].icon, name: shopItems[itemId].name };
+    if (category === 'bakery' && bakeryRecipes[itemId]) return { icon: bakeryRecipes[itemId].icon, name: bakeryRecipes[itemId].name };
+    if ((category === 'tailoring' || category === 'accessories') && weavingRecipes[itemId]) return { icon: weavingRecipes[itemId].icon, name: weavingRecipes[itemId].name };
+    if (category === 'ores' && oreTypes[itemId]) return { icon: oreTypes[itemId].icon, name: oreTypes[itemId].name };
+    if (category === 'jewelry' && jewelryRecipes[itemId]) return { icon: jewelryRecipes[itemId].icon, name: jewelryRecipes[itemId].name };
+    if (productItems[itemId]) return { icon: productItems[itemId].icon, name: productItems[itemId].name };
+    return { icon: '🛒', name: itemId };
+  }
+
+  // ── VERKAUFSKORB (nur Sitzung, in-memory) ──
+  // key = `${category}|${itemId}` → { category, itemId, price, icon, name, qty }
+  let sellCart = {};
+  function cartKey(cat, id) { return cat + '|' + id; }
+  function cartCount() { return Object.values(sellCart).reduce((s, e) => s + e.qty, 0); }
+  function cartTotal() { return Object.values(sellCart).reduce((s, e) => s + e.qty * e.price, 0); }
+
   window.openSell = function() {
     const list = document.getElementById('sellList'); list.innerHTML = ''; let hasItems = false;
     let html = '';
 
+    const sellRow = (category, key, icon, name, stock, price) => {
+      const inCart = sellCart[cartKey(category, key)];
+      const cartHint = inCart ? `<span style="font-size:11px; color:var(--rose); font-weight:700; display:block;">🧺 im Korb: ${inCart.qty}</span>` : '';
+      return `<div class="item-row"><div class="item-info"><span class="item-icon">${icon}</span><div><span class="item-name">${name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${stock} · ${window.fmtCoins(price)} 🪙</span>${cartHint}</div></div><button class="btn-generic btn-buy" onclick="window.sellItem('${category}', '${key}', ${price})">In den Korb 🧺</button></div>`;
+    };
+
     let cropsRows = '';
-    Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; cropsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.crops[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('crops', '${key}', ${item.sellPrice})">Verkaufen (${window.fmtCoins(item.sellPrice)} 🪙)</button></div>`; } });
+    Object.keys(inventory.crops).forEach(key => { if (inventory.crops[key] > 0) { hasItems = true; const item = shopItems[key]; cropsRows += sellRow('crops', key, item.icon, item.name, inventory.crops[key], item.sellPrice); } });
     if (cropsRows) html += `<div class="section-title">🧺 Ernte</div><div class="item-list">${cropsRows}</div>`;
 
     let itemsRows = '';
-    if (inventory.items.honey > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍯</span><div><span class="item-name">Honig</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.honey}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'honey', 300)">Verkaufen (${window.fmtCoins(300)} 🪙)</button></div>`; }
-    if (inventory.items.wool > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧶</span><div><span class="item-name">Wolle</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.wool}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'wool', 600)">Verkaufen (${window.fmtCoins(600)} 🪙)</button></div>`; }
-    if (inventory.items.egg > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥚</span><div><span class="item-name">Ei</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.egg}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'egg', 200)">Verkaufen (${window.fmtCoins(200)} 🪙)</button></div>`; }
-    if (inventory.items.milk > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Kuhmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.milk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'milk', 300)">Verkaufen (${window.fmtCoins(300)} 🪙)</button></div>`; }
-    if (inventory.items.diamond > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">💎</span><div><span class="item-name">Diamant</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.diamond}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'diamond', 1100)">Verkaufen (${window.fmtCoins(1100)} 🪙)</button></div>`; }
-    if (inventory.items.fertilizer > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪴</span><div><span class="item-name">Dünger</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.fertilizer}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'fertilizer', 60)">Verkaufen (${window.fmtCoins(60)} 🪙)</button></div>`; }
-    if (inventory.items.firefly > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🫙</span><div><span class="item-name">Glühwürmchen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.firefly}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'firefly', 10)">Verkaufen (${window.fmtCoins(10)} 🪙)</button></div>`; }
-    if ((inventory.items.feather || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🪶</span><div><span class="item-name">Feder</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.feather}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'feather', 250)">Verkaufen (${window.fmtCoins(250)} 🪙)</button></div>`; }
-    if ((inventory.items.goatmilk || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🥛</span><div><span class="item-name">Ziegenmilch</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.goatmilk}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'goatmilk', 400)">Verkaufen (${window.fmtCoins(400)} 🪙)</button></div>`; }
-    if ((inventory.items.truffle || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🍄</span><div><span class="item-name">Trüffel</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.truffle}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'truffle', 1200)">Verkaufen (${window.fmtCoins(1200)} 🪙)</button></div>`; }
-    if ((inventory.items.horseshoe || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🧲</span><div><span class="item-name">Hufeisen</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.horseshoe}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'horseshoe', 1500)">Verkaufen (${window.fmtCoins(1500)} 🪙)</button></div>`; }
-    if ((inventory.items.rainbowessence || 0) > 0) { hasItems = true; itemsRows += `<div class="item-row"><div class="item-info"><span class="item-icon">🌈</span><div><span class="item-name">Regenbogen-Essenz</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.items.rainbowessence}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('items', 'rainbowessence', 1500)">Verkaufen (${window.fmtCoins(1500)} 🪙)</button></div>`; }
+    Object.keys(productItems).forEach(key => { const count = inventory.items[key] || 0; if (count > 0) { hasItems = true; const p = productItems[key]; itemsRows += sellRow('items', key, p.icon, p.name, count, p.price); } });
     if (itemsRows) html += `<div class="section-title">🎒 Tierprodukte & Items</div><div class="item-list">${itemsRows}</div>`;
 
     let bakeryRows = '';
-    Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; bakeryRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.bakery[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('bakery', '${key}', ${item.sellPrice})">Verkaufen (${window.fmtCoins(item.sellPrice)} 🪙)</button></div>`; } });
+    Object.keys(inventory.bakery).forEach(key => { if (inventory.bakery[key] > 0) { hasItems = true; const item = bakeryRecipes[key]; bakeryRows += sellRow('bakery', key, item.icon, item.name, inventory.bakery[key], item.sellPrice); } });
     if (bakeryRows) html += `<div class="section-title">🍩 Backwaren</div><div class="item-list">${bakeryRows}</div>`;
 
     let accRows = '';
-    Object.keys(inventory.accessories || {}).forEach(key => { if (inventory.accessories[key] > 0) { hasItems = true; const item = weavingRecipes[key]; accRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${item.icon}</span><div><span class="item-name">${item.name}</span><span style="font-size:11px; color:var(--text-mid); display:block;">Auf Lager: ${inventory.accessories[key]}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('accessories', '${key}', ${item.sellPrice})">Verkaufen (${window.fmtCoins(item.sellPrice)} 🪙)</button></div>`; } });
+    Object.keys(inventory.accessories || {}).forEach(key => { if (inventory.accessories[key] > 0) { hasItems = true; const item = weavingRecipes[key]; accRows += sellRow('accessories', key, item.icon, item.name, inventory.accessories[key], item.sellPrice); } });
     if (accRows) html += `<div class="section-title">👒 Accessoires</div><div class="item-list">${accRows}</div>`;
 
     let oresRows = '';
-    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; oresRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${o.icon}</span><div><span class="item-name">${o.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('ores','${key}',${oreSellPrices[key]})">Verkaufen (${window.fmtCoins(oreSellPrices[key])} 🪙)</button></div>`; } });
+    Object.keys(inventory.ores || {}).forEach(key => { const count = inventory.ores[key] || 0; if (count > 0) { hasItems = true; const o = oreTypes[key]; oresRows += sellRow('ores', key, o.icon, o.name, count, oreSellPrices[key]); } });
     if (oresRows) html += `<div class="section-title">⛏️ Erze</div><div class="item-list">${oresRows}</div>`;
 
     let jewRows = '';
-    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; jewRows += `<div class="item-row"><div class="item-info"><span class="item-icon">${r.icon}</span><div><span class="item-name">${r.name}</span><span style="font-size:11px;color:var(--text-mid);display:block;">Auf Lager: ${count}</span></div></div><button class="btn-generic btn-buy" onclick="window.sellItem('jewelry','${key}',${r.sellPrice})">Verkaufen (${window.fmtCoins(r.sellPrice)} 🪙)</button></div>`; } });
+    Object.keys(inventory.jewelry || {}).forEach(key => { const count = inventory.jewelry[key] || 0; if (count > 0) { hasItems = true; const r = jewelryRecipes[key]; jewRows += sellRow('jewelry', key, r.icon, r.name, count, r.sellPrice); } });
     if (jewRows) html += `<div class="section-title">💎 Schmuck</div><div class="item-list">${jewRows}</div>`;
 
     if (!hasItems) {
@@ -5380,41 +5446,37 @@
     } else {
       list.innerHTML = html;
     }
+    window.updateSellCartBar();
     window.showSpecificModal('modalSell');
+  }
+
+  window.updateSellCartBar = function() {
+    const bar = document.getElementById('sellCartBar');
+    if (!bar) return;
+    const count = cartCount();
+    if (count > 0) {
+      bar.style.display = 'flex';
+      bar.innerHTML = `<span>🧺 Korb · ${count} Artikel</span><span class="cart-bar-total">+${window.fmtCoins(cartTotal())} 🪙 →</span>`;
+    } else {
+      bar.style.display = 'none';
+    }
   }
 
   let pendingSell = null;
   let isSelling = false;
 
   window.sellItem = function(category, itemId, price) {
-    let icon = '🛒', name = itemId;
-    if (category === 'bakery' && bakeryRecipes[itemId]) { icon = bakeryRecipes[itemId].icon; name = bakeryRecipes[itemId].name; }
-    else if ((category === 'tailoring' || category === 'accessories') && weavingRecipes[itemId]) { icon = weavingRecipes[itemId].icon; name = weavingRecipes[itemId].name; }
-    else if (category === 'crops' && shopItems[itemId]) { icon = shopItems[itemId].icon; name = shopItems[itemId].name; }
-    else if (itemId === 'egg') { icon = '🥚'; name = 'Ei'; }
-    else if (itemId === 'diamond') { icon = '💎'; name = 'Diamant'; }
-    else if (itemId === 'milk') { icon = '🥛'; name = 'Milch'; }
-    else if (itemId === 'honey') { icon = '🍯'; name = 'Honig'; }
-    else if (itemId === 'wool') { icon = '🧶'; name = 'Wolle'; }
-    else if (itemId === 'fertilizer') { icon = '🪴'; name = 'Dünger'; }
-    else if (itemId === 'firefly')  { icon = '🫙'; name = 'Glühwürmchen'; }
-    else if (itemId === 'feather')  { icon = '🪶'; name = 'Feder'; }
-    else if (itemId === 'goatmilk') { icon = '🥛'; name = 'Ziegenmilch'; }
-    else if (itemId === 'truffle')  { icon = '🍄'; name = 'Trüffel'; }
-    else if (itemId === 'horseshoe'){ icon = '🧲'; name = 'Hufeisen'; }
-    else if (itemId === 'rainbowessence'){ icon = '🌈'; name = 'Regenbogen-Essenz'; }
-    else if (category === 'ores' && oreTypes[itemId])    { icon = oreTypes[itemId].icon; name = oreTypes[itemId].name; }
-    else if (category === 'jewelry' && jewelryRecipes[itemId]) { icon = jewelryRecipes[itemId].icon; name = jewelryRecipes[itemId].name; }
-
+    const meta = getItemMeta(category, itemId);
     const stock = inventory[category][itemId] || 0;
     pendingSell = { category, itemId, price, stock };
+    const existing = sellCart[cartKey(category, itemId)];
 
-    document.getElementById('sellQtyIcon').textContent = icon;
-    document.getElementById('sellQtyTitle').textContent = name + ' verkaufen';
+    document.getElementById('sellQtyIcon').textContent = meta.icon;
+    document.getElementById('sellQtyTitle').textContent = meta.name + ' in den Korb';
     document.getElementById('sellQtyStock').textContent = 'Auf Lager: ' + stock;
-    document.getElementById('sellQtyAllBtn').textContent = 'Alle verkaufen (' + stock + 'x) 🛒';
+    document.getElementById('sellQtyAllBtn').textContent = 'Alle in den Korb (' + stock + 'x) 🧺';
     const input = document.getElementById('sellQtyInput');
-    input.value = 1; input.max = stock;
+    input.value = existing ? Math.min(existing.qty, stock) : 1; input.max = stock;
     window.sellQtyUpdate();
     document.getElementById('sellQtyOverlay').classList.add('show');
   }
@@ -5441,37 +5503,129 @@
     window.sellQtyUpdate();
   }
 
-  window.sellQtyConfirm = async function() {
-    if (!pendingSell || isSelling) return;
+  // Item in den Korb legen (ersetzt die Menge für diesen Eintrag) – verkauft noch nicht
+  window.sellQtyConfirm = function() {
+    if (!pendingSell) return;
     const input = document.getElementById('sellQtyInput');
     let amount = parseInt(input.value) || 1;
     if (amount < 1) amount = 1;
     if (amount > pendingSell.stock) amount = pendingSell.stock;
     const { category, itemId, price } = pendingSell;
-    const total = amount * price;
-    if ((inventory[category][itemId] || 0) < amount) {
-      window.closeSellQty();
-      return;
-    }
-    isSelling = true;
-    try {
-      inventory[category][itemId] -= amount;
-      await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
-      await runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
-      await saveFarmData();
-      window.showFloatingNumber("+" + window.fmtCoins(total) + " 🪙", "#22c55e");
-    } finally {
-      isSelling = false;
-      pendingSell = null;
-      window.closeSellQty();
-      const sellModal = document.getElementById('modalSell');
-      if (sellModal && sellModal.classList.contains('active')) window.openSell();
-    }
+    if (pendingSell.stock < 1) { window.closeSellQty(); return; }
+    const meta = getItemMeta(category, itemId);
+    sellCart[cartKey(category, itemId)] = { category, itemId, price, qty: amount, icon: meta.icon, name: meta.name };
+    window.showFloatingNumber("+" + amount + "x 🧺", "#e8738a");
+    pendingSell = null;
+    window.closeSellQty();
+    const sellModal = document.getElementById('modalSell');
+    if (sellModal && sellModal.classList.contains('active')) window.openSell();
   }
 
   window.closeSellQty = function() { pendingSell = null; document.getElementById('sellQtyOverlay').classList.remove('show'); }
   window.confirmSell = async function() {}
   window.closeSellConfirm = function() { document.getElementById('sellConfirmOverlay').classList.remove('show'); }
+
+  // ── Korb-Ansicht ──
+  const CART_CATEGORIES = [
+    { key: 'crops',       title: '🧺 Ernte' },
+    { key: 'items',       title: '🎒 Tierprodukte & Items' },
+    { key: 'bakery',      title: '🍩 Backwaren' },
+    { key: 'accessories', title: '👒 Accessoires' },
+    { key: 'ores',        title: '⛏️ Erze' },
+    { key: 'jewelry',     title: '💎 Schmuck' },
+  ];
+
+  window.openCart = function() {
+    window.renderCart();
+    document.getElementById('cartOverlay').classList.add('show');
+  }
+
+  window.closeCart = function() {
+    document.getElementById('cartOverlay').classList.remove('show');
+    const m = document.getElementById('modalSell');
+    if (m && m.classList.contains('active')) window.openSell();
+  }
+
+  window.renderCart = function() {
+    const container = document.getElementById('cartContent');
+    const entries = Object.values(sellCart);
+    if (entries.length === 0) {
+      container.innerHTML = `<div class="cart-empty">Dein Korb ist leer 🧺<br>Lege Waren aus dem Marktstand hinein!</div>`;
+      window.updateSellCartBar();
+      return;
+    }
+    let html = '';
+    CART_CATEGORIES.forEach(cat => {
+      const catEntries = entries.filter(e => e.category === cat.key);
+      if (catEntries.length === 0) return;
+      let rows = '';
+      let catSub = 0;
+      catEntries.forEach(e => {
+        const sub = e.qty * e.price;
+        catSub += sub;
+        const key = cartKey(e.category, e.itemId);
+        rows += `<div class="cart-row"><span class="item-icon">${e.icon}</span><div style="flex:1; min-width:0;"><span class="cart-row-name">${e.name}</span><span class="cart-row-unit" style="display:block;">${window.fmtCoins(e.price)} 🪙/Stück</span></div><div class="cart-stepper"><button class="cart-step-btn" onclick="window.cartQtyChange('${key}', -1)">−</button><input class="cart-qty-input" type="number" min="1" value="${e.qty}" onchange="window.cartQtySet('${key}', this.value)"><button class="cart-step-btn" onclick="window.cartQtyChange('${key}', 1)">+</button></div><span class="cart-row-sub">${window.fmtCoins(sub)} 🪙</span><button class="cart-row-remove" onclick="window.removeFromCart('${key}')">🗑</button></div>`;
+      });
+      html += `<div class="section-title">${cat.title}</div><div class="item-list">${rows}</div><div class="cart-cat-sub">Zwischensumme: ${window.fmtCoins(catSub)} 🪙</div>`;
+    });
+    html += `<div class="cart-total">Gesamt: +${window.fmtCoins(cartTotal())} 🪙</div>`;
+    html += `<div class="cart-actions"><button class="cart-clear" onclick="window.clearCart()">Korb leeren</button><button class="cart-sell-all" onclick="window.confirmCartSale()">Alles verkaufen ✓</button></div>`;
+    container.innerHTML = html;
+    window.updateSellCartBar();
+  }
+
+  window.cartQtyChange = function(key, delta) {
+    const e = sellCart[key]; if (!e) return;
+    window.cartQtySet(key, e.qty + delta);
+  }
+
+  window.cartQtySet = function(key, val) {
+    const e = sellCart[key]; if (!e) return;
+    let qty = parseInt(val) || 0;
+    const stock = inventory[e.category]?.[e.itemId] || 0;
+    if (qty > stock) qty = stock;
+    if (qty < 1) { delete sellCart[key]; }
+    else { e.qty = qty; }
+    window.renderCart();
+  }
+
+  window.removeFromCart = function(key) { delete sellCart[key]; window.renderCart(); }
+
+  window.clearCart = function() {
+    sellCart = {};
+    window.renderCart();
+  }
+
+  // Kompletten Korb in einer Transaktion verkaufen
+  window.confirmCartSale = async function() {
+    if (isSelling) return;
+    const entries = Object.values(sellCart);
+    if (entries.length === 0) { window.closeCart(); return; }
+    isSelling = true;
+    try {
+      let total = 0;
+      entries.forEach(e => {
+        const avail = inventory[e.category]?.[e.itemId] || 0;
+        const amount = Math.min(e.qty, avail);
+        if (amount > 0) {
+          inventory[e.category][e.itemId] -= amount;
+          total += amount * e.price;
+        }
+      });
+      if (total > 0) {
+        await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + total);
+        await runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + total).catch(err => console.error('Stats-Fehler:', err));
+        await saveFarmData();
+        window.showFloatingNumber("+" + window.fmtCoins(total) + " 🪙", "#22c55e");
+      }
+    } finally {
+      isSelling = false;
+      sellCart = {};
+      document.getElementById('cartOverlay').classList.remove('show');
+      const sellModal = document.getElementById('modalSell');
+      if (sellModal && sellModal.classList.contains('active')) window.openSell();
+    }
+  }
 
   window.openInventory = function() {
     const container = document.getElementById('inventoryContent'); container.innerHTML = '';
