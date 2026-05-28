@@ -26,6 +26,7 @@ export const XP_VALUES = {
   farm_weaving:        8,
   farm_forge:          8,
   farm_mine_ore:       5,
+  farm_breeding:     200,
   booster_bought:    150,
   booster_used:      100,
   box_bought:         50,
@@ -36,7 +37,8 @@ export const XP_VALUES = {
 // (z. B. abhängig von Wachstumszeit oder Bet-Multiplikator). Wird vom Modal
 // bevorzugt vor `+XP_VALUES[k]` angezeigt.
 export const XP_DISPLAY = {
-  farm_harvest: '1–24 (je 5 Min Wachstumszeit)',
+  farm_harvest:  '1–24 (je 5 Min Wachstumszeit)',
+  farm_breeding: '200–5000 (je nach Seltenheit)',
   slot_spin:    '1 × Bet-Multiplikator',
   slot_jackpot: '200 × Bet-Multiplikator',
   slot_bigwin:  '30 × Bet-Multiplikator'
@@ -69,6 +71,7 @@ export const XP_LABELS = {
   farm_weaving:       'Farm: Weberei abgeholt',
   farm_forge:         'Farm: Schmiede abgeholt',
   farm_mine_ore:      'Farm: Erz aus Mine abgeholt',
+  farm_breeding:      'Farm: Baby im Labor gezüchtet (je nach Seltenheit)',
   booster_bought:     'Booster gekauft',
   booster_used:       'Booster verwendet',
   box_bought:         'Box gekauft',
