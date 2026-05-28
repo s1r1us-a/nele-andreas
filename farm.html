@@ -1831,20 +1831,39 @@
     /* ===== GENETIK-LABOR & RARITÄT =====
        Höhere Raritäten setzen die Filter via CSS; Hue kommt aus --gen-hue
        (vom JS pro Tier gesetzt), damit jede Farbe sichtbar bleibt. */
-    .animal-wrapper { --gen-hue: 0deg; }
+    .animal-wrapper { --gen-hue: 0deg; --gen-size: 1; }
+    /* Größen-Skalierung des Trait-Werts (0.7..1.5) auf das SVG */
+    .animal-wrapper svg { transform: scale(var(--gen-size, 1)); transform-origin: center bottom; }
     .animal-wrapper.r-uncommon svg { filter: hue-rotate(var(--gen-hue)) saturate(1.2) brightness(1.02) drop-shadow(0 0 2px rgba(255,255,255,.4)) !important; }
     .animal-wrapper.r-rare svg     { filter: hue-rotate(var(--gen-hue)) saturate(1.45) brightness(1.05) drop-shadow(0 0 4px rgba(80,180,255,.7)) !important; }
     .animal-wrapper.r-epic svg     { filter: hue-rotate(var(--gen-hue)) saturate(1.75) brightness(1.08) drop-shadow(0 0 6px rgba(200,120,255,.85)) !important; animation: rEpicPulse 3.4s ease-in-out infinite; }
     .animal-wrapper.r-legendary svg{ filter: hue-rotate(var(--gen-hue)) saturate(2) brightness(1.1) drop-shadow(0 0 8px rgba(255,180,80,.9)) drop-shadow(0 0 14px rgba(255,120,200,.5)) !important; animation: rLegPulse 2.8s ease-in-out infinite; }
     .animal-wrapper.r-mythic svg   { saturate: 2.2; animation: rMythAll 6s linear infinite; }
     @keyframes rEpicPulse  { 0%,100%{opacity:1} 50%{opacity:.88} }
-    @keyframes rLegPulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+    /* Legendary/Mythic Keyframes übernehmen --gen-size, damit Größe sichtbar bleibt */
+    @keyframes rLegPulse   {
+      0%,100%{ transform: scale(var(--gen-size, 1)); }
+      50%   { transform: scale(calc(var(--gen-size, 1) * 1.03)); }
+    }
     @keyframes rMythAll {
-      0%   { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(0deg); }
-      100% { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(360deg); }
+      0%   { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(calc(0deg + var(--gen-hue, 0deg))); transform: scale(var(--gen-size, 1)); }
+      100% { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(calc(360deg + var(--gen-hue, 0deg))); transform: scale(var(--gen-size, 1)); }
     }
     .animal-wrapper.r-mythic { animation: rMythFloat 4s ease-in-out infinite; }
     @keyframes rMythFloat  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+    /* Exotische Farb-Allele: eigene Filter, die zur Rarity-Klasse hinzukommen */
+    .animal-wrapper.c-regenbogen svg { animation: cRainbow 4s linear infinite, rEpicPulse 3.4s ease-in-out infinite; }
+    @keyframes cRainbow {
+      0%   { filter: hue-rotate(0deg)   saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(255,200,200,.7)); }
+      25%  { filter: hue-rotate(90deg)  saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(200,255,200,.7)); }
+      50%  { filter: hue-rotate(180deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(200,200,255,.7)); }
+      75%  { filter: hue-rotate(270deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(255,200,255,.7)); }
+      100% { filter: hue-rotate(360deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(255,200,200,.7)); }
+    }
+    .animal-wrapper.c-gold svg        { filter: sepia(0.4) saturate(2) brightness(1.1) drop-shadow(0 0 6px rgba(255,215,0,.8)) !important; }
+    .animal-wrapper.c-perlmutt svg    { filter: saturate(0.6) brightness(1.18) drop-shadow(0 0 6px rgba(255,240,255,.85)) drop-shadow(0 0 12px rgba(200,180,255,.5)) !important; }
+    .animal-wrapper.c-sternenhimmel svg { filter: hue-rotate(220deg) saturate(1.8) brightness(0.95) drop-shadow(0 0 6px rgba(140,120,255,.85)) drop-shadow(0 0 14px rgba(60,40,200,.5)) !important; }
 
     .rarity-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
     .rb-common    { background:#e5e7eb; color:#4b5563; }
@@ -4821,15 +4840,25 @@
     const colorHue = ({
       'weiß':0, 'braun':0, 'schwarz':0, 'grau':0,
       'rosa':320, 'gold':40, 'lavendel':270, 'türkis':170,
-      'smaragd':140, 'korall':10, 'perlmutt':300,
-      'regenbogen':0, 'sternenhimmel':240
+      'smaragd':140, 'korall':10
     })[colorAllele];
     const genHue = (colorHue !== undefined && colorHue !== 0) ? colorHue : (a.hue || 0);
     el.style.setProperty('--gen-hue', genHue + 'deg');
+    // Größen-Trait visuell wirksam machen
+    const genSize = (a.traits && typeof a.traits.size === 'number') ? a.traits.size : 1;
+    el.style.setProperty('--gen-size', String(genSize));
+    // Exotische Farben über eigene Klasse statt einzelner Hue-Mapping
+    const EXOTIC_COLOR_CLASS = { gold:'c-gold', perlmutt:'c-perlmutt', regenbogen:'c-regenbogen', sternenhimmel:'c-sternenhimmel' };
+    el.className = el.className.replace(/\bc-(gold|perlmutt|regenbogen|sternenhimmel)\b/g, '').trim();
+    if (colorAllele && EXOTIC_COLOR_CLASS[colorAllele]) el.classList.add(EXOTIC_COLOR_CLASS[colorAllele]);
 
     const svgEl = el.querySelector('svg');
     if (svgEl) {
-        if (rarity === 'common') {
+        const isExoticColor = colorAllele && EXOTIC_COLOR_CLASS[colorAllele];
+        if (isExoticColor) {
+          // Exotische Farbe übernimmt das Rendering – Inline-Filter entfernen
+          svgEl.style.filter = '';
+        } else if (rarity === 'common') {
           // common: alte hue/sat/bri-Variation behalten (oder Color-Allele falls vorhanden)
           let h = (colorHue !== undefined && colorHue !== 0) ? colorHue : (a.hue || 0);
           let s = a.sat || 1;
