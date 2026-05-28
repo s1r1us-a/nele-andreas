@@ -1827,6 +1827,61 @@
         animation: none !important;
       }
     }
+
+    /* ===== GENETIK-LABOR & RARITÄT =====
+       Höhere Raritäten setzen die Filter via CSS; Hue kommt aus --gen-hue
+       (vom JS pro Tier gesetzt), damit jede Farbe sichtbar bleibt. */
+    .animal-wrapper { --gen-hue: 0deg; }
+    .animal-wrapper.r-uncommon svg { filter: hue-rotate(var(--gen-hue)) saturate(1.2) brightness(1.02) drop-shadow(0 0 2px rgba(255,255,255,.4)) !important; }
+    .animal-wrapper.r-rare svg     { filter: hue-rotate(var(--gen-hue)) saturate(1.45) brightness(1.05) drop-shadow(0 0 4px rgba(80,180,255,.7)) !important; }
+    .animal-wrapper.r-epic svg     { filter: hue-rotate(var(--gen-hue)) saturate(1.75) brightness(1.08) drop-shadow(0 0 6px rgba(200,120,255,.85)) !important; animation: rEpicPulse 3.4s ease-in-out infinite; }
+    .animal-wrapper.r-legendary svg{ filter: hue-rotate(var(--gen-hue)) saturate(2) brightness(1.1) drop-shadow(0 0 8px rgba(255,180,80,.9)) drop-shadow(0 0 14px rgba(255,120,200,.5)) !important; animation: rLegPulse 2.8s ease-in-out infinite; }
+    .animal-wrapper.r-mythic svg   { saturate: 2.2; animation: rMythAll 6s linear infinite; }
+    @keyframes rEpicPulse  { 0%,100%{opacity:1} 50%{opacity:.88} }
+    @keyframes rLegPulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+    @keyframes rMythAll {
+      0%   { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(0deg); }
+      100% { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(360deg); }
+    }
+    .animal-wrapper.r-mythic { animation: rMythFloat 4s ease-in-out infinite; }
+    @keyframes rMythFloat  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+    .rarity-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+    .rb-common    { background:#e5e7eb; color:#4b5563; }
+    .rb-uncommon  { background:#dcfce7; color:#15803d; }
+    .rb-rare      { background:#dbeafe; color:#1d4ed8; }
+    .rb-epic      { background:#f3e8ff; color:#7c3aed; }
+    .rb-legendary { background:linear-gradient(90deg,#fde68a,#fbbf24); color:#78350f; }
+    .rb-mythic    { background:linear-gradient(90deg,#fbcfe8,#c4b5fd,#fde68a); color:#831843; animation:rMythHue 6s linear infinite; }
+
+    .lab-slots { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; margin:14px 0; }
+    .lab-slot { background:rgba(244,114,182,.08); border:2px dashed #f472b6; border-radius:14px; padding:12px; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; text-align:center; }
+    .lab-slot.filled { border-style:solid; background:rgba(244,114,182,.16); }
+    .lab-slot .ls-icon { font-size:34px; }
+    .lab-slot .ls-name { font-weight:700; font-size:13px; color:var(--text-dark); }
+    .lab-slot .ls-sub  { font-size:11px; color:var(--text-mid); }
+    .lab-plus { font-size:24px; color:#f472b6; font-weight:900; }
+    .lab-preview { background:rgba(168,85,247,.07); border-radius:14px; padding:12px; margin-top:6px; }
+    .lab-preview-row { display:flex; justify-content:space-between; font-size:13px; padding:3px 0; }
+    .lab-warning { background:#fef3c7; color:#92400e; padding:10px 12px; border-radius:10px; font-size:13px; margin-top:8px; font-weight:600; }
+    .lab-pick-list { max-height:300px; overflow-y:auto; }
+    .lab-pick-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; cursor:pointer; transition:background .15s; }
+    .lab-pick-row:hover { background:rgba(244,114,182,.1); }
+    .lab-pick-row .lp-name { font-weight:700; font-size:14px; }
+    .lab-pick-row .lp-sub { font-size:11px; color:var(--text-mid); }
+
+    .trait-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; padding:10px; background:rgba(0,0,0,.03); border-radius:12px; margin-top:8px; font-size:13px; }
+    .trait-grid .tg-lbl { color:var(--text-mid); }
+    .trait-grid .tg-val { font-weight:700; text-align:right; color:var(--text-dark); }
+    .bonus-chip { display:inline-block; padding:4px 9px; margin:3px 3px 0 0; background:linear-gradient(135deg,#fbcfe8,#ddd6fe); color:#831843; border-radius:999px; font-size:11px; font-weight:700; }
+
+    .birth-overlay { position:fixed; inset:0; z-index:9999; background:rgba(255,240,250,.92); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; animation:birthFade .4s ease; }
+    @keyframes birthFade { from{opacity:0} to{opacity:1} }
+    .birth-card { background:#fff; border-radius:24px; padding:24px 28px; max-width:360px; width:90%; text-align:center; box-shadow:0 30px 80px rgba(244,114,182,.4); }
+    .birth-card .bc-svg { width:160px; height:160px; margin:0 auto 8px; }
+    .birth-card .bc-title { font-family:'Dancing Script',cursive; font-size:30px; color:#be185d; margin-bottom:4px; }
+    .birth-card input.bc-name { width:100%; padding:10px 12px; border:2px solid #f9a8d4; border-radius:12px; font-size:15px; margin-top:10px; text-align:center; }
+    .birth-card .bc-btn { display:block; width:100%; margin-top:12px; padding:12px; background:linear-gradient(135deg,#ec4899,#a855f7); color:#fff; border:none; border-radius:14px; font-weight:700; font-size:15px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -2022,6 +2077,10 @@
     <div class="topbar-btn-wrap" id="btnStallWrap">
       <button class="topbar-btn" id="btnStall" onclick="window.openStall()">🐾 <span>Stall</span></button>
       <span id="stallBadge"></span>
+    </div>
+    <div class="topbar-btn-wrap" id="btnLabWrap">
+      <button class="topbar-btn" id="btnLab" onclick="window.openLab()">🧬 <span>Labor</span></button>
+      <span id="labBadge"></span>
     </div>
     <button class="topbar-btn visit-btn" id="btnVisit" onclick="window.visitOtherFarm()" style="display:none">👀 <span id="visitBtnLabel">Besuchen</span></button>
     <button class="topbar-btn" id="btnPerfMode" onclick="window.togglePerfMode()" title="Performance-Modus: reduziert Effekte für flüssigeres Spiel">⚡ <span id="perfModeLabel">Voll</span></button>
@@ -2834,6 +2893,12 @@
     <div class="item-list" id="forgeContent"></div>
   </div>
 
+  <div class="modal-card" id="modalLab" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeAllModals()">✕</button>
+    <div class="modal-title">Genetik-Labor 🧬</div>
+    <div id="modalLabContent"></div>
+  </div>
+
   <div class="modal-card" id="modalShop" onclick="event.stopPropagation()">
     <button class="close-btn" onclick="closeAllModals()">✕</button>
     <div class="modal-title">Dorfladen 🏪</div>
@@ -3223,6 +3288,244 @@
     unicorn: { id: 'unicorn', name: 'Einhorn', icon: '🦄', price: 15000 }
   };
 
+  // ===== GENETIK-LABOR =====
+  // Wartezeit pro Art in Sekunden (skaliert grob mit Kaufpreis)
+  const BREED_TIME_SEC = {
+    rabbit:  6  * 3600,
+    chicken: 7  * 3600,
+    cow:     10 * 3600,
+    sheep:   12 * 3600,
+    duck:    12 * 3600,
+    cat:     14 * 3600,
+    dog:     15 * 3600,
+    goat:    16 * 3600,
+    horse:   18 * 3600,
+    pig:     20 * 3600,
+    unicorn: 24 * 3600,
+  };
+  // XP-Belohnung pro Geburt nach Rarity
+  const BIRTH_XP = { common:20, uncommon:35, rare:50, epic:100, legendary:250, mythic:500 };
+  const RARITY_ORDER = ['common','uncommon','rare','epic','legendary','mythic'];
+  const RARITY_LABEL = { common:'Gewöhnlich', uncommon:'Ungewöhnlich', rare:'Selten', epic:'Episch', legendary:'Legendär', mythic:'Mythisch' };
+  const RARITY_XP_MULT = { common:1, uncommon:1.5, rare:2, epic:3, legendary:4, mythic:5 };
+  const RARITY_SELL_MULT = { common:1.5, uncommon:2.25, rare:3.375, epic:5.0625, legendary:7.59375, mythic:11.390625 };
+
+  // Allele-Pools (kategorische Traits)
+  const COLOR_ALLELES = ['weiß','braun','schwarz','grau','rosa','gold','lavendel','türkis','smaragd','korall','perlmutt','regenbogen','sternenhimmel'];
+  const PATTERN_ALLELES = ['uni','uni','uni','gepunktet','gestreift','glitzer','sternenhimmel'];
+  const MOOD_ALLELES = ['fröhlich','schüchtern','frech','weise'];
+  const EXOTIC_COLORS = ['gold','regenbogen','sternenhimmel','perlmutt'];
+
+  // Sonder-Boni
+  const SPECIAL_BONUSES = {
+    goldenharvest: { icon:'🪙', name:'Goldene Ernte',   desc:'10% Chance auf doppelten Coin-Wert pro Ernte.' },
+    earlybird:    { icon:'🌅', name:'Frühaufsteher',    desc:'Schnellere Produktion bei Tag.' },
+    nightowl:     { icon:'🌙', name:'Nachtschwärmer',   desc:'Schnellere Produktion bei Nacht.' },
+    luckycharm:   { icon:'🍀', name:'Glücksbringer',    desc:'+20 zum Glück-Wert.' },
+    ironstomach:  { icon:'🛡️', name:'Eisenmagen',       desc:'Braucht nur halb so oft Futter.' },
+    harvester:    { icon:'🌻', name:'Erntehelfer',      desc:'+5% Ertrag aller Artgenossen.' },
+    beefriend:    { icon:'🐝', name:'Bienenfreund',     desc:'+10% Honig-Produktion.' },
+    sparkle:      { icon:'💫', name:'Funkenwurf',       desc:'1% Chance auf Sternenstaub-Bonus.' },
+    twinblessing: { icon:'👯', name:'Zwillingssegen',   desc:'5% Chance auf Zwillinge bei Geburt.' }
+  };
+
+  // Deterministische Zufallszahl aus Seed (Mulberry32)
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function() {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = a;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function defaultTraitsFor(species) {
+    // Standard-Tier: gewöhnliche Farben, mittlere Werte
+    const baseColor = ({
+      rabbit:'braun', chicken:'weiß', cow:'schwarz', sheep:'weiß',
+      duck:'weiß', cat:'schwarz', dog:'braun', goat:'weiß',
+      horse:'braun', pig:'rosa', unicorn:'weiß'
+    })[species] || 'weiß';
+    return {
+      color:   [baseColor, baseColor],
+      pattern: ['uni', 'uni'],
+      mood:    ['fröhlich', 'fröhlich'],
+      size: 1.0,
+      yieldMult: 1.0,
+      speed: 1.0,
+      luck: 5,
+      rarity: 'common'
+    };
+  }
+
+  function expressedAllele(pair) {
+    if (!Array.isArray(pair) || pair.length < 1) return pair;
+    return pair[0]; // einfache Dominanz: erstes Allel ist dominant
+  }
+
+  function computeRarity(traits, bonuses) {
+    let pts = 0;
+    const sz = traits.size || 1;
+    if (sz > 1.35 || sz < 0.78) pts += 2;
+    else if (sz > 1.2 || sz < 0.88) pts += 1;
+    if (traits.yieldMult > 2)   pts += 4;
+    else if (traits.yieldMult > 1.7) pts += 3;
+    else if (traits.yieldMult > 1.4) pts += 2;
+    else if (traits.yieldMult > 1.15) pts += 1;
+    if (traits.speed > 1.6) pts += 3;
+    else if (traits.speed > 1.3) pts += 2;
+    else if (traits.speed > 1.1) pts += 1;
+    if (traits.luck >= 80) pts += 3;
+    else if (traits.luck >= 50) pts += 2;
+    else if (traits.luck >= 25) pts += 1;
+    const col = expressedAllele(traits.color);
+    const pat = expressedAllele(traits.pattern);
+    if (col === 'regenbogen' || col === 'sternenhimmel') pts += 5;
+    else if (col === 'gold' || col === 'perlmutt') pts += 3;
+    else if (['lavendel','türkis','smaragd','korall'].includes(col)) pts += 1;
+    if (pat === 'sternenhimmel') pts += 4;
+    else if (pat === 'glitzer') pts += 2;
+    else if (pat !== 'uni') pts += 1;
+    pts += (bonuses ? bonuses.length : 0) * 2;
+    if (pts >= 13) return 'mythic';
+    if (pts >= 9)  return 'legendary';
+    if (pts >= 6)  return 'epic';
+    if (pts >= 4)  return 'rare';
+    if (pts >= 2)  return 'uncommon';
+    return 'common';
+  }
+
+  // Erzeugt Traits eines Baby-Tiers aus zwei Eltern + Seed (deterministisch)
+  function breedTraits(parentA, parentB, seed) {
+    const rand = mulberry32(seed);
+    const ta = parentA.traits || defaultTraitsFor(parentA.species);
+    const tb = parentB.traits || defaultTraitsFor(parentB.species);
+
+    // numerisch: Mittelwert + Jitter ±20%, plus Mutationschance
+    function mixNum(a, b, min, max, mutMag) {
+      const avg = (a + b) / 2;
+      let v = avg + (rand() - 0.5) * (max - min) * 0.18;
+      if (rand() < 0.08) { // Mutation
+        const roll = rand();
+        if (roll < 0.7) v += (rand() - 0.5) * mutMag;
+        else if (roll < 0.95) v += rand() * mutMag * 0.9;
+        else v += rand() * mutMag * 1.6; // exotisch
+      }
+      return Math.max(min, Math.min(max, v));
+    }
+
+    // kategorisch: ein Allel von A, eins von B (zufällig). Mit kleiner Mutation.
+    function mixCat(pairA, pairB, pool, exoticPool) {
+      const a1 = (Array.isArray(pairA) ? pairA[Math.floor(rand()*2)] : pairA) || pool[0];
+      const a2 = (Array.isArray(pairB) ? pairB[Math.floor(rand()*2)] : pairB) || pool[0];
+      let out = [a1, a2];
+      // Mutation pro Allel
+      for (let i = 0; i < 2; i++) {
+        if (rand() < 0.05) {
+          const exo = exoticPool && rand() < 0.18;
+          const src = exo ? exoticPool : pool;
+          out[i] = src[Math.floor(rand() * src.length)];
+        }
+      }
+      return out;
+    }
+
+    const luckBoost = ((ta.luck || 0) + (tb.luck || 0)) / 200; // 0..1
+
+    const traits = {
+      color:   mixCat(ta.color,   tb.color,   COLOR_ALLELES,   EXOTIC_COLORS),
+      pattern: mixCat(ta.pattern, tb.pattern, PATTERN_ALLELES, ['sternenhimmel','glitzer']),
+      mood:    mixCat(ta.mood,    tb.mood,    MOOD_ALLELES,    null),
+      size:      Math.round(mixNum(ta.size      || 1, tb.size      || 1, 0.7, 1.5, 0.3) * 100) / 100,
+      yieldMult: Math.round(mixNum(ta.yieldMult || 1, tb.yieldMult || 1, 0.5, 2.5, 0.5) * 100) / 100,
+      speed:     Math.round(mixNum(ta.speed     || 1, tb.speed     || 1, 0.5, 2.0, 0.4) * 100) / 100,
+      luck:      Math.round(mixNum((ta.luck || 5) + luckBoost*10, (tb.luck || 5) + luckBoost*10, 0, 100, 25)),
+    };
+
+    // Sonder-Boni (max 2). Chance steigt mit Glück + Eltern-Rarität.
+    const bonuses = [];
+    const parentRarityScore = (RARITY_ORDER.indexOf(ta.rarity || 'common') + RARITY_ORDER.indexOf(tb.rarity || 'common'));
+    const bonusChance = 0.05 + parentRarityScore * 0.04 + traits.luck / 400; // bis ~0.5
+    const allKeys = Object.keys(SPECIAL_BONUSES);
+    for (let i = 0; i < 2; i++) {
+      if (rand() < bonusChance) {
+        const k = allKeys[Math.floor(rand() * allKeys.length)];
+        if (!bonuses.includes(k)) bonuses.push(k);
+      }
+    }
+
+    traits.rarity = computeRarity(traits, bonuses);
+    return { traits, bonuses };
+  }
+
+  function effectiveSpeed(a) {
+    let s = (a.traits && a.traits.speed) || 1;
+    if (a.bonuses && a.bonuses.includes('earlybird') || a.bonuses && a.bonuses.includes('nightowl')) {
+      try {
+        const h = new Date().getHours();
+        const day = h >= 6 && h < 12;
+        const night = h >= 18 || h < 1;
+        if (a.bonuses.includes('earlybird') && day)   s *= 1.5;
+        if (a.bonuses.includes('nightowl')  && night) s *= 1.5;
+      } catch(e) {}
+    }
+    if (a.bonuses && a.bonuses.includes('ironstomach')) s *= 1.4;
+    return s;
+  }
+
+  function effectiveLuck(a) {
+    let l = (a.traits && a.traits.luck) || 0;
+    if (a.bonuses && a.bonuses.includes('luckycharm')) l += 20;
+    return Math.min(120, l);
+  }
+
+  function animalProductionTime(a) {
+    const s = Math.max(0.3, effectiveSpeed(a));
+    return Math.max(60, Math.round(ANIMAL_PRODUCTION_TIME / s));
+  }
+
+  // sicherstellen, dass jedes Tier ein Trait-Set hat (Migration)
+  function ensureAnimalGenetics(a) {
+    if (!a.traits) a.traits = defaultTraitsFor(a.species);
+    if (!a.traits.rarity) a.traits.rarity = 'common';
+    if (typeof a.generation !== 'number') a.generation = 1;
+    if (!a.bonuses) a.bonuses = [];
+    if (!a.stats) a.stats = { feedings: 0, harvests: 0 };
+    return a;
+  }
+
+  function areRelated(a, b) {
+    // Geschwister: gemeinsame Eltern-IDs
+    const pa = a.parentIds || [];
+    const pb = b.parentIds || [];
+    if (pa.length && pb.length && pa.some(x => pb.includes(x))) return true;
+    // Eltern↔Kind
+    if (pa.includes(b.id)) return true;
+    if (pb.includes(a.id)) return true;
+    return false;
+  }
+
+  function rarityChipHtml(r) {
+    return `<span class="rarity-badge rb-${r}">${RARITY_LABEL[r] || r}</span>`;
+  }
+
+  function bonusChipsHtml(bonuses) {
+    if (!bonuses || !bonuses.length) return '<span style="font-size:12px;color:var(--text-mid);">– keine –</span>';
+    return bonuses.map(k => {
+      const b = SPECIAL_BONUSES[k]; if (!b) return '';
+      return `<span class="bonus-chip" title="${b.desc}">${b.icon} ${b.name}</span>`;
+    }).join('');
+  }
+
+  function fmtHM(sec) {
+    if (sec < 0) sec = 0;
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
   // ── NEUE REZEPTE (WIRTSCHAFTLICH SINNVOLL) ──
   const bakeryRecipes = {
     salad:        { id: 'salad',        name: 'Radieschen-Salat', icon: '🥗', time: 600,  sellPrice: 200,  req: { crops: { radish: 2, lettuce: 1 } } },
@@ -3315,6 +3618,9 @@
   let oven = { slots: Array(5).fill(null).map(() => ({ state: 'empty', item: null, startedAt: 0 })) };
   let beds = Array(12).fill(null).map(() => Array(6).fill(null).map(() => ({ state: 'empty', item: null, plantedAt: 0 })));
   let animals = [];
+  let lab = { active: null }; // active: { species, parentA, parentB, startAt, doneAt, seed }
+  let _labSel = { A: null, B: null, species: null };
+  window.lab = lab;
 
   // ── Persistenz: gebündelte Firebase-Writes ──
   // Mehrere Save-Aufrufe (auch aus der 1s-Schleife) werden zu möglichst
@@ -3327,7 +3633,7 @@
   async function _doSaveNow() {
     if (!userKey || isVisitMode) return;
     const data = { inventory, beds, animals, oven, loom, unlockedBeds, beehive, mineSlots, forgeSlots,
-      bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites] };
+      bakeryFavs: [...bakeryFavorites], weavingFavs: [...weavingFavorites], lab };
     await update(ref(db, `farm/${userKey}`), data);
   }
 
@@ -3499,7 +3805,16 @@
             }
             if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
             if (a.x > 95) a.x = 80 + Math.random() * 15;
+            ensureAnimalGenetics(a);
           });
+          // Lab-State laden
+          if (data.lab && typeof data.lab === 'object') {
+            lab.active = data.lab.active || null;
+          } else {
+            lab.active = null;
+          }
+          window.lab = lab;
+          updateLabBadge && updateLabBadge();
           
           const dataOven = data.oven;
           if (dataOven) {
@@ -4471,10 +4786,11 @@
         rewardHtml = `<div class="reward-bubble">${rewardIcon}</div>`;
     }
 
+    const rarity = (a.traits && a.traits.rarity) || 'common';
     if (!el) {
       el = document.createElement('div');
       el.id = 'animal-' + a.id;
-      el.className = 'animal-wrapper';
+      el.className = 'animal-wrapper r-' + rarity;
       el.onclick = () => window.openAnimalStats(a.id);
       el.innerHTML = getAnimalSVG(a.species, a.equipped) + rewardHtml;
       const seedSrc = String(a.id == null ? Math.random() : a.id);
@@ -4498,13 +4814,31 @@
     el.setAttribute('data-producing', String(a.isProducing));
     el.setAttribute('data-ready', String(a.rewardReady));
     el.setAttribute('data-equipped', (a.equipped && a.equipped.head) ? a.equipped.head : 'null');
-    
+    // Rarity-Klasse aktuell halten
+    el.className = el.className.replace(/\br-(common|uncommon|rare|epic|legendary|mythic)\b/g, '').trim() + ' r-' + rarity;
+
+    const colorAllele = a.traits ? expressedAllele(a.traits.color) : null;
+    const colorHue = ({
+      'weiß':0, 'braun':0, 'schwarz':0, 'grau':0,
+      'rosa':320, 'gold':40, 'lavendel':270, 'türkis':170,
+      'smaragd':140, 'korall':10, 'perlmutt':300,
+      'regenbogen':0, 'sternenhimmel':240
+    })[colorAllele];
+    const genHue = (colorHue !== undefined && colorHue !== 0) ? colorHue : (a.hue || 0);
+    el.style.setProperty('--gen-hue', genHue + 'deg');
+
     const svgEl = el.querySelector('svg');
     if (svgEl) {
-        let h = a.hue || 0;
-        let s = a.sat || 1;
-        let b = a.bri || 1;
-        svgEl.style.filter = `hue-rotate(${h}deg) saturate(${s}) brightness(${b})`;
+        if (rarity === 'common') {
+          // common: alte hue/sat/bri-Variation behalten (oder Color-Allele falls vorhanden)
+          let h = (colorHue !== undefined && colorHue !== 0) ? colorHue : (a.hue || 0);
+          let s = a.sat || 1;
+          let b = a.bri || 1;
+          svgEl.style.filter = `hue-rotate(${h}deg) saturate(${s}) brightness(${b})`;
+        } else {
+          // Höhere Rarität: CSS übernimmt via .r-* Regeln (mit --gen-hue)
+          svgEl.style.filter = '';
+        }
     }
     
     updateAnimalPos(a);
@@ -4935,17 +5269,24 @@
             name: nameInput,
             species: itemToBuy.id,
             x: 12 + Math.random() * 76,
-            y: spawnZone.yMin + Math.random() * (spawnZone.yMax - spawnZone.yMin), 
-            isWalking: false, 
-            facingLeft: false, 
-            isProducing: false, 
-            fedAt: 0, 
+            y: spawnZone.yMin + Math.random() * (spawnZone.yMax - spawnZone.yMin),
+            isWalking: false,
+            facingLeft: false,
+            isProducing: false,
+            fedAt: 0,
             rewardReady: false,
             hue: h,
             sat: s,
             bri: b,
-            equipped: { head: null }
-        }; 
+            equipped: { head: null },
+            traits: defaultTraitsFor(itemToBuy.id),
+            bonuses: [],
+            generation: 1,
+            parentIds: [],
+            parentSnap: null,
+            stats: { feedings: 0, harvests: 0 },
+            bornAt: Date.now()
+        };
         animals.push(newAnimal);
         renderAnimalDOM(newAnimal);
         await saveFarmData();
@@ -5654,18 +5995,33 @@
     animals.forEach(a => {
         if(a.isProducing && !a.rewardReady) {
             const elapsedSec = Math.floor((now - a.fedAt) / 1000);
-            if(elapsedSec >= ANIMAL_PRODUCTION_TIME) {
+            const prodTime = animalProductionTime(a);
+            if(elapsedSec >= prodTime) {
                 a.rewardReady = true;
                 scheduleSave();
                 requestFarmDOMUpdate();
                 if(!hidden && selectedAnimalId === a.id) window.openAnimalStats(a.id);
             }
             else if (!hidden) {
-                if(selectedAnimalId === a.id) { const rem = ANIMAL_PRODUCTION_TIME - elapsedSec; const m = Math.floor(rem / 60); const s = rem % 60; const timerEl = document.getElementById('animalTimerDisplay'); if(timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; }
-                if(document.getElementById('modalStall').classList.contains('active')) { const stallTimerEl = document.getElementById('stall-timer-' + a.id); if(stallTimerEl) { const rem = Math.max(0, ANIMAL_PRODUCTION_TIME - elapsedSec); stallTimerEl.textContent = `⏳ ${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`; } }
+                if(selectedAnimalId === a.id) { const rem = prodTime - elapsedSec; const m = Math.floor(rem / 60); const s = rem % 60; const timerEl = document.getElementById('animalTimerDisplay'); if(timerEl) timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`; }
+                if(document.getElementById('modalStall').classList.contains('active')) { const stallTimerEl = document.getElementById('stall-timer-' + a.id); if(stallTimerEl) { const rem = Math.max(0, prodTime - elapsedSec); stallTimerEl.textContent = `⏳ ${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`; } }
             }
         }
     });
+
+    // ── LABOR TIMER ──
+    if (lab.active) {
+      const la = lab.active;
+      const rem = Math.max(0, Math.floor((la.doneAt - now) / 1000));
+      if (rem <= 0) {
+        // Geburt bereit – Auto-Modal nicht aufdringlich; Badge zeigt es an
+        updateLabBadge();
+        if (!hidden && document.getElementById('modalLab').classList.contains('active')) renderLab();
+      } else if (!hidden && document.getElementById('modalLab').classList.contains('active')) {
+        const elTimer = document.getElementById('labCountdown');
+        if (elTimer) elTimer.textContent = fmtHM(rem);
+      }
+    }
 
     if (!hidden) flushFarmDOM();
   }, 1000);
@@ -6170,6 +6526,26 @@
   function grantAnimalReward(a, acc) {
     a.isProducing = false;
     a.rewardReady = false;
+    if (!a.stats) a.stats = { feedings:0, harvests:0 };
+    a.stats.harvests = (a.stats.harvests || 0) + 1;
+    // Trait-Effekte: yieldMult bestimmt Menge, Luck bestimmt Bonus-Coins
+    const yMult = (a.traits && a.traits.yieldMult) || 1;
+    let qty = Math.floor(yMult);
+    if (Math.random() < (yMult - qty)) qty += 1;
+    qty = Math.max(1, qty);
+    const luck = effectiveLuck(a);
+    if (Math.random() * 100 < luck) {
+      const bonusCoins = 20 + Math.floor(Math.random() * 80);
+      acc.dogCoins += bonusCoins;
+    }
+    // Goldene Ernte (zusätzlicher Coin-Drop)
+    if (a.bonuses && a.bonuses.includes('goldenharvest') && Math.random() < 0.1) {
+      acc.dogCoins += 50 + Math.floor(Math.random() * 150);
+    }
+    // Bienenfreund: Honig-Chance
+    if (a.bonuses && a.bonuses.includes('beefriend') && a.species !== 'bee' && Math.random() < 0.12) {
+      inventory.items.honey = (inventory.items.honey || 0) + 1;
+    }
     const itemMap = {
       rabbit:  ['fertilizer',     '🪴 Dünger erhalten!'],
       chicken: ['egg',            '🥚 Ei erhalten!'],
@@ -6184,8 +6560,8 @@
     };
     const m = itemMap[a.species];
     if (m) {
-      inventory.items[m[0]] = (inventory.items[m[0]] || 0) + 1;
-      return m[1];
+      inventory.items[m[0]] = (inventory.items[m[0]] || 0) + qty;
+      return qty > 1 ? `${m[1].replace('!', '')} ×${qty}!` : m[1];
     }
     if (a.species === 'dog') {
       const find = pickDogFind();
@@ -6285,10 +6661,49 @@
     const retireRefund = Math.floor(purchasePrice * 0.5);
     const slaughterRefund = purchasePrice;
 
+    // ── Genetik / Bonus-Block ──
+    ensureAnimalGenetics(a);
+    const tr = a.traits;
+    const expCol = expressedAllele(tr.color);
+    const expPat = expressedAllele(tr.pattern);
+    const expMood = expressedAllele(tr.mood);
+    const xpM = RARITY_XP_MULT[tr.rarity] || 1;
+    const geneticsHtml = `
+      <div style="margin-top:14px; text-align:left;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <div style="font-weight:700; color:var(--text-dark); font-size:14px;">🧬 Genetik · Gen ${a.generation || 1}</div>
+          ${rarityChipHtml(tr.rarity)}
+        </div>
+        <div class="trait-grid">
+          <span class="tg-lbl">🐾 Größe</span><span class="tg-val">${(tr.size||1).toFixed(2)}×</span>
+          <span class="tg-lbl">🌾 Ertrag</span><span class="tg-val">${(tr.yieldMult||1).toFixed(2)}×</span>
+          <span class="tg-lbl">⚡ Tempo</span><span class="tg-val">${(tr.speed||1).toFixed(2)}×</span>
+          <span class="tg-lbl">🍀 Glück</span><span class="tg-val">${Math.round(tr.luck||0)}</span>
+          <span class="tg-lbl">⭐ XP-Multi</span><span class="tg-val">×${xpM}</span>
+          <span class="tg-lbl">🎨 Farbe</span><span class="tg-val">${expCol}</span>
+          <span class="tg-lbl">✨ Muster</span><span class="tg-val">${expPat}</span>
+          <span class="tg-lbl">😊 Stimmung</span><span class="tg-val">${expMood}</span>
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--text-mid); font-weight:700;">Sonder-Boni:</div>
+        <div style="margin-top:4px;">${bonusChipsHtml(a.bonuses)}</div>
+        ${ (a.generation > 1) ? `<div style="margin-top:6px; font-size:11px; color:var(--text-mid);">Geboren ${a.bornAt ? new Date(a.bornAt).toLocaleDateString('de-DE') : '–'} · ${a.stats?.feedings||0} Fütterungen · ${a.stats?.harvests||0} Ernten</div>` : '' }
+      </div>
+    `;
+
+    // Verkaufs-Button: für gezüchtete Tiere mit Eltern-Snapshot rarity-basierte Formel.
+    let sellBtnHtml = '';
+    if (a.generation > 1 && a.parentSnap && a.parentSnap.priceSum) {
+      const factor = RARITY_SELL_MULT[tr.rarity] || 1.5;
+      const sellPrice = Math.round(a.parentSnap.priceSum * factor);
+      sellBtnHtml = `<button class="btn-feed-large" style="margin-top:10px;background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.confirmSellBred(${id}, ${sellPrice})">💰 Genetik-Tier verkaufen (+${window.fmtCoins(sellPrice)} 🪙)</button>`;
+    }
+
     actionContainer.innerHTML = `
       <div id="defaultAnimalView">
         ${mainActionHtml}
+        ${geneticsHtml}
         <button class="btn-feed-large btn-wardrobe" style="margin-top: 15px;" onclick="window.renderWardrobeGrid(${id})">👕 Garderobe öffnen</button>
+        ${sellBtnHtml}
         <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(217,119,6,0.3);" onclick="window.confirmRetire(${id})">🌅 In den Ruhestand schicken (+${window.fmtCoins(retireRefund)} 🪙)</button>
         <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #7f1d1d, #450a0a); box-shadow: 0 4px 14px rgba(127,29,29,0.4); color: #fff;" onclick="window.confirmSlaughter(${id})">🔪 Schlachten (+${window.fmtCoins(slaughterRefund)} 🪙)</button>
       </div>
@@ -6460,19 +6875,22 @@
     window.renderWardrobeGrid(animalId);
   }
 
-  window.feedAnimal = async function(foodType, isItem = false) { 
-      const a = animals.find(anim => anim.id === selectedAnimalId); 
-      if (!a) return; 
-      const invCategory = isItem ? inventory.items : inventory.crops; 
-      if (invCategory[foodType] > 0) { 
-          invCategory[foodType]--; 
-          a.isProducing = true; 
-          a.fedAt = Date.now(); 
-          a.rewardReady = false; 
+  window.feedAnimal = async function(foodType, isItem = false) {
+      const a = animals.find(anim => anim.id === selectedAnimalId);
+      if (!a) return;
+      const invCategory = isItem ? inventory.items : inventory.crops;
+      if (invCategory[foodType] > 0) {
+          invCategory[foodType]--;
+          a.isProducing = true;
+          a.fedAt = Date.now();
+          a.rewardReady = false;
+          if (!a.stats) a.stats = { feedings:0, harvests:0 };
+          a.stats.feedings = (a.stats.feedings || 0) + 1;
           await saveFarmData();
           window.openAnimalStats(a.id);
           window.showToast(`🍎 ${a.name} wurde gefüttert!`);
-          awardXp(db, userKey, XP_VALUES.farm_feed);
+          const xpMult = RARITY_XP_MULT[(a.traits && a.traits.rarity) || 'common'] || 1;
+          awardXp(db, userKey, Math.round((XP_VALUES.farm_feed || 1) * xpMult));
           
           const el = document.getElementById('animal-' + a.id);
           if (el) {
@@ -6747,6 +7165,7 @@
         }
         if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
         if (a.x > 95) a.x = 80 + Math.random() * 15;
+        ensureAnimalGenetics(a);
       });
 
       const dataOven = data.oven;
@@ -7616,6 +8035,384 @@
     }).catch(() => {
       prompt('Manuell kopieren:', out);
     });
+  };
+
+  // ===================================================================
+  // GENETIK-LABOR – UI & ABLAUF
+  // ===================================================================
+
+  function updateLabBadge() {
+    const badge = document.getElementById('labBadge');
+    if (!badge) return;
+    if (!lab.active) { badge.textContent = ''; badge.style.display = 'none'; return; }
+    const now = Date.now();
+    if (lab.active.doneAt <= now) {
+      badge.textContent = '✓';
+      badge.style.display = '';
+      badge.style.background = '#22c55e';
+      badge.style.color = '#fff';
+      badge.style.borderRadius = '999px';
+      badge.style.padding = '0 6px';
+      badge.style.fontSize = '11px';
+      badge.style.position = 'absolute';
+      badge.style.top = '-4px';
+      badge.style.right = '-4px';
+    } else {
+      const rem = Math.max(0, Math.floor((lab.active.doneAt - now) / 1000));
+      badge.textContent = '⏳';
+      badge.style.display = '';
+      badge.style.background = '#f59e0b';
+      badge.style.color = '#fff';
+      badge.style.borderRadius = '999px';
+      badge.style.padding = '0 6px';
+      badge.style.fontSize = '11px';
+      badge.style.position = 'absolute';
+      badge.style.top = '-4px';
+      badge.style.right = '-4px';
+    }
+  }
+  window.updateLabBadge = updateLabBadge;
+
+  window.openLab = function() {
+    if (isVisitMode) { window.showToast('Nur ansehen – kein Eingriff möglich 👀'); return; }
+    _labSel = { A: null, B: null, species: null };
+    renderLab();
+    window.showSpecificModal('modalLab');
+  };
+
+  function renderLab() {
+    const c = document.getElementById('modalLabContent');
+    if (!c) return;
+    const now = Date.now();
+
+    // ── 1) Aktive Zucht läuft? ──
+    if (lab.active && lab.active.doneAt > now) {
+      const rem = Math.max(0, Math.floor((lab.active.doneAt - now) / 1000));
+      const sp = animalItems[lab.active.species];
+      const pa = lab.active.parentA;
+      const pb = lab.active.parentB;
+      c.innerHTML = `
+        <div style="text-align:center; padding:20px;">
+          <div style="font-size:48px;">${sp ? sp.icon : '🧬'}</div>
+          <div style="margin-top:8px; font-weight:700; color:var(--text-dark); font-size:16px;">Paarung läuft…</div>
+          <div style="margin-top:6px; color:var(--text-mid); font-size:13px;">
+            ${pa.name} <span style="opacity:.6;">×</span> ${pb.name}
+          </div>
+          <div id="labCountdown" style="margin-top:14px; font-size:34px; font-weight:800; color:var(--gold); font-variant-numeric:tabular-nums;">${fmtHM(rem)}</div>
+          <div style="margin-top:6px; font-size:11px; color:var(--text-mid);">verbleibend</div>
+        </div>
+      `;
+      return;
+    }
+
+    // ── 2) Geburt bereit? ──
+    if (lab.active && lab.active.doneAt <= now) {
+      const sp = animalItems[lab.active.species];
+      c.innerHTML = `
+        <div style="text-align:center; padding:20px;">
+          <div style="font-size:56px;">${sp ? sp.icon : '🍼'}</div>
+          <div style="margin-top:10px; font-weight:700; color:#be185d; font-size:18px;">Ein Baby ist bereit!</div>
+          <div style="margin-top:6px; color:var(--text-mid); font-size:12px;">${lab.active.parentA.name} × ${lab.active.parentB.name}</div>
+          <button class="btn-feed-large" style="margin-top:18px; background:linear-gradient(135deg,#ec4899,#a855f7);" onclick="window.collectBaby()">🍼 Baby abholen</button>
+        </div>
+      `;
+      return;
+    }
+
+    // ── 3) Frei: Eltern auswählen ──
+    const speciesWithCount = {};
+    animals.forEach(a => { speciesWithCount[a.species] = (speciesWithCount[a.species] || 0) + 1; });
+    const speciesAvail = Object.keys(speciesWithCount).filter(s => speciesWithCount[s] >= 2);
+
+    const speciesTabsHtml = (() => {
+      if (!speciesAvail.length) return '<div style="font-size:13px;color:var(--text-mid);text-align:center;padding:10px;">Du brauchst mindestens 2 Tiere derselben Art.</div>';
+      const list = ['rabbit','chicken','cow','sheep','duck','cat','goat','pig','horse','dog','unicorn']
+        .filter(s => speciesAvail.includes(s));
+      return `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">` +
+        list.map(s => {
+          const ai = animalItems[s];
+          const active = _labSel.species === s ? 'background:#fbcfe8;border-color:#ec4899;' : '';
+          return `<button class="stall-tab" style="${active}" onclick="window.labSelectSpecies('${s}')">${ai.icon} ${ai.name} (${speciesWithCount[s]})</button>`;
+        }).join('') + `</div>`;
+    })();
+
+    const A = _labSel.A ? animals.find(a => a.id === _labSel.A) : null;
+    const B = _labSel.B ? animals.find(a => a.id === _labSel.B) : null;
+
+    function slotHtml(slot, animal) {
+      if (!animal) {
+        return `<div class="lab-slot" onclick="window.labChooseParent('${slot}')">
+          <div class="ls-icon">＋</div>
+          <div class="ls-name">Elternteil ${slot}</div>
+          <div class="ls-sub">Art zuerst wählen</div>
+        </div>`;
+      }
+      const tr = animal.traits || defaultTraitsFor(animal.species);
+      return `<div class="lab-slot filled" onclick="window.labChooseParent('${slot}')">
+        <div class="ls-icon">${animalItems[animal.species].icon}</div>
+        <div class="ls-name">${animal.name}</div>
+        <div class="ls-sub">Gen ${animal.generation||1} · ${RARITY_LABEL[tr.rarity]||tr.rarity}</div>
+        <div style="margin-top:2px;">${rarityChipHtml(tr.rarity)}</div>
+      </div>`;
+    }
+
+    let previewHtml = '';
+    let startBtn = `<button class="btn-feed-large" disabled style="margin-top:10px;opacity:.5;">Wähle 2 Eltern…</button>`;
+    if (A && B && A.id !== B.id) {
+      const ta = A.traits || defaultTraitsFor(A.species);
+      const tb = B.traits || defaultTraitsFor(B.species);
+      const avgYield = ((ta.yieldMult+tb.yieldMult)/2).toFixed(2);
+      const avgSpeed = ((ta.speed+tb.speed)/2).toFixed(2);
+      const avgLuck  = Math.round((ta.luck+tb.luck)/2);
+      const breedSec = BREED_TIME_SEC[A.species] || 6*3600;
+      const related = areRelated(A, B);
+      previewHtml = `
+        <div class="lab-preview">
+          <div style="font-weight:700;margin-bottom:6px;color:var(--text-dark);">🔮 Vorhersage (Bandbreite)</div>
+          <div class="lab-preview-row"><span>🌾 Ertrag</span><span><b>≈ ${avgYield}×</b></span></div>
+          <div class="lab-preview-row"><span>⚡ Tempo</span><span><b>≈ ${avgSpeed}×</b></span></div>
+          <div class="lab-preview-row"><span>🍀 Glück</span><span><b>≈ ${avgLuck}</b></span></div>
+          <div class="lab-preview-row"><span>⏳ Wartezeit</span><span><b>${Math.round(breedSec/3600)} Stunden</b></span></div>
+          <div class="lab-preview-row"><span>⚠️ Beide Eltern verschwinden nach der Geburt von der Farm.</span></div>
+        </div>
+        ${ related ? '<div class="lab-warning">⚠️ Diese beiden Tiere sind verwandt (Geschwister oder Eltern-Kind). Du kannst trotzdem züchten.</div>' : '' }
+      `;
+      startBtn = `<button class="btn-feed-large" style="margin-top:10px;background:linear-gradient(135deg,#ec4899,#a855f7);" onclick="window.startBreeding()">💞 Paarung starten</button>`;
+    } else if (A && B && A.id === B.id) {
+      previewHtml = `<div class="lab-warning">⚠️ Wähle zwei verschiedene Tiere.</div>`;
+    }
+
+    c.innerHTML = `
+      <p style="text-align:center;font-size:13px;color:var(--text-mid);margin-bottom:8px;">
+        Wähle zwei Tiere derselben Art für die Paarung. Das Baby vererbt Eigenschaften beider Eltern – mit Chance auf seltene Mutationen.
+      </p>
+      ${speciesTabsHtml}
+      <div class="lab-slots">
+        ${slotHtml('A', A)}
+        <div class="lab-plus">×</div>
+        ${slotHtml('B', B)}
+      </div>
+      ${previewHtml}
+      ${startBtn}
+      <div id="labPicker" style="margin-top:14px;"></div>
+    `;
+  }
+  window.renderLab = renderLab;
+
+  window.labSelectSpecies = function(sp) {
+    _labSel.species = sp;
+    _labSel.A = null;
+    _labSel.B = null;
+    renderLab();
+  };
+
+  window.labChooseParent = function(slot) {
+    if (!_labSel.species) { window.showToast('Wähle zuerst eine Tierart 🐾'); return; }
+    const picker = document.getElementById('labPicker');
+    if (!picker) return;
+    const list = animals.filter(a => a.species === _labSel.species && a.id !== _labSel.A && a.id !== _labSel.B);
+    if (!list.length) { picker.innerHTML = '<div style="font-size:12px;color:var(--text-mid);text-align:center;">Keine weiteren Tiere dieser Art verfügbar.</div>'; return; }
+    picker.innerHTML = `
+      <div style="font-weight:700;margin-bottom:6px;font-size:13px;">Wähle Elternteil ${slot}:</div>
+      <div class="lab-pick-list">
+        ${list.map(a => {
+          const tr = a.traits || defaultTraitsFor(a.species);
+          return `<div class="lab-pick-row" onclick="window.labAssignParent('${slot}', ${a.id})">
+            <div style="font-size:22px;">${animalItems[a.species].icon}</div>
+            <div style="flex:1;">
+              <div class="lp-name">${a.name}</div>
+              <div class="lp-sub">Gen ${a.generation||1} · 🌾${(tr.yieldMult||1).toFixed(2)}× · ⚡${(tr.speed||1).toFixed(2)}× · 🍀${Math.round(tr.luck||0)}</div>
+            </div>
+            ${rarityChipHtml(tr.rarity)}
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  };
+
+  window.labAssignParent = function(slot, id) {
+    _labSel[slot] = id;
+    renderLab();
+  };
+
+  window.startBreeding = async function() {
+    if (lab.active) { window.showToast('Eine Paarung läuft bereits ⏳'); return; }
+    const A = animals.find(a => a.id === _labSel.A);
+    const B = animals.find(a => a.id === _labSel.B);
+    if (!A || !B) { window.showToast('Bitte 2 Eltern wählen'); return; }
+    if (A.id === B.id) { window.showToast('Wähle zwei verschiedene Tiere'); return; }
+    if (A.species !== B.species) { window.showToast('Beide Tiere müssen dieselbe Art sein'); return; }
+    const breedSec = BREED_TIME_SEC[A.species] || 6*3600;
+    const seed = (Date.now() ^ Math.floor(Math.random()*0xFFFFFFFF)) >>> 0;
+    // Snapshot der Eltern speichern (für Stammbaum-Info auch nach ihrem Verschwinden)
+    const snap = (a) => ({
+      id: a.id, name: a.name, species: a.species,
+      traits: a.traits, bonuses: a.bonuses || [], generation: a.generation || 1
+    });
+    lab.active = {
+      species: A.species,
+      parentA: snap(A),
+      parentB: snap(B),
+      startAt: Date.now(),
+      doneAt: Date.now() + breedSec*1000,
+      seed: seed
+    };
+    await saveFarmData();
+    updateLabBadge();
+    renderLab();
+    window.showToast(`💞 ${A.name} und ${B.name} sind im Labor. Komm in ${Math.round(breedSec/3600)}h wieder!`);
+  };
+
+  window.collectBaby = async function() {
+    if (!lab.active || lab.active.doneAt > Date.now()) { window.showToast('Noch nicht bereit ⏳'); return; }
+    const la = lab.active;
+    const pa = la.parentA;
+    const pb = la.parentB;
+    const { traits, bonuses } = breedTraits(
+      { species: pa.species, traits: pa.traits },
+      { species: pb.species, traits: pb.traits },
+      la.seed
+    );
+    const generation = Math.max(pa.generation||1, pb.generation||1) + 1;
+
+    // Zwillinge?
+    const twins = (bonuses.includes('twinblessing') || (pa.bonuses||[]).includes('twinblessing') || (pb.bonuses||[]).includes('twinblessing'))
+                  && (mulberry32(la.seed ^ 0x9E3779B9)() < 0.05);
+
+    const newBabies = [];
+    const makeBaby = (suffix) => {
+      const spawnZone = getSpeciesZoneBounds(la.species);
+      const baby = {
+        id: Date.now() + Math.floor(Math.random()*1000) + (suffix||0),
+        name: 'Baby ' + animalItems[la.species].name,
+        species: la.species,
+        x: 12 + Math.random() * 76,
+        y: spawnZone.yMin + Math.random() * (spawnZone.yMax - spawnZone.yMin),
+        isWalking: false,
+        facingLeft: false,
+        isProducing: false,
+        fedAt: 0,
+        rewardReady: false,
+        hue: Math.floor(Math.random()*40)-20,
+        sat: 0.9 + Math.random()*0.3,
+        bri: 0.95 + Math.random()*0.2,
+        equipped: { head: null },
+        traits: suffix ? JSON.parse(JSON.stringify(traits)) : traits,
+        bonuses: suffix ? [...bonuses] : bonuses,
+        generation,
+        parentIds: [pa.id, pb.id],
+        parentSnap: {
+          a: { name: pa.name, rarity: pa.traits?.rarity || 'common', generation: pa.generation||1 },
+          b: { name: pb.name, rarity: pb.traits?.rarity || 'common', generation: pb.generation||1 },
+          priceSum: (animalItems[la.species].price || 0) * 2
+        },
+        stats: { feedings: 0, harvests: 0 },
+        bornAt: Date.now()
+      };
+      newBabies.push(baby);
+      return baby;
+    };
+    const b1 = makeBaby(0);
+    if (twins) makeBaby(1);
+
+    // Eltern entfernen
+    animals = animals.filter(a => a.id !== pa.id && a.id !== pb.id);
+    // Babys hinzufügen
+    newBabies.forEach(b => animals.push(b));
+    window.animals = animals;
+
+    // Lab leeren
+    lab.active = null;
+    await saveFarmData();
+
+    // Alte Eltern-DOM-Nodes räumen
+    [pa.id, pb.id].forEach(id => { const el = document.getElementById('animal-' + id); if (el) el.remove(); });
+    // Babys rendern
+    newBabies.forEach(b => renderAnimalDOM(b));
+    updateFarmDOM();
+    updateLabBadge();
+    window.closeAllModals();
+
+    // XP nach Rarität
+    const xp = BIRTH_XP[traits.rarity] || 20;
+    try { awardXp(db, userKey, xp * newBabies.length); } catch(e) {}
+
+    // Geburts-Overlay
+    showBirthOverlay(b1, twins ? newBabies[1] : null);
+  };
+
+  function showBirthOverlay(baby, twin) {
+    const ai = animalItems[baby.species];
+    const overlay = document.createElement('div');
+    overlay.className = 'birth-overlay';
+    const tr = baby.traits;
+    overlay.innerHTML = `
+      <div class="birth-card">
+        <div style="font-size:80px;">${ai.icon}${twin ? ai.icon : ''}</div>
+        <div class="bc-title">${twin ? 'Zwillinge sind geboren!' : 'Ein Baby ist da!'}</div>
+        <div style="margin:6px 0;">${rarityChipHtml(tr.rarity)}</div>
+        <div style="font-size:12px;color:var(--text-mid);">Gen ${baby.generation} · 🌾${(tr.yieldMult).toFixed(2)}× · ⚡${(tr.speed).toFixed(2)}× · 🍀${Math.round(tr.luck)}</div>
+        <div style="margin-top:6px;">${bonusChipsHtml(baby.bonuses)}</div>
+        <input class="bc-name" id="babyNameInput" value="${baby.name}" maxlength="20" />
+        <button class="bc-btn" onclick="window._finishBirth()">✨ Willkommen!</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    window._birthBabies = twin ? [baby, twin] : [baby];
+    window._birthOverlay = overlay;
+  }
+
+  window._finishBirth = async function() {
+    const inp = document.getElementById('babyNameInput');
+    const name = (inp ? inp.value : '').trim().slice(0,20);
+    if (name && window._birthBabies && window._birthBabies.length) {
+      window._birthBabies.forEach((b, i) => {
+        b.name = window._birthBabies.length > 1 ? (name + ' ' + (i+1)) : name;
+      });
+      await saveFarmData();
+    }
+    if (window._birthOverlay) {
+      window._birthOverlay.remove();
+      window._birthOverlay = null;
+    }
+    window._birthBabies = null;
+  };
+
+  // Verkauf eines gezüchteten Tiers (Rarity-Formel)
+  window.confirmSellBred = function(id, price) {
+    const a = animals.find(x => x.id === id); if (!a) return;
+    document.getElementById('confirmTitle').textContent = 'Genetik-Tier verkaufen 💰';
+    document.getElementById('confirmText').innerHTML =
+      `Möchtest du <b>${a.name}</b> (Gen ${a.generation}, ${RARITY_LABEL[a.traits.rarity]}) verkaufen?<br><br>Du erhältst <b>${window.fmtCoins(price)} 🪙</b>.<br><span style="color:#7f1d1d;font-size:12px;">Das Tier ist danach für immer weg.</span>`;
+    document.getElementById('confirmButtons').innerHTML =
+      `<button class="btn-generic btn-buy" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;" onclick="window.executeSellBred(${id}, ${price})">Ja, verkaufen ✓</button>
+       <button class="btn-generic btn-cancel" onclick="window.openAnimalStats(${id})">Abbrechen</button>`;
+    window.showSpecificModal('modalConfirm');
+  };
+
+  window.executeSellBred = async function(id, price) {
+    const idx = animals.findIndex(x => x.id === id); if (idx === -1) return;
+    const a = animals[idx];
+    if (a.equipped && a.equipped.head) {
+      const itemId = a.equipped.head;
+      if (jewelryRecipes[itemId]) {
+        inventory.jewelry = inventory.jewelry || {};
+        inventory.jewelry[itemId] = (inventory.jewelry[itemId] || 0) + 1;
+      } else {
+        inventory.accessories = inventory.accessories || {};
+        inventory.accessories[itemId] = (inventory.accessories[itemId] || 0) + 1;
+      }
+    }
+    animals.splice(idx, 1);
+    window.animals = animals;
+    const el = document.getElementById('animal-' + id); if (el) el.remove();
+    await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + price);
+    await runTransaction(ref(db, `stats/${userKey}/coinsEarned`), c => (c || 0) + price).catch(()=>{});
+    await saveFarmData();
+    updateFarmDOM();
+    window.closeAllModals();
+    window.showFloatingNumber("+" + window.fmtCoins(price) + " 🪙", "#22c55e");
+    window.showToast(`💰 ${a.name} verkauft!`);
   };
 </script>
 <script type="module" src="maintenance.js"></script>
