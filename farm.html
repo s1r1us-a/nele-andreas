@@ -3331,7 +3331,7 @@
 
   // Allele-Pools (kategorische Traits)
   const COLOR_ALLELES = ['weiß','braun','schwarz','grau','rosa','gold','lavendel','türkis','smaragd','korall','perlmutt','regenbogen','sternenhimmel'];
-  const PATTERN_ALLELES = ['uni','uni','uni','gepunktet','gestreift','glitzer','sternenhimmel'];
+  const PATTERN_ALLELES = ['uni','uni','uni','gepunktet','gestreift','glitzer','sternenmuster'];
   const MOOD_ALLELES = ['fröhlich','schüchtern','frech','weise'];
   const EXOTIC_COLORS = ['gold','regenbogen','sternenhimmel','perlmutt'];
 
@@ -3404,7 +3404,7 @@
     if (col === 'regenbogen' || col === 'sternenhimmel') pts += 5;
     else if (col === 'gold' || col === 'perlmutt') pts += 3;
     else if (['lavendel','türkis','smaragd','korall'].includes(col)) pts += 1;
-    if (pat === 'sternenhimmel') pts += 4;
+    if (pat === 'sternenmuster') pts += 4;
     else if (pat === 'glitzer') pts += 2;
     else if (pat !== 'uni') pts += 1;
     pts += (bonuses ? bonuses.length : 0) * 2;
@@ -3451,11 +3451,13 @@
       return out;
     }
 
-    const luckBoost = ((ta.luck || 0) + (tb.luck || 0)) / 200; // 0..1
+    // Generationen-Drift: bis zu +5 Bonus auf Eltern-Glück, bevor der Mittelwert
+    // gebildet wird – ohne diesen Drift stagnierten Linien dauerhaft auf dem Eltern-Schnitt.
+    const luckBoost = ((ta.luck || 0) + (tb.luck || 0)) / 200; // 0..1, *10 ⇒ max +5
 
     const traits = {
       color:   mixCat(ta.color,   tb.color,   COLOR_ALLELES,   EXOTIC_COLORS),
-      pattern: mixCat(ta.pattern, tb.pattern, PATTERN_ALLELES, ['sternenhimmel','glitzer']),
+      pattern: mixCat(ta.pattern, tb.pattern, PATTERN_ALLELES, ['sternenmuster','glitzer']),
       mood:    mixCat(ta.mood,    tb.mood,    MOOD_ALLELES,    null),
       size:      Math.round(mixNum(ta.size      || 1, tb.size      || 1, 0.7, 1.5, 0.3) * 100) / 100,
       yieldMult: Math.round(mixNum(ta.yieldMult || 1, tb.yieldMult || 1, 0.5, 2.5, 0.5) * 100) / 100,
@@ -3466,7 +3468,8 @@
     // Sonder-Boni (max 2). Chance steigt mit Glück + Eltern-Rarität.
     const bonuses = [];
     const parentRarityScore = (RARITY_ORDER.indexOf(ta.rarity || 'common') + RARITY_ORDER.indexOf(tb.rarity || 'common'));
-    const bonusChance = 0.05 + parentRarityScore * 0.04 + traits.luck / 400; // bis ~0.5
+    // Cap auf 50% pro Slot, sonst landen Top-Eltern fast immer bei 2 Boni.
+    const bonusChance = Math.min(0.5, 0.05 + parentRarityScore * 0.04 + traits.luck / 400);
     const allKeys = Object.keys(SPECIAL_BONUSES);
     for (let i = 0; i < 2; i++) {
       if (rand() < bonusChance) {
@@ -3481,11 +3484,12 @@
 
   function effectiveSpeed(a) {
     let s = (a.traits && a.traits.speed) || 1;
-    if (a.bonuses && a.bonuses.includes('earlybird') || a.bonuses && a.bonuses.includes('nightowl')) {
+    if (a.bonuses && (a.bonuses.includes('earlybird') || a.bonuses.includes('nightowl'))) {
       try {
         const h = new Date().getHours();
-        const day = h >= 6 && h < 12;
-        const night = h >= 18 || h < 1;
+        // Tag = 6:00..18:00, Nacht = 18:00..6:00 (lückenlos, jeweils 12h)
+        const day = h >= 6 && h < 18;
+        const night = !day;
         if (a.bonuses.includes('earlybird') && day)   s *= 1.5;
         if (a.bonuses.includes('nightowl')  && night) s *= 1.5;
       } catch(e) {}
@@ -3512,6 +3516,10 @@
     if (typeof a.generation !== 'number') a.generation = 1;
     if (!a.bonuses) a.bonuses = [];
     if (!a.stats) a.stats = { feedings: 0, harvests: 0 };
+    // Alt-Pattern 'sternenhimmel' (kollidierte mit Farbe gleichen Namens) auf 'sternenmuster' umziehen
+    if (Array.isArray(a.traits.pattern)) {
+      a.traits.pattern = a.traits.pattern.map(p => p === 'sternenhimmel' ? 'sternenmuster' : p);
+    }
     return a;
   }
 
@@ -8332,7 +8340,8 @@
     const makeBaby = (suffix) => {
       const spawnZone = getSpeciesZoneBounds(la.species);
       const baby = {
-        id: Date.now() + Math.floor(Math.random()*1000) + (suffix||0),
+        // *100 + suffix*1000 + Random verhindert Kollision zwischen Twins und parallelen Tabs.
+        id: Date.now() * 100 + Math.floor(Math.random()*1000) + (suffix||0) * 1000,
         name: 'Baby ' + animalItems[la.species].name,
         species: la.species,
         x: 12 + Math.random() * 76,
@@ -8346,8 +8355,10 @@
         sat: 0.9 + Math.random()*0.3,
         bri: 0.95 + Math.random()*0.2,
         equipped: { head: null },
-        traits: suffix ? JSON.parse(JSON.stringify(traits)) : traits,
-        bonuses: suffix ? [...bonuses] : bonuses,
+        // Beide Babys bekommen einen eigenen Trait-Deep-Clone, damit spaetere Mutationen
+        // (z.B. ensureAnimalGenetics-Migration) nicht versehentlich auf das Twin-Geschwister durchschlagen.
+        traits: JSON.parse(JSON.stringify(traits)),
+        bonuses: [...bonuses],
         generation,
         parentIds: [pa.id, pb.id],
         parentSnap: {
