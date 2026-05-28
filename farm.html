@@ -6713,7 +6713,12 @@
     window.showSpecificModal('modalAnimal');
   }
 
+  function isBreedingParent(id) {
+    return !!(lab && lab.active && (lab.active.parentA.id === id || lab.active.parentB.id === id));
+  }
+
   window.confirmRetire = function(id) {
+    if (isBreedingParent(id)) { window.showToast('🧬 Elternteil im Labor – nicht möglich'); return; }
     const a = animals.find(x => x.id === id); if (!a) return;
     const refund = Math.floor(animalItems[a.species].price * 0.5);
     document.getElementById('confirmTitle').textContent = 'Ruhestand bestätigen 🌅';
@@ -6726,6 +6731,7 @@
   };
 
   window.confirmSlaughter = function(id) {
+    if (isBreedingParent(id)) { window.showToast('🧬 Elternteil im Labor – nicht möglich'); return; }
     const a = animals.find(x => x.id === id); if (!a) return;
     const refund = animalItems[a.species].price;
     document.getElementById('confirmTitle').textContent = 'Schlachten bestätigen 🔪';
@@ -6754,6 +6760,7 @@
   };
 
   window.executeRemoveAnimal = async function(id, mode) {
+    if (isBreedingParent(id)) { window.showToast('🧬 Elternteil im Labor – nicht möglich'); window.closeAllModals(); return; }
     const idx = animals.findIndex(x => x.id === id);
     if (idx === -1) return;
     const a = animals[idx];
@@ -6834,6 +6841,7 @@
   window.equipAccessory = async function(animalId, itemId) {
     const a = animals.find(anim => anim.id === animalId);
     if (!a) return;
+    if (isBreedingParent(animalId)) { window.showToast('🧬 Elternteil im Labor – keine Garderobe'); return; }
 
     if (!a.equipped) a.equipped = { head: null };
     if (!inventory.accessories) inventory.accessories = { strawhat: 0, porkpie: 0, spectrespecs: 0, radishearrings: 0, flowercrown: 0 };
@@ -6878,6 +6886,7 @@
   window.feedAnimal = async function(foodType, isItem = false) {
       const a = animals.find(anim => anim.id === selectedAnimalId);
       if (!a) return;
+      if (isBreedingParent(a.id)) { window.showToast('🧬 Elternteil im Labor – nicht fütterbar'); return; }
       const invCategory = isItem ? inventory.items : inventory.crops;
       if (invCategory[foodType] > 0) {
           invCategory[foodType]--;
@@ -7013,6 +7022,7 @@
   window.stallFeedDirect = async function(animalId) {
     const a = animals.find(anim => anim.id === animalId);
     if (!a) return;
+    if (isBreedingParent(a.id)) { window.showToast('🧬 Elternteil im Labor – nicht fütterbar'); return; }
     const f = getAnimalFood(a.species);
     if (!f) return;
     const invCategory = f.isItem ? inventory.items : inventory.crops;
@@ -7080,6 +7090,7 @@
     let fedCount = 0, skippedCount = 0;
     for (const a of scope) {
       if (a.isProducing || a.rewardReady) continue;
+      if (isBreedingParent(a.id)) continue;
       const f = getAnimalFood(a.species);
       if (!f) continue;
       const invCategory = f.isItem ? inventory.items : inventory.crops;
