@@ -752,6 +752,7 @@
     .stall-filter-tabs::-webkit-scrollbar { display:none; }
     .stall-tab { flex-shrink:0; border:1.5px solid var(--ui-card-border); border-radius:50px; padding:5px 12px; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; color:var(--text-mid); background:var(--ui-card-bg); cursor:pointer; touch-action:manipulation; transition: all 0.15s; }
     .stall-tab.active { background: var(--rose-pale, #fde8ed); border-color:var(--rose); color:var(--rose); }
+    .gen-chip { display:inline-flex; align-items:center; gap:2px; border-radius:50px; padding:1px 8px; font-size:11px; font-weight:700; background:#ede9fe; color:#7c3aed; border:1px solid #ddd6fe; white-space:nowrap; }
     .stall-animal-card { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:16px; background:white; margin-bottom:8px; cursor:pointer; touch-action:manipulation; box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid transparent; transition: box-shadow 0.15s; }
     .stall-animal-card:active { box-shadow:0 4px 16px rgba(0,0,0,0.12); }
     .stall-card-ready     { border-left-color: #22c55e; }
@@ -3460,8 +3461,8 @@
       pattern: mixCat(ta.pattern, tb.pattern, PATTERN_ALLELES, ['sternenmuster','glitzer']),
       mood:    mixCat(ta.mood,    tb.mood,    MOOD_ALLELES,    null),
       size:      Math.round(mixNum(ta.size      || 1, tb.size      || 1, 0.7, 1.5, 0.3) * 100) / 100,
-      yieldMult: Math.round(mixNum(ta.yieldMult || 1, tb.yieldMult || 1, 0.5, 2.5, 0.5) * 100) / 100,
-      speed:     Math.round(mixNum(ta.speed     || 1, tb.speed     || 1, 0.5, 2.0, 0.4) * 100) / 100,
+      yieldMult: Math.max(1, Math.round(mixNum(ta.yieldMult || 1, tb.yieldMult || 1, 0.5, 2.5, 0.5) * 100) / 100),
+      speed:     Math.max(1, Math.round(mixNum(ta.speed     || 1, tb.speed     || 1, 0.5, 2.0, 0.4) * 100) / 100),
       luck:      Math.round(mixNum((ta.luck || 5) + luckBoost*10, (tb.luck || 5) + luckBoost*10, 0, 100, 25)),
     };
 
@@ -6742,8 +6743,7 @@
     // Verkaufs-Button: für gezüchtete Tiere mit Eltern-Snapshot rarity-basierte Formel.
     let sellBtnHtml = '';
     if (a.generation > 1 && a.parentSnap && a.parentSnap.priceSum) {
-      const factor = RARITY_SELL_MULT[tr.rarity] || 1.5;
-      const sellPrice = Math.round(a.parentSnap.priceSum * factor);
+      const sellPrice = bredSellPrice(a);
       sellBtnHtml = `<button class="btn-feed-large" style="margin-top:10px;background:linear-gradient(135deg,#22c55e,#16a34a);" onclick="window.confirmSellBred(${id}, ${sellPrice})">💰 Genetik-Tier verkaufen (+${window.fmtCoins(sellPrice)} 🪙)</button>`;
     }
 
@@ -6978,6 +6978,28 @@
     window.showSpecificModal('modalStall');
   };
 
+  // Chip, der Gen-Tiere (gezüchtet, Generation > 1) einheitlich kennzeichnet.
+  // Normale Tiere (Gen 1) bekommen keinen Chip. Wird im Stall und im Labor genutzt.
+  function genBadgeHtml(gen) {
+    return (gen > 1) ? `<span class="gen-chip">🧬 Gen ${gen}</span>` : '';
+  }
+
+  // Tier-Auswahl für die Stall-Filter: 'genetic' = nur Gen-Tiere, 'all' = alle,
+  // sonst nach Tierart. Eine Stelle für alle Filter-Aufrufe (Tabs, Listen, Bulk).
+  function stallScope(filter) {
+    if (filter === 'genetic') return animals.filter(a => a.generation > 1);
+    if (filter === 'all')     return animals;
+    return animals.filter(a => a.species === filter);
+  }
+
+  // Verkaufswert eines gezüchteten Tiers (rarity-basiert). 0 für normale Tiere.
+  function bredSellPrice(a) {
+    if (a.generation > 1 && a.parentSnap && a.parentSnap.priceSum) {
+      return Math.round(a.parentSnap.priceSum * (RARITY_SELL_MULT[(a.traits && a.traits.rarity) || 'common'] || 1.5));
+    }
+    return 0;
+  }
+
   window.renderStall = function(filterSpecies) {
     filterSpecies = filterSpecies || 'all';
 
@@ -6987,7 +7009,7 @@
     const hungryCount    = animals.filter(a => !a.isProducing && !a.rewardReady).length;
     const producingCount = animals.filter(a => a.isProducing && !a.rewardReady).length;
 
-    const scope = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    const scope = stallScope(filterSpecies);
     const readyInScope  = scope.filter(a => a.rewardReady).length;
     const hungryInScope = scope.filter(a => !a.isProducing && !a.rewardReady).length;
 
@@ -7008,19 +7030,22 @@
 
     const tabsEl = document.getElementById('stallFilterTabs');
     let tabsHtml = `<button class="stall-tab ${filterSpecies==='all'?'active':''}" data-filter="all" onclick="window.renderStall('all')">Alle (${animals.length})</button>`;
+    const geneticCount = animals.filter(a => a.generation > 1).length;
+    if (geneticCount) tabsHtml += `<button class="stall-tab ${filterSpecies==='genetic'?'active':''}" data-filter="genetic" onclick="window.renderStall('genetic')">🧬 ${geneticCount}</button>`;
     ['rabbit','chicken','cow','sheep','cat','duck','goat','pig','horse','unicorn','dog'].forEach(sp => {
       if (!counts[sp]) return;
       tabsHtml += `<button class="stall-tab ${filterSpecies===sp?'active':''}" data-filter="${sp}" onclick="window.renderStall('${sp}')">${animalItems[sp].icon} ${counts[sp]}</button>`;
     });
     tabsEl.innerHTML = tabsHtml;
 
-    const filtered = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    const filtered = stallScope(filterSpecies);
     const listEl = document.getElementById('stallAnimalList');
     if (filtered.length === 0) {
       listEl.innerHTML = `<div class="stall-empty"><div class="stall-empty-icon">🌿</div><div class="stall-empty-text">Keine Tiere vorhanden</div></div>`;
       return;
     }
     const sorted = [...filtered].sort((a, b) => {
+      if (filterSpecies === 'genetic') return bredSellPrice(b) - bredSellPrice(a);
       if (a.rewardReady !== b.rewardReady) return a.rewardReady ? -1 : 1;
       if (!a.isProducing !== !b.isProducing) return !a.isProducing ? -1 : 1;
       return 0;
@@ -7050,12 +7075,18 @@
       }
       const svgOnly = getAnimalSVG(a.species, a.equipped).replace(/<div class="rabbit-shadow[^"]*"[^>]*><\/div>/g, '');
       const filterStyle = `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
+      const genChip = genBadgeHtml(a.generation);
+      const tr = a.traits || defaultTraitsFor(a.species);
+      const valueHtml = (filterSpecies === 'genetic')
+        ? `<div class="stall-animal-species" style="margin-top:2px;">${RARITY_LABEL[tr.rarity]||tr.rarity||''} · 💰 ${window.fmtCoins(bredSellPrice(a))} 🪙</div>`
+        : '';
       return `
         <div class="stall-animal-card ${cardClass}" onclick="window.stallOpenAnimal(${a.id})">
           <div class="stall-avatar-wrap" style="filter:${filterStyle}">${svgOnly}</div>
           <div class="stall-animal-info">
-            <div class="stall-animal-name">${a.name}</div>
+            <div class="stall-animal-name">${a.name} ${genChip}</div>
             <div class="stall-animal-species">${animalItems[a.species].icon} ${animalItems[a.species].name}</div>
+            ${valueHtml}
             ${statusHtml}
           </div>
           ${actionHtml}
@@ -7114,7 +7145,7 @@
   window.stallCollectAll = async function(filterSpecies) {
     if (isVisitMode) return;
     filterSpecies = filterSpecies || 'all';
-    const scope = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    const scope = stallScope(filterSpecies);
     const acc = { dogCoins: 0 };
     let count = 0;
     for (const a of scope) {
@@ -7135,7 +7166,7 @@
   window.stallFeedAll = async function(filterSpecies) {
     if (isVisitMode) return;
     filterSpecies = filterSpecies || 'all';
-    const scope = filterSpecies === 'all' ? animals : animals.filter(a => a.species === filterSpecies);
+    const scope = stallScope(filterSpecies);
     let fedCount = 0, skippedCount = 0;
     for (const a of scope) {
       if (a.isProducing || a.rewardReady) continue;
@@ -8220,8 +8251,8 @@
       return `<div class="lab-slot filled" onclick="window.labChooseParent('${slot}')">
         <div class="ls-icon">${animalItems[animal.species].icon}</div>
         <div class="ls-name">${animal.name}</div>
-        <div class="ls-sub">Gen ${animal.generation||1} · ${RARITY_LABEL[tr.rarity]||tr.rarity}</div>
-        <div style="margin-top:2px;">${rarityChipHtml(tr.rarity)}</div>
+        <div class="ls-sub">${RARITY_LABEL[tr.rarity]||tr.rarity}</div>
+        <div style="margin-top:2px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">${genBadgeHtml(animal.generation) || '<span class="gen-chip" style="background:#f1f5f9;color:#64748b;border-color:#e2e8f0;">Normal</span>'}${rarityChipHtml(tr.rarity)}</div>
       </div>`;
     }
 
@@ -8329,8 +8360,8 @@
           return `<div class="lab-pick-row" onclick="window.labAssignParent('${slot}', ${a.id})">
             <div style="font-size:22px;">${animalItems[a.species].icon}</div>
             <div style="flex:1;">
-              <div class="lp-name">${a.name}</div>
-              <div class="lp-sub">Gen ${a.generation||1} · 🌾${(tr.yieldMult||1).toFixed(2)}× · ⚡${(tr.speed||1).toFixed(2)}× · 🍀${Math.round(tr.luck||0)}</div>
+              <div class="lp-name">${a.name} ${genBadgeHtml(a.generation)}</div>
+              <div class="lp-sub">🌾${(tr.yieldMult||1).toFixed(2)}× · ⚡${(tr.speed||1).toFixed(2)}× · 🍀${Math.round(tr.luck||0)}</div>
             </div>
             ${rarityChipHtml(tr.rarity)}
           </div>`;
