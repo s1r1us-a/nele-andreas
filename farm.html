@@ -8167,8 +8167,8 @@
           </div>
           <div id="labCountdown" style="margin-top:14px; font-size:34px; font-weight:800; color:var(--gold); font-variant-numeric:tabular-nums;">${fmtHM(rem)}</div>
           <div style="margin-top:6px; font-size:11px; color:var(--text-mid);">verbleibend</div>
-          <button class="btn-feed-large" style="margin-top:18px; background:linear-gradient(135deg,#f59e0b,#ef4444);" onclick="window.skipBreeding()">⚡ Sofort fertig (<span id="labSkipCost">${window.fmtCoins(labSkipCost(rem))}</span> 🪙)</button>
-          <div style="margin-top:6px; font-size:10px; color:var(--text-mid);">Beendet die Paarung sofort – sehr teuer!</div>
+          <button class="btn-feed-large" style="margin-top:18px; background:linear-gradient(135deg,#f59e0b,#ef4444);" onclick="window.skipBreeding()">⚡ Zeit halbieren (<span id="labSkipCost">${window.fmtCoins(labSkipCost(rem))}</span> 🪙)</button>
+          <div style="margin-top:6px; font-size:10px; color:var(--text-mid);">Halbiert die restliche Wartezeit – sehr teuer!</div>
         </div>
       `;
       return;
@@ -8383,10 +8383,10 @@
     if (currentCoins < cost) { window.showToast(`Nicht genug Coins – du brauchst ${window.fmtCoins(cost)} 🪙`); return; }
     await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) - cost);
     await runTransaction(ref(db, `stats/${userKey}/coinsSpent`), c => (c || 0) + cost).catch(err => console.error('Stats-Fehler:', err));
-    lab.active.doneAt = Date.now();
+    lab.active.doneAt = Date.now() + Math.floor(rem / 2) * 1000;
     await saveFarmData();
     window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444");
-    window.showToast('⚡ Paarung abgeschlossen – das Baby ist bereit!');
+    window.showToast('⚡ Wartezeit halbiert!');
     updateLabBadge();
     renderLab();
   };
