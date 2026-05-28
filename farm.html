@@ -8142,7 +8142,7 @@
     window.showSpecificModal('modalLab');
   };
 
-  const SKIP_COST_PER_HOUR = 3000;
+  const SKIP_COST_PER_HOUR = 5000;
   function labSkipCost(remSec) {
     return Math.max(1, Math.ceil(remSec / 3600)) * SKIP_COST_PER_HOUR;
   }
@@ -8168,7 +8168,7 @@
           <div id="labCountdown" style="margin-top:14px; font-size:34px; font-weight:800; color:var(--gold); font-variant-numeric:tabular-nums;">${fmtHM(rem)}</div>
           <div style="margin-top:6px; font-size:11px; color:var(--text-mid);">verbleibend</div>
           <button class="btn-feed-large" style="margin-top:18px; background:linear-gradient(135deg,#f59e0b,#ef4444);" onclick="window.skipBreeding()">⚡ Zeit halbieren (<span id="labSkipCost">${window.fmtCoins(labSkipCost(rem))}</span> 🪙)</button>
-          <div style="margin-top:6px; font-size:10px; color:var(--text-mid);">Halbiert die restliche Wartezeit – sehr teuer!</div>
+          <div style="margin-top:6px; font-size:10px; color:var(--text-mid);">Halbiert die restliche Wartezeit.</div>
         </div>
       `;
       return;
