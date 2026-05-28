@@ -61,7 +61,7 @@
     .night-mode .cloud { opacity: 0.3; filter: brightness(0.7) drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
     .night-mode .cloud::before, .night-mode .cloud::after { filter: brightness(0.7); }
     .night-mode .fence-post, .night-mode .bakery-base, .night-mode .bakery-roof, .night-mode .bed { filter: brightness(0.75); }
-    .night-mode .animal-wrapper { filter: brightness(0.85); }
+    .night-mode .animal-wrapper { filter: brightness(0.85) var(--rarity-aura); }
     .night-mode .grass-tuft::before, .night-mode .grass-tuft::after { background: #166534; }
     .night-mode .grass-tuft-center { background: #15803d; }
 
@@ -624,7 +624,7 @@
     .growth-bar { height: 100%; background: linear-gradient(90deg, #7ec850, #9be860); width: 0%; border-radius: 4px; transition: width 1s linear; }
 
     /* ── ANIMAL CONTAINER, ANIMATIONS & REWARD BUBBLE ── */
-    .animal-wrapper { position: absolute; left: 0; top: 0; transform-origin: bottom center; transition: filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+    .animal-wrapper { position: absolute; left: 0; top: 0; transform-origin: bottom center; transition: filter 2s ease; cursor: pointer; width: 40px; margin-left: -20px; margin-top: -50px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 50; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)) var(--rarity-aura); }
     .animal-wrapper.is-walking { transition: transform 2s ease-in-out, filter 2s ease; }
     .animal-wrapper:active { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
     .rabbit { width: 40px; height: auto; position: relative; }
@@ -1864,41 +1864,54 @@
     }
 
     /* ===== GENETIK-LABOR & RARITÄT =====
-       Höhere Raritäten setzen die Filter via CSS; Hue kommt aus --gen-hue
-       (vom JS pro Tier gesetzt), damit jede Farbe sichtbar bleibt. */
-    .animal-wrapper { --gen-hue: 0deg; --gen-size: 1; }
+       Zwei getrennte Ebenen: Körperfarbe = Inline-Filter auf dem <svg> (COLOR_FILTERS,
+       vom JS pro Tier gesetzt); Rarity-/Mutations-Glow = --rarity-aura auf dem Wrapper.
+       So bleibt jede Farbe in jeder Rarität sichtbar und der Glow überschreibt sie nicht. */
+    .animal-wrapper { --gen-size: 1; --rarity-aura: ; }
     /* Größen-Skalierung des Trait-Werts (0.7..1.5) auf das SVG */
     .animal-wrapper svg { transform: scale(var(--gen-size, 1)); transform-origin: center bottom; }
-    .animal-wrapper.r-uncommon svg { filter: hue-rotate(var(--gen-hue)) saturate(1.2) brightness(1.02) drop-shadow(0 0 2px rgba(255,255,255,.4)) !important; }
-    .animal-wrapper.r-rare svg     { filter: hue-rotate(var(--gen-hue)) saturate(1.45) brightness(1.05) drop-shadow(0 0 4px rgba(80,180,255,.7)) !important; }
-    .animal-wrapper.r-epic svg     { filter: hue-rotate(var(--gen-hue)) saturate(1.75) brightness(1.08) drop-shadow(0 0 6px rgba(200,120,255,.85)) !important; animation: rEpicPulse 3.4s ease-in-out infinite; }
-    .animal-wrapper.r-legendary svg{ filter: hue-rotate(var(--gen-hue)) saturate(2) brightness(1.1) drop-shadow(0 0 8px rgba(255,180,80,.9)) drop-shadow(0 0 14px rgba(255,120,200,.5)) !important; animation: rLegPulse 2.8s ease-in-out infinite; }
-    .animal-wrapper.r-mythic svg   { saturate: 2.2; animation: rMythAll 6s linear infinite; }
+
+    /* Rarity-/Mutations-Aura: liegt als --rarity-aura (drop-shadow-Glow) auf dem WRAPPER,
+       getrennt von der Körperfarbe (die inline auf dem <svg> sitzt, siehe COLOR_FILTERS).
+       So bleibt jede Farbe in jeder Rarität sichtbar und der Glow kann beliebig stark sein. */
+    .animal-wrapper.r-uncommon  { --rarity-aura: drop-shadow(0 0 3px rgba(255,255,255,.6)); }
+    .animal-wrapper.r-rare      { --rarity-aura: drop-shadow(0 0 4px rgba(80,180,255,.9)); }
+    .animal-wrapper.r-epic      { --rarity-aura: drop-shadow(0 0 5px rgba(200,120,255,.95)) drop-shadow(0 0 11px rgba(168,85,247,.55)); }
+    .animal-wrapper.r-legendary { --rarity-aura: drop-shadow(0 0 6px rgba(255,200,90,1)) drop-shadow(0 0 14px rgba(255,120,200,.6)); }
+    .animal-wrapper.r-mythic    { --rarity-aura: drop-shadow(0 0 7px #ffd1ec) drop-shadow(0 0 17px #c8a8ff); }
+
+    /* Bewegung der höheren Raritäten (Filter bleibt für die Körperfarbe frei) */
+    .animal-wrapper.r-epic svg      { animation: rEpicPulse 3.4s ease-in-out infinite; }
+    .animal-wrapper.r-legendary svg { animation: rLegPulse 2.8s ease-in-out infinite; }
+    .animal-wrapper.r-mythic svg    { animation: rMythAll 6s linear infinite; }
     @keyframes rEpicPulse  { 0%,100%{opacity:1} 50%{opacity:.88} }
     /* Legendary/Mythic Keyframes übernehmen --gen-size, damit Größe sichtbar bleibt */
     @keyframes rLegPulse   {
       0%,100%{ transform: scale(var(--gen-size, 1)); }
       50%   { transform: scale(calc(var(--gen-size, 1) * 1.03)); }
     }
+    /* Mythisch: voller Regenbogen-Schimmer auf dem Körper (überschreibt die Body-Farbe bewusst) */
     @keyframes rMythAll {
-      0%   { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(calc(0deg + var(--gen-hue, 0deg))); transform: scale(var(--gen-size, 1)); }
-      100% { filter: saturate(2.2) brightness(1.12) drop-shadow(0 0 10px #ffd1ec) drop-shadow(0 0 18px #c8a8ff) hue-rotate(calc(360deg + var(--gen-hue, 0deg))); transform: scale(var(--gen-size, 1)); }
+      0%   { filter: saturate(2.2) brightness(1.12) hue-rotate(0deg);   transform: scale(var(--gen-size, 1)); }
+      100% { filter: saturate(2.2) brightness(1.12) hue-rotate(360deg); transform: scale(var(--gen-size, 1)); }
     }
     .animal-wrapper.r-mythic { animation: rMythFloat 4s ease-in-out infinite; }
     @keyframes rMythFloat  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 
-    /* Exotische Farb-Allele: eigene Filter, die zur Rarity-Klasse hinzukommen */
+    /* Exotische Farb-Allele: Body-Farbe kommt aus COLOR_FILTERS (inline);
+       hier nur die Signatur-Aura (überschreibt die Rarity-Aura) bzw. die Regenbogen-Animation. */
+    .animal-wrapper.c-gold          { --rarity-aura: drop-shadow(0 0 6px rgba(255,215,0,.95)) drop-shadow(0 0 14px rgba(255,170,0,.6)); }
+    .animal-wrapper.c-perlmutt      { --rarity-aura: drop-shadow(0 0 6px rgba(255,240,255,.95)) drop-shadow(0 0 13px rgba(200,180,255,.6)); }
+    .animal-wrapper.c-sternenhimmel { --rarity-aura: drop-shadow(0 0 6px rgba(140,120,255,.95)) drop-shadow(0 0 15px rgba(60,40,200,.65)); }
+    .animal-wrapper.c-regenbogen    { --rarity-aura: drop-shadow(0 0 7px rgba(255,180,220,.9)) drop-shadow(0 0 15px rgba(180,200,255,.6)); }
     .animal-wrapper.c-regenbogen svg { animation: cRainbow 4s linear infinite, rEpicPulse 3.4s ease-in-out infinite; }
     @keyframes cRainbow {
-      0%   { filter: hue-rotate(0deg)   saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(255,200,200,.7)); }
-      25%  { filter: hue-rotate(90deg)  saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(200,255,200,.7)); }
-      50%  { filter: hue-rotate(180deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(200,200,255,.7)); }
-      75%  { filter: hue-rotate(270deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(255,200,255,.7)); }
-      100% { filter: hue-rotate(360deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 5px rgba(255,200,200,.7)); }
+      0%   { filter: hue-rotate(0deg)   saturate(1.8) brightness(1.05); }
+      25%  { filter: hue-rotate(90deg)  saturate(1.8) brightness(1.05); }
+      50%  { filter: hue-rotate(180deg) saturate(1.8) brightness(1.05); }
+      75%  { filter: hue-rotate(270deg) saturate(1.8) brightness(1.05); }
+      100% { filter: hue-rotate(360deg) saturate(1.8) brightness(1.05); }
     }
-    .animal-wrapper.c-gold svg        { filter: sepia(0.4) saturate(2) brightness(1.1) drop-shadow(0 0 6px rgba(255,215,0,.8)) !important; }
-    .animal-wrapper.c-perlmutt svg    { filter: saturate(0.6) brightness(1.18) drop-shadow(0 0 6px rgba(255,240,255,.85)) drop-shadow(0 0 12px rgba(200,180,255,.5)) !important; }
-    .animal-wrapper.c-sternenhimmel svg { filter: hue-rotate(220deg) saturate(1.8) brightness(0.95) drop-shadow(0 0 6px rgba(140,120,255,.85)) drop-shadow(0 0 14px rgba(60,40,200,.5)) !important; }
 
     .rarity-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
     .rb-common    { background:#e5e7eb; color:#4b5563; }
@@ -1907,6 +1920,24 @@
     .rb-epic      { background:#f3e8ff; color:#7c3aed; }
     .rb-legendary { background:linear-gradient(90deg,#fde68a,#fbbf24); color:#78350f; }
     .rb-mythic    { background:linear-gradient(90deg,#fbcfe8,#c4b5fd,#fde68a); color:#831843; animation:rMythHue 6s linear infinite; }
+
+    /* Rarität im Tier-Detail-Modal: farbiger Rahmen + Glow je nach Seltenheit.
+       Die r-*-Klasse wird in openAnimalStats auf #modalAnimal gesetzt. */
+    .modal-card.r-common    { border-color:#cbd5e1; }
+    .modal-card.r-uncommon  { border-color:#22c55e; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(34,197,94,.4), 0 0 18px rgba(34,197,94,.35); }
+    .modal-card.r-rare      { border-color:#3b82f6; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(59,130,246,.5), 0 0 22px rgba(59,130,246,.45); }
+    .modal-card.r-epic      { border-color:#a855f7; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(168,85,247,.55), 0 0 26px rgba(168,85,247,.5); }
+    .modal-card.r-legendary { border-color:#f59e0b; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(245,158,11,.6), 0 0 30px rgba(251,191,36,.55); animation: rFrameLegPulse 2.6s ease-in-out infinite; }
+    .modal-card.r-mythic    { border-color:#c084fc; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(192,132,252,.6), 0 0 34px rgba(244,114,182,.55); animation: rFrameMythHue 6s linear infinite; }
+    @keyframes rFrameLegPulse {
+      0%,100% { box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(245,158,11,.6), 0 0 22px rgba(251,191,36,.45); }
+      50%     { box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(245,158,11,.85), 0 0 38px rgba(251,191,36,.7); }
+    }
+    @keyframes rFrameMythHue {
+      0%,100% { border-color:#f9a8d4; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(249,168,212,.6), 0 0 34px rgba(244,114,182,.55); }
+      33%     { border-color:#c4b5fd; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(196,181,253,.6), 0 0 34px rgba(167,139,250,.55); }
+      66%     { border-color:#fcd34d; box-shadow:0 10px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(252,211,77,.6), 0 0 34px rgba(251,191,36,.55); }
+    }
 
     .lab-slots { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; margin:14px 0; }
     .lab-slot { background:rgba(244,114,182,.08); border:2px dashed #f472b6; border-radius:14px; padding:12px; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; text-align:center; }
@@ -3375,10 +3406,39 @@
   const RARITY_SELL_MULT = { common:1.5, uncommon:2.25, rare:3.375, epic:5.0625, legendary:7.59375, mythic:11.390625 };
 
   // Allele-Pools (kategorische Traits)
-  const COLOR_ALLELES = ['weiß','braun','schwarz','grau','rosa','gold','lavendel','türkis','smaragd','korall','perlmutt','regenbogen','sternenhimmel'];
+  const COLOR_ALLELES = ['weiß','creme','braun','rost','schwarz','grau','schiefer','rosa','korall','honig','gold','lavendel','flieder','türkis','smaragd','minze','perlmutt','regenbogen','sternenhimmel'];
   const PATTERN_ALLELES = ['uni','uni','uni','gepunktet','gestreift','glitzer','sternenmuster'];
   const MOOD_ALLELES = ['fröhlich','schüchtern','frech','weise'];
   const EXOTIC_COLORS = ['gold','regenbogen','sternenhimmel','perlmutt'];
+
+  // Farb-Rezepturen pro Allel: vollständige CSS-Filter-Komponenten (OHNE drop-shadow).
+  // Wird in renderAnimalDOM IMMER inline auf das <svg> gelegt – dadurch ist jede Farbe
+  // in jeder Rarität sichtbar (auch weiß/braun/schwarz/grau heben sich klar voneinander ab).
+  // Der Rarity-/Mutations-Glow liegt getrennt davon als --rarity-aura auf dem .animal-wrapper.
+  const COLOR_FILTERS = {
+    // Neutrale Töne klar trennen (früher alle hue=0 → identisch):
+    'weiß':     'saturate(.18) brightness(1.28)',
+    'creme':    'sepia(.32) saturate(.75) brightness(1.18) hue-rotate(-6deg)',
+    'grau':     'saturate(0) brightness(1.02)',
+    'schiefer': 'saturate(.15) brightness(.78) contrast(1.05)',
+    'schwarz':  'saturate(.2) brightness(.46) contrast(1.12)',
+    'braun':    'sepia(.6) saturate(1.6) hue-rotate(-12deg) brightness(.86)',
+    'rost':     'sepia(.7) saturate(2.3) hue-rotate(-25deg) brightness(.95)',
+    'honig':    'sepia(.6) saturate(1.9) hue-rotate(-2deg) brightness(1.08)',
+    // Bunte Töne:
+    'rosa':     'hue-rotate(320deg) saturate(1.6) brightness(1.05)',
+    'korall':   'hue-rotate(10deg) saturate(1.9) brightness(1.06)',
+    'lavendel': 'hue-rotate(270deg) saturate(1.4) brightness(1.05)',
+    'flieder':  'hue-rotate(290deg) saturate(1.2) brightness(1.13)',
+    'türkis':   'hue-rotate(170deg) saturate(1.7) brightness(1.02)',
+    'smaragd':  'hue-rotate(140deg) saturate(1.7) brightness(.98)',
+    'minze':    'hue-rotate(130deg) saturate(1.05) brightness(1.14)',
+    // Exotische Töne (Body-Farbe; Signatur-Aura kommt zusätzlich via .c-* auf dem Wrapper):
+    'gold':         'sepia(.5) saturate(2.4) brightness(1.14)',
+    'perlmutt':     'saturate(.55) brightness(1.2) contrast(.95)',
+    'sternenhimmel':'hue-rotate(220deg) saturate(1.9) brightness(.92)',
+    'regenbogen':   'saturate(1.8) brightness(1.05)' // wird i.d.R. von der cRainbow-Animation überschrieben
+  };
 
   // Sonder-Boni
   const SPECIAL_BONUSES = {
@@ -3448,7 +3508,7 @@
     const pat = expressedAllele(traits.pattern);
     if (col === 'regenbogen' || col === 'sternenhimmel') pts += 5;
     else if (col === 'gold' || col === 'perlmutt') pts += 3;
-    else if (['lavendel','türkis','smaragd','korall'].includes(col)) pts += 1;
+    else if (['lavendel','türkis','smaragd','korall','minze','flieder','honig','rost'].includes(col)) pts += 1;
     if (pat === 'sternenmuster') pts += 4;
     else if (pat === 'glitzer') pts += 2;
     else if (pat !== 'uni') pts += 1;
@@ -3480,15 +3540,17 @@
       return Math.max(min, Math.min(max, v));
     }
 
-    // kategorisch: ein Allel von A, eins von B (zufällig). Mit kleiner Mutation.
-    function mixCat(pairA, pairB, pool, exoticPool) {
+    // kategorisch: ein Allel von A, eins von B (zufällig). Mit Mutation.
+    // mutRate = Chance pro Allel zu mutieren; exoticChance = Anteil der Mutationen
+    // aus dem exotischen Pool (abgestuft nach Eltern-Rarität/-Glück).
+    function mixCat(pairA, pairB, pool, exoticPool, mutRate, exoticChance) {
       const a1 = (Array.isArray(pairA) ? pairA[Math.floor(rand()*2)] : pairA) || pool[0];
       const a2 = (Array.isArray(pairB) ? pairB[Math.floor(rand()*2)] : pairB) || pool[0];
       let out = [a1, a2];
       // Mutation pro Allel
       for (let i = 0; i < 2; i++) {
-        if (rand() < 0.05) {
-          const exo = exoticPool && rand() < 0.18;
+        if (rand() < mutRate) {
+          const exo = exoticPool && rand() < exoticChance;
           const src = exo ? exoticPool : pool;
           out[i] = src[Math.floor(rand() * src.length)];
         }
@@ -3496,23 +3558,39 @@
       return out;
     }
 
+    // Eltern-Stärke bestimmt, wie wahrscheinlich seltene Mutationen auftauchen.
+    const parentRarityScore = (RARITY_ORDER.indexOf(ta.rarity || 'common') + RARITY_ORDER.indexOf(tb.rarity || 'common'));
+    const parentLuck = ((ta.luck || 5) + (tb.luck || 5)) / 2;
+    // Mehr echte Vielfalt: höhere Basis-Mutationsrate; exotische Chance skaliert mit
+    // Eltern-Rarität und -Glück, bleibt aber begrenzt, damit Top-Töne besonders bleiben.
+    const catMut    = 0.10;
+    const colExotic = Math.min(0.5, 0.18 + parentRarityScore * 0.02 + parentLuck / 500);
+    const patExotic = Math.min(0.4, 0.15 + parentRarityScore * 0.02);
+
     // Generationen-Drift: bis zu +5 Bonus auf Eltern-Glück, bevor der Mittelwert
     // gebildet wird – ohne diesen Drift stagnierten Linien dauerhaft auf dem Eltern-Schnitt.
     const luckBoost = ((ta.luck || 0) + (tb.luck || 0)) / 200; // 0..1, *10 ⇒ max +5
 
     const traits = {
-      color:   mixCat(ta.color,   tb.color,   COLOR_ALLELES,   EXOTIC_COLORS),
-      pattern: mixCat(ta.pattern, tb.pattern, PATTERN_ALLELES, ['sternenmuster','glitzer']),
-      mood:    mixCat(ta.mood,    tb.mood,    MOOD_ALLELES,    null),
+      color:   mixCat(ta.color,   tb.color,   COLOR_ALLELES,   EXOTIC_COLORS,            catMut, colExotic),
+      pattern: mixCat(ta.pattern, tb.pattern, PATTERN_ALLELES, ['sternenmuster','glitzer'], catMut, patExotic),
+      mood:    mixCat(ta.mood,    tb.mood,    MOOD_ALLELES,    null,                     catMut, 0),
       size:      Math.round(mixNum(ta.size      || 1, tb.size      || 1, 0.7, 1.5, 0.3) * 100) / 100,
       yieldMult: Math.max(1, Math.round(mixNum(ta.yieldMult || 1, tb.yieldMult || 1, 0.5, 2.5, 0.5) * 100) / 100),
       speed:     Math.max(1, Math.round(mixNum(ta.speed     || 1, tb.speed     || 1, 0.5, 2.0, 0.4) * 100) / 100),
       luck:      Math.round(mixNum((ta.luck || 5) + luckBoost*10, (tb.luck || 5) + luckBoost*10, 0, 100, 25)),
     };
 
+    // Kontinuierlicher Farbton-Jitter pro Baby: gleichfarbige Geschwister sehen dezent
+    // unterschiedlich aus (additiv zum Farb-Rezept im Renderer angewandt).
+    traits.tint = {
+      h: Math.round((rand() - 0.5) * 28),                 // ±14°
+      s: Math.round((rand() - 0.5) * 0.24 * 1000) / 1000, // ±0.12
+      b: Math.round((rand() - 0.5) * 0.12 * 1000) / 1000  // ±0.06
+    };
+
     // Sonder-Boni (max 2). Chance steigt mit Glück + Eltern-Rarität.
     const bonuses = [];
-    const parentRarityScore = (RARITY_ORDER.indexOf(ta.rarity || 'common') + RARITY_ORDER.indexOf(tb.rarity || 'common'));
     // Cap auf 50% pro Slot, sonst landen Top-Eltern fast immer bei 2 Boni.
     const bonusChance = Math.min(0.5, 0.05 + parentRarityScore * 0.04 + traits.luck / 400);
     const allKeys = Object.keys(SPECIAL_BONUSES);
@@ -4925,39 +5003,32 @@
     el.className = el.className.replace(/\br-(common|uncommon|rare|epic|legendary|mythic)\b/g, '').trim() + ' r-' + rarity;
 
     const colorAllele = a.traits ? expressedAllele(a.traits.color) : null;
-    const colorHue = ({
-      'weiß':0, 'braun':0, 'schwarz':0, 'grau':0,
-      'rosa':320, 'gold':40, 'lavendel':270, 'türkis':170,
-      'smaragd':140, 'korall':10
-    })[colorAllele];
-    const genHue = (colorHue !== undefined && colorHue !== 0) ? colorHue : (a.hue || 0);
-    el.style.setProperty('--gen-hue', genHue + 'deg');
     // Größen-Trait visuell wirksam machen
     const genSize = (a.traits && typeof a.traits.size === 'number') ? a.traits.size : 1;
     el.style.setProperty('--gen-size', String(genSize));
-    // Exotische Farben über eigene Klasse statt einzelner Hue-Mapping
+    // Exotische Farben bekommen zusätzlich eine Signatur-Aura/Animation über eigene Klasse
     const EXOTIC_COLOR_CLASS = { gold:'c-gold', perlmutt:'c-perlmutt', regenbogen:'c-regenbogen', sternenhimmel:'c-sternenhimmel' };
     el.className = el.className.replace(/\bc-(gold|perlmutt|regenbogen|sternenhimmel)\b/g, '').trim();
     if (colorAllele && EXOTIC_COLOR_CLASS[colorAllele]) el.classList.add(EXOTIC_COLOR_CLASS[colorAllele]);
 
     const svgEl = el.querySelector('svg');
     if (svgEl) {
-        const isExoticColor = colorAllele && EXOTIC_COLOR_CLASS[colorAllele];
-        if (isExoticColor) {
-          // Exotische Farbe übernimmt das Rendering – Inline-Filter entfernen
+        if (colorAllele === 'regenbogen') {
+          // Regenbogen: die cRainbow-Animation rendert den Körper – kein Inline-Filter
           svgEl.style.filter = '';
-        } else if (rarity === 'common') {
-          // common: alte hue/sat/bri-Variation behalten (oder Color-Allele falls vorhanden)
-          let h = (colorHue !== undefined && colorHue !== 0) ? colorHue : (a.hue || 0);
-          let s = a.sat || 1;
-          let b = a.bri || 1;
-          svgEl.style.filter = `hue-rotate(${h}deg) saturate(${s}) brightness(${b})`;
         } else {
-          // Höhere Rarität: CSS übernimmt via .r-* Regeln (mit --gen-hue)
-          svgEl.style.filter = '';
+          // Körperfarbe IMMER aus der Rezeptur → jede Farbe in jeder Rarität sichtbar.
+          const recipe = COLOR_FILTERS[colorAllele] || '';
+          // Pro-Tier-Jitter: gezüchtete Tiere via traits.tint, gekaufte via Alt-hue/sat/bri.
+          const t = a.traits && a.traits.tint;
+          const jitter = t
+            ? `hue-rotate(${t.h||0}deg) saturate(${(1+(t.s||0)).toFixed(3)}) brightness(${(1+(t.b||0)).toFixed(3)})`
+            : `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
+          // Bei mythisch überschreibt die rMythAll-Animation diesen Filter (Regenbogen-Schimmer).
+          svgEl.style.filter = (recipe + ' ' + jitter).trim();
         }
     }
-    
+
     updateAnimalPos(a);
   }
 
@@ -6842,6 +6913,23 @@
     avatarEl.innerHTML = getAnimalSVG(a.species, a.equipped);
     const svgInModal = avatarEl.querySelector('svg');
     if (svgInModal) { svgInModal.style.width = '100%'; svgInModal.style.height = '100%'; }
+
+    // Genetik sicherstellen und Seltenheit am Modal sichtbar machen (farbiger Rahmen + Glow).
+    // Früh gesetzt, damit der Rahmen auch im "Nur ansehen"-Modus greift.
+    ensureAnimalGenetics(a);
+    const _modalRarity = (a.traits && a.traits.rarity) || 'common';
+    const _modalCard = document.getElementById('modalAnimal');
+    _modalCard.className = _modalCard.className.replace(/\br-(common|uncommon|rare|epic|legendary|mythic)\b/g, '').trim() + ' r-' + _modalRarity;
+    // Körperfarbe auch im Modal-Avatar zeigen (gleiche Rezeptur wie auf der Wiese)
+    if (svgInModal && a.traits) {
+      const _col = expressedAllele(a.traits.color);
+      const _recipe = COLOR_FILTERS[_col] || '';
+      const _t = a.traits.tint;
+      const _jit = _t
+        ? `hue-rotate(${_t.h||0}deg) saturate(${(1+(_t.s||0)).toFixed(3)}) brightness(${(1+(_t.b||0)).toFixed(3)})`
+        : `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
+      svgInModal.style.filter = (_recipe + ' ' + _jit).trim();
+    }
 
     document.getElementById('modalName').value = a.name; 
     document.getElementById('modalName').readOnly = isVisitMode; 
