@@ -6951,14 +6951,28 @@
         ${geneticsHtml}
         <button class="btn-feed-large btn-wardrobe" style="margin-top: 15px;" onclick="window.renderWardrobeGrid(${id})">👕 Garderobe öffnen</button>
         ${sellBtnHtml}
-        <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(217,119,6,0.3);" onclick="window.confirmRetire(${id})">🌅 In den Ruhestand schicken (+${window.fmtCoins(retireRefund)} 🪙)</button>
-        <button class="btn-feed-large" style="margin-top: 10px; background: linear-gradient(135deg, #7f1d1d, #450a0a); box-shadow: 0 4px 14px rgba(127,29,29,0.4); color: #fff;" onclick="window.confirmSlaughter(${id})">🔪 Schlachten (+${window.fmtCoins(slaughterRefund)} 🪙)</button>
+        <button id="animalManageToggle" class="btn-feed-large" style="margin-top: 14px; background: #f1f5f9; color: #64748b; box-shadow: none; font-size: 13px;" onclick="window.toggleAnimalManage()">⚙️ Tier abgeben …</button>
+        <div id="animalManageSection" style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--ui-card-border, #e2e8f0);">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-mid); text-align: left; margin-bottom: 8px;">Tier abgeben</div>
+          <button class="btn-feed-large" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 10px rgba(217,119,6,0.25); font-size: 13px; padding: 10px;" onclick="window.confirmRetire(${id})">🌅 In den Ruhestand schicken (+${window.fmtCoins(retireRefund)} 🪙)</button>
+          <button class="btn-feed-large" style="margin-top: 8px; background: linear-gradient(135deg, #7f1d1d, #450a0a); box-shadow: 0 3px 10px rgba(127,29,29,0.3); color: #fff; font-size: 13px; padding: 10px;" onclick="window.confirmSlaughter(${id})">🔪 Schlachten (+${window.fmtCoins(slaughterRefund)} 🪙)</button>
+        </div>
       </div>
       <div id="wardrobeView" style="display:none;"></div>
     `;
 
     window.showSpecificModal('modalAnimal');
   }
+
+  // Klappt den dezenten "Tier abgeben"-Bereich (Ruhestand/Schlachten) im Tier-Detail
+  // ein/aus. Der Toggle-Button selbst verschwindet beim Öffnen, damit der Bereich ruhig bleibt.
+  window.toggleAnimalManage = function() {
+    const sec = document.getElementById('animalManageSection');
+    const btn = document.getElementById('animalManageToggle');
+    if (!sec) return;
+    sec.style.display = 'block';
+    if (btn) btn.style.display = 'none';
+  };
 
   function isBreedingParent(id) {
     return !!(lab && lab.active && (lab.active.parentA.id === id || lab.active.parentB.id === id));
@@ -7182,12 +7196,22 @@
     return (gen > 1) ? `<span class="gen-chip">🧬 Gen ${gen}</span>` : '';
   }
 
+  // Aktueller Stall-Filterzustand. Wird in renderStall gesetzt und von den Direkt-Aktionen
+  // (Füttern/Abholen/Platzieren) genutzt, damit ein erneutes Rendern Filter + Genetik-Toggle
+  // beibehält (statt fragil aus dem DOM zu lesen).
+  let stallCurrentFilter = 'all', stallGeneticOnly = false;
+
   // Tier-Auswahl für die Stall-Filter: 'genetic' = nur Gen-Tiere, 'all' = alle,
-  // sonst nach Tierart. Eine Stelle für alle Filter-Aufrufe (Tabs, Listen, Bulk).
-  function stallScope(filter) {
-    if (filter === 'genetic') return animals.filter(a => a.generation > 1);
-    if (filter === 'all')     return animals;
-    return animals.filter(a => a.species === filter);
+  // sonst nach Tierart. geneticOnly grenzt zusätzlich auf gezüchtete Tiere (Gen > 1) ein,
+  // sodass sich Tierart-Filter und Genetik kombinieren lassen.
+  // Eine Stelle für alle Filter-Aufrufe (Tabs, Listen, Bulk).
+  function stallScope(filter, geneticOnly) {
+    let list;
+    if (filter === 'genetic')   list = animals.filter(a => a.generation > 1);
+    else if (filter === 'all')  list = animals;
+    else                        list = animals.filter(a => a.species === filter);
+    if (geneticOnly) list = list.filter(a => a.generation > 1);
+    return list;
   }
 
   // Verkaufswert eines gezüchteten Tiers (rarity-basiert). 0 für normale Tiere.
@@ -7198,8 +7222,12 @@
     return 0;
   }
 
-  window.renderStall = function(filterSpecies) {
+  window.renderStall = function(filterSpecies, geneticOnly) {
     filterSpecies = filterSpecies || 'all';
+    // Genetik-Toggle nur bei echten Tierart-Filtern sinnvoll (nicht bei 'all'/'genetic').
+    geneticOnly = !!geneticOnly && filterSpecies !== 'all' && filterSpecies !== 'genetic';
+    stallCurrentFilter = filterSpecies;
+    stallGeneticOnly = geneticOnly;
 
     const counts = {};
     animals.forEach(a => { counts[a.species] = (counts[a.species] || 0) + 1; });
@@ -7207,7 +7235,7 @@
     const hungryCount    = animals.filter(a => !a.isProducing && !a.rewardReady).length;
     const producingCount = animals.filter(a => a.isProducing && !a.rewardReady).length;
 
-    const scope = stallScope(filterSpecies);
+    const scope = stallScope(filterSpecies, geneticOnly);
     const readyInScope  = scope.filter(a => a.rewardReady).length;
     const hungryInScope = scope.filter(a => !a.isProducing && !a.rewardReady).length;
 
@@ -7227,8 +7255,8 @@
         <div class="stall-stat stall-stat-producing">⏳ ${producingCount} prod.</div>
       </div>
       <div class="stall-stats-row" style="margin-top:8px;">
-        <button class="stall-action-btn stall-btn-collect" style="flex:1;" ${readyInScope>0?'':'disabled'} onclick="window.stallCollectAll('${filterSpecies}')">✅ Alle abholen (${readyInScope})</button>
-        <button class="stall-action-btn stall-btn-feed" style="flex:1;" ${hungryInScope>0?'':'disabled'} onclick="window.stallFeedAll('${filterSpecies}')">🍽️ Alle füttern (${hungryInScope})</button>
+        <button class="stall-action-btn stall-btn-collect" style="flex:1;" ${readyInScope>0?'':'disabled'} onclick="window.stallCollectAll('${filterSpecies}', ${geneticOnly})">✅ Alle abholen (${readyInScope})</button>
+        <button class="stall-action-btn stall-btn-feed" style="flex:1;" ${hungryInScope>0?'':'disabled'} onclick="window.stallFeedAll('${filterSpecies}', ${geneticOnly})">🍽️ Alle füttern (${hungryInScope})</button>
       </div>`;
 
     const tabsEl = document.getElementById('stallFilterTabs');
@@ -7237,18 +7265,28 @@
     if (geneticCount) tabsHtml += `<button class="stall-tab ${filterSpecies==='genetic'?'active':''}" data-filter="genetic" onclick="window.renderStall('genetic')">🧬 ${geneticCount}</button>`;
     ['rabbit','chicken','cow','sheep','cat','duck','goat','pig','horse','unicorn','dog'].forEach(sp => {
       if (!counts[sp]) return;
-      tabsHtml += `<button class="stall-tab ${filterSpecies===sp?'active':''}" data-filter="${sp}" onclick="window.renderStall('${sp}')">${animalItems[sp].icon} ${counts[sp]}</button>`;
+      tabsHtml += `<button class="stall-tab ${filterSpecies===sp && !geneticOnly?'active':''}" data-filter="${sp}" onclick="window.renderStall('${sp}')">${animalItems[sp].icon} ${counts[sp]}</button>`;
     });
+    // Genetik-Toggle: nur bei aktivem Tierart-Filter UND wenn diese Art gezüchtete Tiere hat.
+    // Erlaubt "Genetik je Art" (z.B. nur gezüchtete Hasen) zusätzlich zum globalen 🧬-Tab.
+    if (isSpeciesFilter) {
+      const speciesGenCount = animals.filter(a => a.species === filterSpecies && a.generation > 1).length;
+      if (speciesGenCount) {
+        tabsHtml += geneticOnly
+          ? `<button class="stall-tab active" onclick="window.renderStall('${filterSpecies}', false)">🧬 Genetik (${speciesGenCount}) ✕</button>`
+          : `<button class="stall-tab" onclick="window.renderStall('${filterSpecies}', true)">🧬 Nur Genetik (${speciesGenCount})</button>`;
+      }
+    }
     tabsEl.innerHTML = tabsHtml;
 
-    const filtered = stallScope(filterSpecies);
+    const filtered = stallScope(filterSpecies, geneticOnly);
     const listEl = document.getElementById('stallAnimalList');
     if (filtered.length === 0) {
       listEl.innerHTML = `<div class="stall-empty"><div class="stall-empty-icon">🌿</div><div class="stall-empty-text">Keine Tiere vorhanden</div></div>`;
       return;
     }
     const sorted = [...filtered].sort((a, b) => {
-      if (filterSpecies === 'genetic') return bredSellPrice(b) - bredSellPrice(a);
+      if (filterSpecies === 'genetic' || geneticOnly) return bredSellPrice(b) - bredSellPrice(a);
       if (a.rewardReady !== b.rewardReady) return a.rewardReady ? -1 : 1;
       if (!a.isProducing !== !b.isProducing) return !a.isProducing ? -1 : 1;
       return 0;
@@ -7272,15 +7310,21 @@
       } else {
         const f = getAnimalFood(a.species);
         const stock = f ? (f.isItem ? (inventory.items[f.foodType]||0) : (inventory.crops[f.foodType]||0)) : 0;
+        const foodIcon = f ? (f.isItem ? '🥛' : (shopItems[f.foodType] ? shopItems[f.foodType].icon : '🌾')) : '🌾';
         cardClass  = 'stall-card-hungry';
-        statusHtml = `<span class="stall-status-badge stall-badge-hungry">🍽️ Hungrig</span>`;
-        actionHtml = `<button class="stall-action-btn stall-btn-feed" ${stock>0?'':'disabled'} onclick="event.stopPropagation();window.stallFeedDirect(${a.id})">Füttern</button>`;
+        if (stock > 0) {
+          statusHtml = `<span class="stall-status-badge stall-badge-hungry">🍽️ Hungrig · braucht ${foodIcon} (${stock})</span>`;
+          actionHtml = `<button class="stall-action-btn stall-btn-feed" onclick="event.stopPropagation();window.stallFeedDirect(${a.id})">${foodIcon} Füttern</button>`;
+        } else {
+          statusHtml = `<span class="stall-status-badge stall-badge-hungry">🍽️ Hungrig · ${foodIcon} fehlt</span>`;
+          actionHtml = `<button class="stall-action-btn stall-btn-feed" disabled>${foodIcon} fehlt</button>`;
+        }
       }
       const svgOnly = getAnimalSVG(a.species, a.equipped).replace(/<div class="rabbit-shadow[^"]*"[^>]*><\/div>/g, '');
       const filterStyle = `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
       const genChip = genBadgeHtml(a.generation);
       const tr = a.traits || defaultTraitsFor(a.species);
-      const valueHtml = (filterSpecies === 'genetic')
+      const valueHtml = (filterSpecies === 'genetic' || geneticOnly)
         ? `<div class="stall-animal-species" style="margin-top:2px;">${RARITY_LABEL[tr.rarity]||tr.rarity||''} · 💰 ${window.fmtCoins(bredSellPrice(a))} 🪙</div>`
         : '';
       // Platzieren / Einstallen
@@ -7339,8 +7383,7 @@
     }
     await saveFarmData();
     updateFarmDOM();
-    const activeTab = document.querySelector('.stall-tab.active');
-    window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
+    window.renderStall(stallCurrentFilter, stallGeneticOnly);
   };
 
   window.stallOpenAnimal = function(animalId) {
@@ -7361,8 +7404,7 @@
       a.fedAt = Date.now();
       a.rewardReady = false;
       await saveFarmData();
-      const activeTab = document.querySelector('.stall-tab.active');
-      window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
+      window.renderStall(stallCurrentFilter, stallGeneticOnly);
       window.showToast(`🍎 ${a.name} wurde gefüttert!`);
       awardXp(db, userKey, XP_VALUES.farm_feed);
       const el = document.getElementById('animal-' + a.id);
@@ -7385,16 +7427,15 @@
     if (msg) window.showToast(msg);
     await saveFarmData();
     updateFarmDOM();
-    const activeTab = document.querySelector('.stall-tab.active');
-    window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
+    window.renderStall(stallCurrentFilter, stallGeneticOnly);
   };
 
   // Holt alle bereiten Tiere im Filter-Scope ab: O(n) im Speicher,
   // genau EIN Firebase-Write, EIN Render, EINE Toast.
-  window.stallCollectAll = async function(filterSpecies) {
+  window.stallCollectAll = async function(filterSpecies, geneticOnly) {
     if (isVisitMode) return;
     filterSpecies = filterSpecies || 'all';
-    const scope = stallScope(filterSpecies);
+    const scope = stallScope(filterSpecies, geneticOnly);
     const acc = { dogCoins: 0 };
     let count = 0;
     for (const a of scope) {
@@ -7406,16 +7447,16 @@
     if (acc.dogCoins > 0) await runTransaction(ref(db, `coins/${userKey}`), c => (c || 0) + acc.dogCoins);
     await saveFarmData();
     updateFarmDOM();
-    window.renderStall(filterSpecies);
+    window.renderStall(filterSpecies, geneticOnly);
     window.showToast(`🎁 ${count} Tier${count !== 1 ? 'e' : ''} abgeholt!`);
   };
 
   // Füttert so viele hungrige Tiere wie möglich im Filter-Scope: O(n),
   // genau EIN Firebase-Write, EIN Render, EINE Toast.
-  window.stallFeedAll = async function(filterSpecies) {
+  window.stallFeedAll = async function(filterSpecies, geneticOnly) {
     if (isVisitMode) return;
     filterSpecies = filterSpecies || 'all';
-    const scope = stallScope(filterSpecies);
+    const scope = stallScope(filterSpecies, geneticOnly);
     let fedCount = 0, skippedCount = 0;
     for (const a of scope) {
       if (a.isProducing || a.rewardReady) continue;
@@ -7436,7 +7477,7 @@
     if (fedCount === 0 && skippedCount === 0) { window.showToast('Keine hungrigen Tiere.'); return; }
     if (fedCount > 0) await saveFarmData();
     if (fedCount > 0) awardXp(db, userKey, XP_VALUES.farm_feed * fedCount);
-    window.renderStall(filterSpecies);
+    window.renderStall(filterSpecies, geneticOnly);
     if (fedCount === 0) {
       window.showToast(`🥕 Kein Futter im Inventar (${skippedCount} hungrig).`);
     } else if (skippedCount > 0) {
