@@ -773,6 +773,12 @@
     .stall-btn-feed    { background:linear-gradient(135deg,#f97316,#fbbf24); color:white; box-shadow:0 3px 10px rgba(249,115,22,0.28); }
     .stall-btn-collect { background:linear-gradient(135deg,#22c55e,#16a34a); color:white; box-shadow:0 3px 10px rgba(34,197,94,0.28); }
     .stall-btn-wait    { background:#f1f5f9; color:#94a3b8; }
+    .stall-btn-place   { background:linear-gradient(135deg,#84cc16,#65a30d); color:white; box-shadow:0 3px 10px rgba(132,204,22,0.28); }
+    .stall-btn-stable  { background:linear-gradient(135deg,#60a5fa,#3b82f6); color:white; box-shadow:0 3px 10px rgba(96,165,250,0.28); }
+    .stall-btn-full    { background:#f1f5f9; color:#94a3b8; }
+    .stall-card-actions { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+    .stall-card-actions .stall-action-btn { width:100%; }
+    .stall-farm-hint { display:inline-block; margin-left:6px; font-size:11px; color:#65a30d; font-weight:700; vertical-align:middle; }
     .stall-empty { text-align:center; color:var(--text-mid); padding:32px 16px; }
     .stall-empty-icon { font-size:40px; margin-bottom:8px; }
     .stall-empty-text { font-size:13px; font-weight:600; }
@@ -3864,15 +3870,36 @@
           if (!rawAnimals || rawAnimals === 0) { animals = []; } 
           else if (Array.isArray(rawAnimals)) { animals = rawAnimals.filter(a => a !== null && typeof a === 'object'); } 
           else { animals = Object.values(rawAnimals).filter(a => a !== null && typeof a === 'object'); }
+          // Migration onFarm: Altbestand ohne onFarm-Feld bzw. Überschuss > MAX_ON_FARM
+          // je Tierart auf max. MAX_ON_FARM begrenzen (erste in Array-Reihenfolge bleiben).
+          let onFarmMigrated = false;
+          const onFarmCounts = {};
           animals.forEach(a => {
-            const zb = getSpeciesZoneBounds(a.species);
-            if (a.y < zb.yMin || a.y > zb.yMax) {
-              a.y = zb.yMin + Math.random() * (zb.yMax - zb.yMin);
+            if (typeof a.onFarm !== 'boolean') {
+              // Altbestand: erste MAX_ON_FARM pro Art auf die Wiese, Rest in den Stall.
+              const c = onFarmCounts[a.species] || 0;
+              a.onFarm = c < MAX_ON_FARM;
+              if (a.onFarm) onFarmCounts[a.species] = c + 1;
+              onFarmMigrated = true;
+            } else if (a.onFarm) {
+              // Überschuss kappen (z.B. nach manueller Datenänderung).
+              const c = onFarmCounts[a.species] || 0;
+              if (c >= MAX_ON_FARM) { a.onFarm = false; onFarmMigrated = true; }
+              else onFarmCounts[a.species] = c + 1;
             }
-            if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
-            if (a.x > 95) a.x = 80 + Math.random() * 15;
+          });
+          animals.forEach(a => {
+            if (a.onFarm) {
+              const zb = getSpeciesZoneBounds(a.species);
+              if (a.y < zb.yMin || a.y > zb.yMax) {
+                a.y = zb.yMin + Math.random() * (zb.yMax - zb.yMin);
+              }
+              if (!a.x || a.x < 5) a.x = 5 + Math.random() * 15;
+              if (a.x > 95) a.x = 80 + Math.random() * 15;
+            }
             ensureAnimalGenetics(a);
           });
+          if (onFarmMigrated && !isVisitMode) saveFarmData();
           // Lab-State laden
           if (data.lab && typeof data.lab === 'object') {
             lab.active = data.lab.active || null;
@@ -4629,9 +4656,17 @@
   const SPECIES_EMOJI = { cow:'🐄', horse:'🐴', unicorn:'🦄', pig:'🐷', sheep:'🐑', goat:'🐐', rabbit:'🐰', duck:'🦆', chicken:'🐔', cat:'🐱', dog:'🐕' };
   const ZONE_HEIGHT = 48;   // % pro Zone (relativ zur farm-world Höhe)
   const ZONE_START  = 88;   // % – unterhalb der Felder
+  const MAX_ON_FARM = 20;   // max. Tiere pro Art, die optisch auf der Wiese stehen
+
+  // Anzahl Tiere einer Art, die aktuell auf der Wiese platziert sind (onFarm).
+  function countOnFarm(species) {
+    return animals.reduce((n, a) => n + ((a.onFarm && a.species === species) ? 1 : 0), 0);
+  }
 
   function getPresentSpecies() {
-    const present = [...new Set(animals.map(a => a.species))];
+    // Nur Arten, die mind. ein Tier auf der Wiese (onFarm) haben → Zonen/Zäune
+    // erscheinen nur für tatsächlich sichtbare Arten.
+    const present = [...new Set(animals.filter(a => a.onFarm).map(a => a.species))];
     return SPECIES_ORDER.filter(s => present.includes(s));
   }
 
@@ -4816,13 +4851,18 @@
     updateBedsVisuals();
 
     const space = document.getElementById('animalSpace');
-    const liveIds = new Set(animals.map(a => a.id));
+    // Nur Tiere auf der Wiese (onFarm) bekommen ein DOM-Element.
+    const liveIds = new Set(animals.filter(a => a.onFarm).map(a => a.id));
     const existingAnimals = Array.from(space.children);
     existingAnimals.forEach(el => {
       const id = parseInt(el.id.replace('animal-', ''));
-      if (!liveIds.has(id)) { space.removeChild(el); }
+      if (!liveIds.has(id)) {
+        space.removeChild(el);
+        const a = animals.find(an => an.id === id);
+        if (a) a._el = null;
+      }
     });
-    animals.forEach(a => renderAnimalDOM(a));
+    animals.filter(a => a.onFarm).forEach(a => renderAnimalDOM(a));
 
     const readyCount = animals.filter(a => a.rewardReady).length;
     const badge = document.getElementById('stallBadge');
@@ -5340,6 +5380,7 @@
         let b = (90 + Math.random() * 20) / 100;     
 
         const spawnZone = getSpeciesZoneBounds(itemToBuy.id);
+        const placeOnFarm = countOnFarm(itemToBuy.id) < MAX_ON_FARM;
         let newAnimal = {
             id: Date.now(),
             name: nameInput,
@@ -5361,13 +5402,16 @@
             parentIds: [],
             parentSnap: null,
             stats: { feedings: 0, harvests: 0 },
-            bornAt: Date.now()
+            bornAt: Date.now(),
+            onFarm: placeOnFarm
         };
         animals.push(newAnimal);
-        renderAnimalDOM(newAnimal);
+        if (placeOnFarm) renderAnimalDOM(newAnimal);
+        else updateFarmDOM();
         await saveFarmData();
         window.closeAllModals();
         window.showFloatingNumber("-" + window.fmtCoins(cost) + " 🪙", "#ef4444");
+        if (!placeOnFarm) window.showToast(`🏠 Gehege voll (${MAX_ON_FARM}/${MAX_ON_FARM}) – ${nameInput} wartet im Stall.`);
         awardXp(db, userKey, XP_VALUES.farm_animal_bought);
     }
     else { window.showToast('Nicht genug Münzen! 🪙'); }
@@ -7167,10 +7211,15 @@
     const readyInScope  = scope.filter(a => a.rewardReady).length;
     const hungryInScope = scope.filter(a => !a.isProducing && !a.rewardReady).length;
 
+    const isSpeciesFilter = filterSpecies !== 'all' && filterSpecies !== 'genetic';
+    const heroSub = isSpeciesFilter
+      ? `${SPECIES_NAMES[filterSpecies]||filterSpecies}: 🌿 ${countOnFarm(filterSpecies)}/${MAX_ON_FARM} auf der Wiese`
+      : `${animals.length} Tier${animals.length !== 1 ? 'e' : ''} auf der Farm`;
+
     document.getElementById('stallHeader').innerHTML = `
       <div class="stall-hero">
         <div class="stall-hero-title">🐾 Mein Stall</div>
-        <div class="stall-hero-sub">${animals.length} Tier${animals.length !== 1 ? 'e' : ''} auf der Farm</div>
+        <div class="stall-hero-sub">${heroSub}</div>
       </div>
       <div class="stall-stats-row">
         <div class="stall-stat stall-stat-ready">✅ ${readyCount} bereit</div>
@@ -7234,18 +7283,64 @@
       const valueHtml = (filterSpecies === 'genetic')
         ? `<div class="stall-animal-species" style="margin-top:2px;">${RARITY_LABEL[tr.rarity]||tr.rarity||''} · 💰 ${window.fmtCoins(bredSellPrice(a))} 🪙</div>`
         : '';
+      // Platzieren / Einstallen
+      let placeHtml;
+      if (a.onFarm) {
+        placeHtml = `<button class="stall-action-btn stall-btn-stable" onclick="event.stopPropagation();window.stallSetPlacement(${a.id},false)">🏠 Einstallen</button>`;
+      } else if (countOnFarm(a.species) < MAX_ON_FARM) {
+        placeHtml = `<button class="stall-action-btn stall-btn-place" onclick="event.stopPropagation();window.stallSetPlacement(${a.id},true)">🌿 Auf die Wiese</button>`;
+      } else {
+        placeHtml = `<button class="stall-action-btn stall-btn-full" disabled>Wiese voll (${MAX_ON_FARM}/${MAX_ON_FARM})</button>`;
+      }
+      const farmHint = a.onFarm ? `<span class="stall-farm-hint">🌿 Wiese</span>` : '';
       return `
         <div class="stall-animal-card ${cardClass}" onclick="window.stallOpenAnimal(${a.id})">
           <div class="stall-avatar-wrap" style="filter:${filterStyle}">${svgOnly}</div>
           <div class="stall-animal-info">
-            <div class="stall-animal-name">${a.name} ${genChip}</div>
+            <div class="stall-animal-name">${a.name} ${genChip}${farmHint}</div>
             <div class="stall-animal-species">${animalItems[a.species].icon} ${animalItems[a.species].name}</div>
             ${valueHtml}
             ${statusHtml}
           </div>
-          ${actionHtml}
+          <div class="stall-card-actions">
+            ${actionHtml}
+            ${placeHtml}
+          </div>
         </div>`;
     }).join('');
+  };
+
+  // Tier zwischen Wiese (onFarm) und Stall verschieben. toFarm=true → auf die Wiese
+  // (begrenzt auf MAX_ON_FARM pro Art), toFarm=false → in den Stall.
+  window.stallSetPlacement = async function(animalId, toFarm) {
+    if (isVisitMode) return;
+    const a = animals.find(anim => anim.id === animalId);
+    if (!a) return;
+    if (toFarm) {
+      if (a.onFarm) return;
+      if (countOnFarm(a.species) >= MAX_ON_FARM) {
+        window.showToast(`🏠 Gehege voll – max. ${MAX_ON_FARM} ${SPECIES_NAMES[a.species]||'Tiere'} auf der Wiese.`);
+        return;
+      }
+      a.onFarm = true;
+      const zb = getSpeciesZoneBounds(a.species);
+      a.x = 12 + Math.random() * 76;
+      a.y = zb.yMin + Math.random() * (zb.yMax - zb.yMin);
+      a.isWalking = false;
+      renderAnimalDOM(a);
+      window.showToast(`🌿 ${a.name} ist jetzt auf der Wiese!`);
+    } else {
+      if (!a.onFarm) return;
+      a.onFarm = false;
+      const el = document.getElementById('animal-' + a.id);
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      a._el = null;
+      window.showToast(`🏠 ${a.name} wurde in den Stall geschickt.`);
+    }
+    await saveFarmData();
+    updateFarmDOM();
+    const activeTab = document.querySelector('.stall-tab.active');
+    window.renderStall(activeTab ? activeTab.dataset.filter : 'all');
   };
 
   window.stallOpenAnimal = function(animalId) {
@@ -7500,6 +7595,7 @@
   setInterval(() => {
     if (!currentUser || document.hidden) return;
     animals.forEach(a => {
+      if (!a.onFarm) return; // gestallte Tiere bewegen sich nicht
       if (Math.random() < 0.4) {
         let oldX = a.x; 
         let newX, newY; 
@@ -7523,7 +7619,7 @@
           const MIN_DIST_SQ = 100; // 10 * 10
           for (let i = 0, n = animals.length; i < n; i++) {
             const other = animals[i];
-            if (a.id === other.id) continue;
+            if (a.id === other.id || !other.onFarm) continue;
             const dx = newX - other.x;
             const dy = newY - other.y;
             if (dx * dx + dy * dy < MIN_DIST_SQ) { collision = true; break; }
@@ -8623,7 +8719,8 @@
           priceSum: (animalItems[la.species].price || 0) * 2
         },
         stats: { feedings: 0, harvests: 0 },
-        bornAt: Date.now()
+        bornAt: Date.now(),
+        onFarm: false
       };
       newBabies.push(baby);
       return baby;
@@ -8635,6 +8732,8 @@
     animals = animals.filter(a => a.id !== pa.id && a.id !== pb.id);
     // Babys hinzufügen
     newBabies.forEach(b => animals.push(b));
+    // onFarm setzen, sobald Eltern raus sind (countOnFarm zählt die schon gesetzten mit)
+    newBabies.forEach(b => { b.onFarm = countOnFarm(b.species) < MAX_ON_FARM; });
     window.animals = animals;
 
     // Lab leeren
@@ -8643,8 +8742,8 @@
 
     // Alte Eltern-DOM-Nodes räumen
     [pa.id, pb.id].forEach(id => { const el = document.getElementById('animal-' + id); if (el) el.remove(); });
-    // Babys rendern
-    newBabies.forEach(b => renderAnimalDOM(b));
+    // Babys rendern (nur die auf der Wiese)
+    newBabies.filter(b => b.onFarm).forEach(b => renderAnimalDOM(b));
     updateFarmDOM();
     updateLabBadge();
     window.closeAllModals();
