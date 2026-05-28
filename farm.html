@@ -3647,6 +3647,7 @@
   let animals = [];
   let lab = { active: null }; // active: { species, parentA, parentB, startAt, doneAt, seed }
   let _labSel = { A: null, B: null, species: null };
+  let _labHelpOpen = false;
   window.lab = lab;
 
   // ── Persistenz: gebündelte Firebase-Writes ──
@@ -7176,6 +7177,7 @@
     document.getElementById('btnHarvestAll').style.display = 'none';
     document.getElementById('btnVisit').style.display = 'none';
     document.getElementById('btnStallWrap').style.display = 'none';
+    document.getElementById('btnLabWrap').style.display = 'none';
     document.getElementById('topbarCoins').style.display = 'none';
 
     const _ftVisit = document.getElementById('farmTitle'); if (_ftVisit) _ftVisit.textContent = farmName(otherUser);
@@ -7253,6 +7255,7 @@
     document.getElementById('btnHarvestAll').style.display = '';
     document.getElementById('btnVisit').style.display = 'flex';
     document.getElementById('btnStallWrap').style.display = '';
+    document.getElementById('btnLabWrap').style.display = '';
     document.getElementById('topbarCoins').style.display = '';
     document.getElementById('visitBanner').classList.remove('show');
 
@@ -8225,11 +8228,12 @@
       const related = areRelated(A, B);
       previewHtml = `
         <div class="lab-preview">
-          <div style="font-weight:700;margin-bottom:6px;color:var(--text-dark);">🔮 Vorhersage (Bandbreite)</div>
+          <div style="font-weight:700;margin-bottom:6px;color:var(--text-dark);">🔮 So wird das Baby ungefähr</div>
           <div class="lab-preview-row"><span>🌾 Ertrag</span><span><b>≈ ${avgYield}×</b></span></div>
           <div class="lab-preview-row"><span>⚡ Tempo</span><span><b>≈ ${avgSpeed}×</b></span></div>
           <div class="lab-preview-row"><span>🍀 Glück</span><span><b>≈ ${avgLuck}</b></span></div>
           <div class="lab-preview-row"><span>⏳ Wartezeit</span><span><b>${Math.round(breedSec/3600)} Stunden</b></span></div>
+          <div class="lab-preview-row" style="font-size:11px;color:var(--text-mid);"><span>✨ Echte Werte streuen darum herum – mit Glück besser, durch Mutationen auch überraschend anders.</span></div>
           <div class="lab-preview-row"><span>⚠️ Beide Eltern verschwinden nach der Geburt von der Farm.</span></div>
         </div>
         ${ related ? '<div class="lab-warning">⚠️ Diese beiden Tiere sind verwandt (Geschwister oder Eltern-Kind). Du kannst trotzdem züchten.</div>' : '' }
@@ -8239,7 +8243,41 @@
       previewHtml = `<div class="lab-warning">⚠️ Wähle zwei verschiedene Tiere.</div>`;
     }
 
+    const helpHtml = `
+      <div style="border:1px solid #f0c8de;border-radius:12px;background:#fff5fa;margin-bottom:10px;overflow:hidden;">
+        <div onclick="window.toggleLabHelp()" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;cursor:pointer;font-weight:700;color:#be185d;font-size:14px;">
+          <span>❓ Wie funktioniert das Labor?</span>
+          <span style="transition:transform .15s;${_labHelpOpen ? 'transform:rotate(90deg);' : ''}">▶</span>
+        </div>
+        ${ _labHelpOpen ? `
+        <div style="padding:0 12px 12px;font-size:12.5px;color:var(--text-dark);line-height:1.5;">
+          <p style="margin:0 0 8px;"><b>🐾 So geht's:</b> Wähle zwei Tiere derselben Art. Nach einer Wartezeit kommt ein Baby zur Welt – beide Eltern verschwinden danach von der Farm.</p>
+          <p style="margin:0 0 4px;"><b>📊 Was die Werte bedeuten:</b></p>
+          <ul style="margin:0 0 8px;padding-left:18px;">
+            <li><b>🌾 Ertrag</b> – wie <b>viele</b> Produkte das Tier pro Ernte gibt.</li>
+            <li><b>⚡ Tempo</b> – wie <b>schnell</b> das Tier produziert (höher = schneller fertig).</li>
+            <li><b>🍀 Glück</b> – Chance auf <b>Bonus-Münzen</b> bei jeder Ernte.</li>
+            <li><b>⭐ Seltenheit</b> – wird aus den Werten berechnet: mehr <b>XP</b> beim Füttern und ein höherer <b>Verkaufspreis</b>.</li>
+          </ul>
+          <p style="margin:0 0 8px;"><b>🧬 Vererbung &amp; Mutationen:</b> Das Baby mischt die Werte beider Eltern und liegt ungefähr beim Durchschnitt – mal etwas besser, mal schlechter. Mit etwas Glück passieren seltene <b>Mutationen</b> (z. B. exotische Farben oder Spezial-Boni).</p>
+          <p style="margin:0 0 8px;"><b>🎨 Aussehen:</b> Farbe, Muster und Größe sind hübsch fürs Auge – sie können zusätzlich die Seltenheit erhöhen. Die Stimmung ist reine Deko.</p>
+          <p style="margin:0 0 4px;"><b>✨ Spezial-Boni:</b> die ein Tier zufällig haben kann:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li>🪙 <b>Goldene Ernte</b> – 10 % Chance auf 50–200 Bonus-Münzen pro Ernte.</li>
+            <li>🌅 <b>Frühaufsteher</b> – +50 % Tempo zwischen 6 und 18 Uhr.</li>
+            <li>🌙 <b>Nachtschwärmer</b> – +50 % Tempo zwischen 18 und 6 Uhr.</li>
+            <li>🍀 <b>Glücksbringer</b> – +20 zum Glück-Wert.</li>
+            <li>🛡️ <b>Eisenmagen</b> – immer +40 % Tempo.</li>
+            <li>🌻 <b>Erntehelfer</b> – +5 % Ertrag je weiterem Artgenossen mit Erntehelfer.</li>
+            <li>🐝 <b>Bienenfreund</b> – 12 % Chance auf +1 Honig pro Ernte.</li>
+            <li>💫 <b>Funkenwurf</b> – 1 % Chance auf +1 Glühwürmchen pro Ernte.</li>
+            <li>👯 <b>Zwillingssegen</b> – 5 % Chance auf Zwillinge bei der Geburt.</li>
+          </ul>
+        </div>` : '' }
+      </div>`;
+
     c.innerHTML = `
+      ${helpHtml}
       <p style="text-align:center;font-size:13px;color:var(--text-mid);margin-bottom:8px;">
         Wähle zwei Tiere derselben Art für die Paarung. Das Baby vererbt Eigenschaften beider Eltern – mit Chance auf seltene Mutationen.
       </p>
@@ -8255,6 +8293,11 @@
     `;
   }
   window.renderLab = renderLab;
+
+  window.toggleLabHelp = function() {
+    _labHelpOpen = !_labHelpOpen;
+    renderLab();
+  };
 
   window.labSelectSpecies = function(sp) {
     _labSel.species = sp;
