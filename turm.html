@@ -179,8 +179,9 @@ import {
   setReady, leaveLobby, loadGuestSave,
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
   requestAbility, sanitizeLobbyCode,
+  setTowerHeroes, listenHeroes,
 } from './adventure/js/core/tower.js';
-import { heroSrc } from './adventure/js/core/avatar.js';
+import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from './adventure/js/data/classes.js';
 import { MECH_DEFS } from './adventure/js/data/bosses.js';
 import { fmtBig } from './adventure/js/ui/dom.js';
@@ -188,17 +189,22 @@ import { fmtBig } from './adventure/js/ui/dom.js';
 // ---- Globals ----
 let myKey = null, myName = null, myState = null, myClassId = DEFAULT_CLASS_ID;
 let lobbyId = null, lobbyData = null, isHost = false;
-let unsubLobby = null, unsubCombat = null;
+let unsubLobby = null, unsubCombat = null, unsubHeroes = null;
 let fightSpeed = 1, _lastAnimTurn = -1;
 let _frontStatsCache = null, _backStatsCache = null;
 let _frontNameCache = '', _backNameCache = '';
+// Helden-Aussehen beider Slots (vom Host nach tower/heroes geschrieben).
+let _heroLook = { front:null, back:null };
 // Skill-Status (lokaler Spieler)
 let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
 let _lastHealTs = 0;
+// Skill-FX als absolute End-Zeitstempel (Server-Zeit) → lokal heruntergezählt,
+// damit Heilkreis/Schild flackerfrei und auf beiden Geräten synchron erscheinen.
+let _shieldUntil = 0, _frontAblazeUntil = 0, _backAblazeUntil = 0;
 // Cooldown-Anzeige BEIDER Helden (vom Host gebroadcastet, lokal heruntergezählt).
 let _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
 // Auto-Start-Countdown
-let _countdownTicker = null, _countdownTarget = 0, _startingFight = false;
+let _countdownTicker = null, _countdownTarget = 0, _startingFight = false, _startWatchdog = null;
 // Server-Zeit-Offset gegen Uhren-Drift zwischen den Geräten:
 // Firebase liefert über '.info/serverTimeOffset' die Differenz Server−lokal.
 // serverNow() ergibt damit auf BEIDEN Clients dieselbe Zeitbasis.
@@ -376,14 +382,23 @@ function onLobbyUpdate(lobby){
       : (bothReady ? 'Beide bereit!' : 'Warte auf Bereit-Status…');
   }
 
+  // Auto-Start auch hier prüfen: onLobbyUpdate feuert bei JEDER DB-Änderung
+  // und weckt damit selbst einen zwischenzeitlich gedrosselten Tab – der
+  // Kampf startet so zuverlässig, nicht nur abhängig vom setInterval-Tick.
+  maybeAutoStart();
+
   if(lobby.status === 'in_progress'){
     showFightSection();
     if(!unsubCombat){
       unsubCombat = listenCombat(lobbyId, onCombatUpdate);
     }
+    if(!unsubHeroes){
+      unsubHeroes = listenHeroes(lobbyId, onHeroesUpdate);
+    }
   } else if(lobby.status === 'waiting' && $('fightSection').style.display !== 'none'){
     // Host hat ein neues Stockwerk gestartet → Gast zurück in den Warteraum (B1).
     if(unsubCombat){ unsubCombat(); unsubCombat = null; }
+    if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
     $('resultOverlay').classList.remove('show');
     $('fightSection').style.display = 'none';
     $('lobbySection').style.display = '';
@@ -408,22 +423,20 @@ function startCountdown(startAt){
   if(_countdownTicker && _countdownTarget === startAt) return;
   stopCountdown();
   _countdownTarget = startAt;
+  const el = $('lobbyStatus');
   const tick = () => {
     // Vergleich gegen Server-Zeit → identischer Countdown auf beiden Geräten.
     const rem = Math.max(0, Math.ceil((startAt - serverNow())/1000));
-    $('lobbyStatus').textContent = rem > 0
-      ? '⚔️ Kampf startet in ' + rem + ' s… (Bereit abbrechen zum Stoppen)'
-      : '⚔️ Los geht\'s!';
-    if(serverNow() >= startAt){
-      stopCountdown();
-      // Nur der Host startet den Kampf autoritativ. startAt wird NICHT vorab
-      // gelöscht – es bleibt als Retry-Signal erhalten, bis der Status in
-      // onStartFight erfolgreich auf 'in_progress' steht.
-      if(isHost && !_startingFight && lobbyData && lobbyData.status === 'waiting'){
-        _startingFight = true;
-        window.onStartFight().finally(() => { _startingFight = false; });
-      }
+    if(rem > 0){
+      el.classList.add('countdown-active');
+      el.innerHTML = '<span class="countdown-big">' + rem + '</span>'
+        + '<span class="countdown-hint">⚔️ Kampf startet… (Bereit abbrechen zum Stoppen)</span>';
+    } else {
+      el.classList.remove('countdown-active');
+      el.textContent = '⚔️ Los geht\'s!';
     }
+    // Start (host-autoritativ) zentral und idempotent auslösen.
+    maybeAutoStart();
   };
   tick();
   _countdownTicker = setInterval(tick, 250);
@@ -431,6 +444,27 @@ function startCountdown(startAt){
 function stopCountdown(){
   if(_countdownTicker){ clearInterval(_countdownTicker); _countdownTicker = null; }
   _countdownTarget = 0;
+  const el = $('lobbyStatus'); if(el) el.classList.remove('countdown-active');
+}
+
+// Startet den Kampf, sobald der Countdown abgelaufen ist – host-autoritativ,
+// idempotent und gegen hängende Firebase-Aufrufe abgesichert. Aufrufbar aus
+// dem Tick, aus onLobbyUpdate und beim Wiedersichtbarwerden des Tabs.
+function maybeAutoStart(){
+  const lobby = lobbyData;
+  if(!isHost || !lobby || lobby.status !== 'waiting') return;
+  if(!lobby.startAt || serverNow() < lobby.startAt) return;   // noch nicht fällig
+  if(_startingFight) return;
+  // startAt bleibt als Retry-Signal erhalten, bis onStartFight den Status
+  // atomar auf 'in_progress' setzt.
+  _startingFight = true;
+  // Watchdog: selbst wenn onStartFight (z. B. durch einen hängenden Firebase-
+  // Aufruf) nie auflöst, wird das Flag freigegeben → kein dauerhaftes Verklemmen.
+  clearTimeout(_startWatchdog);
+  _startWatchdog = setTimeout(() => { _startingFight = false; }, 8000);
+  window.onStartFight().finally(() => {
+    clearTimeout(_startWatchdog); _startWatchdog = null; _startingFight = false;
+  });
 }
 
 // ---- Kampf starten (Host) ----
@@ -438,8 +472,9 @@ window.onStartFight = async function(){
   const btn = $('startBtn'); if(btn){ btn.disabled = true; btn.textContent = '…'; }
   try {
     const lobby = lobbyData;
-    // Gast-Spielstand laden & Stats berechnen
-    const guestSave  = await loadGuestSave(lobby.guest);
+    // Gast-Spielstand laden (mit Timeout, damit ein hängender Firebase-Aufruf
+    // den Start nicht blockiert → der catch-Zweig armt einen sichtbaren Retry).
+    const guestSave  = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
     const hostStats  = computePlayerStats(myState);
     const guestStats = computePlayerStats(guestSave);
 
@@ -457,6 +492,13 @@ window.onStartFight = async function(){
     _backStatsCache  = backStats;
     _frontNameCache  = frontName;
     _backNameCache   = backName;
+
+    // Helden-Aussehen BEIDER Spieler einmalig veröffentlichen, damit der Gast
+    // den Partner mit dessen echtem Charakter rendert (nicht dem eigenen).
+    const frontSave = frontKey === myKey ? myState : guestSave;
+    const backSave  = backKey  === myKey ? myState : guestSave;
+    _heroLook = { front: lookOf(frontSave, frontStats), back: lookOf(backSave, backStats) };
+    setTowerHeroes(lobbyId, _heroLook.front, _heroLook.back);
 
     // Sprites setzen
     setupArena(lobby.floor || 1, frontStats, backStats, frontName, backName);
@@ -487,6 +529,44 @@ window.onStartFight = async function(){
   }
 };
 
+// Promise mit Zeitlimit – bei Überschreitung Reject statt endloses Warten.
+function withTimeout(promise, ms, msg){
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(msg || 'Timeout')), ms)),
+  ]);
+}
+
+// Kompaktes Aussehens-Objekt eines Helden (Charakter + Ausrüstung + Tier).
+function lookOf(save, stats){
+  return {
+    character:  (save && save.character) || null,
+    equipped:   (save && save.equipped) || {},
+    hideHelmet: !!(save && save.settings && save.settings.hideHelmet),
+    tier:       stats ? stats.tier : 0,
+  };
+}
+
+// Sprite-Quelle aus einem Aussehens-Objekt; Fallback auf heroSrc (lokal/PNG).
+function spriteFor(look, tier){
+  if(look && look.character)
+    return buildHeroSVG(look.character, (look.tier != null ? look.tier : tier),
+      { equipped: look.equipped || {}, hideHelmet: !!look.hideHelmet });
+  return heroSrc(tier);
+}
+
+// Heroes-Knoten (vom Host geschrieben): Aussehen übernehmen & Sprites bauen.
+function onHeroesUpdate(data){
+  if(!data) return;
+  if(data.front) _heroLook.front = data.front;
+  if(data.back)  _heroLook.back  = data.back;
+  applyHeroSprites();
+}
+function applyHeroSprites(){
+  if(_heroLook.front) $('spriteFront').src = spriteFor(_heroLook.front, _heroLook.front.tier);
+  if(_heroLook.back)  $('spriteBack').src  = spriteFor(_heroLook.back,  _heroLook.back.tier);
+}
+
 function setupArena(floor, frontStats, backStats, frontName, backName){
   const boss = towerBossFor(floor);
   $('spriteBoss').src         = boss.sprite;
@@ -494,8 +574,8 @@ function setupArena(floor, frontStats, backStats, frontName, backName){
   $('bossNameLabel').textContent  = boss.name;
   $('bossHpName').textContent     = boss.name;
 
-  $('spriteFront').src         = heroSrc(frontStats.tier);
-  $('spriteBack').src          = heroSrc(backStats.tier);
+  $('spriteFront').src         = spriteFor(_heroLook.front, frontStats.tier);
+  $('spriteBack').src          = spriteFor(_heroLook.back,  backStats.tier);
   $('labelFront').textContent  = '⚔️ ' + frontName;
   $('labelBack').textContent   = (backStats.classId === 'heiler' ? '✨ ' : '🛡️ ') + backName;
   $('frontHpName').textContent = frontName;
@@ -516,10 +596,13 @@ function showFightSection(){
 function onCombatUpdate(data){
   if(!data) return;
 
-  // Sprites (für Guest, der setupArena nicht aufgerufen hat)
+  // Sprites (für Guest, der setupArena nicht aufgerufen hat). Bevorzugt das
+  // echte Partner-Aussehen aus dem Heroes-Knoten, sonst Fallback über den Tier.
   if(!$('spriteFront').src.includes('data:')){
-    if(data.frontTier != null) $('spriteFront').src = heroSrc(data.frontTier);
-    if(data.backTier  != null) $('spriteBack').src  = heroSrc(data.backTier);
+    if(_heroLook.front)        $('spriteFront').src = spriteFor(_heroLook.front, data.frontTier);
+    else if(data.frontTier != null) $('spriteFront').src = heroSrc(data.frontTier);
+    if(_heroLook.back)         $('spriteBack').src  = spriteFor(_heroLook.back, data.backTier);
+    else if(data.backTier  != null) $('spriteBack').src  = heroSrc(data.backTier);
   }
   if(data.frontName && $('frontHpName').textContent === 'Vorne'){
     $('labelFront').textContent  = '⚔️ ' + data.frontName;
@@ -574,7 +657,9 @@ function onCombatUpdate(data){
     setupAbilityUI(data.frontKey, data.backKey);
   }
 
-  // Skill-Effekte rendern (B15)
+  // Skill-Effekte rendern (B15). Ticker auch ohne eigene Fähigkeit starten,
+  // damit Dauer-Effekte lokal flackerfrei heruntergezählt werden.
+  startAbilityTicker();
   renderFx(data.fx || {});
 
   // Log
@@ -637,7 +722,7 @@ function updateAbilityBtn(){
   else      { btn.disabled = false; btn.style.opacity = '1';   btn.textContent = _myAbility.icon+' '+_myAbility.name; }
 }
 function startAbilityTicker(){
-  if(!_abilTicker) _abilTicker = setInterval(() => { updateAbilityBtn(); renderCdBadges(); }, 250);
+  if(!_abilTicker) _abilTicker = setInterval(() => { updateAbilityBtn(); renderCdBadges(); renderFxLocal(); }, 250);
 }
 function stopAbilityUI(){
   if(_abilTicker){ clearInterval(_abilTicker); _abilTicker = null; }
@@ -645,6 +730,7 @@ function stopAbilityUI(){
   _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
   const btn = $('abilityBtn'); if(btn) btn.style.display = 'none';
   ['cdFront','cdBack'].forEach(id => { const el = $(id); if(el) el.style.display = 'none'; });
+  _shieldUntil = _frontAblazeUntil = _backAblazeUntil = 0;
   $('heroFront').classList.remove('ablaze');
   $('heroBack').classList.remove('ablaze');
   removeShieldDome();
@@ -685,15 +771,27 @@ window.onUseAbility = function(){
 };
 
 // FX aus den synchronisierten Kampfdaten rendern (beide Spieler sehen dasselbe).
+// Dauer-Effekte (Raserei-Glut, Schildwall) werden aus der übertragenen Restzeit
+// in eine lokale Endzeit umgerechnet und vom FX-Ticker lokal heruntergezählt.
 function renderFx(fx){
-  $('heroFront').classList.toggle('ablaze', !!fx.ablazeFront);
-  $('heroBack').classList.toggle('ablaze',  !!fx.ablazeBack);
-  if(fx.shield) showShieldDome(); else removeShieldDome();
+  const now = Date.now();
+  _frontAblazeUntil = (fx.ablazeFrontRemain != null) ? now + fx.ablazeFrontRemain : (fx.ablazeFront ? now + 600 : 0);
+  _backAblazeUntil  = (fx.ablazeBackRemain  != null) ? now + fx.ablazeBackRemain  : (fx.ablazeBack  ? now + 600 : 0);
+  _shieldUntil      = (fx.shieldRemain      != null) ? now + fx.shieldRemain      : (fx.shield      ? now + 1000 : 0);
+  renderFxLocal();
+  // Heilkreis: Einmal-Animation per Edge-Trigger – synchron auf beiden Helden.
   if(fx.healTs && fx.healTs > _lastHealTs){
     _lastHealTs = fx.healTs;
     spawnHealCircle('heroFront');
     spawnHealCircle('heroBack');
   }
+}
+// Dauer-Effekte lokal takten → flackerfrei und auf beiden Geräten synchron.
+function renderFxLocal(){
+  const now = Date.now();
+  $('heroFront').classList.toggle('ablaze', now < _frontAblazeUntil);
+  $('heroBack').classList.toggle('ablaze',  now < _backAblazeUntil);
+  if(now < _shieldUntil) showShieldDome(); else removeShieldDome();
 }
 function spawnHealCircle(heroId){
   const stage = $('arenaStage'); const hero = $(heroId);
@@ -747,6 +845,7 @@ async function onNextFloor(){
   if(!isHost) return;
   stopFight();
   if(unsubCombat){ unsubCombat(); unsubCombat = null; }
+  if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
   const nextFloor = await advanceFloor(lobbyId);
   _lastAnimTurn = -1; _lastHealTs = 0;
   stopCountdown();
@@ -772,9 +871,11 @@ window.onLeaveLobby = async function(){
   stopFight();
   if(unsubLobby)  { unsubLobby();  unsubLobby  = null; }
   if(unsubCombat) { unsubCombat(); unsubCombat = null; }
+  if(unsubHeroes) { unsubHeroes(); unsubHeroes = null; }
   if(lobbyId) await leaveLobby(lobbyId).catch(()=>{});
   lobbyId = null; lobbyData = null; isHost = false;
   _lastAnimTurn = -1; _lastHealTs = 0;
+  _heroLook = { front:null, back:null };
   stopAbilityUI();
   resetToMain();
 };
@@ -782,10 +883,13 @@ window.onLeaveLobby = async function(){
 function resetToMain(){
   if(unsubLobby){ unsubLobby(); unsubLobby = null; }
   if(unsubCombat){ unsubCombat(); unsubCombat = null; }
+  if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
   stopCountdown();
   stopAbilityUI();
+  clearTimeout(_startWatchdog); _startWatchdog = null; _startingFight = false;
   lobbyId = null; lobbyData = null; isHost = false;
   _lastAnimTurn = -1; _lastHealTs = 0;
+  _heroLook = { front:null, back:null };
   $('fightSection').style.display  = 'none';
   $('lobbySection').style.display  = '';
   $('lobbyRoom').style.display     = 'none';
@@ -810,6 +914,16 @@ function resetToMain(){
       const v = snap.val();
       if(typeof v === 'number') _serverTimeOffset = v;
     });
+    // Wird der Tab wieder sichtbar/fokussiert (z. B. entsperrtes Handy), den
+    // ggf. eingefrorenen Countdown neu armen und den Auto-Start nachholen –
+    // so startet der Kampf zuverlässig, auch wenn das setInterval pausiert war.
+    const wake = () => {
+      if(lobbyData && lobbyData.startAt && lobbyData.status === 'waiting')
+        startCountdown(lobbyData.startAt);
+      maybeAutoStart();
+    };
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') wake(); });
+    window.addEventListener('focus', wake);
     // Eingeloggte E-Mail → displayName
     const { auth } = await import('./adventure/js/core/firebase.js');
     const user = auth.currentUser;

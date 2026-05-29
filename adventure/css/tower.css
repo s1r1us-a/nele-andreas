@@ -107,9 +107,14 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .arena-bg { position:absolute; inset:0; background-size:cover; background-position:center;
   background-repeat:no-repeat; opacity:0.7; }
 .arena-stage { position:relative; z-index:1; display:grid;
-  grid-template-columns:1fr auto 1fr; align-items:center;
+  grid-template-columns:1fr auto 1fr; align-items:end;
   padding:16px 12px 8px; min-height:160px; gap:8px; }
-.arena-boss-col { display:flex; flex-direction:column; align-items:center; gap:4px; }
+/* Boden-Band, auf dem Helden & Boss stehen → kein „Schweben" mehr. */
+.arena-stage::after { content:''; position:absolute; left:0; right:0; bottom:0;
+  height:34px; z-index:0; pointer-events:none;
+  background:linear-gradient(180deg, rgba(20,10,35,0) 0%, rgba(20,10,35,.5) 60%, rgba(40,20,60,.78) 100%); }
+.arena-boss-col { display:flex; flex-direction:column; align-items:center; gap:4px;
+  position:relative; z-index:1; }
 .arena-boss-col img { width:90px; height:90px; object-fit:contain;
   image-rendering:crisp-edges; filter:drop-shadow(0 0 8px rgba(200,80,255,.5)); }
 /* Helden nebeneinander, leicht versetzt – echte Formation statt Stapel.
@@ -118,12 +123,18 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .arena-heroes-col { display:flex; flex-direction:row; align-items:flex-end;
   justify-content:flex-end; gap:6px; position:relative; }
 .arena-hero { display:flex; flex-direction:column; align-items:center; gap:3px;
-  position:relative; }
+  position:relative; z-index:1; }
 .arena-hero img { width:58px; height:80px; object-fit:contain; }
-/* Front-Held vorne (höherer z-index), Back-Held dahinter und nach oben versetzt. */
+/* Weicher Kontaktschatten unter den Füßen → Helden stehen sichtbar am Boden. */
+.arena-hero::after { content:''; position:absolute; bottom:-1px; left:50%;
+  transform:translateX(-50%); width:46px; height:9px; border-radius:50%; z-index:-1;
+  pointer-events:none;
+  background:radial-gradient(ellipse, rgba(0,0,0,.5), rgba(0,0,0,0) 70%); }
+/* Front-Held vorne (höherer z-index), Back-Held dahinter und leicht versetzt. */
 .arena-hero#heroFront { z-index:2; order:2; }
-.arena-hero.back-hero { z-index:1; order:1; transform:translateY(-16px); }
+.arena-hero.back-hero { z-index:1; order:1; transform:translateY(-6px); }
 .arena-hero.back-hero img { transform:scale(0.88); opacity:.9; }
+.arena-hero.back-hero::after { width:38px; opacity:.7; }
 .hero-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em;
   padding:2px 6px; border-radius:4px; }
 .hero-label.front { background:rgba(74,143,255,.2); color:var(--front-col); }
@@ -182,34 +193,57 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   0%   { filter:drop-shadow(0 0 7px #ff3b00) drop-shadow(0 0 12px #ff7a00) brightness(1.1) saturate(1.3); }
   100% { filter:drop-shadow(0 0 15px #ff5a00) drop-shadow(0 0 24px #ffb000) brightness(1.28) saturate(1.6); }
 }
-/* Heilkreis: expandierender grüner Ring */
+/* Heilkreis: weich aufblühender grüner Ring mit nachlaufendem Goldring. */
 .heal-circle {
-  position:absolute; width:24px; height:24px; border-radius:50%;
+  position:absolute; width:18px; height:18px; border-radius:50%;
   transform:translate(-50%,-50%); pointer-events:none; z-index:9;
-  border:3px solid #4dffa0;
-  box-shadow:0 0 16px 6px rgba(55,214,122,.7), inset 0 0 12px 4px rgba(55,214,122,.5);
-  animation:towerHeal 1s ease-out forwards;
+  border:2px solid #7dffb8;
+  box-shadow:0 0 18px 6px rgba(55,214,122,.55), inset 0 0 14px 5px rgba(120,255,180,.45),
+             0 0 30px 10px rgba(242,205,107,.18);
+  animation:towerHeal 1.05s cubic-bezier(.22,.8,.3,1) forwards;
+}
+.heal-circle::before {
+  content:''; position:absolute; inset:-6px; border-radius:50%;
+  border:1px solid rgba(242,205,107,.55);
+  animation:towerHealInner 1.05s ease-out forwards;
 }
 @keyframes towerHeal {
-  0%   { width:14px;  height:14px; opacity:0; }
-  25%  { opacity:1; }
-  100% { width:110px; height:110px; opacity:0; }
+  0%   { width:14px;  height:14px; opacity:0; filter:blur(1px); }
+  18%  { opacity:1; }
+  70%  { opacity:.85; }
+  100% { width:120px; height:120px; opacity:0; filter:blur(0); }
 }
-/* Schildwall: großes blaues pulsierendes Schild über der Gruppe */
+@keyframes towerHealInner {
+  0%   { transform:scale(.4);  opacity:0; }
+  25%  { opacity:.9; }
+  100% { transform:scale(1.15); opacity:0; }
+}
+/* Schildwall: pulsierende lila-blaue Schutzkuppel über BEIDEN Helden. */
 .shield-dome {
-  position:absolute; inset:-14px -10px; border-radius:50%;
-  pointer-events:none; z-index:6;
-  background:radial-gradient(circle, rgba(80,160,255,.26) 0%, rgba(80,160,255,.12) 58%, rgba(80,160,255,0) 74%);
-  border:2px solid rgba(120,200,255,.7);
-  box-shadow:0 0 22px 6px rgba(90,170,255,.5), inset 0 0 24px 8px rgba(120,200,255,.35);
-  animation:towerShield 1.4s ease-in-out infinite;
+  position:absolute; inset:-18px -14px -6px; pointer-events:none; z-index:6;
+  border-radius:46% 46% 40% 40% / 55% 55% 45% 45%;
+  background:radial-gradient(120% 100% at 50% 30%,
+              rgba(160,90,255,.22) 0%, rgba(120,160,255,.16) 45%,
+              rgba(120,160,255,.05) 72%, rgba(120,160,255,0) 100%);
+  border:1.5px solid rgba(160,120,255,.65);
+  box-shadow:0 0 26px 8px rgba(130,90,255,.42), inset 0 0 30px 10px rgba(150,180,255,.30);
+  animation:towerShield 2.4s ease-in-out infinite;
+}
+.shield-dome::before {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(199,109,255,.5) 40deg,
+              rgba(255,255,255,0) 90deg, rgba(255,255,255,0) 360deg);
+  mix-blend-mode:screen; opacity:.55;
+  animation:towerShieldShimmer 3.2s linear infinite;
 }
 @keyframes towerShield {
-  0%,100% { transform:scale(0.97); opacity:.75; }
-  50%     { transform:scale(1.05); opacity:1; }
+  0%,100% { transform:scale(.985); opacity:.82; }
+  50%     { transform:scale(1.025); opacity:1; }
 }
+@keyframes towerShieldShimmer { to { transform:rotate(360deg); } }
 @media(prefers-reduced-motion: reduce){
-  .arena-hero.ablaze img, .heal-circle, .shield-dome { animation:none; }
+  .arena-hero.ablaze img, .heal-circle, .heal-circle::before,
+  .shield-dome, .shield-dome::before, .countdown-big { animation:none; }
 }
 .dmg-float { position:absolute; font-family:'Press Start 2P',monospace; font-size:13px;
   pointer-events:none; white-space:nowrap;
@@ -235,6 +269,14 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 /* ---- Status-Message ---- */
 .status-msg { text-align:center; font-size:13px; color:var(--txt-mute);
   padding:8px; min-height:24px; }
+/* Prominenter Auto-Start-Countdown – bei BEIDEN Spielern gut sichtbar. */
+.status-msg.countdown-active { color:var(--gold-hi); font-weight:700;
+  display:flex; flex-direction:column; align-items:center; gap:2px; }
+.countdown-big { font-family:'Cinzel',serif; font-weight:900; font-size:40px;
+  line-height:1.05; color:var(--gold-hi); text-shadow:0 0 22px rgba(255,220,80,.55);
+  animation:countdownPulse 1s ease-in-out infinite; }
+.countdown-hint { font-size:11px; color:var(--txt-mute); font-weight:500; }
+@keyframes countdownPulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.12); } }
 
 /* ---- Tabs im Lobby-Bereich ---- */
 .lobby-tabs { display:flex; gap:2px; margin-bottom:16px;
@@ -260,6 +302,9 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 @media(max-width:500px){
   .player-list { grid-template-columns:1fr; }
   .arena-stage { grid-template-columns:1fr auto 1fr; }
+  .arena-stage::after { height:26px; }
   .arena-boss-col img { width:70px; height:70px; }
   .arena-hero img { width:46px; height:64px; }
+  .arena-hero::after { width:36px; }
+  .arena-hero.back-hero::after { width:30px; }
 }
