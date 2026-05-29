@@ -34,12 +34,20 @@ const effLvl = rarityKey => { const ri = rarityIndex(rarityKey); return ri>=5?3:
 let SEQ = 0;
 const _cache = new Map();
 
-export function buildItemSVG(art, variant, rarityKey, element){
+// Orb-Paletten für Zauberstäbe (orb-Parameter aus itemTypes.js).
+const ORB = {
+  rot:   { lo:'#ff8888', mid:'#cc1111', dk:'#550000', halo1:'#cc1111', halo2:'#880000', ring:'#ff5555' },
+  gruen: { lo:'#aaffbb', mid:'#18a85a', dk:'#064d24', halo1:'#18a85a', halo2:'#0a7a3c', ring:'#4dffa0' },
+  blau:  { lo:'#b9a6ff', mid:'#6a3ed0', dk:'#2a1466', halo1:'#6a3ed0', halo2:'#3a1f8c', ring:'#b08bff' },
+};
+
+export function buildItemSVG(art, variant, rarityKey, element, orb){
   variant = (variant|0) % 7;
   const el = (element==='ice') ? 'ice' : 'fire';
   const eff = (art==='waffe' || art==='schild') ? effLvl(rarityKey) : 0;
   const E = ELEM[el];
-  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'');
+  const orbKey = ORB[orb] ? orb : 'rot';
+  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+(variant===6?'_'+orbKey:'');
   if(_cache.has(key)) return _cache.get(key);
 
   const rc = (rarityOf(rarityKey) || {}).color || '#9d9d9d';
@@ -98,16 +106,17 @@ export function buildItemSVG(art, variant, rarityKey, element){
              `<rect x="20" y="11" width="6" height="12" rx="1" fill="${shade(m,1.2)}" opacity="0.6"/>`+
              `<circle cx="32" cy="58" r="3.5" fill="${GOLD}"/>`;
     }
-    if(variant === 6){ // Zauberstab
+    if(variant === 6){ // Zauberstab (Orb-Farbe je Stab-Typ)
+      const O = ORB[orbKey];
       defs += `<radialGradient id="orbG${uid}" cx="38%" cy="35%" r="60%">`+
-              `<stop offset="0" stop-color="#ff8888"/><stop offset="0.5" stop-color="#cc1111"/>`+
-              `<stop offset="1" stop-color="#550000"/></radialGradient>`;
+              `<stop offset="0" stop-color="${O.lo}"/><stop offset="0.5" stop-color="${O.mid}"/>`+
+              `<stop offset="1" stop-color="${O.dk}"/></radialGradient>`;
       body = `<rect x="30" y="20" width="4" height="38" rx="1.5" fill="${U('w')}"/>`+
              `<rect x="28" y="17" width="8" height="5" rx="2" fill="${GOLD}"/>`+
-             `<circle cx="32" cy="10" r="11" fill="#cc1111" opacity="0.25"/>`+
-             `<circle cx="32" cy="10" r="9"  fill="#880000" opacity="0.45"/>`+
+             `<circle cx="32" cy="10" r="11" fill="${O.halo1}" opacity="0.25"/>`+
+             `<circle cx="32" cy="10" r="9"  fill="${O.halo2}" opacity="0.45"/>`+
              `<circle cx="32" cy="10" r="7"  fill="url(#orbG${uid})"/>`+
-             `<circle cx="32" cy="10" r="7"  fill="none" stroke="#ff5555" stroke-width="1.5"/>`+
+             `<circle cx="32" cy="10" r="7"  fill="none" stroke="${O.ring}" stroke-width="1.5"/>`+
              `<circle cx="29.5" cy="7.5" r="2.5" fill="#fff" opacity="0.55"/>`;
       if(eff > 0){
         const pulseR = 8 + eff * 2;

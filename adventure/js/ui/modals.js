@@ -365,7 +365,11 @@ function applyCharacter(){
   if(!_draftChar.classId){ toast('Bitte wähle eine Klasse.'); return; }
   // Vorhandene Klasse ist unveränderlich – nie überschreiben.
   if(state.character && state.character.classId) _draftChar.classId = state.character.classId;
-  state.character = Object.assign({}, _draftChar);
+  // Talente/Punkte beim Aussehen-Ändern bewahren bzw. neu initialisieren.
+  const prevTalents = (state.character && state.character.talents) || {};
+  const prevPoints  = (state.character && typeof state.character.talentPoints === 'number')
+    ? state.character.talentPoints : Math.max(0, (state.level||1) - 1);
+  state.character = Object.assign({}, _draftChar, { talents: prevTalents, talentPoints: prevPoints });
   saveState();
   creatorOverlay().classList.remove('show');
   renderAll();

@@ -15,7 +15,7 @@ import { SLOTS } from './slots.js';
 const ARMOR_MATERIALS = [
   { key:'stoff',  material:'stoff',  prefix:'Stoff',  variant:4, statMult:0.55, affixBias:{ critMagic:3, versatility:2, maxHp:1 }, flavorAffix:'critMagic' },
   { key:'leder',  material:'leder',  prefix:'Leder',  variant:2, statMult:0.95, affixBias:{ dodge:3, critPhys:2, attackSpeed:2 },  flavorAffix:'critPhys' },
-  { key:'platte', material:'platte', prefix:'Platte', variant:0, statMult:1.45, affixBias:{ armor:3, block:3, maxHp:2 },          flavorAffix:'armor' },
+  { key:'platte', material:'platte', prefix:'Platte', variant:0, statMult:1.60, affixBias:{ armor:4, block:3, maxHp:2 },          flavorAffix:'armor' },
 ];
 export const ARMOR_MATERIAL_KEYS = ['stoff','leder','platte'];
 export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
@@ -37,7 +37,11 @@ export const ITEM_TYPES = {
     { key:'axt',         name:'Axt',          variant:3, statMult:1.10, affixBias:{ damage:2, lifesteal:3 },                  flavorAffix:'lifesteal' },
     { key:'speer',       name:'Speer',        variant:4, statMult:1.05, affixBias:{ versatility:3, attackSpeed:2 },           flavorAffix:'versatility' },
     { key:'kriegshammer',name:'Kriegshammer', variant:5, statMult:1.25, affixBias:{ damage:3, critDamage:2 },                 flavorAffix:'critDamage' },
-    { key:'stab',        name:'Zauberstab',   variant:6, statMult:0.90, affixBias:{ critMagic:4, critDamage:2, attackSpeed:2, lifesteal:1 }, flavorAffix:'critMagic', material:'zauberstab' },
+    // 🪄 Zauberstäbe – nur für Heiler (material:'zauberstab'). Weniger Schaden,
+    // dafür Magie-/Heilungs-Affixe. Eigene Orb-Farbe (orb) fürs SVG.
+    { key:'stab',        name:'Kristallstab', variant:6, statMult:0.85, affixBias:{ critMagic:4, critDamage:3, attackSpeed:1 },        flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
+    { key:'heilstab',    name:'Heilstab',     variant:6, statMult:0.70, affixBias:{ lifesteal:4, maxHp:2, critMagic:1 },              flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'runenstab',   name:'Runenstab',    variant:6, statMult:0.80, affixBias:{ attackSpeed:4, critMagic:2, versatility:1 },      flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
   ],
   // 🛡️ Schild – Pool: armor, maxHp, block, thorns, dodge
   schild: [

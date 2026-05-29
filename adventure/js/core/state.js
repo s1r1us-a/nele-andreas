@@ -6,7 +6,7 @@
    ===================================================================== */
 import { SAVE_KEY, SAVE_VERSION } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
-import { defaultTypeKey } from '../data/itemTypes.js';
+import { defaultTypeKey, typeOf } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 import { db, ref, get, set, remove } from './firebase.js';
 
@@ -67,6 +67,14 @@ function migrate(s){
   else { const b = blankStats(); s.stats = Object.assign(b, s.stats);
          s.stats.drops = Object.assign(b.drops, s.stats.drops||{}); }
   if(!s.settings || typeof s.settings !== 'object') s.settings = { seenOnboarding:false };
+  // Talentbaum-Felder defensiv ergänzen (sobald eine Klasse gewählt wurde).
+  if(s.character && typeof s.character === 'object'){
+    if(!s.character.talents || typeof s.character.talents !== 'object') s.character.talents = {};
+    if(typeof s.character.talentPoints !== 'number'){
+      // Altstände: 1 Punkt je erreichtem Level (rückwirkend, noch nicht verteilt).
+      s.character.talentPoints = Math.max(0, (s.level||1) - 1);
+    }
+  }
   // Bereits besiegte Bosse (Index < zone) als First-Clear markieren (Altstände)
   for(let i=0;i<s.zone;i++){ if(!s.firstClears[i]) s.firstClears[i] = true; }
   s.version = SAVE_VERSION;
@@ -82,7 +90,7 @@ function hydrateItems(){
     if(!it.affixes) it.affixes = {};
     if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
     const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id));   // Data-URI nicht gespeichert (siehe saveData)
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb);   // Data-URI nicht gespeichert (siehe saveData)
   }
 }
 

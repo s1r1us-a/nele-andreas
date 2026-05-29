@@ -5,7 +5,9 @@
 import { db, ref, get, set, update, push, onValue } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
-import { CLASS_BY_ID, DEFAULT_CLASS_ID } from '../data/classes.js';
+import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from '../data/classes.js';
+import { materialOf } from '../data/itemTypes.js';
+import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
 import { powerOfBundle } from './items.js';
 import { buildBossSVG } from './boss-art.js';
@@ -87,6 +89,7 @@ export function computePlayerStats(s){
   b.armor  += lb.armor;
   b.damage += lb.dmg;
   b.maxHp  += lb.hp;
+  applyTalents(s, b);   // Talentbaum-Effekte (no-op solange leer)
   b.power   = powerOfBundle(b);
 
   const cls = CLASS_BY_ID[s && s.character && s.character.classId] || CLASS_BY_ID[DEFAULT_CLASS_ID];
@@ -98,7 +101,7 @@ export function computePlayerStats(s){
   const critMult   = COMBAT.heroBaseCritMult + (b.critDamage || 0);
   const interval   = Math.max(COMBAT.swingMinMs, COMBAT.swingBaseMs * (1 - b.attackSpeed));
   const lifesteal  = (b.lifesteal || 0) * cls.healMult;
-  const usesStab   = !!(s.equipped && s.equipped.waffe && s.equipped.waffe.itemType === 'stab');
+  const usesStab   = !!(s.equipped && s.equipped.waffe && materialOf(s.equipped.waffe) === 'zauberstab');
 
   return {
     maxHp, atk, critChance, critMult, interval,
