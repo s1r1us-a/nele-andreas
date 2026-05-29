@@ -7,7 +7,7 @@ import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
 import { pickItemType, ITEM_TYPES } from '../data/itemTypes.js';
 import { state, nextItemId, saveState } from './state.js';
-import { buildItemSVG } from './item-art.js';
+import { buildItemSVG, elementOf } from './item-art.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
 export const POWER_W = {
@@ -115,14 +115,15 @@ export function rollItem(zone, lootBoost=0, opts={}){
   const quality = 0.80 + Math.random()*0.40;
   const stat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * quality * (itype.statMult ?? 1)));
   const variant = itype.variant;   // Typ bestimmt das Sprite (Teil 0/1)
+  const id = nextItemId();
   return {
-    id: nextItemId(),
+    id,
     slotKey, cat: slot.cat, statType: slot.statType,
     rarity: rarity.key, ilvl, stat, variant, itemType: itype.key,
     quality: Math.round(quality*100),
     affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
-    sprite: buildItemSVG(slot.art, variant, rarity.key),
+    sprite: buildItemSVG(slot.art, variant, rarity.key, elementOf(id)),
     name: rarity.adj + ' ' + itype.name,
   };
 }
@@ -200,7 +201,7 @@ export function equip(item, explicitTarget){
   const prev = state.equipped[target];
   if(prev) state.inventory.push(prev);
   item.slotKey = target;
-  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity);
+  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id));
   state.equipped[target] = item;
   saveState();
 }

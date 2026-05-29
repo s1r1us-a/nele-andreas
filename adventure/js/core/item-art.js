@@ -5,7 +5,7 @@
    - Rüstungs-Slots (kopf…umhang): variant = Material (Recolor).
    - Seltenheit als dezenter Glow/Edelstein (Hauptanzeige = Slot-Rahmen).
    ===================================================================== */
-import { rarityOf } from '../data/rarities.js';
+import { rarityOf, rarityIndex } from '../data/rarities.js';
 
 function shade(hex, f){
   const n = parseInt(hex.slice(1),16);
@@ -21,12 +21,25 @@ const GEM       = ['#d23040','#3c6edc','#34be78','#aa5cdc','#ecc446','#8a86a8'];
 const ARMOR_MAT = ['#c8d0dc','#aab2be','#845c38','#3f8f5a','#7a5ca8','#4a465c'];
 const GOLD = '#d8b24a', WOOD = '#7a4f2a';
 
+// Element-Hervorhebung für hochstufige Waffen/Schilde (Episch+). Feuer=rot, Eis=blau.
+export const ELEM = {
+  fire: { glow:'#ff6a2a', core:'#ffe08a', edge:'#ff3a1a' },
+  ice:  { glow:'#5cc8ff', core:'#dff4ff', edge:'#2aa0ff' },
+};
+// Pro Item festes Element aus der ID (kein Speicherfeld nötig, stabil über Reloads).
+export const elementOf = id => (((id|0) % 2)+2)%2 ? 'fire' : 'ice';
+// Effektstufe nach Seltenheit: 0=kein Effekt (<Episch), 1=Episch, 2=Legendär, 3=Mythisch.
+const effLvl = rarityKey => { const ri = rarityIndex(rarityKey); return ri>=5?3:ri>=4?2:ri>=3?1:0; };
+
 let SEQ = 0;
 const _cache = new Map();
 
-export function buildItemSVG(art, variant, rarityKey){
+export function buildItemSVG(art, variant, rarityKey, element){
   variant = (variant|0) % 6;
-  const key = art+'_'+variant+'_'+(rarityKey||'');
+  const el = (element==='ice') ? 'ice' : 'fire';
+  const eff = (art==='waffe' || art==='schild') ? effLvl(rarityKey) : 0;
+  const E = ELEM[el];
+  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'');
   if(_cache.has(key)) return _cache.get(key);
 
   const rc = (rarityOf(rarityKey) || {}).color || '#9d9d9d';
@@ -39,7 +52,14 @@ export function buildItemSVG(art, variant, rarityKey){
 
   let defs = `<radialGradient id="rg${uid}" cx="50%" cy="50%" r="50%">`+
     `<stop offset="0" stop-color="${rc}" stop-opacity="0.34"/><stop offset="1" stop-color="${rc}" stop-opacity="0"/></radialGradient>`;
-  const glow = `<rect x="0" y="0" width="64" height="64" fill="url(#rg${uid})"/>`;
+  if(eff>0){
+    const op = (0.30 + eff*0.16).toFixed(2);
+    defs += `<radialGradient id="eg${uid}" cx="50%" cy="50%" r="50%">`+
+      `<stop offset="0" stop-color="${E.glow}" stop-opacity="${op}"/>`+
+      `<stop offset="0.65" stop-color="${E.glow}" stop-opacity="${(op*0.4).toFixed(2)}"/>`+
+      `<stop offset="1" stop-color="${E.glow}" stop-opacity="0"/></radialGradient>`;
+  }
+  const glow = `<rect x="0" y="0" width="64" height="64" fill="url(#${eff>0?'eg':'rg'}${uid})"/>`;
   const gem  = (cx,cy,r,c) =>
     `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${shade(c,1.2)}"/>`+
     `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" opacity="0.65"/>`+
@@ -83,24 +103,27 @@ export function buildItemSVG(art, variant, rarityKey){
   } else if(art==='schild'){
     const m = METAL[variant];
     defs += lg('m',m);
-    const rim = shade(m,0.55), face = shade(m,0.92);
-    let shape;
-    if(variant===0)      shape = `<rect x="16" y="6" width="32" height="50" rx="9"`;
-    else if(variant===1) shape = `<circle cx="32" cy="32" r="24"`;
-    else if(variant===2) shape = `<circle cx="32" cy="32" r="17"`;
-    else if(variant===3) shape = `<rect x="17" y="6" width="30" height="50" rx="4"`;
-    else if(variant===4) shape = `<circle cx="32" cy="32" r="23"`;
-    else                 shape = null; // Drache: Heater
+    const rim = shade(m,0.55);
+    let shape, ring;
+    if(variant===0)      { shape=`<rect x="16" y="6" width="32" height="50" rx="9"`; ring=`<rect x="12" y="2" width="40" height="58" rx="12" fill="none"`; }
+    else if(variant===1) { shape=`<circle cx="32" cy="32" r="24"`;                  ring=`<circle cx="32" cy="32" r="28" fill="none"`; }
+    else if(variant===2) { shape=`<circle cx="32" cy="32" r="17"`;                  ring=`<circle cx="32" cy="32" r="21" fill="none"`; }
+    else if(variant===3) { shape=`<rect x="17" y="6" width="30" height="50" rx="4"`; ring=`<rect x="13" y="2" width="38" height="58" rx="6" fill="none"`; }
+    else if(variant===4) { shape=`<circle cx="32" cy="32" r="23"`;                  ring=`<circle cx="32" cy="32" r="27" fill="none"`; }
+    else                 { shape=null; ring=null; } // Drache: Heater
     if(shape){
       body = shape+` fill="${U('m')}" stroke="${rim}" stroke-width="3"/>`;
-      // innerer Rand
       if(variant===1||variant===2||variant===4) body += `<circle cx="32" cy="32" r="${variant===2?12:18}" fill="none" stroke="${rim}" stroke-width="1.5" opacity="0.6"/>`;
       if(variant===4) body += `<circle cx="25" cy="24" r="6" fill="#fff" opacity="0.35"/>`; // Spiegel-Glanz
     } else {
       body = `<path d="M12 10 L52 10 L52 30 Q52 50 32 60 Q12 50 12 30 Z" fill="${U('m')}" stroke="${rim}" stroke-width="3"/>`+
              `<path d="M32 14 L46 14 L46 30 Q46 44 32 52 Z" fill="${shade(m,1.1)}" opacity="0.4"/>`;
     }
-    body += gem(32,32,4.5,rc);
+    body += gem(32,32,4.5, eff>0 ? E.glow : rc);   // bei Episch+ Element-Boss
+    if(eff>0){                                       // leuchtender Element-Rand
+      const rs = ring || `<path d="M9 7 L55 7 L55 30 Q55 53 32 63 Q9 53 9 30 Z" fill="none"`;
+      body += rs+` stroke="${E.glow}" stroke-width="3" opacity="0.85"/>`;
+    }
 
   } else if(art==='amulett'){
     const g = GEM[variant];
@@ -151,6 +174,23 @@ export function buildItemSVG(art, variant, rarityKey){
              `<rect x="20" y="10" width="24" height="6" rx="3" fill="${GOLD}"/>`; // Kragen-Spange
     }
     body += gem(32, art==='kopf'?30:(art==='umhang'?13:48), 2.6, rc);
+  }
+
+  // Element-Hervorhebung: Waffe = Flammen/Frost-Akzente, Schild = größer.
+  if(eff>0){
+    if(art==='schild'){
+      const S = [1,1.07,1.15,1.23][eff];
+      body = `<g transform="translate(32,32) scale(${S}) translate(-32,-32)">${body}</g>`;
+    } else { // waffe
+      body += (el==='fire'
+        ? `<path d="M30 6 Q26 12 29 16 Q31 12 31 8 Z" fill="${E.glow}" opacity="0.9"/>`+
+          `<path d="M34 9 Q31 15 34 19 Q36 14 36 10 Z" fill="${E.edge}" opacity="0.85"/>`+
+          `<path d="M27 17 Q24 22 27 26 Q29 21 29 18 Z" fill="${E.glow}" opacity="0.7"/>`
+        : `<path d="M30 8 l3 5 l-3 5 l-3 -5 Z" fill="${E.core}" opacity="0.85"/>`+
+          `<path d="M36 15 l2.5 4 l-2.5 4 l-2.5 -4 Z" fill="${E.edge}" opacity="0.8"/>`+
+          `<circle cx="26" cy="21" r="1.6" fill="#fff" opacity="0.9"/><circle cx="38" cy="25" r="1.3" fill="#fff" opacity="0.85"/>`);
+      if(eff>=3) body += `<circle cx="32" cy="30" r="29" fill="none" stroke="${E.glow}" stroke-width="2" opacity="0.5"/>`;
+    }
   }
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs>${defs}</defs>`+

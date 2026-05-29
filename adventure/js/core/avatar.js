@@ -5,7 +5,12 @@
    ===================================================================== */
 import { ASSETS } from '../data/tuning.js';
 import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-options.js';
+import { rarityIndex } from '../data/rarities.js';
+import { ELEM, elementOf } from './item-art.js';
 import { state } from './state.js';
+
+// Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
+const armorLvl = rk => { const r = rarityIndex(rk); return r>=5?3:r>=4?2:r>=3?1:0; };
 
 const TIER_OUTFIT = ['#6b5a8a','#3f6f9e','#9e6b2e','#b5882a'];
 const TIER_TRIM   = ['#9a86c2','#7fb0e0','#e0a85a','#f2cd6b'];
@@ -31,9 +36,11 @@ const mirror = frag => frag + '<g transform="translate(200,0) scale(-1,1)">'+fra
 let GRAD_SEQ = 0;
 
 // Getragene Waffe in der rechten Hand (Handkreis bei cx=124, cy=194), Klinge nach oben.
-function heldWeapon(variant, uid){
-  if(variant == null) return '';
-  const v = ((variant|0)%6+6)%6;
+function heldWeapon(item, uid){
+  if(!item || typeof item.variant !== 'number') return '';
+  const v = ((item.variant|0)%6+6)%6;
+  const lvl = armorLvl(item.rarity);            // Episch+ → Element-Glow
+  const el = elementOf(item.id), E = ELEM[el];
   const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
   const hx = 124;
   const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
@@ -69,8 +76,14 @@ function heldWeapon(variant, uid){
         `<rect x="${hx-12}" y="131" width="6" height="12" rx="1" fill="${mh}" opacity="0.5"/>`+
         `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
   }
+  // Element-Halo hinter der Waffe (Episch+), Größe nach Stufe.
+  let halo = '';
+  if(lvl>0){
+    halo = `<ellipse cx="${hx}" cy="158" rx="${12+lvl*5}" ry="${48+lvl*6}" fill="${E.glow}" opacity="${(0.16+lvl*0.07).toFixed(2)}"/>`;
+    if(lvl>=3) halo += `<ellipse cx="${hx}" cy="150" rx="9" ry="34" fill="${E.core}" opacity="0.35"/>`;
+  }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
-  return w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
+  return halo + w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
 }
 
 export function buildHeroSVG(character, tier, gear){
@@ -250,15 +263,22 @@ export function buildHeroSVG(character, tier, gear){
     ? mirror(`<circle cx="124" cy="194" r="9" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1.2"/><rect x="116" y="186" width="16" height="7" rx="2" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1"/>`)
     : '';
 
-  // Schild am linken Arm
+  // Schild am linken Arm (Episch+ → größer + leuchtend)
   const sc = eq.schild; let schild = '';
   if(sc){ const v=(((sc.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
+    const lvl = armorLvl(sc.rarity), el = elementOf(sc.id), E = ELEM[el];
     let shp;
     if(v===1||v===4)      shp=`<circle cx="${cx}" cy="${cy}" r="20" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
     else if(v===2)        shp=`<circle cx="${cx}" cy="${cy}" r="15" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
     else if(v===0||v===3) shp=`<rect x="${cx-17}" y="${cy-22}" width="34" height="46" rx="7" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
     else                  shp=`<path d="M${cx-17} ${cy-20} L${cx+17} ${cy-20} L${cx+17} ${cy-2} Q${cx+17} ${cy+18} ${cx} ${cy+26} Q${cx-17} ${cy+18} ${cx-17} ${cy-2} Z" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-    schild = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
+    let inner = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
+    if(lvl>0){
+      const S=[1,1.18,1.34,1.5][lvl];
+      const halo = `<ellipse cx="${cx}" cy="${cy}" rx="${(24*S).toFixed(1)}" ry="${(27*S).toFixed(1)}" fill="${E.glow}" opacity="${(0.18+lvl*0.08).toFixed(2)}"/>`;
+      const rim = `<ellipse cx="${cx}" cy="${cy}" rx="${(22*S).toFixed(1)}" ry="${(25*S).toFixed(1)}" fill="none" stroke="${E.glow}" stroke-width="2.5" opacity="0.6"/>`;
+      schild = halo + `<g transform="translate(${cx},${cy}) scale(${S}) translate(${-cx},${-cy})">${inner}</g>` + rim;
+    } else schild = inner;
   }
 
   // Schulterplatten (sonst Tier-Pauldrons)
@@ -278,8 +298,7 @@ export function buildHeroSVG(character, tier, gear){
            `<ellipse cx="88" cy="56" rx="10" ry="6" fill="${ch}" opacity="0.4"/>`;
   }
 
-  const wv = (eq.waffe && typeof eq.waffe.variant === 'number') ? eq.waffe.variant : null;
-  const weaponG = heldWeapon(wv, uid);
+  const weaponG = heldWeapon(eq.waffe, uid);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
     defs + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
