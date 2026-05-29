@@ -1,7 +1,8 @@
 /* =====================================================================
    MAIN – Einstiegspunkt: Init, Game-Loop, Tabs, Events, Tastenkürzel.
    ===================================================================== */
-import { state, loadSave, saveState } from './core/state.js';
+import { state, loadSave, saveState, flushSave } from './core/state.js';
+import { initAuth } from './core/firebase.js';
 import { expeditionReady, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
 import { startBossFight, toggleSpeed, closeArena, usePotion } from './core/combat.js';
 import { $, fmtRemain } from './ui/dom.js';
@@ -78,13 +79,16 @@ function startLoop(){
   requestAnimationFrame(frame);
 }
 
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveState(); });
-window.addEventListener('beforeunload', saveState);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushSave(); });
+window.addEventListener('beforeunload', flushSave);
 
-// ---- Init -----------------------------------------------------------
-loadSave();
-renderAll();
-startLoop();
-if(!state.character) openCharacterCreator(true);
-else maybeOnboarding();
-saveState();
+// ---- Init (async: erst Auth/Spieler, dann Spielstand laden) ---------
+(async ()=>{
+  const userKey = await initAuth();      // ermittelt Andreas/Nele (sonst Redirect auf index.html)
+  await loadSave(userKey);               // lädt /adventure/<userKey> (sonst lokaler Cache / frisch)
+  renderAll();
+  startLoop();
+  if(!state.character) openCharacterCreator(true);
+  else maybeOnboarding();
+  saveState();
+})();

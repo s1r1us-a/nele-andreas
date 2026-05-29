@@ -3,6 +3,7 @@
    ===================================================================== */
 import { AFFIX_DEFS, AFFIX_KEYS, fmtAffix } from '../data/affixes.js';
 import { SLOTS } from '../data/slots.js';
+import { typeOf } from '../data/itemTypes.js';
 import { rarityOf } from '../data/rarities.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked, procText, resolveTargetSlot } from '../core/items.js';
@@ -46,8 +47,13 @@ export function tooltipHTML(it, opts={}){
     qLine = '<div class="tt-ilvl" style="color:'+col+'">Qualität '+it.quality+'%'+mark+'</div>';
   }
   const lock = isLocked(it.id) ? ' 🔒' : '';
+  // Archetyp-Fokus aus dem Item-Typ (z.B. „Fokus: Krit-Chance").
+  const ty = typeOf(it);
+  const focus = (ty && ty.flavorAffix && AFFIX_DEFS[ty.flavorAffix])
+    ? '<div class="tt-focus">🎯 Fokus: '+AFFIX_DEFS[ty.flavorAffix].label+'</div>' : '';
   return '<div class="tt-name" style="color:'+r.color+'">'+it.name+lock+'</div>'+
     '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
+    focus+
     '<div class="tt-stat '+sCls+'">+'+it.stat+' '+sLbl+'</div>'+
     affixLinesHTML(it)+
     qLine+

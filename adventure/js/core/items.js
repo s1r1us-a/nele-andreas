@@ -1,10 +1,11 @@
 /* =====================================================================
    ITEMS: Generierung, Affixe, Procs, Wert, Verkauf, Ausrüsten.
    ===================================================================== */
-import { ASSETS, VARIANTS, BASE_STAT, ILVL_K, INV_SLOTS } from '../data/tuning.js';
-import { RARITIES, rarityOf, rarityIndex, rarityByIndex } from '../data/rarities.js';
+import { ASSETS, BASE_STAT, ILVL_K, ILVL_QUAD, INV_SLOTS } from '../data/tuning.js';
+import { RARITIES, rarityOf, rarityIndex, rarityByIndex, maxRarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
-import { AFFIX_DEFS, AFFIX_KEYS, affixPool, AFFIX_COUNT } from '../data/affixes.js';
+import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
+import { pickItemType } from '../data/itemTypes.js';
 import { state, nextItemId, saveState } from './state.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
@@ -19,22 +20,38 @@ export function powerOfBundle(b){
 }
 
 // ---- Affixe ---------------------------------------------------------
+// Roll-Bereich je Seltenheit (Teil 2): seltene Drops rollen verlässlich hoch.
+const AFFIX_ROLL_RANGE = {
+  gewoehnlich:[0.75,1.25], ungewoehnlich:[0.75,1.25], selten:[0.80,1.25],
+  episch:[0.85,1.25], legendaer:[0.90,1.28], mythisch:[0.95,1.30],
+};
 export function affixValue(key, ilvl, rarity){
   const d = AFFIX_DEFS[key];
-  const roll = 0.75 + Math.random()*0.5;   // WoW-artiger Range-Roll 75–125 %
+  const [lo, hi] = AFFIX_ROLL_RANGE[rarity.key] || [0.75,1.25];
+  const roll = lo + Math.random()*(hi-lo);  // WoW-artiger Range-Roll, seltenheitsabhängig
   let v = (d.base + ilvl*d.perIlvl) * rarity.mult * roll;
   if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
   else { v = Math.max(1, Math.round(v)); }
   return v;
 }
-export function rollAffixes(slotKey, ilvl, rarity){
+// Alle Vorkommen eines Keys aus dem (gewichteten) Pool entfernen.
+function removeAll(arr, key){ for(let i=arr.length-1;i>=0;i--) if(arr[i]===key) arr.splice(i,1); }
+
+export function rollAffixes(slotKey, ilvl, rarity, itype){
   const cnt = AFFIX_COUNT[rarity.key];
-  const n = typeof cnt === 'function' ? cnt() : (cnt||0);
-  const pool = affixPool(slotKey).slice();
+  let n = typeof cnt === 'function' ? cnt() : (cnt||0);
+  const pool = (itype ? weightedAffixPool(slotKey, itype) : affixPool(slotKey)).slice();
   const out = {};
+  // Archetyp-Garantie (Teil 2): ab Episch zuerst den Flavor-Affix setzen.
+  if(itype && itype.flavorAffix && rarityIndex(rarity.key) >= 3 && pool.includes(itype.flavorAffix) && n > 0){
+    out[itype.flavorAffix] = affixValue(itype.flavorAffix, ilvl, rarity);
+    removeAll(pool, itype.flavorAffix);
+    n--;
+  }
   for(let i=0; i<n && pool.length; i++){
-    const k = pool.splice(Math.floor(Math.random()*pool.length), 1)[0];
+    const k = pool[Math.floor(Math.random()*pool.length)];
     out[k] = affixValue(k, ilvl, rarity);
+    removeAll(pool, k);   // ohne Zurücklegen – alle gewichteten Kopien raus
   }
   return out;
 }
@@ -73,30 +90,33 @@ function randSlotKey(slots){
 export function rollItem(zone, lootBoost=0, opts={}){
   const slotKey = randSlotKey(opts.slots);
   const slot = SLOTS[slotKey];
+  const itype = pickItemType(slotKey);   // Item-Typ mit Stat-Archetyp (Teil 1)
   let rarity;
   if(opts.forceRarityKey) rarity = rarityOf(opts.forceRarityKey);
   else {
-    // lokale Gewichtung ohne Zyklus zu loot.js: identische Formel
+    // lokale Gewichtung ohne Zyklus zu loot.js: identische Formel + Cap (Teil 3b)
     const boost = zone*0.6 + lootBoost;
-    const weights = RARITIES.map((r,i)=> Math.max(0.05, r.weight + i*boost - (i===0?boost*4:0)));
+    const cap = maxRarityIndex(zone);
+    const weights = RARITIES.map((r,i)=> i>cap ? 0 : Math.max(0.05, r.weight + i*boost - (i===0?boost*4:0)));
     const total = weights.reduce((a,b)=>a+b,0); let roll = Math.random()*total;
     rarity = RARITIES[0];
     for(let i=0;i<RARITIES.length;i++){ roll -= weights[i]; if(roll<=0){ rarity = RARITIES[i]; break; } }
   }
-  let ilvl = Math.max(1, Math.round((zone*5 + 1) + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
+  // Item-Level: sanft konvex (Teil 3) – Zusatz ist bei Zone 0 = 0.
+  let ilvl = Math.max(1, Math.round((zone*5 + 1) + zone*zone*ILVL_QUAD + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
   if(opts.minIlvl) ilvl = Math.max(ilvl, opts.minIlvl);
   const quality = 0.80 + Math.random()*0.40;
-  const stat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * quality));
-  const variant = Math.floor(Math.random()*VARIANTS);
+  const stat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * quality * (itype.statMult ?? 1)));
+  const variant = itype.variant;   // Typ bestimmt das Sprite (Teil 0/1)
   return {
     id: nextItemId(),
     slotKey, cat: slot.cat, statType: slot.statType,
-    rarity: rarity.key, ilvl, stat, variant,
+    rarity: rarity.key, ilvl, stat, variant, itemType: itype.key,
     quality: Math.round(quality*100),
-    affixes: rollAffixes(slotKey, ilvl, rarity),
+    affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
     sprite: ASSETS + 'icon_' + slot.art + '_' + variant + '.png',
-    name: rarity.adj + ' ' + slot.base,
+    name: rarity.adj + ' ' + itype.name,
   };
 }
 

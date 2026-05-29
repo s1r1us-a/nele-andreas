@@ -278,6 +278,7 @@ export function maybeOnboarding(){
       '<p>🎒 <b>Inventar:</b> Rüste bessere Teile an, vergleiche im Tooltip und 🔒 sperre Lieblingsstücke.</p>'+
       '<p>👑 <b>Bosse:</b> Jeder Boss ist <b>deutlich härter</b> als der letzte. Ohne Item-Grind kommst du nicht weiter – ein <b>Enrage-Timer</b> bestraft zu wenig Schaden.</p>'+
       '<p>↻ <b>Farmen:</b> Über „Bosse" kannst du besiegte Bosse erneut für Loot farmen.</p>'+
+      '<p>📊 <b>Werte:</b> Die <b>Kampfkraft</b> bündelt all deine Werte (Schaden, Rüstung, Krit, Tempo …) zu einer Vergleichszahl – liegt sie über der empfohlenen Boss-Kampfkraft, stehen die Chancen gut. <b>DPS</b> ist dein Schaden pro Sekunde gegen den Enrage-Timer. Fahre im <b>Charakter</b>-Tab über einen Wert (ⓘ) für die Erklärung.</p>'+
     '</div>'+
     '<div class="close-row"><button class="btn" id="obOk">Los geht’s!</button></div>');
   modal().querySelector('#obOk').addEventListener('click', closeModal);

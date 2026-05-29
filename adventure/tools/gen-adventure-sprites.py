@@ -55,11 +55,12 @@ def shade(color, f):
 
 # Materialpaletten (für Varianten)
 METALS = {
-    "iron":   (170, 178, 190, 255),
-    "steel":  (200, 208, 220, 255),
-    "bronze": (196, 142, 78, 255),
-    "gold":   (222, 184, 92, 255),
-    "dark":   (96, 102, 120, 255),
+    "iron":     (170, 178, 190, 255),
+    "steel":    (200, 208, 220, 255),
+    "bronze":   (196, 142, 78, 255),
+    "gold":     (222, 184, 92, 255),
+    "dark":     (96, 102, 120, 255),
+    "obsidian": (74, 70, 92, 255),   # 6. Variante (Teil 0)
 }
 LEATHERS = {
     "brown":  (132, 92, 56, 255),
@@ -67,6 +68,7 @@ LEATHERS = {
     "red":    (150, 64, 56, 255),
     "green":  (86, 110, 64, 255),
     "purple": (104, 78, 132, 255),
+    "black":  (58, 54, 60, 255),     # 6. Variante (Teil 0)
 }
 GEMS = {
     "ruby":   (210, 48, 64, 255),
@@ -74,9 +76,10 @@ GEMS = {
     "emer":   (52, 190, 120, 255),
     "amet":   (170, 92, 220, 255),
     "topaz":  (236, 196, 70, 255),
+    "onyx":   (96, 92, 120, 255),    # 6. Variante (Teil 0)
 }
 
-VARIANT_COUNT = 4  # Anzahl Varianten je Slot-Typ
+VARIANT_COUNT = 6  # Anzahl Varianten je Slot-Typ (Teil 0: 4 -> 6)
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +115,66 @@ def draw_sword(d, metal):
     rect(d, 4, 18, 6, 21, grip)
     # Knauf
     rect(d, 3, 21, 7, 22, guard)
+
+
+def draw_dagger(d, metal):
+    base = METALS[metal]
+    hi, lo = shade(base, 1.3), shade(base, 0.7)
+    guard = METALS["gold"]; grip = LEATHERS["brown"]
+    # kurze, breite Klinge
+    for i in range(8):
+        x = 8 + i; y = 14 - i
+        rect(d, x, y, x + 1, y + 1, base)
+        rect(d, x, y, x, y, hi)
+    rect(d, 16, 5, 17, 6, hi)            # Spitze
+    rect(d, 6, 14, 11, 15, guard)        # Parierstange
+    rect(d, 7, 15, 9, 19, grip)          # Griff
+    rect(d, 6, 19, 10, 20, guard)        # Knauf
+
+
+def draw_mace(d, metal):
+    base = METALS[metal]
+    hi, lo = shade(base, 1.25), shade(base, 0.65)
+    grip = LEATHERS["brown"]
+    rect(d, 11, 12, 12, 22, grip)        # Stiel
+    d.ellipse([7, 3, 17, 13], fill=base) # Kopf
+    d.ellipse([8, 4, 12, 8], fill=hi)
+    # Stacheln
+    for sx, sy in ((11, 1), (5, 6), (17, 6), (11, 13), (6, 11), (16, 11)):
+        rect(d, sx, sy, sx + 1, sy + 1, lo)
+
+
+def draw_axe(d, metal):
+    base = METALS[metal]
+    hi, lo = shade(base, 1.25), shade(base, 0.68)
+    grip = LEATHERS["brown"]
+    rect(d, 11, 4, 12, 22, grip)         # Stiel
+    # Axtblatt (Halbmond)
+    d.polygon([(12, 5), (20, 7), (20, 14), (12, 13)], fill=base)
+    d.polygon([(12, 5), (16, 6), (16, 13), (12, 13)], fill=hi)
+    rect(d, 19, 8, 20, 12, lo)
+
+
+def draw_spear(d, metal):
+    base = METALS[metal]
+    hi, lo = shade(base, 1.3), shade(base, 0.7)
+    grip = LEATHERS["brown"]
+    rect(d, 11, 6, 12, 22, grip)         # Schaft
+    # Spitze (Raute)
+    d.polygon([(11, 1), (14, 6), (11, 9), (8, 6)], fill=base)
+    d.polygon([(11, 1), (12, 6), (11, 9)], fill=hi)
+    rect(d, 9, 9, 14, 10, METALS["gold"])  # Manschette
+
+
+def draw_hammer(d, metal):
+    base = METALS[metal]
+    hi, lo = shade(base, 1.22), shade(base, 0.62)
+    grip = LEATHERS["brown"]
+    rect(d, 11, 11, 12, 22, grip)        # Stiel
+    outline_rect(d, 5, 3, 18, 11, base, lo)  # massiger Kopf
+    rect(d, 6, 4, 11, 7, hi)
+    rect(d, 5, 3, 6, 11, METALS["gold"])
+    rect(d, 17, 3, 18, 11, METALS["gold"])
 
 
 def draw_helmet(d, metal):
@@ -264,7 +327,9 @@ def draw_shield(d, metal):
 
 
 ICON_DRAWERS = {
-    "waffe":     (draw_sword, list(METALS.keys())),
+    # Waffe: je Variante eine eigene Form (Schwert/Dolch/Streitkolben/Axt/Speer/Kriegshammer)
+    "waffe":     ([draw_sword, draw_dagger, draw_mace, draw_axe, draw_spear, draw_hammer],
+                  list(METALS.keys())),
     "kopf":      (draw_helmet, list(METALS.keys())),
     "brust":     (draw_chest, list(METALS.keys())),
     "schultern": (draw_shoulders, list(METALS.keys())),
@@ -285,7 +350,9 @@ def gen_icons():
             buf = new_buf(ICON_GRID, ICON_GRID)
             d = ImageDraw.Draw(buf)
             mat = mats[v % len(mats)]
-            drawer(d, mat)
+            # drawer kann eine Liste (eine Form je Variante) oder eine Funktion sein.
+            fn = drawer[v % len(drawer)] if isinstance(drawer, (list, tuple)) else drawer
+            fn(d, mat)
             save(buf, ICON_SCALE, f"icon_{slot}_{v}.png")
 
 

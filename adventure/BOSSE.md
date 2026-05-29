@@ -9,7 +9,7 @@ Bosse sind das Fortschritts-Gate: Wer einen Boss besiegt, schaltet den nächsten
 `enrage`/Raserei-Mechanik) hohen Schaden – ohne Item-Grind sind späte Bosse nicht besiegbar.
 
 - **Gold pro Sieg:** `recPower × 1.5 + 40`
-- **XP pro Sieg:** `recPower × 0.9 + 40` (Niederlage: 15 % als Trost-XP)
+- **XP pro Sieg:** `recPower × 0.6 + 30` (Niederlage: 15 % als Trost-XP)
 - **Garantierter Drop:** episch (Boss 1–22) · legendär (23–34) · mythisch (35+)
 - **Erstkill-Bonus:** zusätzliches Gold + Heiltrank beim ersten Sieg
 - **Farmen:** besiegte Bosse erneut für Loot farmbar (reduzierte Belohnung)

@@ -358,7 +358,7 @@ function endFight(fight, win){
   if(win){
     state.killCounts[bossIndex] = (state.killCounts[bossIndex]||0) + 1;
     let reward = Math.round(boss.recPower * 1.5 + 40);
-    let xpBase = Math.round(boss.recPower * 0.9 + 40);
+    let xpBase = Math.round(boss.recPower * 0.6 + 30);  // XP reduziert (Teil 3b)
     if(isFarm){ reward = Math.round(reward*FARM.goldMult); xpBase = Math.round(xpBase*FARM.xpMult); }
     const xpGain = gainXp(xpBase);
     state.gold += reward; state.stats.goldEarned += reward;
@@ -397,7 +397,7 @@ function endFight(fight, win){
       (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+firstTxt+'</div>';
     saveState();
   } else {
-    gainXp(Math.round(boss.recPower * 0.9 * 0.15));
+    gainXp(Math.round(boss.recPower * 0.6 * 0.15));
     saveState();
     res.className = 'arena-result lose show';
     res.innerHTML = '<div class="big">💀 Niederlage</div>'+

@@ -13,3 +13,15 @@ export const RARITIES = [
 export const rarityOf = k => RARITIES.find(r => r.key === k) || RARITIES[0];
 export const rarityIndex = k => Math.max(0, RARITIES.findIndex(r => r.key === k));
 export const rarityByIndex = i => RARITIES[Math.max(0, Math.min(RARITIES.length-1, i))];
+
+// Höchste erreichbare Seltenheit je Fortschritt (Anti-OP-Gating, Teil 3b).
+// Pro ~2 Zonen wird eine Stufe freigeschaltet → lange Frühloot-Läufe können
+// keine Legendären/Mythischen ausspucken, bevor der Fortschritt es erlaubt.
+//   Zone 0–1 → Selten · 2–3 → Episch · 4–6 → Legendär · 7+ → Mythisch
+export function maxRarityIndex(zone){
+  zone = Math.max(0, zone|0);
+  if(zone >= 7) return 5;
+  if(zone >= 4) return 4;
+  if(zone >= 2) return 3;
+  return 2;
+}
