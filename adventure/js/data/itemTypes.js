@@ -8,31 +8,31 @@
    ===================================================================== */
 import { SLOTS } from './slots.js';
 
-// ---- Rüstungs-Material-Archetypen (für alle Rüstungs-Slots gleich) -----
-// Affixe im Rüstungs-Pool: armor, maxHp, attackSpeed, dodge, block, versatility.
+// ---- Rüstungs-Material-Archetypen (WoW-artig, 3 Materialien) ----------
+// Klassen-Tragbarkeit: stoff = alle, leder = Kämpfer/Verteidiger, platte = nur Verteidiger.
+// Stoff: kaum Rüstung, magisch (critMagic). Leder: mehr Rüstung, physisch. Platte: viel Rüstung.
+// Affixe im Rüstungs-Pool: armor, maxHp, attackSpeed, dodge, block, versatility, critMagic, critPhys.
 const ARMOR_MATERIALS = [
-  { key:'platten',  prefix:'Platten',  variant:0, statMult:1.10, affixBias:{ armor:3, block:2 },              flavorAffix:'armor' },
-  { key:'ketten',   prefix:'Ketten',   variant:1, statMult:1.00, affixBias:{ armor:2, maxHp:2, versatility:2 }, flavorAffix:'maxHp' },
-  { key:'leder',    prefix:'Leder',    variant:2, statMult:0.90, affixBias:{ dodge:3, attackSpeed:2 },         flavorAffix:'dodge' },
-  { key:'schuppen', prefix:'Schuppen', variant:3, statMult:1.05, affixBias:{ armor:2, block:3 },              flavorAffix:'block' },
-  { key:'gewand',   prefix:'Gewand',   variant:4, statMult:0.90, affixBias:{ versatility:3, maxHp:2 },        flavorAffix:'versatility' },
-  { key:'drachen',  prefix:'Drachen',  variant:5, statMult:1.05, affixBias:{ armor:2, attackSpeed:3 },        flavorAffix:'attackSpeed' },
+  { key:'stoff',  material:'stoff',  prefix:'Stoff',  variant:4, statMult:0.55, affixBias:{ critMagic:3, versatility:2, maxHp:1 }, flavorAffix:'critMagic' },
+  { key:'leder',  material:'leder',  prefix:'Leder',  variant:2, statMult:0.95, affixBias:{ dodge:3, critPhys:2, attackSpeed:2 },  flavorAffix:'critPhys' },
+  { key:'platte', material:'platte', prefix:'Platte', variant:0, statMult:1.45, affixBias:{ armor:3, block:3, maxHp:2 },          flavorAffix:'armor' },
 ];
-const ARMOR_SLOT_ARTS = ['kopf','schultern','brust','haende','beine','fuesse','umhang'];
+export const ARMOR_MATERIAL_KEYS = ['stoff','leder','platte'];
+export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte' };
 
 function armorTypes(noun){
   return ARMOR_MATERIALS.map(m => ({
-    key:m.key, name:m.prefix+'-'+noun, variant:m.variant,
+    key:m.key, material:m.material, name:m.prefix+'-'+noun, variant:m.variant,
     statMult:m.statMult, affixBias:m.affixBias, flavorAffix:m.flavorAffix,
   }));
 }
 
 // ---- Katalog je Slot-art ----------------------------------------------
 export const ITEM_TYPES = {
-  // ⚔️ Waffen – Pool: critChance, critDamage, attackSpeed, damage, lifesteal, versatility
+  // ⚔️ Waffen – Pool: critPhys, critMagic, critDamage, attackSpeed, damage, lifesteal, versatility
   waffe: [
-    { key:'schwert',     name:'Schwert',      variant:0, statMult:1.00, affixBias:{ damage:2, critChance:2 },                 flavorAffix:'damage' },
-    { key:'dolch',       name:'Dolch',        variant:1, statMult:0.85, affixBias:{ critChance:3, critDamage:2, attackSpeed:2 }, flavorAffix:'critChance' },
+    { key:'schwert',     name:'Schwert',      variant:0, statMult:1.00, affixBias:{ damage:2, critPhys:2 },                 flavorAffix:'damage' },
+    { key:'dolch',       name:'Dolch',        variant:1, statMult:0.85, affixBias:{ critPhys:3, critDamage:2, attackSpeed:2 }, flavorAffix:'critPhys' },
     { key:'streitkolben',name:'Streitkolben', variant:2, statMult:1.20, affixBias:{ damage:3, versatility:2 },                flavorAffix:'damage' },
     { key:'axt',         name:'Axt',          variant:3, statMult:1.10, affixBias:{ damage:2, lifesteal:3 },                  flavorAffix:'lifesteal' },
     { key:'speer',       name:'Speer',        variant:4, statMult:1.05, affixBias:{ versatility:3, attackSpeed:2 },           flavorAffix:'versatility' },
@@ -47,17 +47,17 @@ export const ITEM_TYPES = {
     { key:'spiegelschild',name:'Spiegelschild', variant:4, statMult:1.00, affixBias:{ block:3, dodge:2 },  flavorAffix:'block' },
     { key:'drachenschild',name:'Drachenschild', variant:5, statMult:1.05, affixBias:{ armor:3, thorns:2 }, flavorAffix:'armor' },
   ],
-  // 💍 Schmuck – Pool: critChance, critDamage, maxHp, attackSpeed, armor, damage, lifesteal, versatility, dodge
+  // 💍 Schmuck – Pool: critPhys, critMagic, critDamage, maxHp, attackSpeed, armor, damage, lifesteal, versatility, dodge
   amulett: [
     { key:'kriegsamulett', name:'Kriegsamulett', variant:0, statMult:1.00, affixBias:{ damage:3, critDamage:2 },     flavorAffix:'critDamage' },
     { key:'lebensamulett', name:'Lebensamulett', variant:1, statMult:1.00, affixBias:{ maxHp:3, lifesteal:2 },       flavorAffix:'maxHp' },
     { key:'schutzamulett', name:'Schutzamulett', variant:2, statMult:1.00, affixBias:{ armor:3, versatility:2 },     flavorAffix:'versatility' },
-    { key:'kritamulett',   name:'Krit-Amulett',  variant:3, statMult:1.00, affixBias:{ critChance:3, critDamage:2 }, flavorAffix:'critChance' },
+    { key:'kritamulett',   name:'Krit-Amulett',  variant:3, statMult:1.00, affixBias:{ critPhys:3, critDamage:2 }, flavorAffix:'critPhys' },
     { key:'tempoamulett',  name:'Tempo-Amulett', variant:4, statMult:1.00, affixBias:{ attackSpeed:3, dodge:2 },     flavorAffix:'attackSpeed' },
-    { key:'raeuberamulett',name:'Räuber-Amulett',variant:5, statMult:1.00, affixBias:{ lifesteal:3, critChance:2 },  flavorAffix:'lifesteal' },
+    { key:'raeuberamulett',name:'Räuber-Amulett',variant:5, statMult:1.00, affixBias:{ lifesteal:3, critPhys:2 },  flavorAffix:'lifesteal' },
   ],
   ring: [
-    { key:'siegelring',  name:'Siegelring',       variant:0, statMult:1.00, affixBias:{ critChance:3, critDamage:2 }, flavorAffix:'critChance' },
+    { key:'siegelring',  name:'Siegelring',       variant:0, statMult:1.00, affixBias:{ critPhys:3, critDamage:2 }, flavorAffix:'critPhys' },
     { key:'bluttropfen', name:'Bluttropfen-Ring', variant:1, statMult:1.00, affixBias:{ lifesteal:3, maxHp:2 },       flavorAffix:'lifesteal' },
     { key:'waechterring',name:'Wächterring',      variant:2, statMult:1.00, affixBias:{ armor:3, dodge:2 },           flavorAffix:'dodge' },
     { key:'machtring',   name:'Macht-Ring',       variant:3, statMult:1.00, affixBias:{ damage:3, critDamage:2 },     flavorAffix:'critDamage' },
@@ -105,4 +105,10 @@ export function typeOf(item){
 export function defaultTypeKey(slotKey){
   const list = ITEM_TYPES[artOf(slotKey)];
   return (list && list[0]) ? list[0].key : 'base';
+}
+
+// Rüstungs-Material eines Items (stoff/leder/platte) oder null für
+// Waffe/Schild/Schmuck (= klassenunabhängig tragbar).
+export function materialOf(item){
+  return typeOf(item).material || null;
 }

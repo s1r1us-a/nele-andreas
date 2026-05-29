@@ -4,7 +4,8 @@
    pct:false -> flacher Wert
    ===================================================================== */
 export const AFFIX_DEFS = {
-  critChance:  { label:'Krit-Chance',     pct:true,  base:0.03, perIlvl:0.0015, cap:0.50 },
+  critPhys:    { label:'Physischer Krit',  pct:true,  base:0.03, perIlvl:0.0015, cap:0.50 },
+  critMagic:   { label:'Magischer Krit',   pct:true,  base:0.03, perIlvl:0.0015, cap:0.50 },
   critDamage:  { label:'Krit-Schaden',    pct:true,  base:0.15, perIlvl:0.006,  cap:2.00 },
   maxHp:       { label:'Lebenspunkte',    pct:false, base:12,   perIlvl:1.4 },
   attackSpeed: { label:'Angriffstempo',   pct:true,  base:0.03, perIlvl:0.0012, cap:0.40 },
@@ -21,10 +22,10 @@ export const AFFIX_KEYS = Object.keys(AFFIX_DEFS);
 
 // Welche Affixe können je Slot/Kategorie rollen
 export const AFFIX_POOL = {
-  waffe:   ['critChance','critDamage','attackSpeed','damage','lifesteal','versatility'],
+  waffe:   ['critPhys','critMagic','critDamage','attackSpeed','damage','lifesteal','versatility'],
   schild:  ['armor','maxHp','block','thorns','dodge'],
-  ruestung:['armor','maxHp','attackSpeed','dodge','block','versatility'],
-  schmuck: ['critChance','critDamage','maxHp','attackSpeed','armor','damage','lifesteal','versatility','dodge'],
+  ruestung:['armor','maxHp','attackSpeed','dodge','block','versatility','critMagic','critPhys'],
+  schmuck: ['critPhys','critMagic','critDamage','maxHp','attackSpeed','armor','damage','lifesteal','versatility','dodge'],
 };
 export function affixPool(slotKey){
   if(slotKey==='waffe') return AFFIX_POOL.waffe;

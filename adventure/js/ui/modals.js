@@ -9,6 +9,8 @@ import { SLOTS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { GENDERS, HAIR_STYLES, HAIR_COLORS, SKIN_TONES, EYE_COLORS,
          DEFAULT_CHARACTER } from '../data/character-options.js';
+import { CLASSES, CLASS_BY_ID, classOf } from '../data/classes.js';
+import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
@@ -16,7 +18,7 @@ import { state, saveState, resetState } from '../core/state.js';
 import { recomputeTotals, heroTier, gainXp } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
-         isLocked, toggleLock, rollItem, inventoryFull } from '../core/items.js';
+         isLocked, toggleLock, rollItem, inventoryFull, canEquip } from '../core/items.js';
 import { startExpedition } from '../core/expedition.js';
 import { ITEM_TYPES } from '../data/itemTypes.js';
 import { startBossFight, updatePotionBtn, setGodmode, isGodmode } from '../core/combat.js';
@@ -36,7 +38,7 @@ export function openSlotPicker(slotKey){
   const fitKeys = FITS(slotKey);
   const candidates = state.inventory
     .filter(i => fitKeys.includes(i.slotKey))
-    .sort((a,b)=> rarityIndex(b.rarity)-rarityIndex(a.rarity) || b.stat-a.stat);
+    .sort((a,b)=> (canEquip(b)-canEquip(a)) || rarityIndex(b.rarity)-rarityIndex(a.rarity) || b.stat-a.stat);
   const cur = state.equipped[slotKey];
   let html = '<h2>'+slot.name+'</h2><div class="sub">Wähle einen Gegenstand zum Ausrüsten</div>';
   if(cur){
@@ -60,6 +62,7 @@ export function openSlotPicker(slotKey){
       const cell = document.createElement('div');
       cell.className = 'inv-item';
       cell.style.setProperty('--rc', r.color);
+      if(!canEquip(it)) cell.style.opacity = '.45';   // Material nicht tragbar
       cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it, { compare:true });
       cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it, slotKey, ()=>openSlotPicker(slotKey)); });
@@ -107,17 +110,21 @@ export function openItemPreview(item, fromSlotKey, backFn){
   const procLine = item.proc ? '<div class="preview-hint" style="color:'+item.proc.color+'">'+
     '★ '+item.proc.label+'</div>' : '';
   const locked = isLocked(item.id);
+  const equipOk = canEquip(item);
+  const blockLine = equipOk ? '' :
+    '<div class="preview-hint" style="color:#ff6b6b">✋ '+classOf(state).label+' kann '+
+    (MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.</div>';
   openModal('<h2 style="color:'+r.color+'">'+item.name+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
     (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
          : '<div class="preview-hint">Dieser Slot ist noch frei.</div>')+
-    '<div class="preview-stats">'+body+'</div>'+procLine+
+    '<div class="preview-stats">'+body+'</div>'+procLine+blockLine+
     '<div class="preview-actions">'+
-      '<button class="btn" id="previewEquip">Anlegen</button>'+
+      '<button class="btn" id="previewEquip"'+(equipOk?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Anlegen</button>'+
       '<button class="btn ghost" id="previewLock">'+(locked?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
     '</div>');
-  modal().querySelector('#previewEquip').addEventListener('click', ()=>{ equip(item, target); renderAll(); closeModal(); });
+  if(equipOk) modal().querySelector('#previewEquip').addEventListener('click', ()=>{ equip(item, target); renderAll(); closeModal(); });
   modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn); });
   modal().querySelector('#previewCancel').addEventListener('click', ()=>{ backFn ? backFn() : closeModal(); });
 }
@@ -294,11 +301,24 @@ export function isCreatorForced(){ return _creatorForced; }
 export function openCharacterCreator(forced){
   _creatorForced = !!forced;
   _draftChar = Object.assign({}, DEFAULT_CHARACTER, state.character || {});
+  // Erst-Erstellung: keine Klasse vorausgewählt → bewusste Wahl erzwingen.
+  if(!state.character) _draftChar.classId = null;
   renderCreator();
   creatorOverlay().classList.add('show');
 }
 function renderCreator(){
   const tier = heroTier(recomputeTotals().power);
+  // Klasse ist dauerhaft: einmal gesetzt (im gespeicherten Charakter) → gesperrt.
+  const classLocked = !!(state.character && state.character.classId);
+  const classBtns = CLASSES.map(c => {
+    const sel = _draftChar.classId === c.id;
+    const dis = classLocked && !sel;
+    return '<div class="opt-btn'+(sel?' sel':'')+(dis?' disabled':'')+'"'+
+      (classLocked?'':' data-class="'+c.id+'"')+' title="'+c.desc.replace(/"/g,'&quot;')+'"'+
+      (dis?' style="opacity:.4;cursor:not-allowed"':'')+'>'+c.icon+' '+c.label+'</div>';
+  }).join('');
+  const selClass = _draftChar.classId ? CLASS_BY_ID[_draftChar.classId] : null;
+  const classDesc = selClass ? selClass.desc : 'Wähle eine Klasse – sie ist dauerhaft und kann später nicht geändert werden.';
   const genderBtns = GENDERS.map(g =>
     '<div class="opt-btn'+(_draftChar.gender===g.id?' sel':'')+'" data-gender="'+g.id+'">'+g.icon+' '+g.label+'</div>').join('');
   const hairBtns = HAIR_STYLES.map(h =>
@@ -312,6 +332,9 @@ function renderCreator(){
   creatorModal().innerHTML =
     '<h2>👤 Charakter erstellen</h2>'+
     '<img class="creator-preview" id="creatorPreview" alt="Vorschau">'+
+    '<div class="creator-section"><h3>Klasse'+(classLocked?' (dauerhaft)':'')+'</h3>'+
+      '<div class="opt-grid cols3">'+classBtns+'</div>'+
+      '<div class="sub" style="margin-top:6px;">'+classDesc+'</div></div>'+
     '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols3">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
     '<div class="creator-section"><h3>Haarfarbe</h3><div class="color-grid">'+colorBtns+'</div></div>'+
@@ -322,6 +345,8 @@ function renderCreator(){
       (_creatorForced ? '' : '<button class="btn ghost" id="cancelCharBtn">Abbrechen</button>')+
     '</div>';
   creatorModal().querySelector('#creatorPreview').src = buildHeroSVG(_draftChar, tier);
+  creatorModal().querySelectorAll('[data-class]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.classId = el.dataset.class; renderCreator(); }));
   creatorModal().querySelectorAll('[data-gender]').forEach(el =>
     el.addEventListener('click', ()=>{ _draftChar.gender = el.dataset.gender; renderCreator(); }));
   creatorModal().querySelectorAll('[data-hair]').forEach(el =>
@@ -337,6 +362,9 @@ function renderCreator(){
   if(cancel) cancel.addEventListener('click', ()=> creatorOverlay().classList.remove('show'));
 }
 function applyCharacter(){
+  if(!_draftChar.classId){ toast('Bitte wähle eine Klasse.'); return; }
+  // Vorhandene Klasse ist unveränderlich – nie überschreiben.
+  if(state.character && state.character.classId) _draftChar.classId = state.character.classId;
   state.character = Object.assign({}, _draftChar);
   saveState();
   creatorOverlay().classList.remove('show');

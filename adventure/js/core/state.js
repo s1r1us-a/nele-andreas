@@ -43,6 +43,9 @@ export function freshState(){
 // Härtet zugleich gegen RTDB-Serialisierung (null-Werte & leere Container
 // gehen beim Schreiben verloren und müssen beim Laden rekonstruiert werden).
 function migrate(s){
+  // Klassen-/Rüstungs-/Stat-Umbau (v6): alte Stände komplett zurücksetzen,
+  // damit beide Spieler neu mit verbindlicher Klassenwahl starten.
+  if(typeof s.version !== 'number' || s.version < SAVE_VERSION) return freshState();
   if(typeof s.zone !== 'number') s.zone = 0;
   if(typeof s.gold !== 'number') s.gold = 0;
   if(typeof s.bossesBeaten !== 'number') s.bossesBeaten = 0;
