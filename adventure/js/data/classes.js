@@ -9,8 +9,8 @@
    ===================================================================== */
 export const CLASSES = [
   { id:'heiler',      label:'Heiler',      icon:'✨',
-    desc:'Magier-Heiler. Trägt nur Stoff. Starke Heilung, kaum Rüstung.',
-    allowedMaterials:['stoff'],                  damageSchool:'magisch',
+    desc:'Magier-Heiler. Trägt Stoff und Zauberstäbe. Starke Heilung, magischer Fernkampf.',
+    allowedMaterials:['stoff','zauberstab'],      damageSchool:'magisch',
     dmgMult:0.65, healMult:1.6 },
   { id:'kaempfer',    label:'Kämpfer',     icon:'⚔️',
     desc:'Krieger. Trägt Stoff und Leder. Ausgewogener physischer Schaden.',

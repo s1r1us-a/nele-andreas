@@ -18,7 +18,7 @@ const ARMOR_MATERIALS = [
   { key:'platte', material:'platte', prefix:'Platte', variant:0, statMult:1.45, affixBias:{ armor:3, block:3, maxHp:2 },          flavorAffix:'armor' },
 ];
 export const ARMOR_MATERIAL_KEYS = ['stoff','leder','platte'];
-export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte' };
+export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
 
 function armorTypes(noun){
   return ARMOR_MATERIALS.map(m => ({
@@ -37,6 +37,7 @@ export const ITEM_TYPES = {
     { key:'axt',         name:'Axt',          variant:3, statMult:1.10, affixBias:{ damage:2, lifesteal:3 },                  flavorAffix:'lifesteal' },
     { key:'speer',       name:'Speer',        variant:4, statMult:1.05, affixBias:{ versatility:3, attackSpeed:2 },           flavorAffix:'versatility' },
     { key:'kriegshammer',name:'Kriegshammer', variant:5, statMult:1.25, affixBias:{ damage:3, critDamage:2 },                 flavorAffix:'critDamage' },
+    { key:'stab',        name:'Zauberstab',   variant:6, statMult:0.90, affixBias:{ critMagic:4, critDamage:2, attackSpeed:2, lifesteal:1 }, flavorAffix:'critMagic', material:'zauberstab' },
   ],
   // 🛡️ Schild – Pool: armor, maxHp, block, thorns, dodge
   schild: [

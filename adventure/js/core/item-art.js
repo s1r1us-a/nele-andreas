@@ -35,7 +35,7 @@ let SEQ = 0;
 const _cache = new Map();
 
 export function buildItemSVG(art, variant, rarityKey, element){
-  variant = (variant|0) % 6;
+  variant = (variant|0) % 7;
   const el = (element==='ice') ? 'ice' : 'fire';
   const eff = (art==='waffe' || art==='schild') ? effLvl(rarityKey) : 0;
   const E = ELEM[el];
@@ -98,7 +98,24 @@ export function buildItemSVG(art, variant, rarityKey, element){
              `<rect x="20" y="11" width="6" height="12" rx="1" fill="${shade(m,1.2)}" opacity="0.6"/>`+
              `<circle cx="32" cy="58" r="3.5" fill="${GOLD}"/>`;
     }
-    body += gem(32, variant===5?17:(variant===2?12:46), 2.4, rc);
+    if(variant === 6){ // Zauberstab
+      defs += `<radialGradient id="orbG${uid}" cx="38%" cy="35%" r="60%">`+
+              `<stop offset="0" stop-color="#ff8888"/><stop offset="0.5" stop-color="#cc1111"/>`+
+              `<stop offset="1" stop-color="#550000"/></radialGradient>`;
+      body = `<rect x="30" y="20" width="4" height="38" rx="1.5" fill="${U('w')}"/>`+
+             `<rect x="28" y="17" width="8" height="5" rx="2" fill="${GOLD}"/>`+
+             `<circle cx="32" cy="10" r="11" fill="#cc1111" opacity="0.25"/>`+
+             `<circle cx="32" cy="10" r="9"  fill="#880000" opacity="0.45"/>`+
+             `<circle cx="32" cy="10" r="7"  fill="url(#orbG${uid})"/>`+
+             `<circle cx="32" cy="10" r="7"  fill="none" stroke="#ff5555" stroke-width="1.5"/>`+
+             `<circle cx="29.5" cy="7.5" r="2.5" fill="#fff" opacity="0.55"/>`;
+      if(eff > 0){
+        const pulseR = 8 + eff * 2;
+        body += `<circle cx="32" cy="10" r="${pulseR}" fill="none" stroke="${E.glow}" stroke-width="${eff}" opacity="0.55"/>`;
+      }
+    } else {
+      body += gem(32, variant===5?17:(variant===2?12:46), 2.4, rc);
+    }
 
   } else if(art==='schild'){
     const m = METAL[variant];
