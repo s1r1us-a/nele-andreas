@@ -85,6 +85,13 @@ window.addEventListener('beforeunload', flushSave);
 // ---- Init (async: erst Auth/Spieler, dann Spielstand laden) ---------
 (async ()=>{
   const userKey = await initAuth();      // ermittelt Andreas/Nele (sonst Redirect auf index.html)
+
+  // Eingeloggten Account anzeigen (Topbar-Chip) und Intro-Begrüßung personalisieren.
+  const name = userKey ? userKey[0].toUpperCase() + userKey.slice(1) : 'Gast';
+  const un = document.getElementById('userName'); if(un) un.textContent = name;
+  const chip = document.getElementById('userChip'); if(chip) chip.dataset.user = userKey || '';
+  if(window.__advIntroSetName) window.__advIntroSetName(name);
+
   await loadSave(userKey);               // lädt /adventure/<userKey> (sonst lokaler Cache / frisch)
   renderAll();
   startLoop();

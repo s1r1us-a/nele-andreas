@@ -6,11 +6,270 @@
 <title>⚔️ Idle Abenteuer – Nele & Andreas</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Quicksand:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="adventure/css/style.css">
+<style>
+  /* ===================== Episches Wappen-Intro ===================== */
+  .adv-intro-overlay {
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(242,205,107,0.16) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 120%, rgba(122,60,160,0.30) 0%, transparent 60%),
+      linear-gradient(160deg, #161122 0%, #0f0a18 45%, #0a0710 100%);
+    transition: opacity 0.6s ease;
+  }
+  .adv-intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+  /* Dunkle Vignette für epische Tiefe */
+  .adv-intro-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* Rotierende Gold/Lila-Strahlen hinter dem Wappen */
+  .adv-intro-rays-wrap {
+    position: absolute; width: 900px; height: 900px;
+    left: 50%; top: 42%; margin: -450px 0 0 -450px;
+    pointer-events: none;
+    animation: advIntroRaysSpin 40s linear 0.4s infinite;
+  }
+  .adv-intro-rays {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,   rgba(242,205,107,0.12) 5deg,  transparent 13deg,
+      transparent 40deg,  rgba(163,53,238,0.08)  46deg, transparent 54deg,
+      transparent 78deg,  rgba(242,205,107,0.11) 84deg, transparent 92deg,
+      transparent 118deg, rgba(163,53,238,0.07)  124deg,transparent 132deg,
+      transparent 158deg, rgba(242,205,107,0.10) 164deg,transparent 172deg,
+      transparent 198deg, rgba(163,53,238,0.08)  204deg,transparent 212deg,
+      transparent 238deg, rgba(242,205,107,0.11) 244deg,transparent 252deg,
+      transparent 288deg, rgba(163,53,238,0.07)  294deg,transparent 302deg,
+      transparent 328deg, rgba(242,205,107,0.10) 334deg,transparent 342deg
+    );
+    opacity: 0;
+    animation: advIntroRaysIn 1.4s ease-out 0.9s both;
+  }
+  @keyframes advIntroRaysSpin { to { transform: rotate(360deg); } }
+  @keyframes advIntroRaysIn {
+    0%   { opacity: 0; transform: scale(0.4); }
+    50%  { opacity: 1; }
+    100% { opacity: 0.8; transform: scale(1); }
+  }
+
+  /* Glut/Funken */
+  .adv-intro-particles { position: absolute; inset: 0; pointer-events: none; }
+  .adv-intro-ember {
+    position: absolute; bottom: -6%;
+    will-change: transform, opacity; opacity: 0;
+    animation: advIntroEmberRise linear both;
+  }
+  @keyframes advIntroEmberRise {
+    0%   { opacity: 0; transform: translateY(0) translateX(0) scale(0.6) rotate(0deg); }
+    12%  { opacity: 1; }
+    80%  { opacity: 0.9; }
+    100% { opacity: 0; transform: translateY(-115vh) translateX(var(--drift,0px)) scale(1) rotate(var(--spin,180deg)); }
+  }
+
+  /* Gold-Schockwellen beim Wappen-Reveal */
+  .adv-intro-ring {
+    position: absolute; border-radius: 50%; pointer-events: none; opacity: 0;
+    left: 50%; top: 42%;
+  }
+  .adv-intro-ring-r1 { width: 150px; height: 150px; margin: -75px 0 0 -75px; border: 2px solid rgba(242,205,107,0.70); animation: advIntroRingExp 1.6s ease-out 1.05s both; }
+  .adv-intro-ring-r2 { width: 120px; height: 120px; margin: -60px 0 0 -60px; border: 1.5px solid rgba(163,53,238,0.55); animation: advIntroRingExp 1.5s ease-out 1.45s both; }
+  .adv-intro-ring-r3 { width: 180px; height: 180px; margin: -90px 0 0 -90px; border: 1.2px solid rgba(255,255,255,0.45); animation: advIntroRingExp 1.5s ease-out 1.90s both; }
+  @keyframes advIntroRingExp {
+    0%   { transform: scale(1);   opacity: 0.9; }
+    55%  { opacity: 0.4; }
+    100% { transform: scale(7);   opacity: 0; }
+  }
+
+  /* Inhalt */
+  .adv-intro-content {
+    position: relative; z-index: 3;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; padding: 0 24px;
+  }
+
+  /* Herabrollendes Banner mit Wappen */
+  .adv-intro-banner {
+    position: relative;
+    transform-origin: top center; transform: scaleY(0);
+    animation: advIntroBannerDrop 0.85s cubic-bezier(0.34,1.56,0.64,1) 0.30s both;
+    margin-bottom: 26px;
+  }
+  @keyframes advIntroBannerDrop {
+    0%   { transform: scaleY(0); }
+    70%  { transform: scaleY(1.08); }
+    100% { transform: scaleY(1); }
+  }
+  /* Wimpel-Schwänze links/rechts */
+  .adv-intro-banner-tail {
+    position: absolute; top: 16px; width: 30px; height: 96px;
+    background: linear-gradient(180deg, #7a2230, #4a1320);
+    box-shadow: inset 0 0 0 2px rgba(242,205,107,0.45);
+  }
+  .adv-intro-banner-tail-l { left: -22px; clip-path: polygon(0 0,100% 0,100% 100%,50% 78%,0 100%); transform: rotate(-4deg); }
+  .adv-intro-banner-tail-r { right: -22px; clip-path: polygon(0 0,100% 0,100% 100%,50% 78%,0 100%); transform: rotate(4deg); }
+
+  /* Wappenschild */
+  .adv-intro-crest {
+    position: relative;
+    width: 138px; height: 158px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #2c1b3f 0%, #1a1028 60%, #120a1c 100%);
+    border: 3px solid var(--gold-hi, #f2cd6b);
+    border-radius: 14px 14px 50% 50% / 14px 14px 30% 30%;
+    clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%);
+    box-shadow:
+      0 0 0 2px rgba(0,0,0,0.5),
+      0 0 34px 6px rgba(242,205,107,0.45),
+      inset 0 0 24px rgba(163,53,238,0.30);
+    overflow: hidden;
+    transform: scale(0); opacity: 0;
+    animation: advIntroCrestPop 0.7s cubic-bezier(0.34,1.56,0.64,1) 1.00s both;
+  }
+  @keyframes advIntroCrestPop {
+    0%   { transform: scale(0) rotate(-12deg); opacity: 0; }
+    60%  { transform: scale(1.18) rotate(4deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .adv-intro-crest-emblem {
+    font-size: 56px; line-height: 1; margin-top: -10px;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.7));
+  }
+  .adv-intro-crest-star {
+    position: absolute; font-size: 13px; color: var(--gold-hi, #f2cd6b);
+    opacity: 0.85; text-shadow: 0 0 8px rgba(242,205,107,0.8);
+  }
+  .adv-intro-crest-star-l { left: 14px; top: 16px; }
+  .adv-intro-crest-star-r { right: 14px; top: 16px; }
+
+  /* Diagonaler Metall-Glanz */
+  .adv-intro-shine {
+    position: absolute; top: -50%; left: -120%;
+    width: 55%; height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+    transform: rotate(20deg);
+    animation: advIntroShine 0.9s ease-in 1.65s both;
+  }
+  @keyframes advIntroShine {
+    0%   { left: -120%; opacity: 0; }
+    25%  { opacity: 1; }
+    100% { left: 170%; opacity: 0; }
+  }
+
+  /* Titel */
+  .adv-intro-title {
+    font-family: 'Cinzel', serif; font-weight: 900;
+    font-size: clamp(40px, 11vw, 78px); letter-spacing: 4px;
+    margin: 0; line-height: 1.05;
+    background: linear-gradient(100deg, #8a6e2e 0%, #f2cd6b 28%, #fff6d8 48%, #f2cd6b 68%, #8a6e2e 100%);
+    background-size: 220% auto;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+    animation:
+      advIntroTitleFocus 1.0s cubic-bezier(0.22,1,0.36,1) 2.20s both,
+      advIntroTitleShimmer 2.6s ease-in-out 3.30s infinite;
+  }
+  @keyframes advIntroTitleFocus {
+    0%   { opacity: 0; filter: blur(30px) drop-shadow(0 2px 6px rgba(0,0,0,0.6)); transform: scale(1.18); letter-spacing: 18px; }
+    100% { opacity: 1; filter: blur(0)    drop-shadow(0 2px 6px rgba(0,0,0,0.6)); transform: scale(1);    letter-spacing: 4px; }
+  }
+  @keyframes advIntroTitleShimmer {
+    0%, 100% { background-position: 0% center; }
+    50%      { background-position: 150% center; }
+  }
+
+  /* Zierlinie */
+  .adv-intro-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 16px 0 14px;
+    opacity: 0;
+    animation: advIntroDivider 0.7s ease-out 2.60s both;
+  }
+  .adv-intro-divider-wing {
+    display: block; height: 2px; width: 0;
+    background: linear-gradient(90deg, transparent, var(--gold-hi, #f2cd6b));
+    animation: advIntroDividerWing 0.7s ease-out 2.60s both;
+  }
+  .adv-intro-divider-wing.r { background: linear-gradient(90deg, var(--gold-hi, #f2cd6b), transparent); }
+  .adv-intro-divider-gem { color: var(--gold-hi, #f2cd6b); font-size: 12px; text-shadow: 0 0 8px rgba(242,205,107,0.8); }
+  @keyframes advIntroDivider { to { opacity: 1; } }
+  @keyframes advIntroDividerWing { 0% { width: 0; } 100% { width: 64px; } }
+
+  /* Begrüßung */
+  .adv-intro-sub {
+    font-family: 'Cinzel', serif; font-size: clamp(15px, 4vw, 20px);
+    color: #d9cdb6; letter-spacing: 2px; margin: 0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    opacity: 0;
+    animation: advIntroSubTrack 1.0s ease-out 3.00s both;
+  }
+  .adv-intro-sub #advIntroName {
+    color: var(--gold-hi, #f2cd6b); font-weight: 700;
+    text-shadow: 0 0 10px rgba(242,205,107,0.55);
+  }
+  @keyframes advIntroSubTrack {
+    0%   { opacity: 0; letter-spacing: 14px; }
+    100% { opacity: 1; letter-spacing: 2px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .adv-intro-overlay *,
+    .adv-intro-overlay {
+      animation: none !important;
+      transition: opacity 0.4s ease !important;
+    }
+    .adv-intro-banner { transform: none; }
+    .adv-intro-crest  { transform: none; opacity: 1; }
+    .adv-intro-rays, .adv-intro-title, .adv-intro-divider, .adv-intro-divider-wing, .adv-intro-sub { opacity: 1; }
+    .adv-intro-divider-wing { width: 64px; }
+  }
+</style>
 </head>
 <body>
+<!-- ===================== Episches Wappen-Intro ===================== -->
+<div class="adv-intro-overlay" id="advIntro">
+  <div class="adv-intro-vignette"></div>
+  <div class="adv-intro-rays-wrap"><div class="adv-intro-rays"></div></div>
+  <div class="adv-intro-particles" id="advIntroParticles"></div>
+
+  <div class="adv-intro-ring adv-intro-ring-r1"></div>
+  <div class="adv-intro-ring adv-intro-ring-r2"></div>
+  <div class="adv-intro-ring adv-intro-ring-r3"></div>
+
+  <div class="adv-intro-content">
+    <div class="adv-intro-banner">
+      <span class="adv-intro-banner-tail adv-intro-banner-tail-l"></span>
+      <span class="adv-intro-banner-tail adv-intro-banner-tail-r"></span>
+      <div class="adv-intro-crest">
+        <span class="adv-intro-crest-emblem">⚔️</span>
+        <span class="adv-intro-crest-star adv-intro-crest-star-l">✦</span>
+        <span class="adv-intro-crest-star adv-intro-crest-star-r">✦</span>
+        <span class="adv-intro-shine"></span>
+      </div>
+    </div>
+
+    <h1 class="adv-intro-title">Abenteuer</h1>
+    <div class="adv-intro-divider">
+      <span class="adv-intro-divider-wing l"></span>
+      <span class="adv-intro-divider-gem">◆</span>
+      <span class="adv-intro-divider-wing r"></span>
+    </div>
+    <p class="adv-intro-sub">Willkommen, <span id="advIntroName">Abenteurer</span></p>
+  </div>
+</div>
+<!-- =============================================================== -->
+
 <div class="topbar">
   <a class="back" href="index.html">← Zurück</a>
   <h1>⚔️ Abenteuer</h1>
+  <div class="user-chip" id="userChip" title="Eingeloggt als">
+    <span class="uc-ico">👤</span><b id="userName">…</b>
+  </div>
   <button class="dev-btn" id="statsBtn" title="Statistik">📊</button>
   <button class="dev-btn" id="devBtn" title="Test-Werkzeuge">🛠 Dev</button>
   <div class="stats-mini">
@@ -151,6 +410,47 @@
   </div>
 </div>
 
+<script>
+/* Episches Wappen-Intro: Glut/Funken erzeugen, personalisieren, ausblenden. */
+(function(){
+  var overlay = document.getElementById('advIntro');
+  if(!overlay) return;
+  var layer = document.getElementById('advIntroParticles');
+
+  // Aufsteigende Glut & Funken
+  var glyphs = ['🔥','✨','⚜️','✦','•'];
+  var count = 26;
+  for(var i=0;i<count;i++){
+    var e = document.createElement('span');
+    e.className = 'adv-intro-ember';
+    var g = glyphs[Math.floor(Math.random()*glyphs.length)];
+    e.textContent = g;
+    var size = 8 + Math.random()*20;
+    e.style.left = (Math.random()*100) + '%';
+    e.style.fontSize = size + 'px';
+    e.style.setProperty('--drift', (Math.random()*120 - 60) + 'px');
+    e.style.setProperty('--spin', (Math.random()*360 - 180) + 'deg');
+    if(g === '•'){ e.style.color = 'rgba(242,205,107,0.9)'; e.style.textShadow = '0 0 8px rgba(242,205,107,0.8)'; }
+    var dur = 2.6 + Math.random()*2.8;
+    var delay = 0.6 + Math.random()*4.2;
+    e.style.animationDuration = dur + 's';
+    e.style.animationDelay = delay + 's';
+    layer.appendChild(e);
+  }
+
+  // Personalisierungs-Hook für das Modul (setzt Nele/Andreas).
+  window.__advIntroSetName = function(name){
+    var el = document.getElementById('advIntroName');
+    if(el && name) el.textContent = name;
+  };
+
+  // Nach ~5,5 s ausblenden und entfernen, damit nichts blockiert wird.
+  setTimeout(function(){
+    overlay.classList.add('fade-out');
+    setTimeout(function(){ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 650);
+  }, 5500);
+})();
+</script>
 <script type="module" src="adventure/js/main.js"></script>
 </body>
 </html>
