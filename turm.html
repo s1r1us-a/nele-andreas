@@ -189,6 +189,8 @@ let _frontNameCache = '', _backNameCache = '';
 // Skill-Status (lokaler Spieler)
 let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
 let _lastHealTs = 0;
+// Auto-Start-Countdown
+let _countdownTicker = null, _countdownTarget = 0, _startingFight = false;
 
 const $  = id => document.getElementById(id);
 const qS = s  => document.querySelector(s);
@@ -331,16 +333,33 @@ function onLobbyUpdate(lobby){
     $('backSlotReady').className    = 'slot-ready ' + (backReady ? 'yes' : 'no');
   }
 
+  // Bereit-Button als Umschalter (Bereit ⇄ Abbrechen) – während des Countdowns abbrechbar.
   const myReady = isHost ? hostR : guestR;
-  $('readyBtn').disabled  = !hasGuest || myReady;
+  $('readyBtn').disabled  = !hasGuest;
+  $('readyBtn').textContent = myReady ? '✖️ Bereit abbrechen' : '✅ Bereit!';
+  $('readyBtn').className  = 'btn ' + (myReady ? 'btn-ghost' : 'btn-primary');
+  $('startBtn').style.display = 'none';  // Auto-Start ersetzt den manuellen Start-Button.
 
-  if(isHost){
-    $('startBtn').style.display = (hostR && guestR && hasGuest) ? '' : 'none';
+  const bothReady = hostR && guestR && hasGuest;
+
+  // Auto-Start-Countdown: bei „beide bereit" 10-Sekunden-Timer setzen,
+  // bei Abbruch wieder löschen (nur der Host verwaltet startAt).
+  if(isHost && lobby.status === 'waiting' && !_startingFight){
+    if(bothReady && !lobby.startAt){
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: Date.now() + 10000 }).catch(()=>{});
+    } else if(!bothReady && lobby.startAt){
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
+    }
   }
 
-  $('lobbyStatus').textContent = !hasGuest
-    ? 'Warte auf Partner…'
-    : (hostR && guestR ? 'Beide bereit! Host kann starten.' : 'Warte auf Bereit-Status…');
+  if(lobby.startAt && lobby.status === 'waiting'){
+    startCountdown(lobby.startAt);
+  } else {
+    stopCountdown();
+    $('lobbyStatus').textContent = !hasGuest
+      ? 'Warte auf Partner…'
+      : (bothReady ? 'Beide bereit!' : 'Warte auf Bereit-Status…');
+  }
 
   if(lobby.status === 'in_progress'){
     showFightSection();
@@ -360,16 +379,46 @@ function onLobbyUpdate(lobby){
   }
 }
 
-// ---- Bereit ----
+// ---- Bereit (Umschalter) ----
 window.onReady = async function(){
+  const myReady = isHost ? !!(lobbyData && lobbyData.hostReady) : !!(lobbyData && lobbyData.guestReady);
   $('readyBtn').disabled = true;
-  try { await setReady(lobbyId, isHost, true); }
-  catch(e){ toast('Fehler: ' + e.message); $('readyBtn').disabled = false; }
+  try { await setReady(lobbyId, isHost, !myReady); }
+  catch(e){ toast('Fehler: ' + e.message); }
+  finally { $('readyBtn').disabled = false; }
 };
+
+// ---- Auto-Start-Countdown ----
+function startCountdown(startAt){
+  if(_countdownTicker && _countdownTarget === startAt) return;
+  stopCountdown();
+  _countdownTarget = startAt;
+  const tick = () => {
+    const rem = Math.max(0, Math.ceil((startAt - Date.now())/1000));
+    $('lobbyStatus').textContent = rem > 0
+      ? '⚔️ Kampf startet in ' + rem + ' s… (Bereit abbrechen zum Stoppen)'
+      : '⚔️ Los geht\'s!';
+    if(Date.now() >= startAt){
+      stopCountdown();
+      // Nur der Host startet den Kampf autoritativ.
+      if(isHost && !_startingFight && lobbyData && lobbyData.status === 'waiting'){
+        _startingFight = true;
+        update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
+        window.onStartFight().finally(() => { _startingFight = false; });
+      }
+    }
+  };
+  tick();
+  _countdownTicker = setInterval(tick, 250);
+}
+function stopCountdown(){
+  if(_countdownTicker){ clearInterval(_countdownTicker); _countdownTicker = null; }
+  _countdownTarget = 0;
+}
 
 // ---- Kampf starten (Host) ----
 window.onStartFight = async function(){
-  const btn = $('startBtn'); btn.disabled = true; btn.textContent = '…';
+  const btn = $('startBtn'); if(btn){ btn.disabled = true; btn.textContent = '…'; }
   try {
     const lobby = lobbyData;
     // Gast-Spielstand laden & Stats berechnen
@@ -410,7 +459,7 @@ window.onStartFight = async function(){
     toast('Fehler beim Kampfstart: ' + e.message);
     console.error(e);
   } finally{
-    btn.disabled = false; btn.textContent = '⚔️ Kampf starten!';
+    if(btn){ btn.disabled = false; btn.textContent = '⚔️ Kampf starten!'; }
   }
 };
 
@@ -642,6 +691,7 @@ async function onNextFloor(){
   if(unsubCombat){ unsubCombat(); unsubCombat = null; }
   const nextFloor = await advanceFloor(lobbyId);
   _lastAnimTurn = -1; _lastHealTs = 0;
+  stopCountdown();
   stopAbilityUI();
   $('resultOverlay').classList.remove('show');
   $('fightSection').style.display  = 'none';
@@ -674,6 +724,7 @@ window.onLeaveLobby = async function(){
 function resetToMain(){
   if(unsubLobby){ unsubLobby(); unsubLobby = null; }
   if(unsubCombat){ unsubCombat(); unsubCombat = null; }
+  stopCountdown();
   stopAbilityUI();
   lobbyId = null; lobbyData = null; isHost = false;
   _lastAnimTurn = -1; _lastHealTs = 0;
