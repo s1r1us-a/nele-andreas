@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ Idle Abenteuer – Nele & Andreas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Quicksand:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  /* ===================================================================
+     Eigenständiges dunkles WoW-Fantasy-Design.
+     Bewusst KEIN princess-theme / Seiten-Theme, KEIN Firebase, KEINE Coins.
+     Persistenz nur über localStorage.
+     =================================================================== */
+  :root {
+    --bg-0:#0d0b14; --bg-1:#16121f; --panel:#1c1726; --panel-2:#241d31;
+    --stone:#2a2335; --stone-hi:#3a3147; --line:#3d3450;
+    --gold:#d4a84b; --gold-hi:#f2cd6b; --gold-dim:#8a6e2e;
+    --txt:#e9e2d4; --txt-dim:#a99fb5; --txt-mute:#6f6680;
+    --armor:#8fb6e8; --damage:#e88f8f; --power:#d4a84b;
+    --r-gewoehnlich:#9d9d9d; --r-ungewoehnlich:#1eff00; --r-selten:#0070dd;
+    --r-episch:#a335ee; --r-legendaer:#ff8000;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body {
+    font-family:'Quicksand',sans-serif; color:var(--txt);
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(212,168,75,.10), transparent 60%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-0));
+    background-attachment:fixed; min-height:100vh; overflow-x:hidden;
+  }
+  img { image-rendering:pixelated; image-rendering:crisp-edges; }
+  h1,h2,h3 { font-family:'Cinzel',serif; }
+  .pixel { font-family:'Press Start 2P',monospace; }
+
+  /* ---- Top-Bar -------------------------------------------------- */
+  .topbar {
+    display:flex; align-items:center; gap:14px; padding:12px 18px;
+    background:linear-gradient(180deg, rgba(36,29,49,.96), rgba(28,23,38,.96));
+    border-bottom:2px solid var(--gold-dim);
+    position:sticky; top:0; z-index:40; backdrop-filter:blur(4px);
+  }
+  .topbar .back { color:var(--txt-dim); text-decoration:none; font-size:14px;
+    padding:6px 10px; border:1px solid var(--line); border-radius:8px; }
+  .topbar .back:hover { color:var(--gold-hi); border-color:var(--gold-dim); }
+  .topbar h1 { font-size:18px; letter-spacing:1px; color:var(--gold-hi);
+    text-shadow:0 2px 0 #000; flex:0 0 auto; }
+  .stats-mini { margin-left:auto; display:flex; gap:14px; flex-wrap:wrap; }
+  .stat-chip { display:flex; align-items:center; gap:6px; font-weight:600;
+    font-size:13px; background:var(--stone); padding:6px 11px; border-radius:20px;
+    border:1px solid var(--line); }
+  .stat-chip .lbl { color:var(--txt-mute); font-size:11px; text-transform:uppercase; }
+  .stat-chip.armor b{color:var(--armor);} .stat-chip.damage b{color:var(--damage);}
+  .stat-chip.power b{color:var(--power);}
+
+  /* ---- Tabs ------------------------------------------------------ */
+  .tabs { display:flex; gap:6px; justify-content:center; padding:14px 10px 0; flex-wrap:wrap; }
+  .tab {
+    font-family:'Cinzel',serif; font-weight:700; font-size:15px; cursor:pointer;
+    color:var(--txt-dim); background:var(--panel); border:1px solid var(--line);
+    border-bottom:none; padding:10px 22px; border-radius:10px 10px 0 0; user-select:none;
+  }
+  .tab.active { color:var(--gold-hi); background:var(--panel-2);
+    box-shadow:0 -2px 0 var(--gold) inset; }
+  .tab:hover:not(.active){ color:var(--txt); }
+
+  .wrap { max-width:1000px; margin:0 auto; padding:0 14px 60px; }
+  .view { display:none; animation:fade .25s ease; }
+  .view.active { display:block; }
+  @keyframes fade { from{opacity:0; transform:translateY(6px);} to{opacity:1;} }
+
+  .panel {
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line); border-radius:0 0 14px 14px;
+    border-top:2px solid var(--gold-dim); padding:20px;
+  }
+
+  /* ---- Abenteuer-Ansicht ---------------------------------------- */
+  .scene {
+    position:relative; height:230px; border-radius:12px; overflow:hidden;
+    border:2px solid var(--gold-dim); background-size:cover; background-position:center bottom;
+    image-rendering:pixelated;
+  }
+  .scene .hero {
+    position:absolute; bottom:14px; left:50%; height:170px; width:auto;
+    transform:translateX(-50%); filter:drop-shadow(0 6px 6px rgba(0,0,0,.5));
+  }
+  .scene .zone-label {
+    position:absolute; top:10px; left:12px; font-family:'Cinzel',serif; font-weight:700;
+    background:rgba(0,0,0,.45); padding:5px 12px; border-radius:8px; color:var(--gold-hi);
+    border:1px solid var(--gold-dim); font-size:14px;
+  }
+  .bob { animation:bob 1.6s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateX(-50%) translateY(0);}
+    50%{transform:translateX(-50%) translateY(-7px);} }
+
+  .progress-row { display:flex; align-items:center; gap:12px; margin:18px 0 6px; }
+  .progress-row .label { font-size:13px; color:var(--txt-dim); min-width:120px; }
+  .bar { flex:1; height:18px; background:#0d0a13; border:1px solid var(--line);
+    border-radius:10px; overflow:hidden; }
+  .bar > i { display:block; height:100%; width:0%;
+    background:linear-gradient(90deg,var(--gold-dim),var(--gold-hi));
+    transition:width .25s linear; }
+
+  .zone-controls { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; align-items:center; }
+  .btn {
+    font-family:'Cinzel',serif; font-weight:700; cursor:pointer; color:var(--bg-0);
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); border:none;
+    padding:10px 18px; border-radius:9px; box-shadow:0 2px 0 var(--gold-dim);
+  }
+  .btn:hover { filter:brightness(1.07); } .btn:active { transform:translateY(1px); }
+  .btn[disabled] { opacity:.4; cursor:not-allowed; filter:grayscale(.5); }
+  .btn.ghost { background:var(--stone); color:var(--txt); box-shadow:none;
+    border:1px solid var(--line); }
+
+  .log { margin-top:18px; background:#0d0a13; border:1px solid var(--line);
+    border-radius:10px; padding:10px 14px; max-height:180px; overflow-y:auto; }
+  .log h3 { font-size:13px; color:var(--txt-mute); text-transform:uppercase;
+    letter-spacing:1px; margin-bottom:8px; }
+  .log .entry { font-size:13px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.04);
+    display:flex; gap:8px; }
+  .log .entry .when { color:var(--txt-mute); font-size:11px; min-width:60px; }
+
+  /* ---- Charakter / Paperdoll ------------------------------------ */
+  .doll {
+    display:grid; gap:14px; align-items:center; justify-items:center;
+    grid-template-columns:96px 1fr 96px; grid-template-rows:auto auto;
+    grid-template-areas:"left center right" "bottom bottom bottom";
+    margin-top:6px;
+  }
+  .doll .col { display:flex; flex-direction:column; gap:14px; }
+  .doll .col.left { grid-area:left; } .doll .col.right { grid-area:right; }
+  .doll .center { grid-area:center; }
+  .doll .bottom { grid-area:bottom; display:flex; gap:14px; justify-content:center; }
+  .hero-frame {
+    position:relative; width:230px; height:300px; border-radius:14px;
+    border:2px solid var(--gold-dim);
+    background:radial-gradient(circle at 50% 35%, var(--stone-hi), var(--bg-0) 75%);
+    display:flex; align-items:flex-end; justify-content:center; overflow:hidden;
+  }
+  .hero-frame img { height:270px; filter:drop-shadow(0 8px 8px rgba(0,0,0,.6)); }
+  .hero-frame .tier-badge { position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    font-family:'Cinzel',serif; font-size:12px; color:var(--gold-hi);
+    background:rgba(0,0,0,.5); padding:3px 12px; border-radius:20px;
+    border:1px solid var(--gold-dim); white-space:nowrap; }
+
+  .slot {
+    position:relative; width:84px; height:84px; border-radius:10px; cursor:pointer;
+    background:var(--stone); border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s, border-color .15s;
+  }
+  .slot:hover { transform:scale(1.06); border-color:var(--gold-dim); }
+  .slot .slot-name { position:absolute; bottom:-16px; left:0; right:0; text-align:center;
+    font-size:10px; color:var(--txt-mute); letter-spacing:.3px; }
+  .slot img { width:64px; height:64px; }
+  .slot .empty-ic { font-size:26px; opacity:.25; }
+  .slot[data-rarity]{ box-shadow:0 0 10px -1px var(--rc,transparent); border-color:var(--rc,var(--line)); }
+
+  /* ---- Inventar -------------------------------------------------- */
+  .inv-cat { margin-top:8px; }
+  .inv-cat h3 { font-size:15px; color:var(--gold-hi); margin:18px 0 10px;
+    border-bottom:1px solid var(--line); padding-bottom:6px; letter-spacing:.5px; }
+  .inv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:12px; }
+  .inv-item {
+    position:relative; aspect-ratio:1; border-radius:10px; cursor:pointer;
+    background:var(--stone); border:2px solid var(--rc,var(--line));
+    box-shadow:0 0 9px -2px var(--rc,transparent);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s;
+  }
+  .inv-item:hover { transform:scale(1.07); z-index:5; }
+  .inv-item img { width:60px; height:60px; }
+  .inv-item.equipped::after { content:'✓'; position:absolute; top:2px; right:5px;
+    color:var(--gold-hi); font-weight:700; font-size:13px; text-shadow:0 1px 2px #000; }
+  .inv-empty { color:var(--txt-mute); font-style:italic; padding:14px 4px; }
+
+  /* ---- Tooltip --------------------------------------------------- */
+  #tooltip {
+    position:fixed; z-index:100; pointer-events:none; display:none; max-width:240px;
+    background:#0b0910; border:1px solid var(--gold-dim); border-radius:8px;
+    padding:10px 12px; box-shadow:0 8px 24px rgba(0,0,0,.6); font-size:13px;
+  }
+  #tooltip .tt-name { font-family:'Cinzel',serif; font-weight:700; margin-bottom:3px; }
+  #tooltip .tt-slot { color:var(--txt-mute); font-size:11px; margin-bottom:6px; }
+  #tooltip .tt-stat { font-weight:600; }
+  #tooltip .tt-stat.armor{color:var(--armor);} #tooltip .tt-stat.damage{color:var(--damage);}
+  #tooltip .tt-ilvl { color:var(--txt-mute); font-size:11px; margin-top:4px; }
+
+  /* ---- Modal (Picker + Offline) --------------------------------- */
+  .overlay { position:fixed; inset:0; background:rgba(5,4,9,.78); z-index:80;
+    display:none; align-items:center; justify-content:center; padding:18px; }
+  .overlay.show { display:flex; }
+  .modal { background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:2px solid var(--gold-dim); border-radius:14px; padding:22px;
+    max-width:520px; width:100%; max-height:84vh; overflow-y:auto; }
+  .modal h2 { color:var(--gold-hi); font-size:20px; margin-bottom:6px; text-align:center; }
+  .modal .sub { text-align:center; color:var(--txt-dim); font-size:13px; margin-bottom:16px; }
+  .modal .close-row { text-align:center; margin-top:18px; }
+  .picker-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:10px; }
+
+  .rarity-name[data-r="gewoehnlich"]{color:var(--r-gewoehnlich);}
+  .rarity-name[data-r="ungewoehnlich"]{color:var(--r-ungewoehnlich);}
+  .rarity-name[data-r="selten"]{color:var(--r-selten);}
+  .rarity-name[data-r="episch"]{color:var(--r-episch);}
+  .rarity-name[data-r="legendaer"]{color:var(--r-legendaer);}
+
+  /* Funde-Pop bei Drop */
+  .find-pop { position:fixed; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6);
+    z-index:90; pointer-events:none; opacity:0; text-align:center; }
+  .find-pop.go { animation:pop 1.8s ease forwards; }
+  @keyframes pop { 15%{opacity:1; transform:translate(-50%,-50%) scale(1.1);}
+    30%{transform:translate(-50%,-50%) scale(1);}
+    80%{opacity:1; transform:translate(-50%,-90%) scale(1);}
+    100%{opacity:0; transform:translate(-50%,-130%) scale(.9);} }
+  .find-pop img { width:74px; height:74px; filter:drop-shadow(0 4px 10px #000); }
+  .find-pop .fp-name { font-family:'Cinzel',serif; font-weight:700; margin-top:4px;
+    text-shadow:0 2px 4px #000; }
+
+  @media (max-width:640px){
+    .doll { grid-template-columns:1fr; grid-template-areas:"center" "left" "right" "bottom"; }
+    .doll .col { flex-direction:row; flex-wrap:wrap; justify-content:center; }
+    .stats-mini { width:100%; margin:8px 0 0; justify-content:center; }
+    .topbar { flex-wrap:wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="index.html">← Zurück</a>
+  <h1>⚔️ Idle Abenteuer</h1>
+  <div class="stats-mini">
+    <div class="stat-chip armor"><span class="lbl">Rüstung</span><b id="miniArmor">0</b></div>
+    <div class="stat-chip damage"><span class="lbl">Schaden</span><b id="miniDamage">0</b></div>
+    <div class="stat-chip power"><span class="lbl">Kampfkraft</span><b id="miniPower">0</b></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-view="adventure">Abenteuer</div>
+  <div class="tab" data-view="character">Charakter</div>
+  <div class="tab" data-view="inventory">Inventar</div>
+</div>
+
+<div class="wrap">
+  <!-- ABENTEUER -->
+  <div class="view active" id="view-adventure">
+    <div class="panel">
+      <div class="scene" id="scene">
+        <span class="zone-label" id="zoneLabel">Zone 1</span>
+        <img class="hero bob" id="sceneHero" alt="Held">
+      </div>
+      <div class="progress-row">
+        <span class="label">Nächster Fund</span>
+        <div class="bar"><i id="findBar"></i></div>
+      </div>
+      <div class="progress-row">
+        <span class="label">Fortschritt Zone</span>
+        <div class="bar"><i id="zoneBar"></i></div>
+      </div>
+      <div class="zone-controls">
+        <button class="btn" id="advanceZoneBtn">⚔️ Nächste Zone</button>
+        <span id="zoneHint" style="color:var(--txt-dim); font-size:13px;"></span>
+      </div>
+      <div class="log">
+        <h3>Abenteuer-Logbuch</h3>
+        <div id="logEntries"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARAKTER -->
+  <div class="view" id="view-character">
+    <div class="panel">
+      <div class="doll">
+        <div class="col left" id="dollLeft"></div>
+        <div class="center">
+          <div class="hero-frame">
+            <span class="tier-badge" id="tierBadge"></span>
+            <img id="dollHero" alt="Charakter">
+          </div>
+        </div>
+        <div class="col right" id="dollRight"></div>
+        <div class="bottom" id="dollBottom"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTAR -->
+  <div class="view" id="view-inventory">
+    <div class="panel" id="inventoryPanel"></div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   IDLE ABENTEUER – eigenständig, ohne Firebase/Coins. State in localStorage.
+   ===================================================================== */
+const SAVE_KEY = 'idleAbenteuer_v1';
+const ASSETS = 'adventure-assets/';
+const TICK_MS = 8000;            // Beute-Tick alle 8s (sichtbar)
+const MAX_OFFLINE_MS = 12 * 3600 * 1000; // max. 12h Offline-Fortschritt
+const DROP_CHANCE = 0.55;        // Wahrscheinlichkeit auf Fund pro Tick
+const VARIANTS = 4;              // Sprite-Varianten je Slot
+const MAX_PER_CAT = 30;          // Inventar-Limit je Kategorie (schwächste fliegen raus)
+                                 // Platzhalter bis Verkaufen/Coins angebunden ist.
+
+// ---- Seltenheiten (WoW-Farben) -------------------------------------
+const RARITIES = [
+  { key:'gewoehnlich',   name:'Gewöhnlich',   adj:'Abgenutzte',   color:'#9d9d9d', mult:1.0, weight:60 },
+  { key:'ungewoehnlich', name:'Ungewöhnlich', adj:'Solide',       color:'#1eff00', mult:1.4, weight:25 },
+  { key:'selten',        name:'Seltene',      adj:'Funkelnde',    color:'#0070dd', mult:1.9, weight:10 },
+  { key:'episch',        name:'Epische',      adj:'Glühende',     color:'#a335ee', mult:2.6, weight:4  },
+  { key:'legendaer',     name:'Legendäre',    adj:'Sagenhafte',   color:'#ff8000', mult:3.5, weight:1  },
+];
+const rarityOf = k => RARITIES.find(r => r.key === k);
+const rarityIndex = k => RARITIES.findIndex(r => r.key === k);
+
+// ---- Slots (Paper-Doll) --------------------------------------------
+// art = Sprite-Basisname (icon_<art>_<v>.png); cat = Inventar-Kategorie
+const SLOTS = {
+  kopf:      { name:'Kopf',       art:'kopf',      cat:'ruestung', statType:'armor',  base:'Helm' },
+  schultern: { name:'Schultern',  art:'schultern', cat:'ruestung', statType:'armor',  base:'Schulterplatten' },
+  brust:     { name:'Brust',      art:'brust',     cat:'ruestung', statType:'armor',  base:'Brustpanzer' },
+  haende:    { name:'Hände',      art:'haende',    cat:'ruestung', statType:'armor',  base:'Handschuhe' },
+  beine:     { name:'Beine',      art:'beine',     cat:'ruestung', statType:'armor',  base:'Beinschienen' },
+  fuesse:    { name:'Füße',       art:'fuesse',    cat:'ruestung', statType:'armor',  base:'Stiefel' },
+  umhang:    { name:'Umhang',     art:'umhang',    cat:'ruestung', statType:'armor',  base:'Umhang' },
+  amulett:   { name:'Amulett',    art:'amulett',   cat:'schmuck',  statType:'armor',  base:'Amulett' },
+  ring1:     { name:'Ring 1',     art:'ring',      cat:'schmuck',  statType:'armor',  base:'Ring' },
+  ring2:     { name:'Ring 2',     art:'ring',      cat:'schmuck',  statType:'armor',  base:'Ring' },
+  schild:    { name:'Schild',     art:'schild',    cat:'ruestung', statType:'armor',  base:'Schild' },
+  waffe:     { name:'Waffe',      art:'waffe',     cat:'waffen',   statType:'damage', base:'Schwert' },
+};
+// Zwei Ring-Slots teilen sich dieselbe Inventar-Kategorie/„passt-in"-Logik
+const FITS = slotKey => (slotKey === 'ring1' || slotKey === 'ring2') ? ['ring1','ring2'] : [slotKey];
+
+// Anordnung im Charakterfenster
+const LEFT_SLOTS  = ['kopf','schultern','brust','haende','beine','fuesse'];
+const RIGHT_SLOTS = ['amulett','umhang','ring1','ring2','schild'];
+const BOTTOM_SLOTS = ['waffe'];
+
+const SLOT_ICON = { kopf:'🪖', schultern:'🎽', brust:'🛡️', haende:'🧤', beine:'👖',
+  fuesse:'🥾', umhang:'🧣', amulett:'📿', ring1:'💍', ring2:'💍', schild:'🛡️', waffe:'⚔️' };
+
+const BASE_STAT = { armor:6, damage:8 };  // Basiswert je Stattyp
+const ILVL_K = 0.12;                       // Item-Level-Skalierung
+
+const ZONES = [
+  { name:'Blühende Wiesen',  bg:0 }, { name:'Dunkelwald', bg:1 },
+  { name:'Tiefe Höhlen',     bg:2 }, { name:'Vulkanschlund', bg:3 },
+  { name:'Frostgipfel',      bg:4 },
+];
+const zoneBg = z => ASSETS + 'bg_zone_' + ZONES[Math.min(z, ZONES.length-1)].bg + '.png';
+const zoneName = z => (ZONES[Math.min(z, ZONES.length-1)].name) + (z >= ZONES.length ? ' +' + (z-ZONES.length+1) : '');
+const FINDS_PER_ZONE = 12; // Funde bis „Nächste Zone" freigeschaltet
+
+// ---- State ----------------------------------------------------------
+let state = null;
+let nextId = 1;
+
+function freshState(){
+  const eq = {}; Object.keys(SLOTS).forEach(s => eq[s] = null);
+  return { version:1, zone:0, zoneFinds:0, equipped:eq, inventory:[],
+           lastTick:Date.now(), log:[], totalFinds:0 };
+}
+function loadSave(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return freshState();
+    const s = JSON.parse(raw);
+    if(!s || s.version !== 1) return freshState();
+    // höchste vorhandene id ermitteln, damit neue ids kollisionsfrei sind
+    const all = [...s.inventory, ...Object.values(s.equipped).filter(Boolean)];
+    nextId = all.reduce((m,it)=>Math.max(m, it.id||0), 0) + 1;
+    return s;
+  } catch(e){ console.warn('Save defekt, neu gestartet', e); return freshState(); }
+}
+function saveState(){
+  state.lastTick = Date.now();
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
+}
+
+// ---- Loot-Generierung ----------------------------------------------
+function weightedRarity(zone){
+  // höhere Zonen verschieben Gewichte zu besseren Seltenheiten
+  const boost = zone * 0.6;
+  const weights = RARITIES.map((r,i) => Math.max(0.1, r.weight + i*boost - (i===0 ? boost*4 : 0)));
+  const total = weights.reduce((a,b)=>a+b,0);
+  let roll = Math.random()*total;
+  for(let i=0;i<RARITIES.length;i++){ roll -= weights[i]; if(roll<=0) return RARITIES[i]; }
+  return RARITIES[0];
+}
+function randSlotKey(){
+  const keys = Object.keys(SLOTS);
+  return keys[Math.floor(Math.random()*keys.length)];
+}
+function rollItem(zone){
+  const slotKey = randSlotKey();
+  const slot = SLOTS[slotKey];
+  const rarity = weightedRarity(zone);
+  const ilvl = Math.max(1, Math.round((zone*5 + 1) + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
+  const stat = Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K));
+  const variant = Math.floor(Math.random()*VARIANTS);
+  return {
+    id: nextId++,
+    slotKey, cat: slot.cat, statType: slot.statType,
+    rarity: rarity.key, ilvl, stat, variant,
+    sprite: ASSETS + 'icon_' + slot.art + '_' + variant + '.png',
+    name: rarity.adj + ' ' + slot.base,
+  };
+}
+
+// ---- Totals ---------------------------------------------------------
+function recomputeTotals(){
+  let armor=0, damage=0;
+  for(const it of Object.values(state.equipped)){
+    if(!it) continue;
+    if(it.statType==='armor') armor += it.stat; else damage += it.stat;
+  }
+  const power = Math.round(armor + damage*1.5);
+  return { armor, damage, power };
+}
+function heroTier(power){
+  if(power >= 600) return 3;
+  if(power >= 250) return 2;
+  if(power >= 80)  return 1;
+  return 0;
+}
+const TIER_NAME = ['Abenteurer','Krieger','Held','Legende'];
+
+// ---- Equip ----------------------------------------------------------
+function equip(item){
+  // passenden Slot finden: bei Ringen den ersten freien, sonst Slot des Items
+  let target = item.slotKey;
+  if(item.slotKey==='ring1' || item.slotKey==='ring2'){
+    target = !state.equipped.ring1 ? 'ring1' : (!state.equipped.ring2 ? 'ring2' : 'ring1');
+  }
+  // Item aus Inventar nehmen
+  const idx = state.inventory.findIndex(i => i.id === item.id);
+  if(idx>=0) state.inventory.splice(idx,1);
+  // bisheriges Item zurück ins Inventar
+  const prev = state.equipped[target];
+  if(prev) state.inventory.push(prev);
+  // normalisiere slotKey aufs Ziel (für Rings)
+  item.slotKey = target;
+  item.sprite = ASSETS + 'icon_' + SLOTS[target].art + '_' + item.variant + '.png';
+  state.equipped[target] = item;
+  saveState(); renderAll();
+}
+function unequip(slotKey){
+  const it = state.equipped[slotKey];
+  if(!it) return;
+  state.equipped[slotKey] = null;
+  state.inventory.push(it);
+  saveState(); renderAll();
+}
+
+// ---- Inventar begrenzen (schwächste Items je Kategorie verwerfen) ---
+const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat; // höher = besser
+function trimInventory(){
+  let removed = 0;
+  for(const cat of ['waffen','ruestung','schmuck']){
+    const items = state.inventory.filter(i => i.cat === cat)
+      .sort((a,b)=> itemValue(b)-itemValue(a));
+    if(items.length > MAX_PER_CAT){
+      const keep = new Set(items.slice(0, MAX_PER_CAT).map(i=>i.id));
+      const before = state.inventory.length;
+      state.inventory = state.inventory.filter(i => i.cat !== cat || keep.has(i.id));
+      removed += before - state.inventory.length;
+    }
+  }
+  return removed;
+}
+
+// ---- Logbuch & Funde ------------------------------------------------
+function addLog(item){
+  const r = rarityOf(item.rarity);
+  state.log.unshift({ t:Date.now(), name:item.name, rarity:item.rarity, stat:item.stat, statType:item.statType });
+  if(state.log.length > 40) state.log.pop();
+}
+function popFind(item){
+  const r = rarityOf(item.rarity);
+  const el = document.createElement('div');
+  el.className = 'find-pop';
+  el.innerHTML = '<img src="'+item.sprite+'" alt="">'+
+    '<div class="fp-name" style="color:'+r.color+'">'+item.name+'</div>';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('go'));
+  setTimeout(()=> el.remove(), 1900);
+}
+
+// ---- Tick & Offline -------------------------------------------------
+let findProgress = 0; // 0..1 visueller Balken bis nächster Tick
+let lastTickAt = Date.now();
+
+function doTick(announce){
+  state.lastTick = Date.now();
+  if(Math.random() < DROP_CHANCE){
+    const item = rollItem(state.zone);
+    state.inventory.push(item);
+    addLog(item);
+    state.zoneFinds = Math.min(FINDS_PER_ZONE, state.zoneFinds + 1);
+    state.totalFinds++;
+    if(announce){ popFind(item); trimInventory(); }
+    return item;
+  }
+  return null;
+}
+
+function applyOffline(){
+  const now = Date.now();
+  let elapsed = now - (state.lastTick || now);
+  if(elapsed <= TICK_MS) return null;
+  elapsed = Math.min(elapsed, MAX_OFFLINE_MS);
+  const ticks = Math.floor(elapsed / TICK_MS);
+  if(ticks <= 0) return null;
+  const found = [];
+  for(let i=0;i<ticks;i++){
+    const it = doTick(false);
+    if(it) found.push(it);
+  }
+  state.lastTick = now;
+  const removed = trimInventory();
+  return { ticks, elapsed, found, removed, kept: found.length - removed };
+}
+
+// ---- Rendering ------------------------------------------------------
+const $ = s => document.querySelector(s);
+function renderAll(){ renderTopStats(); renderAdventure(); renderCharacter(); renderInventory(); }
+
+function renderTopStats(){
+  const t = recomputeTotals();
+  $('#miniArmor').textContent = t.armor;
+  $('#miniDamage').textContent = t.damage;
+  $('#miniPower').textContent = t.power;
+}
+
+function renderAdventure(){
+  const t = recomputeTotals();
+  const scene = $('#scene');
+  scene.style.backgroundImage = "url('"+zoneBg(state.zone)+"')";
+  $('#zoneLabel').textContent = 'Zone '+(state.zone+1)+' · '+zoneName(state.zone);
+  $('#sceneHero').src = ASSETS + 'char_tier'+heroTier(t.power)+'.png';
+  $('#findBar').style.width = Math.round(findProgress*100)+'%';
+  $('#zoneBar').style.width = Math.round(state.zoneFinds/FINDS_PER_ZONE*100)+'%';
+
+  const canAdvance = state.zoneFinds >= FINDS_PER_ZONE;
+  $('#advanceZoneBtn').disabled = !canAdvance;
+  $('#zoneHint').textContent = canAdvance
+    ? 'Du bist bereit für die nächste Zone!'
+    : (FINDS_PER_ZONE - state.zoneFinds) + ' Funde bis zur nächsten Zone';
+
+  const log = $('#logEntries');
+  log.innerHTML = state.log.length ? '' : '<div class="entry" style="color:var(--txt-mute)">Noch keine Funde…</div>';
+  for(const e of state.log){
+    const r = rarityOf(e.rarity);
+    const div = document.createElement('div');
+    div.className = 'entry';
+    const sign = e.statType==='armor' ? '🛡️' : '⚔️';
+    div.innerHTML = '<span class="when">'+timeAgo(e.t)+'</span>'+
+      '<span style="color:'+r.color+'">'+e.name+'</span>'+
+      '<span style="margin-left:auto; color:var(--txt-dim)">'+sign+' +'+e.stat+'</span>';
+    log.appendChild(div);
+  }
+}
+
+function slotEl(slotKey){
+  const slot = SLOTS[slotKey];
+  const it = state.equipped[slotKey];
+  const el = document.createElement('div');
+  el.className = 'slot';
+  if(it){
+    const r = rarityOf(it.rarity);
+    el.dataset.rarity = it.rarity;
+    el.style.setProperty('--rc', r.color);
+    el.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
+    bindTooltip(el, it);
+  } else {
+    el.innerHTML = '<span class="empty-ic">'+SLOT_ICON[slotKey]+'</span>';
+  }
+  el.innerHTML += '<span class="slot-name">'+slot.name+'</span>';
+  el.addEventListener('click', ()=> openSlotPicker(slotKey));
+  return el;
+}
+
+function renderCharacter(){
+  const t = recomputeTotals();
+  const tier = heroTier(t.power);
+  $('#dollHero').src = ASSETS + 'char_tier'+tier+'.png';
+  $('#tierBadge').textContent = TIER_NAME[tier] + ' · ' + t.power + ' Kampfkraft';
+  const L = $('#dollLeft'), R = $('#dollRight'), B = $('#dollBottom');
+  L.innerHTML=''; R.innerHTML=''; B.innerHTML='';
+  LEFT_SLOTS.forEach(s => L.appendChild(slotEl(s)));
+  RIGHT_SLOTS.forEach(s => R.appendChild(slotEl(s)));
+  BOTTOM_SLOTS.forEach(s => B.appendChild(slotEl(s)));
+}
+
+const CAT_LABEL = { waffen:'⚔️ Waffen', ruestung:'🛡️ Rüstung', schmuck:'💍 Schmuck' };
+function renderInventory(){
+  const panel = $('#inventoryPanel');
+  panel.innerHTML = '';
+  const cats = ['waffen','ruestung','schmuck'];
+  const equippedIds = new Set(Object.values(state.equipped).filter(Boolean).map(i=>i.id));
+  let any = false;
+  for(const cat of cats){
+    const items = state.inventory.filter(i => i.cat === cat)
+      .sort((a,b)=> rarityIndex(b.rarity)-rarityIndex(a.rarity) || b.stat-a.stat);
+    const wrap = document.createElement('div');
+    wrap.className = 'inv-cat';
+    wrap.innerHTML = '<h3>'+CAT_LABEL[cat]+' <span style="color:var(--txt-mute); font-size:12px;">('+items.length+')</span></h3>';
+    const grid = document.createElement('div');
+    grid.className = 'inv-grid';
+    if(!items.length){
+      grid.innerHTML = '<div class="inv-empty">Keine Gegenstände in dieser Kategorie.</div>';
+    } else {
+      any = true;
+      for(const it of items){
+        const r = rarityOf(it.rarity);
+        const cell = document.createElement('div');
+        cell.className = 'inv-item';
+        cell.style.setProperty('--rc', r.color);
+        cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
+        bindTooltip(cell, it);
+        cell.addEventListener('click', ()=> equip(it));
+        grid.appendChild(cell);
+      }
+    }
+    wrap.appendChild(grid);
+    panel.appendChild(wrap);
+  }
+  if(!any && !state.inventory.length){
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color:var(--txt-dim); text-align:center; margin-top:10px;';
+    hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
+    panel.appendChild(hint);
+  }
+}
+
+// ---- Tooltip --------------------------------------------------------
+const tt = $('#tooltip');
+function tooltipHTML(it){
+  const r = rarityOf(it.rarity);
+  const slot = SLOTS[it.slotKey];
+  const sCls = it.statType==='armor' ? 'armor' : 'damage';
+  const sLbl = it.statType==='armor' ? 'Rüstung' : 'Schaden';
+  return '<div class="tt-name" style="color:'+r.color+'">'+it.name+'</div>'+
+    '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
+    '<div class="tt-stat '+sCls+'">+'+it.stat+' '+sLbl+'</div>'+
+    '<div class="tt-ilvl">Gegenstandsstufe '+it.ilvl+'</div>';
+}
+function bindTooltip(el, it){
+  el.addEventListener('mousemove', e => {
+    tt.innerHTML = tooltipHTML(it);
+    tt.style.display = 'block';
+    const x = Math.min(e.clientX+14, window.innerWidth-250);
+    const y = Math.min(e.clientY+14, window.innerHeight-120);
+    tt.style.left = x+'px'; tt.style.top = y+'px';
+  });
+  el.addEventListener('mouseleave', ()=> tt.style.display='none');
+}
+
+// ---- Slot-Picker (Modal) -------------------------------------------
+const overlay = $('#overlay'), modal = $('#modal');
+function closeModal(){ overlay.classList.remove('show'); }
+overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+
+function openSlotPicker(slotKey){
+  const slot = SLOTS[slotKey];
+  const fitKeys = FITS(slotKey);
+  // passende Items: alle im Inventar, deren slotKey in fitKeys liegt
+  const candidates = state.inventory
+    .filter(i => fitKeys.includes(i.slotKey))
+    .sort((a,b)=> rarityIndex(b.rarity)-rarityIndex(a.rarity) || b.stat-a.stat);
+  const cur = state.equipped[slotKey];
+  let html = '<h2>'+slot.name+'</h2><div class="sub">Wähle einen Gegenstand zum Ausrüsten</div>';
+  if(cur){
+    const r = rarityOf(cur.rarity);
+    html += '<div style="text-align:center; margin-bottom:14px;">'+
+      '<div style="font-size:12px; color:var(--txt-mute); margin-bottom:6px;">Aktuell ausgerüstet</div>'+
+      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+'</span> '+
+      '<span style="color:var(--txt-dim)">(+'+cur.stat+')</span><br>'+
+      '<button class="btn ghost" id="unequipBtn" style="margin-top:10px;">Ablegen</button></div>';
+  }
+  if(candidates.length){
+    html += '<div class="picker-list" id="pickerList"></div>';
+  } else {
+    html += '<p style="text-align:center; color:var(--txt-dim);">Keine passenden Gegenstände im Inventar.</p>';
+  }
+  html += '<div class="close-row"><button class="btn ghost" id="closeModalBtn">Schließen</button></div>';
+  modal.innerHTML = html;
+
+  if(cur) modal.querySelector('#unequipBtn').addEventListener('click', ()=>{ unequip(slotKey); closeModal(); });
+  modal.querySelector('#closeModalBtn').addEventListener('click', closeModal);
+  if(candidates.length){
+    const list = modal.querySelector('#pickerList');
+    for(const it of candidates){
+      const r = rarityOf(it.rarity);
+      const cell = document.createElement('div');
+      cell.className = 'inv-item';
+      cell.style.setProperty('--rc', r.color);
+      cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
+      bindTooltip(cell, it);
+      cell.addEventListener('click', ()=>{ equip(it); closeModal(); });
+      list.appendChild(cell);
+    }
+  }
+  overlay.classList.add('show');
+}
+
+// ---- Offline-Modal --------------------------------------------------
+function showOfflineModal(res){
+  const best = res.found.reduce((b,it)=> (!b || rarityIndex(it.rarity)>rarityIndex(b.rarity)) ? it : b, null);
+  let html = '<h2>Während du weg warst</h2>';
+  const mins = Math.round(res.elapsed/60000);
+  html += '<div class="sub">Dein Held war '+(mins>=60? Math.floor(mins/60)+' Std '+(mins%60)+' Min' : mins+' Min')+' unterwegs.</div>';
+  html += '<p style="text-align:center; font-size:15px; margin-bottom:10px;">🎒 <b>'+res.found.length+'</b> Gegenstände gefunden</p>';
+  if(res.removed > 0){
+    html += '<p style="text-align:center; font-size:12px; color:var(--txt-mute); margin-bottom:8px;">'+
+      'Dein Beutel war voll – die '+res.removed+' schwächsten wurden zurückgelassen.</p>';
+  }
+  if(best){
+    const r = rarityOf(best.rarity);
+    html += '<p style="text-align:center; margin-bottom:6px;">Bester Fund:<br>'+
+      '<img src="'+best.sprite+'" style="width:64px;height:64px;vertical-align:middle"><br>'+
+      '<span class="rarity-name" data-r="'+best.rarity+'" style="font-weight:700">'+best.name+'</span> '+
+      '<span style="color:var(--txt-dim)">(+'+best.stat+')</span></p>';
+  }
+  html += '<div class="close-row"><button class="btn" id="claimBtn">Einsammeln</button></div>';
+  modal.innerHTML = html;
+  modal.querySelector('#claimBtn').addEventListener('click', closeModal);
+  overlay.classList.add('show');
+}
+
+// ---- Hilfen ---------------------------------------------------------
+function timeAgo(t){
+  const s = Math.floor((Date.now()-t)/1000);
+  if(s<60) return 'gerade'; if(s<3600) return Math.floor(s/60)+' Min';
+  if(s<86400) return Math.floor(s/3600)+' Std'; return Math.floor(s/86400)+' T';
+}
+
+// ---- Zone-Wechsel ---------------------------------------------------
+$('#advanceZoneBtn').addEventListener('click', ()=>{
+  if(state.zoneFinds < FINDS_PER_ZONE) return;
+  state.zone++; state.zoneFinds = 0;
+  saveState(); renderAll();
+});
+
+// ---- Tabs -----------------------------------------------------------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    $('#view-'+tab.dataset.view).classList.add('active');
+  });
+});
+
+// ---- Game-Loop ------------------------------------------------------
+function startLoop(){
+  lastTickAt = Date.now();
+  setInterval(()=>{
+    doTick(true);
+    lastTickAt = Date.now();
+    saveState();
+    renderAdventure(); renderTopStats();
+    // Inventar nur aktualisieren, wenn sichtbar (Performance)
+    if($('#view-inventory').classList.contains('active')) renderInventory();
+  }, TICK_MS);
+
+  // visueller Fund-Balken
+  function frame(){
+    findProgress = Math.min(1, (Date.now()-lastTickAt)/TICK_MS);
+    $('#findBar').style.width = Math.round(findProgress*100)+'%';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// Bei Tab-Wechsel/Schließen speichern (für Offline-Fortschritt)
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveState(); });
+window.addEventListener('beforeunload', saveState);
+
+// ---- Init -----------------------------------------------------------
+(function init(){
+  state = loadSave();
+  const offline = applyOffline();
+  renderAll();
+  startLoop();
+  if(offline && offline.found.length) showOfflineModal(offline);
+  saveState();
+})();
+</script>
+</body>
+</html>
