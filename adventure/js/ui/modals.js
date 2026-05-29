@@ -7,7 +7,8 @@ import { INV_SLOTS } from '../data/tuning.js';
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
-import { GENDERS, HAIR_STYLES, HAIR_COLORS, DEFAULT_CHARACTER } from '../data/character-options.js';
+import { GENDERS, HAIR_STYLES, HAIR_COLORS, SKIN_TONES, EYE_COLORS,
+         DEFAULT_CHARACTER } from '../data/character-options.js';
 import { rarityChances } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
@@ -303,12 +304,18 @@ function renderCreator(){
     '<div class="opt-btn'+(_draftChar.hairId===h.id?' sel':'')+'" data-hair="'+h.id+'">'+h.label+'</div>').join('');
   const colorBtns = HAIR_COLORS.map(c =>
     '<div class="color-swatch'+(_draftChar.hairColor===c.color?' sel':'')+'" data-color="'+c.color+'" title="'+c.label+'" style="background:'+c.color+'"></div>').join('');
+  const skinBtns = SKIN_TONES.map(s =>
+    '<div class="color-swatch'+(_draftChar.skinTone===s.color?' sel':'')+'" data-skin="'+s.color+'" title="'+s.label+'" style="background:'+s.color+'"></div>').join('');
+  const eyeBtns = EYE_COLORS.map(e =>
+    '<div class="color-swatch'+(_draftChar.eyeColor===e.color?' sel':'')+'" data-eye="'+e.color+'" title="'+e.label+'" style="background:'+e.color+'"></div>').join('');
   creatorModal().innerHTML =
     '<h2>👤 Charakter erstellen</h2>'+
     '<img class="creator-preview" id="creatorPreview" alt="Vorschau">'+
     '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols2">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
     '<div class="creator-section"><h3>Haarfarbe</h3><div class="color-grid">'+colorBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Hautton</h3><div class="color-grid">'+skinBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Augenfarbe</h3><div class="color-grid">'+eyeBtns+'</div></div>'+
     '<div class="preview-actions">'+
       '<button class="btn" id="saveCharBtn">✓ Fertig</button>'+
       (_creatorForced ? '' : '<button class="btn ghost" id="cancelCharBtn">Abbrechen</button>')+
@@ -320,6 +327,10 @@ function renderCreator(){
     el.addEventListener('click', ()=>{ _draftChar.hairId = el.dataset.hair; renderCreator(); }));
   creatorModal().querySelectorAll('[data-color]').forEach(el =>
     el.addEventListener('click', ()=>{ _draftChar.hairColor = el.dataset.color; renderCreator(); }));
+  creatorModal().querySelectorAll('[data-skin]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.skinTone = el.dataset.skin; renderCreator(); }));
+  creatorModal().querySelectorAll('[data-eye]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.eyeColor = el.dataset.eye; renderCreator(); }));
   creatorModal().querySelector('#saveCharBtn').addEventListener('click', applyCharacter);
   const cancel = creatorModal().querySelector('#cancelCharBtn');
   if(cancel) cancel.addEventListener('click', ()=> creatorOverlay().classList.remove('show'));

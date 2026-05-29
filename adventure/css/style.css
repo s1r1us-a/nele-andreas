@@ -21,6 +21,8 @@ body {
   background-attachment:fixed; min-height:100vh; overflow-x:hidden;
 }
 img { image-rendering:pixelated; image-rendering:crisp-edges; }
+/* Held ist glattes Vektor-SVG – Pixelierung gezielt aufheben (Boss/Item-Icons bleiben Pixel-Art). */
+#sceneHero, #dollHero, #heroSprite, .creator-preview { image-rendering:auto; }
 h1,h2,h3 { font-family:'Cinzel',serif; }
 .pixel { font-family:'Press Start 2P',monospace; }
 
@@ -451,7 +453,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .cs-v.armor{color:var(--armor);} .cs-v.hp{color:#37d67a;}
 .cs-v.crit{color:var(--gold-hi);} .cs-v.level{color:#ffd95e;}
 @media (max-width:560px){ .char-stats { grid-template-columns:1fr; } }
-.creator-preview { display:block; margin:0 auto 14px; width:150px; height:150px;
+.creator-preview { display:block; margin:0 auto 14px; width:auto; height:180px; aspect-ratio:5/8;
   border-radius:14px; background:radial-gradient(circle at 50% 35%, #2a2335, #16121f);
   border:1px solid var(--line); }
 .creator-section { margin-bottom:16px; }
@@ -507,6 +509,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 
 @media (prefers-reduced-motion: reduce){
   .arena-stage.shake{ animation:none; } .combatant{ transition:none; }
+  .bob{ animation:none; }
 }
 
 @media (max-width:640px){
@@ -547,4 +550,10 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   .preview-actions .btn { width:100%; }
   .btn { padding:12px 18px; }
   .find-pop img { width:56px; height:56px; }
+  /* Charakter-Editor auf kleinen Displays kompakt halten */
+  .creator-preview { height:150px; }
+  .creator-section { margin-bottom:12px; }
+  .color-grid { grid-template-columns:repeat(5,1fr); gap:8px; }
+  .color-swatch { width:34px; height:34px; }
+  .opt-btn { padding:9px 6px; font-size:12px; }
 }
