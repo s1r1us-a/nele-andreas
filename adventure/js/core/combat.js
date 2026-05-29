@@ -294,15 +294,42 @@ function mechFloat(who, text, color){
   $('#dmgLayer').appendChild(num);
   setTimeout(()=> num.remove(), FLOAT / combatSpeed);
 }
+
+function heroUsesStab(){
+  return state.equipped && state.equipped.waffe && state.equipped.waffe.itemType === 'stab';
+}
+
+function staffProjectileAnim(fromAnchor, toAnchor, layer, speed, onArrive){
+  const ball = document.createElement('div');
+  ball.className = 'staff-projectile';
+  ball.style.left = fromAnchor.x + 'px';
+  ball.style.top  = (fromAnchor.y - 10) + 'px';
+  layer.appendChild(ball);
+  const dx = toAnchor.x - fromAnchor.x;
+  const dy = toAnchor.y - fromAnchor.y;
+  const dur = Math.max(80, 220 / speed);
+  ball.animate(
+    [ { transform:'translate(0,0) scale(1)', opacity:1 },
+      { transform:`translate(${dx}px,${dy}px) scale(0.4)`, opacity:0.6 } ],
+    { duration: dur, easing:'ease-in', fill:'forwards' }
+  );
+  setTimeout(()=>{ ball.remove(); if(onArrive) onArrive(); }, dur);
+}
+
 function attackAnim(who, dmg, crit, onHit){
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isHero = who==='hero';
   const attacker = isHero ? $('#heroSprite') : $('#bossSprite');
   const target   = isHero ? $('#bossSprite') : $('#heroSprite');
   const targetId = isHero ? 'bossSprite' : 'heroSprite';
+  const heroId   = isHero ? 'heroSprite' : 'bossSprite';
   const stage = $('#arenaStage');
-  if(!reduce){ lunge(attacker, !isHero); }
-  setTimeout(()=>{
+  const layer = $('#dmgLayer');
+  const useProjectile = isHero && !reduce && heroUsesStab();
+
+  if(!reduce && !useProjectile){ lunge(attacker, !isHero); }
+
+  const doHit = () => {
     if(onHit) onHit();
     if(!reduce){
       target.classList.add('hit');
@@ -313,8 +340,7 @@ function attackAnim(who, dmg, crit, onHit){
     const a = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
     const jitter = Math.round((Math.random()*2-1)*12);
     const x = a.x + jitter, y = a.y;
-    const layer = $('#dmgLayer');
-    if(!reduce){
+    if(!reduce && !useProjectile){
       const slash = document.createElement('div');
       slash.className = 'slash'; slash.style.left=(x-45)+'px'; slash.style.top=(y-45)+'px';
       layer.appendChild(slash);
@@ -326,7 +352,15 @@ function attackAnim(who, dmg, crit, onHit){
     num.style.left=(x-10)+'px'; num.style.top=y+'px';
     layer.appendChild(num);
     setTimeout(()=> num.remove(), FLOAT / combatSpeed);
-  }, reduce ? 0 : HIT_DELAY / combatSpeed);
+  };
+
+  if(useProjectile){
+    const from = (currentFight && currentFight.anchor[heroId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
+    const to   = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth*3/4, y: stage.clientHeight/2 };
+    staffProjectileAnim(from, to, layer, combatSpeed, doHit);
+  } else {
+    setTimeout(doHit, reduce ? 0 : HIT_DELAY / combatSpeed);
+  }
 }
 
 // ---- Heiltrank im Kampf --------------------------------------------

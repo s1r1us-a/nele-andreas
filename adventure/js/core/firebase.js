@@ -4,7 +4,7 @@
    stellt db + Helfer für state.js / coins.js bereit.
    ===================================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, update, remove, runTransaction, onValue }
+import { getDatabase, ref, get, set, update, remove, push, runTransaction, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -23,7 +23,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db   = getDatabase(app);
 export const auth = getAuth(app);
-export { ref, get, set, update, remove, runTransaction, onValue };
+export { ref, get, set, update, remove, push, runTransaction, onValue };
 
 // E-Mail → Anzeigename (Mapping wie in index.html).
 export function displayName(email){
@@ -31,6 +31,7 @@ export function displayName(email){
   const e = email.toLowerCase();
   if(e === 'raederich@outlook.com') return 'Andreas';
   if(e === 'nele.busse@web.de')     return 'Nele';
+  if(e === 'dev@dev.com')           return 'Dev';
   return email.split('@')[0];
 }
 
