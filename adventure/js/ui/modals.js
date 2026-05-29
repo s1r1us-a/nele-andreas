@@ -18,7 +18,8 @@ import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, rollItem, inventoryFull } from '../core/items.js';
 import { startExpedition } from '../core/expedition.js';
-import { startBossFight, updatePotionBtn } from '../core/combat.js';
+import { ITEM_TYPES } from '../data/itemTypes.js';
+import { startBossFight, updatePotionBtn, setGodmode, isGodmode } from '../core/combat.js';
 import { $, fmtVal, fmtBig, IS_TOUCH, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { renderAll } from './render.js';
@@ -352,7 +353,10 @@ export function openDevPanel(){
     '<div class="dev-list">'+
       '<button class="btn ghost" id="devFinish">⏭️ Abenteuer sofort beenden</button>'+
       '<button class="btn ghost" id="devFill">🎒 Inventar mit Items füllen</button>'+
+      '<button class="btn ghost" id="devOneEach">🧰 Eins von jedem Item-Typ</button>'+
       '<button class="btn ghost" id="devClear">🗑️ Inventar leeren (außer 🔒)</button>'+
+      '<button class="btn ghost" id="devGod">'+(isGodmode()?'🛡️ Godmode: AN':'🛡️ Godmode: AUS')+'</button>'+
+      '<button class="btn ghost" id="devBosses">⚔️ Gegen beliebigen Boss kämpfen</button>'+
       '<button class="btn ghost" id="devGold">💰 +100000 Gold</button>'+
       '<button class="btn ghost" id="devXp">⭐ +5000 XP</button>'+
       '<button class="btn ghost" id="devPotion">🧪 +3 Heiltränke</button>'+
@@ -363,7 +367,18 @@ export function openDevPanel(){
   const q = s => devModal().querySelector(s);
   q('#devFinish').addEventListener('click', ()=>{ if(state.expedition){ state.expedition.endsAt = Date.now(); saveState(); renderAll(); } devOverlay().classList.remove('show'); });
   q('#devFill').addEventListener('click', ()=>{ while(state.inventory.length < INV_SLOTS) state.inventory.push(rollItem(state.zone, 2)); saveState(); renderAll(); });
+  q('#devOneEach').addEventListener('click', ()=>{
+    const slotForArt = art => Object.keys(SLOTS).find(k => SLOTS[k].art === art);
+    for(const art of Object.keys(ITEM_TYPES)){
+      const sk = slotForArt(art); if(!sk) continue;
+      for(const ty of ITEM_TYPES[art])
+        state.inventory.push(rollItem(state.zone, 0, { slots:[sk], forceType:ty.key, forceRarityKey:'episch' }));
+    }
+    saveState(); renderAll(); toast('🧰 Je 1 Item pro Typ ins Inventar gelegt');
+  });
   q('#devClear').addEventListener('click', ()=>{ state.inventory = state.inventory.filter(it=>isLocked(it.id)); saveState(); renderAll(); });
+  q('#devGod').addEventListener('click', ()=>{ setGodmode(!isGodmode()); q('#devGod').textContent = isGodmode()?'🛡️ Godmode: AN':'🛡️ Godmode: AUS'; });
+  q('#devBosses').addEventListener('click', ()=>{ devOverlay().classList.remove('show'); openDevBossPicker(); });
   q('#devGold').addEventListener('click', ()=>{ state.gold += 100000; saveState(); renderAll(); });
   q('#devXp').addEventListener('click', ()=>{ gainXp(5000); saveState(); renderAll(); });
   q('#devPotion').addEventListener('click', ()=>{ state.potions = (state.potions||0) + 3; saveState(); renderAll(); updatePotionBtn(); });
@@ -374,4 +389,26 @@ export function openDevPanel(){
   });
   q('#devClose').addEventListener('click', ()=> devOverlay().classList.remove('show'));
   devOverlay().classList.add('show');
+}
+
+// Dev: direkt gegen JEDEN Boss kämpfen (auch noch nicht freigeschaltete).
+export function openDevBossPicker(){
+  let rows = '';
+  for(let i=0; i<BOSS_COUNT; i++){
+    const b = bossFor(i);
+    rows += '<div class="bl-row">'+
+      '<img class="bl-portrait" src="'+b.sprite+'" alt="">'+
+      '<div class="bl-info"><div class="bl-name">👑 '+(i+1)+'. '+b.name+'</div>'+
+        '<div class="bl-meta">'+zoneName(i)+' · Kraft '+fmtBig(b.recPower)+'</div></div>'+
+      '<button class="btn ghost" data-devfight="'+i+'">Kämpfen</button>'+
+    '</div>';
+  }
+  openModal('<h2>🛠 Boss-Test</h2>'+
+    '<div class="sub">Direkt gegen jeden Boss kämpfen (nur Test). Tipp: Godmode aktivieren.</div>'+
+    '<div class="boss-list">'+rows+'</div>'+
+    '<div class="close-row"><button class="btn ghost" id="dbpClose">Schließen</button></div>');
+  modal().querySelectorAll('[data-devfight]').forEach(btn => btn.addEventListener('click', ()=>{
+    const idx = parseInt(btn.dataset.devfight,10); closeModal(); startBossFight(idx);
+  }));
+  modal().querySelector('#dbpClose').addEventListener('click', closeModal);
 }

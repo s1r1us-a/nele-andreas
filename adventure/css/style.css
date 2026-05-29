@@ -20,9 +20,8 @@ body {
     linear-gradient(160deg, var(--bg-1), var(--bg-0));
   background-attachment:fixed; min-height:100vh; overflow-x:hidden;
 }
-img { image-rendering:pixelated; image-rendering:crisp-edges; }
-/* Held ist glattes Vektor-SVG – Pixelierung gezielt aufheben (Boss/Item-Icons bleiben Pixel-Art). */
-#sceneHero, #dollHero, #heroSprite, .creator-preview { image-rendering:auto; }
+/* Alle Spiel-Grafiken sind jetzt glatte Vektor-SVGs → keine Pixelierung. */
+img { image-rendering:auto; }
 h1,h2,h3 { font-family:'Cinzel',serif; }
 .pixel { font-family:'Press Start 2P',monospace; }
 
@@ -88,7 +87,6 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .scene {
   position:relative; height:230px; border-radius:12px; overflow:hidden;
   border:2px solid var(--gold-dim); background-size:cover; background-position:center bottom;
-  image-rendering:pixelated;
 }
 .scene .hero {
   position:absolute; bottom:14px; left:50%; height:170px; width:auto;
@@ -283,7 +281,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   padding:14px; border-radius:12px; border:2px solid var(--gold-dim);
   background:linear-gradient(180deg, rgba(60,20,20,.5), rgba(20,16,28,.7)); }
 .boss-panel .boss-portrait { width:96px; height:96px; flex:0 0 auto;
-  image-rendering:pixelated; filter:drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
 .boss-info { flex:1; }
 .boss-name { font-family:'Cinzel',serif; font-weight:700; font-size:18px; color:#ff9a6b;
   text-shadow:0 2px 0 #000; margin-bottom:4px; }
@@ -299,7 +297,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .bl-row { display:flex; gap:12px; align-items:center; padding:10px;
   border-radius:10px; background:var(--stone); border:1px solid var(--line); }
 .bl-row.current { border-color:var(--gold-dim); background:rgba(255,217,94,.06); }
-.bl-portrait { width:54px; height:54px; flex:0 0 auto; image-rendering:pixelated; }
+.bl-portrait { width:54px; height:54px; flex:0 0 auto; }
 .bl-info { flex:1; min-width:0; }
 .bl-name { font-family:'Cinzel',serif; font-weight:700; font-size:14px; color:#ff9a6b; }
 .bl-meta { font-size:12px; color:var(--txt-dim); margin-top:2px; }
@@ -373,7 +371,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .arena-stage.shake { animation:shake .25s; }
 @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-7px);}
   75%{transform:translateX(7px);} }
-.combatant { position:absolute; bottom:24px; image-rendering:pixelated;
+.combatant { position:absolute; bottom:24px;
   filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); will-change:transform; }
 .combatant.hero-c { left:8%; height:180px; }
 .combatant.boss-c { right:6%; height:230px; transform:scaleX(-1); }

@@ -5,8 +5,9 @@ import { ASSETS, BASE_STAT, ILVL_K, ILVL_QUAD, INV_SLOTS } from '../data/tuning.
 import { RARITIES, rarityOf, rarityIndex, rarityByIndex, maxRarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
-import { pickItemType } from '../data/itemTypes.js';
+import { pickItemType, ITEM_TYPES } from '../data/itemTypes.js';
 import { state, nextItemId, saveState } from './state.js';
+import { buildItemSVG } from './item-art.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
 export const POWER_W = {
@@ -86,11 +87,17 @@ function randSlotKey(slots){
   const keys = (slots && slots.length) ? slots : SLOT_KEYS;
   return keys[Math.floor(Math.random()*keys.length)];
 }
-// opts: { slots?, forceRarityKey?, minIlvl? }
+// opts: { slots?, forceRarityKey?, minIlvl?, forceType? }
 export function rollItem(zone, lootBoost=0, opts={}){
   const slotKey = randSlotKey(opts.slots);
   const slot = SLOTS[slotKey];
-  const itype = pickItemType(slotKey);   // Item-Typ mit Stat-Archetyp (Teil 1)
+  // forceType (Dev): bestimmten Item-Typ erzwingen, sonst zufällig (Teil 1).
+  let itype = pickItemType(slotKey);
+  if(opts.forceType){
+    const list = ITEM_TYPES[slot.art];
+    const t = list && list.find(x => x.key === opts.forceType);
+    if(t) itype = t;
+  }
   let rarity;
   if(opts.forceRarityKey) rarity = rarityOf(opts.forceRarityKey);
   else {
@@ -115,7 +122,7 @@ export function rollItem(zone, lootBoost=0, opts={}){
     quality: Math.round(quality*100),
     affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
-    sprite: ASSETS + 'icon_' + slot.art + '_' + variant + '.png',
+    sprite: buildItemSVG(slot.art, variant, rarity.key),
     name: rarity.adj + ' ' + itype.name,
   };
 }
@@ -193,7 +200,7 @@ export function equip(item, explicitTarget){
   const prev = state.equipped[target];
   if(prev) state.inventory.push(prev);
   item.slotKey = target;
-  item.sprite = ASSETS + 'icon_' + SLOTS[target].art + '_' + item.variant + '.png';
+  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity);
   state.equipped[target] = item;
   saveState();
 }

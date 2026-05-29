@@ -7,6 +7,8 @@
      Mehrere Bosse/Gebiete teilen sich vorhandene Grafiken (kein neues Asset nötig).
    ===================================================================== */
 import { ASSETS, ENDLESS } from './tuning.js';
+import { buildBossSVG } from '../core/boss-art.js';
+import { buildZoneBgSVG } from '../core/zone-art.js';
 
 // ---- Mechanik-Katalog (für Tooltips, Log & Boss-Info) --------------
 export const MECH_DEFS = {
@@ -101,11 +103,17 @@ export const BOSS_DEFS = [
 
 export const BOSS_COUNT = BOSS_DEFS.length;
 
+// Farbe der primären Mechanik (für Augenglühen/Aura des Boss-SVG).
+function mechColorOf(b){
+  const m = Array.isArray(b.mechanic) ? b.mechanic[0] : b.mechanic;
+  return (m && MECH_DEFS[m] && MECH_DEFS[m].color) || '#ff5a3c';
+}
+
 // Jenseits der definierten Bosse: gestaffelte Endlos-Skalierung (#14).
 export function bossFor(zone){
   if(zone < BOSS_DEFS.length){
     const b = BOSS_DEFS[zone];
-    return { ...b, sprite: ASSETS+'boss_'+b.spr+'.png', zone };
+    return { ...b, sprite: buildBossSVG({ spr:b.spr, area:b.area, zone, mechColor:mechColorOf(b) }), zone };
   }
   const over = zone - BOSS_DEFS.length + 1;
   const last = BOSS_DEFS[BOSS_DEFS.length-1];
@@ -115,11 +123,11 @@ export function bossFor(zone){
     maxHp: Math.round(last.maxHp * Math.pow(ENDLESS.hpFactor, over)),
     atk:   Math.round(last.atk   * Math.pow(ENDLESS.atkFactor, over)),
     recPower: Math.round(last.recPower * Math.pow(ENDLESS.powFactor, over)),
-    sprite: ASSETS + 'boss_' + last.spr + '.png',
+    sprite: buildBossSVG({ spr:last.spr, area:last.area, zone, mechColor:mechColorOf(last) }),
     zone,
   };
 }
-export const zoneBg = z => ASSETS + 'bg_zone_' + ZONES[bossFor(z).area].bg + '.png';
+export const zoneBg = z => buildZoneBgSVG(ZONES[bossFor(z).area].bg);
 export const zoneName = z => ZONES[bossFor(z).area].name + (z >= BOSS_DEFS.length ? ' +' + (z-BOSS_DEFS.length+1) : '');
 
 // Garantierte Drop-Seltenheit je Boss-Index (#15): später → besser.
