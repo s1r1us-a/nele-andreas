@@ -2,10 +2,12 @@
    TURM DES WAHNSINNS – Multiplayer-Koop-Modus.
    Lobby-Verwaltung + Kampf-Engine (Host-gesteuert, RTDB-synchronisiert).
    ===================================================================== */
-import { db, ref, get, set, update, push, onValue } from './firebase.js';
+import { db, ref, get, set, update, push, onValue, onDisconnect } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
-import { CLASS_BY_ID, DEFAULT_CLASS_ID } from '../data/classes.js';
+import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from '../data/classes.js';
+import { materialOf } from '../data/itemTypes.js';
+import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
 import { powerOfBundle } from './items.js';
 import { buildBossSVG } from './boss-art.js';
@@ -14,6 +16,7 @@ import { fmtBig } from '../ui/dom.js';
 
 const LOBBY_PATH  = id => 'tower/lobbies/' + id;
 const COMBAT_PATH = id => 'tower/combat/'   + id;
+const ABIL_PATH   = id => 'tower/abil/'     + id;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
 const TOWER_BASE_HP  = 700;
@@ -87,6 +90,7 @@ export function computePlayerStats(s){
   b.armor  += lb.armor;
   b.damage += lb.dmg;
   b.maxHp  += lb.hp;
+  applyTalents(s, b);   // Talentbaum-Effekte (no-op solange leer)
   b.power   = powerOfBundle(b);
 
   const cls = CLASS_BY_ID[s && s.character && s.character.classId] || CLASS_BY_ID[DEFAULT_CLASS_ID];
@@ -98,7 +102,7 @@ export function computePlayerStats(s){
   const critMult   = COMBAT.heroBaseCritMult + (b.critDamage || 0);
   const interval   = Math.max(COMBAT.swingMinMs, COMBAT.swingBaseMs * (1 - b.attackSpeed));
   const lifesteal  = (b.lifesteal || 0) * cls.healMult;
-  const usesStab   = !!(s.equipped && s.equipped.waffe && s.equipped.waffe.itemType === 'stab');
+  const usesStab   = !!(s.equipped && s.equipped.waffe && materialOf(s.equipped.waffe) === 'zauberstab');
 
   return {
     maxHp, atk, critChance, critMult, interval,
@@ -112,27 +116,33 @@ export function computePlayerStats(s){
 }
 
 // ---- Lobby-Verwaltung -----------------------------------------------
-export async function createLobby(userKey, displayName){
+export async function createLobby(userKey, displayName, classId){
   const lobbyRef = push(ref(db, 'tower/lobbies'));
   const lobbyId  = lobbyRef.key;
   await set(lobbyRef, {
-    host: userKey, hostName: displayName,
-    guest: null,   guestName: null,
+    host: userKey, hostName: displayName, hostClass: classId || DEFAULT_CLASS_ID,
+    guest: null,   guestName: null,       guestClass: null,
     status: 'waiting', floor: 1,
     createdAt: Date.now(),
     hostReady: false, guestReady: false,
   });
+  // Host-Disconnect → Lobby automatisch schließen (B3).
+  try { onDisconnect(ref(db, LOBBY_PATH(lobbyId) + '/status')).set('ended'); } catch(e){}
   return lobbyId;
 }
 
-export async function joinLobby(lobbyId, userKey, displayName){
+export async function joinLobby(lobbyId, userKey, displayName, classId){
   const snap = await get(ref(db, LOBBY_PATH(lobbyId)));
   if(!snap.exists()) throw new Error('Lobby nicht gefunden.');
   const lobby = snap.val();
   if(lobby.status === 'ended') throw new Error('Diese Lobby ist beendet.');
   if(lobby.guest && lobby.guest !== userKey) throw new Error('Lobby ist bereits voll.');
   if(lobby.host === userKey) throw new Error('Du bist bereits der Host.');
-  await update(ref(db, LOBBY_PATH(lobbyId)), { guest: userKey, guestName: displayName });
+  await update(ref(db, LOBBY_PATH(lobbyId)), {
+    guest: userKey, guestName: displayName, guestClass: classId || DEFAULT_CLASS_ID,
+  });
+  // Gast-Disconnect → Lobby ebenfalls schließen (B3).
+  try { onDisconnect(ref(db, LOBBY_PATH(lobbyId) + '/status')).set('ended'); } catch(e){}
   return lobby;
 }
 
@@ -142,6 +152,12 @@ export function listenLobby(lobbyId, cb){
 
 export function listenCombat(lobbyId, cb){
   return onValue(ref(db, COMBAT_PATH(lobbyId)), snap => cb(snap.exists() ? snap.val() : null));
+}
+
+// ---- Skill-Aktivierung (jeder Spieler, host-validiert) -------------
+// Ein Spieler fordert seine Klassen-Fähigkeit an. Der Host wendet sie an.
+export async function requestAbility(lobbyId, slot, abilityId){
+  try { await set(ref(db, ABIL_PATH(lobbyId)), { slot, ability: abilityId, ts: Date.now() }); } catch(e){}
 }
 
 export async function setReady(lobbyId, isHost, val = true){
@@ -163,6 +179,7 @@ export async function loadGuestSave(guestKey){
 // ---- Kampf-Engine (läuft nur beim Host) ----------------------------
 let _fightTimer = null;
 let _fight = null;
+let _abilUnsub = null;
 
 export function getCurrentFight(){ return _fight; }
 
@@ -188,6 +205,7 @@ function addLog(fight, text, color){
 }
 
 async function syncFight(fight){
+  const now = Date.now();
   const data = {
     floor:       fight.floor,
     bossHp:      Math.ceil(fight.bossHp),
@@ -197,22 +215,35 @@ async function syncFight(fight){
     frontName:   fight.frontName,
     frontTier:   fight.frontTier,
     frontStab:   fight.frontUsesStab || false,
+    frontKey:    fight.frontKey || '',
+    frontClass:  fight.frontClass || '',
     backHp:      Math.ceil(fight.backHp),
     backMaxHp:   fight.backMaxHp,
     backName:    fight.backName,
     backTier:    fight.backTier,
     backStab:    fight.backUsesStab  || false,
+    backKey:     fight.backKey || '',
+    backClass:   fight.backClass || '',
     turn:        fight.turn,
     dmgDealt:    fight.dmgDealt,
+    startedAt:   fight.startedAt,
     log:         fight.log,
+    // Aktive Skill-Effekte für die Gast-Animationen (B15)
+    fx: {
+      ablazeFront: now < (fight.frontCritUntil||0),
+      ablazeBack:  now < (fight.backCritUntil||0),
+      shield:      now < (fight.groupDmgReduceUntil||0),
+      healTs:      fight.lastHealTs || 0,
+    },
     status:      fight.over ? (fight.won ? 'won' : 'lost') : 'fighting',
   };
   try { await set(ref(db, COMBAT_PATH(fight.lobbyId)), data); } catch(e){ console.warn('Sync error', e); }
   if(fight.onUpdate) fight.onUpdate(data);
 }
 
-export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName, backName, onUpdate){
+export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName, backName, onUpdate, keys){
   const boss = towerBossFor(floor);
+  keys = keys || {};
 
   const fight = {
     lobbyId, floor, boss,
@@ -226,6 +257,8 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontIsHealer: frontStats.classId === 'heiler',
     frontUsesStab: frontStats.usesStab || false,
     frontName, frontTier: frontStats.tier,
+    frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
+    frontAbility: abilityOf(frontStats.classId),
     backMaxHp:  backStats.maxHp,  backHp: backStats.maxHp,
     backAtk:    backStats.atk,    backArmor: backStats.armor,
     backCrit:   backStats.critChance, backCritMult: backStats.critMult,
@@ -235,15 +268,50 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backHealMult: backStats.healMult,
     backUsesStab: backStats.usesStab || false,
     backName, backTier: backStats.tier,
+    backKey: keys.backKey || '', backClass: backStats.classId || '',
+    backAbility: abilityOf(backStats.classId),
     turn:0, over:false, won:false,
     enrageMult:1, berserkMult:1, poison:0, shieldTurns:0,
     speed:1, log:{}, logCount:0,
     startedAt: Date.now(), dmgDealt:0,
+    // Skill-Status (B14)
+    frontCritUntil:0, backCritUntil:0, groupDmgReduceUntil:0, lastHealTs:0,
+    _lastAbilTs:0,
     onUpdate,
   };
   _fight = fight;
+  // Host lauscht auf Skill-Anfragen beider Spieler.
+  _abilUnsub = onValue(ref(db, ABIL_PATH(lobbyId)), snap => {
+    if(!snap.exists()) return;
+    const req = snap.val();
+    if(!req || !req.ts || req.ts <= fight._lastAbilTs) return;
+    fight._lastAbilTs = req.ts;
+    applyAbility(fight, req.slot, req.ability);
+  });
   syncFight(fight);
   scheduleExchange(fight);
+}
+
+// Host wendet eine angeforderte Klassen-Fähigkeit auf den Kampf an.
+function applyAbility(fight, slot, abilityId){
+  if(fight.over) return;
+  const ab = (slot === 'front' ? fight.frontAbility : fight.backAbility);
+  if(!ab || ab.id !== abilityId) return;
+  const now = Date.now();
+  if(ab.id === 'heilkreis'){
+    if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
+    if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + Math.round(fight.backMaxHp  * ab.healPct));
+    fight.lastHealTs = now;
+    addLog(fight, '➕ Heilkreis: alle Helden +'+Math.round(ab.healPct*100)+'% HP', '#37d67a');
+  } else if(ab.id === 'raserei'){
+    if(slot === 'front') fight.frontCritUntil = now + ab.dur; else fight.backCritUntil = now + ab.dur;
+    addLog(fight, '🔥 '+(slot==='front'?fight.frontName:fight.backName)+' entfacht Raserei!', '#ff8a3d');
+  } else if(ab.id === 'schildwall'){
+    fight.groupDmgReduceUntil = now + ab.dur;
+    fight.groupDmgReducePct   = ab.dmgReduce || 0;
+    addLog(fight, '🛡️ Schildwall – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff');
+  }
+  syncFight(fight);
 }
 
 function scheduleExchange(fight){
@@ -268,9 +336,16 @@ function exchange(fight){
   // Frost → slow (handled via longer interval this turn)
   const frosted = mechs.includes('frost') && fight.turn % 3 === 0;
 
+  // Skill: Raserei-Krit-Boost (B14)
+  const now = Date.now();
+  const fCritBonus = (now < (fight.frontCritUntil||0) && fight.frontAbility) ? (fight.frontAbility.critBonus||0) : 0;
+  const bCritBonus = (now < (fight.backCritUntil ||0) && fight.backAbility)  ? (fight.backAbility.critBonus ||0) : 0;
+  const effFrontCrit = Math.min(1, fight.frontCrit + fCritBonus);
+  const effBackCrit  = Math.min(1, fight.backCrit  + bCritBonus);
+
   // ---- Vorne schlägt Boss ---
   if(fight.frontHp > 0){
-    const { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, fight.frontCrit, fight.frontCritMult);
+    const { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
     fight.bossHp = Math.max(0, fight.bossHp - fd);
     fight.dmgDealt += fd;
     addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
@@ -295,7 +370,7 @@ function exchange(fight){
       fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + healAmt);
       addLog(fight, '💚 ' + fight.backName + ' heilt ' + fight.frontName + ': +' + fmtBig(healAmt) + ' HP', '#37d67a');
     } else {
-      const { dmg: bd, crit: bc } = rollDmg(fight.backAtk, fight.backCrit, fight.backCritMult);
+      const { dmg: bd, crit: bc } = rollDmg(fight.backAtk, effBackCrit, fight.backCritMult);
       fight.bossHp = Math.max(0, fight.bossHp - bd);
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
@@ -344,11 +419,15 @@ function exchange(fight){
 
     const frontDead = fight.frontHp <= 0;
 
+    // Skill: Schildwall reduziert Gruppen-Schaden (B14)
+    const wallFactor = Date.now() < (fight.groupDmgReduceUntil||0) ? (1 - (fight.groupDmgReducePct||0)) : 1;
+
     // Front-Treffer
     if(!frontDead){
       const effArmorFront = breathTurn ? 0 : fight.frontArmor;
       const effAtkFront   = fight.shieldTurns > 0 ? bossAtk * 0.4 * FRONT_SHARE : bossAtk * FRONT_SHARE;
-      const { dmg: fd, dodged: dFront } = takeBossDmg(effAtkFront, effArmorFront, fight.frontDodge, fight.frontVers);
+      let { dmg: fd, dodged: dFront } = takeBossDmg(effAtkFront, effArmorFront, fight.frontDodge, fight.frontVers);
+      if(fd > 0 && wallFactor < 1) fd = Math.max(1, Math.round(fd * wallFactor));
       if(dFront){
         addLog(fight, '💨 ' + fight.frontName + ' weicht aus!', '#9ec5ff');
       } else if(fd > 0){
@@ -374,7 +453,8 @@ function exchange(fight){
     const backShare = frontDead ? 1.0 : BACK_SHARE;
     const effAtkBack = fight.shieldTurns > 0 ? bossAtk * 0.4 * backShare : bossAtk * backShare;
     const effArmorBack = breathTurn ? 0 : fight.backArmor;
-    const { dmg: bd, dodged: dBack } = takeBossDmg(effAtkBack, effArmorBack, fight.backDodge, fight.backVers);
+    let { dmg: bd, dodged: dBack } = takeBossDmg(effAtkBack, effArmorBack, fight.backDodge, fight.backVers);
+    if(bd > 0 && wallFactor < 1) bd = Math.max(1, Math.round(bd * wallFactor));
     if(dBack){
       addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');
     } else if(bd > 0){
@@ -407,6 +487,7 @@ export function setFightSpeed(v){
 
 export function stopFight(){
   clearTimeout(_fightTimer);
+  if(_abilUnsub){ _abilUnsub(); _abilUnsub = null; }
   if(_fight) _fight.over = true;
   _fight = null;
 }
@@ -418,5 +499,6 @@ export async function advanceFloor(lobbyId){
   const next = (lobby.floor || 1) + 1;
   await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting' });
   await set(ref(db, COMBAT_PATH(lobbyId)), null);
+  await set(ref(db, ABIL_PATH(lobbyId)), null);
   return next;
 }

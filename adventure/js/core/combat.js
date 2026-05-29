@@ -6,6 +6,8 @@ import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM } from '../data/tuning.js';
 import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
 import { rollAffixes } from '../core/items.js';
+import { materialOf } from '../data/itemTypes.js';
+import { classOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
@@ -84,6 +86,9 @@ export function startBossFight(bossIndex){
     enrageMult:1,
     // Meter
     startedAt: Date.now(), dmgDealt:0, log:[],
+    // Klassen-Spezialfähigkeit (B13)
+    ability: classOf(state).ability || null,
+    abilityCdUntil: 0, critBoostUntil: 0, dmgReduceUntil: 0,
   };
   currentFight = fight;
   updateHpBars(fight);
@@ -95,6 +100,8 @@ export function startBossFight(bossIndex){
   combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×';
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   updatePotionBtn();
+  resetAbilityVisuals();
+  updateAbilityBtn();
   // Mechanik-Hinweis
   const mlist = mechanics.map(m => (MECH_DEFS[m]?MECH_DEFS[m].emoji+MECH_DEFS[m].label:m)).join(' · ');
   addCombatLog(fight, '⚔️ Kampf gegen '+boss.name+(mlist?' ('+mlist+')':''), '#ffd24a');
@@ -153,7 +160,8 @@ function exchange(fight){
   } else if(fight.invulnTurns > 0){
     mechFloat('boss', '✨ Immun', '#9ec5ff');
   } else {
-    const effCrit = fight.heroCritChance * (fight.curseTurns>0 ? 0.5 : 1);
+    let effCrit = fight.heroCritChance * (fight.curseTurns>0 ? 0.5 : 1);
+    if(Date.now() < fight.critBoostUntil && fight.ability){ effCrit = Math.min(1, effCrit + (fight.ability.critBonus||0)); }
     const heroCrit = Math.random() < effCrit;
     let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
     if(fight.shieldTurns > 0) dmg = Math.max(1, Math.round(dmg*0.4));  // Eispanzer
@@ -231,6 +239,8 @@ function exchange(fight){
       const armorRed = ignoreArmor ? 0 : (fight.heroArmor*COMBAT.armorReduction + fight.heroBlock);
       let bd = Math.max(1, Math.round((atk * rnd(0.15) * mult) - armorRed));
       bd = Math.round(bd * (1 - fight.versatility));   // Vielseitigkeit senkt erlittenen Schaden
+      // Schildwall (Verteidiger): erlittener Schaden stark reduziert.
+      if(Date.now() < fight.dmgReduceUntil && fight.ability){ bd = Math.max(1, Math.round(bd * (1 - (fight.ability.dmgReduce||0)))); }
       fight.heroHp = Math.max(0, fight.heroHp - bd);
       if(breath) mechFloat('boss', '🔥 Feueratem', '#ff8a3d');
       attackAnim('boss', bd, bossCrit, ()=> updateHpBars(fight));
@@ -296,7 +306,8 @@ function mechFloat(who, text, color){
 }
 
 function heroUsesStab(){
-  return state.equipped && state.equipped.waffe && state.equipped.waffe.itemType === 'stab';
+  const w = state.equipped && state.equipped.waffe;
+  return !!(w && materialOf(w) === 'zauberstab');
 }
 
 function staffProjectileAnim(fromAnchor, toAnchor, layer, speed, onArrive){
@@ -383,6 +394,90 @@ export function usePotion(){
   updatePotionBtn();
 }
 
+// ---- Klassen-Spezialfähigkeit (B13) --------------------------------
+let _abilityTicker = null;
+export function updateAbilityBtn(){
+  const btn = $('#abilityBtn'); if(!btn) return;
+  const f = currentFight;
+  const ab = f && f.ability;
+  if(!ab){ btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  const now = Date.now();
+  const cd = Math.max(0, Math.ceil((f.abilityCdUntil - now)/1000));
+  if(!f || f.over){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = ab.icon+' '+ab.name; return; }
+  if(cd > 0){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = ab.icon+' '+ab.name+' ('+cd+'s)'; }
+  else      { btn.disabled = false; btn.style.opacity = '1';  btn.textContent = ab.icon+' '+ab.name; }
+}
+function startAbilityTicker(){
+  if(_abilityTicker) return;
+  _abilityTicker = setInterval(()=>{
+    const f = currentFight;
+    if(!f || f.over){ updateAbilityBtn(); return; }
+    // Buff-Visuals beenden, wenn Dauer abgelaufen
+    if(f.critBoostUntil && Date.now() >= f.critBoostUntil){ f.critBoostUntil = 0; $('#heroSprite').classList.remove('ablaze'); }
+    if(f.dmgReduceUntil && Date.now() >= f.dmgReduceUntil){ f.dmgReduceUntil = 0; removeShieldDome(); }
+    if(Date.now() >= f.abilityCdUntil){ updateAbilityBtn(); if(Date.now() >= f.abilityCdUntil + 1500 && !f.critBoostUntil && !f.dmgReduceUntil){ stopAbilityTicker(); } }
+    else updateAbilityBtn();
+  }, 250);
+}
+function stopAbilityTicker(){ if(_abilityTicker){ clearInterval(_abilityTicker); _abilityTicker = null; } }
+function resetAbilityVisuals(){
+  $('#heroSprite').classList.remove('ablaze');
+  removeShieldDome();
+  stopAbilityTicker();
+}
+export function useAbility(){
+  const f = currentFight;
+  if(!f || f.over || !f.ability) return;
+  if(Date.now() < f.abilityCdUntil) return;
+  const ab = f.ability;
+  f.abilityCdUntil = Date.now() + ab.cd;
+  if(ab.id === 'heilkreis'){
+    const heal = Math.round(f.heroMaxHp * ab.healPct);
+    f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+    updateHpBars(f);
+    spawnHealCircle('heroSprite');
+    mechFloat('hero', '➕ +'+fmtBig(heal), '#37d67a');
+    addCombatLog(f, '➕ Heilkreis: +'+fmtBig(heal)+' HP', '#37d67a');
+  } else if(ab.id === 'raserei'){
+    f.critBoostUntil = Date.now() + ab.dur;
+    $('#heroSprite').classList.add('ablaze');
+    mechFloat('hero', '🔥 Raserei!', '#ff6b3c');
+    addCombatLog(f, '🔥 Raserei entfacht – +100 % Krit für '+(ab.dur/1000)+'s!', '#ff8a3d');
+  } else if(ab.id === 'schildwall'){
+    f.dmgReduceUntil = Date.now() + ab.dur;
+    spawnShieldDome('heroSprite');
+    mechFloat('hero', '🛡️ Schildwall!', '#7fd0ff');
+    addCombatLog(f, '🛡️ Schildwall – '+Math.round(ab.dmgReduce*100)+'% weniger Schaden für '+(ab.dur/1000)+'s!', '#7fd0ff');
+  }
+  updateAbilityBtn();
+  startAbilityTicker();
+}
+
+// Heilkreis-Overlay (expandierender grüner Ring) um einen Sprite.
+function spawnHealCircle(spriteId){
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = $('#arenaStage');
+  const a = (currentFight && currentFight.anchor[spriteId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
+  const ring = document.createElement('div');
+  ring.className = 'heal-circle';
+  ring.style.left = a.x+'px'; ring.style.top = a.y+'px';
+  $('#dmgLayer').appendChild(ring);
+  if(reduce){ ring.style.opacity = '0.8'; }
+  setTimeout(()=> ring.remove(), 1100);
+}
+// Pulsierendes blaues Schild über dem Sprite (bleibt bis Buff endet).
+function spawnShieldDome(spriteId){
+  removeShieldDome();
+  const stage = $('#arenaStage');
+  const a = (currentFight && currentFight.anchor[spriteId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
+  const dome = document.createElement('div');
+  dome.className = 'shield-dome'; dome.id = 'shieldDome';
+  dome.style.left = a.x+'px'; dome.style.top = a.y+'px';
+  $('#dmgLayer').appendChild(dome);
+}
+function removeShieldDome(){ const d = $('#shieldDome'); if(d) d.remove(); }
+
 export function toggleSpeed(){
   combatSpeed = combatSpeed === 1 ? 2 : 1;
   $('#speedBtn').textContent = '⏩ Tempo '+combatSpeed+'×';
@@ -391,6 +486,7 @@ export function closeArena(){
   if(currentFight) currentFight.over = true;
   arenaOverlay().classList.remove('show');
   clearTimeout(combatTimer); combatTimer = null;
+  resetAbilityVisuals();
   renderAll();
 }
 
@@ -399,6 +495,8 @@ function endFight(fight, win){
   fight.over = true;
   clearTimeout(combatTimer);
   updatePotionBtn();
+  resetAbilityVisuals();
+  updateAbilityBtn();
   const res = $('#arenaResult');
   const boss = fight.boss, bossIndex = fight.bossIndex, isFarm = fight.isFarm;
 

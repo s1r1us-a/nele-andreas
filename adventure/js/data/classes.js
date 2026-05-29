@@ -11,15 +11,21 @@ export const CLASSES = [
   { id:'heiler',      label:'Heiler',      icon:'✨',
     desc:'Magier-Heiler. Trägt Stoff und Zauberstäbe. Starke Heilung, magischer Fernkampf.',
     allowedMaterials:['stoff','zauberstab'],      damageSchool:'magisch',
-    dmgMult:0.65, healMult:1.6 },
+    dmgMult:0.65, healMult:1.6,
+    ability:{ id:'heilkreis',  name:'Heilkreis',  icon:'➕', cd:30000, healPct:0.5,
+              desc:'Zündet einen leuchtenden Heilkreis – heilt alle Helden um 50 % ihrer maximalen HP.' } },
   { id:'kaempfer',    label:'Kämpfer',     icon:'⚔️',
     desc:'Krieger. Trägt Stoff und Leder. Ausgewogener physischer Schaden.',
     allowedMaterials:['stoff','leder'],          damageSchool:'physisch',
-    dmgMult:1.0,  healMult:1.0 },
+    dmgMult:1.0,  healMult:1.0,
+    ability:{ id:'raserei',    name:'Raserei',    icon:'🔥', cd:30000, dur:7000, critBonus:1.0,
+              desc:'Entfacht 7 Sekunden lang flammende Raserei – +100 % Krit-Chance.' } },
   { id:'verteidiger', label:'Verteidiger', icon:'🛡️',
     desc:'Tank. Trägt Stoff, Leder und Platte. Sehr viel Rüstung, wenig Schaden.',
     allowedMaterials:['stoff','leder','platte'], damageSchool:'physisch',
-    dmgMult:0.7,  healMult:1.0 },
+    dmgMult:0.7,  healMult:1.0,
+    ability:{ id:'schildwall',name:'Schildwall', icon:'🛡️', cd:30000, dur:10000, dmgReduce:0.8,
+              desc:'Errichtet 10 Sekunden lang einen pulsierenden Schildwall – alle Helden erleiden 80 % weniger Schaden.' } },
 ];
 export const CLASS_BY_ID = Object.fromEntries(CLASSES.map(c => [c.id, c]));
 export const DEFAULT_CLASS_ID = 'kaempfer';
@@ -28,3 +34,5 @@ export const DEFAULT_CLASS_ID = 'kaempfer';
 export function classOf(state){ return CLASS_BY_ID[state && state.character && state.character.classId] || CLASS_BY_ID[DEFAULT_CLASS_ID]; }
 export function allowedMaterials(state){ return classOf(state).allowedMaterials; }
 export function damageSchool(state){ return classOf(state).damageSchool; }
+// Spezialfähigkeit einer Klasse (null-sicher).
+export function abilityOf(classId){ const c = CLASS_BY_ID[classId] || CLASS_BY_ID[DEFAULT_CLASS_ID]; return c.ability || null; }

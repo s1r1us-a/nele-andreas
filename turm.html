@@ -153,6 +153,7 @@
       <div class="dps-meter" id="dpsMeter">Warte auf Kampfdaten…</div>
       <div class="combat-log" id="combatLog"></div>
       <div class="arena-controls">
+        <button class="btn btn-primary" id="abilityBtn" style="display:none" onclick="onUseAbility()">✨ Fähigkeit</button>
         <button class="btn btn-ghost" id="speedBtn" style="display:none" onclick="onToggleSpeed()">⏩ Tempo 1×</button>
         <button class="btn btn-danger" onclick="onLeaveLobby()">🚪 Lobby verlassen</button>
       </div>
@@ -171,19 +172,25 @@ import {
   createLobby, joinLobby, listenLobby, listenCombat,
   setReady, leaveLobby, loadGuestSave,
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
+  requestAbility,
 } from './adventure/js/core/tower.js';
 import { heroSrc } from './adventure/js/core/avatar.js';
-import { CLASS_BY_ID, DEFAULT_CLASS_ID } from './adventure/js/data/classes.js';
+import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from './adventure/js/data/classes.js';
 import { MECH_DEFS } from './adventure/js/data/bosses.js';
 import { fmtBig } from './adventure/js/ui/dom.js';
 
 // ---- Globals ----
-let myKey = null, myName = null, myState = null;
+let myKey = null, myName = null, myState = null, myClassId = DEFAULT_CLASS_ID;
 let lobbyId = null, lobbyData = null, isHost = false;
 let unsubLobby = null, unsubCombat = null;
 let fightSpeed = 1, _lastAnimTurn = -1;
 let _frontStatsCache = null, _backStatsCache = null;
 let _frontNameCache = '', _backNameCache = '';
+// Skill-Status (lokaler Spieler)
+let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
+let _lastHealTs = 0;
+// Auto-Start-Countdown
+let _countdownTicker = null, _countdownTarget = 0, _startingFight = false;
 
 const $  = id => document.getElementById(id);
 const qS = s  => document.querySelector(s);
@@ -209,7 +216,7 @@ window.onCreateLobby = async function(){
   const btn = $('createBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    lobbyId = await createLobby(myKey, myName);
+    lobbyId = await createLobby(myKey, myName, myClassId);
     isHost  = true;
     openLobbyRoom();
     startLobbyListener();
@@ -225,7 +232,7 @@ window.onJoinLobby = async function(){
   const btn = $('joinBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    await joinLobby(code, myKey, myName);
+    await joinLobby(code, myKey, myName, myClassId);
     lobbyId = code;
     isHost  = false;
     openLobbyRoom();
@@ -275,7 +282,9 @@ function resolveFormation(lobby, hostClassId, guestClassId){
 }
 
 function onLobbyUpdate(lobby){
+  // Lobby gelöscht oder beendet → beide Spieler zurücksetzen (B2).
   if(!lobby){ toast('Lobby beendet.'); resetToMain(); return; }
+  if(lobby.status === 'ended'){ toast('Die Lobby wurde beendet.'); resetToMain(); return; }
   lobbyData = lobby;
   const floor = lobby.floor || 1;
 
@@ -288,51 +297,128 @@ function onLobbyUpdate(lobby){
     return '<span class="mech-badge">' + (d ? d.emoji + ' ' + d.label : m) + '</span>';
   }).join('');
 
-  // Spieler-Slots (vereinfacht: Host oben, Guest unten, Formation-Label)
   const hostR  = !!lobby.hostReady;
   const guestR = !!lobby.guestReady;
   const hasGuest = !!lobby.guest;
 
-  // Zeige Host als "Vorne" (default), Guest als "Hinten"
-  $('frontSlotName').textContent  = lobby.hostName  || lobby.host  || '–';
-  $('frontSlotClass').textContent = '';
-  $('frontSlotReady').textContent = hostR  ? '✅ bereit' : 'nicht bereit';
-  $('frontSlotReady').className   = 'slot-ready ' + (hostR  ? 'yes' : 'no');
+  const clsLabel = id => { const c = CLASS_BY_ID[id]; return c ? (c.icon + ' ' + c.label) : ''; };
 
-  $('backSlotName').textContent   = lobby.guestName || lobby.guest || '…';
-  $('backSlotClass').textContent  = '';
-  $('backSlotReady').textContent  = guestR ? '✅ bereit' : 'nicht bereit';
-  $('backSlotReady').className    = 'slot-ready ' + (guestR ? 'yes' : 'no');
+  if(!hasGuest){
+    // Allein im Warteraum: Host immer sichtbar (Position wird mit Partner final bestimmt).
+    $('frontSlotName').textContent  = lobby.hostName || lobby.host || '–';
+    $('frontSlotClass').textContent = clsLabel(lobby.hostClass);
+    $('frontSlotReady').textContent = hostR ? '✅ bereit' : 'nicht bereit';
+    $('frontSlotReady').className   = 'slot-ready ' + (hostR ? 'yes' : 'no');
+    $('backSlotName').textContent   = '…';
+    $('backSlotClass').textContent  = '';
+    $('backSlotReady').textContent  = 'nicht bereit';
+    $('backSlotReady').className    = 'slot-ready no';
+  } else {
+    // Tatsächliche Aufstellung gemäß Klassen (Heiler hinten) – auch im Warteraum (B4).
+    const form = resolveFormation(lobby, lobby.hostClass, lobby.guestClass);
+    const frontIsHost = form.frontKey === lobby.host;
+    const frontReady  = frontIsHost ? hostR : guestR;
+    const backReady   = frontIsHost ? guestR : hostR;
+    const frontClassId = frontIsHost ? lobby.hostClass : lobby.guestClass;
+    const backClassId  = frontIsHost ? lobby.guestClass : lobby.hostClass;
 
-  const myReady = isHost ? hostR : guestR;
-  $('readyBtn').disabled  = !hasGuest || myReady;
+    $('frontSlotName').textContent  = form.frontName || form.frontKey || '–';
+    $('frontSlotClass').textContent = clsLabel(frontClassId);
+    $('frontSlotReady').textContent = frontReady ? '✅ bereit' : 'nicht bereit';
+    $('frontSlotReady').className   = 'slot-ready ' + (frontReady ? 'yes' : 'no');
 
-  if(isHost){
-    $('startBtn').style.display = (hostR && guestR && hasGuest) ? '' : 'none';
+    $('backSlotName').textContent   = form.backName || form.backKey || '…';
+    $('backSlotClass').textContent  = clsLabel(backClassId);
+    $('backSlotReady').textContent  = backReady ? '✅ bereit' : 'nicht bereit';
+    $('backSlotReady').className    = 'slot-ready ' + (backReady ? 'yes' : 'no');
   }
 
-  $('lobbyStatus').textContent = !hasGuest
-    ? 'Warte auf Partner…'
-    : (hostR && guestR ? 'Beide bereit! Host kann starten.' : 'Warte auf Bereit-Status…');
+  // Bereit-Button als Umschalter (Bereit ⇄ Abbrechen) – während des Countdowns abbrechbar.
+  const myReady = isHost ? hostR : guestR;
+  $('readyBtn').disabled  = !hasGuest;
+  $('readyBtn').textContent = myReady ? '✖️ Bereit abbrechen' : '✅ Bereit!';
+  $('readyBtn').className  = 'btn ' + (myReady ? 'btn-ghost' : 'btn-primary');
+  $('startBtn').style.display = 'none';  // Auto-Start ersetzt den manuellen Start-Button.
+
+  const bothReady = hostR && guestR && hasGuest;
+
+  // Auto-Start-Countdown: bei „beide bereit" 10-Sekunden-Timer setzen,
+  // bei Abbruch wieder löschen (nur der Host verwaltet startAt).
+  if(isHost && lobby.status === 'waiting' && !_startingFight){
+    if(bothReady && !lobby.startAt){
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: Date.now() + 10000 }).catch(()=>{});
+    } else if(!bothReady && lobby.startAt){
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
+    }
+  }
+
+  if(lobby.startAt && lobby.status === 'waiting'){
+    startCountdown(lobby.startAt);
+  } else {
+    stopCountdown();
+    $('lobbyStatus').textContent = !hasGuest
+      ? 'Warte auf Partner…'
+      : (bothReady ? 'Beide bereit!' : 'Warte auf Bereit-Status…');
+  }
 
   if(lobby.status === 'in_progress'){
     showFightSection();
     if(!unsubCombat){
       unsubCombat = listenCombat(lobbyId, onCombatUpdate);
     }
+  } else if(lobby.status === 'waiting' && $('fightSection').style.display !== 'none'){
+    // Host hat ein neues Stockwerk gestartet → Gast zurück in den Warteraum (B1).
+    if(unsubCombat){ unsubCombat(); unsubCombat = null; }
+    $('resultOverlay').classList.remove('show');
+    $('fightSection').style.display = 'none';
+    $('lobbySection').style.display = '';
+    $('lobbyRoom').style.display    = '';
+    qS('.lobby-tabs').style.display = 'none';
+    _lastAnimTurn = -1; _lastHealTs = 0;
+    stopAbilityUI();
   }
 }
 
-// ---- Bereit ----
+// ---- Bereit (Umschalter) ----
 window.onReady = async function(){
+  const myReady = isHost ? !!(lobbyData && lobbyData.hostReady) : !!(lobbyData && lobbyData.guestReady);
   $('readyBtn').disabled = true;
-  try { await setReady(lobbyId, isHost, true); }
-  catch(e){ toast('Fehler: ' + e.message); $('readyBtn').disabled = false; }
+  try { await setReady(lobbyId, isHost, !myReady); }
+  catch(e){ toast('Fehler: ' + e.message); }
+  finally { $('readyBtn').disabled = false; }
 };
+
+// ---- Auto-Start-Countdown ----
+function startCountdown(startAt){
+  if(_countdownTicker && _countdownTarget === startAt) return;
+  stopCountdown();
+  _countdownTarget = startAt;
+  const tick = () => {
+    const rem = Math.max(0, Math.ceil((startAt - Date.now())/1000));
+    $('lobbyStatus').textContent = rem > 0
+      ? '⚔️ Kampf startet in ' + rem + ' s… (Bereit abbrechen zum Stoppen)'
+      : '⚔️ Los geht\'s!';
+    if(Date.now() >= startAt){
+      stopCountdown();
+      // Nur der Host startet den Kampf autoritativ.
+      if(isHost && !_startingFight && lobbyData && lobbyData.status === 'waiting'){
+        _startingFight = true;
+        update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
+        window.onStartFight().finally(() => { _startingFight = false; });
+      }
+    }
+  };
+  tick();
+  _countdownTicker = setInterval(tick, 250);
+}
+function stopCountdown(){
+  if(_countdownTicker){ clearInterval(_countdownTicker); _countdownTicker = null; }
+  _countdownTarget = 0;
+}
 
 // ---- Kampf starten (Host) ----
 window.onStartFight = async function(){
-  const btn = $('startBtn'); btn.disabled = true; btn.textContent = '…';
+  const btn = $('startBtn'); if(btn){ btn.disabled = true; btn.textContent = '…'; }
   try {
     const lobby = lobbyData;
     // Gast-Spielstand laden & Stats berechnen
@@ -363,15 +449,17 @@ window.onStartFight = async function(){
 
     showFightSection();
     $('speedBtn').style.display = '';
+    setupAbilityUI(frontKey, backKey);
 
     startTowerFight(lobbyId, lobby.floor || 1,
-      frontStats, backStats, frontName, backName, onCombatUpdate);
+      frontStats, backStats, frontName, backName, onCombatUpdate,
+      { frontKey, backKey });
 
   } catch(e){
     toast('Fehler beim Kampfstart: ' + e.message);
     console.error(e);
   } finally{
-    btn.disabled = false; btn.textContent = '⚔️ Kampf starten!';
+    if(btn){ btn.disabled = false; btn.textContent = '⚔️ Kampf starten!'; }
   }
 };
 
@@ -411,10 +499,15 @@ function onCombatUpdate(data){
   }
   if(data.frontName && $('frontHpName').textContent === 'Vorne'){
     $('labelFront').textContent  = '⚔️ ' + data.frontName;
-    $('labelBack').textContent   = (data.backStab ? '✨ ' : '🛡️ ') + data.backName;
+    $('labelBack').textContent   = ((data.backClass === 'heiler') ? '✨ ' : '🛡️ ') + data.backName;
     $('frontHpName').textContent = data.frontName;
     $('backHpName').textContent  = data.backName;
     $('bossHpName').textContent  = 'Boss';
+
+    // Heiler-HP-Bar in Heilungsfarbe (auch beim Gast)
+    const bkFill = $('backHpFill');
+    if(data.backClass === 'heiler'){ bkFill.classList.remove('back'); bkFill.classList.add('heal'); }
+    else                           { bkFill.classList.remove('heal'); bkFill.classList.add('back'); }
 
     // Boss-Sprite (Guest hat keinen Boss gesetzt)
     if(lobbyData && !$('spriteBoss').src.includes('data:')){
@@ -436,8 +529,9 @@ function onCombatUpdate(data){
   $('frontHpText').textContent = fmtHp(data.frontHp, data.frontMaxHp);
   $('backHpText').textContent  = fmtHp(data.backHp,  data.backMaxHp);
 
-  // DPS
-  const sec = Math.max(0.5, (Date.now() - (lobbyData && lobbyData.createdAt ? lobbyData.createdAt : Date.now() - 1000)) / 1000);
+  // DPS (ab Kampfstart, nicht ab Lobby-Erstellung)
+  const startTs = data.startedAt || (lobbyData && lobbyData.createdAt) || (Date.now() - 1000);
+  const sec = Math.max(0.5, (Date.now() - startTs) / 1000);
   const dps = Math.round((data.dmgDealt||0) / sec);
   $('dpsMeter').textContent = 'DPS ' + fmtBig(dps) + ' · Schaden ' + fmtBig(data.dmgDealt||0) + ' · Runde ' + (data.turn||0);
 
@@ -446,6 +540,14 @@ function onCombatUpdate(data){
     _lastAnimTurn = data.turn;
     spawnProjectile();
   }
+
+  // Skill-UI für den Gast initialisieren, sobald die Aufstellung bekannt ist.
+  if(!_mySlot && (data.frontKey || data.backKey)){
+    setupAbilityUI(data.frontKey, data.backKey);
+  }
+
+  // Skill-Effekte rendern (B15)
+  renderFx(data.fx || {});
 
   // Log
   if(data.log){
@@ -489,6 +591,72 @@ function spawnProjectile(){
   setTimeout(() => ball.remove(), 290);
 }
 
+// ---- Klassen-Spezialfähigkeit (B14) ----
+function setupAbilityUI(frontKey, backKey){
+  _mySlot = (myKey === frontKey) ? 'front' : (myKey === backKey ? 'back' : null);
+  _myAbility = abilityOf(myClassId);
+  const btn = $('abilityBtn');
+  if(!_myAbility || !_mySlot){ btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  _abilCdUntil = 0;
+  updateAbilityBtn();
+  startAbilityTicker();
+}
+function updateAbilityBtn(){
+  const btn = $('abilityBtn'); if(!btn || !_myAbility) return;
+  const cd = Math.max(0, Math.ceil((_abilCdUntil - Date.now())/1000));
+  if(cd > 0){ btn.disabled = true;  btn.style.opacity = '0.5'; btn.textContent = _myAbility.icon+' '+_myAbility.name+' ('+cd+'s)'; }
+  else      { btn.disabled = false; btn.style.opacity = '1';   btn.textContent = _myAbility.icon+' '+_myAbility.name; }
+}
+function startAbilityTicker(){ if(!_abilTicker) _abilTicker = setInterval(updateAbilityBtn, 250); }
+function stopAbilityUI(){
+  if(_abilTicker){ clearInterval(_abilTicker); _abilTicker = null; }
+  _mySlot = null; _myAbility = null; _abilCdUntil = 0;
+  const btn = $('abilityBtn'); if(btn) btn.style.display = 'none';
+  $('heroFront').classList.remove('ablaze');
+  $('heroBack').classList.remove('ablaze');
+  removeShieldDome();
+}
+window.onUseAbility = function(){
+  if(!_myAbility || !_mySlot || !lobbyId) return;
+  if(Date.now() < _abilCdUntil) return;
+  _abilCdUntil = Date.now() + _myAbility.cd;
+  requestAbility(lobbyId, _mySlot, _myAbility.id);
+  updateAbilityBtn();
+  toast(_myAbility.icon + ' ' + _myAbility.name + ' aktiviert!');
+};
+
+// FX aus den synchronisierten Kampfdaten rendern (beide Spieler sehen dasselbe).
+function renderFx(fx){
+  $('heroFront').classList.toggle('ablaze', !!fx.ablazeFront);
+  $('heroBack').classList.toggle('ablaze',  !!fx.ablazeBack);
+  if(fx.shield) showShieldDome(); else removeShieldDome();
+  if(fx.healTs && fx.healTs > _lastHealTs){
+    _lastHealTs = fx.healTs;
+    spawnHealCircle('heroFront');
+    spawnHealCircle('heroBack');
+  }
+}
+function spawnHealCircle(heroId){
+  const stage = $('arenaStage'); const hero = $(heroId);
+  if(!stage || !hero) return;
+  const sr = stage.getBoundingClientRect(), hr = hero.getBoundingClientRect();
+  const x = hr.left - sr.left + hr.width/2, y = hr.top - sr.top + hr.height/2;
+  const ring = document.createElement('div');
+  ring.className = 'heal-circle'; ring.style.left = x+'px'; ring.style.top = y+'px';
+  $('dmgLayer').appendChild(ring);
+  setTimeout(()=> ring.remove(), 1100);
+}
+function showShieldDome(){
+  if($('shieldDome')) return;
+  const col = document.querySelector('.arena-heroes-col');
+  if(!col) return;
+  const dome = document.createElement('div');
+  dome.className = 'shield-dome'; dome.id = 'shieldDome';
+  col.appendChild(dome);
+}
+function removeShieldDome(){ const d = $('shieldDome'); if(d) d.remove(); }
+
 // ---- Ergebnis ----
 function showResult(won, floor){
   if($('resultOverlay').classList.contains('show')) return;
@@ -522,7 +690,9 @@ async function onNextFloor(){
   stopFight();
   if(unsubCombat){ unsubCombat(); unsubCombat = null; }
   const nextFloor = await advanceFloor(lobbyId);
-  _lastAnimTurn = -1;
+  _lastAnimTurn = -1; _lastHealTs = 0;
+  stopCountdown();
+  stopAbilityUI();
   $('resultOverlay').classList.remove('show');
   $('fightSection').style.display  = 'none';
   $('lobbySection').style.display  = '';
@@ -546,11 +716,18 @@ window.onLeaveLobby = async function(){
   if(unsubCombat) { unsubCombat(); unsubCombat = null; }
   if(lobbyId) await leaveLobby(lobbyId).catch(()=>{});
   lobbyId = null; lobbyData = null; isHost = false;
-  _lastAnimTurn = -1;
+  _lastAnimTurn = -1; _lastHealTs = 0;
+  stopAbilityUI();
   resetToMain();
 };
 
 function resetToMain(){
+  if(unsubLobby){ unsubLobby(); unsubLobby = null; }
+  if(unsubCombat){ unsubCombat(); unsubCombat = null; }
+  stopCountdown();
+  stopAbilityUI();
+  lobbyId = null; lobbyData = null; isHost = false;
+  _lastAnimTurn = -1; _lastHealTs = 0;
   $('fightSection').style.display  = 'none';
   $('lobbySection').style.display  = '';
   $('lobbyRoom').style.display     = 'none';
@@ -576,6 +753,7 @@ function resetToMain(){
     $('userChip').textContent = myName;
 
     myState = await loadSave(myKey);
+    myClassId = (myState && myState.character && myState.character.classId) || DEFAULT_CLASS_ID;
   } catch(e){ console.error('Init-Fehler:', e); }
 })();
 </script>

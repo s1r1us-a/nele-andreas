@@ -8,12 +8,14 @@ import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
 import { EXPEDITIONS } from '../data/expeditions.js';
 import { STAT_HELP } from '../data/statHelp.js';
 import { classOf } from '../data/classes.js';
+import { talentTreeFor, isRealTalent } from '../data/talents.js';
 import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
-import { state } from '../core/state.js';
+import { state, saveState } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
-import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany } from '../core/items.js';
+import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip } from '../core/items.js';
+import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
@@ -162,6 +164,60 @@ export function renderCharacter(){
   RIGHT_SLOTS.forEach(s => R.appendChild(slotEl(s)));
   BOTTOM_SLOTS.forEach(s => B.appendChild(slotEl(s)));
   renderCharStats(t);
+  renderTalents();
+}
+
+// ---- Talentbaum (B16, Gerüst) --------------------------------------
+export function renderTalents(){
+  const box = $('#talentsPanel'); if(!box) return;
+  if(!state.character){ box.innerHTML = ''; return; }
+  const cls = classOf(state);
+  const tree = talentTreeFor(cls.id);
+  if(!tree.length){ box.innerHTML = ''; return; }
+  const ranks = state.character.talents || {};
+  const points = state.character.talentPoints || 0;
+
+  let html = '<div class="talents-head">'+
+    '<h4>🌳 Talente – '+cls.icon+' '+cls.label+'</h4>'+
+    '<span class="talent-points">Verfügbare Punkte: <b>'+points+'</b></span>'+
+    '</div>'+
+    '<p class="talents-hint">Talente werden bald freigeschaltet. Pro Level erhältst du einen Punkt.</p>';
+
+  tree.forEach((tier, ti) => {
+    html += '<div class="talent-tier"><span class="talent-tier-label">Stufe '+(ti+1)+'</span><div class="talent-row">';
+    tier.forEach(node => {
+      const real = isRealTalent(node);
+      const rank = ranks[node.id] || 0;
+      const cssCls = 'talent-node' + (real ? '' : ' placeholder') + (rank>0 ? ' taken' : '');
+      const icon = real ? (node.icon || '✦') : '🔒';
+      const name = real ? node.name : 'Bald verfügbar';
+      const rankTxt = real ? '<span class="talent-rank">'+rank+'/'+(node.maxRank||1)+'</span>' : '';
+      html += '<button class="'+cssCls+'" data-talent="'+node.id+'"'+(real?'':' disabled')+
+        ' title="'+((real?node.desc:'Dieses Talent wird später freigeschaltet.')||'').replace(/"/g,'&quot;')+'">'+
+        '<span class="talent-icon">'+icon+'</span>'+
+        '<span class="talent-name">'+name+'</span>'+rankTxt+'</button>';
+    });
+    html += '</div></div>';
+  });
+  box.innerHTML = html;
+
+  box.querySelectorAll('.talent-node[data-talent]').forEach(btn => {
+    btn.addEventListener('click', () => spendTalentPoint(btn.dataset.talent));
+  });
+}
+
+function spendTalentPoint(talentId){
+  const cls = classOf(state);
+  const node = talentTreeFor(cls.id).flat().find(n => n.id === talentId);
+  if(!node || !isRealTalent(node)) return;
+  const ranks = state.character.talents || (state.character.talents = {});
+  const cur = ranks[talentId] || 0;
+  if(cur >= (node.maxRank||1)){ toast('Talent bereits maximiert.'); return; }
+  if((state.character.talentPoints||0) <= 0){ toast('Keine Talentpunkte verfügbar.'); return; }
+  ranks[talentId] = cur + 1;
+  state.character.talentPoints--;
+  saveState();
+  renderAll();
 }
 function renderCharStats(t){
   const c = heroCombat(t);
@@ -303,8 +359,12 @@ function buildInvGrid(wrap){
       const r = rarityOf(it.rarity);
       cell.classList.add('filled');
       cell.style.setProperty('--rc', r.color);
+      // Material vorhanden + Klasse kann es nicht tragen → Sperr-Markierung (B8).
+      const blocked = !!materialOf(it) && !canEquip(it);
+      if(blocked) cell.classList.add('not-equippable');
       cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
         (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
+        (blocked?'<span class="bp-noequip" title="Deine Klasse kann das nicht tragen">✋</span>':'')+
         (it.proc?'<span class="bp-proc">★</span>':'')+
         '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it, { compare:true });

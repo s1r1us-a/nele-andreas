@@ -4,6 +4,7 @@
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { classOf, damageSchool } from '../data/classes.js';
+import { applyTalents } from '../data/talents.js';
 import { state } from './state.js';
 import { powerOfBundle } from './items.js';
 import { toast } from '../ui/dom.js';
@@ -34,6 +35,11 @@ export function gainXp(amount){
   if(newLevel > oldLevel){
     state.level = newLevel;
     const lb = levelBonus(newLevel);
+    // Pro Levelaufstieg 1 Talentpunkt (nur wenn bereits eine Klasse gewählt wurde).
+    if(state.character){
+      const gained = newLevel - oldLevel;
+      state.character.talentPoints = (state.character.talentPoints || 0) + gained;
+    }
     toast('⭐ Level '+newLevel+'! +'+(lb.hp)+' HP · +'+Math.round(lb.dmg)+' Schaden · +'+lb.armor+' Rüstung');
   }
   return amount;
@@ -60,6 +66,8 @@ export function recomputeTotals(){
   // Charakter-Level: dauerhafte Boni oben drauf
   const lb = levelBonus(state.level);
   b.armor += lb.armor; b.damage += lb.dmg; b.maxHp += lb.hp;
+  // Talentbaum-Effekte (no-op solange Talente leer sind).
+  applyTalents(state, b);
   b.power = powerOfBundle(b);
   return b;
 }

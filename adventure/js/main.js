@@ -4,7 +4,7 @@
 import { state, loadSave, saveState, flushSave } from './core/state.js';
 import { initAuth } from './core/firebase.js';
 import { expeditionReady, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
-import { startBossFight, toggleSpeed, closeArena, usePotion } from './core/combat.js';
+import { startBossFight, toggleSpeed, closeArena, usePotion, useAbility } from './core/combat.js';
 import { $, fmtRemain } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
 import { openBossList, openStats, openDevPanel, openCharacterCreator,
@@ -32,6 +32,7 @@ $('#toggleHelmBtn').addEventListener('click', ()=>{
 });
 $('#speedBtn').addEventListener('click', toggleSpeed);
 $('#potionBtn').addEventListener('click', usePotion);
+$('#abilityBtn').addEventListener('click', useAbility);
 $('#arenaCloseBtn').addEventListener('click', closeArena);
 $('#expCancelBtn').addEventListener('click', ()=>{
   if(confirm('Abenteuer abbrechen? Die mitgebrachten Items gehen verloren.')) cancelExpedition();
