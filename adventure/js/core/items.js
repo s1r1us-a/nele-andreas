@@ -5,13 +5,15 @@ import { ASSETS, BASE_STAT, ILVL_K, ILVL_QUAD, INV_SLOTS } from '../data/tuning.
 import { RARITIES, rarityOf, rarityIndex, rarityByIndex, maxRarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
-import { pickItemType, ITEM_TYPES } from '../data/itemTypes.js';
+import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
+import { allowedMaterials, classOf } from '../data/classes.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
+import { toast } from '../ui/dom.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
 export const POWER_W = {
-  armor:1, damage:1.5, maxHp:0.2, critChance:200, critDamage:60, attackSpeed:150,
+  armor:1, damage:1.5, maxHp:0.2, critPhys:200, critMagic:200, critDamage:60, attackSpeed:150,
   lifesteal:180, dodge:220, block:1, versatility:200, thorns:0.8,
 };
 export function powerOfBundle(b){
@@ -192,7 +194,18 @@ export function resolveTargetSlot(item){
   }
   return item.slotKey;
 }
+// Klassen-Restriktion: Rüstungs-Material muss zur Klasse passen
+// (Waffe/Schild/Schmuck haben kein Material → immer tragbar).
+export function canEquip(item){
+  const mat = materialOf(item);
+  if(!mat) return true;
+  return allowedMaterials(state).includes(mat);
+}
 export function equip(item, explicitTarget){
+  if(!canEquip(item)){
+    toast('✋ '+classOf(state).label+' kann '+(MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.');
+    return;
+  }
   const isRing = item.slotKey==='ring1' || item.slotKey==='ring2';
   let target = (isRing && (explicitTarget==='ring1' || explicitTarget==='ring2'))
     ? explicitTarget : resolveTargetSlot(item);

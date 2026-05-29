@@ -4,7 +4,7 @@
    ===================================================================== */
 export const ASSETS = 'adventure/assets/';
 export const SAVE_KEY = 'idleAbenteuer_v1';
-export const SAVE_VERSION = 5;            // erhöht bei Strukturänderungen → Migration
+export const SAVE_VERSION = 6;            // erhöht bei Strukturänderungen → Migration
 export const VARIANTS = 6;                // Sprite-Varianten je Slot (= Item-Typen je Slot)
 export const INV_SLOTS = 30;             // Inventar-Obergrenze (von 20 erhöht, mehr Grind-Platz)
 export const HEAL_PCT = 0.5;             // Heiltrank stellt 50 % der maximalen HP wieder her

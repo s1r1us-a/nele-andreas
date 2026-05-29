@@ -7,6 +7,7 @@ import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
          CAT_ICON, CAT_ORDER } from '../data/slots.js';
 import { EXPEDITIONS } from '../data/expeditions.js';
 import { STAT_HELP } from '../data/statHelp.js';
+import { classOf } from '../data/classes.js';
 import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
@@ -180,17 +181,25 @@ function renderCharStats(t){
   if(t.dodge>0)       secondary += row('Ausweichen', pct(t.dodge), 'armor', 'ausweichen');
   if(t.versatility>0) secondary += row('Vielseitigkeit', pct(t.versatility), 'crit', 'vielseitigkeit');
   if(t.thorns>0)      secondary += row('Dornen', t.thorns, 'damage', 'dornen');
+  const cls = classOf(state);
+  // Aktive Schule fett markieren, inaktiven Krit dezent („wirkt nicht").
+  const physActive = c.school === 'physisch', magicActive = c.school === 'magisch';
+  const critRow = (label, val, active, info) =>
+    row(label + (active ? ' <span class="cs-active">★</span>' : ' <small>(inaktiv)</small>'),
+        pct(val), 'crit', info);
   $('#charStats').innerHTML =
     '<div class="cs-group"><h4>Übersicht</h4>'+
+      row('Klasse', cls.icon+' '+cls.label, 'power', 'klasse')+
       row('Level', lvl + ' <small>('+cur+' / '+need+' XP)</small>', 'level')+
       row('Kampfkraft', t.power, 'power', 'kampfkraft')+
       row('Gegenstandsstufe', gearScore(), 'crit', 'gegenstandsstufe')+
       row('Leben', fmtBig(c.maxHp), 'hp', 'leben')+
     '</div>'+
-    '<div class="cs-group"><h4>Angriff</h4>'+
+    '<div class="cs-group"><h4>Angriff ('+(magicActive?'magisch':'physisch')+')</h4>'+
       row('Schaden', c.atk, 'damage', 'schaden')+
       row('DPS', fmtBig(Math.round(c.dps)), 'damage', 'dps')+
-      row('Krit-Chance', pct(c.critChance), 'crit', 'kritchance')+
+      critRow('Physischer Krit', c.critPhys, physActive, 'kritphys')+
+      critRow('Magischer Krit', c.critMagic, magicActive, 'kritmagic')+
       row('Krit-Schaden', pct(c.critMult), 'crit', 'kritschaden')+
       row('Angriffstempo', c.swingsPerSec.toFixed(2)+'/s', 'crit', 'angriffstempo')+
     '</div>'+

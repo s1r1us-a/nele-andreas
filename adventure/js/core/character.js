@@ -3,6 +3,7 @@
    ===================================================================== */
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
+import { classOf, damageSchool } from '../data/classes.js';
 import { state } from './state.js';
 import { powerOfBundle } from './items.js';
 import { toast } from '../ui/dom.js';
@@ -39,7 +40,7 @@ export function gainXp(amount){
 }
 
 // ---- Gesamt-Stats ---------------------------------------------------
-const SUM_KEYS = ['armor','damage','critChance','critDamage','maxHp','attackSpeed',
+const SUM_KEYS = ['armor','damage','critPhys','critMagic','critDamage','maxHp','attackSpeed',
                   'lifesteal','dodge','block','versatility','thorns'];
 export function recomputeTotals(){
   const b = {}; SUM_KEYS.forEach(k => b[k] = 0);
@@ -50,7 +51,8 @@ export function recomputeTotals(){
     for(const k of AFFIX_KEYS) b[k] += a[k] || 0;
   }
   // Caps gegen Degeneration
-  b.critChance  = Math.min(0.60, b.critChance);
+  b.critPhys    = Math.min(0.60, b.critPhys);
+  b.critMagic   = Math.min(0.60, b.critMagic);
   b.attackSpeed = Math.min(0.60, b.attackSpeed);
   b.lifesteal   = Math.min(AFFIX_DEFS.lifesteal.cap, b.lifesteal);
   b.dodge       = Math.min(AFFIX_DEFS.dodge.cap, b.dodge);
@@ -64,9 +66,12 @@ export function recomputeTotals(){
 
 // ---- Abgeleitete Kampfwerte (eine Quelle für UI & Bosskampf) -------
 export function heroCombat(t){
+  const cls = classOf(state);
+  const school = cls.damageSchool;                 // 'magisch' | 'physisch'
+  const activeCrit = school==='magisch' ? (t.critMagic||0) : (t.critPhys||0);
   const maxHp = COMBAT.heroBaseHp + t.armor*COMBAT.heroHpPerArmor + t.maxHp;
-  const atk = Math.round((COMBAT.heroBaseAtk + t.damage) * (1 + (t.versatility||0)));
-  const critChance = COMBAT.heroBaseCrit + t.critChance;
+  const atk = Math.round((COMBAT.heroBaseAtk + t.damage) * (1 + (t.versatility||0)) * cls.dmgMult);
+  const critChance = COMBAT.heroBaseCrit + activeCrit;
   const critMult = COMBAT.heroBaseCritMult + t.critDamage;
   const interval = Math.max(COMBAT.swingMinMs, COMBAT.swingBaseMs * (1 - t.attackSpeed));
   const swingsPerSec = 1000 / interval;
@@ -74,7 +79,9 @@ export function heroCombat(t){
   const dps = avgSwing * swingsPerSec;
   const dmgReduction = t.armor*COMBAT.armorReduction + (t.block||0);
   return { maxHp, atk, critChance, critMult, interval, swingsPerSec, dps, dmgReduction,
-           lifesteal: t.lifesteal||0, dodge: t.dodge||0, versatility: t.versatility||0, thorns: t.thorns||0 };
+           school, critPhys: t.critPhys||0, critMagic: t.critMagic||0,
+           lifesteal: (t.lifesteal||0) * cls.healMult, dodge: t.dodge||0,
+           versatility: t.versatility||0, thorns: t.thorns||0 };
 }
 
 export function heroTier(power){

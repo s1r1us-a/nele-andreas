@@ -1,146 +1,171 @@
 # Item-Übersicht – Idle Abenteuer
 
-> **Automatisch generiert** aus `adventure/js/data/itemTypes.js` (Single Source of Truth).
+> **Automatisch generiert** aus den Daten-Dateien (Single Source of Truth).
 > Nicht von Hand editieren – Datendatei ändern und `node adventure/tools/gen-items-doc.mjs` neu ausführen.
 
-Jeder Slot bietet **6 Item-Typen** mit eigenem Stat-Archetyp. Jeder Typ existiert in allen **6 Seltenheiten**:
-Gewöhnlich · Ungewöhnlich · Seltene · Epische · Legendäre · Mythische.
+## 🧙 Klassen & Rüstungsmaterialien
 
-- **StatMult** verschiebt den Primär-Stat (Schaden/Rüstung); <1 = mehr Fokus auf Affixe.
-- **Affix-Bias** = Sekundär-Stats, die der Typ bevorzugt rollt.
-- **Flavor (Episch+)** = ab Episch garantiert vorhandener Archetyp-Affix.
-- Seltenheit hebt Werte (Multiplikator), Affix-Anzahl und ab Episch die Roll-Qualität; Legendär/Mythisch tragen zusätzlich einen Proc-Effekt.
+Die bei der Erstellung gewählte **Klasse** ist dauerhaft und bestimmt, welche Rüstungsmaterialien getragen werden dürfen und welche Schadensschule zählt.
 
-## ⚔️ Waffen
-
-### Waffe  ·  Primär: Schaden
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
+| Klasse | Schule | Tragbare Materialien | Schadens-× | Heil-× |
 |---|---|---|---|---|
-| Schwert | v0 | 1.0 | Schaden, Krit-Chance | Schaden |
-| Dolch | v1 | 0.85 | Krit-Chance, Krit-Schaden, Angriffstempo | Krit-Chance |
-| Streitkolben | v2 | 1.2 | Schaden, Vielseitigkeit | Schaden |
-| Axt | v3 | 1.1 | Schaden, Lebensraub | Lebensraub |
-| Speer | v4 | 1.05 | Vielseitigkeit, Angriffstempo | Vielseitigkeit |
-| Kriegshammer | v5 | 1.25 | Schaden, Krit-Schaden | Krit-Schaden |
+| ✨ Heiler | magisch | Stoff | 0.65× | 1.6× |
+| ⚔️ Kämpfer | physisch | Stoff, Leder | 1× | 1× |
+| 🛡️ Verteidiger | physisch | Stoff, Leder, Platte | 0.7× | 1× |
 
-## 🛡️ Rüstung
+Rüstung gibt es in **3 Materialien**: **Stoff** (kaum Rüstung, magisch), **Leder** (mehr Rüstung, physisch), **Platte** (sehr viel Rüstung, wenig Schaden).
 
-### Kopf  ·  Primär: Rüstung
+## ✨ Seltenheiten
 
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
+Seltenheit hebt den Primärwert (Multiplikator), die Affix-Anzahl und ab Episch die Roll-Qualität; Legendär/Mythisch tragen zusätzlich einen Proc-Effekt.
+
+| Seltenheit | Wert-× | Drop-Gewicht | Affixe | Basis-Goldwert |
 |---|---|---|---|---|
-| Platten-Helm | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Helm | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Helm | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Helm | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Helm | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Helm | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
+| Gewöhnlich | 1× | 60 | 0 | 0 |
+| Ungewöhnlich | 1.4× | 25 | 1 | 1000 |
+| Seltene | 1.9× | 10 | 2 | 2000 |
+| Epische | 2.6× | 4 | 2–3 | 3000 |
+| Legendäre | 3.5× | 1 | 3 | 4000 |
+| Mythische | 4.7× | 0.18 | 4 | 5000 |
 
-### Schultern  ·  Primär: Rüstung
+## 📋 Alle Gegenstände (Beispielwerte @ Gegenstandsstufe 50, Qualität 100 %)
 
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
+Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Seltenheit. Hier je Typ der Wert bei Stufe 50 für **Gewöhnlich** und **Episch** zum Vergleich.
+
+### ⚔️ Waffen
+
+#### Waffe  ·  Primär: Schaden
+
+| Typ | Variante | StatMult | Schaden (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|
+| Schwert | v0 | 1.0 | 56 / 146 | Schaden, Physischer Krit | Schaden |
+| Dolch | v1 | 0.85 | 48 / 124 | Physischer Krit, Krit-Schaden, Angriffstempo | Physischer Krit |
+| Streitkolben | v2 | 1.2 | 67 / 175 | Schaden, Vielseitigkeit | Schaden |
+| Axt | v3 | 1.1 | 62 / 160 | Schaden, Lebensraub | Lebensraub |
+| Speer | v4 | 1.05 | 59 / 153 | Vielseitigkeit, Angriffstempo | Vielseitigkeit |
+| Kriegshammer | v5 | 1.25 | 70 / 182 | Schaden, Krit-Schaden | Krit-Schaden |
+
+### 🛡️ Rüstung
+
+#### Kopf  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Helm | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Helm | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Helm | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Schultern  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Schulterplatten | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Schulterplatten | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Brust  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Brustpanzer | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Brustpanzer | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Hände  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Handschuhe | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Handschuhe | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Beine  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Beinschienen | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Beinschienen | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Füße  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Stiefel | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Stiefel | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Umhang  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Stoff-Umhang | Stoff | Heiler, Kämpfer, Verteidiger | 0.55 | 23 / 60 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
+| Leder-Umhang | Leder | Kämpfer, Verteidiger | 0.95 | 40 / 104 | Ausweichen, Physischer Krit, Angriffstempo | Physischer Krit |
+| Platte-Umhang | Platte | Verteidiger | 1.45 | 61 / 158 | Rüstung, Block, Lebenspunkte | Rüstung |
+
+#### Schild  ·  Primär: Rüstung
+
+| Typ | Material | Tragbar | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|---|
+| Turmschild | – | alle | 1.1 | 46 / 120 | Rüstung, Block | Block |
+| Rundschild | – | alle | 1.0 | 42 / 109 | Rüstung, Dornen | Dornen |
+| Buckler | – | alle | 0.9 | 38 / 98 | Ausweichen, Block | Ausweichen |
+| Pavese | – | alle | 1.15 | 48 / 126 | Rüstung, Lebenspunkte | Lebenspunkte |
+| Spiegelschild | – | alle | 1.0 | 42 / 109 | Block, Ausweichen | Block |
+| Drachenschild | – | alle | 1.05 | 44 / 115 | Rüstung, Dornen | Rüstung |
+
+### 💍 Schmuck
+
+#### Amulett  ·  Primär: Rüstung
+
+| Typ | Variante | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|
+| Kriegsamulett | v0 | 1.0 | 42 / 109 | Schaden, Krit-Schaden | Krit-Schaden |
+| Lebensamulett | v1 | 1.0 | 42 / 109 | Lebenspunkte, Lebensraub | Lebenspunkte |
+| Schutzamulett | v2 | 1.0 | 42 / 109 | Rüstung, Vielseitigkeit | Vielseitigkeit |
+| Krit-Amulett | v3 | 1.0 | 42 / 109 | Physischer Krit, Krit-Schaden | Physischer Krit |
+| Tempo-Amulett | v4 | 1.0 | 42 / 109 | Angriffstempo, Ausweichen | Angriffstempo |
+| Räuber-Amulett | v5 | 1.0 | 42 / 109 | Lebensraub, Physischer Krit | Lebensraub |
+
+#### Ring 1 & 2  ·  Primär: Rüstung
+
+| Typ | Variante | StatMult | Rüstung (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |
+|---|---|---|---|---|---|
+| Siegelring | v0 | 1.0 | 42 / 109 | Physischer Krit, Krit-Schaden | Physischer Krit |
+| Bluttropfen-Ring | v1 | 1.0 | 42 / 109 | Lebensraub, Lebenspunkte | Lebensraub |
+| Wächterring | v2 | 1.0 | 42 / 109 | Rüstung, Ausweichen | Ausweichen |
+| Macht-Ring | v3 | 1.0 | 42 / 109 | Schaden, Krit-Schaden | Krit-Schaden |
+| Vitalring | v4 | 1.0 | 42 / 109 | Lebenspunkte, Rüstung | Lebenspunkte |
+| Talisman | v5 | 1.0 | 42 / 109 | Vielseitigkeit, Angriffstempo | Vielseitigkeit |
+
+## 🔧 Sekundärwerte (Affixe)
+
+`Basis` + `pro Stufe` × Gegenstandsstufe, dann × Seltenheits-Multiplikator und Roll (0,75–1,30). `%`-Werte sind Anteile.
+
+| Affix | Typ | Basis | pro Stufe | Obergrenze |
 |---|---|---|---|---|
-| Platten-Schulterplatten | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Schulterplatten | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Schulterplatten | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Schulterplatten | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Schulterplatten | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Schulterplatten | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
+| Physischer Krit | % | 3.00% | 0.150% | 50% |
+| Magischer Krit | % | 3.00% | 0.150% | 50% |
+| Krit-Schaden | % | 15.00% | 0.600% | 200% |
+| Lebenspunkte | flach | 12 | 1.4 | – |
+| Angriffstempo | % | 3.00% | 0.120% | 40% |
+| Rüstung | flach | 3 | 0.5 | – |
+| Schaden | flach | 4 | 0.6 | – |
+| Lebensraub | % | 2.00% | 0.100% | 40% |
+| Ausweichen | % | 2.00% | 0.080% | 35% |
+| Block | flach | 2 | 0.4 | – |
+| Vielseitigkeit | % | 2.00% | 0.090% | 30% |
+| Dornen | flach | 3 | 0.5 | – |
 
-### Brust  ·  Primär: Rüstung
+## 💰 Wertigkeit & Verkauf
 
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Platten-Brustpanzer | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Brustpanzer | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Brustpanzer | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Brustpanzer | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Brustpanzer | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Brustpanzer | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
-
-### Hände  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Platten-Handschuhe | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Handschuhe | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Handschuhe | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Handschuhe | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Handschuhe | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Handschuhe | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
-
-### Beine  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Platten-Beinschienen | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Beinschienen | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Beinschienen | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Beinschienen | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Beinschienen | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Beinschienen | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
-
-### Füße  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Platten-Stiefel | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Stiefel | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Stiefel | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Stiefel | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Stiefel | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Stiefel | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
-
-### Umhang  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Platten-Umhang | v0 | 1.1 | Rüstung, Block | Rüstung |
-| Ketten-Umhang | v1 | 1.0 | Rüstung, Lebenspunkte, Vielseitigkeit | Lebenspunkte |
-| Leder-Umhang | v2 | 0.9 | Ausweichen, Angriffstempo | Ausweichen |
-| Schuppen-Umhang | v3 | 1.05 | Rüstung, Block | Block |
-| Gewand-Umhang | v4 | 0.9 | Vielseitigkeit, Lebenspunkte | Vielseitigkeit |
-| Drachen-Umhang | v5 | 1.05 | Rüstung, Angriffstempo | Angriffstempo |
-
-### Schild  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Turmschild | v0 | 1.1 | Rüstung, Block | Block |
-| Rundschild | v1 | 1.0 | Rüstung, Dornen | Dornen |
-| Buckler | v2 | 0.9 | Ausweichen, Block | Ausweichen |
-| Pavese | v3 | 1.15 | Rüstung, Lebenspunkte | Lebenspunkte |
-| Spiegelschild | v4 | 1.0 | Block, Ausweichen | Block |
-| Drachenschild | v5 | 1.05 | Rüstung, Dornen | Rüstung |
-
-## 💍 Schmuck
-
-### Amulett  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Kriegsamulett | v0 | 1.0 | Schaden, Krit-Schaden | Krit-Schaden |
-| Lebensamulett | v1 | 1.0 | Lebenspunkte, Lebensraub | Lebenspunkte |
-| Schutzamulett | v2 | 1.0 | Rüstung, Vielseitigkeit | Vielseitigkeit |
-| Krit-Amulett | v3 | 1.0 | Krit-Chance, Krit-Schaden | Krit-Chance |
-| Tempo-Amulett | v4 | 1.0 | Angriffstempo, Ausweichen | Angriffstempo |
-| Räuber-Amulett | v5 | 1.0 | Lebensraub, Krit-Chance | Lebensraub |
-
-### Ring 1 & 2  ·  Primär: Rüstung
-
-| Typ | Variante | StatMult | Affix-Bias | Flavor (Episch+) |
-|---|---|---|---|---|
-| Siegelring | v0 | 1.0 | Krit-Chance, Krit-Schaden | Krit-Chance |
-| Bluttropfen-Ring | v1 | 1.0 | Lebensraub, Lebenspunkte | Lebensraub |
-| Wächterring | v2 | 1.0 | Rüstung, Ausweichen | Ausweichen |
-| Macht-Ring | v3 | 1.0 | Schaden, Krit-Schaden | Krit-Schaden |
-| Vitalring | v4 | 1.0 | Lebenspunkte, Rüstung | Lebenspunkte |
-| Talisman | v5 | 1.0 | Vielseitigkeit, Angriffstempo | Vielseitigkeit |
+- **Gegenstandswert** = `Seltenheitsrang × 1000 + Primärwert + Affix-Score` (Affix-Score: %-Affixe × 100, flache × 0,5, Proc +40).
+- **Verkaufspreis** = `max(1, (Primärwert + Affix-Score × 2) × (Seltenheitsrang + 1) × 0,6)`.
+- **Kampfkraft** eines Items gewichtet alle Werte (z. B. Krit ×200, Schaden ×1,5, Rüstung ×1) zu einer Vergleichszahl.
 
 ---
 
-**Summe:** 66 Basis-Typen × 6 Seltenheiten = 396 Item-Ausprägungen.
+**Summe:** 45 Basis-Typen × 6 Seltenheiten = 270 Item-Ausprägungen.
 
 > Sprites: `icon_<slot>_<variante>.png` (0–5). Waffen besitzen je Variante eine eigene Form
-> (Schwert/Dolch/Streitkolben/Axt/Speer/Kriegshammer); übrige Slots unterscheiden sich per Material-Farbe.
+> (Schwert/Dolch/Streitkolben/Axt/Speer/Kriegshammer); Rüstung nutzt 3 Material-Varianten (Stoff v4, Leder v2, Platte v0).
