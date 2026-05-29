@@ -4,9 +4,9 @@ Generator für die Pixelart-Sprites des Idle-Abenteuerspiels (abenteuer.html).
 
 Zeichnet alle Grafiken deterministisch (fester Seed) auf ein kleines Raster und
 skaliert sie mit Nearest-Neighbour hoch -> scharfer Pixellook, keine externen
-Asset-Dateien nötig. Ergebnis landet in ../adventure-assets/.
+Asset-Dateien nötig. Ergebnis landet in ../assets/ (d. h. adventure/assets/).
 
-Aufruf:   python3 tools/gen-adventure-sprites.py
+Aufruf:   python3 adventure/tools/gen-adventure-sprites.py
 Benötigt: Pillow  (pip install Pillow)
 """
 
@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw
 # Grundlagen
 # ---------------------------------------------------------------------------
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.normpath(os.path.join(HERE, "..", "adventure-assets"))
+OUT = os.path.normpath(os.path.join(HERE, "..", "assets"))
 os.makedirs(OUT, exist_ok=True)
 
 SEED = 1337
