@@ -311,7 +311,7 @@ function renderCreator(){
   creatorModal().innerHTML =
     '<h2>👤 Charakter erstellen</h2>'+
     '<img class="creator-preview" id="creatorPreview" alt="Vorschau">'+
-    '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols2">'+genderBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols3">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
     '<div class="creator-section"><h3>Haarfarbe</h3><div class="color-grid">'+colorBtns+'</div></div>'+
     '<div class="creator-section"><h3>Hautton</h3><div class="color-grid">'+skinBtns+'</div></div>'+

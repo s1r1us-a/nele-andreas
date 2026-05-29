@@ -1,7 +1,7 @@
 /* =====================================================================
    CHARAKTER-EDITOR: Geschlecht, Frisuren, Haarfarben.
    ===================================================================== */
-export const GENDERS = [ { id:'w', label:'Weiblich', icon:'♀' }, { id:'m', label:'Männlich', icon:'♂' } ];
+export const GENDERS = [ { id:'w', label:'Weiblich', icon:'♀' }, { id:'m', label:'Männlich', icon:'♂' }, { id:'d', label:'Divers', icon:'⚧' } ];
 export const HAIR_STYLES = [
   { id:'kurz',          label:'Kurz' },
   { id:'lang',          label:'Lang' },

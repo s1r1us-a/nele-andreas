@@ -26,7 +26,7 @@ let GRAD_SEQ = 0;
 
 export function buildHeroSVG(character, tier){
   const c = character || DEFAULT_CHARACTER;
-  const female = c.gender !== 'm';
+  const gender = c.gender || 'w';
   const hairId = c.hairId || 'kurz';
   const hc  = c.hairColor || '#f5d04a';
   const hcd = shade(hc, 0.68);            // Haar-Lowlight
@@ -89,28 +89,42 @@ export function buildHeroSVG(character, tier){
     hairFront = capFringe;
   }
 
-  // ---- Körper -------------------------------------------------------
+  // ---- Körper (Hals gekürzt, Ausschnitt höher → natürlicher Hals) ---
   let body;
-  if(female){
+  if(gender==='m'){
     body =
-      `<rect x="91" y="100" width="18" height="28" rx="8" fill="url(#sk${uid})"/>`+   // Hals
-      `<path d="M100 120 L123 134 C131 154 116 176 113 196 C113 236 128 274 141 300 `+
-        `L59 300 C72 274 87 236 87 196 C84 176 69 154 77 134 Z" `+
-        `fill="url(#ou${uid})" stroke="${shade(outfit,0.45)}" stroke-width="2" stroke-linejoin="round"/>`+
-      `<path d="M62 296 C84 305 116 305 138 296 L141 302 C116 312 84 312 59 302 Z" fill="url(#tr${uid})"/>`+ // Saum
-      `<ellipse cx="100" cy="140" rx="24" ry="8" fill="#fff" opacity="0.12"/>`+        // Schulter-Glanz
-      mirror(`<ellipse cx="114" cy="306" rx="10" ry="5" fill="${boot}"/>`);            // Füße
-  } else {
-    body =
-      `<rect x="90" y="100" width="20" height="28" rx="7" fill="url(#sk${uid})"/>`+    // Hals
-      `<path d="M100 120 L126 134 C133 152 129 174 126 190 L74 190 C71 174 67 152 74 134 Z" `+
+      `<rect x="90" y="106" width="20" height="20" rx="7" fill="url(#sk${uid})"/>`+    // Hals
+      `<path d="M100 124 L126 130 C133 150 129 174 126 190 L74 190 C71 150 67 130 74 130 Z" `+
         `fill="url(#ou${uid})" stroke="${shade(outfit,0.45)}" stroke-width="2" stroke-linejoin="round"/>`+
       `<rect x="74" y="180" width="52" height="13" rx="3" fill="url(#tr${uid})"/>`+    // Gürtel
       `<path d="M103 190 L123 190 L120 270 L106 270 Z" fill="${outfitSh}"/>`+          // Bein r
       `<path d="M77 190 L97 190 L94 270 L80 270 Z" fill="${outfitSh}"/>`+              // Bein l
       `<rect x="102" y="262" width="22" height="16" rx="5" fill="${boot}"/>`+          // Stiefel r
       `<rect x="76" y="262" width="22" height="16" rx="5" fill="${boot}"/>`+           // Stiefel l
-      `<ellipse cx="100" cy="140" rx="26" ry="8" fill="#fff" opacity="0.10"/>`;
+      `<ellipse cx="100" cy="136" rx="26" ry="8" fill="#fff" opacity="0.10"/>`;
+  } else if(gender==='d'){
+    // Divers: androgyne gegürtete Tunika bis Mitte Oberschenkel + Leggings + Stiefel
+    body =
+      `<rect x="90" y="106" width="20" height="20" rx="7" fill="url(#sk${uid})"/>`+    // Hals
+      `<path d="M100 124 L124 130 C131 150 122 186 120 214 C119 226 128 232 134 236 `+
+        `L66 236 C72 232 81 226 80 214 C78 186 69 150 76 130 Z" `+
+        `fill="url(#ou${uid})" stroke="${shade(outfit,0.45)}" stroke-width="2" stroke-linejoin="round"/>`+
+      `<rect x="76" y="182" width="48" height="12" rx="3" fill="url(#tr${uid})"/>`+    // Gürtel
+      `<path d="M68 232 C84 240 116 240 132 232 L134 238 C116 246 84 246 66 238 Z" fill="url(#tr${uid})"/>`+ // Saum
+      `<path d="M102 236 L120 236 L116 292 L106 292 Z" fill="${outfitSh}"/>`+          // Legging r
+      `<path d="M98 236 L80 236 L84 292 L94 292 Z" fill="${outfitSh}"/>`+              // Legging l
+      `<rect x="104" y="286" width="18" height="14" rx="4" fill="${boot}"/>`+          // Stiefel r
+      `<rect x="78" y="286" width="18" height="14" rx="4" fill="${boot}"/>`+           // Stiefel l
+      `<ellipse cx="100" cy="136" rx="24" ry="8" fill="#fff" opacity="0.11"/>`;
+  } else {
+    body =
+      `<rect x="91" y="106" width="18" height="20" rx="8" fill="url(#sk${uid})"/>`+   // Hals
+      `<path d="M100 124 L123 130 C131 152 116 176 113 196 C113 236 128 274 141 300 `+
+        `L59 300 C72 274 87 236 87 196 C84 176 69 152 77 130 Z" `+
+        `fill="url(#ou${uid})" stroke="${shade(outfit,0.45)}" stroke-width="2" stroke-linejoin="round"/>`+
+      `<path d="M62 296 C84 305 116 305 138 296 L141 302 C116 312 84 312 59 302 Z" fill="url(#tr${uid})"/>`+ // Saum
+      `<ellipse cx="100" cy="136" rx="24" ry="8" fill="#fff" opacity="0.12"/>`+        // Schulter-Glanz
+      mirror(`<ellipse cx="114" cy="306" rx="10" ry="5" fill="${boot}"/>`);            // Füße
   }
 
   // ---- Arme (symmetrisch) ------------------------------------------
