@@ -52,6 +52,12 @@
   .stat-chip .lbl { color:var(--txt-mute); font-size:11px; text-transform:uppercase; }
   .stat-chip.armor b{color:var(--armor);} .stat-chip.damage b{color:var(--damage);}
   .stat-chip.power b{color:var(--power);}
+  .stat-chip.level { position:relative; }
+  .stat-chip.level b{ color:#ffd95e; }
+  .xp-bar { position:absolute; left:8px; right:8px; bottom:2px; height:3px;
+    background:rgba(255,255,255,.12); border-radius:2px; overflow:hidden; }
+  .xp-bar i { display:block; height:100%; width:0%;
+    background:linear-gradient(90deg,#ffd95e,#ff9e3d); transition:width .35s; }
 
   /* ---- Tabs ------------------------------------------------------ */
   .tabs { display:flex; gap:6px; justify-content:center; padding:14px 10px 0; flex-wrap:wrap; }
@@ -425,7 +431,25 @@
   .reward-card { padding:12px 8px; border-radius:12px; text-align:center;
     background:var(--stone); border:2px solid var(--rc, var(--line)); }
   .reward-card img { width:56px; height:56px; }
+  .reward-card .rc-emoji { font-size:48px; line-height:56px; height:56px; }
   .reward-card .rc-name { font-weight:700; font-size:13px; margin:6px 0; }
+  /* Inventar-Sub-Tabs (Ausrüstung / Verbrauch) */
+  .inv-subtabs { display:flex; gap:8px; margin-bottom:14px; }
+  .inv-subtab { flex:1; padding:9px 10px; border-radius:10px; cursor:pointer;
+    text-align:center; font-weight:600; font-size:13px; background:var(--stone);
+    border:1px solid var(--line); color:var(--txt-dim); }
+  .inv-subtab.active { color:var(--gold-hi); border-color:var(--gold-dim);
+    background:rgba(255,217,94,.08); }
+  /* Verbrauchsgegenstände-Liste */
+  .consum-list { display:flex; flex-direction:column; gap:12px; }
+  .consum-card { display:flex; align-items:center; gap:14px; padding:12px 14px;
+    border-radius:12px; background:var(--stone); border:1px solid var(--line); }
+  .consum-card .cc-icon { font-size:38px; }
+  .consum-card .cc-body { flex:1; }
+  .consum-card .cc-name { font-weight:700; color:var(--gold-hi); }
+  .consum-card .cc-desc { color:var(--txt-dim); font-size:12px; margin-top:2px; }
+  .consum-card .cc-count { font-family:'Press Start 2P',monospace; font-size:15px;
+    color:#37d67a; }
 
   @media (prefers-reduced-motion: reduce){
     .arena-stage.shake{ animation:none; } .combatant{ transition:none; }
@@ -484,6 +508,10 @@
   <h1>⚔️ Abenteuer</h1>
   <button class="dev-btn" id="devBtn" title="Test-Werkzeuge">🛠 Dev</button>
   <div class="stats-mini">
+    <div class="stat-chip level" id="levelChip" title="Level">
+      <span class="lbl">⭐ Level</span><b id="miniLevel">1</b>
+      <div class="xp-bar"><i id="xpFill"></i></div>
+    </div>
     <div class="stat-chip gold"><span class="lbl">💰 Gold</span><b id="miniGold">0</b></div>
     <div class="stat-chip armor"><span class="lbl">Rüstung</span><b id="miniArmor">0</b></div>
     <div class="stat-chip damage"><span class="lbl">Schaden</span><b id="miniDamage">0</b></div>
@@ -612,6 +640,7 @@
       <div class="arena-result" id="arenaResult"></div>
     </div>
     <div class="arena-controls">
+      <button class="btn ghost" id="potionBtn">🧪 Heiltrank</button>
       <button class="btn ghost" id="speedBtn">⏩ Tempo 1×</button>
       <button class="btn" id="arenaCloseBtn" style="display:none;">Schließen</button>
     </div>
@@ -626,8 +655,11 @@
 const SAVE_KEY = 'idleAbenteuer_v1';
 const ASSETS = 'adventure-assets/';
 const VARIANTS = 4;              // Sprite-Varianten je Slot
-const INV_SLOTS = 10;            // Harte Inventar-Obergrenze. Ist es voll, muss vor dem
+const INV_SLOTS = 20;            // Harte Inventar-Obergrenze. Ist es voll, muss vor dem
                                  // Belohnungen-Abholen erst Platz geschaffen werden.
+const HEAL_PCT = 0.5;            // Heiltrank stellt 50 % der maximalen HP wieder her
+const POTION_BASE_CHANCE = 0.20; // Basis-Chance auf einen Heiltrank je Expedition
+                                 // (skaliert zusätzlich mit der Expeditions-Dauer)
 
 // ---- Expeditionen (Abenteuer auf Zeit) -----------------------------
 // Man wählt eine Dauer; das Abenteuer läuft in Echtzeit (auch offline) ab.
@@ -738,9 +770,12 @@ const AFFIX_COUNT = {
 };
 function affixValue(key, ilvl, rarity){
   const d = AFFIX_DEFS[key];
-  let v = (d.base + ilvl*d.perIlvl) * rarity.mult;
+  // WoW-artiger Range-Roll: derselbe Affix variiert von 75 % bis 125 %,
+  // damit zwei Items gleicher Seltenheit besser/schlechter ausfallen können.
+  const roll = 0.75 + Math.random()*0.5;
+  let v = (d.base + ilvl*d.perIlvl) * rarity.mult * roll;
   if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
-  else { v = Math.round(v); }
+  else { v = Math.max(1, Math.round(v)); }
   return v;
 }
 function rollAffixes(slotKey, ilvl, rarity){
@@ -760,42 +795,94 @@ function fmtAffix(key, v){
   return (d.pct ? '+'+Math.round(v*100)+'%' : '+'+v) + ' ' + d.label;
 }
 
+// Gebiete (Hintergründe). Mehrere Bosse teilen sich ein Gebiet.
 const ZONES = [
   { name:'Blühende Wiesen',  bg:0 }, { name:'Dunkelwald', bg:1 },
   { name:'Tiefe Höhlen',     bg:2 }, { name:'Vulkanschlund', bg:3 },
   { name:'Frostgipfel',      bg:4 },
 ];
-const zoneBg = z => ASSETS + 'bg_zone_' + ZONES[Math.min(z, ZONES.length-1)].bg + '.png';
-const zoneName = z => (ZONES[Math.min(z, ZONES.length-1)].name) + (z >= ZONES.length ? ' +' + (z-ZONES.length+1) : '');
 
-// ---- Bosse (Zonen-Gate) --------------------------------------------
-// Die nächste Zone wird durch Besiegen des Bosses freigeschaltet.
+// ---- Bosse (Fortschritts-Gate) -------------------------------------
+// Der nächste Boss/das nächste Gebiet wird durch Besiegen freigeschaltet.
 // recPower = empfohlene Kampfkraft (nur Hinweis, KEINE Sperre – man kann
 // immer kämpfen, ist man zu schwach verliert man eben).
+// bg  = Gebiets-/Hintergrund-Index (0–4, ZONES), spr = Boss-Sprite (0–4).
+// mechanic = einzigartige Kampf-Fähigkeit (String oder Array, siehe exchange()).
+// Stats sind bewusst hoch → lange, harte Kämpfe.
 const BOSS_DEFS = [
-  { name:'Grollzahn der Goblin',   maxHp:180,  atk:14,  recPower:60  },
-  { name:'Webmutter Schwarzbein',  maxHp:420,  atk:26,  recPower:160 },
-  { name:'Gorrak der Höhlentroll', maxHp:950,  atk:44,  recPower:340 },
-  { name:'Pyraxis der Lavadrache', maxHp:2100, atk:72,  recPower:680 },
-  { name:'Frostherz der Golem',    maxHp:4200, atk:110, recPower:1200 },
+  { name:'Grollzahn der Goblin',        bg:0, spr:0, maxHp:800,    atk:16,  recPower:70,    mechanic:'wut' },
+  { name:'Borkenschreck der Waldgeist', bg:0, spr:1, maxHp:1400,   atk:22,  recPower:120,   mechanic:'dornen' },
+  { name:'Königin Summbrand',           bg:0, spr:2, maxHp:2200,   atk:28,  recPower:190,   mechanic:'gift' },
+  { name:'Webmutter Schwarzbein',       bg:1, spr:1, maxHp:3400,   atk:36,  recPower:290,   mechanic:'gift' },
+  { name:'Schattenrudel-Alpha',         bg:1, spr:3, maxHp:5000,   atk:46,  recPower:420,   mechanic:'berserk' },
+  { name:'Nachtmar der Schrecken',      bg:1, spr:0, maxHp:7200,   atk:58,  recPower:600,   mechanic:'betaeubung' },
+  { name:'Gorrak der Höhlentroll',      bg:2, spr:2, maxHp:10500,  atk:72,  recPower:850,   mechanic:'regen' },
+  { name:'Kristallweber',               bg:2, spr:4, maxHp:15000,  atk:90,  recPower:1200,  mechanic:'eispanzer' },
+  { name:'Erzfresser',                  bg:2, spr:3, maxHp:21000,  atk:112, recPower:1650,  mechanic:'ruestungsbruch' },
+  { name:'Pyraxis der Lavadrache',      bg:3, spr:3, maxHp:30000,  atk:140, recPower:2300,  mechanic:'feueratem' },
+  { name:'Magmaherz der Elementar',     bg:3, spr:4, maxHp:42000,  atk:172, recPower:3100,  mechanic:'lebensentzug' },
+  { name:'Aschefürst Zinnober',         bg:3, spr:0, maxHp:58000,  atk:210, recPower:4200,  mechanic:'hinrichtung' },
+  { name:'Frostherz der Golem',         bg:4, spr:4, maxHp:80000,  atk:255, recPower:5600,  mechanic:'eispanzer' },
+  { name:'Eiskönigin Glacira',          bg:4, spr:1, maxHp:110000, atk:310, recPower:7500,  mechanic:'frost' },
+  { name:'Sturmtitan Boreas',           bg:4, spr:2, maxHp:150000, atk:380, recPower:10000, mechanic:'berserk' },
+  { name:'Schattendrache Nyx',          bg:3, spr:3, maxHp:210000, atk:460, recPower:13500, mechanic:['feueratem','lebensentzug'] },
+  { name:'Der Vergessene Wächter',      bg:2, spr:4, maxHp:290000, atk:560, recPower:18000, mechanic:['regen','eispanzer','dornen'] },
+  { name:'Weltenfresser',               bg:4, spr:4, maxHp:400000, atk:690, recPower:24000, mechanic:['hinrichtung','dornen','berserk'] },
 ];
-// Jenseits der definierten Zonen: skaliert weiter hoch.
+// Jenseits der definierten Bosse: letzter Boss skaliert sanft weiter hoch.
 function bossFor(zone){
   if(zone < BOSS_DEFS.length){
     const b = BOSS_DEFS[zone];
-    return { ...b, sprite: ASSETS+'boss_'+zone+'.png', zone };
+    return { ...b, sprite: ASSETS+'boss_'+b.spr+'.png', zone };
   }
   const over = zone - BOSS_DEFS.length + 1;
   const last = BOSS_DEFS[BOSS_DEFS.length-1];
-  const f = Math.pow(1.8, over);
+  const f = Math.pow(1.55, over);
   return {
+    ...last,
     name: last.name + ' +' + over,
     maxHp: Math.round(last.maxHp * f),
     atk: Math.round(last.atk * f),
     recPower: Math.round(last.recPower * f),
-    sprite: ASSETS + 'boss_' + (BOSS_DEFS.length-1) + '.png',
+    sprite: ASSETS + 'boss_' + last.spr + '.png',
     zone,
   };
+}
+const zoneBg = z => ASSETS + 'bg_zone_' + ZONES[bossFor(z).bg].bg + '.png';
+const zoneName = z => ZONES[bossFor(z).bg].name + (z >= BOSS_DEFS.length ? ' +' + (z-BOSS_DEFS.length+1) : '');
+
+// ---- Charakter-Level / XP (lokal, ohne Firebase) -------------------
+// Eigenständige XP-Kurve. Level geben dauerhafte Stat-Boni (siehe levelBonus).
+function xpForLevel(n){ return Math.round(40 * Math.pow(n, 1.45)); }
+function levelFromTotal(totalXp){
+  let total = Number(totalXp)||0, level = 1, cum = 0;
+  while(cum + xpForLevel(level) <= total){ cum += xpForLevel(level); level++; if(level>=9999) break; }
+  return level;
+}
+function xpInLevel(totalXp, level){
+  let total = Number(totalXp)||0, cum = 0;
+  for(let i=1;i<level;i++) cum += xpForLevel(i);
+  return total - cum;
+}
+// Dauerhafte Stat-Boni pro Level (additiv – Gear bleibt Hauptquelle).
+function levelBonus(level){
+  const l = Math.max(0, (level||1) - 1);
+  return { hp: l*10, dmg: l*1.5, armor: l*1 };
+}
+// Vergibt XP, prüft Level-Ups, zeigt Toast. Liefert die Menge zurück.
+function gainXp(amount){
+  amount = Math.max(0, Math.round(amount||0));
+  if(!amount) return 0;
+  const oldLevel = state.level || 1;
+  state.xp = (state.xp||0) + amount;
+  const newLevel = levelFromTotal(state.xp);
+  if(newLevel > oldLevel){
+    state.level = newLevel;
+    const lb = levelBonus(newLevel);
+    toast('⭐ Level '+newLevel+'! +'+(lb.hp)+' HP · +'+Math.round(lb.dmg)+' Schaden · +'+lb.armor+' Rüstung');
+  }
+  if(typeof renderTopStats === 'function') renderTopStats();
+  return amount;
 }
 
 // ---- State ----------------------------------------------------------
@@ -804,22 +891,25 @@ let nextId = 1;
 
 function freshState(){
   const eq = {}; Object.keys(SLOTS).forEach(s => eq[s] = null);
-  return { version:2, zone:0, zoneFinds:0, equipped:eq, inventory:[],
+  return { version:3, zone:0, zoneFinds:0, equipped:eq, inventory:[],
            lastTick:Date.now(), log:[], totalFinds:0, gold:0, bossesBeaten:0,
-           character:null, expedition:null };
+           xp:0, level:1, potions:0, character:null, expedition:null };
 }
 function loadSave(){
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return freshState();
     const s = JSON.parse(raw);
-    if(!s || (s.version !== 1 && s.version !== 2)) return freshState();
+    if(!s || (s.version !== 1 && s.version !== 2 && s.version !== 3)) return freshState();
     // Migration alter Stände: neue Felder ergänzen
     if(typeof s.gold !== 'number') s.gold = 0;
     if(typeof s.bossesBeaten !== 'number') s.bossesBeaten = 0;
+    if(typeof s.xp !== 'number') s.xp = 0;        // Charakter-XP
+    if(typeof s.level !== 'number') s.level = levelFromTotal(s.xp); // Level aus XP ableiten
+    if(typeof s.potions !== 'number') s.potions = 0; // Heiltränke (Verbrauchsgegenstand)
     if(!('character' in s)) s.character = null;   // null → Charakter-Editor beim Start
     if(!('expedition' in s)) s.expedition = null; // kein laufendes Abenteuer
-    s.version = 2;
+    s.version = 3;
     // höchste vorhandene id ermitteln, damit neue ids kollisionsfrei sind
     const all = [...s.inventory, ...Object.values(s.equipped).filter(Boolean)];
     nextId = all.reduce((m,it)=>Math.max(m, it.id||0), 0) + 1;
@@ -862,12 +952,15 @@ function rollItem(zone, lootBoost=0){
   const slot = SLOTS[slotKey];
   const rarity = weightedRarity(zone, lootBoost);
   const ilvl = Math.max(1, Math.round((zone*5 + 1) + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
-  const stat = Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K));
+  // WoW-artiger Qualitäts-Roll (80 %–120 %) → gleiche Seltenheit, bessere/schlechtere Items.
+  const quality = 0.80 + Math.random()*0.40;
+  const stat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * quality));
   const variant = Math.floor(Math.random()*VARIANTS);
   return {
     id: nextId++,
     slotKey, cat: slot.cat, statType: slot.statType,
     rarity: rarity.key, ilvl, stat, variant,
+    quality: Math.round(quality*100),
     affixes: rollAffixes(slotKey, ilvl, rarity),
     sprite: ASSETS + 'icon_' + slot.art + '_' + variant + '.png',
     name: rarity.adj + ' ' + slot.base,
@@ -891,6 +984,11 @@ function recomputeTotals(){
   // Globale Caps gegen Degeneration
   critChance  = Math.min(0.60, critChance);
   attackSpeed = Math.min(0.60, attackSpeed);
+  // Charakter-Level: dauerhafte Boni oben drauf
+  const lb = levelBonus(state.level);
+  armor  += lb.armor;
+  damage += lb.dmg;
+  maxHp  += lb.hp;
   const power = Math.round(armor + damage*1.5
     + maxHp*0.2 + critChance*200 + critDamage*60 + attackSpeed*150);
   return { armor, damage, critChance, critDamage, maxHp, attackSpeed, power };
@@ -1112,17 +1210,25 @@ function collectExpedition(){
     flashFullBanner();
     return;
   }
+  const exp = expeditionOf(state.expedition.durKey);
+  let xpGain = exp ? Math.round(25 + exp.boost*25) : 25;  // XP nach Expeditions-Dauer
   for(const it of items){
     state.inventory.push(it);
     addLog(it);
     popFind(it);
     state.totalFinds = (state.totalFinds||0) + 1;
+    xpGain += rarityIndex(it.rarity)*4 + 3;               // + XP je Fund nach Seltenheit
   }
+  gainXp(xpGain);
+  // Chance auf einen Heiltrank – längere Expeditionen droppen häufiger.
+  const potionChance = Math.min(0.6, POTION_BASE_CHANCE + (exp ? exp.boost*0.1 : 0));
+  let potionGained = false;
+  if(Math.random() < potionChance){ state.potions = (state.potions||0) + 1; potionGained = true; toast('🧪 Heiltrank gefunden!'); }
   state.zoneFinds = (state.zoneFinds||0) + items.length;
   const collected = items.slice();
   state.expedition = null;
   saveState(); renderAll();
-  showRewardModal(collected);
+  showRewardModal(collected, potionGained);
 }
 
 // Hebt das „Inventar voll"-Banner kurz hervor, wenn Abholen blockiert ist.
@@ -1145,6 +1251,13 @@ function renderTopStats(){
   $('#miniArmor').textContent = t.armor;
   $('#miniDamage').textContent = t.damage;
   $('#miniPower').textContent = t.power;
+  // Level + XP-Fortschritt
+  const lvl = state.level || 1;
+  const need = xpForLevel(lvl);
+  const cur = xpInLevel(state.xp || 0, lvl);
+  $('#miniLevel').textContent = lvl;
+  $('#xpFill').style.width = Math.max(0, Math.min(100, cur/need*100)) + '%';
+  $('#levelChip').title = 'Level '+lvl+' · '+cur+' / '+need+' XP';
 }
 
 function renderAdventure(){
@@ -1267,16 +1380,32 @@ function sortedInventory(){
     CAT_ORDER[a.cat]-CAT_ORDER[b.cat] || itemValue(b)-itemValue(a));
 }
 
+let invTab = 'gear';  // aktiver Inventar-Sub-Tab: 'gear' | 'consum'
+
 function renderInventory(){
   const panel = $('#inventoryPanel');
+  panel.innerHTML = '';
+
+  // Sub-Tab-Leiste: Ausrüstung / Verbrauch
+  const subtabs = document.createElement('div');
+  subtabs.className = 'inv-subtabs';
+  subtabs.innerHTML =
+    '<div class="inv-subtab'+(invTab==='gear'?' active':'')+'" data-tab="gear">🎒 Ausrüstung</div>'+
+    '<div class="inv-subtab'+(invTab==='consum'?' active':'')+'" data-tab="consum">🧪 Verbrauch</div>';
+  subtabs.querySelectorAll('.inv-subtab').forEach(el => el.addEventListener('click', ()=>{
+    invTab = el.dataset.tab; hideTooltip(); renderInventory();
+  }));
+  panel.appendChild(subtabs);
+
+  if(invTab === 'consum'){ renderConsumables(panel); return; }
+
   const items = sortedInventory();
   const full = items.length >= INV_SLOTS;
   const slots = Math.max(INV_SLOTS, items.length); // Altstände >10 alle zeigen
-  panel.innerHTML = '';
 
   const head = document.createElement('div');
   head.className = 'inv-head';
-  head.innerHTML = '<h2>🎒 Inventar</h2>'+
+  head.innerHTML = '<h2>🎒 Ausrüstung</h2>'+
     '<span class="count'+(full?' full':'')+'">'+items.length+' / '+INV_SLOTS+'</span>';
   panel.appendChild(head);
 
@@ -1306,6 +1435,35 @@ function renderInventory(){
   if(!items.length) hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
   else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten oder verkaufe im <b>Shop</b>, damit das Abenteuer weiterläuft.';
   else hint.textContent = 'Klick ein Item, um es auszurüsten. Sortiert nach Kategorie.';
+  panel.appendChild(hint);
+}
+
+// Verbrauchsgegenstände-Ansicht (aktuell: Heiltränke)
+function renderConsumables(panel){
+  const head = document.createElement('div');
+  head.className = 'inv-head';
+  head.innerHTML = '<h2>🧪 Verbrauch</h2>';
+  panel.appendChild(head);
+
+  const list = document.createElement('div');
+  list.className = 'consum-list';
+  const n = state.potions || 0;
+  if(n > 0){
+    const card = document.createElement('div');
+    card.className = 'consum-card';
+    card.innerHTML = '<div class="cc-icon">🧪</div>'+
+      '<div class="cc-body"><div class="cc-name">Heiltrank</div>'+
+      '<div class="cc-desc">Stellt 50 % der maximalen HP wieder her – im Bosskampf einsetzbar.</div></div>'+
+      '<div class="cc-count">×'+n+'</div>';
+    list.appendChild(card);
+  }
+  panel.appendChild(list);
+
+  const hint = document.createElement('p');
+  hint.className = 'inv-hint';
+  hint.textContent = n > 0
+    ? 'Heiltränke setzt du während eines Bosskampfes über den Heiltrank-Knopf ein.'
+    : 'Noch keine Verbrauchsgegenstände – finde Heiltränke auf Abenteuern!';
   panel.appendChild(hint);
 }
 
@@ -1386,10 +1544,17 @@ function tooltipHTML(it){
   const slot = SLOTS[it.slotKey];
   const sCls = it.statType==='armor' ? 'armor' : 'damage';
   const sLbl = it.statType==='armor' ? 'Rüstung' : 'Schaden';
+  let qLine = '';
+  if(typeof it.quality === 'number'){
+    const mark = it.quality >= 110 ? ' ⭐' : (it.quality <= 90 ? ' ▽' : '');
+    const col = it.quality >= 110 ? '#37d67a' : (it.quality <= 90 ? '#c0653a' : 'var(--txt-mute)');
+    qLine = '<div class="tt-ilvl" style="color:'+col+'">Qualität '+it.quality+'%'+mark+'</div>';
+  }
   return '<div class="tt-name" style="color:'+r.color+'">'+it.name+'</div>'+
     '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
     '<div class="tt-stat '+sCls+'">+'+it.stat+' '+sLbl+'</div>'+
     affixLinesHTML(it)+
+    qLine+
     '<div class="tt-ilvl">Gegenstandsstufe '+it.ilvl+'</div>';
 }
 function bindTooltip(el, it){
@@ -1588,7 +1753,7 @@ function previewExpedition(durKey){
 }
 
 // ---- Belohnungs-Modal (nach dem Abholen) ---------------------------
-function showRewardModal(items){
+function showRewardModal(items, potionGained){
   let cards = '';
   for(const it of items){
     const r = rarityOf(it.rarity);
@@ -1599,8 +1764,15 @@ function showRewardModal(items){
       '<div class="tt-stat '+it.statType+'">+'+it.stat+' '+sLbl+'</div>'+
       affixLinesHTML(it)+'</div>';
   }
+  if(potionGained){
+    cards += '<div class="reward-card" style="--rc:#37d67a">'+
+      '<div class="rc-emoji">🧪</div>'+
+      '<div class="rc-name" style="color:#37d67a">Heiltrank</div>'+
+      '<div class="tt-stat" style="color:#37d67a">+50% HP im Kampf</div></div>';
+  }
+  const sub = 'Du hast '+items.length+' Gegenstände'+(potionGained?' + einen Heiltrank':'')+' erhalten!';
   modal.innerHTML = '<h2>🎁 Belohnung</h2>'+
-    '<div class="sub">Du hast 2 Gegenstände erhalten!</div>'+
+    '<div class="sub">'+sub+'</div>'+
     '<div class="reward-grid">'+cards+'</div>'+
     '<div class="close-row"><button class="btn" id="rewardOkBtn">Super!</button></div>';
   modal.querySelector('#rewardOkBtn').addEventListener('click', closeModal);
@@ -1668,6 +1840,8 @@ function openDevPanel(){
       '<button class="btn ghost" id="devFill">🎒 Inventar mit Items füllen</button>'+
       '<button class="btn ghost" id="devClear">🗑️ Inventar leeren</button>'+
       '<button class="btn ghost" id="devGold">💰 +1000 Gold</button>'+
+      '<button class="btn ghost" id="devXp">⭐ +500 XP</button>'+
+      '<button class="btn ghost" id="devPotion">🧪 +3 Heiltränke</button>'+
       '<button class="btn" id="devReset" style="background:linear-gradient(180deg,#c0392b,#922d22);">♻️ Spiel komplett zurücksetzen</button>'+
     '</div>'+
     '<div class="close-row"><button class="btn ghost" id="devClose">Schließen</button></div>';
@@ -1684,6 +1858,12 @@ function openDevPanel(){
   });
   devModal.querySelector('#devGold').addEventListener('click', ()=>{
     state.gold += 1000; saveState(); renderAll();
+  });
+  devModal.querySelector('#devXp').addEventListener('click', ()=>{
+    gainXp(500); saveState(); renderAll();
+  });
+  devModal.querySelector('#devPotion').addEventListener('click', ()=>{
+    state.potions = (state.potions||0) + 3; saveState(); renderAll(); updatePotionBtn();
   });
   devModal.querySelector('#devReset').addEventListener('click', ()=>{
     if(!confirm('Wirklich alles löschen und neu starten?')) return;
@@ -1739,6 +1919,26 @@ $('#arenaCloseBtn').addEventListener('click', ()=>{
   renderAll();
 });
 
+// Heiltrank-Knopf im Kampf: Label/Aktivierung an Bestand & Kampfstatus koppeln.
+function updatePotionBtn(){
+  const btn = $('#potionBtn'); if(!btn) return;
+  const n = state.potions || 0;
+  btn.textContent = '🧪 Heiltrank ('+n+')';
+  btn.disabled = n <= 0 || !currentFight || currentFight.over;
+  btn.style.opacity = btn.disabled ? '0.5' : '1';
+}
+$('#potionBtn').addEventListener('click', ()=>{
+  const f = currentFight;
+  if(!f || f.over || (state.potions||0) <= 0) return;
+  if(f.heroHp >= f.heroMaxHp){ toast('Bereits volle HP'); return; }
+  const heal = Math.round(f.heroMaxHp * HEAL_PCT);
+  f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+  state.potions--; saveState();
+  updateHpBars(f);
+  mechFloat('hero', '💚 +'+heal, '#37d67a');
+  updatePotionBtn();
+});
+
 function rnd(v){ return 1 + (Math.random()*2-1)*v; } // ±v Varianz-Faktor
 
 function startBossFight(){
@@ -1753,16 +1953,20 @@ function startBossFight(){
 
   // Kampfwerte (inkl. neuer Stats)
   const heroMaxHp = 100 + t.armor*4 + t.maxHp;
+  const mechanics = Array.isArray(boss.mechanic) ? boss.mechanic.slice()
+                   : (boss.mechanic ? [boss.mechanic] : []);
   const fight = {
     heroMaxHp, heroHp: heroMaxHp,
     heroAtk: 5 + t.damage,
-    heroArmor: t.armor,
+    heroArmor: t.armor, heroArmorBase: t.armor,
     heroCritChance: 0.05 + t.critChance,        // 5% Basis + Affixe
     heroCritMult: 2.0 + t.critDamage,           // 2× Basis + Affixe
     heroInterval: Math.max(220, 750 * (1 - t.attackSpeed)), // Haste verkürzt Takt
-    bossMaxHp: boss.maxHp, bossAtk: boss.atk,
+    bossMaxHp: boss.maxHp, bossAtk: boss.atk, bossAtkBase: boss.atk,
     bossHp: boss.maxHp,
     turn: 0, over: false, boss, anchor: {},
+    // Mechanik-Status
+    mechanics, poison: 0, berserkMult: 1, shieldTurns: 0, frostTurns: 0,
   };
   currentFight = fight;
   updateHpBars(fight);
@@ -1770,6 +1974,7 @@ function startBossFight(){
   $('#arenaResult').classList.remove('show');
   $('#arenaCloseBtn').style.display = 'none';
   combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×';
+  updatePotionBtn();
   arenaOverlay.classList.add('show');
 
   // Anker (Mittelpunkte der Kämpfer) nach Layout messen – kein Rect-Read pro Treffer.
@@ -1798,26 +2003,109 @@ window.addEventListener('resize', ()=>{
 });
 
 function scheduleExchange(fight){
-  combatTimer = setTimeout(()=> exchange(fight), fight.heroInterval / combatSpeed);
+  let interval = fight.heroInterval;
+  if(fight.frostTurns > 0){ interval *= 1.4; fight.frostTurns--; }  // Frost verlangsamt
+  combatTimer = setTimeout(()=> exchange(fight), interval / combatSpeed);
+}
+
+const hasMech = (fight, key) => fight.mechanics.indexOf(key) >= 0;
+
+// Kleiner Floating-Text für Mechanik-Effekte (über Held oder Boss).
+function mechFloat(who, text, color){
+  const targetId = who==='hero' ? 'heroSprite' : 'bossSprite';
+  const stage = $('#arenaStage');
+  const a = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
+  const num = document.createElement('div');
+  num.className = 'dmg-num';
+  num.style.color = color || '#fff';
+  num.style.fontSize = '15px';
+  num.textContent = text;
+  num.style.left = (a.x-24)+'px'; num.style.top = (a.y-34)+'px';
+  $('#dmgLayer').appendChild(num);
+  setTimeout(()=> num.remove(), FLOAT / combatSpeed);
 }
 
 function exchange(fight){
   if(fight.over) return;
-  // Held schlägt
-  const heroCrit = Math.random() < fight.heroCritChance;
-  let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
-  fight.bossHp = Math.max(0, fight.bossHp - dmg);
-  // HP-Balken erst beim Trefferzeitpunkt aktualisieren (synchron zum Visual)
-  attackAnim('hero', dmg, heroCrit, ()=> updateHpBars(fight));
+  fight.turn++;
+
+  // --- Held schlägt (außer betäubt) ---
+  const stunned = hasMech(fight,'betaeubung') && Math.random() < 0.12;
+  if(stunned){
+    mechFloat('hero', '😵 Betäubt', '#7fd0ff');
+  } else {
+    const heroCrit = Math.random() < fight.heroCritChance;
+    let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
+    // Eispanzer: aktiver Schild reduziert eingehenden Schaden am Boss
+    if(fight.shieldTurns > 0) dmg = Math.max(1, Math.round(dmg*0.4));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg);
+    // HP-Balken erst beim Trefferzeitpunkt aktualisieren (synchron zum Visual)
+    attackAnim('hero', dmg, heroCrit, ()=> updateHpBars(fight));
+    // Dornen: Boss reflektiert einen Teil des erhaltenen Schadens
+    if(hasMech(fight,'dornen')){
+      const refl = Math.max(1, Math.round(dmg*0.15));
+      fight.heroHp = Math.max(0, fight.heroHp - refl);
+      mechFloat('hero', '🌵 -'+refl, '#9acd32');
+    }
+  }
   if(fight.bossHp <= 0){ return endFight(fight, true); }
 
   // Boss schlägt zurück (nach kurzer Pause)
   setTimeout(()=>{
     if(fight.over) return;
+
+    // Schild abklingen lassen / Eispanzer aktivieren
+    if(fight.shieldTurns > 0) fight.shieldTurns--;
+    if(hasMech(fight,'eispanzer') && fight.turn % 5 === 0){
+      fight.shieldTurns = 2; mechFloat('boss', '🛡️ Eispanzer', '#7fd0ff');
+    }
+    // Regeneration
+    if(hasMech(fight,'regen') && fight.turn % 3 === 0){
+      const heal = Math.round(fight.bossMaxHp*0.04);
+      fight.bossHp = Math.min(fight.bossMaxHp, fight.bossHp + heal);
+      mechFloat('boss', '➕'+heal, '#37d67a'); updateHpBars(fight);
+    }
+    // Berserk: Angriff wächst pro Runde
+    if(hasMech(fight,'berserk')) fight.berserkMult *= 1.03;
+
+    // Boss-Angriff berechnen
+    let atk = fight.bossAtkBase * fight.berserkMult;
+    if(hasMech(fight,'wut') && fight.bossHp < fight.bossMaxHp*0.3) atk *= 1.5;
+    if(hasMech(fight,'hinrichtung') && fight.heroHp < fight.heroMaxHp*0.25) atk *= 2;
+
     const bossCrit = Math.random() < 0.12;
-    let bd = Math.max(1, Math.round((fight.bossAtk * rnd(0.15) * (bossCrit?2:1)) - fight.heroArmor*0.3));
+    let mult = bossCrit ? 2 : 1, ignoreArmor = false, breath = false;
+    if(hasMech(fight,'feueratem') && fight.turn % 4 === 0){ mult *= 2.2; ignoreArmor = true; breath = true; }
+    const armorRed = ignoreArmor ? 0 : fight.heroArmor*0.3;
+    let bd = Math.max(1, Math.round((atk * rnd(0.15) * mult) - armorRed));
     fight.heroHp = Math.max(0, fight.heroHp - bd);
+    if(breath) mechFloat('boss', '🔥 Feueratem', '#ff8a3d');
     attackAnim('boss', bd, bossCrit, ()=> updateHpBars(fight));
+
+    // Lebensentzug: Boss heilt sich anteilig am ausgeteilten Schaden
+    if(hasMech(fight,'lebensentzug')){
+      const heal = Math.round(bd*0.4);
+      fight.bossHp = Math.min(fight.bossMaxHp, fight.bossHp + heal);
+      mechFloat('boss', '🩸+'+heal, '#37d67a');
+    }
+    // Rüstungsbruch: senkt Helden-Rüstung dauerhaft (im Kampf)
+    if(hasMech(fight,'ruestungsbruch') && fight.heroArmor > 0){
+      fight.heroArmor = Math.max(0, fight.heroArmor - Math.max(1, Math.round(fight.heroArmorBase*0.05)));
+      mechFloat('hero', '🔨 Rüstung', '#c0653a');
+    }
+    // Gift: Stack aufbauen + DoT
+    if(hasMech(fight,'gift')){
+      fight.poison++;
+      const dot = 2*fight.poison;
+      fight.heroHp = Math.max(0, fight.heroHp - dot);
+      mechFloat('hero', '☠️-'+dot, '#9b59b6');
+    }
+    // Frost: verlangsamt den Helden für die nächsten Runden
+    if(hasMech(fight,'frost') && fight.turn % 3 === 0){
+      fight.frostTurns = 2; mechFloat('boss', '❄️ Frost', '#7fd0ff');
+    }
+
+    updateHpBars(fight);
     if(fight.heroHp <= 0){ return endFight(fight, false); }
     scheduleExchange(fight);
   }, 360 / combatSpeed);
@@ -1883,30 +2171,39 @@ function attackAnim(who, dmg, crit, onHit){
 function endFight(fight, win){
   fight.over = true;
   clearTimeout(combatTimer);
+  updatePotionBtn();
   const res = $('#arenaResult');
   if(win){
+    const bossIndex = state.zone;                       // Index VOR dem Hochzählen
     const reward = Math.round(fight.boss.recPower * 1.5 + 40);
+    const xpGain = gainXp(Math.round(fight.boss.recPower * 0.9 + 40));
     state.gold += reward;
     state.bossesBeaten++;
     state.zone++;
-    // garantierter guter Drop, falls Platz
+    // Garantierter EPISCHER Drop, falls Platz. Frühe Bosse → schwächere Epics
+    // (ilvl skaliert mit Boss-Index + monoton steigender Boden), kein Sofort-OP.
     let bonusTxt = '';
     if(!inventoryFull()){
-      const drop = rollItem(Math.max(0, state.zone-1));
-      // mindestens „selten" – inkl. passender Affixe für die neue Seltenheit
-      if(rarityIndex(drop.rarity) < 2){
-        drop.rarity='selten'; drop.stat=Math.round(drop.stat*1.9);
-        drop.name = rarityOf('selten').adj+' '+SLOTS[drop.slotKey].base;
-        drop.affixes = rollAffixes(drop.slotKey, drop.ilvl, rarityOf('selten'));
-      }
+      const drop = rollItem(bossIndex);                 // ilvl skaliert über Boss-Index
+      const ep = rarityOf('episch');
+      drop.ilvl = Math.max(drop.ilvl, bossIndex*5);     // ilvl-Boden je Boss
+      drop.rarity = 'episch';
+      const q = 0.80 + Math.random()*0.40;
+      drop.quality = Math.round(q*100);
+      drop.stat = Math.max(1, Math.round(BASE_STAT[drop.statType] * ep.mult * (1 + drop.ilvl*ILVL_K) * q));
+      drop.name = ep.adj + ' ' + SLOTS[drop.slotKey].base;
+      drop.affixes = rollAffixes(drop.slotKey, drop.ilvl, ep);
       state.inventory.push(drop); addLog(drop);
-      bonusTxt = ' + Beute: '+drop.name;
+      bonusTxt = ' + 💜 Beute: '+drop.name;
     }
     res.className = 'arena-result win show';
     res.innerHTML = '<div class="big">⚔️ Sieg!</div>'+
-      '<div class="sub">'+fight.boss.name+' besiegt! Belohnung: 💰 '+reward+' Gold'+bonusTxt+'<br>Neue Zone freigeschaltet!</div>';
+      '<div class="sub">'+fight.boss.name+' besiegt! Belohnung: 💰 '+reward+' Gold · ⭐ '+xpGain+' XP'+bonusTxt+'<br>Neuer Boss freigeschaltet!</div>';
     saveState();
   } else {
+    // Trost-XP, damit auch Fehlversuche Fortschritt bringen
+    gainXp(Math.round(fight.boss.recPower * 0.9 * 0.15));
+    saveState();
     res.className = 'arena-result lose show';
     res.innerHTML = '<div class="big">💀 Niederlage</div>'+
       '<div class="sub">'+fight.boss.name+' war zu stark. Werde stärker und versuch es erneut!</div>';
