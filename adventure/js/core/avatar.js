@@ -9,6 +9,12 @@ import { state } from './state.js';
 
 const TIER_OUTFIT = ['#6b5a8a','#3f6f9e','#9e6b2e','#b5882a'];
 const TIER_TRIM   = ['#9a86c2','#7fb0e0','#e0a85a','#f2cd6b'];
+// Waffen-Metalle je Variante (analog item-art.js) für die getragene Waffe.
+const WEAPON_METAL = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c'];
+const WOOD = '#7a4f2a', GOLD = '#d8b24a';
+// Rüstungs-Material je Variante (analog item-art.js ARMOR_MAT).
+const ARMOR_MAT = ['#c8d0dc','#aab2be','#845c38','#3f8f5a','#7a5ca8','#4a465c'];
+const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % 6 + 6) % 6];
 
 // Farbe komponentenweise mit Faktor f skalieren (Highlights f>1, Schatten f<1).
 function shade(hex, f){
@@ -24,7 +30,50 @@ const mirror = frag => frag + '<g transform="translate(200,0) scale(-1,1)">'+fra
 // Eindeutige Gradient-IDs pro Build (mehrere Avatare rendern gleichzeitig).
 let GRAD_SEQ = 0;
 
-export function buildHeroSVG(character, tier){
+// Getragene Waffe in der rechten Hand (Handkreis bei cx=124, cy=194), Klinge nach oben.
+function heldWeapon(variant, uid){
+  if(variant == null) return '';
+  const v = ((variant|0)%6+6)%6;
+  const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
+  const hx = 124;
+  const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
+               `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  let w = '';
+  if(v===0){            // Schwert
+    w = `<rect x="${hx-9}" y="182" width="18" height="4" rx="1.5" fill="${GOLD}"/>`+
+        `<path d="M${hx} 120 L${hx+4} 128 L${hx+4} 182 L${hx-4} 182 L${hx-4} 128 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-1.5}" y="128" width="2" height="52" fill="${mh}" opacity="0.5"/>`+ grip;
+  } else if(v===1){     // Dolch
+    w = `<rect x="${hx-7}" y="183" width="14" height="3.5" rx="1.5" fill="${GOLD}"/>`+
+        `<path d="M${hx} 144 L${hx+4} 150 L${hx+3} 183 L${hx-3} 183 L${hx-4} 150 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+ grip;
+  } else if(v===2){     // Streitkolben
+    w = `<rect x="${hx-2}" y="150" width="4" height="52" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx} 127 L${hx-4} 135 L${hx+4} 135 Z" fill="${md}"/>`+
+        `<path d="M${hx-12} 140 L${hx-3} 136 L${hx-3} 144 Z" fill="${md}"/>`+
+        `<path d="M${hx+12} 140 L${hx+3} 136 L${hx+3} 144 Z" fill="${md}"/>`+
+        `<circle cx="${hx}" cy="140" r="11" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<circle cx="${hx-3}" cy="137" r="3" fill="${mh}" opacity="0.6"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  } else if(v===3){     // Axt
+    w = `<rect x="${hx-2}" y="124" width="4" height="78" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx+1} 128 L${hx+18} 124 Q${hx+27} 139 ${hx+18} 153 L${hx+1} 149 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  } else if(v===4){     // Speer
+    w = `<rect x="${hx-2}" y="126" width="4" height="76" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx} 111 L${hx+6} 128 L${hx-6} 128 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-5}" y="127" width="10" height="3" rx="1" fill="${GOLD}"/>`+
+        `<circle cx="${hx}" cy="204" r="3" fill="${GOLD}"/>`;
+  } else {              // Kriegshammer
+    w = `<rect x="${hx-2}" y="150" width="4" height="52" rx="1.5" fill="${WOOD}"/>`+
+        `<rect x="${hx-15}" y="128" width="30" height="18" rx="3" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-12}" y="131" width="6" height="12" rx="1" fill="${mh}" opacity="0.5"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  }
+  // Haut-„Finger" über den Griff → wirkt gegriffen.
+  return w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
+}
+
+export function buildHeroSVG(character, tier, gear){
   const c = character || DEFAULT_CHARACTER;
   const gender = c.gender || 'w';
   const hairId = c.hairId || 'kurz';
@@ -150,19 +199,100 @@ export function buildHeroSVG(character, tier){
 
   // ---- Tier-Akzente -------------------------------------------------
   const aura = t>=3 ? `<ellipse cx="100" cy="175" rx="96" ry="150" fill="url(#au${uid})"/>` : '';
-  const cape = t>=2
+  const tierCape = t>=2
     ? `<path d="M74 130 L126 130 L144 258 C120 270 80 270 56 258 Z" fill="${shade(trim,0.72)}"/>`+
       `<path d="M100 130 L100 264" stroke="${shade(trim,0.6)}" stroke-width="2" opacity="0.5"/>`
     : '';
-  const pauldrons = t>=3 ? mirror(`<ellipse cx="120" cy="134" rx="15" ry="10" fill="url(#tr${uid})"/>`) : '';
+  const tierPauldrons = t>=3 ? mirror(`<ellipse cx="120" cy="134" rx="15" ry="10" fill="url(#tr${uid})"/>`) : '';
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320">`+
-    defs + aura + cape + hairBack + body + arms + head + face + hairFront + pauldrons +
+  // ---- Angelegte Ausrüstung (nur additiv, materialgetönt) -----------
+  const eq = (gear && gear.equipped) || {};
+  const hideHelmet = !!(gear && gear.hideHelmet);
+
+  // Umhang (sonst Tier-Cape)
+  const um = eq.umhang;
+  const cloak = um
+    ? `<path d="M74 130 L126 130 L146 264 C120 278 80 278 54 264 Z" fill="${matOf(um)}" stroke="${shade(matOf(um),0.5)}" stroke-width="2" stroke-linejoin="round"/>`+
+      `<path d="M100 130 L100 268" stroke="${shade(matOf(um),0.7)}" stroke-width="2" opacity="0.5"/>`
+    : tierCape;
+
+  // Beinschienen (Mann/Divers; beim Kleid verdeckt)
+  const bn = eq.beine; let beine = '';
+  if(bn){ const c=matOf(bn), cs=shade(c,0.5);
+    if(gender==='m') beine = mirror(`<path d="M103 192 L123 192 L120 266 L106 266 Z" fill="${c}" stroke="${cs}" stroke-width="1.5"/><rect x="106" y="208" width="14" height="3" fill="${cs}" opacity="0.5"/>`);
+    else if(gender==='d') beine = mirror(`<path d="M102 238 L120 238 L116 290 L106 290 Z" fill="${c}" stroke="${cs}" stroke-width="1.5"/>`);
+  }
+
+  // Brustpanzer
+  const br = eq.brust; let brust = '';
+  if(br){ const c=matOf(br), cs=shade(c,0.5), ch=shade(c,1.2);
+    if(gender==='w')
+      brust = `<path d="M100 126 L120 132 C124 150 120 172 113 182 C108 186 92 186 87 182 C80 172 76 150 80 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+              `<path d="M100 130 L100 182" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
+              `<ellipse cx="92" cy="148" rx="6" ry="9" fill="${ch}" opacity="0.4"/>`;
+    else
+      brust = `<path d="M100 126 L124 132 C128 150 126 174 122 186 L78 186 C74 174 72 150 76 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+              `<path d="M100 130 L100 186" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
+              `<ellipse cx="90" cy="150" rx="7" ry="10" fill="${ch}" opacity="0.4"/>`;
+  }
+
+  // Stiefel
+  const fu = eq.fuesse; let fuesse = '';
+  if(fu){ const c=matOf(fu), cs=shade(c,0.5);
+    if(gender==='w') fuesse = mirror(`<ellipse cx="114" cy="305" rx="11" ry="6" fill="${c}" stroke="${cs}" stroke-width="1.2"/>`);
+    else if(gender==='m') fuesse = `<rect x="102" y="261" width="22" height="17" rx="5" fill="${c}" stroke="${cs}" stroke-width="1.2"/><rect x="76" y="261" width="22" height="17" rx="5" fill="${c}" stroke="${cs}" stroke-width="1.2"/>`;
+    else fuesse = `<rect x="104" y="285" width="18" height="15" rx="4" fill="${c}" stroke="${cs}" stroke-width="1.2"/><rect x="78" y="285" width="18" height="15" rx="4" fill="${c}" stroke="${cs}" stroke-width="1.2"/>`;
+  }
+
+  // Handschuhe
+  const ha = eq.haende;
+  const gloves = ha
+    ? mirror(`<circle cx="124" cy="194" r="9" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1.2"/><rect x="116" y="186" width="16" height="7" rx="2" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1"/>`)
+    : '';
+
+  // Schild am linken Arm
+  const sc = eq.schild; let schild = '';
+  if(sc){ const v=(((sc.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
+    let shp;
+    if(v===1||v===4)      shp=`<circle cx="${cx}" cy="${cy}" r="20" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+    else if(v===2)        shp=`<circle cx="${cx}" cy="${cy}" r="15" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+    else if(v===0||v===3) shp=`<rect x="${cx-17}" y="${cy-22}" width="34" height="46" rx="7" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+    else                  shp=`<path d="M${cx-17} ${cy-20} L${cx+17} ${cy-20} L${cx+17} ${cy-2} Q${cx+17} ${cy+18} ${cx} ${cy+26} Q${cx-17} ${cy+18} ${cx-17} ${cy-2} Z" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+    schild = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
+  }
+
+  // Schulterplatten (sonst Tier-Pauldrons)
+  const shp_ = eq.schultern;
+  const pauldronG = shp_
+    ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${matOf(shp_)}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
+    : tierPauldrons;
+
+  // Voller Helm (verdeckt Haare; nur wenn angelegt UND nicht ausgeblendet)
+  const kp = eq.kopf; let helm = '';
+  if(kp && !hideHelmet){ const c=matOf(kp), cs=shade(c,0.5), ch=shade(c,1.2);
+    helm = `<path d="M64 80 Q60 40 100 40 Q140 40 136 80 L136 86 L64 86 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+           `<rect x="64" y="84" width="72" height="8" rx="3" fill="${shade(c,0.85)}" stroke="${cs}" stroke-width="1.5"/>`+
+           `<rect x="97" y="84" width="6" height="22" rx="1" fill="${cs}"/>`+
+           `<rect x="78" y="74" width="16" height="6" rx="3" fill="#160d12" opacity="0.85"/>`+
+           `<rect x="106" y="74" width="16" height="6" rx="3" fill="#160d12" opacity="0.85"/>`+
+           `<ellipse cx="88" cy="56" rx="10" ry="6" fill="${ch}" opacity="0.4"/>`;
+  }
+
+  const wv = (eq.waffe && typeof eq.waffe.variant === 'number') ? eq.waffe.variant : null;
+  const weaponG = heldWeapon(wv, uid);
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
+    defs + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
+    pauldronG + head + face + hairFront + helm + weaponG +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
 export function heroSrc(tier){
-  if(state && state.character) return buildHeroSVG(state.character, tier);
+  if(state && state.character)
+    return buildHeroSVG(state.character, tier, {
+      equipped: state.equipped || {},
+      hideHelmet: !!(state.settings && state.settings.hideHelmet),
+    });
   return ASSETS + 'char_tier' + tier + '.png';
 }
