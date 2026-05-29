@@ -3415,17 +3415,21 @@
   // Wird in renderAnimalDOM IMMER inline auf das <svg> gelegt – dadurch ist jede Farbe
   // in jeder Rarität sichtbar (auch weiß/braun/schwarz/grau heben sich klar voneinander ab).
   // Der Rarity-/Mutations-Glow liegt getrennt davon als --rarity-aura auf dem .animal-wrapper.
+  // WICHTIG: Diese Rezepte werden NUR auf Tiere angewandt, deren Farbe von der Basisfarbe
+  // ihrer Art abweicht (echte Farb-Mutationen). Standardfarben zeigen die handgezeichnete
+  // SVG-Optik unverändert (siehe bodyColorFilter()). Deshalb dürfen die Rezepte die Farbe
+  // nur VERSCHIEBEN – nicht entfärben, abdunkeln oder vergilben.
   const COLOR_FILTERS = {
-    // Neutrale Töne klar trennen (früher alle hue=0 → identisch):
-    'weiß':     'saturate(.18) brightness(1.28)',
-    'creme':    'sepia(.32) saturate(.75) brightness(1.18) hue-rotate(-6deg)',
-    'grau':     'saturate(0) brightness(1.02)',
-    'schiefer': 'saturate(.15) brightness(.78) contrast(1.05)',
-    'schwarz':  'saturate(.2) brightness(.46) contrast(1.12)',
-    'braun':    'sepia(.6) saturate(1.6) hue-rotate(-12deg) brightness(.86)',
-    'rost':     'sepia(.7) saturate(2.3) hue-rotate(-25deg) brightness(.95)',
-    'honig':    'sepia(.6) saturate(1.9) hue-rotate(-2deg) brightness(1.08)',
-    // Bunte Töne:
+    // Neutrale Töne – dezent, ohne harte Entsättigung/Abdunklung:
+    'weiß':     'saturate(.7) brightness(1.12)',
+    'creme':    'sepia(.18) saturate(1.05) brightness(1.1) hue-rotate(-6deg)',
+    'grau':     'saturate(.45) brightness(1.0)',
+    'schiefer': 'saturate(.4) brightness(.9) contrast(1.03)',
+    'schwarz':  'saturate(.55) brightness(.66) contrast(1.08)',
+    'braun':    'sepia(.35) saturate(1.4) hue-rotate(-18deg) brightness(.95)',
+    'rost':     'sepia(.45) saturate(1.9) hue-rotate(-28deg) brightness(1.0)',
+    'honig':    'sepia(.4) saturate(1.6) hue-rotate(-4deg) brightness(1.1)',
+    // Bunte Töne (reine Farbton-Verschiebung, keine Abdunklung):
     'rosa':     'hue-rotate(320deg) saturate(1.6) brightness(1.05)',
     'korall':   'hue-rotate(10deg) saturate(1.9) brightness(1.06)',
     'lavendel': 'hue-rotate(270deg) saturate(1.4) brightness(1.05)',
@@ -3434,11 +3438,37 @@
     'smaragd':  'hue-rotate(140deg) saturate(1.7) brightness(.98)',
     'minze':    'hue-rotate(130deg) saturate(1.05) brightness(1.14)',
     // Exotische Töne (Body-Farbe; Signatur-Aura kommt zusätzlich via .c-* auf dem Wrapper):
-    'gold':         'sepia(.5) saturate(2.4) brightness(1.14)',
-    'perlmutt':     'saturate(.55) brightness(1.2) contrast(.95)',
-    'sternenhimmel':'hue-rotate(220deg) saturate(1.9) brightness(.92)',
+    'gold':         'sepia(.45) saturate(2.2) brightness(1.16)',
+    'perlmutt':     'saturate(.8) brightness(1.15)',
+    'sternenhimmel':'hue-rotate(220deg) saturate(1.7) brightness(1.0)',
     'regenbogen':   'saturate(1.8) brightness(1.05)' // wird i.d.R. von der cRainbow-Animation überschrieben
   };
+
+  // Basisfarbe pro Art: Die SVG-Kunst ist genau in dieser Optik gezeichnet, daher wird die
+  // Standardfarbe OHNE Rezept gerendert (Identität) – sonst verzerrt das Rezept das Kunstwerk
+  // (dunkle Kühe, entfärbte Einhörner, gelbliche Hasen).
+  const SPECIES_BASE_COLOR = {
+    rabbit:'braun', chicken:'weiß', cow:'schwarz', sheep:'weiß',
+    duck:'weiß', cat:'schwarz', dog:'braun', goat:'weiß',
+    horse:'braun', pig:'rosa', unicorn:'weiß'
+  };
+
+  // Liefert den vollständigen Inline-Filter (Körperfarbe) für ein Tier.
+  // - regenbogen: leer (cRainbow-Animation rendert den Körper)
+  // - Standardfarbe der Art: kein Rezept (handgezeichnete Optik bleibt unverändert)
+  // - sonst: Farb-Rezept aus COLOR_FILTERS
+  // In jedem Fall folgt der dezente Pro-Tier-Jitter (gezüchtet: traits.tint, gekauft: hue/sat/bri).
+  function bodyColorFilter(a) {
+    const colorAllele = a.traits ? expressedAllele(a.traits.color) : null;
+    if (colorAllele === 'regenbogen') return '';
+    const isBase = colorAllele && SPECIES_BASE_COLOR[a.species] === colorAllele;
+    const recipe = isBase ? '' : (COLOR_FILTERS[colorAllele] || '');
+    const t = a.traits && a.traits.tint;
+    const jitter = t
+      ? `hue-rotate(${t.h||0}deg) saturate(${(1+(t.s||0)).toFixed(3)}) brightness(${(1+(t.b||0)).toFixed(3)})`
+      : `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
+    return (recipe + ' ' + jitter).trim();
+  }
 
   // Sonder-Boni
   const SPECIAL_BONUSES = {
@@ -3467,11 +3497,7 @@
 
   function defaultTraitsFor(species) {
     // Standard-Tier: gewöhnliche Farben, mittlere Werte
-    const baseColor = ({
-      rabbit:'braun', chicken:'weiß', cow:'schwarz', sheep:'weiß',
-      duck:'weiß', cat:'schwarz', dog:'braun', goat:'weiß',
-      horse:'braun', pig:'rosa', unicorn:'weiß'
-    })[species] || 'weiß';
+    const baseColor = SPECIES_BASE_COLOR[species] || 'weiß';
     return {
       color:   [baseColor, baseColor],
       pattern: ['uni', 'uni'],
@@ -5013,20 +5039,9 @@
 
     const svgEl = el.querySelector('svg');
     if (svgEl) {
-        if (colorAllele === 'regenbogen') {
-          // Regenbogen: die cRainbow-Animation rendert den Körper – kein Inline-Filter
-          svgEl.style.filter = '';
-        } else {
-          // Körperfarbe IMMER aus der Rezeptur → jede Farbe in jeder Rarität sichtbar.
-          const recipe = COLOR_FILTERS[colorAllele] || '';
-          // Pro-Tier-Jitter: gezüchtete Tiere via traits.tint, gekaufte via Alt-hue/sat/bri.
-          const t = a.traits && a.traits.tint;
-          const jitter = t
-            ? `hue-rotate(${t.h||0}deg) saturate(${(1+(t.s||0)).toFixed(3)}) brightness(${(1+(t.b||0)).toFixed(3)})`
-            : `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
-          // Bei mythisch überschreibt die rMythAll-Animation diesen Filter (Regenbogen-Schimmer).
-          svgEl.style.filter = (recipe + ' ' + jitter).trim();
-        }
+        // Körperfarbe: Standardfarbe → handgezeichnete Optik unverändert; sonst Farb-Rezept.
+        // Bei mythisch überschreibt die rMythAll-Animation diesen Filter (Regenbogen-Schimmer).
+        svgEl.style.filter = bodyColorFilter(a);
     }
 
     updateAnimalPos(a);
@@ -6920,15 +6935,9 @@
     const _modalRarity = (a.traits && a.traits.rarity) || 'common';
     const _modalCard = document.getElementById('modalAnimal');
     _modalCard.className = _modalCard.className.replace(/\br-(common|uncommon|rare|epic|legendary|mythic)\b/g, '').trim() + ' r-' + _modalRarity;
-    // Körperfarbe auch im Modal-Avatar zeigen (gleiche Rezeptur wie auf der Wiese)
+    // Körperfarbe auch im Modal-Avatar zeigen (gleiche Logik wie auf der Wiese)
     if (svgInModal && a.traits) {
-      const _col = expressedAllele(a.traits.color);
-      const _recipe = COLOR_FILTERS[_col] || '';
-      const _t = a.traits.tint;
-      const _jit = _t
-        ? `hue-rotate(${_t.h||0}deg) saturate(${(1+(_t.s||0)).toFixed(3)}) brightness(${(1+(_t.b||0)).toFixed(3)})`
-        : `hue-rotate(${a.hue||0}deg) saturate(${a.sat||1}) brightness(${a.bri||1})`;
-      svgInModal.style.filter = (_recipe + ' ' + _jit).trim();
+      svgInModal.style.filter = bodyColorFilter(a);
     }
 
     document.getElementById('modalName').value = a.name; 
