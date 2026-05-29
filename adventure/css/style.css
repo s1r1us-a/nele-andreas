@@ -20,7 +20,8 @@ body {
     linear-gradient(160deg, var(--bg-1), var(--bg-0));
   background-attachment:fixed; min-height:100vh; overflow-x:hidden;
 }
-img { image-rendering:pixelated; image-rendering:crisp-edges; }
+/* Alle Spiel-Grafiken sind jetzt glatte Vektor-SVGs → keine Pixelierung. */
+img { image-rendering:auto; }
 h1,h2,h3 { font-family:'Cinzel',serif; }
 .pixel { font-family:'Press Start 2P',monospace; }
 
@@ -86,7 +87,6 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .scene {
   position:relative; height:230px; border-radius:12px; overflow:hidden;
   border:2px solid var(--gold-dim); background-size:cover; background-position:center bottom;
-  image-rendering:pixelated;
 }
 .scene .hero {
   position:absolute; bottom:14px; left:50%; height:170px; width:auto;
@@ -281,7 +281,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   padding:14px; border-radius:12px; border:2px solid var(--gold-dim);
   background:linear-gradient(180deg, rgba(60,20,20,.5), rgba(20,16,28,.7)); }
 .boss-panel .boss-portrait { width:96px; height:96px; flex:0 0 auto;
-  image-rendering:pixelated; filter:drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
 .boss-info { flex:1; }
 .boss-name { font-family:'Cinzel',serif; font-weight:700; font-size:18px; color:#ff9a6b;
   text-shadow:0 2px 0 #000; margin-bottom:4px; }
@@ -297,7 +297,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .bl-row { display:flex; gap:12px; align-items:center; padding:10px;
   border-radius:10px; background:var(--stone); border:1px solid var(--line); }
 .bl-row.current { border-color:var(--gold-dim); background:rgba(255,217,94,.06); }
-.bl-portrait { width:54px; height:54px; flex:0 0 auto; image-rendering:pixelated; }
+.bl-portrait { width:54px; height:54px; flex:0 0 auto; }
 .bl-info { flex:1; min-width:0; }
 .bl-name { font-family:'Cinzel',serif; font-weight:700; font-size:14px; color:#ff9a6b; }
 .bl-meta { font-size:12px; color:var(--txt-dim); margin-top:2px; }
@@ -371,7 +371,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .arena-stage.shake { animation:shake .25s; }
 @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-7px);}
   75%{transform:translateX(7px);} }
-.combatant { position:absolute; bottom:24px; image-rendering:pixelated;
+.combatant { position:absolute; bottom:24px;
   filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); will-change:transform; }
 .combatant.hero-c { left:8%; height:180px; }
 .combatant.boss-c { right:6%; height:230px; transform:scaleX(-1); }
@@ -451,7 +451,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .cs-v.armor{color:var(--armor);} .cs-v.hp{color:#37d67a;}
 .cs-v.crit{color:var(--gold-hi);} .cs-v.level{color:#ffd95e;}
 @media (max-width:560px){ .char-stats { grid-template-columns:1fr; } }
-.creator-preview { display:block; margin:0 auto 14px; width:150px; height:150px;
+.creator-preview { display:block; margin:0 auto 14px; width:auto; height:180px; aspect-ratio:5/8;
   border-radius:14px; background:radial-gradient(circle at 50% 35%, #2a2335, #16121f);
   border:1px solid var(--line); }
 .creator-section { margin-bottom:16px; }
@@ -507,6 +507,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 
 @media (prefers-reduced-motion: reduce){
   .arena-stage.shake{ animation:none; } .combatant{ transition:none; }
+  .bob{ animation:none; }
 }
 
 @media (max-width:640px){
@@ -547,4 +548,10 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   .preview-actions .btn { width:100%; }
   .btn { padding:12px 18px; }
   .find-pop img { width:56px; height:56px; }
+  /* Charakter-Editor auf kleinen Displays kompakt halten */
+  .creator-preview { height:150px; }
+  .creator-section { margin-bottom:12px; }
+  .color-grid { grid-template-columns:repeat(5,1fr); gap:8px; }
+  .color-swatch { width:34px; height:34px; }
+  .opt-btn { padding:9px 6px; font-size:12px; }
 }

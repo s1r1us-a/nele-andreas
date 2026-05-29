@@ -1,7 +1,7 @@
 /* =====================================================================
    CHARAKTER-EDITOR: Geschlecht, Frisuren, Haarfarben.
    ===================================================================== */
-export const GENDERS = [ { id:'w', label:'Weiblich', icon:'♀' }, { id:'m', label:'Männlich', icon:'♂' } ];
+export const GENDERS = [ { id:'w', label:'Weiblich', icon:'♀' }, { id:'m', label:'Männlich', icon:'♂' }, { id:'d', label:'Divers', icon:'⚧' } ];
 export const HAIR_STYLES = [
   { id:'kurz',          label:'Kurz' },
   { id:'lang',          label:'Lang' },
@@ -21,5 +21,19 @@ export const HAIR_COLORS = [
   { label:'Grün',    color:'#22c55e' },
   { label:'Lila',    color:'#a855f7' },
 ];
-export const DEFAULT_CHARACTER = { gender:'w', hairId:'lang', hairColor:'#f5d04a' };
-export const SKIN_TONE = '#f0c9a8';
+export const SKIN_TONES = [
+  { label:'Hell',     color:'#f3d3b3' },
+  { label:'Mittel',   color:'#e8b58a' },
+  { label:'Gebräunt', color:'#c98a5b' },
+  { label:'Dunkel',   color:'#8a5a3b' },
+  { label:'Tief',     color:'#5e3a26' },
+];
+export const EYE_COLORS = [
+  { label:'Braun', color:'#5b3a2e' },
+  { label:'Blau',  color:'#3b6fa0' },
+  { label:'Grün',  color:'#3f7a4e' },
+  { label:'Grau',  color:'#5f6b73' },
+];
+export const SKIN_TONE = '#f0c9a8';  // Fallback für Altstände ohne skinTone
+export const EYE_DEFAULT = '#5b3a2e';
+export const DEFAULT_CHARACTER = { gender:'w', hairId:'lang', hairColor:'#f5d04a', skinTone:'#f3d3b3', eyeColor:'#5b3a2e' };

@@ -7,7 +7,8 @@ import { INV_SLOTS } from '../data/tuning.js';
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
-import { GENDERS, HAIR_STYLES, HAIR_COLORS, DEFAULT_CHARACTER } from '../data/character-options.js';
+import { GENDERS, HAIR_STYLES, HAIR_COLORS, SKIN_TONES, EYE_COLORS,
+         DEFAULT_CHARACTER } from '../data/character-options.js';
 import { rarityChances } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
@@ -17,7 +18,8 @@ import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, rollItem, inventoryFull } from '../core/items.js';
 import { startExpedition } from '../core/expedition.js';
-import { startBossFight, updatePotionBtn } from '../core/combat.js';
+import { ITEM_TYPES } from '../data/itemTypes.js';
+import { startBossFight, updatePotionBtn, setGodmode, isGodmode } from '../core/combat.js';
 import { $, fmtVal, fmtBig, IS_TOUCH, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { renderAll } from './render.js';
@@ -303,12 +305,18 @@ function renderCreator(){
     '<div class="opt-btn'+(_draftChar.hairId===h.id?' sel':'')+'" data-hair="'+h.id+'">'+h.label+'</div>').join('');
   const colorBtns = HAIR_COLORS.map(c =>
     '<div class="color-swatch'+(_draftChar.hairColor===c.color?' sel':'')+'" data-color="'+c.color+'" title="'+c.label+'" style="background:'+c.color+'"></div>').join('');
+  const skinBtns = SKIN_TONES.map(s =>
+    '<div class="color-swatch'+(_draftChar.skinTone===s.color?' sel':'')+'" data-skin="'+s.color+'" title="'+s.label+'" style="background:'+s.color+'"></div>').join('');
+  const eyeBtns = EYE_COLORS.map(e =>
+    '<div class="color-swatch'+(_draftChar.eyeColor===e.color?' sel':'')+'" data-eye="'+e.color+'" title="'+e.label+'" style="background:'+e.color+'"></div>').join('');
   creatorModal().innerHTML =
     '<h2>👤 Charakter erstellen</h2>'+
     '<img class="creator-preview" id="creatorPreview" alt="Vorschau">'+
-    '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols2">'+genderBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols3">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
     '<div class="creator-section"><h3>Haarfarbe</h3><div class="color-grid">'+colorBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Hautton</h3><div class="color-grid">'+skinBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Augenfarbe</h3><div class="color-grid">'+eyeBtns+'</div></div>'+
     '<div class="preview-actions">'+
       '<button class="btn" id="saveCharBtn">✓ Fertig</button>'+
       (_creatorForced ? '' : '<button class="btn ghost" id="cancelCharBtn">Abbrechen</button>')+
@@ -320,6 +328,10 @@ function renderCreator(){
     el.addEventListener('click', ()=>{ _draftChar.hairId = el.dataset.hair; renderCreator(); }));
   creatorModal().querySelectorAll('[data-color]').forEach(el =>
     el.addEventListener('click', ()=>{ _draftChar.hairColor = el.dataset.color; renderCreator(); }));
+  creatorModal().querySelectorAll('[data-skin]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.skinTone = el.dataset.skin; renderCreator(); }));
+  creatorModal().querySelectorAll('[data-eye]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.eyeColor = el.dataset.eye; renderCreator(); }));
   creatorModal().querySelector('#saveCharBtn').addEventListener('click', applyCharacter);
   const cancel = creatorModal().querySelector('#cancelCharBtn');
   if(cancel) cancel.addEventListener('click', ()=> creatorOverlay().classList.remove('show'));
@@ -341,7 +353,10 @@ export function openDevPanel(){
     '<div class="dev-list">'+
       '<button class="btn ghost" id="devFinish">⏭️ Abenteuer sofort beenden</button>'+
       '<button class="btn ghost" id="devFill">🎒 Inventar mit Items füllen</button>'+
+      '<button class="btn ghost" id="devOneEach">🧰 Eins von jedem Item-Typ</button>'+
       '<button class="btn ghost" id="devClear">🗑️ Inventar leeren (außer 🔒)</button>'+
+      '<button class="btn ghost" id="devGod">'+(isGodmode()?'🛡️ Godmode: AN':'🛡️ Godmode: AUS')+'</button>'+
+      '<button class="btn ghost" id="devBosses">⚔️ Gegen beliebigen Boss kämpfen</button>'+
       '<button class="btn ghost" id="devGold">💰 +100000 Gold</button>'+
       '<button class="btn ghost" id="devXp">⭐ +5000 XP</button>'+
       '<button class="btn ghost" id="devPotion">🧪 +3 Heiltränke</button>'+
@@ -352,7 +367,18 @@ export function openDevPanel(){
   const q = s => devModal().querySelector(s);
   q('#devFinish').addEventListener('click', ()=>{ if(state.expedition){ state.expedition.endsAt = Date.now(); saveState(); renderAll(); } devOverlay().classList.remove('show'); });
   q('#devFill').addEventListener('click', ()=>{ while(state.inventory.length < INV_SLOTS) state.inventory.push(rollItem(state.zone, 2)); saveState(); renderAll(); });
+  q('#devOneEach').addEventListener('click', ()=>{
+    const slotForArt = art => Object.keys(SLOTS).find(k => SLOTS[k].art === art);
+    for(const art of Object.keys(ITEM_TYPES)){
+      const sk = slotForArt(art); if(!sk) continue;
+      for(const ty of ITEM_TYPES[art])
+        state.inventory.push(rollItem(state.zone, 0, { slots:[sk], forceType:ty.key, forceRarityKey:'episch' }));
+    }
+    saveState(); renderAll(); toast('🧰 Je 1 Item pro Typ ins Inventar gelegt');
+  });
   q('#devClear').addEventListener('click', ()=>{ state.inventory = state.inventory.filter(it=>isLocked(it.id)); saveState(); renderAll(); });
+  q('#devGod').addEventListener('click', ()=>{ setGodmode(!isGodmode()); q('#devGod').textContent = isGodmode()?'🛡️ Godmode: AN':'🛡️ Godmode: AUS'; });
+  q('#devBosses').addEventListener('click', ()=>{ devOverlay().classList.remove('show'); openDevBossPicker(); });
   q('#devGold').addEventListener('click', ()=>{ state.gold += 100000; saveState(); renderAll(); });
   q('#devXp').addEventListener('click', ()=>{ gainXp(5000); saveState(); renderAll(); });
   q('#devPotion').addEventListener('click', ()=>{ state.potions = (state.potions||0) + 3; saveState(); renderAll(); updatePotionBtn(); });
@@ -363,4 +389,26 @@ export function openDevPanel(){
   });
   q('#devClose').addEventListener('click', ()=> devOverlay().classList.remove('show'));
   devOverlay().classList.add('show');
+}
+
+// Dev: direkt gegen JEDEN Boss kämpfen (auch noch nicht freigeschaltete).
+export function openDevBossPicker(){
+  let rows = '';
+  for(let i=0; i<BOSS_COUNT; i++){
+    const b = bossFor(i);
+    rows += '<div class="bl-row">'+
+      '<img class="bl-portrait" src="'+b.sprite+'" alt="">'+
+      '<div class="bl-info"><div class="bl-name">👑 '+(i+1)+'. '+b.name+'</div>'+
+        '<div class="bl-meta">'+zoneName(i)+' · Kraft '+fmtBig(b.recPower)+'</div></div>'+
+      '<button class="btn ghost" data-devfight="'+i+'">Kämpfen</button>'+
+    '</div>';
+  }
+  openModal('<h2>🛠 Boss-Test</h2>'+
+    '<div class="sub">Direkt gegen jeden Boss kämpfen (nur Test). Tipp: Godmode aktivieren.</div>'+
+    '<div class="boss-list">'+rows+'</div>'+
+    '<div class="close-row"><button class="btn ghost" id="dbpClose">Schließen</button></div>');
+  modal().querySelectorAll('[data-devfight]').forEach(btn => btn.addEventListener('click', ()=>{
+    const idx = parseInt(btn.dataset.devfight,10); closeModal(); startBossFight(idx);
+  }));
+  modal().querySelector('#dbpClose').addEventListener('click', closeModal);
 }

@@ -7,6 +7,7 @@
 import { SAVE_KEY, SAVE_VERSION } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
 import { defaultTypeKey } from '../data/itemTypes.js';
+import { buildItemSVG } from './item-art.js';
 import { db, ref, get, set, remove } from './firebase.js';
 
 export let state = null;
@@ -69,14 +70,29 @@ function migrate(s){
   return s;
 }
 
-// Items nach dem Laden defaulten + nextId ableiten.
+// Items nach dem Laden defaulten + nextId ableiten + Sprite neu berechnen.
 function hydrateItems(){
-  const all = [...state.inventory, ...Object.values(state.equipped).filter(Boolean)];
+  const exp = (state.expedition && Array.isArray(state.expedition.items)) ? state.expedition.items : [];
+  const all = [...state.inventory, ...Object.values(state.equipped).filter(Boolean), ...exp];
   nextId = all.reduce((m,it)=>Math.max(m, it.id||0), 0) + 1;
   for(const it of all){
     if(!it.affixes) it.affixes = {};
     if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
+    const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
+    it.sprite = buildItemSVG(art, it.variant, it.rarity);   // Data-URI nicht gespeichert (siehe saveData)
   }
+}
+
+// Speicher-Snapshot ohne die (ableitbaren) Item-Sprites → kein Save-Bloat.
+function stripItem(it){ if(!it) return it; const { sprite, ...rest } = it; return rest; }
+function saveData(){
+  const s = state;
+  const eq = {}; Object.keys(s.equipped||{}).forEach(k => eq[k] = stripItem(s.equipped[k]));
+  const data = { ...s, inventory: (s.inventory||[]).map(stripItem), equipped: eq };
+  if(s.expedition && Array.isArray(s.expedition.items)){
+    data.expedition = { ...s.expedition, items: s.expedition.items.map(stripItem) };
+  }
+  return data;
 }
 
 function parseLocal(){
@@ -103,7 +119,7 @@ export async function loadSave(uk){
   state = loaded ? migrate(loaded) : freshState();
   hydrateItems();
   // Lokalen Cache aktualisieren (Offline-Fallback).
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData())); } catch(e){}
   return state;
 }
 
@@ -115,15 +131,15 @@ async function _flushRemote(){
   if(_saveInFlight){ _savePending = true; return; }
   _saveInFlight = true;
   try {
-    await set(ref(db, dbPath()), state);
-    while(_savePending){ _savePending = false; await set(ref(db, dbPath()), state); }
+    await set(ref(db, dbPath()), saveData());
+    while(_savePending){ _savePending = false; await set(ref(db, dbPath()), saveData()); }
   } catch(e){ console.warn('Firebase-Speichern fehlgeschlagen', e); }
   finally { _saveInFlight = false; }
 }
 
 export function saveState(){
   state.lastTick = Date.now();
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData())); } catch(e){}
   if(!userKey) return;
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(()=>{ _saveTimer = null; _flushRemote(); }, 1500);
@@ -132,7 +148,7 @@ export function saveState(){
 // Sofortiges Schreiben (Seitenwechsel/Schließen) – kein Debounce.
 export function flushSave(){
   state.lastTick = Date.now();
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData())); } catch(e){}
   clearTimeout(_saveTimer); _saveTimer = null;
   _flushRemote();
 }

@@ -16,6 +16,16 @@ import { renderAll } from '../ui/render.js';
 
 let combatSpeed = 1, combatTimer = null;
 export let currentFight = null;
+let godmode = false;
+export function setGodmode(v){
+  godmode = !!v;
+  // Verlassen-Button live ein-/ausblenden, falls gerade ein Kampf läuft.
+  if(currentFight && !currentFight.over){
+    const b = $('#arenaCloseBtn');
+    if(b){ if(godmode){ b.style.display=''; b.textContent='🚪 Kampf verlassen'; } else b.style.display='none'; }
+  }
+}
+export function isGodmode(){ return godmode; }
 const arenaOverlay = () => $('#arenaOverlay');
 
 export function setCombatSpeed(v){ combatSpeed = v; }
@@ -79,7 +89,9 @@ export function startBossFight(bossIndex){
   updateHpBars(fight);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
-  $('#arenaCloseBtn').style.display = 'none';
+  // Im Godmode jederzeit verlassen können (sonst während des Kampfes verborgen).
+  if(godmode){ $('#arenaCloseBtn').style.display = ''; $('#arenaCloseBtn').textContent = '🚪 Kampf verlassen'; }
+  else $('#arenaCloseBtn').style.display = 'none';
   combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×';
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   updatePotionBtn();
@@ -246,6 +258,7 @@ function exchange(fight){
     }
     if(hasMech(fight,'frost') && fight.turn % 3 === 0){ fight.frostTurns = 2; mechFloat('boss','❄️ Frost','#7fd0ff'); }
 
+    if(godmode && fight.heroHp <= 0){ fight.heroHp = fight.heroMaxHp; }  // Dev: unsterblich
     updateHpBars(fight);
     if(fight.heroHp <= 0){ return endFight(fight, false); }
     scheduleExchange(fight);
@@ -403,5 +416,6 @@ function endFight(fight, win){
     res.innerHTML = '<div class="big">💀 Niederlage</div>'+
       '<div class="sub">'+boss.name+' war zu stark. Grinde bessere Items und versuch es erneut!</div>';
   }
+  $('#arenaCloseBtn').textContent = 'Schließen';
   $('#arenaCloseBtn').style.display = '';
 }
