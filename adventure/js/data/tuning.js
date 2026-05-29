@@ -2,7 +2,7 @@
    TUNING – zentrale Balance-Zahlen (Phase 0, #4).
    Alle Stellschrauben an EINEM Ort, damit Balancing ohne Logik-Eingriffe geht.
    ===================================================================== */
-export const ASSETS = 'adventure-assets/';
+export const ASSETS = 'adventure/assets/';
 export const SAVE_KEY = 'idleAbenteuer_v1';
 export const SAVE_VERSION = 4;            // erhöht bei Strukturänderungen → Migration
 export const VARIANTS = 4;                // Sprite-Varianten je Slot

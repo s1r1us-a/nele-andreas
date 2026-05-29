@@ -16,18 +16,22 @@ python3 -m http.server 8000
 ## Projektstruktur
 
 ```
-abenteuer.html              # schlanke Shell: Markup + lädt CSS und main.js
-adventure/
+abenteuer.html              # schlanke Shell im Root (Einstieg): lädt CSS und main.js
+adventure/                  # gesamtes Beiwerk des Spiels gebündelt
+  assets/                   # Sprites (Bosse, Items, Hintergründe, Charakter)
   css/style.css             # gesamtes Styling
   README.md                 # diese Datei
+  BOSSE.md                  # auto-generierte Boss-Übersicht
+  tools/
+    gen-adventure-sprites.py  # erzeugt die Sprites in adventure/assets/
+    gen-bosse-doc.mjs         # erzeugt adventure/BOSSE.md
   js/
     main.js                 # Einstieg: Init, Game-Loop, Tabs, Events, Tastenkürzel
     data/                   # reine Daten/Konstanten (keine Logik)
-      tuning.js             #   zentrale Balance-Zahlen (Drop-Raten, Enrage, Skalierung)
+      tuning.js             #   zentrale Balance-Zahlen (inkl. ASSETS-Pfad)
       rarities.js           #   Seltenheiten inkl. „Mythisch"
       affixes.js            #   Affix-Definitionen, Pools, Anzeige
       slots.js              #   Ausrüstungsslots / Paper-Doll
-      zones.js → (in bosses.js)
       bosses.js             #   Gebiete, Mechaniken, 40 Bosse + Endlos-Skalierung
       expeditions.js        #   Expeditions-Dauern
       character-options.js  #   Geschlecht/Frisuren/Farben
@@ -46,12 +50,17 @@ adventure/
       modals.js             #   Slot-Picker, Vorschau, Boss-Liste/Farm, Statistik, Editor, Dev
 ```
 
-## Doku neu generieren
+> Nur der Einstiegspunkt `abenteuer.html` liegt im Root (wie alle anderen Mini-Apps
+> des Repos). Alles andere Spiel-spezifische steckt im Ordner `adventure/`.
 
-`BOSSE.md` wird aus `adventure/js/data/bosses.js` erzeugt:
+## Doku & Sprites neu generieren
 
 ```bash
-node tools/gen-bosse-doc.mjs
+# Boss-Übersicht (adventure/BOSSE.md) aus den Daten erzeugen:
+node adventure/tools/gen-bosse-doc.mjs
+
+# Sprites (adventure/assets/) neu zeichnen – benötigt Pillow:
+python3 adventure/tools/gen-adventure-sprites.py
 ```
 
 ## Balance an einem Ort

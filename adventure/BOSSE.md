@@ -1,7 +1,7 @@
 # Boss-Übersicht – Idle Abenteuer
 
 > **Automatisch generiert** aus `adventure/js/data/bosses.js` (Single Source of Truth).
-> Nicht von Hand editieren – stattdessen die Datendatei ändern und `node tools/gen-bosse-doc.mjs` neu ausführen.
+> Nicht von Hand editieren – stattdessen die Datendatei ändern und `node adventure/tools/gen-bosse-doc.mjs` neu ausführen.
 
 Bosse sind das Fortschritts-Gate: Wer einen Boss besiegt, schaltet den nächsten frei und erhält
 **Gold + XP + einen garantierten Gegenstand**. Jeder Boss ist **deutlich härter** als der Vorgänger

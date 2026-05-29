@@ -1,12 +1,12 @@
-/* Generiert BOSSE.md aus adventure/js/data/bosses.js (Single Source of Truth).
-   Nutzung (im Repo-Wurzelverzeichnis):  node tools/gen-bosse-doc.mjs           */
+/* Generiert adventure/BOSSE.md aus adventure/js/data/bosses.js (Single Source of Truth).
+   Nutzung (im Repo-Wurzelverzeichnis):  node adventure/tools/gen-bosse-doc.mjs   */
 import { writeFileSync } from 'fs';
-const { BOSS_DEFS, ZONES, MECH_DEFS } = await import('../adventure/js/data/bosses.js');
-const { ENDLESS } = await import('../adventure/js/data/tuning.js');
+const { BOSS_DEFS, ZONES, MECH_DEFS } = await import('../js/data/bosses.js');
+const { ENDLESS } = await import('../js/data/tuning.js');
 const fmt = n => n>=1e9?(n/1e9).toFixed(2).replace(/\.?0+$/,'')+' Mrd':n>=1e6?(n/1e6).toFixed(2).replace(/\.?0+$/,'')+' Mio':n>=1e3?(n/1e3).toFixed(1).replace(/\.0$/,'')+'k':''+n;
 let m='# Boss-Übersicht – Idle Abenteuer\n\n';
 m+='> **Automatisch generiert** aus `adventure/js/data/bosses.js` (Single Source of Truth).\n';
-m+='> Nicht von Hand editieren – stattdessen die Datendatei ändern und `node tools/gen-bosse-doc.mjs` neu ausführen.\n\n';
+m+='> Nicht von Hand editieren – stattdessen die Datendatei ändern und `node adventure/tools/gen-bosse-doc.mjs` neu ausführen.\n\n';
 m+='Bosse sind das Fortschritts-Gate: Wer einen Boss besiegt, schaltet den nächsten frei und erhält\n';
 m+='**Gold + XP + einen garantierten Gegenstand**. Jeder Boss ist **deutlich härter** als der Vorgänger\n';
 m+='(~×1,45 HP/Angriff pro Stufe). Zusätzlich erzwingt ein **Soft-Enrage** ab Runde 45 (bzw. 22 bei der\n';
@@ -28,5 +28,5 @@ BOSS_DEFS.forEach((b,i)=>{
 m+=`\nAb Boss #${BOSS_DEFS.length} skaliert der letzte Boss endlos weiter: HP ×${ENDLESS.hpFactor}ⁿ, Angriff ×${ENDLESS.atkFactor}ⁿ, Kraft ×${ENDLESS.powFactor}ⁿ.\n\n`;
 m+='> Sprites/Hintergründe: Es existieren `boss_0..4.png` und `bg_zone_0..4.png`. Mehrere Bosse/Gebiete\n';
 m+='> teilen sich vorhandene Grafiken (Felder `area`/`spr`/`bg`). Eigene Grafiken können später ergänzt werden.\n';
-writeFileSync('BOSSE.md', m);
-console.log('BOSSE.md generiert ('+BOSS_DEFS.length+' Bosse)');
+writeFileSync(new URL('../BOSSE.md', import.meta.url), m);
+console.log('adventure/BOSSE.md generiert ('+BOSS_DEFS.length+' Bosse)');
