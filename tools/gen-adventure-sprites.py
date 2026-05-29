@@ -365,6 +365,143 @@ def gen_characters():
         draw_character(t)
 
 
+# --- Bosse ------------------------------------------------------------------
+BOSS_GRID = 40
+BOSS_SCALE = 5  # -> 200x200 px
+
+
+def _eyes(d, xs, y, color=(255, 60, 60, 255), glow=(255, 180, 120, 255)):
+    for x in xs:
+        rect(d, x, y, x + 1, y + 1, color)
+        rect(d, x, y, x, y, glow)
+
+
+def draw_boss_goblin(d):
+    skin = (96, 150, 70, 255); hi = shade(skin, 1.25); lo = shade(skin, 0.7)
+    # Körper
+    d.ellipse([12, 20, 28, 36], fill=skin)
+    rect(d, 13, 26, 27, 36, skin)
+    # Kopf
+    d.ellipse([10, 6, 30, 24], fill=skin)
+    d.ellipse([12, 8, 20, 16], fill=hi)
+    # Ohren
+    d.polygon([(10, 12), (3, 8), (9, 18)], fill=skin)
+    d.polygon([(30, 12), (37, 8), (31, 18)], fill=skin)
+    # Augen + Zähne
+    _eyes(d, [15, 23], 13)
+    rect(d, 16, 19, 24, 21, (40, 30, 20, 255))
+    rect(d, 17, 21, 18, 22, (240, 240, 220, 255))
+    rect(d, 22, 21, 23, 22, (240, 240, 220, 255))
+    # Arme
+    rect(d, 6, 22, 12, 26, lo); rect(d, 28, 22, 34, 26, lo)
+    # Keule
+    rect(d, 32, 10, 35, 24, LEATHERS["brown"])
+    d.ellipse([30, 6, 38, 14], fill=shade(LEATHERS["brown"], 1.1))
+    # Beine
+    rect(d, 14, 35, 19, 39, lo); rect(d, 21, 35, 26, 39, lo)
+
+
+def draw_boss_spider(d):
+    body = (54, 44, 64, 255); hi = shade(body, 1.4); leg = shade(body, 0.7)
+    # Hinterleib + Kopf
+    d.ellipse([12, 14, 30, 34], fill=body)
+    d.ellipse([15, 8, 27, 20], fill=body)
+    d.ellipse([17, 10, 22, 14], fill=hi)
+    # Beine (je 4 pro Seite)
+    for i, yy in enumerate((16, 20, 24, 28)):
+        d.line([(13, yy), (3, yy - 4 + i*2)], fill=leg, width=2)
+        d.line([(29, yy), (39, yy - 4 + i*2)], fill=leg, width=2)
+    # Augen (mehrere rote)
+    _eyes(d, [17, 20, 23], 11)
+    _eyes(d, [18, 22], 14)
+    # Reißzähne
+    rect(d, 19, 19, 19, 21, (220, 220, 220, 255))
+    rect(d, 22, 19, 22, 21, (220, 220, 220, 255))
+
+
+def draw_boss_troll(d):
+    skin = (120, 110, 96, 255); hi = shade(skin, 1.2); lo = shade(skin, 0.7)
+    # Massiger Körper
+    rect(d, 11, 18, 29, 37, skin)
+    d.ellipse([9, 16, 31, 30], fill=skin)
+    # Kopf
+    d.ellipse([13, 4, 27, 20], fill=skin)
+    d.ellipse([15, 6, 21, 12], fill=hi)
+    # Hörner
+    d.polygon([(13, 6), (9, 1), (15, 4)], fill=(230, 225, 210, 255))
+    d.polygon([(27, 6), (31, 1), (25, 4)], fill=(230, 225, 210, 255))
+    # Augen + Unterbiss
+    _eyes(d, [16, 23], 10, color=(255, 210, 80, 255))
+    rect(d, 17, 16, 18, 18, (240, 240, 220, 255))
+    rect(d, 22, 16, 23, 18, (240, 240, 220, 255))
+    # Riesige Arme/Fäuste
+    rect(d, 4, 20, 11, 26, lo); d.ellipse([3, 24, 12, 33], fill=skin)
+    rect(d, 29, 20, 36, 26, lo); d.ellipse([28, 24, 37, 33], fill=skin)
+    # Beine
+    rect(d, 13, 36, 19, 39, lo); rect(d, 21, 36, 27, 39, lo)
+
+
+def draw_boss_dragon(d):
+    body = (170, 60, 40, 255); hi = shade(body, 1.3); lo = shade(body, 0.65)
+    belly = (230, 170, 90, 255)
+    # Körper
+    d.ellipse([12, 16, 30, 36], fill=body)
+    rect(d, 16, 30, 26, 36, belly)
+    # Flügel
+    d.polygon([(12, 18), (2, 8), (4, 24)], fill=lo)
+    d.polygon([(30, 18), (40, 8), (38, 24)], fill=lo)
+    d.polygon([(12, 18), (4, 12), (6, 22)], fill=body)
+    d.polygon([(30, 18), (38, 12), (36, 22)], fill=body)
+    # Hals + Kopf
+    rect(d, 19, 8, 25, 18, body)
+    d.ellipse([18, 2, 30, 14], fill=body)
+    d.polygon([(28, 6), (37, 6), (28, 12)], fill=hi)  # Schnauze
+    # Hörner + Auge
+    d.polygon([(20, 3), (18, -1), (23, 3)], fill=(240, 230, 210, 255))
+    _eyes(d, [24], 6, color=(255, 230, 90, 255))
+    # Feuer-Glut am Maul
+    rect(d, 36, 8, 38, 10, (255, 200, 80, 255))
+    # Beine
+    rect(d, 14, 35, 18, 39, lo); rect(d, 23, 35, 27, 39, lo)
+
+
+def draw_boss_golem(d):
+    ice = (170, 210, 235, 255); hi = (225, 240, 250, 255); lo = shade(ice, 0.75)
+    # Blockiger Körper
+    rect(d, 11, 16, 29, 36, ice)
+    rect(d, 11, 16, 14, 36, hi)
+    rect(d, 26, 16, 29, 36, lo)
+    # Kopf
+    rect(d, 15, 5, 25, 16, ice)
+    rect(d, 15, 5, 17, 16, hi)
+    # Eiskristalle (Schultern/Kopf)
+    d.polygon([(13, 16), (9, 6), (17, 14)], fill=hi)
+    d.polygon([(27, 16), (31, 6), (23, 14)], fill=hi)
+    d.polygon([(20, 5), (18, -2), (22, -2)], fill=hi)
+    # Augen
+    _eyes(d, [17, 22], 9, color=(80, 200, 255, 255), glow=(200, 240, 255, 255))
+    # Arme
+    rect(d, 5, 18, 11, 24, ice); rect(d, 29, 18, 35, 24, ice)
+    d.ellipse([3, 22, 11, 30], fill=ice); d.ellipse([29, 22, 37, 30], fill=ice)
+    # Beine
+    rect(d, 13, 35, 19, 39, lo); rect(d, 21, 35, 27, 39, lo)
+    # Riss-Linien
+    d.line([(20, 16), (20, 34)], fill=lo)
+
+
+BOSS_DRAWERS = [draw_boss_goblin, draw_boss_spider, draw_boss_troll,
+                draw_boss_dragon, draw_boss_golem]
+
+
+def gen_bosses():
+    print("Bosse:")
+    for i, drawer in enumerate(BOSS_DRAWERS):
+        buf = new_buf(BOSS_GRID, BOSS_GRID)
+        d = ImageDraw.Draw(buf)
+        drawer(d)
+        save(buf, BOSS_SCALE, f"boss_{i}.png")
+
+
 # --- Hintergründe -----------------------------------------------------------
 def gen_backgrounds():
     print("Hintergründe:")
@@ -410,6 +547,7 @@ def main():
     print("Schreibe nach:", OUT)
     gen_icons()
     gen_characters()
+    gen_bosses()
     gen_backgrounds()
     print("Fertig.")
 
