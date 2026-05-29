@@ -170,7 +170,7 @@
 <script type="module">
 import { initAuth, displayName as getDisplayName, db, ref, update }
   from './adventure/js/core/firebase.js';
-import { loadSave } from './adventure/js/core/state.js';
+import { loadSave, flushSave } from './adventure/js/core/state.js';
 import {
   computePlayerStats, towerBossFor,
   createLobby, joinLobby, listenLobby, listenCombat,
@@ -343,9 +343,12 @@ function onLobbyUpdate(lobby){
   $('readyBtn').disabled  = !hasGuest;
   $('readyBtn').textContent = myReady ? '✖️ Bereit abbrechen' : '✅ Bereit!';
   $('readyBtn').className  = 'btn ' + (myReady ? 'btn-ghost' : 'btn-primary');
-  $('startBtn').style.display = 'none';  // Auto-Start ersetzt den manuellen Start-Button.
-
   const bothReady = hostR && guestR && hasGuest;
+
+  // Auto-Start (Countdown) ist der Komfortweg; der manuelle Start-Button bleibt aber
+  // für den Host als Fallback sichtbar, falls dessen Timer nicht feuert (z.B. Mobile-
+  // Throttling bei gesperrtem Display) oder ein vorheriger Start fehlgeschlagen ist.
+  $('startBtn').style.display = (isHost && bothReady && lobby.status === 'waiting') ? '' : 'none';
 
   // Auto-Start-Countdown: bei „beide bereit" 10-Sekunden-Timer setzen,
   // bei Abbruch wieder löschen (nur der Host verwaltet startAt).
@@ -405,11 +408,12 @@ function startCountdown(startAt){
       : '⚔️ Los geht\'s!';
     if(Date.now() >= startAt){
       stopCountdown();
-      // Nur der Host startet den Kampf autoritativ.
-      if(isHost && !_startingFight && lobbyData && lobbyData.status === 'waiting'){
-        _startingFight = true;
+      // Nur der Host startet den Kampf autoritativ – und nur wenn wirklich beide
+      // bereit sind (schützt vor veraltetem/race-bedingtem startAt).
+      const bothReady = lobbyData && lobbyData.hostReady && lobbyData.guestReady && lobbyData.guest;
+      if(isHost && !_startingFight && bothReady && lobbyData.status === 'waiting'){
         update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
-        window.onStartFight().finally(() => { _startingFight = false; });
+        window.onStartFight();
       }
     }
   };
@@ -423,6 +427,10 @@ function stopCountdown(){
 
 // ---- Kampf starten (Host) ----
 window.onStartFight = async function(){
+  // Doppelstart verhindern (Auto-Countdown + manueller Button / mehrfache Klicks).
+  if(_startingFight) return;
+  if(lobbyData && lobbyData.status === 'in_progress') return;
+  _startingFight = true;
   const btn = $('startBtn'); if(btn){ btn.disabled = true; btn.textContent = '…'; }
   try {
     const lobby = lobbyData;
@@ -463,7 +471,12 @@ window.onStartFight = async function(){
   } catch(e){
     toast('Fehler beim Kampfstart: ' + e.message);
     console.error(e);
+    // Bleibende Fehlermeldung im Warteraum + Start-Button als Retry einblenden,
+    // damit der Host nicht in einer scheinbar fertigen Lobby hängen bleibt.
+    $('lobbyStatus').textContent = '⚠️ Start fehlgeschlagen: ' + e.message + ' – erneut „Kampf starten" versuchen.';
+    if(btn) btn.style.display = '';
   } finally{
+    _startingFight = false;
     if(btn){ btn.disabled = false; btn.textContent = '⚔️ Kampf starten!'; }
   }
 };
@@ -759,6 +772,9 @@ function resetToMain(){
 
     myState = await loadSave(myKey);
     myClassId = (myState && myState.character && myState.character.classId) || DEFAULT_CLASS_ID;
+    // Eigenen Spielstand sofort nach Firebase schreiben, damit der Partner ihn beim
+    // Kampfstart (loadGuestSave) immer findet – loadSave selbst schreibt nicht zurück.
+    flushSave();
   } catch(e){ console.error('Init-Fehler:', e); }
 })();
 </script>
