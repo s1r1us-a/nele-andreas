@@ -116,10 +116,24 @@ export function computePlayerStats(s){
 }
 
 // ---- Lobby-Verwaltung -----------------------------------------------
-export async function createLobby(userKey, displayName, classId){
-  const lobbyRef = push(ref(db, 'tower/lobbies'));
-  const lobbyId  = lobbyRef.key;
-  await set(lobbyRef, {
+// Wunsch-Code säubern: Firebase-Keys dürfen . $ # [ ] / nicht enthalten.
+export function sanitizeLobbyCode(code){
+  return String(code || '').trim().replace(/[.$#\[\]\/\s]+/g, '-').slice(0, 40);
+}
+
+export async function createLobby(userKey, displayName, classId, desiredCode){
+  let lobbyId;
+  const code = sanitizeLobbyCode(desiredCode);
+  if(code){
+    // Selbst gewählter Code – darf nicht bereits vergeben sein.
+    const exists = await get(ref(db, LOBBY_PATH(code)));
+    if(exists.exists()) throw new Error('Code „' + code + '" ist bereits vergeben – wähle einen anderen.');
+    lobbyId = code;
+  } else {
+    // Kein Code angegeben → zufälligen erzeugen.
+    lobbyId = push(ref(db, 'tower/lobbies')).key;
+  }
+  await set(ref(db, LOBBY_PATH(lobbyId)), {
     host: userKey, hostName: displayName, hostClass: classId || DEFAULT_CLASS_ID,
     guest: null,   guestName: null,       guestClass: null,
     status: 'waiting', floor: 1,
