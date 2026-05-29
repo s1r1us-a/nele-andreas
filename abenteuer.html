@@ -185,6 +185,7 @@
   #tooltip .tt-slot { color:var(--txt-mute); font-size:11px; margin-bottom:6px; }
   #tooltip .tt-stat { font-weight:600; }
   #tooltip .tt-stat.armor{color:var(--armor);} #tooltip .tt-stat.damage{color:var(--damage);}
+  #tooltip .tt-stat.affix{color:var(--r-ungewoehnlich); font-weight:600;}
   #tooltip .tt-ilvl { color:var(--txt-mute); font-size:11px; margin-top:4px; }
 
   /* ---- Modal (Picker + Offline) --------------------------------- */
@@ -198,6 +199,34 @@
   .modal .sub { text-align:center; color:var(--txt-dim); font-size:13px; margin-bottom:16px; }
   .modal .close-row { text-align:center; margin-top:18px; }
   .picker-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:10px; }
+
+  /* ---- Aktuell-ausgerüstet-Block im Slot-Picker ------------------ */
+  .cur-equip { text-align:center; margin-bottom:16px; padding:12px;
+    background:#0d0a13; border:1px solid var(--line); border-radius:10px; }
+  .cur-equip .cur-label { font-size:12px; color:var(--txt-mute); margin-bottom:6px; }
+  .cur-equip .cur-stats { margin-top:8px; display:flex; flex-direction:column; gap:2px;
+    align-items:center; font-size:13px; }
+  .cur-stats .tt-stat { font-weight:600; }
+  .cur-stats .tt-stat.armor{color:var(--armor);} .cur-stats .tt-stat.damage{color:var(--damage);}
+  .cur-stats .tt-stat.affix{color:var(--r-ungewoehnlich);}
+
+  /* ---- Item-Vorschau / Vergleich -------------------------------- */
+  .preview-hint { text-align:center; color:var(--txt-dim); font-size:13px; margin:4px 0 12px; }
+  .preview-stats { background:#0d0a13; border:1px solid var(--line); border-radius:10px;
+    padding:10px 14px; }
+  .diff-row { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:baseline;
+    padding:5px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+  .diff-row:last-child { border-bottom:none; }
+  .diff-row.power-row { margin-top:4px; border-top:1px solid var(--line); padding-top:8px; font-weight:700; }
+  .diff-label { color:var(--txt-dim); }
+  .diff-new { font-weight:600; color:var(--txt); text-align:right; min-width:54px; }
+  .diff-new.armor{color:var(--armor);} .diff-new.damage{color:var(--damage);}
+  .diff-new.power{color:var(--power);}
+  .diff-pos { color:var(--r-ungewoehnlich); font-weight:700; text-align:right; min-width:54px; }
+  .diff-neg { color:var(--damage); font-weight:700; text-align:right; min-width:54px; }
+  .diff-zero { color:var(--txt-mute); text-align:right; min-width:54px; }
+  .preview-actions { display:flex; gap:10px; justify-content:center; margin-top:18px; }
+  .preview-actions .btn { min-width:120px; }
 
   .rarity-name[data-r="gewoehnlich"]{color:var(--r-gewoehnlich);}
   .rarity-name[data-r="ungewoehnlich"]{color:var(--r-ungewoehnlich);}
@@ -303,16 +332,17 @@
   @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-7px);}
     75%{transform:translateX(7px);} }
   .combatant { position:absolute; bottom:24px; image-rendering:pixelated;
-    filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); transition:transform .18s ease; }
+    filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); will-change:transform; }
   .combatant.hero-c { left:8%; height:180px; }
   .combatant.boss-c { right:6%; height:230px; transform:scaleX(-1); }
-  .combatant.lunge-r { transform:translateX(120px); }
-  .combatant.boss-c.lunge-l { transform:scaleX(-1) translateX(120px); }
   .combatant.hit { animation:hitflash .25s; }
   @keyframes hitflash { 0%,100%{filter:none;} 50%{filter:brightness(3) drop-shadow(0 0 10px #fff);} }
   .dmg-num { position:absolute; font-family:'Press Start 2P',monospace; font-size:15px;
-    color:#fff; text-shadow:0 2px 3px #000; pointer-events:none; animation:dmgrise 1s ease forwards; }
+    color:#ffe9a8; text-shadow:0 2px 3px #000; pointer-events:none; animation:dmgrise 1s ease forwards;
+    will-change:transform,opacity; }
   .dmg-num.crit { font-size:22px; color:#ffd24a; }
+  .dmg-num.incoming { color:var(--damage); }
+  .dmg-num.incoming.crit { color:#ff5a5a; }
   @keyframes dmgrise { 0%{opacity:0; transform:translateY(10px) scale(.6);}
     20%{opacity:1; transform:translateY(0) scale(1.1);}
     100%{opacity:0; transform:translateY(-50px) scale(1);} }
@@ -337,8 +367,47 @@
   @media (max-width:640px){
     .doll { grid-template-columns:1fr; grid-template-areas:"center" "left" "right" "bottom"; }
     .doll .col { flex-direction:row; flex-wrap:wrap; justify-content:center; }
-    .stats-mini { width:100%; margin:8px 0 0; justify-content:center; }
+    .stats-mini { width:100%; margin:8px 0 0; justify-content:center; gap:8px; }
+    .stat-chip { font-size:12px; padding:5px 9px; }
     .topbar { flex-wrap:wrap; }
+    .wrap { padding:0 10px 50px; }
+    .panel { padding:16px; }
+    /* Paperdoll-Held fluid statt fixer 230×300 */
+    .hero-frame { width:min(230px,70vw); height:auto; aspect-ratio:230/300; }
+    .hero-frame img { height:auto; max-height:80%; }
+    /* Inventar/Rucksack reflowen */
+    .backpack { grid-template-columns:repeat(4,1fr); gap:10px; }
+    /* Arena fluid */
+    .arena-stage { height:min(300px,42vh); }
+  }
+
+  @media (max-width:480px){
+    .topbar { padding:10px 12px; gap:8px; }
+    .topbar h1 { font-size:16px; }
+    .tab { padding:9px 14px; font-size:14px; }
+    .panel { padding:12px; }
+    /* kleinere Slots & Icons */
+    .slot { width:64px; height:64px; }
+    .slot img { width:48px; height:48px; }
+    .slot .slot-name { font-size:9px; }
+    .inv-grid { grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); }
+    .backpack { grid-template-columns:repeat(3,1fr); }
+    /* Kämpfer kleiner, damit beide ins Bild passen */
+    .combatant.hero-c { height:120px; }
+    .combatant.boss-c { height:150px; }
+    .vs { display:none; }
+    .arena-top { gap:8px; }
+    .fb-name { font-size:12px; }
+    .arena-result .big { font-size:32px; }
+    .arena-result .sub { font-size:13px; }
+    /* Modal füllt den Schirm besser */
+    .modal { padding:16px; max-height:90vh; }
+    .modal h2 { font-size:18px; }
+    .preview-actions { flex-direction:column; }
+    .preview-actions .btn { width:100%; }
+    /* großzügigere Touch-Ziele */
+    .btn { padding:12px 18px; }
+    .find-pop img { width:56px; height:56px; }
   }
 </style>
 </head>
@@ -506,6 +575,60 @@ const SLOT_ICON = { kopf:'🪖', schultern:'🎽', brust:'🛡️', haende:'🧤
 const BASE_STAT = { armor:6, damage:8 };  // Basiswert je Stattyp
 const ILVL_K = 0.12;                       // Item-Level-Skalierung
 
+// ---- Sekundär-Stats (Affixe) ---------------------------------------
+// pct:true  -> Wert ist ein Bruch (0.05 = 5%), wird als % angezeigt
+// pct:false -> flacher Wert
+const AFFIX_DEFS = {
+  critChance:  { label:'Krit-Chance',   pct:true,  base:0.03, perIlvl:0.0015, cap:0.50 },
+  critDamage:  { label:'Krit-Schaden',  pct:true,  base:0.15, perIlvl:0.006,  cap:2.00 },
+  maxHp:       { label:'Lebenspunkte',  pct:false, base:12,   perIlvl:1.4 },
+  attackSpeed: { label:'Angriffstempo', pct:true,  base:0.03, perIlvl:0.0012, cap:0.40 },
+  armor:       { label:'Rüstung',       pct:false, base:3,    perIlvl:0.5 },
+  damage:      { label:'Schaden',       pct:false, base:4,    perIlvl:0.6 },
+};
+const AFFIX_KEYS = Object.keys(AFFIX_DEFS);
+// Welche Affixe können je Slot/Kategorie rollen
+const AFFIX_POOL = {
+  waffe:   ['critChance','critDamage','attackSpeed','damage'],
+  schild:  ['armor','maxHp'],
+  ruestung:['armor','maxHp','attackSpeed'],
+  schmuck: ['critChance','critDamage','maxHp','attackSpeed','armor','damage'],
+};
+function affixPool(slotKey){
+  if(slotKey==='waffe') return AFFIX_POOL.waffe;
+  if(slotKey==='schild') return AFFIX_POOL.schild;
+  if(slotKey==='amulett'||slotKey==='ring1'||slotKey==='ring2') return AFFIX_POOL.schmuck;
+  return AFFIX_POOL.ruestung;
+}
+// Anzahl Affixe je Seltenheit (Funktion = variabel)
+const AFFIX_COUNT = {
+  gewoehnlich:0, ungewoehnlich:1, selten:2,
+  episch: ()=> 2 + (Math.random()<0.5 ? 1 : 0), legendaer:3,
+};
+function affixValue(key, ilvl, rarity){
+  const d = AFFIX_DEFS[key];
+  let v = (d.base + ilvl*d.perIlvl) * rarity.mult;
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.round(v); }
+  return v;
+}
+function rollAffixes(slotKey, ilvl, rarity){
+  const cnt = AFFIX_COUNT[rarity.key];
+  const n = typeof cnt === 'function' ? cnt() : (cnt||0);
+  const pool = affixPool(slotKey).slice();
+  const out = {};
+  for(let i=0; i<n && pool.length; i++){
+    const k = pool.splice(Math.floor(Math.random()*pool.length), 1)[0];
+    out[k] = affixValue(k, ilvl, rarity);
+  }
+  return out;
+}
+// Anzeige-String für einen Affix-Wert
+function fmtAffix(key, v){
+  const d = AFFIX_DEFS[key];
+  return (d.pct ? '+'+Math.round(v*100)+'%' : '+'+v) + ' ' + d.label;
+}
+
 const ZONES = [
   { name:'Blühende Wiesen',  bg:0 }, { name:'Dunkelwald', bg:1 },
   { name:'Tiefe Höhlen',     bg:2 }, { name:'Vulkanschlund', bg:3 },
@@ -565,6 +688,8 @@ function loadSave(){
     // höchste vorhandene id ermitteln, damit neue ids kollisionsfrei sind
     const all = [...s.inventory, ...Object.values(s.equipped).filter(Boolean)];
     nextId = all.reduce((m,it)=>Math.max(m, it.id||0), 0) + 1;
+    // Altstände ohne Affixe defensiv mit leerer Map versehen
+    for(const it of all){ if(!it.affixes) it.affixes = {}; }
     return s;
   } catch(e){ console.warn('Save defekt, neu gestartet', e); return freshState(); }
 }
@@ -598,6 +723,7 @@ function rollItem(zone){
     id: nextId++,
     slotKey, cat: slot.cat, statType: slot.statType,
     rarity: rarity.key, ilvl, stat, variant,
+    affixes: rollAffixes(slotKey, ilvl, rarity),
     sprite: ASSETS + 'icon_' + slot.art + '_' + variant + '.png',
     name: rarity.adj + ' ' + slot.base,
   };
@@ -605,13 +731,34 @@ function rollItem(zone){
 
 // ---- Totals ---------------------------------------------------------
 function recomputeTotals(){
-  let armor=0, damage=0;
+  let armor=0, damage=0, critChance=0, critDamage=0, maxHp=0, attackSpeed=0;
   for(const it of Object.values(state.equipped)){
     if(!it) continue;
     if(it.statType==='armor') armor += it.stat; else damage += it.stat;
+    const a = it.affixes || {};
+    armor      += a.armor      || 0;
+    damage     += a.damage     || 0;
+    critChance += a.critChance || 0;
+    critDamage += a.critDamage || 0;
+    maxHp      += a.maxHp      || 0;
+    attackSpeed+= a.attackSpeed|| 0;
   }
-  const power = Math.round(armor + damage*1.5);
-  return { armor, damage, power };
+  // Globale Caps gegen Degeneration
+  critChance  = Math.min(0.60, critChance);
+  attackSpeed = Math.min(0.60, attackSpeed);
+  const power = Math.round(armor + damage*1.5
+    + maxHp*0.2 + critChance*200 + critDamage*60 + attackSpeed*150);
+  return { armor, damage, critChance, critDamage, maxHp, attackSpeed, power };
+}
+// Power-Beitrag eines EINZELNEN Items (für den Vergleich im Vorschau-Modal)
+function itemPower(it){
+  if(!it) return 0;
+  const a = it.affixes || {};
+  let armor=0, damage=0;
+  if(it.statType==='armor') armor += it.stat; else damage += it.stat;
+  armor += a.armor||0; damage += a.damage||0;
+  return Math.round(armor + damage*1.5 + (a.maxHp||0)*0.2
+    + (a.critChance||0)*200 + (a.critDamage||0)*60 + (a.attackSpeed||0)*150);
 }
 function heroTier(power){
   if(power >= 600) return 3;
@@ -622,12 +769,18 @@ function heroTier(power){
 const TIER_NAME = ['Abenteurer','Krieger','Held','Legende'];
 
 // ---- Equip ----------------------------------------------------------
-function equip(item){
-  // passenden Slot finden: bei Ringen den ersten freien, sonst Slot des Items
-  let target = item.slotKey;
+// Welcher Slot würde durch dieses Item belegt? (bei Ringen erster freier, sonst eigener Slot)
+function resolveTargetSlot(item){
   if(item.slotKey==='ring1' || item.slotKey==='ring2'){
-    target = !state.equipped.ring1 ? 'ring1' : (!state.equipped.ring2 ? 'ring2' : 'ring1');
+    return !state.equipped.ring1 ? 'ring1' : (!state.equipped.ring2 ? 'ring2' : 'ring1');
   }
+  return item.slotKey;
+}
+function equip(item, explicitTarget){
+  // passenden Slot finden: explizit (z.B. aus Slot-Picker) oder via resolveTargetSlot
+  const isRing = item.slotKey==='ring1' || item.slotKey==='ring2';
+  let target = (isRing && (explicitTarget==='ring1' || explicitTarget==='ring2'))
+    ? explicitTarget : resolveTargetSlot(item);
   // Item aus Inventar nehmen
   const idx = state.inventory.findIndex(i => i.id === item.id);
   if(idx>=0) state.inventory.splice(idx,1);
@@ -649,10 +802,16 @@ function unequip(slotKey){
 }
 
 // ---- Inventar (10 Slots) & Verkaufswert -----------------------------
-const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat; // höher = besser
+// Affix-Punkte: % zählen stärker (×100), flache Werte moderat (×0.5)
+function affixScore(it){
+  let s = 0; const a = it.affixes || {};
+  for(const [k,v] of Object.entries(a)){ s += AFFIX_DEFS[k].pct ? v*100 : v*0.5; }
+  return s;
+}
+const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat + affixScore(it); // höher = besser
 const inventoryFull = () => state.inventory.length >= INV_SLOTS;
-// Verkaufspreis skaliert mit Seltenheit & Stat (Legendäres bringt deutlich mehr)
-const sellPrice = it => Math.max(1, Math.round(it.stat * (rarityIndex(it.rarity)+1) * 0.6));
+// Verkaufspreis skaliert mit Seltenheit, Stat & Affixen (Legendäres bringt deutlich mehr)
+const sellPrice = it => Math.max(1, Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6));
 
 function sellItem(id){
   const idx = state.inventory.findIndex(i => i.id === id);
@@ -732,7 +891,7 @@ function applyOffline(){
 
 // ---- Rendering ------------------------------------------------------
 const $ = s => document.querySelector(s);
-function renderAll(){ renderTopStats(); renderAdventure(); renderCharacter(); renderInventory(); renderShop(); }
+function renderAll(){ hideTooltip(); renderTopStats(); renderAdventure(); renderCharacter(); renderInventory(); renderShop(); }
 
 function renderTopStats(){
   const t = recomputeTotals();
@@ -843,7 +1002,7 @@ function renderInventory(){
       cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
         '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it);
-      cell.addEventListener('click', ()=> equip(it));
+      cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it); });
     } else {
       cell.innerHTML = '<span class="bp-empty">＋</span>';
     }
@@ -907,8 +1066,11 @@ function renderShop(){
       '<span class="price">💰 '+sellPrice(it)+'</span>';
     bindTooltip(cell, it);
     cell.addEventListener('click', (e)=>{
+      hideTooltip();
+      // Touch: erst Werte zeigen + bestätigen (kein Fehlverkauf). Desktop: Sofortverkauf.
+      if(IS_TOUCH){ openSellModal(it); return; }
       const price = sellItem(it.id);
-      if(price) { tt.style.display='none'; goldPop(e.clientX, e.clientY, '+'+price); }
+      if(price) goldPop(e.clientX, e.clientY, '+'+price);
     });
     grid.appendChild(cell);
   }
@@ -917,6 +1079,17 @@ function renderShop(){
 
 // ---- Tooltip --------------------------------------------------------
 const tt = $('#tooltip');
+function hideTooltip(){ tt.style.display = 'none'; }
+function affixLinesHTML(it){
+  const a = it.affixes || {};
+  let html = '';
+  // in fester Reihenfolge der Definition, damit es ruhig aussieht
+  for(const k of AFFIX_KEYS){
+    if(a[k] == null) continue;
+    html += '<div class="tt-stat affix">'+fmtAffix(k, a[k])+'</div>';
+  }
+  return html;
+}
 function tooltipHTML(it){
   const r = rarityOf(it.rarity);
   const slot = SLOTS[it.slotKey];
@@ -925,6 +1098,7 @@ function tooltipHTML(it){
   return '<div class="tt-name" style="color:'+r.color+'">'+it.name+'</div>'+
     '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
     '<div class="tt-stat '+sCls+'">+'+it.stat+' '+sLbl+'</div>'+
+    affixLinesHTML(it)+
     '<div class="tt-ilvl">Gegenstandsstufe '+it.ilvl+'</div>';
 }
 function bindTooltip(el, it){
@@ -935,8 +1109,10 @@ function bindTooltip(el, it){
     const y = Math.min(e.clientY+14, window.innerHeight-120);
     tt.style.left = x+'px'; tt.style.top = y+'px';
   });
-  el.addEventListener('mouseleave', ()=> tt.style.display='none');
+  el.addEventListener('mouseleave', hideTooltip);
 }
+// Tooltip nie „kleben" lassen: beim Scrollen ausblenden
+window.addEventListener('scroll', hideTooltip, true);
 
 // ---- Slot-Picker (Modal) -------------------------------------------
 const overlay = $('#overlay'), modal = $('#modal');
@@ -944,6 +1120,7 @@ function closeModal(){ overlay.classList.remove('show'); }
 overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
 
 function openSlotPicker(slotKey){
+  hideTooltip();
   const slot = SLOTS[slotKey];
   const fitKeys = FITS(slotKey);
   // passende Items: alle im Inventar, deren slotKey in fitKeys liegt
@@ -953,11 +1130,14 @@ function openSlotPicker(slotKey){
   const cur = state.equipped[slotKey];
   let html = '<h2>'+slot.name+'</h2><div class="sub">Wähle einen Gegenstand zum Ausrüsten</div>';
   if(cur){
-    const r = rarityOf(cur.rarity);
-    html += '<div style="text-align:center; margin-bottom:14px;">'+
-      '<div style="font-size:12px; color:var(--txt-mute); margin-bottom:6px;">Aktuell ausgerüstet</div>'+
-      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+'</span> '+
-      '<span style="color:var(--txt-dim)">(+'+cur.stat+')</span><br>'+
+    const sLbl = cur.statType==='armor' ? 'Rüstung' : 'Schaden';
+    html += '<div class="cur-equip">'+
+      '<div class="cur-label">Aktuell ausgerüstet</div>'+
+      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+'</span>'+
+      '<div class="cur-stats">'+
+        '<div class="tt-stat '+cur.statType+'">+'+cur.stat+' '+sLbl+'</div>'+
+        affixLinesHTML(cur)+
+      '</div>'+
       '<button class="btn ghost" id="unequipBtn" style="margin-top:10px;">Ablegen</button></div>';
   }
   if(candidates.length){
@@ -979,10 +1159,114 @@ function openSlotPicker(slotKey){
       cell.style.setProperty('--rc', r.color);
       cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it);
-      cell.addEventListener('click', ()=>{ equip(it); closeModal(); });
+      cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it, slotKey, ()=>openSlotPicker(slotKey)); });
       list.appendChild(cell);
     }
   }
+  overlay.classList.add('show');
+}
+
+// ---- Item-Vorschau / Bestätigen ------------------------------------
+// Liefert je Stat {key,label,val,delta,pct} – Vergleich neu vs. aktuell
+function statRows(neu, alt){
+  alt = alt || null;
+  const get = (it, key) => {
+    if(!it) return 0;
+    if(key === '__main') return it.stat;            // Hauptstat
+    return (it.affixes && it.affixes[key]) || 0;    // Affix
+  };
+  const rows = [];
+  // Hauptstat (immer)
+  const mainLbl = neu.statType==='armor' ? 'Rüstung' : 'Schaden';
+  // Wenn das aktuelle Item denselben Stat-Typ hat, vergleiche, sonst alt=0
+  const altMain = (alt && alt.statType===neu.statType) ? alt.stat : 0;
+  rows.push({ key:'__main', label:mainLbl, val:neu.stat, delta:neu.stat-altMain, pct:false, type:neu.statType });
+  // Affixe: Vereinigung der Keys beider Items, in fester Reihenfolge
+  for(const k of AFFIX_KEYS){
+    const nv = get(neu, k), av = get(alt, k);
+    if(nv === 0 && av === 0) continue;
+    rows.push({ key:k, label:AFFIX_DEFS[k].label, val:nv, delta:nv-av, pct:AFFIX_DEFS[k].pct });
+  }
+  return rows;
+}
+function fmtVal(v, pct){ return pct ? Math.round(v*100)+'%' : (''+v); }
+function deltaSpan(delta, pct){
+  if(Math.abs(delta) < (pct?0.0005:0.5)) return '<span class="diff-zero">±0</span>';
+  const cls = delta>0 ? 'diff-pos' : 'diff-neg';
+  const sign = delta>0 ? '+' : '−';
+  return '<span class="'+cls+'">'+sign+fmtVal(Math.abs(delta), pct)+'</span>';
+}
+function openItemPreview(item, fromSlotKey, backFn){
+  hideTooltip();
+  const r = rarityOf(item.rarity);
+  // Ziel-Slot bestimmen (für korrekten Vergleich & Equip, v.a. Ringe)
+  const target = (fromSlotKey === 'ring2') ? 'ring2'
+    : (fromSlotKey && SLOTS[fromSlotKey] ? fromSlotKey : resolveTargetSlot(item));
+  const cur = state.equipped[target] || null;
+  const rows = statRows(item, cur);
+
+  let body = '';
+  for(const row of rows){
+    body += '<div class="diff-row">'+
+      '<span class="diff-label">'+row.label+'</span>'+
+      '<span class="diff-new'+(row.type? ' '+row.type:'')+'">+'+fmtVal(row.val, row.pct)+'</span>'+
+      deltaSpan(row.delta, row.pct)+
+    '</div>';
+  }
+  // Kampfkraft-Differenz
+  const powDelta = itemPower(item) - itemPower(cur);
+  body += '<div class="diff-row power-row">'+
+    '<span class="diff-label">Kampfkraft</span>'+
+    '<span class="diff-new power">'+itemPower(item)+'</span>'+
+    deltaSpan(powDelta, false)+
+  '</div>';
+
+  let html = '<h2 style="color:'+r.color+'">'+item.name+'</h2>'+
+    '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
+    (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
+         : '<div class="preview-hint">Dieser Slot ist noch frei.</div>')+
+    '<div class="preview-stats">'+body+'</div>'+
+    '<div class="preview-actions">'+
+      '<button class="btn" id="previewEquip">Anlegen</button>'+
+      '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
+    '</div>';
+  modal.innerHTML = html;
+  modal.querySelector('#previewEquip').addEventListener('click', ()=>{ equip(item, target); closeModal(); });
+  modal.querySelector('#previewCancel').addEventListener('click', ()=>{ backFn ? backFn() : closeModal(); });
+  overlay.classList.add('show');
+}
+
+// Touch-Erkennung – auf Touch werden Werte vor dem Verkauf gezeigt (kein Fehlverkauf)
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// Verkaufs-Modal (v.a. für Touch): zeigt Werte + Verkaufen-Button
+function openSellModal(item){
+  hideTooltip();
+  const r = rarityOf(item.rarity);
+  const sLbl = item.statType==='armor' ? 'Rüstung' : 'Schaden';
+  let stats = '<div class="diff-row"><span class="diff-label">'+sLbl+'</span>'+
+    '<span class="diff-new '+item.statType+'">+'+item.stat+'</span></div>';
+  for(const k of AFFIX_KEYS){
+    const v = item.affixes && item.affixes[k];
+    if(v == null) continue;
+    const pct = AFFIX_DEFS[k].pct;
+    stats += '<div class="diff-row"><span class="diff-label">'+AFFIX_DEFS[k].label+'</span>'+
+      '<span class="diff-new">+'+fmtVal(v, pct)+'</span></div>';
+  }
+  const price = sellPrice(item);
+  modal.innerHTML = '<h2 style="color:'+r.color+'">'+item.name+'</h2>'+
+    '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
+    '<div class="preview-stats">'+stats+'</div>'+
+    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 💰 '+price+' Gold?</div>'+
+    '<div class="preview-actions">'+
+      '<button class="btn" id="sellConfirm">Verkaufen</button>'+
+      '<button class="btn ghost" id="sellCancel">Abbrechen</button>'+
+    '</div>';
+  modal.querySelector('#sellConfirm').addEventListener('click', ()=>{
+    const p = sellItem(item.id); closeModal();
+    if(p) toast('+'+p+' Gold');
+  });
+  modal.querySelector('#sellCancel').addEventListener('click', closeModal);
   overlay.classList.add('show');
 }
 
@@ -1064,14 +1348,18 @@ function startBossFight(){
   $('#heroBarName').textContent = 'Held';
   $('#bossBarName').textContent = boss.name;
 
-  // Kampfwerte
+  // Kampfwerte (inkl. neuer Stats)
+  const heroMaxHp = 100 + t.armor*4 + t.maxHp;
   const fight = {
-    heroMaxHp: 100 + t.armor*4,
+    heroMaxHp, heroHp: heroMaxHp,
     heroAtk: 5 + t.damage,
     heroArmor: t.armor,
+    heroCritChance: 0.05 + t.critChance,        // 5% Basis + Affixe
+    heroCritMult: 2.0 + t.critDamage,           // 2× Basis + Affixe
+    heroInterval: Math.max(220, 750 * (1 - t.attackSpeed)), // Haste verkürzt Takt
     bossMaxHp: boss.maxHp, bossAtk: boss.atk,
-    heroHp: 100 + t.armor*4, bossHp: boss.maxHp,
-    turn: 0, over: false, boss,
+    bossHp: boss.maxHp,
+    turn: 0, over: false, boss, anchor: {},
   };
   currentFight = fight;
   updateHpBars(fight);
@@ -1081,22 +1369,43 @@ function startBossFight(){
   combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×';
   arenaOverlay.classList.add('show');
 
-  clearInterval(combatTimer);
+  // Anker (Mittelpunkte der Kämpfer) nach Layout messen – kein Rect-Read pro Treffer.
+  // Sprite-Breite hängt vom geladenen Bild ab -> nach Layout UND nach Bild-Load messen.
+  requestAnimationFrame(()=> measureAnchors(fight));
+  $('#heroSprite').onload = ()=> { if(currentFight===fight && !fight.over) measureAnchors(fight); };
+  $('#bossSprite').onload = ()=> { if(currentFight===fight && !fight.over) measureAnchors(fight); };
+
+  clearTimeout(combatTimer);
   scheduleExchange(fight);
 }
 
+function measureAnchors(fight){
+  const stage = $('#arenaStage');
+  const sr = stage.getBoundingClientRect();
+  for(const id of ['heroSprite','bossSprite']){
+    const el = $('#'+id); if(!el) continue;
+    const r = el.getBoundingClientRect();
+    fight.anchor[id] = { x: r.left - sr.left + r.width/2, y: r.top - sr.top + r.height/3 };
+  }
+}
+// Anker bei Größenänderung neu messen, solange die Arena offen ist
+window.addEventListener('resize', ()=>{
+  if(currentFight && !currentFight.over && arenaOverlay.classList.contains('show'))
+    measureAnchors(currentFight);
+});
+
 function scheduleExchange(fight){
-  combatTimer = setTimeout(()=> exchange(fight), 750 / combatSpeed);
+  combatTimer = setTimeout(()=> exchange(fight), fight.heroInterval / combatSpeed);
 }
 
 function exchange(fight){
   if(fight.over) return;
   // Held schlägt
-  const heroCrit = Math.random() < 0.15;
-  let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit?2:1)));
+  const heroCrit = Math.random() < fight.heroCritChance;
+  let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
   fight.bossHp = Math.max(0, fight.bossHp - dmg);
-  attackAnim('hero', dmg, heroCrit);
-  updateHpBars(fight);
+  // HP-Balken erst beim Trefferzeitpunkt aktualisieren (synchron zum Visual)
+  attackAnim('hero', dmg, heroCrit, ()=> updateHpBars(fight));
   if(fight.bossHp <= 0){ return endFight(fight, true); }
 
   // Boss schlägt zurück (nach kurzer Pause)
@@ -1105,8 +1414,7 @@ function exchange(fight){
     const bossCrit = Math.random() < 0.12;
     let bd = Math.max(1, Math.round((fight.bossAtk * rnd(0.15) * (bossCrit?2:1)) - fight.heroArmor*0.3));
     fight.heroHp = Math.max(0, fight.heroHp - bd);
-    attackAnim('boss', bd, bossCrit);
-    updateHpBars(fight);
+    attackAnim('boss', bd, bossCrit, ()=> updateHpBars(fight));
     if(fight.heroHp <= 0){ return endFight(fight, false); }
     scheduleExchange(fight);
   }, 360 / combatSpeed);
@@ -1119,39 +1427,59 @@ function updateHpBars(f){
   $('#bossHpText').textContent = Math.ceil(f.bossHp)+' / '+f.bossMaxHp+' HP';
 }
 
-function attackAnim(who, dmg, crit){
+const HIT_DELAY=150, FLASH=240, SHAKE=240, FLOAT=1000;
+// WAAPI-Lunge: skaliert mit combatSpeed, behält den Basis-Transform (Boss-Spiegelung)
+function lunge(el, isBoss){
+  const base = isBoss ? 'scaleX(-1) ' : '';
+  el.animate(
+    [ { transform: base+'translateX(0)' },
+      { transform: base+'translateX(60px)', offset:0.4 },
+      { transform: base+'translateX(0)' } ],
+    { duration: 180 / combatSpeed, easing:'ease-out' }
+  );
+}
+function attackAnim(who, dmg, crit, onHit){
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const attacker = who==='hero' ? $('#heroSprite') : $('#bossSprite');
-  const target   = who==='hero' ? $('#bossSprite') : $('#heroSprite');
+  const isHero = who==='hero';
+  const attacker = isHero ? $('#heroSprite') : $('#bossSprite');
+  const target   = isHero ? $('#bossSprite') : $('#heroSprite');
+  const targetId = isHero ? 'bossSprite' : 'heroSprite';
   const stage = $('#arenaStage');
   if(!reduce){
-    attacker.classList.add(who==='hero' ? 'lunge-r' : 'lunge-l');
-    setTimeout(()=> attacker.classList.remove('lunge-r','lunge-l'), 200);
+    lunge(attacker, !isHero);
   }
   setTimeout(()=>{
-    target.classList.add('hit');
-    setTimeout(()=> target.classList.remove('hit'), 250);
-    if(!reduce && (crit || Math.random()<.5)){ stage.classList.add('shake');
-      setTimeout(()=> stage.classList.remove('shake'), 250); }
-    // Slash + Schadenszahl beim Ziel
-    const r = target.getBoundingClientRect();
-    const sr = stage.getBoundingClientRect();
-    const x = r.left - sr.left + r.width/2;
-    const y = r.top - sr.top + r.height/3;
-    const slash = document.createElement('div');
-    slash.className = 'slash'; slash.style.left=(x-45)+'px'; slash.style.top=(y-45)+'px';
-    const num = document.createElement('div');
-    num.className = 'dmg-num'+(crit?' crit':''); num.textContent = '-'+dmg+(crit?'!':'');
-    num.style.left=(x-10)+'px'; num.style.top=y+'px';
+    if(onHit) onHit();                 // HP-Balken genau beim Treffer aktualisieren
+    if(!reduce){
+      target.classList.add('hit');
+      setTimeout(()=> target.classList.remove('hit'), FLASH / combatSpeed);
+      if(crit || Math.random()<.5){ stage.classList.add('shake');
+        setTimeout(()=> stage.classList.remove('shake'), SHAKE / combatSpeed); }
+    }
+    // Position aus gecachten Ankern (kein Layout-Read pro Treffer)
+    const a = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
+    const jitter = Math.round((Math.random()*2-1)*12);   // WoW-typisches Auffächern
+    const x = a.x + jitter, y = a.y;
     const layer = $('#dmgLayer');
-    layer.appendChild(slash); layer.appendChild(num);
-    setTimeout(()=>{ slash.remove(); num.remove(); }, 1000);
-  }, reduce ? 0 : 150);
+    if(!reduce){
+      const slash = document.createElement('div');
+      slash.className = 'slash'; slash.style.left=(x-45)+'px'; slash.style.top=(y-45)+'px';
+      layer.appendChild(slash);
+      setTimeout(()=> slash.remove(), FLOAT / combatSpeed);
+    }
+    // Floating-Combat-Text: ausgeteilt (gelb über Boss) / erhalten (rot über Held)
+    const num = document.createElement('div');
+    num.className = 'dmg-num' + (crit?' crit':'') + (isHero ? '' : ' incoming');
+    num.textContent = '-'+dmg+(crit?'!':'');
+    num.style.left=(x-10)+'px'; num.style.top=y+'px';
+    layer.appendChild(num);
+    setTimeout(()=> num.remove(), FLOAT / combatSpeed);
+  }, reduce ? 0 : HIT_DELAY / combatSpeed);
 }
 
 function endFight(fight, win){
   fight.over = true;
-  clearInterval(combatTimer); clearTimeout(combatTimer);
+  clearTimeout(combatTimer);
   const res = $('#arenaResult');
   if(win){
     const reward = Math.round(fight.boss.recPower * 1.5 + 40);
@@ -1162,9 +1490,12 @@ function endFight(fight, win){
     let bonusTxt = '';
     if(!inventoryFull()){
       const drop = rollItem(Math.max(0, state.zone-1));
-      // mindestens „selten"
-      if(rarityIndex(drop.rarity) < 2){ drop.rarity='selten'; drop.stat=Math.round(drop.stat*1.9);
-        drop.name = rarityOf('selten').adj+' '+SLOTS[drop.slotKey].base; }
+      // mindestens „selten" – inkl. passender Affixe für die neue Seltenheit
+      if(rarityIndex(drop.rarity) < 2){
+        drop.rarity='selten'; drop.stat=Math.round(drop.stat*1.9);
+        drop.name = rarityOf('selten').adj+' '+SLOTS[drop.slotKey].base;
+        drop.affixes = rollAffixes(drop.slotKey, drop.ilvl, rarityOf('selten'));
+      }
       state.inventory.push(drop); addLog(drop);
       bonusTxt = ' + Beute: '+drop.name;
     }
