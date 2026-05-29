@@ -7,7 +7,7 @@
 import { SAVE_KEY, SAVE_VERSION } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
 import { defaultTypeKey } from '../data/itemTypes.js';
-import { buildItemSVG } from './item-art.js';
+import { buildItemSVG, elementOf } from './item-art.js';
 import { db, ref, get, set, remove } from './firebase.js';
 
 export let state = null;
@@ -79,7 +79,7 @@ function hydrateItems(){
     if(!it.affixes) it.affixes = {};
     if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
     const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity);   // Data-URI nicht gespeichert (siehe saveData)
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id));   // Data-URI nicht gespeichert (siehe saveData)
   }
 }
 
