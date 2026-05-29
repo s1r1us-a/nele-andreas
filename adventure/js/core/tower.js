@@ -2,7 +2,7 @@
    TURM DES WAHNSINNS – Multiplayer-Koop-Modus.
    Lobby-Verwaltung + Kampf-Engine (Host-gesteuert, RTDB-synchronisiert).
    ===================================================================== */
-import { db, ref, get, set, update, push, onValue, onDisconnect } from './firebase.js';
+import { db, ref, get, set, update, remove, push, onValue, onDisconnect } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from '../data/classes.js';
@@ -116,19 +116,51 @@ export function computePlayerStats(s){
 }
 
 // ---- Lobby-Verwaltung -----------------------------------------------
-export async function createLobby(userKey, displayName, classId){
-  const lobbyRef = push(ref(db, 'tower/lobbies'));
-  const lobbyId  = lobbyRef.key;
-  await set(lobbyRef, {
+// Wunsch-Code säubern: Firebase-Keys dürfen . $ # [ ] / nicht enthalten.
+export function sanitizeLobbyCode(code){
+  return String(code || '').trim().replace(/[.$#\[\]\/\s]+/g, '-').slice(0, 40);
+}
+
+export async function createLobby(userKey, displayName, classId, desiredCode){
+  let lobbyId;
+  const code = sanitizeLobbyCode(desiredCode);
+  if(code){
+    // Selbst gewählter Code – darf nicht bereits vergeben sein.
+    const exists = await get(ref(db, LOBBY_PATH(code)));
+    if(exists.exists()) throw new Error('Code „' + code + '" ist bereits vergeben – wähle einen anderen.');
+    lobbyId = code;
+  } else {
+    // Kein Code angegeben → zufälligen erzeugen.
+    lobbyId = push(ref(db, 'tower/lobbies')).key;
+  }
+  await set(ref(db, LOBBY_PATH(lobbyId)), {
     host: userKey, hostName: displayName, hostClass: classId || DEFAULT_CLASS_ID,
     guest: null,   guestName: null,       guestClass: null,
     status: 'waiting', floor: 1,
     createdAt: Date.now(),
     hostReady: false, guestReady: false,
   });
-  // Host-Disconnect → Lobby automatisch schließen (B3).
-  try { onDisconnect(ref(db, LOBBY_PATH(lobbyId) + '/status')).set('ended'); } catch(e){}
+  // Host-Disconnect → Lobby + Kampf-/Skill-Daten automatisch entfernen (B3, Aufräumen).
+  armDisconnectCleanup(lobbyId);
   return lobbyId;
+}
+
+// Räumt Lobby, Kampf- und Skill-Knoten beim plötzlichen Verbindungsabbruch
+// (Tab schließen, wegnavigieren, Absturz) automatisch auf, damit die DB
+// nicht mit verwaisten Lobbies zugemüllt wird.
+function armDisconnectCleanup(lobbyId){
+  try {
+    onDisconnect(ref(db, LOBBY_PATH(lobbyId))).remove();
+    onDisconnect(ref(db, COMBAT_PATH(lobbyId))).remove();
+    onDisconnect(ref(db, ABIL_PATH(lobbyId))).remove();
+  } catch(e){}
+}
+
+// Lobby vollständig entfernen (Lobby + Kampf + Skill-Knoten).
+async function purgeLobby(lobbyId){
+  try { await remove(ref(db, LOBBY_PATH(lobbyId)));  } catch(e){}
+  try { await remove(ref(db, COMBAT_PATH(lobbyId))); } catch(e){}
+  try { await remove(ref(db, ABIL_PATH(lobbyId)));   } catch(e){}
 }
 
 export async function joinLobby(lobbyId, userKey, displayName, classId){
@@ -141,8 +173,8 @@ export async function joinLobby(lobbyId, userKey, displayName, classId){
   await update(ref(db, LOBBY_PATH(lobbyId)), {
     guest: userKey, guestName: displayName, guestClass: classId || DEFAULT_CLASS_ID,
   });
-  // Gast-Disconnect → Lobby ebenfalls schließen (B3).
-  try { onDisconnect(ref(db, LOBBY_PATH(lobbyId) + '/status')).set('ended'); } catch(e){}
+  // Gast-Disconnect → Lobby ebenfalls aufräumen (B3, Aufräumen).
+  armDisconnectCleanup(lobbyId);
   return lobby;
 }
 
@@ -166,7 +198,10 @@ export async function setReady(lobbyId, isHost, val = true){
 }
 
 export async function leaveLobby(lobbyId){
+  // Erst auf 'ended' setzen (der Partner erhält das Signal sofort), dann
+  // den gesamten Lobby-Zweig löschen, damit keine Leichen zurückbleiben.
   try { await update(ref(db, LOBBY_PATH(lobbyId)), { status: 'ended' }); } catch(e){}
+  await purgeLobby(lobbyId);
 }
 
 // Lädt den Spielstand des Gastes aus RTDB.

@@ -34,9 +34,13 @@
       <div class="card">
         <div class="card-title">Neue Lobby erstellen</div>
         <p style="font-size:13px;color:var(--txt-mute);margin-bottom:14px;">
-          Erstelle eine Lobby und teile den Code mit deinem Partner.
-          Der Turm kann nur zu zweit betreten werden.
+          Wähle einen eigenen Code (z. B. „nele") oder lass das Feld leer für einen
+          zufälligen Code. Teile ihn dann mit deinem Partner – der Turm ist nur zu zweit betretbar.
         </p>
+        <div class="input-row" style="margin-bottom:12px">
+          <input type="text" class="input-code" id="createCodeInput"
+            placeholder="Wunsch-Code (optional)…" maxlength="40" autocomplete="off">
+        </div>
         <button class="btn btn-primary btn-full" id="createBtn" onclick="onCreateLobby()">🏰 Lobby erstellen</button>
       </div>
     </div>
@@ -172,7 +176,7 @@ import {
   createLobby, joinLobby, listenLobby, listenCombat,
   setReady, leaveLobby, loadGuestSave,
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
-  requestAbility,
+  requestAbility, sanitizeLobbyCode,
 } from './adventure/js/core/tower.js';
 import { heroSrc } from './adventure/js/core/avatar.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from './adventure/js/data/classes.js';
@@ -216,7 +220,8 @@ window.onCreateLobby = async function(){
   const btn = $('createBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    lobbyId = await createLobby(myKey, myName, myClassId);
+    const wish = sanitizeLobbyCode($('createCodeInput').value);
+    lobbyId = await createLobby(myKey, myName, myClassId, wish);
     isHost  = true;
     openLobbyRoom();
     startLobbyListener();
