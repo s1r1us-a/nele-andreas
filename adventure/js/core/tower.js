@@ -12,6 +12,7 @@ import { levelBonus, heroTier } from './character.js';
 import { powerOfBundle } from './items.js';
 import { buildBossSVG } from './boss-art.js';
 import { buildZoneBgSVG } from './zone-art.js';
+import { freshState } from './state.js';
 import { fmtBig } from '../ui/dom.js';
 
 const LOBBY_PATH  = id => 'tower/lobbies/' + id;
@@ -218,11 +219,16 @@ export async function leaveLobby(lobbyId){
   await purgeLobby(lobbyId);
 }
 
-// Lädt den Spielstand des Gastes aus RTDB.
+// Lädt den Spielstand des Gastes aus RTDB. Hat der Gast noch nie gespeichert
+// (frischer Account!), wird ein Default-Spielstand zurückgegeben, statt zu
+// werfen – sonst hängt der Kampfstart in einer Endlosschleife. Der Aufrufer
+// setzt die in der Lobby gewählte Klasse darauf.
 export async function loadGuestSave(guestKey){
-  const snap = await get(ref(db, 'adventure/' + guestKey));
-  if(!snap.exists()) throw new Error('Spielstand von ' + guestKey + ' nicht gefunden.');
-  return snap.val();
+  try {
+    const snap = await get(ref(db, 'adventure/' + guestKey));
+    if(snap.exists()) return snap.val();
+  } catch(e){ console.warn('Gast-Spielstand-Laden fehlgeschlagen, nutze Default', e); }
+  return freshState();
 }
 
 // ---- Kampf-Engine (läuft nur beim Host) ----------------------------
@@ -295,6 +301,12 @@ async function syncFight(fight){
       ablazeBackRemain:  Math.max(0, (fight.backCritUntil ||0) - now),
       shieldRemain:      Math.max(0, (fight.groupDmgReduceUntil||0) - now),
       healTs:      fight.lastHealTs || 0,
+      // Edge-Timestamps für Kampf-Animationen (Front-Lunge, Stab-Cast,
+      // passive Heilung, Boss-Treffer → Schild-Ripple).
+      frontHitTs:  fight.lastFrontHitTs || 0,
+      backAtkTs:   fight.lastBackAtkTs  || 0,
+      backHealTs:  fight.lastBackHealTs || 0,
+      bossHitTs:   fight.lastBossHitTs  || 0,
     },
     status:      fight.over ? (fight.won ? 'won' : 'lost') : 'fighting',
   };
@@ -337,6 +349,9 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     startedAt: Date.now(), dmgDealt:0,
     // Skill-Status (B14)
     frontCritUntil:0, backCritUntil:0, groupDmgReduceUntil:0, lastHealTs:0,
+    // Edge-Timestamps für Kampf-Animationen (monoton steigend → driftfreie
+    // Edge-Trigger auf beiden Clients, gleiches Muster wie lastHealTs).
+    lastFrontHitTs:0, lastBackAtkTs:0, lastBackHealTs:0, lastBossHitTs:0,
     _lastAbilTs:0,
     onUpdate,
   };
@@ -409,6 +424,7 @@ function exchange(fight){
 
   // ---- Vorne schlägt Boss ---
   if(fight.frontHp > 0){
+    fight.lastFrontHitTs = Date.now();   // → Front-Nahkampf-Lunge (Animation)
     const { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
     fight.bossHp = Math.max(0, fight.bossHp - fd);
     fight.dmgDealt += fd;
@@ -432,8 +448,10 @@ function exchange(fight){
     if(fight.backIsHealer && frontLow){
       const healAmt = Math.round(fight.backAtk * 2.0 * (fight.backHealMult || 1));
       fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + healAmt);
+      fight.lastBackHealTs = Date.now();  // → passive Heil-Animation am Front-Helden
       addLog(fight, '💚 ' + fight.backName + ' heilt ' + fight.frontName + ': +' + fmtBig(healAmt) + ' HP', '#37d67a');
     } else {
+      fight.lastBackAtkTs = Date.now();   // → Stab-Cast + Projektil (Animation)
       const { dmg: bd, crit: bc } = rollDmg(fight.backAtk, effBackCrit, fight.backCritMult);
       fight.bossHp = Math.max(0, fight.bossHp - bd);
       fight.dmgDealt += bd;
@@ -496,6 +514,7 @@ function exchange(fight){
         addLog(fight, '💨 ' + fight.frontName + ' weicht aus!', '#9ec5ff');
       } else if(fd > 0){
         fight.frontHp = Math.max(0, fight.frontHp - fd);
+        fight.lastBossHitTs = Date.now();   // → Schild-Aufprall-Ripple
         addLog(fight, '💥 Boss → ' + fight.frontName + ': -' + fmtBig(fd) + ' HP', '#ff6b6b');
         // Gift
         if(mechs.includes('gift')){
@@ -523,6 +542,7 @@ function exchange(fight){
       addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');
     } else if(bd > 0){
       fight.backHp = Math.max(0, fight.backHp - bd);
+      fight.lastBossHitTs = Date.now();   // → Schild-Aufprall-Ripple
       addLog(fight, '💥 Boss → ' + fight.backName + ': -' + fmtBig(bd) + ' HP', '#ff6b6b');
     }
 
@@ -561,7 +581,7 @@ export async function advanceFloor(lobbyId){
   if(!snap.exists()) return 1;
   const lobby = snap.val();
   const next = (lobby.floor || 1) + 1;
-  await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting' });
+  await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting', startAt: null });
   await set(ref(db, COMBAT_PATH(lobbyId)), null);
   await set(ref(db, ABIL_PATH(lobbyId)), null);
   return next;
