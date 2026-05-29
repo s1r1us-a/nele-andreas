@@ -114,10 +114,12 @@
           <div class="arena-hero" id="heroFront">
             <img id="spriteFront" alt="Vorne" src="">
             <div class="hero-label front" id="labelFront">⚔️ Vorne</div>
+            <div class="hero-cd" id="cdFront" style="display:none"></div>
           </div>
           <div class="arena-hero back-hero" id="heroBack">
             <img id="spriteBack" alt="Hinten" src="">
             <div class="hero-label back" id="labelBack">🛡️ Hinten</div>
+            <div class="hero-cd" id="cdBack" style="display:none"></div>
           </div>
         </div>
         <div class="arena-vs">VS</div>
@@ -193,6 +195,8 @@ let _frontNameCache = '', _backNameCache = '';
 // Skill-Status (lokaler Spieler)
 let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
 let _lastHealTs = 0;
+// Cooldown-Anzeige BEIDER Helden (vom Host gebroadcastet, lokal heruntergezählt).
+let _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
 // Auto-Start-Countdown
 let _countdownTicker = null, _countdownTarget = 0, _startingFight = false;
 // Server-Zeit-Offset gegen Uhren-Drift zwischen den Geräten:
@@ -555,6 +559,10 @@ function onCombatUpdate(data){
   const dps = Math.round((data.dmgDealt||0) / sec);
   $('dpsMeter').textContent = 'DPS ' + fmtBig(dps) + ' · Schaden ' + fmtBig(data.dmgDealt||0) + ' · Runde ' + (data.turn||0);
 
+  // Fähigkeits-Cooldown beider Helden übernehmen (für BEIDE Spieler sichtbar).
+  updateCdState('front', data.frontClass, data.frontCdRemain);
+  updateCdState('back',  data.backClass,  data.backCdRemain);
+
   // Projektil-Animation wenn Hinten-Spieler Zauberstab trägt
   if(data.backStab && data.status === 'fighting' && data.turn !== _lastAnimTurn){
     _lastAnimTurn = data.turn;
@@ -628,14 +636,44 @@ function updateAbilityBtn(){
   if(cd > 0){ btn.disabled = true;  btn.style.opacity = '0.5'; btn.textContent = _myAbility.icon+' '+_myAbility.name+' ('+cd+'s)'; }
   else      { btn.disabled = false; btn.style.opacity = '1';   btn.textContent = _myAbility.icon+' '+_myAbility.name; }
 }
-function startAbilityTicker(){ if(!_abilTicker) _abilTicker = setInterval(updateAbilityBtn, 250); }
+function startAbilityTicker(){
+  if(!_abilTicker) _abilTicker = setInterval(() => { updateAbilityBtn(); renderCdBadges(); }, 250);
+}
 function stopAbilityUI(){
   if(_abilTicker){ clearInterval(_abilTicker); _abilTicker = null; }
   _mySlot = null; _myAbility = null; _abilCdUntil = 0;
+  _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
   const btn = $('abilityBtn'); if(btn) btn.style.display = 'none';
+  ['cdFront','cdBack'].forEach(id => { const el = $(id); if(el) el.style.display = 'none'; });
   $('heroFront').classList.remove('ablaze');
   $('heroBack').classList.remove('ablaze');
   removeShieldDome();
+}
+
+// Cooldown-Reststand eines Slots aus den Kampfdaten übernehmen (mit Empfangszeit).
+function updateCdState(slot, classId, remain){
+  const st = _cdState[slot]; if(!st) return;
+  st.ab = abilityOf(classId);
+  st.remain = Math.max(0, remain || 0);
+  st.at = Date.now();
+  renderCdBadges();
+}
+// Badges beider Helden live rendern (lokal heruntergezählt seit Empfang).
+function renderCdBadges(){
+  renderCdBadge('front', 'cdFront');
+  renderCdBadge('back',  'cdBack');
+}
+function renderCdBadge(slot, elId){
+  const el = $(elId); if(!el) return;
+  const st = _cdState[slot];
+  if(!st || !st.ab){ el.style.display = 'none'; return; }
+  // Eigener Held: lokalen Cooldown mit einrechnen → sofortiges Feedback beim Klick.
+  let remain = Math.max(0, st.remain - (Date.now() - st.at));
+  if(slot === _mySlot) remain = Math.max(remain, _abilCdUntil - Date.now());
+  const cd = Math.max(0, Math.ceil(remain / 1000));
+  el.style.display = '';
+  if(cd > 0){ el.className = 'hero-cd cooling'; el.textContent = st.ab.icon + ' ' + cd + 's'; }
+  else      { el.className = 'hero-cd ready';   el.textContent = st.ab.icon + ' bereit'; }
 }
 window.onUseAbility = function(){
   if(!_myAbility || !_mySlot || !lobbyId) return;
