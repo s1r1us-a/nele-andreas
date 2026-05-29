@@ -168,7 +168,7 @@
 </div><!-- /container -->
 
 <script type="module">
-import { initAuth, displayName as getDisplayName, db, ref, update }
+import { initAuth, displayName as getDisplayName, db, ref, update, onValue }
   from './adventure/js/core/firebase.js';
 import { loadSave } from './adventure/js/core/state.js';
 import {
@@ -195,6 +195,11 @@ let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
 let _lastHealTs = 0;
 // Auto-Start-Countdown
 let _countdownTicker = null, _countdownTarget = 0, _startingFight = false;
+// Server-Zeit-Offset gegen Uhren-Drift zwischen den Geräten:
+// Firebase liefert über '.info/serverTimeOffset' die Differenz Server−lokal.
+// serverNow() ergibt damit auf BEIDEN Clients dieselbe Zeitbasis.
+let _serverTimeOffset = 0;
+function serverNow(){ return Date.now() + _serverTimeOffset; }
 
 const $  = id => document.getElementById(id);
 const qS = s  => document.querySelector(s);
@@ -351,7 +356,8 @@ function onLobbyUpdate(lobby){
   // bei Abbruch wieder löschen (nur der Host verwaltet startAt).
   if(isHost && lobby.status === 'waiting' && !_startingFight){
     if(bothReady && !lobby.startAt){
-      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: Date.now() + 10000 }).catch(()=>{});
+      // Absoluter Server-Zeitstempel → für beide Clients identisch interpretierbar.
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: serverNow() + 10000 }).catch(()=>{});
     } else if(!bothReady && lobby.startAt){
       update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
     }
@@ -399,16 +405,18 @@ function startCountdown(startAt){
   stopCountdown();
   _countdownTarget = startAt;
   const tick = () => {
-    const rem = Math.max(0, Math.ceil((startAt - Date.now())/1000));
+    // Vergleich gegen Server-Zeit → identischer Countdown auf beiden Geräten.
+    const rem = Math.max(0, Math.ceil((startAt - serverNow())/1000));
     $('lobbyStatus').textContent = rem > 0
       ? '⚔️ Kampf startet in ' + rem + ' s… (Bereit abbrechen zum Stoppen)'
       : '⚔️ Los geht\'s!';
-    if(Date.now() >= startAt){
+    if(serverNow() >= startAt){
       stopCountdown();
-      // Nur der Host startet den Kampf autoritativ.
+      // Nur der Host startet den Kampf autoritativ. startAt wird NICHT vorab
+      // gelöscht – es bleibt als Retry-Signal erhalten, bis der Status in
+      // onStartFight erfolgreich auf 'in_progress' steht.
       if(isHost && !_startingFight && lobbyData && lobbyData.status === 'waiting'){
         _startingFight = true;
-        update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
         window.onStartFight().finally(() => { _startingFight = false; });
       }
     }
@@ -449,8 +457,10 @@ window.onStartFight = async function(){
     // Sprites setzen
     setupArena(lobby.floor || 1, frontStats, backStats, frontName, backName);
 
-    // Status → in_progress
-    await update(ref(db, 'tower/lobbies/' + lobbyId), { status: 'in_progress' });
+    // Status → in_progress UND startAt im selben Write löschen (atomar):
+    // entweder der Kampf startet und der Countdown stoppt, oder nichts ändert
+    // sich und startAt bleibt für einen erneuten Versuch erhalten.
+    await update(ref(db, 'tower/lobbies/' + lobbyId), { status: 'in_progress', startAt: null });
 
     showFightSection();
     $('speedBtn').style.display = '';
@@ -461,8 +471,13 @@ window.onStartFight = async function(){
       { frontKey, backKey });
 
   } catch(e){
-    toast('Fehler beim Kampfstart: ' + e.message);
+    // Start fehlgeschlagen (z. B. Gast-Spielstand fehlt): frisches Ziel setzen,
+    // damit der Countdown sichtbar neu anläuft – kein Busy-Loop, kein Hängen.
+    toast('Kampfstart fehlgeschlagen: ' + e.message + ' – neuer Versuch in 10 s.');
     console.error(e);
+    if(isHost && lobbyData && lobbyData.status === 'waiting'){
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: serverNow() + 10000 }).catch(()=>{});
+    }
   } finally{
     if(btn){ btn.disabled = false; btn.textContent = '⚔️ Kampf starten!'; }
   }
@@ -751,6 +766,12 @@ function resetToMain(){
 (async () => {
   try {
     myKey = await initAuth();
+    // Server-Zeit-Offset live mitlesen, bevor eine Lobby geöffnet wird –
+    // sorgt für einen geräteübergreifend synchronen Auto-Start-Countdown.
+    onValue(ref(db, '.info/serverTimeOffset'), snap => {
+      const v = snap.val();
+      if(typeof v === 'number') _serverTimeOffset = v;
+    });
     // Eingeloggte E-Mail → displayName
     const { auth } = await import('./adventure/js/core/firebase.js');
     const user = auth.currentUser;
