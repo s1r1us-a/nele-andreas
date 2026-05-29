@@ -17,6 +17,7 @@ import { fmtBig } from '../ui/dom.js';
 const LOBBY_PATH  = id => 'tower/lobbies/' + id;
 const COMBAT_PATH = id => 'tower/combat/'   + id;
 const ABIL_PATH   = id => 'tower/abil/'     + id;
+const HEROES_PATH = id => 'tower/heroes/'   + id;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
 const TOWER_BASE_HP  = 700;
@@ -153,6 +154,7 @@ function armDisconnectCleanup(lobbyId){
     onDisconnect(ref(db, LOBBY_PATH(lobbyId))).remove();
     onDisconnect(ref(db, COMBAT_PATH(lobbyId))).remove();
     onDisconnect(ref(db, ABIL_PATH(lobbyId))).remove();
+    onDisconnect(ref(db, HEROES_PATH(lobbyId))).remove();
   } catch(e){}
 }
 
@@ -161,6 +163,18 @@ async function purgeLobby(lobbyId){
   try { await remove(ref(db, LOBBY_PATH(lobbyId)));  } catch(e){}
   try { await remove(ref(db, COMBAT_PATH(lobbyId))); } catch(e){}
   try { await remove(ref(db, ABIL_PATH(lobbyId)));   } catch(e){}
+  try { await remove(ref(db, HEROES_PATH(lobbyId))); } catch(e){}
+}
+
+// ---- Helden-Aussehen (einmalig, damit der Partner korrekt gerendert wird) --
+// Wird vom Host beim Kampfstart geschrieben; beide Clients bauen daraus die
+// Sprites mit buildHeroSVG. Nur statische Aussehensdaten (character + equipped),
+// kein Pro-Frame-Sync → kein Payload-Bloat im Kampf-Knoten.
+export async function setTowerHeroes(lobbyId, front, back){
+  try { await set(ref(db, HEROES_PATH(lobbyId)), { front: front || null, back: back || null }); } catch(e){}
+}
+export function listenHeroes(lobbyId, cb){
+  return onValue(ref(db, HEROES_PATH(lobbyId)), snap => cb(snap.exists() ? snap.val() : null));
 }
 
 export async function joinLobby(lobbyId, userKey, displayName, classId){
@@ -267,11 +281,19 @@ async function syncFight(fight){
     // drift-frei, da Host- und Gast-Uhr nicht identisch sind. Clients zählen lokal runter.
     frontCdRemain: Math.max(0, (fight.frontAbilUntil||0) - now),
     backCdRemain:  Math.max(0, (fight.backAbilUntil ||0) - now),
-    // Aktive Skill-Effekte für die Gast-Animationen (B15)
+    // Aktive Skill-Effekte für die Animationen beider Spieler (B15).
+    // Als RESTZEIT (ms) zum Sync-Zeitpunkt – driftfrei trotz abweichender
+    // Geräteuhren (gleiches Muster wie die Cooldown-Badges). Jeder Client
+    // rechnet beim Empfang eine lokale Endzeit aus und hält den Effekt so
+    // flackerfrei und synchron sichtbar, unabhängig von der Sync-Frequenz.
+    // Die alten Booleans bleiben für Rückwärtskompatibilität erhalten.
     fx: {
       ablazeFront: now < (fight.frontCritUntil||0),
       ablazeBack:  now < (fight.backCritUntil||0),
       shield:      now < (fight.groupDmgReduceUntil||0),
+      ablazeFrontRemain: Math.max(0, (fight.frontCritUntil||0) - now),
+      ablazeBackRemain:  Math.max(0, (fight.backCritUntil ||0) - now),
+      shieldRemain:      Math.max(0, (fight.groupDmgReduceUntil||0) - now),
       healTs:      fight.lastHealTs || 0,
     },
     status:      fight.over ? (fight.won ? 'won' : 'lost') : 'fighting',
