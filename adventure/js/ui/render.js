@@ -145,6 +145,14 @@ export function renderCharacter(){
   const t = recomputeTotals();
   const tier = heroTier(t.power);
   $('#dollHero').src = heroSrc(tier);
+  const helmBtn = $('#toggleHelmBtn');
+  if(helmBtn){
+    const hasHelm = !!(state.equipped && state.equipped.kopf);
+    const hidden = !!(state.settings && state.settings.hideHelmet);
+    helmBtn.textContent = hidden ? '🪖 Helm zeigen' : '🪖 Helm verbergen';
+    helmBtn.disabled = !hasHelm;
+    helmBtn.title = hasHelm ? '' : 'Kein Helm angelegt';
+  }
   $('#tierBadge').textContent = TIER_NAME[tier] + ' · ' + t.power + ' Kampfkraft';
   $('#tierBadge').title = STAT_HELP.kampfkraft;
   const L = $('#dollLeft'), R = $('#dollRight'), B = $('#dollBottom');

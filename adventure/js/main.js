@@ -25,6 +25,11 @@ $('#bossListBtn').addEventListener('click', openBossList);
 $('#statsBtn').addEventListener('click', openStats);
 $('#devBtn').addEventListener('click', openDevPanel);
 $('#editLookBtn').addEventListener('click', ()=> openCharacterCreator(false));
+$('#toggleHelmBtn').addEventListener('click', ()=>{
+  if(!state.settings) state.settings = {};
+  state.settings.hideHelmet = !state.settings.hideHelmet;
+  saveState(); renderAll();
+});
 $('#speedBtn').addEventListener('click', toggleSpeed);
 $('#potionBtn').addEventListener('click', usePotion);
 $('#arenaCloseBtn').addEventListener('click', closeArena);
