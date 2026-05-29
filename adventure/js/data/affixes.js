@@ -33,6 +33,20 @@ export function affixPool(slotKey){
   return AFFIX_POOL.ruestung;
 }
 
+// Gewichteter Pool für einen Item-Typ: jeder Affix-Key kommt entsprechend
+// itemType.affixBias mehrfach vor (Default-Gewicht 1). Nur pool-gültige
+// Affixe wirken. Ziehen erfolgt ohne Zurücklegen (alle Kopien per Key raus).
+export function weightedAffixPool(slotKey, itemType){
+  const base = affixPool(slotKey);
+  const bias = (itemType && itemType.affixBias) || {};
+  const out = [];
+  for(const k of base){
+    const w = Math.max(1, bias[k] || 1);
+    for(let i=0;i<w;i++) out.push(k);
+  }
+  return out;
+}
+
 // Anzahl Affixe je Seltenheit (Funktion = variabel)
 export const AFFIX_COUNT = {
   gewoehnlich:0, ungewoehnlich:1, selten:2,

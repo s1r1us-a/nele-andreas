@@ -2,11 +2,13 @@
    LOOT-GEWICHTUNG. zone + lootBoost verschieben die Verteilung Richtung
    selten/episch/legendär/mythisch.
    ===================================================================== */
-import { RARITIES } from '../data/rarities.js';
+import { RARITIES, maxRarityIndex } from '../data/rarities.js';
 
 export function rarityWeights(zone, lootBoost=0){
   const boost = zone * 0.6 + lootBoost;
-  return RARITIES.map((r,i) => Math.max(0.05, r.weight + i*boost - (i===0 ? boost*4 : 0)));
+  const cap = maxRarityIndex(zone);   // Anti-OP-Gating (Teil 3b)
+  return RARITIES.map((r,i) => i > cap ? 0
+    : Math.max(0.05, r.weight + i*boost - (i===0 ? boost*4 : 0)));
 }
 export function weightedRarity(zone, lootBoost=0){
   const weights = rarityWeights(zone, lootBoost);

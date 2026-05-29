@@ -6,6 +6,7 @@ import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
          CAT_ICON, CAT_ORDER } from '../data/slots.js';
 import { EXPEDITIONS } from '../data/expeditions.js';
+import { STAT_HELP } from '../data/statHelp.js';
 import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
@@ -31,6 +32,9 @@ export function renderTopStats(){
   $('#miniArmor').textContent = t.armor;
   $('#miniDamage').textContent = t.damage;
   $('#miniPower').textContent = t.power;
+  if($('#miniArmor').parentElement)  $('#miniArmor').parentElement.title  = STAT_HELP.ruestung;
+  if($('#miniDamage').parentElement) $('#miniDamage').parentElement.title = STAT_HELP.schaden;
+  if($('#miniPower').parentElement)  $('#miniPower').parentElement.title  = STAT_HELP.kampfkraft;
   const lvl = state.level || 1;
   const need = xpForLevel(lvl);
   const cur = xpInLevel(state.xp || 0, lvl);
@@ -142,6 +146,7 @@ export function renderCharacter(){
   const tier = heroTier(t.power);
   $('#dollHero').src = heroSrc(tier);
   $('#tierBadge').textContent = TIER_NAME[tier] + ' · ' + t.power + ' Kampfkraft';
+  $('#tierBadge').title = STAT_HELP.kampfkraft;
   const L = $('#dollLeft'), R = $('#dollRight'), B = $('#dollBottom');
   L.innerHTML=''; R.innerHTML=''; B.innerHTML='';
   LEFT_SLOTS.forEach(s => L.appendChild(slotEl(s)));
@@ -154,30 +159,36 @@ function renderCharStats(t){
   const lvl = state.level || 1;
   const need = xpForLevel(lvl), cur = xpInLevel(state.xp || 0, lvl);
   const pct = v => (v*100).toFixed(1).replace(/\.0$/,'') + '%';
-  const row = (label, val, cls) => '<div class="cs-row"><span class="cs-l">'+label+
-    '</span><b class="cs-v'+(cls?' '+cls:'')+'">'+val+'</b></div>';
+  // info = Schlüssel in STAT_HELP → Hover-Erklärung (title) + ⓘ-Markierung.
+  const row = (label, val, cls, info) => {
+    const help = info && STAT_HELP[info] ? STAT_HELP[info] : '';
+    const tAttr = help ? ' title="'+help.replace(/"/g,'&quot;')+'"' : '';
+    const lbl = label + (help ? ' <span class="cs-info">ⓘ</span>' : '');
+    return '<div class="cs-row'+(help?' has-help':'')+'"'+tAttr+'><span class="cs-l">'+lbl+
+      '</span><b class="cs-v'+(cls?' '+cls:'')+'">'+val+'</b></div>';
+  };
   let secondary = '';
-  if(t.lifesteal>0)   secondary += row('Lebensraub', pct(t.lifesteal), 'hp');
-  if(t.dodge>0)       secondary += row('Ausweichen', pct(t.dodge), 'armor');
-  if(t.versatility>0) secondary += row('Vielseitigkeit', pct(t.versatility), 'crit');
-  if(t.thorns>0)      secondary += row('Dornen', t.thorns, 'damage');
+  if(t.lifesteal>0)   secondary += row('Lebensraub', pct(t.lifesteal), 'hp', 'lebensraub');
+  if(t.dodge>0)       secondary += row('Ausweichen', pct(t.dodge), 'armor', 'ausweichen');
+  if(t.versatility>0) secondary += row('Vielseitigkeit', pct(t.versatility), 'crit', 'vielseitigkeit');
+  if(t.thorns>0)      secondary += row('Dornen', t.thorns, 'damage', 'dornen');
   $('#charStats').innerHTML =
     '<div class="cs-group"><h4>Übersicht</h4>'+
       row('Level', lvl + ' <small>('+cur+' / '+need+' XP)</small>', 'level')+
-      row('Kampfkraft', t.power, 'power')+
-      row('Gegenstandsstufe', gearScore(), 'crit')+
-      row('Leben', fmtBig(c.maxHp), 'hp')+
+      row('Kampfkraft', t.power, 'power', 'kampfkraft')+
+      row('Gegenstandsstufe', gearScore(), 'crit', 'gegenstandsstufe')+
+      row('Leben', fmtBig(c.maxHp), 'hp', 'leben')+
     '</div>'+
     '<div class="cs-group"><h4>Angriff</h4>'+
-      row('Schaden', c.atk, 'damage')+
-      row('DPS', fmtBig(Math.round(c.dps)), 'damage')+
-      row('Krit-Chance', pct(c.critChance), 'crit')+
-      row('Krit-Schaden', pct(c.critMult), 'crit')+
-      row('Angriffstempo', c.swingsPerSec.toFixed(2)+'/s', 'crit')+
+      row('Schaden', c.atk, 'damage', 'schaden')+
+      row('DPS', fmtBig(Math.round(c.dps)), 'damage', 'dps')+
+      row('Krit-Chance', pct(c.critChance), 'crit', 'kritchance')+
+      row('Krit-Schaden', pct(c.critMult), 'crit', 'kritschaden')+
+      row('Angriffstempo', c.swingsPerSec.toFixed(2)+'/s', 'crit', 'angriffstempo')+
     '</div>'+
     '<div class="cs-group"><h4>Verteidigung</h4>'+
-      row('Rüstung', t.armor, 'armor')+
-      row('Schadensreduktion', '−'+Math.round(c.dmgReduction)+' / Treffer', 'armor')+
+      row('Rüstung', t.armor, 'armor', 'ruestung')+
+      row('Schadensreduktion', '−'+Math.round(c.dmgReduction)+' / Treffer', 'armor', 'schadensreduktion')+
       secondary+
     '</div>';
 }

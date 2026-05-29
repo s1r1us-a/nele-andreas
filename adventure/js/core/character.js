@@ -8,7 +8,8 @@ import { powerOfBundle } from './items.js';
 import { toast } from '../ui/dom.js';
 
 // ---- XP / Level -----------------------------------------------------
-export function xpForLevel(n){ return Math.round(40 * Math.pow(n, 1.45)); }
+// Steilere Levelkosten (Teil 3b: grind-lastiger). Exponent 1.45 → 1.55.
+export function xpForLevel(n){ return Math.round(40 * Math.pow(n, 1.55)); }
 export function levelFromTotal(totalXp){
   let total = Number(totalXp)||0, level = 1, cum = 0;
   while(cum + xpForLevel(level) <= total){ cum += xpForLevel(level); level++; if(level>=9999) break; }

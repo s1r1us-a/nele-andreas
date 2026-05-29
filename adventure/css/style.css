@@ -190,6 +190,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 }
 #tooltip .tt-name { font-family:'Cinzel',serif; font-weight:700; margin-bottom:3px; }
 #tooltip .tt-slot { color:var(--txt-mute); font-size:11px; margin-bottom:6px; }
+#tooltip .tt-focus { color:var(--gold,#d4a061); font-size:11px; margin-bottom:6px; font-weight:600; }
 #tooltip .tt-stat { font-weight:600; }
 #tooltip .tt-stat.armor{color:var(--armor);} #tooltip .tt-stat.damage{color:var(--damage);}
 #tooltip .tt-stat.affix{color:var(--r-ungewoehnlich); font-weight:600;}
@@ -432,6 +433,9 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   padding:4px 0; border-bottom:1px solid rgba(255,255,255,.05); }
 .cs-row:last-child { border-bottom:0; }
 .cs-row .cs-l { color:var(--txt-dim); font-size:13px; }
+.cs-row.has-help { cursor:help; }
+.cs-row .cs-info { color:var(--txt-mute); font-size:10px; opacity:.6; margin-left:3px; }
+.cs-row.has-help:hover .cs-info { opacity:1; }
 .cs-row .cs-v { font-weight:700; font-size:14px; }
 .cs-row .cs-v small { color:var(--txt-mute); font-weight:400; font-size:11px; }
 .cs-v.power{color:var(--power);} .cs-v.damage{color:var(--damage);}
