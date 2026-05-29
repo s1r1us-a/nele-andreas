@@ -112,7 +112,7 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .arena-boss-col { display:flex; flex-direction:column; align-items:center; gap:4px; }
 .arena-boss-col img { width:90px; height:90px; object-fit:contain;
   image-rendering:crisp-edges; filter:drop-shadow(0 0 8px rgba(200,80,255,.5)); }
-.arena-heroes-col { display:flex; flex-direction:column; gap:8px; }
+.arena-heroes-col { display:flex; flex-direction:column; gap:8px; position:relative; }
 .arena-hero { display:flex; flex-direction:column; align-items:center; gap:3px;
   position:relative; }
 .arena-hero img { width:58px; height:80px; object-fit:contain; }
@@ -158,6 +158,46 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   background:radial-gradient(circle at 35% 35%, #ff9999, #cc0000 55%, #660000);
   box-shadow:0 0 8px 4px #ff3300, 0 0 2px 1px #ff9999;
   pointer-events:none; transform:translate(-7px,-7px); z-index:10;
+}
+
+/* ---- Klassen-Spezialfähigkeiten (FX) ---- */
+/* Raserei: roter Glow + Flammen-Puls */
+.arena-hero.ablaze img {
+  filter:drop-shadow(0 0 9px #ff3b00) drop-shadow(0 0 16px #ff7a00) brightness(1.18) saturate(1.4);
+  animation:towerAblaze .5s ease-in-out infinite alternate;
+}
+@keyframes towerAblaze {
+  0%   { filter:drop-shadow(0 0 7px #ff3b00) drop-shadow(0 0 12px #ff7a00) brightness(1.1) saturate(1.3); }
+  100% { filter:drop-shadow(0 0 15px #ff5a00) drop-shadow(0 0 24px #ffb000) brightness(1.28) saturate(1.6); }
+}
+/* Heilkreis: expandierender grüner Ring */
+.heal-circle {
+  position:absolute; width:24px; height:24px; border-radius:50%;
+  transform:translate(-50%,-50%); pointer-events:none; z-index:9;
+  border:3px solid #4dffa0;
+  box-shadow:0 0 16px 6px rgba(55,214,122,.7), inset 0 0 12px 4px rgba(55,214,122,.5);
+  animation:towerHeal 1s ease-out forwards;
+}
+@keyframes towerHeal {
+  0%   { width:14px;  height:14px; opacity:0; }
+  25%  { opacity:1; }
+  100% { width:110px; height:110px; opacity:0; }
+}
+/* Schildwall: großes blaues pulsierendes Schild über der Gruppe */
+.shield-dome {
+  position:absolute; inset:-14px -10px; border-radius:50%;
+  pointer-events:none; z-index:6;
+  background:radial-gradient(circle, rgba(80,160,255,.26) 0%, rgba(80,160,255,.12) 58%, rgba(80,160,255,0) 74%);
+  border:2px solid rgba(120,200,255,.7);
+  box-shadow:0 0 22px 6px rgba(90,170,255,.5), inset 0 0 24px 8px rgba(120,200,255,.35);
+  animation:towerShield 1.4s ease-in-out infinite;
+}
+@keyframes towerShield {
+  0%,100% { transform:scale(0.97); opacity:.75; }
+  50%     { transform:scale(1.05); opacity:1; }
+}
+@media(prefers-reduced-motion: reduce){
+  .arena-hero.ablaze img, .heal-circle, .shield-dome { animation:none; }
 }
 .dmg-float { position:absolute; font-family:'Press Start 2P',monospace; font-size:13px;
   pointer-events:none; white-space:nowrap;

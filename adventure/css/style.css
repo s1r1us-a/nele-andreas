@@ -328,6 +328,8 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .bp-slot .bp-cat { position:absolute; top:3px; left:5px; font-size:11px; opacity:.5; }
 .bp-slot .bp-lock { position:absolute; top:3px; right:4px; font-size:12px; }
 .bp-slot .bp-proc { position:absolute; bottom:3px; right:5px; font-size:12px; color:#ffd24a; }
+.bp-slot .bp-noequip { position:absolute; bottom:3px; left:5px; font-size:12px; filter:grayscale(.3); }
+.bp-slot.not-equippable img { opacity:.55; filter:grayscale(.4); }
 .inv-hint { color:var(--txt-dim); font-size:13px; margin-top:14px; text-align:center; }
 
 /* ---- Shop ------------------------------------------------------ */
@@ -510,6 +512,27 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .cs-v.armor{color:var(--armor);} .cs-v.hp{color:#37d67a;}
 .cs-v.crit{color:var(--gold-hi);} .cs-v.level{color:#ffd95e;}
 @media (max-width:560px){ .char-stats { grid-template-columns:1fr; } }
+/* ---- Talentbaum (B16) ---- */
+.talents-panel { margin-top:18px; background:var(--stone); border:1px solid var(--line);
+  border-radius:12px; padding:12px 14px; }
+.talents-panel:empty { display:none; }
+.talents-head { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+.talents-head h4 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--gold-hi); margin:0; }
+.talent-points { font-size:12px; color:var(--txt-dim); }
+.talent-points b { color:#ffd95e; }
+.talents-hint { font-size:11px; color:var(--txt-mute); margin:4px 0 10px; }
+.talent-tier { margin-bottom:10px; }
+.talent-tier-label { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--txt-mute); }
+.talent-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.talent-node { flex:1 1 90px; min-width:90px; display:flex; flex-direction:column; align-items:center;
+  gap:3px; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:10px;
+  padding:8px 6px; cursor:pointer; color:var(--txt); transition:border-color .15s, transform .15s; }
+.talent-node:not(:disabled):hover { border-color:var(--gold-hi); transform:translateY(-2px); }
+.talent-node.placeholder { opacity:.5; cursor:not-allowed; }
+.talent-node.taken { border-color:#37d67a; box-shadow:0 0 10px rgba(55,214,122,.3); }
+.talent-icon { font-size:20px; }
+.talent-name { font-size:11px; text-align:center; line-height:1.2; }
+.talent-rank { font-size:10px; color:var(--gold-hi); font-weight:700; }
 .creator-preview { display:block; margin:0 auto 14px; width:auto; height:180px; aspect-ratio:5/8;
   border-radius:14px; background:radial-gradient(circle at 50% 35%, #2a2335, #16121f);
   border:1px solid var(--line); }
