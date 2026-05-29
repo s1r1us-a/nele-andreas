@@ -124,7 +124,7 @@ export function buildBossSVG(boss){
       `<path d="M100 96 L100 174" stroke="${lo}" stroke-width="2" opacity="0.5"/>`;       // Riss
   }
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">`+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">`+
     defs + aura + shadow + mon + `</svg>`;
   const uri = 'data:image/svg+xml,' + encodeURIComponent(svg);
   _cache.set(key, uri);

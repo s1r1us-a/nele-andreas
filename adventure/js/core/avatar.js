@@ -9,6 +9,9 @@ import { state } from './state.js';
 
 const TIER_OUTFIT = ['#6b5a8a','#3f6f9e','#9e6b2e','#b5882a'];
 const TIER_TRIM   = ['#9a86c2','#7fb0e0','#e0a85a','#f2cd6b'];
+// Waffen-Metalle je Variante (analog item-art.js) für die getragene Waffe.
+const WEAPON_METAL = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c'];
+const WOOD = '#7a4f2a', GOLD = '#d8b24a';
 
 // Farbe komponentenweise mit Faktor f skalieren (Highlights f>1, Schatten f<1).
 function shade(hex, f){
@@ -24,7 +27,50 @@ const mirror = frag => frag + '<g transform="translate(200,0) scale(-1,1)">'+fra
 // Eindeutige Gradient-IDs pro Build (mehrere Avatare rendern gleichzeitig).
 let GRAD_SEQ = 0;
 
-export function buildHeroSVG(character, tier){
+// Getragene Waffe in der rechten Hand (Handkreis bei cx=124, cy=194), Klinge nach oben.
+function heldWeapon(variant, uid){
+  if(variant == null) return '';
+  const v = ((variant|0)%6+6)%6;
+  const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
+  const hx = 124;
+  const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
+               `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  let w = '';
+  if(v===0){            // Schwert
+    w = `<rect x="${hx-9}" y="182" width="18" height="4" rx="1.5" fill="${GOLD}"/>`+
+        `<path d="M${hx} 120 L${hx+4} 128 L${hx+4} 182 L${hx-4} 182 L${hx-4} 128 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-1.5}" y="128" width="2" height="52" fill="${mh}" opacity="0.5"/>`+ grip;
+  } else if(v===1){     // Dolch
+    w = `<rect x="${hx-7}" y="183" width="14" height="3.5" rx="1.5" fill="${GOLD}"/>`+
+        `<path d="M${hx} 144 L${hx+4} 150 L${hx+3} 183 L${hx-3} 183 L${hx-4} 150 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+ grip;
+  } else if(v===2){     // Streitkolben
+    w = `<rect x="${hx-2}" y="150" width="4" height="52" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx} 127 L${hx-4} 135 L${hx+4} 135 Z" fill="${md}"/>`+
+        `<path d="M${hx-12} 140 L${hx-3} 136 L${hx-3} 144 Z" fill="${md}"/>`+
+        `<path d="M${hx+12} 140 L${hx+3} 136 L${hx+3} 144 Z" fill="${md}"/>`+
+        `<circle cx="${hx}" cy="140" r="11" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<circle cx="${hx-3}" cy="137" r="3" fill="${mh}" opacity="0.6"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  } else if(v===3){     // Axt
+    w = `<rect x="${hx-2}" y="124" width="4" height="78" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx+1} 128 L${hx+18} 124 Q${hx+27} 139 ${hx+18} 153 L${hx+1} 149 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  } else if(v===4){     // Speer
+    w = `<rect x="${hx-2}" y="126" width="4" height="76" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx} 111 L${hx+6} 128 L${hx-6} 128 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-5}" y="127" width="10" height="3" rx="1" fill="${GOLD}"/>`+
+        `<circle cx="${hx}" cy="204" r="3" fill="${GOLD}"/>`;
+  } else {              // Kriegshammer
+    w = `<rect x="${hx-2}" y="150" width="4" height="52" rx="1.5" fill="${WOOD}"/>`+
+        `<rect x="${hx-15}" y="128" width="30" height="18" rx="3" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-12}" y="131" width="6" height="12" rx="1" fill="${mh}" opacity="0.5"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  }
+  // Haut-„Finger" über den Griff → wirkt gegriffen.
+  return w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
+}
+
+export function buildHeroSVG(character, tier, weapon){
   const c = character || DEFAULT_CHARACTER;
   const gender = c.gender || 'w';
   const hairId = c.hairId || 'kurz';
@@ -156,13 +202,17 @@ export function buildHeroSVG(character, tier){
     : '';
   const pauldrons = t>=3 ? mirror(`<ellipse cx="120" cy="134" rx="15" ry="10" fill="url(#tr${uid})"/>`) : '';
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320">`+
-    defs + aura + cape + hairBack + body + arms + head + face + hairFront + pauldrons +
+  const wv = (weapon && typeof weapon.variant === 'number') ? weapon.variant : null;
+  const weaponG = heldWeapon(wv, uid);
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
+    defs + aura + cape + hairBack + body + arms + head + face + hairFront + pauldrons + weaponG +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
 export function heroSrc(tier){
-  if(state && state.character) return buildHeroSVG(state.character, tier);
+  if(state && state.character)
+    return buildHeroSVG(state.character, tier, state.equipped && state.equipped.waffe);
   return ASSETS + 'char_tier' + tier + '.png';
 }
