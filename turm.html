@@ -170,7 +170,7 @@
 </div><!-- /container -->
 
 <script type="module">
-import { initAuth, displayName as getDisplayName, db, ref, update, onValue }
+import { initAuth, displayName as getDisplayName, db, ref, update, onValue, runTransaction }
   from './adventure/js/core/firebase.js';
 import { loadSave } from './adventure/js/core/state.js';
 import {
@@ -198,6 +198,8 @@ let _heroLook = { front:null, back:null };
 // Skill-Status (lokaler Spieler)
 let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
 let _lastHealTs = 0;
+// Edge-Guards für Kampf-Animationen (zuletzt gesehener Timestamp je Effekt).
+let _lastFrontHitTs = 0, _lastBackAtkTs = 0, _lastBackHealTs = 0, _lastBossHitTs = 0;
 // Skill-FX als absolute End-Zeitstempel (Server-Zeit) → lokal heruntergezählt,
 // damit Heilkreis/Schild flackerfrei und auf beiden Geräten synchron erscheinen.
 let _shieldUntil = 0, _frontAblazeUntil = 0, _backAblazeUntil = 0;
@@ -205,6 +207,8 @@ let _shieldUntil = 0, _frontAblazeUntil = 0, _backAblazeUntil = 0;
 let _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
 // Auto-Start-Countdown
 let _countdownTicker = null, _countdownTarget = 0, _startingFight = false, _startWatchdog = null;
+// Status-Flip-Lock (verhindert doppelte Transaktionen) + Sim-Start-Guard (Host).
+let _flippingStatus = false, _fightStarted = false, _startRetries = 0, _heartbeat = null;
 // Server-Zeit-Offset gegen Uhren-Drift zwischen den Geräten:
 // Firebase liefert über '.info/serverTimeOffset' die Differenz Server−lokal.
 // serverNow() ergibt damit auf BEIDEN Clients dieselbe Zeitbasis.
@@ -363,13 +367,17 @@ function onLobbyUpdate(lobby){
   const bothReady = hostR && guestR && hasGuest;
 
   // Auto-Start-Countdown: bei „beide bereit" 10-Sekunden-Timer setzen,
-  // bei Abbruch wieder löschen (nur der Host verwaltet startAt).
-  if(isHost && lobby.status === 'waiting' && !_startingFight){
+  // bei Abbruch wieder löschen. BEIDE Clients dürfen das per Transaktion –
+  // so hängt der Countdown nicht mehr an einem einzigen Schreiber (Host) und
+  // startet auf beiden Geräten synchron, selbst wenn der Host-Listener klemmt.
+  if(lobby.status === 'waiting' && !_startingFight){
     if(bothReady && !lobby.startAt){
-      // Absoluter Server-Zeitstempel → für beide Clients identisch interpretierbar.
-      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: serverNow() + 10000 }).catch(()=>{});
+      // Absoluter Server-Zeitstempel; Transaktion → genau ein Wert für beide.
+      runTransaction(ref(db, 'tower/lobbies/' + lobbyId + '/startAt'),
+        cur => (cur == null ? serverNow() + 10000 : cur)).catch(()=>{});
     } else if(!bothReady && lobby.startAt){
-      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
+      runTransaction(ref(db, 'tower/lobbies/' + lobbyId + '/startAt'),
+        () => null).catch(()=>{});
     }
   }
 
@@ -389,6 +397,9 @@ function onLobbyUpdate(lobby){
 
   if(lobby.status === 'in_progress'){
     showFightSection();
+    // Host fährt die Kampf-Simulation, sobald der Status (von wem auch immer)
+    // auf 'in_progress' steht – getrennt vom Status-Flip. Idempotent.
+    if(isHost) ensureFightRunning();
     if(!unsubCombat){
       unsubCombat = listenCombat(lobbyId, onCombatUpdate);
     }
@@ -405,6 +416,8 @@ function onLobbyUpdate(lobby){
     $('lobbyRoom').style.display    = '';
     qS('.lobby-tabs').style.display = 'none';
     _lastAnimTurn = -1; _lastHealTs = 0;
+    _lastFrontHitTs = _lastBackAtkTs = _lastBackHealTs = _lastBossHitTs = 0;
+    _fightStarted = false; _startRetries = 0;
     stopAbilityUI();
   }
 }
@@ -447,37 +460,58 @@ function stopCountdown(){
   const el = $('lobbyStatus'); if(el) el.classList.remove('countdown-active');
 }
 
-// Startet den Kampf, sobald der Countdown abgelaufen ist – host-autoritativ,
-// idempotent und gegen hängende Firebase-Aufrufe abgesichert. Aufrufbar aus
-// dem Tick, aus onLobbyUpdate und beim Wiedersichtbarwerden des Tabs.
+// Flippt den Lobby-Status auf 'in_progress', sobald der Countdown abgelaufen
+// ist. BEIDE Clients dürfen das per Transaktion – so startet das Spiel bei 0
+// zuverlässig, auch wenn der Host-Tick klemmt. Der DB-Change weckt dann den
+// Host, der über onLobbyUpdate → ensureFightRunning() die Simulation fährt.
+// Reiner Flip, idempotent, keine Sim-Logik hier.
 function maybeAutoStart(){
   const lobby = lobbyData;
-  if(!isHost || !lobby || lobby.status !== 'waiting') return;
+  if(!lobby || lobby.status !== 'waiting') return;
   if(!lobby.startAt || serverNow() < lobby.startAt) return;   // noch nicht fällig
-  if(_startingFight) return;
-  // startAt bleibt als Retry-Signal erhalten, bis onStartFight den Status
-  // atomar auf 'in_progress' setzt.
-  _startingFight = true;
-  // Watchdog: selbst wenn onStartFight (z. B. durch einen hängenden Firebase-
-  // Aufruf) nie auflöst, wird das Flag freigegeben → kein dauerhaftes Verklemmen.
-  clearTimeout(_startWatchdog);
-  _startWatchdog = setTimeout(() => { _startingFight = false; }, 8000);
-  window.onStartFight().finally(() => {
-    clearTimeout(_startWatchdog); _startWatchdog = null; _startingFight = false;
-  });
+  if(_flippingStatus) return;
+  _flippingStatus = true;
+  runTransaction(ref(db, 'tower/lobbies/' + lobbyId), cur => {
+    if(!cur) return undefined;                 // Lobby weg → Transaktion abbrechen
+    if(cur.status === 'waiting' && cur.startAt){
+      cur.status  = 'in_progress';
+      cur.startAt = null;
+    }
+    return cur;
+  }).catch(()=>{}).finally(() => { _flippingStatus = false; });
 }
 
-// ---- Kampf starten (Host) ----
-window.onStartFight = async function(){
-  const btn = $('startBtn'); if(btn){ btn.disabled = true; btn.textContent = '…'; }
+// ---- Manueller Start (Button i. d. R. ausgeblendet) ----
+// Flippt nur den Status; die Simulation fährt der Host via ensureFightRunning().
+window.onStartFight = function(){
+  if(!lobbyId) return;
+  runTransaction(ref(db, 'tower/lobbies/' + lobbyId), cur => {
+    if(!cur) return undefined;
+    if(cur.status === 'waiting'){ cur.status = 'in_progress'; cur.startAt = null; }
+    return cur;
+  }).catch(()=>{});
+};
+
+// ---- Kampf-Simulation fahren (NUR Host) ----
+// Wird aufgerufen, sobald der Status auf 'in_progress' steht (egal welcher
+// Client geflippt hat). Idempotent über _fightStarted. Lädt den Gast-Spielstand
+// (Default bei frischem Account), baut die Arena und startet die Engine.
+// Bei Fehlern: begrenzter Retry statt Endlosschleife.
+async function ensureFightRunning(){
+  if(!isHost || _fightStarted) return;
+  if(!lobbyData || lobbyData.status !== 'in_progress') return;
+  _fightStarted = true;
   try {
     const lobby = lobbyData;
-    // Gast-Spielstand laden (mit Timeout, damit ein hängender Firebase-Aufruf
-    // den Start nicht blockiert → der catch-Zweig armt einen sichtbaren Retry).
-    const guestSave  = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
+    // Gast-Spielstand laden (mit Timeout). loadGuestSave liefert bei fehlendem
+    // Save einen Default → frische Accounts (z. B. Test-Login) blockieren nicht.
+    const guestSave = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
+    // In der Lobby gewählte Klasse anwenden, falls (noch) kein Charakter gespeichert.
+    if(!guestSave.character) guestSave.character = { classId: lobby.guestClass || DEFAULT_CLASS_ID };
+    if(myState && !myState.character) myState.character = { classId: lobby.hostClass || DEFAULT_CLASS_ID };
+
     const hostStats  = computePlayerStats(myState);
     const guestStats = computePlayerStats(guestSave);
-
     const hostCls  = (myState.character && myState.character.classId) || DEFAULT_CLASS_ID;
     const guestCls = (guestSave.character && guestSave.character.classId) || DEFAULT_CLASS_ID;
 
@@ -487,27 +521,16 @@ window.onStartFight = async function(){
     const frontStats = frontKey === myKey ? hostStats : guestStats;
     const backStats  = backKey  === myKey ? hostStats : guestStats;
 
-    // Cache für Sprite-Anzeige
-    _frontStatsCache = frontStats;
-    _backStatsCache  = backStats;
-    _frontNameCache  = frontName;
-    _backNameCache   = backName;
+    _frontStatsCache = frontStats; _backStatsCache = backStats;
+    _frontNameCache  = frontName;  _backNameCache  = backName;
 
-    // Helden-Aussehen BEIDER Spieler einmalig veröffentlichen, damit der Gast
-    // den Partner mit dessen echtem Charakter rendert (nicht dem eigenen).
+    // Helden-Aussehen beider Spieler einmalig veröffentlichen.
     const frontSave = frontKey === myKey ? myState : guestSave;
     const backSave  = backKey  === myKey ? myState : guestSave;
     _heroLook = { front: lookOf(frontSave, frontStats), back: lookOf(backSave, backStats) };
     setTowerHeroes(lobbyId, _heroLook.front, _heroLook.back);
 
-    // Sprites setzen
     setupArena(lobby.floor || 1, frontStats, backStats, frontName, backName);
-
-    // Status → in_progress UND startAt im selben Write löschen (atomar):
-    // entweder der Kampf startet und der Countdown stoppt, oder nichts ändert
-    // sich und startAt bleibt für einen erneuten Versuch erhalten.
-    await update(ref(db, 'tower/lobbies/' + lobbyId), { status: 'in_progress', startAt: null });
-
     showFightSection();
     $('speedBtn').style.display = '';
     setupAbilityUI(frontKey, backKey);
@@ -516,18 +539,23 @@ window.onStartFight = async function(){
       frontStats, backStats, frontName, backName, onCombatUpdate,
       { frontKey, backKey });
 
+    _startRetries = 0;
   } catch(e){
-    // Start fehlgeschlagen (z. B. Gast-Spielstand fehlt): frisches Ziel setzen,
-    // damit der Countdown sichtbar neu anläuft – kein Busy-Loop, kein Hängen.
-    toast('Kampfstart fehlgeschlagen: ' + e.message + ' – neuer Versuch in 10 s.');
     console.error(e);
-    if(isHost && lobbyData && lobbyData.status === 'waiting'){
-      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: serverNow() + 10000 }).catch(()=>{});
+    _fightStarted = false;             // erneuter Versuch möglich
+    _startRetries++;
+    if(_startRetries <= 2){
+      toast('Kampfstart fehlgeschlagen – neuer Versuch …');
+      setTimeout(() => ensureFightRunning(), 1500 * _startRetries);
+    } else {
+      // Kein Endlos-Countdown: zurück in den Warteraum, Bereit-Status lösen.
+      toast('Kampfstart fehlgeschlagen: ' + e.message + ' – bitte erneut „Bereit" klicken.');
+      update(ref(db, 'tower/lobbies/' + lobbyId),
+        { status:'waiting', startAt:null, hostReady:false, guestReady:false }).catch(()=>{});
+      _startRetries = 0;
     }
-  } finally{
-    if(btn){ btn.disabled = false; btn.textContent = '⚔️ Kampf starten!'; }
   }
-};
+}
 
 // Promise mit Zeitlimit – bei Überschreitung Reject statt endloses Warten.
 function withTimeout(promise, ms, msg){
@@ -646,10 +674,14 @@ function onCombatUpdate(data){
   updateCdState('front', data.frontClass, data.frontCdRemain);
   updateCdState('back',  data.backClass,  data.backCdRemain);
 
-  // Projektil-Animation wenn Hinten-Spieler Zauberstab trägt
-  if(data.backStab && data.status === 'fighting' && data.turn !== _lastAnimTurn){
-    _lastAnimTurn = data.turn;
-    spawnProjectile();
+  // ---- Kampf-Animationen: Edge-Trigger über monotone Timestamps ----
+  // (synchron auf beiden Geräten, gleiches Muster wie der Heilkreis).
+  const cfx = data.fx || {};
+  if(data.status === 'fighting'){
+    if(cfx.frontHitTs && cfx.frontHitTs > _lastFrontHitTs){ _lastFrontHitTs = cfx.frontHitTs; triggerFrontLunge(); }
+    if(cfx.backAtkTs  && cfx.backAtkTs  > _lastBackAtkTs ){ _lastBackAtkTs  = cfx.backAtkTs;  triggerStabCast(data); }
+    if(cfx.backHealTs && cfx.backHealTs > _lastBackHealTs){ _lastBackHealTs = cfx.backHealTs; spawnHealBurst('heroFront'); }
+    if(cfx.bossHitTs  && cfx.bossHitTs  > _lastBossHitTs ){ _lastBossHitTs  = cfx.bossHitTs;  shieldHit(); }
   }
 
   // Skill-UI für den Gast initialisieren, sobald die Aufstellung bekannt ist.
@@ -675,8 +707,9 @@ function onCombatUpdate(data){
   if(data.status === 'lost') showResult(false, data.floor);
 }
 
-// ---- Projektil-Animation ----
-function spawnProjectile(){
+// ---- Projektil-Animation (Zauberstab-Bolt mit leuchtendem Schweif) ----
+// type: 'atk' (rot/orange) oder 'heal' (lila/cyan, für die Heilerin).
+function spawnProjectile(type){
   const stage  = $('arenaStage');
   const heroEl = $('heroBack');
   const bossEl = $('spriteBoss');
@@ -684,24 +717,61 @@ function spawnProjectile(){
   const sr = stage.getBoundingClientRect();
   const hr = heroEl.getBoundingClientRect();
   const br = bossEl.getBoundingClientRect();
+  // Start an der Stab-Spitze (etwas oberhalb der Hand), Ziel: Boss-Körpermitte.
   const fromX = hr.left - sr.left + hr.width / 2;
-  const fromY = hr.top  - sr.top  + hr.height / 3;
+  const fromY = hr.top  - sr.top  + hr.height * 0.38;
   const toX   = br.left - sr.left + br.width  / 2;
-  const toY   = br.top  - sr.top  + br.height / 3;
+  const toY   = br.top  - sr.top  + br.height / 2;
 
   const ball = document.createElement('div');
-  ball.className = 'tower-projectile';
+  ball.className = 'tower-projectile' + (type === 'heal' ? ' magic' : '');
   ball.style.left = fromX + 'px';
   ball.style.top  = fromY + 'px';
   $('dmgLayer').appendChild(ball);
 
   const dx = toX - fromX, dy = toY - fromY;
+  const ang = Math.atan2(dy, dx) * 180 / Math.PI;
   ball.animate(
-    [{ transform:'translate(0,0) scale(1)', opacity:1 },
-     { transform:`translate(${dx}px,${dy}px) scale(0.35)`, opacity:0.5 }],
-    { duration:270, easing:'ease-in', fill:'forwards' }
+    [{ transform:`translate(0,0) rotate(${ang}deg) scale(1)`, opacity:1 },
+     { transform:`translate(${dx}px,${dy}px) rotate(${ang}deg) scale(.5)`, opacity:.55 }],
+    { duration:260, easing:'cubic-bezier(.4,.05,.7,.6)', fill:'forwards' }
   );
+  // Kleiner Einschlag-Funke am Boss.
+  setTimeout(() => {
+    const spark = document.createElement('div');
+    spark.className = 'proj-impact' + (type === 'heal' ? ' magic' : '');
+    spark.style.left = toX + 'px'; spark.style.top = toY + 'px';
+    $('dmgLayer').appendChild(spark);
+    setTimeout(() => spark.remove(), 320);
+  }, 250);
   setTimeout(() => ball.remove(), 290);
+}
+
+// ---- Front-Nahkampf-Lunge (Vorstoß Richtung Boss) + Boss-Treffer-Flash ----
+function triggerFrontLunge(){
+  const h = $('heroFront');
+  if(h){ h.classList.remove('lunge'); void h.offsetWidth; h.classList.add('lunge');
+    setTimeout(() => h.classList.remove('lunge'), 340); }
+  const b = $('spriteBoss');
+  if(b){ b.classList.remove('boss-hit'); void b.offsetWidth; b.classList.add('boss-hit');
+    setTimeout(() => b.classList.remove('boss-hit'), 200); }
+}
+
+// ---- Heiler-Zauberstab-Cast: Aufladungs-Glow + Bolt zum Boss ----
+function triggerStabCast(data){
+  const h = $('heroBack');
+  if(h){ h.classList.remove('casting'); void h.offsetWidth; h.classList.add('casting');
+    setTimeout(() => h.classList.remove('casting'), 360); }
+  const isHealer = !!(data && data.backClass === 'heiler');
+  // Heilerin feuert immer einen Magie-Bolt; sonst nur mit Zauberstab-Waffe.
+  if(isHealer || (data && data.backStab)) spawnProjectile(isHealer ? 'heal' : 'atk');
+}
+
+// ---- Schild-Aufprall-Ripple (nur wenn der Schild gerade aktiv ist) ----
+function shieldHit(){
+  const d = $('shieldDome'); if(!d) return;
+  d.classList.remove('hit'); void d.offsetWidth; d.classList.add('hit');
+  setTimeout(() => d.classList.remove('hit'), 460);
 }
 
 // ---- Klassen-Spezialfähigkeit (B14) ----
@@ -779,11 +849,11 @@ function renderFx(fx){
   _backAblazeUntil  = (fx.ablazeBackRemain  != null) ? now + fx.ablazeBackRemain  : (fx.ablazeBack  ? now + 600 : 0);
   _shieldUntil      = (fx.shieldRemain      != null) ? now + fx.shieldRemain      : (fx.shield      ? now + 1000 : 0);
   renderFxLocal();
-  // Heilkreis: Einmal-Animation per Edge-Trigger – synchron auf beiden Helden.
+  // Heilkreis-Skill: Einmal-Animation per Edge-Trigger – synchron auf beiden Helden.
   if(fx.healTs && fx.healTs > _lastHealTs){
     _lastHealTs = fx.healTs;
-    spawnHealCircle('heroFront');
-    spawnHealCircle('heroBack');
+    spawnHealBurst('heroFront');
+    spawnHealBurst('heroBack');
   }
 }
 // Dauer-Effekte lokal takten → flackerfrei und auf beiden Geräten synchron.
@@ -793,15 +863,34 @@ function renderFxLocal(){
   $('heroBack').classList.toggle('ablaze',  now < _backAblazeUntil);
   if(now < _shieldUntil) showShieldDome(); else removeShieldDome();
 }
-function spawnHealCircle(heroId){
+// AAA-Heilung: mehrschichtiger Burst (Boden-Glow, Doppelring, aufsteigende
+// Licht-Motes) statt einfachem Kreis. Auf Mobile weniger Partikel.
+function spawnHealBurst(heroId){
   const stage = $('arenaStage'); const hero = $(heroId);
   if(!stage || !hero) return;
   const sr = stage.getBoundingClientRect(), hr = hero.getBoundingClientRect();
   const x = hr.left - sr.left + hr.width/2, y = hr.top - sr.top + hr.height/2;
-  const ring = document.createElement('div');
-  ring.className = 'heal-circle'; ring.style.left = x+'px'; ring.style.top = y+'px';
-  $('dmgLayer').appendChild(ring);
-  setTimeout(()=> ring.remove(), 1100);
+
+  const burst = document.createElement('div');
+  burst.className = 'heal-burst';
+  burst.style.left = x + 'px'; burst.style.top = y + 'px';
+
+  const glow = document.createElement('div'); glow.className = 'hb-glow';
+  const ring = document.createElement('div'); ring.className = 'heal-circle';
+  burst.appendChild(glow); burst.appendChild(ring);
+
+  // Aufsteigende Licht-Partikel (auf schmalen Viewports reduziert).
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const moteCount = reduce ? 0 : (window.innerWidth < 500 ? 5 : 9);
+  for(let i = 0; i < moteCount; i++){
+    const m = document.createElement('div'); m.className = 'hb-mote';
+    m.style.setProperty('--dx', (Math.random()*64 - 32).toFixed(0) + 'px');
+    m.style.setProperty('--sx', (Math.random()*28 - 14).toFixed(0) + 'px');
+    m.style.animationDelay = (Math.random()*220).toFixed(0) + 'ms';
+    burst.appendChild(m);
+  }
+  $('dmgLayer').appendChild(burst);
+  setTimeout(() => burst.remove(), 1300);
 }
 function showShieldDome(){
   if($('shieldDome')) return;
@@ -848,6 +937,8 @@ async function onNextFloor(){
   if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
   const nextFloor = await advanceFloor(lobbyId);
   _lastAnimTurn = -1; _lastHealTs = 0;
+  _lastFrontHitTs = _lastBackAtkTs = _lastBackHealTs = _lastBossHitTs = 0;
+  _fightStarted = false; _startRetries = 0;
   stopCountdown();
   stopAbilityUI();
   $('resultOverlay').classList.remove('show');
@@ -887,8 +978,10 @@ function resetToMain(){
   stopCountdown();
   stopAbilityUI();
   clearTimeout(_startWatchdog); _startWatchdog = null; _startingFight = false;
+  _flippingStatus = false; _fightStarted = false; _startRetries = 0;
   lobbyId = null; lobbyData = null; isHost = false;
   _lastAnimTurn = -1; _lastHealTs = 0;
+  _lastFrontHitTs = _lastBackAtkTs = _lastBackHealTs = _lastBossHitTs = 0;
   _heroLook = { front:null, back:null };
   $('fightSection').style.display  = 'none';
   $('lobbySection').style.display  = '';
@@ -924,6 +1017,11 @@ function resetToMain(){
     };
     document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') wake(); });
     window.addEventListener('focus', wake);
+    // Heartbeat (1 s): unabhängig vom Countdown-Ticker den fälligen Auto-Start
+    // nachholen – Absicherung, falls ein Timer gedrosselt wurde.
+    if(!_heartbeat) _heartbeat = setInterval(() => {
+      if(lobbyData && lobbyData.startAt && lobbyData.status === 'waiting') maybeAutoStart();
+    }, 1000);
     // Eingeloggte E-Mail → displayName
     const { auth } = await import('./adventure/js/core/firebase.js');
     const user = auth.currentUser;

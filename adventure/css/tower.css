@@ -36,7 +36,7 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .back-link:hover { color:var(--txt); }
 
 /* ---- Layout ---- */
-.container { max-width:680px; margin:0 auto; padding:20px 16px 40px; }
+.container { max-width:860px; margin:0 auto; padding:20px 16px 40px; }
 
 /* ---- Cards ---- */
 .card { background:var(--bg2); border:1px solid var(--border); border-radius:14px;
@@ -108,15 +108,16 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   background-repeat:no-repeat; opacity:0.7; }
 .arena-stage { position:relative; z-index:1; display:grid;
   grid-template-columns:1fr auto 1fr; align-items:end;
-  padding:16px 12px 8px; min-height:160px; gap:8px; }
+  padding:24px 18px 0; min-height:260px; gap:8px; }
 /* Boden-Band, auf dem Helden & Boss stehen → kein „Schweben" mehr. */
 .arena-stage::after { content:''; position:absolute; left:0; right:0; bottom:0;
-  height:34px; z-index:0; pointer-events:none;
-  background:linear-gradient(180deg, rgba(20,10,35,0) 0%, rgba(20,10,35,.5) 60%, rgba(40,20,60,.78) 100%); }
+  height:54px; z-index:0; pointer-events:none;
+  background:linear-gradient(180deg, rgba(20,10,35,0) 0%, rgba(20,10,35,.5) 55%, rgba(40,20,60,.82) 100%); }
 .arena-boss-col { display:flex; flex-direction:column; align-items:center; gap:4px;
   position:relative; z-index:1; }
-.arena-boss-col img { width:90px; height:90px; object-fit:contain;
-  image-rendering:crisp-edges; filter:drop-shadow(0 0 8px rgba(200,80,255,.5)); }
+.arena-boss-col img { width:150px; height:150px; object-fit:contain;
+  image-rendering:crisp-edges; filter:drop-shadow(0 0 8px rgba(200,80,255,.5));
+  transform-origin:bottom center; animation:idleBobBoss 3.2s ease-in-out infinite; }
 /* Helden nebeneinander, leicht versetzt – echte Formation statt Stapel.
    Front-Held vorne/unten (näher zum Boss), Back-Held (Heiler) seitlich
    dahinter und etwas höher → Tiefe ohne Überlappung. */
@@ -124,17 +125,31 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   justify-content:flex-end; gap:6px; position:relative; }
 .arena-hero { display:flex; flex-direction:column; align-items:center; gap:3px;
   position:relative; z-index:1; }
-.arena-hero img { width:58px; height:80px; object-fit:contain; }
+/* Idle-Bobbing auf dem img (transform-origin unten → Füße bleiben am Boden,
+   kein Schweben). Der Kontaktschatten am Wrapper bobbt NICHT mit. */
+.arena-hero img { width:92px; height:128px; object-fit:contain;
+  transform-origin:bottom center; animation:idleBobHero 2.4s ease-in-out infinite; }
 /* Weicher Kontaktschatten unter den Füßen → Helden stehen sichtbar am Boden. */
 .arena-hero::after { content:''; position:absolute; bottom:-1px; left:50%;
-  transform:translateX(-50%); width:46px; height:9px; border-radius:50%; z-index:-1;
+  transform:translateX(-50%); width:70px; height:12px; border-radius:50%; z-index:-1;
   pointer-events:none;
   background:radial-gradient(ellipse, rgba(0,0,0,.5), rgba(0,0,0,0) 70%); }
-/* Front-Held vorne (höherer z-index), Back-Held dahinter und leicht versetzt. */
+/* Front-Held vorne (höherer z-index), Back-Held dahinter. Tiefe über Skalierung
+   am WRAPPER mit transform-origin unten → schrumpft von den Füßen aus, bleibt
+   am Boden (kein translateY-Schweben mehr). */
 .arena-hero#heroFront { z-index:2; order:2; }
-.arena-hero.back-hero { z-index:1; order:1; transform:translateY(-6px); }
-.arena-hero.back-hero img { transform:scale(0.88); opacity:.9; }
-.arena-hero.back-hero::after { width:38px; opacity:.7; }
+.arena-hero.back-hero { z-index:1; order:1; transform:scale(.86); transform-origin:bottom center; }
+.arena-hero.back-hero img { opacity:.92; animation-duration:2.8s; }
+.arena-hero.back-hero::after { opacity:.7; }
+/* ---- Idle-Atmen ---- */
+@keyframes idleBobHero {
+  0%,100% { transform:translateY(0)    scaleY(1);    }
+  50%     { transform:translateY(-3px) scaleY(.985); }
+}
+@keyframes idleBobBoss {
+  0%,100% { transform:translateY(0)    scale(1);     }
+  50%     { transform:translateY(-5px) scale(1.012); }
+}
 .hero-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em;
   padding:2px 6px; border-radius:4px; }
 .hero-label.front { background:rgba(74,143,255,.2); color:var(--front-col); }
@@ -175,13 +190,58 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .combat-log::-webkit-scrollbar-thumb { background:var(--bg3); border-radius:2px; }
 .cl-line { font-size:11px; line-height:1.5; }
 
-/* ---- Projectile ---- */
+/* ---- Projektil (Zauberstab-Bolt mit Schweif) ---- */
 .tower-projectile {
-  position:absolute; width:14px; height:14px; border-radius:50%;
-  background:radial-gradient(circle at 35% 35%, #ff9999, #cc0000 55%, #660000);
-  box-shadow:0 0 8px 4px #ff3300, 0 0 2px 1px #ff9999;
-  pointer-events:none; transform:translate(-7px,-7px); z-index:10;
+  position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #ffd6a0, #ff5a00 52%, #7a1a00);
+  box-shadow:0 0 10px 4px #ff5a00, 0 0 4px 2px #ffd27a;
+  pointer-events:none; z-index:10;
 }
+.tower-projectile::after {   /* nachlaufender Schweif (im rotierten Bolt-Frame nach hinten) */
+  content:''; position:absolute; right:50%; top:50%;
+  width:30px; height:5px; transform:translateY(-50%);
+  border-radius:3px;
+  background:linear-gradient(90deg, rgba(255,120,0,0), rgba(255,150,40,.85));
+  filter:blur(1px);
+}
+.tower-projectile.magic {    /* Heilerin: lila/cyan Magie-Bolt */
+  background:radial-gradient(circle at 35% 35%, #eafff8, #8a5cff 50%, #2a1060);
+  box-shadow:0 0 12px 5px #9a6cff, 0 0 4px 2px #aef7ff;
+}
+.tower-projectile.magic::after {
+  background:linear-gradient(90deg, rgba(140,90,255,0), rgba(170,240,255,.9));
+}
+/* Einschlag-Funke am Boss */
+.proj-impact {
+  position:absolute; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%;
+  pointer-events:none; z-index:10;
+  background:radial-gradient(circle, #fff, #ff7a00 55%, rgba(255,90,0,0));
+  animation:projImpact .3s ease-out forwards;
+}
+.proj-impact.magic { background:radial-gradient(circle, #fff, #9a6cff 55%, rgba(150,90,255,0)); }
+@keyframes projImpact { 0%{transform:scale(.4);opacity:1} 100%{transform:scale(2.4);opacity:0} }
+
+/* ---- Front-Nahkampf-Lunge ---- */
+@keyframes frontLunge {
+  0%   { transform:translateX(0)    translateY(0); }
+  35%  { transform:translateX(26px) translateY(-5px); }  /* Ausfall Richtung Boss */
+  55%  { transform:translateX(30px) translateY(2px);  }  /* Aufprall */
+  100% { transform:translateX(0)    translateY(0); }
+}
+.arena-hero.lunge img { animation:frontLunge .32s cubic-bezier(.3,.7,.4,1) !important; }
+/* Boss-Treffer-Flash */
+@keyframes bossHit {
+  0%,100% { filter:drop-shadow(0 0 8px rgba(200,80,255,.5)) brightness(1); }
+  40%     { filter:drop-shadow(0 0 14px #fff) brightness(1.6) saturate(1.3); }
+}
+.arena-boss-col img.boss-hit { animation:bossHit .2s ease-out !important; }
+/* Heiler-Zauberstab-Aufladung */
+@keyframes wandCharge {
+  0%   { filter:drop-shadow(0 0 0 rgba(160,90,255,0)); }
+  55%  { filter:drop-shadow(0 0 12px #c76dff) drop-shadow(0 0 20px #7fd0ff) brightness(1.18); }
+  100% { filter:drop-shadow(0 0 2px rgba(160,90,255,.25)); }
+}
+.arena-hero.casting img { animation:wandCharge .34s ease-out !important; }
 
 /* ---- Klassen-Spezialfähigkeiten (FX) ---- */
 /* Raserei: roter Glow + Flammen-Puls */
@@ -193,9 +253,35 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   0%   { filter:drop-shadow(0 0 7px #ff3b00) drop-shadow(0 0 12px #ff7a00) brightness(1.1) saturate(1.3); }
   100% { filter:drop-shadow(0 0 15px #ff5a00) drop-shadow(0 0 24px #ffb000) brightness(1.28) saturate(1.6); }
 }
+/* ---- AAA-Heilung: mehrschichtiger Burst ---- */
+.heal-burst { position:absolute; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:9; width:0; height:0; }
+/* weicher, aufflammender Boden-Glow */
+.heal-burst .hb-glow {
+  position:absolute; left:-58px; top:-6px; width:116px; height:64px; border-radius:50%;
+  background:radial-gradient(ellipse, rgba(55,214,122,.6), rgba(120,255,180,.25) 45%, rgba(55,214,122,0) 72%);
+  animation:hbGlow 1s ease-out forwards;
+}
+@keyframes hbGlow {
+  0%   { opacity:0; transform:scale(.5); }
+  25%  { opacity:1; }
+  100% { opacity:0; transform:scale(1.35); }
+}
+/* aufsteigende Licht-Motes */
+.heal-burst .hb-mote {
+  position:absolute; left:0; top:0; width:7px; height:7px; border-radius:50%;
+  background:radial-gradient(circle, #f0fff0, #37d67a 60%, rgba(55,214,122,0));
+  box-shadow:0 0 7px 2px rgba(120,255,180,.75);
+  animation:hbMote 1s ease-out forwards;
+}
+@keyframes hbMote {
+  0%   { transform:translate(var(--sx,0), 14px) scale(.4); opacity:0; }
+  20%  { opacity:1; }
+  100% { transform:translate(var(--dx,0), -60px) scale(1); opacity:0; }
+}
 /* Heilkreis: weich aufblühender grüner Ring mit nachlaufendem Goldring. */
 .heal-circle {
-  position:absolute; width:18px; height:18px; border-radius:50%;
+  position:absolute; left:0; top:0; width:18px; height:18px; border-radius:50%;
   transform:translate(-50%,-50%); pointer-events:none; z-index:9;
   border:2px solid #7dffb8;
   box-shadow:0 0 18px 6px rgba(55,214,122,.55), inset 0 0 14px 5px rgba(120,255,180,.45),
@@ -211,23 +297,43 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   0%   { width:14px;  height:14px; opacity:0; filter:blur(1px); }
   18%  { opacity:1; }
   70%  { opacity:.85; }
-  100% { width:120px; height:120px; opacity:0; filter:blur(0); }
+  100% { width:150px; height:150px; opacity:0; filter:blur(0); }
 }
 @keyframes towerHealInner {
   0%   { transform:scale(.4);  opacity:0; }
   25%  { opacity:.9; }
   100% { transform:scale(1.15); opacity:0; }
 }
-/* Schildwall: pulsierende lila-blaue Schutzkuppel über BEIDEN Helden. */
+/* Schildwall: hexagonales Energieschild über BEIDEN Helden – Wabenmuster,
+   Fresnel-Rand, rotierender Schimmer und Aufprall-Ripple bei Boss-Treffern. */
 .shield-dome {
-  position:absolute; inset:-18px -14px -6px; pointer-events:none; z-index:6;
+  position:absolute; inset:-22px -16px -6px; pointer-events:none; z-index:6;
   border-radius:46% 46% 40% 40% / 55% 55% 45% 45%;
-  background:radial-gradient(120% 100% at 50% 30%,
-              rgba(160,90,255,.22) 0%, rgba(120,160,255,.16) 45%,
-              rgba(120,160,255,.05) 72%, rgba(120,160,255,0) 100%);
-  border:1.5px solid rgba(160,120,255,.65);
-  box-shadow:0 0 26px 8px rgba(130,90,255,.42), inset 0 0 30px 10px rgba(150,180,255,.30);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='22' viewBox='0 0 26 22'%3E%3Cpath d='M6.5 1 L19.5 1 L26 11 L19.5 21 L6.5 21 L0 11 Z' fill='none' stroke='%23a6c4ff' stroke-width='1' opacity='0.55'/%3E%3C/svg%3E"),
+    radial-gradient(120% 100% at 50% 30%,
+              rgba(160,90,255,.26) 0%, rgba(120,160,255,.18) 45%,
+              rgba(120,160,255,.06) 72%, rgba(120,160,255,0) 100%);
+  background-size:24px 20px, cover;
+  background-position:center;
+  border:1.5px solid rgba(180,150,255,.8);
+  box-shadow:0 0 28px 9px rgba(130,90,255,.45),
+             inset 0 0 32px 11px rgba(150,180,255,.32),
+             inset 0 0 6px 2px rgba(220,235,255,.5);   /* Fresnel-Rand */
+  -webkit-mask:radial-gradient(120% 100% at 50% 38%, #000 58%, transparent 100%);
+          mask:radial-gradient(120% 100% at 50% 38%, #000 58%, transparent 100%);
   animation:towerShield 2.4s ease-in-out infinite;
+}
+/* Aufprall-Welle, wenn der Boss trifft (Klasse via JS kurz gesetzt). */
+.shield-dome.hit::after {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  border:2px solid rgba(200,230,255,.95);
+  box-shadow:0 0 18px 4px rgba(170,210,255,.7);
+  animation:shieldRipple .45s ease-out;
+}
+@keyframes shieldRipple {
+  0%   { transform:scale(.9);  opacity:.95; }
+  100% { transform:scale(1.12); opacity:0; }
 }
 .shield-dome::before {
   content:''; position:absolute; inset:0; border-radius:inherit;
@@ -243,7 +349,10 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 @keyframes towerShieldShimmer { to { transform:rotate(360deg); } }
 @media(prefers-reduced-motion: reduce){
   .arena-hero.ablaze img, .heal-circle, .heal-circle::before,
-  .shield-dome, .shield-dome::before, .countdown-big { animation:none; }
+  .shield-dome, .shield-dome::before, .shield-dome.hit::after, .countdown-big,
+  .arena-hero img, .arena-boss-col img, .arena-hero.lunge img,
+  .arena-hero.casting img, .arena-boss-col img.boss-hit,
+  .heal-burst .hb-glow, .heal-burst .hb-mote, .proj-impact { animation:none; }
 }
 .dmg-float { position:absolute; font-family:'Press Start 2P',monospace; font-size:13px;
   pointer-events:none; white-space:nowrap;
@@ -301,10 +410,10 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 
 @media(max-width:500px){
   .player-list { grid-template-columns:1fr; }
-  .arena-stage { grid-template-columns:1fr auto 1fr; }
-  .arena-stage::after { height:26px; }
-  .arena-boss-col img { width:70px; height:70px; }
-  .arena-hero img { width:46px; height:64px; }
-  .arena-hero::after { width:36px; }
-  .arena-hero.back-hero::after { width:30px; }
+  .arena-stage { grid-template-columns:1fr auto 1fr; min-height:200px; padding:18px 10px 0; }
+  .arena-stage::after { height:42px; }
+  .arena-boss-col img { width:104px; height:104px; }
+  .arena-hero img { width:66px; height:92px; }
+  .arena-hero::after { width:52px; }
+  .arena-hero.back-hero::after { width:42px; }
 }
