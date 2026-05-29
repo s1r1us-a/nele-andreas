@@ -141,18 +141,28 @@ export async function createLobby(userKey, displayName, classId, desiredCode){
     hostReady: false, guestReady: false,
   });
   // Host-Disconnect → Lobby + Kampf-/Skill-Daten automatisch entfernen (B3, Aufräumen).
-  armDisconnectCleanup(lobbyId);
+  armDisconnectCleanup(lobbyId, true);
   return lobbyId;
 }
 
-// Räumt Lobby, Kampf- und Skill-Knoten beim plötzlichen Verbindungsabbruch
-// (Tab schließen, wegnavigieren, Absturz) automatisch auf, damit die DB
-// nicht mit verwaisten Lobbies zugemüllt wird.
-function armDisconnectCleanup(lobbyId){
+// Räumt beim plötzlichen Verbindungsabbruch (Tab schließen, wegnavigieren, Absturz)
+// automatisch auf, damit die DB nicht mit verwaisten Lobbies zugemüllt wird.
+//  - Host-Disconnect → ganze Lobby + Kampf-/Skill-Daten entfernen.
+//  - Gast-Disconnect → nur die Gast-Felder zurücksetzen, NICHT die Lobby löschen,
+//    sonst kickt ein kurzer Verbindungsabriss des Gastes (z.B. Handy im Hintergrund)
+//    auch den Host aus der Lobby.
+function armDisconnectCleanup(lobbyId, isHost){
   try {
-    onDisconnect(ref(db, LOBBY_PATH(lobbyId))).remove();
-    onDisconnect(ref(db, COMBAT_PATH(lobbyId))).remove();
-    onDisconnect(ref(db, ABIL_PATH(lobbyId))).remove();
+    if(isHost){
+      onDisconnect(ref(db, LOBBY_PATH(lobbyId))).remove();
+      onDisconnect(ref(db, COMBAT_PATH(lobbyId))).remove();
+      onDisconnect(ref(db, ABIL_PATH(lobbyId))).remove();
+    } else {
+      onDisconnect(ref(db, LOBBY_PATH(lobbyId))).update({
+        guest: null, guestName: null, guestClass: null,
+        guestReady: false, startAt: null,
+      });
+    }
   } catch(e){}
 }
 
@@ -173,8 +183,8 @@ export async function joinLobby(lobbyId, userKey, displayName, classId){
   await update(ref(db, LOBBY_PATH(lobbyId)), {
     guest: userKey, guestName: displayName, guestClass: classId || DEFAULT_CLASS_ID,
   });
-  // Gast-Disconnect → Lobby ebenfalls aufräumen (B3, Aufräumen).
-  armDisconnectCleanup(lobbyId);
+  // Gast-Disconnect → nur Gast-Felder zurücksetzen (Lobby bleibt für den Host bestehen).
+  armDisconnectCleanup(lobbyId, false);
   return lobby;
 }
 
@@ -532,7 +542,9 @@ export async function advanceFloor(lobbyId){
   if(!snap.exists()) return 1;
   const lobby = snap.val();
   const next = (lobby.floor || 1) + 1;
-  await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting' });
+  // startAt zurücksetzen, sonst feuert beim nächsten Stockwerk ein veralteter
+  // (in der Vergangenheit liegender) Countdown sofort einen Start aus.
+  await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting', startAt: null });
   await set(ref(db, COMBAT_PATH(lobbyId)), null);
   await set(ref(db, ABIL_PATH(lobbyId)), null);
   return next;
