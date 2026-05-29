@@ -396,6 +396,23 @@
 
   /* ---- Charakter-Editor ----------------------------------------- */
   .char-actions { text-align:center; margin-bottom:14px; }
+  /* Werte-Übersicht (WoW-artig) */
+  .char-stats { margin-top:18px; display:grid; grid-template-columns:repeat(3,1fr);
+    gap:12px; }
+  .cs-group { background:var(--stone); border:1px solid var(--line); border-radius:12px;
+    padding:10px 12px; }
+  .cs-group h4 { font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--gold-hi); margin:0 0 8px; }
+  .cs-row { display:flex; align-items:baseline; justify-content:space-between;
+    padding:4px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+  .cs-row:last-child { border-bottom:0; }
+  .cs-row .cs-l { color:var(--txt-dim); font-size:13px; }
+  .cs-row .cs-v { font-weight:700; font-size:14px; }
+  .cs-row .cs-v small { color:var(--txt-mute); font-weight:400; font-size:11px; }
+  .cs-v.power{color:var(--power);} .cs-v.damage{color:var(--damage);}
+  .cs-v.armor{color:var(--armor);} .cs-v.hp{color:#37d67a;}
+  .cs-v.crit{color:var(--gold-hi);} .cs-v.level{color:#ffd95e;}
+  @media (max-width:560px){ .char-stats { grid-template-columns:1fr; } }
   .creator-preview { display:block; margin:0 auto 14px; width:150px; height:150px;
     border-radius:14px; background:radial-gradient(circle at 50% 35%, #2a2335, #16121f);
     border:1px solid var(--line); }
@@ -594,6 +611,7 @@
         <div class="col right" id="dollRight"></div>
         <div class="bottom" id="dollBottom"></div>
       </div>
+      <div class="char-stats" id="charStats"></div>
     </div>
   </div>
 
@@ -993,6 +1011,21 @@ function recomputeTotals(){
     + maxHp*0.2 + critChance*200 + critDamage*60 + attackSpeed*150);
   return { armor, damage, critChance, critDamage, maxHp, attackSpeed, power };
 }
+// Abgeleitete Kampfwerte aus den Totals – EINE Quelle für Charakterfenster UND
+// echten Bosskampf (startBossFight nutzt dieselben Felder). DPS = Krit-gewichteter
+// Durchschnittstreffer × Schläge pro Sekunde.
+function heroCombat(t){
+  const maxHp = 100 + t.armor*4 + t.maxHp;
+  const atk = 5 + t.damage;
+  const critChance = 0.05 + t.critChance;   // 5 % Basis + Affixe
+  const critMult = 2.0 + t.critDamage;      // 2× Basis + Affixe
+  const interval = Math.max(220, 750 * (1 - t.attackSpeed)); // ms je Schlag
+  const swingsPerSec = 1000 / interval;
+  const avgSwing = atk * (1 + critChance*(critMult-1));
+  const dps = avgSwing * swingsPerSec;
+  const dmgReduction = t.armor*0.3;          // flache Reduktion eingehenden Schadens
+  return { maxHp, atk, critChance, critMult, interval, swingsPerSec, dps, dmgReduction };
+}
 // Power-Beitrag eines EINZELNEN Items (für den Vergleich im Vorschau-Modal)
 function itemPower(it){
   if(!it) return 0;
@@ -1369,6 +1402,35 @@ function renderCharacter(){
   LEFT_SLOTS.forEach(s => L.appendChild(slotEl(s)));
   RIGHT_SLOTS.forEach(s => R.appendChild(slotEl(s)));
   BOTTOM_SLOTS.forEach(s => B.appendChild(slotEl(s)));
+  renderCharStats(t);
+}
+
+// WoW-artige Werte-Übersicht. Aktualisiert sich automatisch mit, da renderCharacter
+// bei jedem equip()/unequip() über renderAll() neu läuft.
+function renderCharStats(t){
+  const c = heroCombat(t);
+  const lvl = state.level || 1;
+  const need = xpForLevel(lvl), cur = xpInLevel(state.xp || 0, lvl);
+  const pct = v => (v*100).toFixed(1).replace(/\.0$/,'') + '%';
+  const row = (label, val, cls) => '<div class="cs-row"><span class="cs-l">'+label+
+    '</span><b class="cs-v'+(cls?' '+cls:'')+'">'+val+'</b></div>';
+  $('#charStats').innerHTML =
+    '<div class="cs-group"><h4>Übersicht</h4>'+
+      row('Level', lvl + ' <small>('+cur+' / '+need+' XP)</small>', 'level')+
+      row('Kampfkraft', t.power, 'power')+
+      row('Leben', c.maxHp, 'hp')+
+    '</div>'+
+    '<div class="cs-group"><h4>Angriff</h4>'+
+      row('Schaden', c.atk, 'damage')+
+      row('DPS', Math.round(c.dps), 'damage')+
+      row('Krit-Chance', pct(c.critChance), 'crit')+
+      row('Krit-Schaden', pct(c.critMult), 'crit')+
+      row('Angriffstempo', c.swingsPerSec.toFixed(2)+'/s', 'crit')+
+    '</div>'+
+    '<div class="cs-group"><h4>Verteidigung</h4>'+
+      row('Rüstung', t.armor, 'armor')+
+      row('Schadensreduktion', '−'+Math.round(c.dmgReduction)+' / Treffer', 'armor')+
+    '</div>';
 }
 
 const CAT_LABEL = { waffen:'⚔️ Waffen', ruestung:'🛡️ Rüstung', schmuck:'💍 Schmuck' };
@@ -1951,17 +2013,19 @@ function startBossFight(){
   $('#heroBarName').textContent = 'Held';
   $('#bossBarName').textContent = boss.name;
 
-  // Kampfwerte (inkl. neuer Stats)
-  const heroMaxHp = 100 + t.armor*4 + t.maxHp;
+  // Kampfwerte (inkl. neuer Stats) – aus dem gemeinsamen Helfer, identisch zum
+  // Charakterfenster.
+  const c = heroCombat(t);
+  const heroMaxHp = c.maxHp;
   const mechanics = Array.isArray(boss.mechanic) ? boss.mechanic.slice()
                    : (boss.mechanic ? [boss.mechanic] : []);
   const fight = {
     heroMaxHp, heroHp: heroMaxHp,
-    heroAtk: 5 + t.damage,
+    heroAtk: c.atk,
     heroArmor: t.armor, heroArmorBase: t.armor,
-    heroCritChance: 0.05 + t.critChance,        // 5% Basis + Affixe
-    heroCritMult: 2.0 + t.critDamage,           // 2× Basis + Affixe
-    heroInterval: Math.max(220, 750 * (1 - t.attackSpeed)), // Haste verkürzt Takt
+    heroCritChance: c.critChance,               // 5% Basis + Affixe
+    heroCritMult: c.critMult,                   // 2× Basis + Affixe
+    heroInterval: c.interval,                   // Haste verkürzt Takt
     bossMaxHp: boss.maxHp, bossAtk: boss.atk, bossAtkBase: boss.atk,
     bossHp: boss.maxHp,
     turn: 0, over: false, boss, anchor: {},
