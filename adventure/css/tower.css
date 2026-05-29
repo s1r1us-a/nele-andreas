@@ -112,15 +112,27 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .arena-boss-col { display:flex; flex-direction:column; align-items:center; gap:4px; }
 .arena-boss-col img { width:90px; height:90px; object-fit:contain;
   image-rendering:crisp-edges; filter:drop-shadow(0 0 8px rgba(200,80,255,.5)); }
-.arena-heroes-col { display:flex; flex-direction:column; gap:8px; position:relative; }
+/* Helden nebeneinander, leicht versetzt – echte Formation statt Stapel.
+   Front-Held vorne/unten (näher zum Boss), Back-Held (Heiler) seitlich
+   dahinter und etwas höher → Tiefe ohne Überlappung. */
+.arena-heroes-col { display:flex; flex-direction:row; align-items:flex-end;
+  justify-content:flex-end; gap:6px; position:relative; }
 .arena-hero { display:flex; flex-direction:column; align-items:center; gap:3px;
   position:relative; }
 .arena-hero img { width:58px; height:80px; object-fit:contain; }
+/* Front-Held vorne (höherer z-index), Back-Held dahinter und nach oben versetzt. */
+.arena-hero#heroFront { z-index:2; order:2; }
+.arena-hero.back-hero { z-index:1; order:1; transform:translateY(-16px); }
 .arena-hero.back-hero img { transform:scale(0.88); opacity:.9; }
 .hero-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em;
   padding:2px 6px; border-radius:4px; }
 .hero-label.front { background:rgba(74,143,255,.2); color:var(--front-col); }
 .hero-label.back  { background:rgba(160,53,232,.2); color:var(--back-col); }
+/* Fähigkeits-Cooldown-Badge pro Held – für BEIDE Spieler sichtbar. */
+.hero-cd { font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px;
+  white-space:nowrap; background:rgba(0,0,0,.4); color:var(--txt-mute); }
+.hero-cd.ready { color:#37d67a; background:rgba(55,214,122,.16); }
+.hero-cd.cooling { color:#ffce54; background:rgba(255,206,84,.14); }
 .arena-vs { font-family:'Cinzel',serif; font-weight:900; font-size:18px;
   color:rgba(255,255,255,.35); align-self:center; }
 

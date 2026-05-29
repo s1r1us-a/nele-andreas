@@ -263,6 +263,10 @@ async function syncFight(fight){
     dmgDealt:    fight.dmgDealt,
     startedAt:   fight.startedAt,
     log:         fight.log,
+    // Fähigkeits-Cooldown beider Slots als Restzeit (ms) zum Sync-Zeitpunkt –
+    // drift-frei, da Host- und Gast-Uhr nicht identisch sind. Clients zählen lokal runter.
+    frontCdRemain: Math.max(0, (fight.frontAbilUntil||0) - now),
+    backCdRemain:  Math.max(0, (fight.backAbilUntil ||0) - now),
     // Aktive Skill-Effekte für die Gast-Animationen (B15)
     fx: {
       ablazeFront: now < (fight.frontCritUntil||0),
@@ -333,6 +337,9 @@ function applyAbility(fight, slot, abilityId){
   const ab = (slot === 'front' ? fight.frontAbility : fight.backAbility);
   if(!ab || ab.id !== abilityId) return;
   const now = Date.now();
+  // Cooldown pro Slot merken → wird in syncFight als Restzeit an beide Clients gesendet.
+  if(slot === 'front') fight.frontAbilUntil = now + (ab.cd || 0);
+  else                 fight.backAbilUntil  = now + (ab.cd || 0);
   if(ab.id === 'heilkreis'){
     if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
     if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + Math.round(fight.backMaxHp  * ab.healPct));
