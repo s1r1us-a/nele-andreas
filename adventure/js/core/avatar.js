@@ -7,6 +7,7 @@ import { ASSETS } from '../data/tuning.js';
 import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-options.js';
 import { rarityIndex } from '../data/rarities.js';
 import { ELEM, elementOf } from './item-art.js';
+import { typeOf } from '../data/itemTypes.js';
 import { state } from './state.js';
 
 // Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
@@ -17,6 +18,12 @@ const TIER_TRIM   = ['#9a86c2','#7fb0e0','#e0a85a','#f2cd6b'];
 // Waffen-Metalle je Variante (analog item-art.js) für die getragene Waffe.
 const WEAPON_METAL = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c'];
 const WOOD = '#7a4f2a', GOLD = '#d8b24a';
+// Kugel-Paletten für Zauberstäbe (orb: rot/blau/gruen) – hell/mittel/dunkel/Glow.
+const ORB_PAL = {
+  rot:   { hi:'#ffd0d0', mid:'#ff3b3b', lo:'#7a0d0d', glow:'#ff5a3c' },
+  blau:  { hi:'#cfe6ff', mid:'#3aa0ff', lo:'#0a3a73', glow:'#58a6ff' },
+  gruen: { hi:'#d6ffe0', mid:'#37d67a', lo:'#0c5a2c', glow:'#4dff86' },
+};
 // Rüstungs-Material je Variante (analog item-art.js ARMOR_MAT).
 const ARMOR_MAT = ['#c8d0dc','#aab2be','#845c38','#3f8f5a','#7a5ca8','#4a465c'];
 const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % 6 + 6) % 6];
@@ -43,6 +50,21 @@ function heldWeapon(item, uid){
   const el = elementOf(item.id), E = ELEM[el];
   const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
   const hx = 124;
+  // Zauberstab: langer Stab mit leuchtender Kugel oben (Farbe je nach Stab-Typ).
+  const ty = typeOf(item);
+  if(ty && ty.material === 'zauberstab'){
+    const P = ORB_PAL[ty.orb] || ORB_PAL.rot;
+    const oy = 112;                                   // Höhe der Kugel
+    const pole = `<rect x="${hx-2.5}" y="${oy}" width="5" height="${204-oy}" rx="2.5" fill="${WOOD}"/>`+
+                 `<rect x="${hx-2.5}" y="${oy+4}" width="2" height="${198-oy}" fill="${shade(WOOD,1.3)}" opacity="0.5"/>`+
+                 `<rect x="${hx-5}" y="${oy+6}" width="10" height="5" rx="2" fill="${GOLD}"/>`;  // Fassung
+    const glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30"/>`+
+                 `<circle cx="${hx}" cy="${oy}" r="12" fill="${P.glow}" opacity="0.35"/>`;
+    const orb  = `<circle cx="${hx}" cy="${oy}" r="9" fill="${P.mid}" stroke="${P.lo}" stroke-width="1"/>`+
+                 `<circle cx="${hx-3}" cy="${oy-3}" r="3.4" fill="${P.hi}" opacity="0.9"/>`;
+    const hand = `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
+    return glow + pole + orb + hand;
+  }
   const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
                `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
   let w = '';
