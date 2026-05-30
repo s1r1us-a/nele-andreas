@@ -270,6 +270,7 @@
   <div class="user-chip" id="userChip" title="Eingeloggt als">
     <span class="uc-ico">👤</span><b id="userName">…</b>
   </div>
+  <button class="dev-btn" id="rosterTopBtn" title="Charakter wechseln / verwalten">👥</button>
   <button class="dev-btn" id="statsBtn" title="Statistik">📊</button>
   <button class="dev-btn" id="devBtn" title="Test-Werkzeuge">🛠 Dev</button>
   <div class="stats-mini">
@@ -287,6 +288,7 @@
 <div class="tabs">
   <div class="tab active" data-view="adventure">Abenteuer</div>
   <div class="tab" data-view="character">Charakter</div>
+  <div class="tab" data-view="talents">Talente</div>
   <div class="tab" data-view="inventory">Inventar</div>
   <div class="tab" data-view="shop">Shop</div>
 </div>
@@ -370,11 +372,13 @@
         <h3 class="char-section-h">📊 Werte</h3>
         <div class="char-stats" id="charStats"></div>
       </section>
+    </div>
+  </div>
 
-      <section class="char-section">
-        <h3 class="char-section-h">🌳 Talente</h3>
-        <div class="talents-panel" id="talentsPanel"></div>
-      </section>
+  <!-- TALENTE -->
+  <div class="view" id="view-talents">
+    <div class="panel">
+      <div class="talents-panel" id="talentsPanel"></div>
     </div>
   </div>
 

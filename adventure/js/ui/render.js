@@ -6,11 +6,24 @@ import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
          CAT_ICON, CAT_ORDER } from '../data/slots.js';
 import { EXPEDITIONS } from '../data/expeditions.js';
-import { STAT_HELP, STAT_INFO } from '../data/statHelp.js';
+// statHelp als Namespace importieren: ein Namespace-Import scheitert NIE am
+// fehlenden Namen (liefert undefined statt fatalem Link-Fehler). Schützt die App,
+// falls nach einem Deploy kurzzeitig ein veraltetes statHelp.js gecacht ist.
+import * as STATHELP from '../data/statHelp.js';
+const STAT_HELP = STATHELP.STAT_HELP || {};
+const STAT_INFO = STATHELP.STAT_INFO || {};
 import { classOf } from '../data/classes.js';
 import { RESPEC_COST } from '../data/tuning.js';
-import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked,
-         talentStatKeys } from '../data/talents.js';
+import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked } from '../data/talents.js';
+// Klassen-Statkeys lokal ableiten (statt talentStatKeys zu importieren) – die
+// Knoten tragen bereits node.keys, das vermeidet einen weiteren cross-file Import.
+const STAT_ORDER = ['damage','maxHp','armor','critPhys','critMagic','critDamage',
+  'attackSpeed','lifesteal','dodge','versatility','thorns','block'];
+function classStatKeys(classId){
+  const present = new Set();
+  talentTreeFor(classId).flat().forEach(n => (n.keys||[]).forEach(k => present.add(k)));
+  return STAT_ORDER.filter(k => present.has(k));
+}
 import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
@@ -172,7 +185,6 @@ export function renderCharHeader(t, tier){
   const lvl = state.level || 1;
   const need = xpForLevel(lvl), cur = xpInLevel(state.xp || 0, lvl);
   const xpPct = Math.max(0, Math.min(100, cur/need*100));
-  const count = listCharacters().length;
   const hasHelm = !!(state.equipped && state.equipped.kopf);
   const hidden  = !!(state.settings && state.settings.hideHelmet);
   box.innerHTML =
@@ -188,12 +200,10 @@ export function renderCharHeader(t, tier){
       '</div>'+
     '</div>'+
     '<div class="ch-actions">'+
-      '<button class="btn ghost" id="rosterBtn">👥 Charaktere ('+count+')</button>'+
       '<button class="btn ghost" id="editLookBtn">✏️ Aussehen</button>'+
       '<button class="btn ghost" id="helmBtn"'+(hasHelm?'':' disabled title="Kein Helm angelegt"')+'>'+
         (hidden?'🪖 Helm zeigen':'🪖 Helm verbergen')+'</button>'+
     '</div>';
-  box.querySelector('#rosterBtn').addEventListener('click', openRosterModal);
   box.querySelector('#editLookBtn').addEventListener('click', ()=> openCharacterCreator(false));
   const helm = box.querySelector('#helmBtn');
   if(helm && hasHelm) helm.addEventListener('click', ()=>{
@@ -252,7 +262,7 @@ export function renderTalents(){
   });
 
   // Werte-Legende (immer sichtbar, einklappbar) – erklärt jeden Klassen-Wert.
-  const legendRows = talentStatKeys(cls.id).map(k => {
+  const legendRows = classStatKeys(cls.id).map(k => {
     const i = STAT_INFO[k]; if(!i) return '';
     return '<div class="legend-row"><span class="legend-label">'+i.label+'</span>'+
       '<span class="legend-help">'+i.help.replace(/^[^:]*:\s*/,'')+'</span></div>';
@@ -312,8 +322,8 @@ function renderCharStats(t){
   if(t.lifesteal>0)   secondary += row('Lebensraub', pct(t.lifesteal), 'hp', 'lebensraub');
   if(t.dodge>0)       secondary += row('Ausweichen', pct(t.dodge), 'armor', 'ausweichen');
   if(t.versatility>0) secondary += row('Vielseitigkeit', pct(t.versatility), 'crit', 'vielseitigkeit');
-  if(t.thorns>0)      secondary += row('Dornen', t.thorns, 'damage', 'dornen');
-  if(t.block>0)       secondary += row('Block', t.block, 'armor', 'block');
+  if(t.thorns>0)      secondary += row('Dornen', Math.round(t.thorns), 'damage', 'dornen');
+  if(t.block>0)       secondary += row('Block', Math.round(t.block), 'armor', 'block');
   const secGroup = secondary
     ? '<div class="cs-group"><h4>Sekundärwerte</h4>'+secondary+'</div>' : '';
   const cls = classOf(state);
@@ -340,7 +350,7 @@ function renderCharStats(t){
       row('Angriffstempo', c.swingsPerSec.toFixed(2)+'/s', 'crit', 'angriffstempo')+
     '</div>'+
     '<div class="cs-group"><h4>Verteidigung</h4>'+
-      row('Rüstung', t.armor, 'armor', 'ruestung')+
+      row('Rüstung', Math.round(t.armor), 'armor', 'ruestung')+
       row('Schadensreduktion', '−'+Math.round(c.dmgReduction)+' / Treffer', 'armor', 'schadensreduktion')+
     '</div>'+
     secGroup;
