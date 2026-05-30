@@ -38,12 +38,14 @@ Bosse sind das Fortschritts-Gate: Wer einen Boss besiegt, schaltet den nächsten
 | `schwaechung` | 💔 Reduziert deine Heilung & Lebensraub. |
 | `teilung` | ➗ Bei 50 % HP: Wutausbruch, Angriff stark erhöht. |
 | `eskalation` | 📈 Je weniger HP, desto mehr Schaden. |
+| `reflexion` | 🪞 Reflektiert 25 % deines Schadens zurück. |
+| `auszehrung` | 🦴 Alle 3 Runden sinkt deine maximale HP um 3 %. |
 
 ## Gebiete
 
-0. Blühende Wiesen · 1. Dunkelwald · 2. Tiefe Höhlen · 3. Vulkanschlund · 4. Frostgipfel · 5. Versunkene Tiefen · 6. Schattenreich · 7. Aschewüste · 8. Himmelszitadelle · 9. Die Leere
+0. Blühende Wiesen · 1. Dunkelwald · 2. Tiefe Höhlen · 3. Vulkanschlund · 4. Frostgipfel · 5. Versunkene Tiefen · 6. Schattenreich · 7. Aschewüste · 8. Himmelszitadelle · 9. Die Leere · 10. Sternennarbe · 11. Jenseits der Zeit
 
-## Roster (40 Bosse + endlose Skalierung)
+## Roster (46 Bosse + endlose Skalierung)
 
 | # | Name | Gebiet | HP | Angriff | Kraft | Mechaniken | Phasen |
 |---|------|--------|----|---------|-------|------------|--------|
@@ -87,8 +89,14 @@ Bosse sind das Fortschritts-Gate: Wer einen Boss besiegt, schaltet den nächsten
 | 37 | Sternenfresser Astaroth | Die Leere | 21.91 Mrd | 6.94 Mio | 2.54 Mrd | enrage, hinrichtung, schwaechung | – |
 | 38 | Urzeit-Drache Bahamut | Die Leere | 31.77 Mrd | 9.85 Mio | 3.71 Mrd | add_spawn, eskalation, berserk, gift | 50%: feueratem; 20%: enrage |
 | 39 | Erzdämon der Ewigkeit | Die Leere | 46.07 Mrd | 13.99 Mio | 5.42 Mrd | enrage, teilung, hinrichtung, dornen, eskalation | 70%: verbrennung; 40%: add_spawn; 20%: schildphase |
+| 40 | Nebularch der Sternenfresser | Sternennarbe | 66.8 Mrd | 20 Mio | 7.91 Mrd | reflexion, enrage | 50%: eskalation |
+| 41 | Singularität Vortex | Sternennarbe | 96.9 Mrd | 28.6 Mio | 11.55 Mrd | auszehrung, schildphase | 40%: enrage |
+| 42 | Kometenkönig Aldebaran | Sternennarbe | 140 Mrd | 40.9 Mio | 16.87 Mrd | eskalation, verbrennung, reflexion | – |
+| 43 | Chronarch der Zeitlose | Jenseits der Zeit | 204 Mrd | 58.5 Mio | 24.5 Mrd | auszehrung, teilung | 60%: enrage; 30%: hinrichtung |
+| 44 | Paradox-Entität | Jenseits der Zeit | 296 Mrd | 83.7 Mio | 35.7 Mrd | reflexion, fluch, frost | – |
+| 45 | Der Ewige Zerfall | Jenseits der Zeit | 429 Mrd | 119.7 Mio | 52.1 Mrd | enrage, auszehrung, reflexion, eskalation | 70%: verbrennung; 40%: add_spawn; 20%: schildphase |
 
-Ab Boss #40 skaliert der letzte Boss endlos weiter: HP ×1.6ⁿ, Angriff ×1.55ⁿ, Kraft ×1.6ⁿ.
+Ab Boss #46 skaliert der letzte Boss endlos weiter: HP ×1.6ⁿ, Angriff ×1.55ⁿ, Kraft ×1.6ⁿ.
 
 > Sprites/Hintergründe: Es existieren `boss_0..4.png` und `bg_zone_0..4.png`. Mehrere Bosse/Gebiete
 > teilen sich vorhandene Grafiken (Felder `area`/`spr`/`bg`). Eigene Grafiken können später ergänzt werden.

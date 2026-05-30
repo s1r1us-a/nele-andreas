@@ -24,7 +24,7 @@ function classStatKeys(classId){
   talentTreeFor(classId).flat().forEach(n => (n.keys||[]).forEach(k => present.add(k)));
   return STAT_ORDER.filter(k => present.has(k));
 }
-import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
+import { bossFor, zoneBg, zoneName, zoneFlavor, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
@@ -68,6 +68,7 @@ export function renderAdventure(){
   const scene = $('#scene');
   scene.style.backgroundImage = "url('"+zoneBg(state.zone)+"')";
   $('#zoneLabel').textContent = 'Zone '+(state.zone+1)+' · '+zoneName(state.zone);
+  const zf = $('#zoneFlavor'); if(zf) zf.textContent = zoneFlavor(state.zone);
   $('#sceneHero').src = heroSrc(heroTier(t.power));
   $('#findBar').style.width = Math.round(findProgress*100)+'%';
 

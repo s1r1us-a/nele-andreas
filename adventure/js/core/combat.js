@@ -186,6 +186,12 @@ function exchange(fight){
       fight.heroHp = Math.max(0, fight.heroHp - refl);
       mechFloat('hero', '🌵 -'+refl, '#9acd32');
     }
+    // Reflexion: stärkere Schadens-Spiegelung als Dornen.
+    if(hasMech(fight,'reflexion')){
+      const refl = Math.max(1, Math.round(dmg*0.25));
+      fight.heroHp = Math.max(0, fight.heroHp - refl);
+      mechFloat('hero', '🪞 -'+fmtBig(refl), '#b6d0ff');
+    }
     // Helden-Dornen-Affix reflektiert an Boss
     if(fight.thorns > 0){ fight.bossHp = Math.max(0, fight.bossHp - fight.thorns); fight.dmgDealt += fight.thorns; }
   }
@@ -211,6 +217,13 @@ function exchange(fight){
     if(hasMech(fight,'fluch') && fight.turn % 4 === 0){ fight.curseTurns = 3; mechFloat('hero','🟣 Fluch','#a335ee'); }
     if(hasMech(fight,'teilung') && !fight.teilungDone && fight.bossHp < fight.bossMaxHp*0.5){
       fight.teilungDone = true; fight.berserkMult *= 1.5; mechFloat('boss','➗ Teilung!','#ffd24a'); addCombatLog(fight,'➗ Der Boss teilt sich – Angriff stark erhöht!','#ffd24a');
+    }
+    // Auszehrung: senkt periodisch die maximale HP des Helden (zermürbt im langen Kampf).
+    if(hasMech(fight,'auszehrung') && fight.turn % 3 === 0){
+      const cut = Math.max(1, Math.round(fight.heroMaxHp*0.03));
+      fight.heroMaxHp = Math.max(1, fight.heroMaxHp - cut);
+      fight.heroHp = Math.min(fight.heroHp, fight.heroMaxHp);
+      mechFloat('hero', '🦴 Auszehrung', '#c9b6a0');
     }
 
     // Boss-Angriff berechnen
