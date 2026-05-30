@@ -399,9 +399,19 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   100%{opacity:0; transform:scale(1.3) rotate(25deg);} }
 .staff-projectile {
   position:absolute; width:14px; height:14px; border-radius:50%;
+  pointer-events:none; transform:translate(-7px,-7px);
+}
+.staff-projectile.orb-rot {
   background:radial-gradient(circle at 35% 35%, #ff9999, #cc0000 55%, #660000);
   box-shadow:0 0 8px 4px #ff3300, 0 0 2px 1px #ff9999;
-  pointer-events:none; transform:translate(-7px,-7px);
+}
+.staff-projectile.orb-blau {
+  background:radial-gradient(circle at 35% 35%, #a9d0ff, #0066cc 55%, #003366);
+  box-shadow:0 0 8px 4px #3399ff, 0 0 2px 1px #a9d0ff;
+}
+.staff-projectile.orb-gruen {
+  background:radial-gradient(circle at 35% 35%, #b6f5c2, #0a9a3c 55%, #064d1f);
+  box-shadow:0 0 8px 4px #33dd66, 0 0 2px 1px #b6f5c2;
 }
 /* ---- Klassen-Spezialfähigkeiten (Animationen) ---- */
 .ability-btn { border-color:rgba(180,120,255,.5); }
