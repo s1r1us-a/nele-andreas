@@ -97,7 +97,7 @@ export function startBossFight(bossIndex){
   // Im Godmode jederzeit verlassen können (sonst während des Kampfes verborgen).
   if(godmode){ $('#arenaCloseBtn').style.display = ''; $('#arenaCloseBtn').textContent = '🚪 Kampf verlassen'; }
   else $('#arenaCloseBtn').style.display = 'none';
-  combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×';
+  combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×'; $('#speedBtn').style.display = '';
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   updatePotionBtn();
   resetAbilityVisuals();
@@ -411,6 +411,7 @@ export function updatePotionBtn(){
 }
 export function usePotion(){
   const f = currentFight;
+  if(f && f.isDuel){ if(!f.over) f.onAction('potion'); return; }
   if(!f || f.over || (state.potions||0) <= 0) return;
   if(f.heroHp >= f.heroMaxHp){ toast('Bereits volle HP'); return; }
   const heal = Math.round(f.heroMaxHp * HEAL_PCT * f.healDebuff);
@@ -455,6 +456,7 @@ function resetAbilityVisuals(){
 }
 export function useAbility(){
   const f = currentFight;
+  if(f && f.isDuel){ if(!f.over && f.ability && Date.now() >= f.abilityCdUntil) f.onAction('ability'); return; }
   if(!f || f.over || !f.ability) return;
   if(Date.now() < f.abilityCdUntil) return;
   const ab = f.ability;
@@ -521,10 +523,14 @@ export function toggleSpeed(){
   $('#speedBtn').textContent = '⏩ Tempo '+combatSpeed+'×';
 }
 export function closeArena(){
+  const wasDuel = currentFight && currentFight.isDuel ? currentFight : null;
   if(currentFight) currentFight.over = true;
   arenaOverlay().classList.remove('show');
   clearTimeout(combatTimer); combatTimer = null;
   resetAbilityVisuals();
+  $('#speedBtn').style.display = '';
+  if(wasDuel && wasDuel.onClose) wasDuel.onClose();
+  currentFight = null;
   renderAll();
 }
 
@@ -586,6 +592,157 @@ function endFight(fight, win){
     res.innerHTML = '<div class="big">💀 Niederlage</div>'+
       '<div class="sub">'+boss.name+' war zu stark. Grinde bessere Items und versuch es erneut!</div>';
   }
+  $('#arenaCloseBtn').textContent = 'Schließen';
+  $('#arenaCloseBtn').style.display = '';
+}
+
+// =====================================================================
+//  LIVE-PvP-DUELL: exakt dieselbe Arena, der Gegner steht im Boss-Slot.
+//  Der Host (siehe duel.js) simuliert autoritativ; BEIDE Clients rendern
+//  ausschließlich aus dem Kampf-Snapshot via applyDuelSnapshot().
+// =====================================================================
+// cfg: { lobbyId, role, myName, oppName, oppSrc, myTier, ability, stake, onAction, onClose }
+export function openDuelArena(cfg){
+  clearTimeout(combatTimer); combatTimer = null;
+  const t = recomputeTotals();
+  const stage = $('#arenaStage');
+  stage.style.setProperty('--arena-bg', "url('"+zoneBg(state.zone)+"')");
+  $('#heroSprite').src = heroSrc(heroTier(t.power));
+  $('#bossSprite').src = cfg.oppSrc;
+  $('#heroBarName').textContent = cfg.myName || 'Du';
+  $('#bossBarName').textContent = '🆚 ' + (cfg.oppName || 'Gegner');
+
+  const fight = {
+    isDuel: true, role: cfg.role, lobbyId: cfg.lobbyId, stake: cfg.stake|0,
+    onAction: cfg.onAction, onClose: cfg.onClose,
+    heroMaxHp: 1, heroHp: 1, bossMaxHp: 1, bossHp: 1,
+    ability: cfg.ability || null, abilityCdUntil: 0,
+    over: false, anchor: {}, startedAt: Date.now(),
+    _animTurn: -1, _lastHealTs: 0, _ended: false,
+  };
+  currentFight = fight;
+  $('#arenaResult').className = 'arena-result';
+  $('#arenaResult').classList.remove('show');
+  $('#arenaCloseBtn').style.display = ''; $('#arenaCloseBtn').textContent = '🚪 Verlassen';
+  $('#speedBtn').style.display = 'none';   // Tempo ist im Duell host-autoritär
+  combatSpeed = 1;
+  if($('#combatLog')) $('#combatLog').innerHTML = '';
+  resetAbilityVisuals();
+  updateAbilityBtn();
+  $('#potionBtn').textContent = '🧪 Heiltrank (?)';
+  arenaOverlay().classList.add('show');
+
+  requestAnimationFrame(()=> measureAnchors(fight));
+  $('#heroSprite').onload = ()=> { if(currentFight===fight && !fight.over) measureAnchors(fight); };
+  $('#bossSprite').onload = ()=> { if(currentFight===fight && !fight.over) measureAnchors(fight); };
+  return fight;
+}
+
+// Wird bei jedem Kampf-Snapshot (duel/combat/<id>) auf BEIDEN Clients aufgerufen.
+export function applyDuelSnapshot(snap){
+  const f = currentFight;
+  if(!f || !f.isDuel || !snap) return;
+  const me = f.role, opp = me === 'host' ? 'guest' : 'host';
+
+  f.heroMaxHp = snap[me+'MaxHp'] || 1; f.heroHp = snap[me+'Hp'] || 0;
+  f.bossMaxHp = snap[opp+'MaxHp'] || 1; f.bossHp = snap[opp+'Hp'] || 0;
+  updateHpBars(f);
+
+  const sec = Math.max(0.5, (Date.now() - (snap.startedAt || Date.now()))/1000);
+  $('#dpsMeter').textContent = 'DPS '+fmtBig(Math.round((snap.dmgDealt||0)/sec))+
+    ' · Schaden '+fmtBig(snap.dmgDealt||0)+' · Runde '+(snap.turn||0);
+
+  // Eigener Fähigkeits-Cooldown (autoritativ als Restzeit übertragen).
+  f.abilityCdUntil = Date.now() + (snap[me+'CdRemain'] || 0);
+  updateAbilityBtn();
+
+  // Heiltrank-Knopf zeigt die verbleibenden Duell-Tränke der eigenen Seite.
+  const pots = snap[me+'Potions']; const pb = $('#potionBtn');
+  if(pb && pots != null){
+    pb.textContent = '🧪 Heiltrank ('+pots+')';
+    pb.disabled = f.over || pots <= 0 || f.heroHp >= f.heroMaxHp;
+    pb.style.opacity = pb.disabled ? '0.5' : '1';
+  }
+
+  // Kampflog (Map vom Host → nach Index absteigend).
+  if(snap.log){
+    const box = $('#combatLog');
+    if(box){
+      box.innerHTML = Object.entries(snap.log).sort((a,b)=> +b[0]-+a[0]).slice(0,40)
+        .map(([,e])=> '<div class="cl-line" style="color:'+(e.c||'#cfc6dd')+'">'+(e.t||'')+'</div>').join('');
+    }
+  }
+
+  // Angriffs-Animationen einmal pro neuer Runde (Lunge/Treffer/Zahlen wie im SP).
+  if(!f.over && snap.turn !== f._animTurn){
+    f._animTurn = snap.turn;
+    replayDuelEvents(snap.events || [], me);
+  }
+
+  // Skill-Effekt-Visuals (Restzeit-basiert, driftfrei).
+  applyDuelFx(snap.fx || {}, me);
+  if(snap.fx && snap.fx.healTs && snap.fx.healTs !== f._lastHealTs){
+    f._lastHealTs = snap.fx.healTs;
+    mechFloat(snap.fx.healSide === me ? 'hero' : 'boss', '💚 Heilung', '#37d67a');
+  }
+
+  if(snap.over && !f._ended){ f._ended = true; endDuel(f, snap.winner, me); }
+}
+
+function replayDuelEvents(events, me){
+  events.forEach((e, i) => {
+    setTimeout(()=>{
+      if(!currentFight || currentFight.over) {/* Ergebnis kann schon da sein – Treffer trotzdem zeigen */}
+      const attacker = e.s === me ? 'hero' : 'boss';
+      const defender = e.t === me ? 'hero' : 'boss';
+      if(e.o){ mechFloat(defender, '💨 Ausweichen', '#9ec5ff'); return; }
+      if(e.h){ mechFloat(attacker, '💚 +'+fmtBig(e.d||0), '#37d67a'); return; }
+      attackAnim(attacker, e.d||0, !!e.c, ()=>{});
+    }, i * 240);
+  });
+}
+
+function applyDuelFx(fx, me){
+  const oppAblaze = (me === 'host' ? fx.guestAblazeRemain : fx.hostAblazeRemain) || 0;
+  const myAblaze  = (me === 'host' ? fx.hostAblazeRemain  : fx.guestAblazeRemain) || 0;
+  $('#heroSprite').classList.toggle('ablaze', myAblaze > 0);
+  $('#bossSprite').classList.toggle('ablaze', oppAblaze > 0);
+  const myShield = (me === 'host' ? fx.hostShieldRemain : fx.guestShieldRemain) || 0;
+  if(myShield > 0){ if(!$('#shieldDome')) spawnShieldDome('heroSprite'); }
+  else removeShieldDome();
+}
+
+function endDuel(f, winner, me){
+  f.over = true;
+  resetAbilityVisuals();
+  updateAbilityBtn();
+  const draw = winner === 'draw';
+  const win = winner === me;
+  const stake = f.stake|0;
+  // Jeder Client verrechnet den Einsatz auf dem EIGENEN Spielstand (Netto-Pott).
+  if(!draw && stake > 0){
+    if(win){ state.gold += stake; state.stats.goldEarned += stake; }
+    else   { state.gold = Math.max(0, state.gold - stake); }
+  }
+  if(!f._statApplied){
+    f._statApplied = true;
+    if(!draw){ if(win) state.stats.duelWins = (state.stats.duelWins||0)+1;
+               else    state.stats.duelLosses = (state.stats.duelLosses||0)+1; }
+  }
+  saveState();
+
+  const res = $('#arenaResult');
+  if(draw){
+    res.className = 'arena-result show';
+    res.innerHTML = '<div class="big">🤝 Unentschieden</div><div class="sub">Beide Helden fallen gleichzeitig – kein Einsatz wechselt den Besitzer.</div>';
+  } else if(win){
+    res.className = 'arena-result win show';
+    res.innerHTML = '<div class="big">🏆 Sieg!</div><div class="sub">Du gewinnst das Duell!'+(stake>0?' 💰 +'+fmtBig(stake)+' Gold':'')+'</div>';
+  } else {
+    res.className = 'arena-result lose show';
+    res.innerHTML = '<div class="big">💀 Niederlage</div><div class="sub">Dein Gegner war stärker.'+(stake>0?' 💰 −'+fmtBig(stake)+' Gold':'')+'</div>';
+  }
+  $('#potionBtn').disabled = true; $('#potionBtn').style.opacity = '0.5';
   $('#arenaCloseBtn').textContent = 'Schließen';
   $('#arenaCloseBtn').style.display = '';
 }
