@@ -3,7 +3,6 @@
    Charakter-Editor, Dev-Werkzeuge, Boss-Liste/Farm (#17), Statistik (#28),
    Onboarding (#29).
    ===================================================================== */
-import { INV_SLOTS } from '../data/tuning.js';
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
@@ -14,22 +13,22 @@ import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
-import { state, saveState, resetState, listCharacters, createCharacter,
+import { state, saveState, listCharacters, createCharacter,
          switchCharacter, deleteCharacter, canAddCharacter, activeCharId } from '../core/state.js';
-import { recomputeTotals, heroTier, gainXp } from '../core/character.js';
+import { recomputeTotals, heroTier } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
-         isLocked, toggleLock, rollItem, inventoryFull, canEquip } from '../core/items.js';
+         isLocked, toggleLock, canEquip } from '../core/items.js';
 import { startExpedition } from '../core/expedition.js';
-import { ITEM_TYPES } from '../data/itemTypes.js';
-import { startBossFight, updatePotionBtn, setGodmode, isGodmode,
-         openDuelArena, applyDuelSnapshot } from '../core/combat.js';
+import { startBossFight, updatePotionBtn,
+         openDuelArena, applyDuelSnapshot, resolveArenaOpponentLeft } from '../core/combat.js';
 import { computePlayerStats } from '../core/tower.js';
-import { userKey } from '../core/firebase.js';
+import { db, ref, get, userKey } from '../core/firebase.js';
+import { getCoins } from '../core/coins.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
-         startDuelHost, stopDuelHost, serverNow, otherKey, loadGuestSave,
-         resolveActiveSlot } from '../core/duel.js';
+         requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
+         loadGuestSave, resolveActiveSlot } from '../core/duel.js';
 import { $, fmtVal, fmtBig, IS_TOUCH, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { renderAll } from './render.js';
@@ -154,14 +153,14 @@ export function openSellModal(item){
   openModal('<h2 style="color:'+r.color+'">'+item.name+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
     '<div class="preview-stats">'+stats+'</div>'+
-    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 💰 '+fmtBig(price)+' Gold?</div>'+
+    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 🪙 '+fmtBig(price)+' Münzen?</div>'+
     '<div class="preview-actions">'+
       '<button class="btn" id="sellConfirm">Verkaufen</button>'+
       '<button class="btn ghost" id="sellLock">'+(isLocked(item.id)?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="sellCancel">Abbrechen</button>'+
     '</div>');
   modal().querySelector('#sellConfirm').addEventListener('click', ()=>{
-    const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Gold');
+    const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Münzen');
   });
   modal().querySelector('#sellLock').addEventListener('click', ()=>{ toggleLock(item.id); openSellModal(item); });
   modal().querySelector('#sellCancel').addEventListener('click', closeModal);
@@ -276,7 +275,7 @@ export function openStats(){
       '<div class="cs-group"><h4>Beute</h4>'+
         row('Funde gesamt', state.totalFinds||0)+
         row('Expeditionen', s.expeditionsDone)+
-        row('Gold verdient', fmtBig(s.goldEarned))+
+        row('Münzen verdient', fmtBig(s.goldEarned))+
         row('Bestes Item', best)+
       '</div>'+
       '<div class="cs-group" style="grid-column:1 / -1;"><h4>Drops nach Seltenheit</h4>'+dropRows+'</div>'+
@@ -452,76 +451,6 @@ export function openRosterModal(){
   modal().querySelector('#rosterClose').addEventListener('click', closeModal);
 }
 
-// ---- Dev-/Test-Werkzeuge -------------------------------------------
-const devOverlay = () => $('#devOverlay');
-const devModal = () => $('#devModal');
-export function openDevPanel(){
-  devModal().innerHTML =
-    '<h2>🛠 Test-Werkzeuge</h2>'+
-    '<div class="sub">Nur zum Testen – nicht Teil des normalen Spiels.</div>'+
-    '<div class="dev-list">'+
-      '<button class="btn ghost" id="devFinish">⏭️ Abenteuer sofort beenden</button>'+
-      '<button class="btn ghost" id="devFill">🎒 Inventar mit Items füllen</button>'+
-      '<button class="btn ghost" id="devOneEach">🧰 Eins von jedem Item-Typ</button>'+
-      '<button class="btn ghost" id="devClear">🗑️ Inventar leeren (außer 🔒)</button>'+
-      '<button class="btn ghost" id="devGod">'+(isGodmode()?'🛡️ Godmode: AN':'🛡️ Godmode: AUS')+'</button>'+
-      '<button class="btn ghost" id="devBosses">⚔️ Gegen beliebigen Boss kämpfen</button>'+
-      '<button class="btn ghost" id="devGold">💰 +100000 Gold</button>'+
-      '<button class="btn ghost" id="devXp">⭐ +5000 XP</button>'+
-      '<button class="btn ghost" id="devPotion">🧪 +3 Heiltränke</button>'+
-      '<button class="btn ghost" id="devSkip">⏩ Boss überspringen (+1 Zone)</button>'+
-      '<button class="btn" id="devReset" style="background:linear-gradient(180deg,#c0392b,#922d22);">♻️ Spiel komplett zurücksetzen</button>'+
-    '</div>'+
-    '<div class="close-row"><button class="btn ghost" id="devClose">Schließen</button></div>';
-  const q = s => devModal().querySelector(s);
-  q('#devFinish').addEventListener('click', ()=>{ if(state.expedition){ state.expedition.endsAt = Date.now(); saveState(); renderAll(); } devOverlay().classList.remove('show'); });
-  q('#devFill').addEventListener('click', ()=>{ while(state.inventory.length < INV_SLOTS) state.inventory.push(rollItem(state.zone, 2)); saveState(); renderAll(); });
-  q('#devOneEach').addEventListener('click', ()=>{
-    const slotForArt = art => Object.keys(SLOTS).find(k => SLOTS[k].art === art);
-    for(const art of Object.keys(ITEM_TYPES)){
-      const sk = slotForArt(art); if(!sk) continue;
-      for(const ty of ITEM_TYPES[art])
-        state.inventory.push(rollItem(state.zone, 0, { slots:[sk], forceType:ty.key, forceRarityKey:'episch' }));
-    }
-    saveState(); renderAll(); toast('🧰 Je 1 Item pro Typ ins Inventar gelegt');
-  });
-  q('#devClear').addEventListener('click', ()=>{ state.inventory = state.inventory.filter(it=>isLocked(it.id)); saveState(); renderAll(); });
-  q('#devGod').addEventListener('click', ()=>{ setGodmode(!isGodmode()); q('#devGod').textContent = isGodmode()?'🛡️ Godmode: AN':'🛡️ Godmode: AUS'; });
-  q('#devBosses').addEventListener('click', ()=>{ devOverlay().classList.remove('show'); openDevBossPicker(); });
-  q('#devGold').addEventListener('click', ()=>{ state.gold += 100000; saveState(); renderAll(); });
-  q('#devXp').addEventListener('click', ()=>{ gainXp(5000); saveState(); renderAll(); });
-  q('#devPotion').addEventListener('click', ()=>{ state.potions = (state.potions||0) + 3; saveState(); renderAll(); updatePotionBtn(); });
-  q('#devSkip').addEventListener('click', ()=>{ state.firstClears[state.zone]=true; state.zone++; saveState(); renderAll(); });
-  q('#devReset').addEventListener('click', ()=>{
-    if(!confirm('Wirklich alles löschen und neu starten?')) return;
-    resetState(); devOverlay().classList.remove('show'); renderAll(); openCharacterCreator(true);
-  });
-  q('#devClose').addEventListener('click', ()=> devOverlay().classList.remove('show'));
-  devOverlay().classList.add('show');
-}
-
-// Dev: direkt gegen JEDEN Boss kämpfen (auch noch nicht freigeschaltete).
-export function openDevBossPicker(){
-  let rows = '';
-  for(let i=0; i<BOSS_COUNT; i++){
-    const b = bossFor(i);
-    rows += '<div class="bl-row">'+
-      '<img class="bl-portrait" src="'+b.sprite+'" alt="">'+
-      '<div class="bl-info"><div class="bl-name">👑 '+(i+1)+'. '+b.name+'</div>'+
-        '<div class="bl-meta">'+zoneName(i)+' · Kraft '+fmtBig(b.recPower)+'</div></div>'+
-      '<button class="btn ghost" data-devfight="'+i+'">Kämpfen</button>'+
-    '</div>';
-  }
-  openModal('<h2>🛠 Boss-Test</h2>'+
-    '<div class="sub">Direkt gegen jeden Boss kämpfen (nur Test). Tipp: Godmode aktivieren.</div>'+
-    '<div class="boss-list">'+rows+'</div>'+
-    '<div class="close-row"><button class="btn ghost" id="dbpClose">Schließen</button></div>');
-  modal().querySelectorAll('[data-devfight]').forEach(btn => btn.addEventListener('click', ()=>{
-    const idx = parseInt(btn.dataset.devfight,10); closeModal(); startBossFight(idx);
-  }));
-  modal().querySelector('#dbpClose').addEventListener('click', closeModal);
-}
-
 // =====================================================================
 //  LIVE-PvP-DUELL – Lobby (nutzt das vorhandene Lobby-System aus duel.js)
 // =====================================================================
@@ -548,10 +477,10 @@ export function openDuelLobby(){
   cleanupDuel(false);
   openModal(
     '<h2>⚔️🆚 Duell – Live-PvP</h2>'+
-    '<div class="sub">Tritt live gegen <b>'+cap(otherKey())+'</b> an – beide setzen Gold ein, der Sieger bekommt den Pott. '+
-      'Eure echten Werte zählen. (Dein Gold: 💰 '+fmtBig(state.gold)+')</div>'+
+    '<div class="sub">Tritt live gegen <b>'+cap(otherKey())+'</b> an – beide setzen Münzen ein, der Sieger bekommt den Pott. '+
+      'Eure echten Werte zählen. (Deine Münzen: 🪙 '+fmtBig(getCoins())+')</div>'+
     '<div class="duel-box">'+
-      '<label class="duel-row">Einsatz 💰 <input id="duelStake" type="number" min="0" value="50"></label>'+
+      '<label class="duel-row">Einsatz 🪙 <input id="duelStake" type="number" min="0" value="50"></label>'+
       '<label class="duel-row">Code <input id="duelCode" type="text" placeholder="z. B. nele"></label>'+
       '<div class="duel-actions">'+
         '<button class="btn" id="duelCreateBtn">Lobby erstellen</button>'+
@@ -567,7 +496,7 @@ export function openDuelLobby(){
 
 async function duelCreate(){
   const stake = Math.max(0, parseInt($('#duelStake').value, 10) || 0);
-  if(state.gold < stake){ toast('💰 Dafür reicht dein Gold nicht.'); return; }
+  if(getCoins() < stake){ toast('🪙 Dafür reichen deine Münzen nicht.'); return; }
   const code = ($('#duelCode').value || '').trim();
   try {
     _dHost = true; _dStake = stake;
@@ -589,7 +518,8 @@ async function duelJoin(){
 
 function onDuelUpdate(lobby){
   if(!lobby || lobby.status === 'ended'){
-    if(!_dArena){ stopDuelCountdown(); toast('Duell-Lobby geschlossen.'); cleanupDuel(false); closeModal(); renderAll(); }
+    if(_dArena){ resolveArenaOpponentLeft(); }   // Gegner mitten im Duell weg → wir gewinnen
+    else { stopDuelCountdown(); toast('Duell-Lobby geschlossen.'); cleanupDuel(false); closeModal(); renderAll(); }
     return;
   }
   _dStake = lobby.stake || 0;
@@ -624,7 +554,7 @@ function renderDuelLobby(lobby){
   const meReady = _dHost ? lobby.hostReady : lobby.guestReady;
   openModal(
     '<h2>⚔️🆚 Duell-Lobby</h2>'+
-    '<div class="sub">Einsatz: 💰 '+fmtBig(lobby.stake||0)+' · Code: <b>'+_dId+'</b> (teile ihn mit '+cap(otherKey())+')</div>'+
+    '<div class="sub">Einsatz: 🪙 '+fmtBig(lobby.stake||0)+' · Code: <b>'+_dId+'</b> (teile ihn mit '+cap(otherKey())+')</div>'+
     '<div class="duel-vs">'+chip(lobby.hostName, lobby.hostReady, lobby.host)+
       '<span class="duel-vs-mid">VS</span>'+chip(lobby.guestName, lobby.guestReady, lobby.guest)+'</div>'+
     '<div class="duel-status" id="duelStatus"></div>'+
@@ -634,7 +564,7 @@ function renderDuelLobby(lobby){
     '</div>');
   const rb = $('#duelReadyBtn');
   if(rb) rb.addEventListener('click', ()=>{
-    if(!meReady && state.gold < (lobby.stake||0)){ toast('💰 Dafür reicht dein Gold nicht.'); return; }
+    if(!meReady && getCoins() < (lobby.stake||0)){ toast('🪙 Dafür reichen deine Münzen nicht.'); return; }
     setDuelReady(_dId, _dHost, !meReady);
   });
   $('#duelLeaveBtn').addEventListener('click', ()=>{ cleanupDuel(true); closeModal(); renderAll(); });
@@ -651,8 +581,11 @@ async function hostBeginDuel(lobby){
     const hostStats = computePlayerStats(state);
     const guestStats = computePlayerStats(oppSave);
     const stake = lobby.stake || 0;
-    if(state.gold < stake || (oppSave.gold || 0) < stake){
-      toast('💰 Einer von euch hat nicht genug Gold für den Einsatz.');
+    // Münzstände beider Spieler aus dem globalen Wallet prüfen (nicht aus dem Save).
+    let oppCoins = 0;
+    try { oppCoins = Number((await get(ref(db, `coins/${oppKey}`))).val()) || 0; } catch(e){}
+    if(getCoins() < stake || oppCoins < stake){
+      toast('🪙 Einer von euch hat nicht genug Münzen für den Einsatz.');
       setDuelStatus(_dId, { hostReady:false, guestReady:false, startAt:null });
       _dStarting = false; return;
     }
@@ -688,6 +621,7 @@ function enterDuelArena(lobby){
       myName: dMyName(), oppName: _dHost ? lobby.guestName : lobby.hostName,
       oppSrc, ability: classOf(state).ability,
       onAction: (kind) => requestDuelAction(_dId, role, kind),
+      onForfeit: () => requestDuelForfeit(_dId, role),
       onClose: () => cleanupDuel(true),
     });
     _dUnsubCombat = listenDuelCombat(_dId, snap => { if(snap) applyDuelSnapshot(snap); });

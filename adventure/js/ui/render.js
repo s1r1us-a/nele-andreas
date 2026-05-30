@@ -30,6 +30,7 @@ import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
 import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
+import { getCoins, spendCoins } from '../core/coins.js';
 import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
@@ -47,7 +48,7 @@ const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
 // ---- Top-Leiste -----------------------------------------------------
 export function renderTopStats(){
   const t = recomputeTotals();
-  $('#miniGold').textContent = fmtBig(state.gold);
+  // #miniGold (Münzstand) wird vom globalen Coin-Listener in main.js gepflegt.
   $('#miniArmor').textContent = t.armor;
   $('#miniDamage').textContent = t.damage;
   $('#miniPower').textContent = t.power;
@@ -236,7 +237,7 @@ export function renderTalents(){
     '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+'</span>'+
     '<span class="talent-points">Punkte: <b>'+points+'</b></span>'+
     '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
-      '♻️ Zurücksetzen (💰 '+fmtBig(RESPEC_COST)+')</button>'+
+      '♻️ Zurücksetzen (🪙 '+fmtBig(RESPEC_COST)+')</button>'+
     '</div>'+
     '<p class="talents-hint"><b>Pro Stufe</b> wählst du <b>genau ein</b> Talent (kostet 1 Punkt). Die nächste Stufe öffnet sich danach.</p>';
 
@@ -302,9 +303,9 @@ function chooseTalent(stufeIndex, optionId){
 function respecTalents(){
   const chosenCount = chosenTalentCount(state);
   if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
-  if((state.gold||0) < RESPEC_COST){ toast('Nicht genug Gold ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
-  if(!confirm('Alle Talente zurücksetzen für '+fmtBig(RESPEC_COST)+' Gold? Die Punkte erhältst du zurück.')) return;
-  state.gold -= RESPEC_COST;
+  if(getCoins() < RESPEC_COST){ toast('Nicht genug Münzen ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
+  if(!confirm('Alle Talente zurücksetzen für '+fmtBig(RESPEC_COST)+' Münzen? Die Punkte erhältst du zurück.')) return;
+  spendCoins(RESPEC_COST).catch(()=>{});
   state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
   state.character.talents = {};
   saveState();
@@ -516,11 +517,11 @@ export function renderShop(){
   panel.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'shop-head';
-  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">💰 '+fmtBig(state.gold)+' Gold</span>';
+  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Münzen</span>';
   panel.appendChild(head);
   const note = document.createElement('p');
   note.className = 'shop-note';
-  note.textContent = 'Verkaufe Gegenstände für Gold. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
+  note.textContent = 'Verkaufe Gegenstände für Münzen. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
   panel.appendChild(note);
   const actions = document.createElement('div');
   actions.className = 'shop-actions';
@@ -531,7 +532,7 @@ export function renderShop(){
     b.addEventListener('click', ()=>{
       const res = sellMany(filterFn);
       renderAll();
-      toast(res.n ? '+'+fmtBig(res.gold)+' Gold ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
+      toast(res.n ? '+'+fmtBig(res.coins)+' Münzen ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
     });
     actions.appendChild(b);
   };
@@ -557,7 +558,7 @@ export function renderShop(){
     cell.style.setProperty('--rc', r.color);
     cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">'+
       (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
-      '<span class="price">💰 '+fmtBig(sellPrice(it))+'</span>';
+      '<span class="price">🪙 '+fmtBig(sellPrice(it))+'</span>';
     bindTooltip(cell, it);
     cell.addEventListener('click', (e)=>{
       hideTooltip();

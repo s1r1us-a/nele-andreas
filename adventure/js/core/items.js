@@ -9,6 +9,7 @@ import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf } from '..
 import { allowedMaterials, classOf } from '../data/classes.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
+import { awardCoins } from './coins.js';
 import { toast } from '../ui/dom.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
@@ -165,6 +166,8 @@ export function toggleLock(id){
   saveState();
 }
 
+// Verkauf: Item entfernen und seinen Wert (sellPrice) als globale Münzen
+// gutschreiben. Liefert den ausgezahlten Betrag zurück (0, wenn nichts ging).
 export function sellItem(id){
   if(isLocked(id)) return 0;
   const idx = state.inventory.findIndex(i => i.id === id);
@@ -172,22 +175,21 @@ export function sellItem(id){
   const it = state.inventory[idx];
   const price = sellPrice(it);
   state.inventory.splice(idx, 1);
-  state.gold += price;
+  awardCoins(price).catch(()=>{});
   state.stats.goldEarned += price;
   saveState();
   return price;
 }
 export function sellMany(filterFn){
-  let gold = 0, n = 0;
+  let coins = 0, n = 0;
   const keep = [];
   for(const it of state.inventory){
-    if(!isLocked(it.id) && filterFn(it)){ gold += sellPrice(it); n++; } else keep.push(it);
+    if(!isLocked(it.id) && filterFn(it)){ coins += sellPrice(it); n++; } else keep.push(it);
   }
   state.inventory = keep;
-  state.gold += gold;
-  state.stats.goldEarned += gold;
+  if(coins > 0){ awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins; }
   saveState();
-  return { gold, n };
+  return { coins, n };
 }
 
 // ---- Ausrüsten ------------------------------------------------------
