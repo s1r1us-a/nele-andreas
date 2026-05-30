@@ -295,14 +295,14 @@ function lunge(el, isBoss){
     { duration: 220 / combatSpeed, easing:'ease-out' }
   );
 }
-// Stab-Cast: Held lehnt sich nach vorne und hält den Stab vor (sanfter als der Nahkampf-Schwung).
+// Stab-Cast: Held lehnt sich deutlich nach vorne und hält den Stab dem Boss entgegen.
 function staffCast(el){
   el.animate(
     [ { transform:'translateX(0) rotate(0deg)' },
-      { transform:'translateX(26px) rotate(-6deg)', offset:0.4 },
-      { transform:'translateX(22px) rotate(-5deg)', offset:0.7 },
+      { transform:'translateX(40px) rotate(-9deg)', offset:0.35 },
+      { transform:'translateX(34px) rotate(-7deg)', offset:0.7 },
       { transform:'translateX(0) rotate(0deg)' } ],
-    { duration: 300 / combatSpeed, easing:'ease-out' }
+    { duration: 340 / combatSpeed, easing:'ease-out' }
   );
 }
 function mechFloat(who, text, color){
@@ -348,23 +348,23 @@ function attackAnim(who, dmg, crit, onHit){
   const heroId   = isHero ? 'heroSprite' : 'bossSprite';
   const stage = $('#arenaStage');
   const layer = $('#dmgLayer');
-  const useProjectile = isHero && !reduce && heroUsesStab();
+  // Kampf-Animationen (Schwung, Stab-Cast, Projektil) laufen unabhängig von
+  // prefers-reduced-motion – nur das ruckartige Screen-Shake respektiert die Einstellung.
+  const useProjectile = isHero && heroUsesStab();
 
-  if(!reduce && !useProjectile){ lunge(attacker, !isHero); }
-  else if(useProjectile){ staffCast(attacker); }
+  if(!useProjectile){ lunge(attacker, !isHero); }
+  else { staffCast(attacker); }
 
   const doHit = () => {
     if(onHit) onHit();
-    if(!reduce){
-      target.classList.add('hit');
-      setTimeout(()=> target.classList.remove('hit'), FLASH / combatSpeed);
-      if(crit || Math.random()<.5){ stage.classList.add('shake');
-        setTimeout(()=> stage.classList.remove('shake'), SHAKE / combatSpeed); }
-    }
+    target.classList.add('hit');
+    setTimeout(()=> target.classList.remove('hit'), FLASH / combatSpeed);
+    if(!reduce && (crit || Math.random()<.5)){ stage.classList.add('shake');
+      setTimeout(()=> stage.classList.remove('shake'), SHAKE / combatSpeed); }
     const a = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
     const jitter = Math.round((Math.random()*2-1)*12);
     const x = a.x + jitter, y = a.y;
-    if(!reduce && !useProjectile){
+    if(!useProjectile){
       const slash = document.createElement('div');
       slash.className = 'slash'; slash.style.left=(x-45)+'px'; slash.style.top=(y-45)+'px';
       layer.appendChild(slash);
@@ -384,7 +384,7 @@ function attackAnim(who, dmg, crit, onHit){
     const orb  = (state.equipped && state.equipped.waffe && typeOf(state.equipped.waffe).orb) || 'rot';
     staffProjectileAnim(from, to, layer, combatSpeed, orb, doHit);
   } else {
-    setTimeout(doHit, reduce ? 0 : HIT_DELAY / combatSpeed);
+    setTimeout(doHit, HIT_DELAY / combatSpeed);
   }
 }
 
