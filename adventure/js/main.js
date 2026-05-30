@@ -24,12 +24,8 @@ $('#challengeBtn').addEventListener('click', ()=> startBossFight());
 $('#bossListBtn').addEventListener('click', openBossList);
 $('#statsBtn').addEventListener('click', openStats);
 $('#devBtn').addEventListener('click', openDevPanel);
-$('#editLookBtn').addEventListener('click', ()=> openCharacterCreator(false));
-$('#toggleHelmBtn').addEventListener('click', ()=>{
-  if(!state.settings) state.settings = {};
-  state.settings.hideHelmet = !state.settings.hideHelmet;
-  saveState(); renderAll();
-});
+// „Aussehen ändern" und „Helm" liegen jetzt im dynamischen Charakter-Header
+// (in render.js verdrahtet, da bei jedem Render neu aufgebaut).
 $('#speedBtn').addEventListener('click', toggleSpeed);
 $('#potionBtn').addEventListener('click', usePotion);
 $('#abilityBtn').addEventListener('click', useAbility);

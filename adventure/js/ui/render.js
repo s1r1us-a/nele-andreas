@@ -6,10 +6,11 @@ import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
          CAT_ICON, CAT_ORDER } from '../data/slots.js';
 import { EXPEDITIONS } from '../data/expeditions.js';
-import { STAT_HELP } from '../data/statHelp.js';
+import { STAT_HELP, STAT_INFO } from '../data/statHelp.js';
 import { classOf } from '../data/classes.js';
 import { RESPEC_COST } from '../data/tuning.js';
-import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked } from '../data/talents.js';
+import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked,
+         talentStatKeys } from '../data/talents.js';
 import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
@@ -20,7 +21,8 @@ import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
-import { openSlotPicker, openItemPreview, openSellModal, previewExpedition, openRosterModal } from './modals.js';
+import { openSlotPicker, openItemPreview, openSellModal, previewExpedition,
+         openRosterModal, openCharacterCreator } from './modals.js';
 
 export function renderAll(){
   hideTooltip(); renderTopStats(); renderAdventure();
@@ -149,14 +151,6 @@ export function renderCharacter(){
   const t = recomputeTotals();
   const tier = heroTier(t.power);
   $('#dollHero').src = heroSrc(tier);
-  const helmBtn = $('#toggleHelmBtn');
-  if(helmBtn){
-    const hasHelm = !!(state.equipped && state.equipped.kopf);
-    const hidden = !!(state.settings && state.settings.hideHelmet);
-    helmBtn.textContent = hidden ? '🪖 Helm zeigen' : '🪖 Helm verbergen';
-    helmBtn.disabled = !hasHelm;
-    helmBtn.title = hasHelm ? '' : 'Kein Helm angelegt';
-  }
   $('#tierBadge').textContent = TIER_NAME[tier] + ' · ' + t.power + ' Kampfkraft';
   $('#tierBadge').title = STAT_HELP.kampfkraft;
   const L = $('#dollLeft'), R = $('#dollRight'), B = $('#dollBottom');
@@ -164,27 +158,49 @@ export function renderCharacter(){
   LEFT_SLOTS.forEach(s => L.appendChild(slotEl(s)));
   RIGHT_SLOTS.forEach(s => R.appendChild(slotEl(s)));
   BOTTOM_SLOTS.forEach(s => B.appendChild(slotEl(s)));
-  renderRosterBar();
+  renderCharHeader(t, tier);
   renderCharStats(t);
   renderTalents();
 }
 
-// ---- Charakter-Roster-Leiste (Wechsel / Neu) -----------------------
-export function renderRosterBar(){
-  const box = $('#charRoster'); if(!box) return;
+// ---- Charakter-Header (Identität + Aktionen) -----------------------
+export function renderCharHeader(t, tier){
+  const box = $('#charHeader'); if(!box) return;
   const cls = classOf(state);
   const ch = state.character;
   const name = (ch && ch.name) ? ch.name : (ch ? cls.label : 'Neuer Held');
+  const lvl = state.level || 1;
+  const need = xpForLevel(lvl), cur = xpInLevel(state.xp || 0, lvl);
+  const xpPct = Math.max(0, Math.min(100, cur/need*100));
   const count = listCharacters().length;
+  const hasHelm = !!(state.equipped && state.equipped.kopf);
+  const hidden  = !!(state.settings && state.settings.hideHelmet);
   box.innerHTML =
-    '<div class="cr-current">'+
-      '<span class="cr-ico">'+cls.icon+'</span>'+
-      '<span class="cr-name">'+name+'</span>'+
-      '<span class="cr-meta">'+cls.label+' · Level '+(state.level||1)+'</span>'+
+    '<div class="ch-id">'+
+      '<div class="ch-avatar"><img src="'+heroSrc(tier)+'" alt="">'+
+        '<span class="ch-tier">'+TIER_NAME[tier]+'</span></div>'+
+      '<div class="ch-main">'+
+        '<div class="ch-name">'+name+'</div>'+
+        '<div class="ch-class">'+cls.icon+' '+cls.label+'</div>'+
+        '<div class="ch-level">Level <b>'+lvl+'</b> <small>'+cur+' / '+need+' XP</small></div>'+
+        '<div class="ch-xpbar"><i style="width:'+xpPct+'%"></i></div>'+
+        '<div class="ch-power" title="'+STAT_HELP.kampfkraft.replace(/"/g,'&quot;')+'">⚔️ Kampfkraft <b>'+t.power+'</b></div>'+
+      '</div>'+
     '</div>'+
-    '<button class="btn ghost cr-switch" id="rosterBtn">👥 Charaktere ('+count+')</button>';
-  const btn = box.querySelector('#rosterBtn');
-  if(btn) btn.addEventListener('click', openRosterModal);
+    '<div class="ch-actions">'+
+      '<button class="btn ghost" id="rosterBtn">👥 Charaktere ('+count+')</button>'+
+      '<button class="btn ghost" id="editLookBtn">✏️ Aussehen</button>'+
+      '<button class="btn ghost" id="helmBtn"'+(hasHelm?'':' disabled title="Kein Helm angelegt"')+'>'+
+        (hidden?'🪖 Helm zeigen':'🪖 Helm verbergen')+'</button>'+
+    '</div>';
+  box.querySelector('#rosterBtn').addEventListener('click', openRosterModal);
+  box.querySelector('#editLookBtn').addEventListener('click', ()=> openCharacterCreator(false));
+  const helm = box.querySelector('#helmBtn');
+  if(helm && hasHelm) helm.addEventListener('click', ()=>{
+    if(!state.settings) state.settings = {};
+    state.settings.hideHelmet = !state.settings.hideHelmet;
+    saveState(); renderAll();
+  });
 }
 
 // ---- Talentbaum: 10 Stufen, pro Stufe genau EIN Talent -------------
@@ -196,37 +212,54 @@ export function renderTalents(){
   if(!tree.length){ box.innerHTML = ''; return; }
   const points = state.character.talentPoints || 0;
   const chosenCount = chosenTalentCount(state);
+  const esc = s => (s||'').replace(/"/g,'&quot;');
 
   let html = '<div class="talents-head">'+
-    '<h4>🌳 Talente – '+cls.icon+' '+cls.label+'</h4>'+
-    '<span class="talent-points">Verfügbare Punkte: <b>'+points+'</b></span>'+
+    '<span class="talents-class">'+cls.icon+' '+cls.label+'</span>'+
+    '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+'</span>'+
+    '<span class="talent-points">Punkte: <b>'+points+'</b></span>'+
+    '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
+      '♻️ Zurücksetzen (💰 '+fmtBig(RESPEC_COST)+')</button>'+
     '</div>'+
-    '<p class="talents-hint">Pro Level erhältst du einen Talentpunkt. <b>Pro Stufe</b> wählst du <b>genau ein</b> Talent – die nächste Stufe öffnet sich danach.</p>'+
-    '<div class="talents-respec">'+
-      '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
-        '♻️ Talente zurücksetzen (💰 '+fmtBig(RESPEC_COST)+')</button>'+
-    '</div>';
+    '<p class="talents-hint"><b>Pro Stufe</b> wählst du <b>genau ein</b> Talent (kostet 1 Punkt). Die nächste Stufe öffnet sich danach.</p>';
 
   tree.forEach((tier, ti) => {
     const unlocked = stufeUnlocked(state, ti);
     const chosenId = chosenTalentId(state, ti);
-    html += '<div class="talent-tier'+(unlocked?'':' locked')+'">'+
-      '<span class="talent-tier-label">Stufe '+(ti+1)+(unlocked?'':' 🔒')+'</span>'+
+    const canPick  = unlocked && chosenId == null && points > 0;
+    const stateLbl = chosenId != null ? '✓ gewählt' : (unlocked ? (points>0?'wählbar':'kein Punkt') : '🔒 gesperrt');
+    html += '<div class="talent-tier'+(unlocked?'':' locked')+(chosenId!=null?' done':'')+'">'+
+      '<div class="talent-tier-head"><span class="talent-tier-label">Stufe '+(ti+1)+'</span>'+
+        '<span class="talent-tier-state">'+stateLbl+'</span></div>'+
       '<div class="talent-row">';
     tier.forEach(node => {
       const isChosen = chosenId === node.id;
-      const dimmed = chosenId != null && !isChosen;   // andere Option der Stufe gewählt
+      const dimmed = chosenId != null && !isChosen;
       const dis = !unlocked || (chosenId != null);
+      // Tooltip: Wert + Wirk-Erklärung der betroffenen Stats.
+      const explain = node.keys.map(k => STAT_INFO[k] ? STAT_INFO[k].help : '').filter(Boolean).join('\n');
+      const tip = node.desc + (explain ? '\n\n' + explain : '');
       const cssCls = 'talent-node' + (isChosen ? ' taken' : '') +
-        (!unlocked ? ' locked' : '') + (dimmed ? ' dimmed' : '');
+        (!unlocked ? ' locked' : '') + (dimmed ? ' dimmed' : '') + (canPick ? ' pickable' : '');
       html += '<button class="'+cssCls+'" data-stufe="'+ti+'" data-talent="'+node.id+'"'+(dis?' disabled':'')+
-        ' title="'+(node.desc||'').replace(/"/g,'&quot;')+'">'+
+        ' title="'+esc(tip)+'">'+
+        (isChosen?'<span class="talent-check">✓</span>':'')+
         '<span class="talent-icon">'+(node.icon||'✦')+'</span>'+
         '<span class="talent-name">'+node.name+'</span>'+
-        '<span class="talent-rank">'+node.desc+'</span></button>';
+        '<span class="talent-val">'+node.desc+'</span></button>';
     });
     html += '</div></div>';
   });
+
+  // Werte-Legende (immer sichtbar, einklappbar) – erklärt jeden Klassen-Wert.
+  const legendRows = talentStatKeys(cls.id).map(k => {
+    const i = STAT_INFO[k]; if(!i) return '';
+    return '<div class="legend-row"><span class="legend-label">'+i.label+'</span>'+
+      '<span class="legend-help">'+i.help.replace(/^[^:]*:\s*/,'')+'</span></div>';
+  }).join('');
+  html += '<details class="talent-legend"><summary>ℹ️ Was bewirken die Werte?</summary>'+
+    '<div class="legend-list">'+legendRows+'</div></details>';
+
   box.innerHTML = html;
 
   box.querySelectorAll('.talent-node[data-talent]').forEach(btn => {
@@ -266,26 +299,31 @@ function renderCharStats(t){
   const lvl = state.level || 1;
   const need = xpForLevel(lvl), cur = xpInLevel(state.xp || 0, lvl);
   const pct = v => (v*100).toFixed(1).replace(/\.0$/,'') + '%';
-  // info = Schlüssel in STAT_HELP → Hover-Erklärung (title) + ⓘ-Markierung.
+  // info = Schlüssel in STAT_HELP → Hover-Erklärung (title) + Antippen (Toast).
   const row = (label, val, cls, info) => {
     const help = info && STAT_HELP[info] ? STAT_HELP[info] : '';
-    const tAttr = help ? ' title="'+help.replace(/"/g,'&quot;')+'"' : '';
+    const tAttr = help ? ' title="'+help.replace(/"/g,'&quot;')+'" data-help="'+info+'"' : '';
     const lbl = label + (help ? ' <span class="cs-info">ⓘ</span>' : '');
     return '<div class="cs-row'+(help?' has-help':'')+'"'+tAttr+'><span class="cs-l">'+lbl+
       '</span><b class="cs-v'+(cls?' '+cls:'')+'">'+val+'</b></div>';
   };
+  // Sekundärwerte: nur anzeigen, wenn vorhanden (>0) – als eigene Gruppe.
   let secondary = '';
   if(t.lifesteal>0)   secondary += row('Lebensraub', pct(t.lifesteal), 'hp', 'lebensraub');
   if(t.dodge>0)       secondary += row('Ausweichen', pct(t.dodge), 'armor', 'ausweichen');
   if(t.versatility>0) secondary += row('Vielseitigkeit', pct(t.versatility), 'crit', 'vielseitigkeit');
   if(t.thorns>0)      secondary += row('Dornen', t.thorns, 'damage', 'dornen');
+  if(t.block>0)       secondary += row('Block', t.block, 'armor', 'block');
+  const secGroup = secondary
+    ? '<div class="cs-group"><h4>Sekundärwerte</h4>'+secondary+'</div>' : '';
   const cls = classOf(state);
   // Aktive Schule fett markieren, inaktiven Krit dezent („wirkt nicht").
   const physActive = c.school === 'physisch', magicActive = c.school === 'magisch';
   const critRow = (label, val, active, info) =>
     row(label + (active ? ' <span class="cs-active">★</span>' : ' <small>(inaktiv)</small>'),
         pct(val), 'crit', info);
-  $('#charStats').innerHTML =
+  const box = $('#charStats');
+  box.innerHTML =
     '<div class="cs-group"><h4>Übersicht</h4>'+
       row('Klasse', cls.icon+' '+cls.label, 'power', 'klasse')+
       row('Level', lvl + ' <small>('+cur+' / '+need+' XP)</small>', 'level')+
@@ -304,8 +342,12 @@ function renderCharStats(t){
     '<div class="cs-group"><h4>Verteidigung</h4>'+
       row('Rüstung', t.armor, 'armor', 'ruestung')+
       row('Schadensreduktion', '−'+Math.round(c.dmgReduction)+' / Treffer', 'armor', 'schadensreduktion')+
-      secondary+
-    '</div>';
+    '</div>'+
+    secGroup;
+  // Antippen einer Werte-Zeile → Erklärung als Toast (handytauglich).
+  box.querySelectorAll('.cs-row.has-help').forEach(r => r.addEventListener('click', ()=>{
+    const k = r.dataset.help; if(k && STAT_HELP[k]) toast(STAT_HELP[k]);
+  }));
 }
 
 // ---- Inventar (Filter/Sortierung/Sperre, #23/#24) ------------------
