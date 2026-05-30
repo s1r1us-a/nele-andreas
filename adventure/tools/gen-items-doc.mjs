@@ -38,7 +38,7 @@ const GROUPS = [
   { title:'💍 Schmuck', arts:['amulett','ring'] },
 ];
 
-let m = '# Item-Übersicht – Idle Abenteuer\n\n';
+let m = '# Item-Übersicht – Dämmerpfad\n\n';
 m += '> **Automatisch generiert** aus den Daten-Dateien (Single Source of Truth).\n';
 m += '> Nicht von Hand editieren – Datendatei ändern und `node adventure/tools/gen-items-doc.mjs` neu ausführen.\n\n';
 

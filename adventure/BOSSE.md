@@ -1,4 +1,4 @@
-# Boss-Übersicht – Idle Abenteuer
+# Boss-Übersicht – Dämmerpfad
 
 > **Automatisch generiert** aus `adventure/js/data/bosses.js` (Single Source of Truth).
 > Nicht von Hand editieren – stattdessen die Datendatei ändern und `node adventure/tools/gen-bosse-doc.mjs` neu ausführen.

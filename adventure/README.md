@@ -1,4 +1,4 @@
-# Idle Abenteuer – Entwickler-README
+# Dämmerpfad – Entwickler-README
 
 Eigenständiges Idle-/Abenteuer-RPG im WoW-Stil. Vanilla JavaScript (ES-Module),
 **kein Build-Step**, **keine Framework-Abhängigkeiten**, Persistenz über `localStorage`.

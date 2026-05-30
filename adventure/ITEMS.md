@@ -1,4 +1,4 @@
-# Item-Übersicht – Idle Abenteuer
+# Item-Übersicht – Dämmerpfad
 
 > **Automatisch generiert** aus den Daten-Dateien (Single Source of Truth).
 > Nicht von Hand editieren – Datendatei ändern und `node adventure/tools/gen-items-doc.mjs` neu ausführen.
