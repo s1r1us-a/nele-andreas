@@ -192,6 +192,9 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   border-radius:8px; padding:8px 10px; font-family:'Quicksand',sans-serif; font-size:13px; }
 .inv-search { flex:1; min-width:120px; }
 .inv-controls select:focus, .inv-search:focus { outline:none; border-color:var(--gold-dim); }
+.inv-wear { display:flex; align-items:center; gap:6px; font-family:'Quicksand',sans-serif;
+  font-size:13px; color:var(--txt); cursor:pointer; user-select:none; padding:0 4px; }
+.inv-wear input { accent-color:var(--gold-dim); cursor:pointer; }
 
 /* ---- Tooltip --------------------------------------------------- */
 #tooltip {

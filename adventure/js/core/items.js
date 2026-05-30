@@ -229,6 +229,27 @@ export function unequip(slotKey){
   saveState();
 }
 
+// Auto-Equip: legt Slot für Slot das stärkste tragbare Item aus dem Inventar an
+// (nach itemPower). Ringe werden einzeln behandelt; gesperrte/falsche Klasse bleiben
+// unberührt. equip() legt das jeweils ersetzte Teil zurück ins Inventar.
+export function autoEquipBest(){
+  const fits = (it, target) =>
+    (target==='ring1' || target==='ring2')
+      ? (it.slotKey==='ring1' || it.slotKey==='ring2')
+      : it.slotKey === target;
+  let changes = 0;
+  for(const target of SLOT_KEYS){
+    let bestItem = null, bestP = itemPower(state.equipped[target]);
+    for(const it of state.inventory){
+      if(!fits(it, target) || !canEquip(it)) continue;
+      const p = itemPower(it);
+      if(p > bestP){ bestP = p; bestItem = it; }
+    }
+    if(bestItem){ equip(bestItem, target); changes++; }
+  }
+  return changes;
+}
+
 // ---- Logbuch & Statistik -------------------------------------------
 export function addLog(item){
   state.log.unshift({ t:Date.now(), name:item.name, rarity:item.rarity, stat:item.stat, statType:item.statType });
