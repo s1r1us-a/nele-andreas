@@ -15,20 +15,15 @@ import { heroSrc } from './avatar.js';
 import { rollItem, inventoryFull, addLog, recordDrop } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
 import { renderAll } from '../ui/render.js';
+import { awardCoins, spendCoins } from './coins.js';
 
 let combatSpeed = 1, combatTimer = null;
 export let currentFight = null;
-let godmode = false;
-export function setGodmode(v){
-  godmode = !!v;
-  // Verlassen-Button live ein-/ausblenden, falls gerade ein Kampf läuft.
-  if(currentFight && !currentFight.over){
-    const b = $('#arenaCloseBtn');
-    if(b){ if(godmode){ b.style.display=''; b.textContent='🚪 Kampf verlassen'; } else b.style.display='none'; }
-  }
-}
-export function isGodmode(){ return godmode; }
 const arenaOverlay = () => $('#arenaOverlay');
+
+// Münz-Belohnung für den ECHTEN Erstkill eines Bosses (kuratiert, gedeckelt).
+// Zonenabhängig 10 … 50, damit das Abenteuer die geteilte Ökonomie nicht flutet.
+function bossCoinReward(i){ return Math.min(50, 10 + i*2); }
 
 export function setCombatSpeed(v){ combatSpeed = v; }
 export function getCombatSpeed(){ return combatSpeed; }
@@ -94,9 +89,8 @@ export function startBossFight(bossIndex){
   updateHpBars(fight);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
-  // Im Godmode jederzeit verlassen können (sonst während des Kampfes verborgen).
-  if(godmode){ $('#arenaCloseBtn').style.display = ''; $('#arenaCloseBtn').textContent = '🚪 Kampf verlassen'; }
-  else $('#arenaCloseBtn').style.display = 'none';
+  // Während eines Boss-Kampfes ist „Verlassen" ausgeblendet (kein Abbrechen).
+  $('#arenaCloseBtn').style.display = 'none';
   combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×'; $('#speedBtn').style.display = '';
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   updatePotionBtn();
@@ -281,7 +275,6 @@ function exchange(fight){
     }
     if(hasMech(fight,'frost') && fight.turn % 3 === 0){ fight.frostTurns = 2; mechFloat('boss','❄️ Frost','#7fd0ff'); }
 
-    if(godmode && fight.heroHp <= 0){ fight.heroHp = fight.heroMaxHp; }  // Dev: unsterblich
     updateHpBars(fight);
     if(fight.heroHp <= 0){ return endFight(fight, false); }
     scheduleExchange(fight);
@@ -522,16 +515,49 @@ export function toggleSpeed(){
   combatSpeed = combatSpeed === 1 ? 2 : 1;
   $('#speedBtn').textContent = '⏩ Tempo '+combatSpeed+'×';
 }
-export function closeArena(){
-  const wasDuel = currentFight && currentFight.isDuel ? currentFight : null;
-  if(currentFight) currentFight.over = true;
+// Reiner DOM-Teardown der Arena – kein Duell-Wissen. Ruft erst NACH der
+// Verrechnung das onClose() (→ cleanupDuel/leaveDuel) auf, damit ein
+// terminaler Forfeit-Snapshot nicht vorzeitig gelöscht wird.
+function hardCloseArena(f){
+  if(f) f.over = true;
+  clearTimeout(_forfeitTimer); _forfeitTimer = null;
   arenaOverlay().classList.remove('show');
   clearTimeout(combatTimer); combatTimer = null;
   resetAbilityVisuals();
   $('#speedBtn').style.display = '';
-  if(wasDuel && wasDuel.onClose) wasDuel.onClose();
-  currentFight = null;
+  if(currentFight === f || !currentFight) currentFight = null;
+  if(f && f.onClose) f.onClose();
   renderAll();
+}
+
+let _forfeitTimer = null;
+export function closeArena(){
+  const f = currentFight;
+  // Unbeendetes Duell verlassen = Forfeit: Verlassender verliert den Einsatz,
+  // der Gegner gewinnt. Host autoritativ informieren (terminaler Snapshot für
+  // den Gegner), lokal sofort verrechnen, Ergebnis kurz zeigen, dann schließen.
+  if(f && f.isDuel && !f.over && !f._ended && f.onForfeit){
+    f._forfeiting = true;
+    clearTimeout(combatTimer); combatTimer = null;
+    try { f.onForfeit(); } catch(e){}
+    f._ended = true;
+    endDuel(f, f.role === 'host' ? 'guest' : 'host', f.role);
+    clearTimeout(_forfeitTimer);
+    _forfeitTimer = setTimeout(()=> hardCloseArena(f), 1200);
+    return;
+  }
+  hardCloseArena(f);
+}
+
+// Gegner hat die Arena verlassen (Lobby beendet, kein Snapshot mehr) → dieser
+// Client gewinnt. Safety-Net zum Snapshot-Pfad; durch _ended doppelt abgesichert.
+export function resolveArenaOpponentLeft(){
+  const f = currentFight;
+  if(!f || !f.isDuel || f._ended) return;
+  f._ended = true;
+  endDuel(f, f.role, f.role);
+  clearTimeout(_forfeitTimer);
+  _forfeitTimer = setTimeout(()=> hardCloseArena(f), 1200);
 }
 
 // ---- Kampfende & Belohnung -----------------------------------------
@@ -546,11 +572,9 @@ function endFight(fight, win){
 
   if(win){
     state.killCounts[bossIndex] = (state.killCounts[bossIndex]||0) + 1;
-    let reward = Math.round(boss.recPower * 1.5 + 40);
     let xpBase = Math.round(boss.recPower * 0.6 + 30);  // XP reduziert (Teil 3b)
-    if(isFarm){ reward = Math.round(reward*FARM.goldMult); xpBase = Math.round(xpBase*FARM.xpMult); }
+    if(isFarm){ xpBase = Math.round(xpBase*FARM.xpMult); }
     const xpGain = gainXp(xpBase);
-    state.gold += reward; state.stats.goldEarned += reward;
 
     // Garantierter Drop (#15): Seltenheit steigt mit Boss-Index
     let bonusTxt = '';
@@ -571,18 +595,19 @@ function endFight(fight, win){
         state.bossesBeaten++;
         if(!state.firstClears[bossIndex]){
           state.firstClears[bossIndex] = true;
-          // Erstkill-Bonus (#16): extra Gold + Heiltrank
-          const fcGold = Math.round(reward*0.5);
-          state.gold += fcGold; state.stats.goldEarned += fcGold;
+          // Erstkill-Bonus (#16): kuratierte Münzen (global) + Heiltrank.
+          // Nur beim ECHTEN Erstkill – Farmen erreicht diesen Zweig nie.
+          const coins = bossCoinReward(bossIndex);
+          awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
           state.potions = (state.potions||0) + 1;
-          firstTxt = '<br>🏆 Erstkill-Bonus: 💰 '+fmtBig(fcGold)+' Gold + 🧪 Heiltrank!';
+          firstTxt = '<br>🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Münzen + 🧪 Heiltrank!';
         }
       }
     } else { state.stats.farmKills++; }
 
     res.className = 'arena-result win show';
     res.innerHTML = '<div class="big">⚔️ Sieg!</div>'+
-      '<div class="sub">'+boss.name+' besiegt! 💰 '+fmtBig(reward)+' Gold · ⭐ '+fmtBig(xpGain)+' XP'+bonusTxt+
+      '<div class="sub">'+boss.name+' besiegt! ⭐ '+fmtBig(xpGain)+' XP'+bonusTxt+
       (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+firstTxt+'</div>';
     saveState();
   } else {
@@ -601,7 +626,7 @@ function endFight(fight, win){
 //  Der Host (siehe duel.js) simuliert autoritativ; BEIDE Clients rendern
 //  ausschließlich aus dem Kampf-Snapshot via applyDuelSnapshot().
 // =====================================================================
-// cfg: { lobbyId, role, myName, oppName, oppSrc, myTier, ability, stake, onAction, onClose }
+// cfg: { lobbyId, role, myName, oppName, oppSrc, myTier, ability, stake, onAction, onClose, onForfeit }
 export function openDuelArena(cfg){
   clearTimeout(combatTimer); combatTimer = null;
   const t = recomputeTotals();
@@ -614,7 +639,7 @@ export function openDuelArena(cfg){
 
   const fight = {
     isDuel: true, role: cfg.role, lobbyId: cfg.lobbyId, stake: cfg.stake|0,
-    onAction: cfg.onAction, onClose: cfg.onClose,
+    onAction: cfg.onAction, onClose: cfg.onClose, onForfeit: cfg.onForfeit,
     heroMaxHp: 1, heroHp: 1, bossMaxHp: 1, bossHp: 1,
     ability: cfg.ability || null, abilityCdUntil: 0,
     over: false, anchor: {}, startedAt: Date.now(),
@@ -629,7 +654,12 @@ export function openDuelArena(cfg){
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   resetAbilityVisuals();
   updateAbilityBtn();
-  $('#potionBtn').textContent = '🧪 Heiltrank (?)';
+  // Anzeige neutral starten, bis der erste Snapshot echte Werte liefert
+  // (verhindert „1/1 HP" und „🧪 Heiltrank (?)" vor dem Kampfbeginn).
+  $('#heroHp').style.width = '0%'; $('#bossHp').style.width = '0%';
+  $('#heroHpText').textContent = ''; $('#bossHpText').textContent = '';
+  const _pb = $('#potionBtn');
+  if(_pb){ _pb.textContent = '🧪 Heiltrank'; _pb.disabled = true; _pb.style.opacity = '0.5'; }
   arenaOverlay().classList.add('show');
 
   requestAnimationFrame(()=> measureAnchors(fight));
@@ -719,10 +749,10 @@ function endDuel(f, winner, me){
   const draw = winner === 'draw';
   const win = winner === me;
   const stake = f.stake|0;
-  // Jeder Client verrechnet den Einsatz auf dem EIGENEN Spielstand (Netto-Pott).
+  // Jeder Client verrechnet den Einsatz über das globale Münz-Wallet (Netto-Pott).
   if(!draw && stake > 0){
-    if(win){ state.gold += stake; state.stats.goldEarned += stake; }
-    else   { state.gold = Math.max(0, state.gold - stake); }
+    if(win){ awardCoins(stake).catch(()=>{}); state.stats.goldEarned += stake; }
+    else   { spendCoins(stake).catch(()=>{}); }
   }
   if(!f._statApplied){
     f._statApplied = true;
@@ -737,10 +767,10 @@ function endDuel(f, winner, me){
     res.innerHTML = '<div class="big">🤝 Unentschieden</div><div class="sub">Beide Helden fallen gleichzeitig – kein Einsatz wechselt den Besitzer.</div>';
   } else if(win){
     res.className = 'arena-result win show';
-    res.innerHTML = '<div class="big">🏆 Sieg!</div><div class="sub">Du gewinnst das Duell!'+(stake>0?' 💰 +'+fmtBig(stake)+' Gold':'')+'</div>';
+    res.innerHTML = '<div class="big">🏆 Sieg!</div><div class="sub">Du gewinnst das Duell!'+(stake>0?' 🪙 +'+fmtBig(stake)+' Münzen':'')+'</div>';
   } else {
     res.className = 'arena-result lose show';
-    res.innerHTML = '<div class="big">💀 Niederlage</div><div class="sub">Dein Gegner war stärker.'+(stake>0?' 💰 −'+fmtBig(stake)+' Gold':'')+'</div>';
+    res.innerHTML = '<div class="big">💀 Niederlage</div><div class="sub">Dein Gegner war stärker.'+(stake>0?' 🪙 −'+fmtBig(stake)+' Münzen':'')+'</div>';
   }
   $('#potionBtn').disabled = true; $('#potionBtn').style.opacity = '0.5';
   $('#arenaCloseBtn').textContent = 'Schließen';

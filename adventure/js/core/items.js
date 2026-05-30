@@ -165,29 +165,26 @@ export function toggleLock(id){
   saveState();
 }
 
+// Verkauf = Entsorgen: Item entfernen, um Inventarplatz zu schaffen. Gibt
+// KEINE Währung mehr (Münzen entstehen nur bei kuratierten Events). Liefert
+// die Anzahl entfernter Teile zurück (1 bei Erfolg, 0 sonst).
 export function sellItem(id){
   if(isLocked(id)) return 0;
   const idx = state.inventory.findIndex(i => i.id === id);
   if(idx < 0) return 0;
-  const it = state.inventory[idx];
-  const price = sellPrice(it);
   state.inventory.splice(idx, 1);
-  state.gold += price;
-  state.stats.goldEarned += price;
   saveState();
-  return price;
+  return 1;
 }
 export function sellMany(filterFn){
-  let gold = 0, n = 0;
+  let n = 0;
   const keep = [];
   for(const it of state.inventory){
-    if(!isLocked(it.id) && filterFn(it)){ gold += sellPrice(it); n++; } else keep.push(it);
+    if(!isLocked(it.id) && filterFn(it)){ n++; } else keep.push(it);
   }
   state.inventory = keep;
-  state.gold += gold;
-  state.stats.goldEarned += gold;
   saveState();
-  return { gold, n };
+  return { n };
 }
 
 // ---- Ausrüsten ------------------------------------------------------

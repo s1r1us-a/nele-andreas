@@ -273,13 +273,12 @@
   <button class="dev-btn" id="rosterTopBtn" title="Charakter wechseln / verwalten">👥</button>
   <button class="dev-btn" id="duelBtn" title="Live-Duell gegen den anderen Spieler">⚔️🆚</button>
   <button class="dev-btn" id="statsBtn" title="Statistik">📊</button>
-  <button class="dev-btn" id="devBtn" title="Test-Werkzeuge">🛠 Dev</button>
   <div class="stats-mini">
     <div class="stat-chip level" id="levelChip" title="Level">
       <span class="lbl">⭐ Level</span><b id="miniLevel">1</b>
       <div class="xp-bar"><i id="xpFill"></i></div>
     </div>
-    <div class="stat-chip gold"><span class="lbl">💰 Gold</span><b id="miniGold">0</b></div>
+    <div class="stat-chip gold"><span class="lbl">🪙 Münzen</span><b id="miniGold">0</b></div>
     <div class="stat-chip armor"><span class="lbl">Rüstung</span><b id="miniArmor">0</b></div>
     <div class="stat-chip damage"><span class="lbl">Schaden</span><b id="miniDamage">0</b></div>
     <div class="stat-chip power"><span class="lbl">Kampfkraft</span><b id="miniPower">0</b></div>
@@ -291,7 +290,7 @@
   <div class="tab" data-view="character">Charakter</div>
   <div class="tab" data-view="talents">Talente</div>
   <div class="tab" data-view="inventory">Inventar</div>
-  <div class="tab" data-view="shop">Shop</div>
+  <div class="tab" data-view="shop">Entsorgung</div>
 </div>
 
 <div class="wrap">
@@ -303,7 +302,7 @@
         <span class="zone-flavor" id="zoneFlavor"></span>
         <img class="hero bob" id="sceneHero" alt="Held">
       </div>
-      <div class="full-banner" id="fullBanner">🎒 Mache erst Platz im Inventar – verkaufe im Shop oder rüste etwas aus, dann kannst du die Belohnung abholen!</div>
+      <div class="full-banner" id="fullBanner">🎒 Mache erst Platz im Inventar – entsorge etwas in der Entsorgung oder rüste etwas aus, dann kannst du die Belohnung abholen!</div>
 
       <div class="expedition" id="expeditionBox">
         <div class="exp-pick" id="expPick">
@@ -398,7 +397,6 @@
 <div id="tooltip"></div>
 <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
 <div class="overlay" id="creatorOverlay"><div class="modal" id="creatorModal"></div></div>
-<div class="overlay" id="devOverlay"><div class="modal" id="devModal"></div></div>
 
 <!-- Boss-Kampf-Arena -->
 <div class="arena-overlay" id="arenaOverlay">

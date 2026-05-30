@@ -29,10 +29,11 @@ import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
-import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
+import { itemValue, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
+import { getCoins, spendCoins } from '../core/coins.js';
 import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
-import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
+import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { openSlotPicker, openItemPreview, openSellModal, previewExpedition,
          openRosterModal, openCharacterCreator } from './modals.js';
@@ -47,7 +48,7 @@ const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
 // ---- Top-Leiste -----------------------------------------------------
 export function renderTopStats(){
   const t = recomputeTotals();
-  $('#miniGold').textContent = fmtBig(state.gold);
+  // #miniGold (Münzstand) wird vom globalen Coin-Listener in main.js gepflegt.
   $('#miniArmor').textContent = t.armor;
   $('#miniDamage').textContent = t.damage;
   $('#miniPower').textContent = t.power;
@@ -236,7 +237,7 @@ export function renderTalents(){
     '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+'</span>'+
     '<span class="talent-points">Punkte: <b>'+points+'</b></span>'+
     '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
-      '♻️ Zurücksetzen (💰 '+fmtBig(RESPEC_COST)+')</button>'+
+      '♻️ Zurücksetzen (🪙 '+fmtBig(RESPEC_COST)+')</button>'+
     '</div>'+
     '<p class="talents-hint"><b>Pro Stufe</b> wählst du <b>genau ein</b> Talent (kostet 1 Punkt). Die nächste Stufe öffnet sich danach.</p>';
 
@@ -302,9 +303,9 @@ function chooseTalent(stufeIndex, optionId){
 function respecTalents(){
   const chosenCount = chosenTalentCount(state);
   if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
-  if((state.gold||0) < RESPEC_COST){ toast('Nicht genug Gold ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
-  if(!confirm('Alle Talente zurücksetzen für '+fmtBig(RESPEC_COST)+' Gold? Die Punkte erhältst du zurück.')) return;
-  state.gold -= RESPEC_COST;
+  if(getCoins() < RESPEC_COST){ toast('Nicht genug Münzen ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
+  if(!confirm('Alle Talente zurücksetzen für '+fmtBig(RESPEC_COST)+' Münzen? Die Punkte erhältst du zurück.')) return;
+  spendCoins(RESPEC_COST).catch(()=>{});
   state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
   state.character.talents = {};
   saveState();
@@ -444,7 +445,7 @@ export function renderInventory(){
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
   if(!total) hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
-  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten/Sperren oder verkaufe im <b>Shop</b>.';
+  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten/Sperren oder entsorge etwas in der <b>Entsorgung</b>.';
   else hint.textContent = 'Klick ein Item: ausrüsten, vergleichen oder 🔒 sperren.';
   panel.appendChild(hint);
 }
@@ -516,11 +517,11 @@ export function renderShop(){
   panel.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'shop-head';
-  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">💰 '+fmtBig(state.gold)+' Gold</span>';
+  head.innerHTML = '<h2>🧹 Entsorgung</h2>';
   panel.appendChild(head);
   const note = document.createElement('p');
   note.className = 'shop-note';
-  note.textContent = 'Verkaufe Gegenstände für Gold. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
+  note.textContent = 'Entsorge Gegenstände, um Inventarplatz zu schaffen. Gesperrte (🔒) & ausgerüstete Teile bleiben erhalten. (Münzen gibt es nur für Boss-Erstkills, Duelle & lange Expeditionen.)';
   panel.appendChild(note);
   const actions = document.createElement('div');
   actions.className = 'shop-actions';
@@ -531,11 +532,11 @@ export function renderShop(){
     b.addEventListener('click', ()=>{
       const res = sellMany(filterFn);
       renderAll();
-      toast(res.n ? '+'+fmtBig(res.gold)+' Gold ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
+      toast(res.n ? (res.n+' Gegenstände entsorgt') : 'Nichts zu entsorgen');
     });
     actions.appendChild(b);
   };
-  sellBtn('🧹 Junk verkaufen (Grau/Grün)', it => rarityIndex(it.rarity) <= 1);
+  sellBtn('🧹 Junk entsorgen (Grau/Grün)', it => rarityIndex(it.rarity) <= 1);
   sellBtn('⚪ Alle Gewöhnlichen', it => rarityIndex(it.rarity) === 0);
   sellBtn('🔵 Bis Selten', it => rarityIndex(it.rarity) <= 2);
   panel.appendChild(actions);
@@ -543,7 +544,7 @@ export function renderShop(){
   if(!items.length){
     const p = document.createElement('p');
     p.className = 'inv-hint';
-    p.textContent = 'Dein Inventar ist leer – nichts zu verkaufen.';
+    p.textContent = 'Dein Inventar ist leer – nichts zu entsorgen.';
     panel.appendChild(p);
     return;
   }
@@ -556,16 +557,14 @@ export function renderShop(){
     cell.className = 'inv-item shop-item' + (isLocked(it.id)?' locked':'');
     cell.style.setProperty('--rc', r.color);
     cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">'+
-      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
-      '<span class="price">💰 '+fmtBig(sellPrice(it))+'</span>';
+      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'');
     bindTooltip(cell, it);
     cell.addEventListener('click', (e)=>{
       hideTooltip();
       if(isLocked(it.id)){ toast('🔒 Gesperrt – erst entsperren'); return; }
       if(IS_TOUCH){ openSellModal(it); return; }
-      const price = sellItem(it.id);
+      sellItem(it.id);
       renderAll();
-      if(price) goldPop(e.clientX, e.clientY, '+'+fmtBig(price));
     });
     grid.appendChild(cell);
   }

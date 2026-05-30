@@ -5,9 +5,10 @@ import { state, loadSave, saveState, flushSave } from './core/state.js';
 import { initAuth } from './core/firebase.js';
 import { expeditionReady, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
 import { startBossFight, toggleSpeed, closeArena, usePotion, useAbility } from './core/combat.js';
-import { $, fmtRemain } from './ui/dom.js';
+import { watchCoins } from './core/coins.js';
+import { $, fmtRemain, fmtBig } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
-import { openBossList, openStats, openDevPanel, openCharacterCreator,
+import { openBossList, openStats, openCharacterCreator,
          openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby } from './ui/modals.js';
 
 // ---- Tabs -----------------------------------------------------------
@@ -25,7 +26,6 @@ $('#bossListBtn').addEventListener('click', openBossList);
 $('#statsBtn').addEventListener('click', openStats);
 $('#rosterTopBtn').addEventListener('click', openRosterModal);
 $('#duelBtn').addEventListener('click', openDuelLobby);
-$('#devBtn').addEventListener('click', openDevPanel);
 // „Aussehen ändern" und „Helm" liegen jetzt im dynamischen Charakter-Header
 // (in render.js verdrahtet, da bei jedem Render neu aufgebaut).
 $('#speedBtn').addEventListener('click', toggleSpeed);
@@ -38,7 +38,6 @@ $('#expCancelBtn').addEventListener('click', ()=>{
 $('#expCollectBtn').addEventListener('click', collectExpedition);
 
 $('#overlay').addEventListener('click', e=>{ if(e.target===$('#overlay')) $('#overlay').classList.remove('show'); });
-$('#devOverlay').addEventListener('click', e=>{ if(e.target===$('#devOverlay')) $('#devOverlay').classList.remove('show'); });
 $('#creatorOverlay').addEventListener('click', e=>{ if(e.target===$('#creatorOverlay') && !isCreatorForced()) $('#creatorOverlay').classList.remove('show'); });
 
 // ---- Tastenkürzel (#31) --------------------------------------------
@@ -98,6 +97,8 @@ window.addEventListener('beforeunload', flushSave);
 
   await loadSave(userKey);               // lädt /adventure/<userKey> (sonst lokaler Cache / frisch)
   renderAll();
+  // Globalen Münzstand live in die Topbar spiegeln (geteiltes Wallet mit Farm/Slot).
+  watchCoins(c => { const el = $('#miniGold'); if(el) el.textContent = fmtBig(c); });
   startLoop();
   if(!state.character) openCharacterCreator(true);
   else maybeOnboarding();

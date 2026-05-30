@@ -110,6 +110,13 @@ export async function requestDuelAction(lobbyId, role, kind){
   try { await set(ref(db, ABIL(lobbyId)), { role, kind, ts: Date.now() }); } catch(e){}
 }
 
+// Ein Spieler gibt mitten im Duell auf (Arena verlassen). Läuft über denselben
+// Aktions-Kanal: der Host beendet den Kampf autoritativ und schreibt einen
+// terminalen Snapshot, sodass BEIDE Clients regulär über endDuel verrechnen.
+export async function requestDuelForfeit(lobbyId, role){
+  try { await set(ref(db, ABIL(lobbyId)), { role, kind: 'forfeit', ts: Date.now() }); } catch(e){}
+}
+
 // Spielstände liegen als Roster { version, activeId, slots } vor – den aktiven
 // (flachen) Slot herausziehen, damit computePlayerStats/buildHeroSVG ihn lesen.
 export function resolveActiveSlot(loaded){
@@ -184,6 +191,19 @@ function logLine(fight, text, color){
 }
 
 function applyAction(fight, role, kind){
+  // Forfeit zuerst behandeln (unabhängig vom HP-Stand des Verlassenden).
+  if(kind === 'forfeit'){
+    if(fight.over) return;
+    fight.over = true;
+    fight.winner = role === 'host' ? 'guest' : 'host';
+    const lname = role === 'host' ? fight.hostName : fight.guestName;
+    const wname = fight.winner === 'host' ? fight.hostName : fight.guestName;
+    logLine(fight, '🚪 ' + lname + ' verlässt das Duell – ' + wname + ' gewinnt!', '#ffd24a');
+    clearTimeout(_timer);
+    fight.events = [];
+    syncDuel(fight, true);
+    return;
+  }
   const side = role === 'host' ? fight.host : fight.guest;
   const name = role === 'host' ? fight.hostName : fight.guestName;
   if(!side || side.hp <= 0) return;
