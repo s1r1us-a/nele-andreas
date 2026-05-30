@@ -17,7 +17,7 @@ import { state, saveState, listCharacters, createCharacter,
          switchCharacter, deleteCharacter, canAddCharacter, activeCharId } from '../core/state.js';
 import { recomputeTotals, heroTier } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
-import { equip, unequip, sellItem, itemPower, resolveTargetSlot,
+import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, canEquip } from '../core/items.js';
 import { startExpedition } from '../core/expedition.js';
 import { startBossFight, updatePotionBtn,
@@ -149,17 +149,18 @@ export function openSellModal(item){
     stats += '<div class="diff-row"><span class="diff-label">'+AFFIX_DEFS[k].label+'</span>'+
       '<span class="diff-new">+'+fmtVal(v, AFFIX_DEFS[k].pct)+'</span></div>';
   }
+  const price = sellPrice(item);
   openModal('<h2 style="color:'+r.color+'">'+item.name+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
     '<div class="preview-stats">'+stats+'</div>'+
-    '<div class="preview-hint" style="margin-top:12px;">Diesen Gegenstand entsorgen, um Platz zu schaffen?</div>'+
+    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 🪙 '+fmtBig(price)+' Münzen?</div>'+
     '<div class="preview-actions">'+
-      '<button class="btn" id="sellConfirm">Entsorgen</button>'+
+      '<button class="btn" id="sellConfirm">Verkaufen</button>'+
       '<button class="btn ghost" id="sellLock">'+(isLocked(item.id)?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="sellCancel">Abbrechen</button>'+
     '</div>');
   modal().querySelector('#sellConfirm').addEventListener('click', ()=>{
-    const n = sellItem(item.id); renderAll(); closeModal(); if(n) toast('Gegenstand entsorgt');
+    const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Münzen');
   });
   modal().querySelector('#sellLock').addEventListener('click', ()=>{ toggleLock(item.id); openSellModal(item); });
   modal().querySelector('#sellCancel').addEventListener('click', closeModal);

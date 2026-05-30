@@ -29,11 +29,11 @@ import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
-import { itemValue, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
+import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
-import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, toast } from './dom.js';
+import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { openSlotPicker, openItemPreview, openSellModal, previewExpedition,
          openRosterModal, openCharacterCreator } from './modals.js';
@@ -445,7 +445,7 @@ export function renderInventory(){
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
   if(!total) hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
-  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten/Sperren oder entsorge etwas in der <b>Entsorgung</b>.';
+  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten/Sperren oder verkaufe im <b>Shop</b>.';
   else hint.textContent = 'Klick ein Item: ausrüsten, vergleichen oder 🔒 sperren.';
   panel.appendChild(hint);
 }
@@ -517,11 +517,11 @@ export function renderShop(){
   panel.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'shop-head';
-  head.innerHTML = '<h2>🧹 Entsorgung</h2>';
+  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Münzen</span>';
   panel.appendChild(head);
   const note = document.createElement('p');
   note.className = 'shop-note';
-  note.textContent = 'Entsorge Gegenstände, um Inventarplatz zu schaffen. Gesperrte (🔒) & ausgerüstete Teile bleiben erhalten. (Münzen gibt es nur für Boss-Erstkills, Duelle & lange Expeditionen.)';
+  note.textContent = 'Verkaufe Gegenstände für Münzen. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
   panel.appendChild(note);
   const actions = document.createElement('div');
   actions.className = 'shop-actions';
@@ -532,11 +532,11 @@ export function renderShop(){
     b.addEventListener('click', ()=>{
       const res = sellMany(filterFn);
       renderAll();
-      toast(res.n ? (res.n+' Gegenstände entsorgt') : 'Nichts zu entsorgen');
+      toast(res.n ? '+'+fmtBig(res.coins)+' Münzen ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
     });
     actions.appendChild(b);
   };
-  sellBtn('🧹 Junk entsorgen (Grau/Grün)', it => rarityIndex(it.rarity) <= 1);
+  sellBtn('🧹 Junk verkaufen (Grau/Grün)', it => rarityIndex(it.rarity) <= 1);
   sellBtn('⚪ Alle Gewöhnlichen', it => rarityIndex(it.rarity) === 0);
   sellBtn('🔵 Bis Selten', it => rarityIndex(it.rarity) <= 2);
   panel.appendChild(actions);
@@ -544,7 +544,7 @@ export function renderShop(){
   if(!items.length){
     const p = document.createElement('p');
     p.className = 'inv-hint';
-    p.textContent = 'Dein Inventar ist leer – nichts zu entsorgen.';
+    p.textContent = 'Dein Inventar ist leer – nichts zu verkaufen.';
     panel.appendChild(p);
     return;
   }
@@ -557,14 +557,16 @@ export function renderShop(){
     cell.className = 'inv-item shop-item' + (isLocked(it.id)?' locked':'');
     cell.style.setProperty('--rc', r.color);
     cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">'+
-      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'');
+      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
+      '<span class="price">🪙 '+fmtBig(sellPrice(it))+'</span>';
     bindTooltip(cell, it);
     cell.addEventListener('click', (e)=>{
       hideTooltip();
       if(isLocked(it.id)){ toast('🔒 Gesperrt – erst entsperren'); return; }
       if(IS_TOUCH){ openSellModal(it); return; }
-      sellItem(it.id);
+      const price = sellItem(it.id);
       renderAll();
+      if(price) goldPop(e.clientX, e.clientY, '+'+fmtBig(price));
     });
     grid.appendChild(cell);
   }

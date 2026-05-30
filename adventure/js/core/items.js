@@ -9,6 +9,7 @@ import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf } from '..
 import { allowedMaterials, classOf } from '../data/classes.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
+import { awardCoins } from './coins.js';
 import { toast } from '../ui/dom.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
@@ -165,26 +166,30 @@ export function toggleLock(id){
   saveState();
 }
 
-// Verkauf = Entsorgen: Item entfernen, um Inventarplatz zu schaffen. Gibt
-// KEINE Währung mehr (Münzen entstehen nur bei kuratierten Events). Liefert
-// die Anzahl entfernter Teile zurück (1 bei Erfolg, 0 sonst).
+// Verkauf: Item entfernen und seinen Wert (sellPrice) als globale Münzen
+// gutschreiben. Liefert den ausgezahlten Betrag zurück (0, wenn nichts ging).
 export function sellItem(id){
   if(isLocked(id)) return 0;
   const idx = state.inventory.findIndex(i => i.id === id);
   if(idx < 0) return 0;
+  const it = state.inventory[idx];
+  const price = sellPrice(it);
   state.inventory.splice(idx, 1);
+  awardCoins(price).catch(()=>{});
+  state.stats.goldEarned += price;
   saveState();
-  return 1;
+  return price;
 }
 export function sellMany(filterFn){
-  let n = 0;
+  let coins = 0, n = 0;
   const keep = [];
   for(const it of state.inventory){
-    if(!isLocked(it.id) && filterFn(it)){ n++; } else keep.push(it);
+    if(!isLocked(it.id) && filterFn(it)){ coins += sellPrice(it); n++; } else keep.push(it);
   }
   state.inventory = keep;
+  if(coins > 0){ awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins; }
   saveState();
-  return { n };
+  return { coins, n };
 }
 
 // ---- Ausrüsten ------------------------------------------------------
