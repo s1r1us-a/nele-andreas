@@ -6,7 +6,7 @@ import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM } from '../data/tuning.js';
 import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
 import { rollAffixes } from '../core/items.js';
-import { materialOf } from '../data/itemTypes.js';
+import { materialOf, typeOf } from '../data/itemTypes.js';
 import { classOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState } from './state.js';
@@ -286,11 +286,23 @@ export function updateHpBars(f){
 const HIT_DELAY=150, FLASH=240, SHAKE=240, FLOAT=1000;
 function lunge(el, isBoss){
   const base = isBoss ? 'scaleX(-1) ' : '';
+  // Deutlicher Schwung: Vorwärts-Stoß kombiniert mit einer Drehung der Figur.
   el.animate(
-    [ { transform: base+'translateX(0)' },
-      { transform: base+'translateX(60px)', offset:0.4 },
-      { transform: base+'translateX(0)' } ],
-    { duration: 180 / combatSpeed, easing:'ease-out' }
+    [ { transform: base+'translateX(0) rotate(0deg)' },
+      { transform: base+'translateX(58px) rotate(-18deg)', offset:0.35 },
+      { transform: base+'translateX(64px) rotate(12deg)', offset:0.55 },
+      { transform: base+'translateX(0) rotate(0deg)' } ],
+    { duration: 220 / combatSpeed, easing:'ease-out' }
+  );
+}
+// Stab-Cast: Held lehnt sich nach vorne und hält den Stab vor (sanfter als der Nahkampf-Schwung).
+function staffCast(el){
+  el.animate(
+    [ { transform:'translateX(0) rotate(0deg)' },
+      { transform:'translateX(26px) rotate(-6deg)', offset:0.4 },
+      { transform:'translateX(22px) rotate(-5deg)', offset:0.7 },
+      { transform:'translateX(0) rotate(0deg)' } ],
+    { duration: 300 / combatSpeed, easing:'ease-out' }
   );
 }
 function mechFloat(who, text, color){
@@ -310,9 +322,9 @@ function heroUsesStab(){
   return !!(w && materialOf(w) === 'zauberstab');
 }
 
-function staffProjectileAnim(fromAnchor, toAnchor, layer, speed, onArrive){
+function staffProjectileAnim(fromAnchor, toAnchor, layer, speed, orb, onArrive){
   const ball = document.createElement('div');
-  ball.className = 'staff-projectile';
+  ball.className = 'staff-projectile orb-' + (orb || 'rot');
   ball.style.left = fromAnchor.x + 'px';
   ball.style.top  = (fromAnchor.y - 10) + 'px';
   layer.appendChild(ball);
@@ -339,6 +351,7 @@ function attackAnim(who, dmg, crit, onHit){
   const useProjectile = isHero && !reduce && heroUsesStab();
 
   if(!reduce && !useProjectile){ lunge(attacker, !isHero); }
+  else if(useProjectile){ staffCast(attacker); }
 
   const doHit = () => {
     if(onHit) onHit();
@@ -368,7 +381,8 @@ function attackAnim(who, dmg, crit, onHit){
   if(useProjectile){
     const from = (currentFight && currentFight.anchor[heroId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
     const to   = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth*3/4, y: stage.clientHeight/2 };
-    staffProjectileAnim(from, to, layer, combatSpeed, doHit);
+    const orb  = (state.equipped && state.equipped.waffe && typeOf(state.equipped.waffe).orb) || 'rot';
+    staffProjectileAnim(from, to, layer, combatSpeed, orb, doHit);
   } else {
     setTimeout(doHit, reduce ? 0 : HIT_DELAY / combatSpeed);
   }

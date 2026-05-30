@@ -423,6 +423,22 @@
 (function(){
   var overlay = document.getElementById('advIntro');
   if(!overlay) return;
+
+  // Intro nur beim Eintritt von der Index-Seite und max. 1x pro Sitzung zeigen.
+  var ref = document.referrer || '';
+  var fromIndex = false;
+  try {
+    var r = new URL(ref);
+    fromIndex = (r.origin === location.origin) &&
+                (/(^|\/)index\.html$/.test(r.pathname) || r.pathname === '/' || /\/$/.test(r.pathname));
+  } catch(e) {}
+  var alreadyShown = sessionStorage.getItem('advIntroShown') === '1';
+  if(!fromIndex || alreadyShown){
+    if(overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    return;
+  }
+  sessionStorage.setItem('advIntroShown', '1');
+
   var layer = document.getElementById('advIntroParticles');
 
   // Aufsteigende Glut & Funken
