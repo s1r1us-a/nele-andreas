@@ -191,6 +191,10 @@ let myKey = null, myName = null, myState = null, myClassId = DEFAULT_CLASS_ID;
 let lobbyId = null, lobbyData = null, isHost = false;
 let unsubLobby = null, unsubCombat = null, unsubHeroes = null;
 let fightSpeed = 1, _lastAnimTurn = -1;
+// Animations-Timings (gespiegelt aus dem Singleplayer-Kampf, combat.js). BOSS_REPLY_MS
+// spiegelt COMBAT.bossReplyMs (tuning.js) – wird hier lokal gehalten, da turm.html COMBAT
+// nicht importiert. Alle Dauern werden zur Laufzeit durch fightSpeed geteilt.
+const HIT_DELAY = 150, FLASH = 240, SHAKE = 240, FLOAT = 1000, BOSS_REPLY_MS = 360;
 let _frontStatsCache = null, _backStatsCache = null;
 let _frontNameCache = '', _backNameCache = '';
 // Helden-Aussehen beider Slots (vom Host nach tower/heroes geschrieben).
@@ -652,10 +656,11 @@ function onCombatUpdate(data){
   updateCdState('front', data.frontClass, data.frontCdRemain);
   updateCdState('back',  data.backClass,  data.backCdRemain);
 
-  // Projektil-Animation wenn Hinten-Spieler Zauberstab trägt
-  if(data.backStab && data.status === 'fighting' && data.turn !== _lastAnimTurn){
+  // Pro-Runde Angriffs-Animationen abspielen (Lunge, Treffer, Schadenszahlen –
+  // genau wie im Singleplayer). Einmal pro neuer Runde, auf BEIDEN Clients.
+  if(data.status === 'fighting' && data.turn !== _lastAnimTurn){
     _lastAnimTurn = data.turn;
-    spawnProjectile();
+    replayTurn(data.events, data.backStab);
   }
 
   // Skill-UI für den Gast initialisieren, sobald die Aufstellung bekannt ist.
@@ -708,6 +713,123 @@ function spawnProjectile(){
     { duration:270, easing:'ease-in', fill:'forwards' }
   );
   setTimeout(() => ball.remove(), 290);
+}
+
+// ---- Singleplayer-artige Angriffs-Animationen ----
+// Slot → DOM-Elemente, Lunge-Richtung (Helden links → +X zum Boss, Boss rechts → −X)
+// und Basis-Versatz (Hinten-Held steht via CSS leicht erhöht, translateY(-6px)).
+function slotEls(slot){
+  if(slot === 'front') return { wrap:$('heroFront'), img:'spriteFront', baseY:0,  dir:1  };
+  if(slot === 'back')  return { wrap:$('heroBack'),  img:'spriteBack',  baseY:-6, dir:1  };
+  return                      { wrap:qS('.arena-boss-col'), img:'spriteBoss', baseY:0, dir:-1 };
+}
+// Sprite-Mittelpunkt relativ zur Stage (on-demand gemessen → robust gegen responsives Layout).
+function anchorOf(imgId){
+  const stage = $('arenaStage'), el = $(imgId);
+  if(!stage || !el) return { x:0, y:0 };
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  return { x:r.left - sr.left + r.width/2, y:r.top - sr.top + r.height/3 };
+}
+// Vorstürmen Richtung Gegner – animiert den WRAPPER (nicht das <img>), damit die
+// .ablaze-Filter-Animation auf dem Bild nicht überschrieben wird. baseY bleibt erhalten.
+function lungeMP(wrap, dir, baseY){
+  if(!wrap) return;
+  const b = baseY ? `translateY(${baseY}px) ` : '';
+  wrap.animate(
+    [ { transform: b + 'translateX(0)' },
+      { transform: b + `translateX(${dir*48}px)`, offset:0.4 },
+      { transform: b + 'translateX(0)' } ],
+    { duration: 180 / fightSpeed, easing:'ease-out' }
+  );
+}
+// Zauberstab-Projektil zwischen zwei Sprites (verallgemeinerte spawnProjectile-Mathematik).
+function staffProjectileMP(fromImg, toImg, onArrive){
+  const stage = $('arenaStage'), fe = $(fromImg), te = $(toImg);
+  if(!stage || !fe || !te){ if(onArrive) onArrive(); return; }
+  const sr = stage.getBoundingClientRect(), fr = fe.getBoundingClientRect(), tr = te.getBoundingClientRect();
+  const fromX = fr.left - sr.left + fr.width/2, fromY = fr.top - sr.top + fr.height/3;
+  const toX   = tr.left - sr.left + tr.width/2, toY   = tr.top - sr.top + tr.height/3;
+  const ball = document.createElement('div');
+  ball.className = 'tower-projectile';
+  ball.style.left = fromX + 'px'; ball.style.top = fromY + 'px';
+  $('dmgLayer').appendChild(ball);
+  const dx = toX - fromX, dy = toY - fromY;
+  const dur = Math.max(80, 220 / fightSpeed);
+  ball.animate(
+    [{ transform:'translate(0,0) scale(1)', opacity:1 },
+     { transform:`translate(${dx}px,${dy}px) scale(0.4)`, opacity:0.6 }],
+    { duration:dur, easing:'ease-in', fill:'forwards' }
+  );
+  setTimeout(() => { ball.remove(); if(onArrive) onArrive(); }, dur);
+}
+// Schwebender Text über einem Sprite (Heilung/Ausweichen) – nutzt die vorhandene .dmg-float-Optik.
+function mechFloatMP(imgId, text, color){
+  const a = anchorOf(imgId);
+  const num = document.createElement('div');
+  num.className = 'dmg-float'; num.style.color = color || '#fff';
+  num.textContent = text;
+  num.style.left = (a.x - 16) + 'px'; num.style.top = (a.y - 30) + 'px';
+  $('dmgLayer').appendChild(num);
+  setTimeout(() => num.remove(), FLOAT / fightSpeed);
+}
+// Ein einzelnes Angriffs-Event abspielen – Port von combat.js attackAnim, für 3 Sprites.
+function attackAnimMP(ev){
+  if(!ev || !ev.s || !ev.t) return;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const src = slotEls(ev.s), tgt = slotEls(ev.t);
+  // Heilung: grüner Float (der Heilkreis/-Effekt selbst kommt aus renderFx).
+  if(ev.h){ mechFloatMP(tgt.img, '➕ +' + fmtBig(ev.d || 0), '#37d67a'); return; }
+  // Ausweichen: nur Hinweis, kein Treffer/keine Zahl.
+  if(ev.o){ mechFloatMP(tgt.img, '💨', '#9ec5ff'); return; }
+
+  const doHit = () => {
+    const timg = $(tgt.img);
+    if(!reduce && timg){
+      timg.classList.add('hit');
+      setTimeout(() => timg.classList.remove('hit'), FLASH / fightSpeed);
+      if(ev.c || Math.random() < .5){
+        const stage = $('arenaStage'); stage.classList.add('shake');
+        setTimeout(() => stage.classList.remove('shake'), SHAKE / fightSpeed);
+      }
+    }
+    const a = anchorOf(tgt.img);
+    const jitter = Math.round((Math.random()*2 - 1) * 12);
+    const x = a.x + jitter, y = a.y;
+    if(!reduce && !ev.p){
+      const slash = document.createElement('div');
+      slash.className = 'tower-slash'; slash.style.left = (x-45) + 'px'; slash.style.top = (y-45) + 'px';
+      $('dmgLayer').appendChild(slash);
+      setTimeout(() => slash.remove(), FLOAT / fightSpeed);
+    }
+    const num = document.createElement('div');
+    num.className = 'dmg-float' + (ev.c ? ' crit' : '') + (ev.s === 'boss' ? ' incoming' : '');
+    num.textContent = '-' + fmtBig(ev.d || 0) + (ev.c ? '!' : '');
+    num.style.left = (x-10) + 'px'; num.style.top = y + 'px';
+    $('dmgLayer').appendChild(num);
+    setTimeout(() => num.remove(), FLOAT / fightSpeed);
+  };
+
+  if(ev.p && !reduce){
+    staffProjectileMP(src.img, tgt.img, doHit);
+  } else {
+    if(!reduce) lungeMP(src.wrap, src.dir, src.baseY);
+    setTimeout(doHit, reduce ? 0 : HIT_DELAY / fightSpeed);
+  }
+}
+// Alle Angriffe einer Runde abspielen: Helden zuerst, Boss-Antwort nach kurzer Verzögerung.
+function replayTurn(events, backStab){
+  const evs = Array.isArray(events) ? events : Object.values(events || {});
+  if(!evs.length){
+    // Rückwärtskompatibilität: alte Runden ohne events → bisheriges Projektil-Verhalten.
+    if(backStab) spawnProjectile();
+    return;
+  }
+  const heroEvs = evs.filter(e => e && (e.s === 'front' || e.s === 'back'));
+  const bossEvs = evs.filter(e => e && e.s === 'boss');
+  heroEvs.forEach(attackAnimMP);
+  if(bossEvs.length){
+    setTimeout(() => bossEvs.forEach(attackAnimMP), BOSS_REPLY_MS / fightSpeed);
+  }
 }
 
 // ---- Klassen-Spezialfähigkeit (B14) ----
@@ -799,23 +921,41 @@ function renderFxLocal(){
   $('heroBack').classList.toggle('ablaze',  now < _backAblazeUntil);
   if(now < _shieldUntil) showShieldDome(); else removeShieldDome();
 }
+// Heil-Effekt: Lichtkern + Ring + aufsteigende Funken + kurzes grünes Aufleuchten.
 function spawnHealCircle(heroId){
   const stage = $('arenaStage'); const hero = $(heroId);
   if(!stage || !hero) return;
   const sr = stage.getBoundingClientRect(), hr = hero.getBoundingClientRect();
   const x = hr.left - sr.left + hr.width/2, y = hr.top - sr.top + hr.height/2;
-  const ring = document.createElement('div');
-  ring.className = 'heal-circle'; ring.style.left = x+'px'; ring.style.top = y+'px';
-  $('dmgLayer').appendChild(ring);
-  setTimeout(()=> ring.remove(), 1100);
+  const fx = document.createElement('div');
+  fx.className = 'heal-fx'; fx.style.left = x+'px'; fx.style.top = y+'px';
+  const core = document.createElement('div'); core.className = 'heal-core';
+  const ring = document.createElement('div'); ring.className = 'heal-ring';
+  fx.appendChild(core); fx.appendChild(ring);
+  for(let i = 0; i < 6; i++){
+    const p = document.createElement('div'); p.className = 'heal-particle';
+    p.textContent = (i % 2) ? '✦' : '+';
+    p.style.setProperty('--dx', Math.round((Math.random()*2 - 1) * 26) + 'px');
+    p.style.animationDelay = (i * 70) + 'ms';
+    fx.appendChild(p);
+  }
+  $('dmgLayer').appendChild(fx);
+  hero.classList.add('heal-glow');
+  setTimeout(() => hero.classList.remove('heal-glow'), 1150);
+  setTimeout(() => fx.remove(), 1250);
 }
+// Magische Barriere VOR dem Verteidiger (Front-Held), Richtung Boss (rechts) versetzt.
 function showShieldDome(){
   if($('shieldDome')) return;
-  const col = document.querySelector('.arena-heroes-col');
-  if(!col) return;
-  const dome = document.createElement('div');
-  dome.className = 'shield-dome'; dome.id = 'shieldDome';
-  col.appendChild(dome);
+  const stage = $('arenaStage'); const hero = $('heroFront');
+  if(!stage || !hero) return;
+  const sr = stage.getBoundingClientRect(), hr = hero.getBoundingClientRect();
+  const x = hr.left - sr.left + hr.width/2 + hr.width * 0.62;
+  const y = hr.top  - sr.top  + hr.height/2;
+  const bar = document.createElement('div');
+  bar.className = 'magic-barrier'; bar.id = 'shieldDome';
+  bar.style.left = x+'px'; bar.style.top = y+'px';
+  $('dmgLayer').appendChild(bar);
 }
 function removeShieldDome(){ const d = $('shieldDome'); if(d) d.remove(); }
 

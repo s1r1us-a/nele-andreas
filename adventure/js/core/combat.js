@@ -454,27 +454,38 @@ export function useAbility(){
   startAbilityTicker();
 }
 
-// Heilkreis-Overlay (expandierender grüner Ring) um einen Sprite.
+// Heil-Effekt: Lichtkern + Ring + aufsteigende Funken + kurzes grünes Aufleuchten.
 function spawnHealCircle(spriteId){
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const stage = $('#arenaStage');
   const a = (currentFight && currentFight.anchor[spriteId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
-  const ring = document.createElement('div');
-  ring.className = 'heal-circle';
-  ring.style.left = a.x+'px'; ring.style.top = a.y+'px';
-  $('#dmgLayer').appendChild(ring);
-  if(reduce){ ring.style.opacity = '0.8'; }
-  setTimeout(()=> ring.remove(), 1100);
+  const fx = document.createElement('div');
+  fx.className = 'heal-fx';
+  fx.style.left = a.x+'px'; fx.style.top = a.y+'px';
+  const core = document.createElement('div'); core.className = 'heal-core';
+  const ring = document.createElement('div'); ring.className = 'heal-ring';
+  fx.appendChild(core); fx.appendChild(ring);
+  for(let i = 0; i < 6; i++){
+    const p = document.createElement('div'); p.className = 'heal-particle';
+    p.textContent = (i % 2) ? '✦' : '+';
+    p.style.setProperty('--dx', Math.round((Math.random()*2 - 1) * 28) + 'px');
+    p.style.animationDelay = (i * 70) + 'ms';
+    fx.appendChild(p);
+  }
+  $('#dmgLayer').appendChild(fx);
+  const hero = $('#'+spriteId);
+  if(hero){ hero.classList.add('heal-glow'); setTimeout(()=> hero.classList.remove('heal-glow'), 1150); }
+  setTimeout(()=> fx.remove(), 1250);
 }
-// Pulsierendes blaues Schild über dem Sprite (bleibt bis Buff endet).
+// Große magische Energiebarriere VOR dem Helden Richtung Boss (bleibt bis Buff endet).
 function spawnShieldDome(spriteId){
   removeShieldDome();
   const stage = $('#arenaStage');
   const a = (currentFight && currentFight.anchor[spriteId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
-  const dome = document.createElement('div');
-  dome.className = 'shield-dome'; dome.id = 'shieldDome';
-  dome.style.left = a.x+'px'; dome.style.top = a.y+'px';
-  $('#dmgLayer').appendChild(dome);
+  const bar = document.createElement('div');
+  bar.className = 'magic-barrier'; bar.id = 'shieldDome';
+  // Vor dem Helden Richtung Boss (rechts) versetzt.
+  bar.style.left = (a.x + 70)+'px'; bar.style.top = a.y+'px';
+  $('#dmgLayer').appendChild(bar);
 }
 function removeShieldDome(){ const d = $('#shieldDome'); if(d) d.remove(); }
 

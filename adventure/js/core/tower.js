@@ -277,6 +277,9 @@ async function syncFight(fight){
     dmgDealt:    fight.dmgDealt,
     startedAt:   fight.startedAt,
     log:         fight.log,
+    // Pro-Runde-Angriffsereignisse für die Singleplayer-artigen Animationen (Lunge,
+    // Treffer, Schadenszahlen) auf BEIDEN Clients. Kompakte Schlüssel halten die Payload klein.
+    events:      fight.events || [],
     // Fähigkeits-Cooldown beider Slots als Restzeit (ms) zum Sync-Zeitpunkt –
     // drift-frei, da Host- und Gast-Uhr nicht identisch sind. Clients zählen lokal runter.
     frontCdRemain: Math.max(0, (fight.frontAbilUntil||0) - now),
@@ -387,6 +390,10 @@ function exchange(fight){
   if(fight.over) return;
   fight.turn++;
 
+  // Angriffsereignisse dieser Runde – werden über syncFight an beide Clients gesendet,
+  // die sie als Singleplayer-artige Animationen abspielen. Pro Runde frisch.
+  const events = [];
+
   const mechs = fight.bossMech || [];
 
   // Regeneration
@@ -413,6 +420,7 @@ function exchange(fight){
     fight.bossHp = Math.max(0, fight.bossHp - fd);
     fight.dmgDealt += fd;
     addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
+    events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}) });
     // Dornen reflektiert
     if(mechs.includes('dornen')){
       const refl = Math.max(1, Math.round(fd * 0.15));
@@ -433,12 +441,14 @@ function exchange(fight){
       const healAmt = Math.round(fight.backAtk * 2.0 * (fight.backHealMult || 1));
       fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + healAmt);
       addLog(fight, '💚 ' + fight.backName + ' heilt ' + fight.frontName + ': +' + fmtBig(healAmt) + ' HP', '#37d67a');
+      events.push({ s:'back', t:'front', d:healAmt, h:1 });
     } else {
       const { dmg: bd, crit: bc } = rollDmg(fight.backAtk, effBackCrit, fight.backCritMult);
       fight.bossHp = Math.max(0, fight.bossHp - bd);
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
       addLog(fight, icon + ' ' + fight.backName + (bc?' ✨KRIT':'') + ': -' + fmtBig(bd) + ' HP', bc ? '#ffd24a' : '#cfc6dd');
+      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}) });
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(bd * 0.15));
         fight.backHp = Math.max(0, fight.backHp - refl);
@@ -456,6 +466,7 @@ function exchange(fight){
     fight.over = true; fight.won = true;
     addLog(fight, '🏆 Sieg! Stockwerk ' + fight.floor + ' gemeistert!', '#ffd24a');
     clearTimeout(_fightTimer);
+    fight.events = events;
     syncFight(fight);
     return;
   }
@@ -494,9 +505,11 @@ function exchange(fight){
       if(fd > 0 && wallFactor < 1) fd = Math.max(1, Math.round(fd * wallFactor));
       if(dFront){
         addLog(fight, '💨 ' + fight.frontName + ' weicht aus!', '#9ec5ff');
+        events.push({ s:'boss', t:'front', o:1 });
       } else if(fd > 0){
         fight.frontHp = Math.max(0, fight.frontHp - fd);
         addLog(fight, '💥 Boss → ' + fight.frontName + ': -' + fmtBig(fd) + ' HP', '#ff6b6b');
+        events.push({ s:'boss', t:'front', d:fd });
         // Gift
         if(mechs.includes('gift')){
           fight.poison++;
@@ -521,14 +534,17 @@ function exchange(fight){
     if(bd > 0 && wallFactor < 1) bd = Math.max(1, Math.round(bd * wallFactor));
     if(dBack){
       addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');
+      events.push({ s:'boss', t:'back', o:1 });
     } else if(bd > 0){
       fight.backHp = Math.max(0, fight.backHp - bd);
       addLog(fight, '💥 Boss → ' + fight.backName + ': -' + fmtBig(bd) + ' HP', '#ff6b6b');
+      events.push({ s:'boss', t:'back', d:bd });
     }
 
     // Frost → nächste Runde verlangsamt (über erhöhtes Interval)
     if(frosted) addLog(fight, '❄️ Frost! Angriff verlangsamt.', '#7fd0ff');
 
+    fight.events = events;
     await syncFight(fight);
 
     // Niederlage?
