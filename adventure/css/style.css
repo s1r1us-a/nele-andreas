@@ -405,18 +405,51 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 }
 /* ---- Klassen-Spezialfähigkeiten (Animationen) ---- */
 .ability-btn { border-color:rgba(180,120,255,.5); }
-/* Heilkreis: expandierender grüner Ring */
-.heal-circle {
-  position:absolute; width:30px; height:30px; border-radius:50%;
-  transform:translate(-50%,-50%); pointer-events:none; z-index:9;
-  border:3px solid #4dffa0;
-  box-shadow:0 0 16px 6px rgba(55,214,122,.7), inset 0 0 14px 4px rgba(55,214,122,.5);
-  animation:healPulse 1s ease-out forwards;
+/* Heilung: aufblühender Lichtkern + expandierender Ring + aufsteigende Funken.
+   Wirkt wie echte Heilmagie statt nur eines Kreises (identisch zum Turm-Modus). */
+.heal-fx { position:absolute; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:9; width:0; height:0; }
+.heal-fx .heal-core {
+  position:absolute; left:0; top:0; width:70px; height:70px;
+  transform:translate(-50%,-50%); border-radius:50%;
+  background:radial-gradient(circle, rgba(150,255,195,.6) 0%, rgba(55,214,122,.32) 45%,
+              rgba(55,214,122,0) 72%);
+  box-shadow:0 0 28px 11px rgba(55,214,122,.45);
+  animation:healCore 1.1s ease-out forwards;
 }
-@keyframes healPulse {
-  0%   { width:18px;  height:18px; opacity:0; }
+.heal-fx .heal-ring {
+  position:absolute; left:0; top:0; width:20px; height:20px;
+  transform:translate(-50%,-50%); border-radius:50%;
+  border:3px solid rgba(170,255,205,.9);
+  box-shadow:0 0 16px 5px rgba(55,214,122,.6), inset 0 0 14px 4px rgba(120,255,180,.5),
+             0 0 30px 10px rgba(242,205,107,.16);
+  animation:healRing 1.1s cubic-bezier(.22,.8,.3,1) forwards;
+}
+.heal-fx .heal-particle {
+  position:absolute; left:0; top:0; font-size:16px; line-height:1; font-weight:700;
+  color:#9dffc4; text-shadow:0 0 6px rgba(55,214,122,.9);
+  transform:translate(-50%,-50%); opacity:0;
+  animation:healParticle 1.05s ease-out forwards;
+}
+@keyframes healCore {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(.4); }
   25%  { opacity:1; }
+  100% { opacity:0; transform:translate(-50%,-50%) scale(1.18); }
+}
+@keyframes healRing {
+  0%   { width:18px;  height:18px;  opacity:0; }
+  18%  { opacity:1; }
   100% { width:150px; height:150px; opacity:0; }
+}
+@keyframes healParticle {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(.5); }
+  25%  { opacity:1; }
+  100% { opacity:0; transform:translate(calc(-50% + var(--dx,0px)), calc(-50% - 64px)) scale(1.05); }
+}
+.combatant.heal-glow { animation:healGlow 1.1s ease-out; }
+@keyframes healGlow {
+  0%,100% { filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); }
+  40%     { filter:drop-shadow(0 0 10px #4dffa0) drop-shadow(0 0 18px #37d67a) brightness(1.16) saturate(1.3); }
 }
 /* Raserei: roter Glow + Flammen-Puls auf dem Helden-Sprite */
 .combatant.ablaze {
@@ -427,21 +460,46 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   0%   { filter:drop-shadow(0 0 8px #ff3b00) drop-shadow(0 0 14px #ff7a00) brightness(1.1) saturate(1.3); }
   100% { filter:drop-shadow(0 0 16px #ff5a00) drop-shadow(0 0 26px #ffb000) brightness(1.28) saturate(1.6); }
 }
-/* Schildwall: großes blaues pulsierendes Schild */
-.shield-dome {
-  position:absolute; width:120px; height:120px; border-radius:50%;
-  transform:translate(-50%,-50%); pointer-events:none; z-index:4;
-  background:radial-gradient(circle, rgba(80,160,255,.28) 0%, rgba(80,160,255,.12) 55%, rgba(80,160,255,0) 72%);
-  border:2px solid rgba(120,200,255,.7);
-  box-shadow:0 0 22px 6px rgba(90,170,255,.5), inset 0 0 24px 8px rgba(120,200,255,.35);
-  animation:shieldPulse 1.4s ease-in-out infinite;
+/* Schildwall: große magische Energiebarriere VOR dem Helden (Richtung Boss).
+   Identisch zum Turm-Modus. */
+.magic-barrier {
+  position:absolute; pointer-events:none; z-index:4;
+  width:58px; height:150px; transform:translate(-50%,-50%);
+  border-radius:46% 46% 42% 42% / 14% 14% 14% 14%;
+  background:
+    repeating-linear-gradient(0deg, rgba(150,190,255,.10) 0 7px, rgba(120,160,255,0) 7px 14px),
+    radial-gradient(60% 80% at 50% 50%, rgba(160,120,255,.32) 0%, rgba(120,160,255,.18) 50%,
+      rgba(120,160,255,.04) 78%, rgba(120,160,255,0) 100%);
+  border:2px solid rgba(175,145,255,.78);
+  box-shadow:0 0 30px 10px rgba(130,90,255,.5), inset 0 0 26px 10px rgba(150,180,255,.38);
+  animation:barrierAppear .35s ease-out, barrierPulse 2.2s ease-in-out infinite .35s;
 }
-@keyframes shieldPulse {
-  0%,100% { transform:translate(-50%,-50%) scale(0.95); opacity:.75; }
-  50%     { transform:translate(-50%,-50%) scale(1.08); opacity:1; }
+.magic-barrier::before {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(199,160,255,.55) 50deg,
+              rgba(255,255,255,0) 120deg, rgba(255,255,255,0) 360deg);
+  mix-blend-mode:screen; opacity:.6; animation:barrierShimmer 2.8s linear infinite;
 }
+.magic-barrier::after {
+  content:''; position:absolute; inset:-3px; border-radius:inherit;
+  border:1px solid rgba(200,180,255,.5); opacity:.4;
+  animation:barrierFlicker 1.6s steps(6, end) infinite;
+}
+@keyframes barrierAppear {
+  0%   { opacity:0; transform:translate(-50%,-50%) scaleY(.4); }
+  60%  { opacity:1; transform:translate(-50%,-50%) scaleY(1.08); }
+  100% { transform:translate(-50%,-50%) scaleY(1); }
+}
+@keyframes barrierPulse {
+  0%,100% { box-shadow:0 0 24px 7px rgba(130,90,255,.4),   inset 0 0 20px 7px rgba(150,180,255,.3); }
+  50%     { box-shadow:0 0 40px 14px rgba(150,110,255,.62), inset 0 0 32px 12px rgba(170,200,255,.48); }
+}
+@keyframes barrierShimmer { to { transform:rotate(360deg); } }
+@keyframes barrierFlicker { 0%,100% { opacity:.22; } 50%{ opacity:.6; } }
 @media(prefers-reduced-motion: reduce){
-  .heal-circle, .combatant.ablaze, .shield-dome { animation:none; }
+  .combatant.ablaze, .combatant.heal-glow,
+  .heal-fx .heal-core, .heal-fx .heal-ring, .heal-fx .heal-particle,
+  .magic-barrier, .magic-barrier::before, .magic-barrier::after { animation:none; }
 }
 /* Turm-Teaser auf dem Abenteuer-Tab */
 .tower-teaser { margin:18px 0 4px; text-align:center; }
