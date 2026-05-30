@@ -367,8 +367,14 @@ function onLobbyUpdate(lobby){
   if(isHost && lobby.status === 'waiting' && !_startingFight){
     if(bothReady && !lobby.startAt){
       // Absoluter Server-Zeitstempel → für beide Clients identisch interpretierbar.
-      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: serverNow() + 10000 }).catch(()=>{});
+      // Wert SOFORT lokal übernehmen (= lobbyData, selbe Referenz), damit Countdown
+      // und maybeAutoStart nicht erst auf das DB-Echo des eigenen Writes warten müssen.
+      const target = serverNow() + 10000;
+      lobby.startAt = target;
+      update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: target }).catch(()=>{});
     } else if(!bothReady && lobby.startAt){
+      // Abbruch ebenfalls lokal sofort wirksam → Countdown stoppt ohne Echo-Verzögerung.
+      lobby.startAt = null;
       update(ref(db, 'tower/lobbies/' + lobbyId), { startAt: null }).catch(()=>{});
     }
   }
