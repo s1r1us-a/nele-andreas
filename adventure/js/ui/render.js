@@ -24,12 +24,12 @@ function classStatKeys(classId){
   talentTreeFor(classId).flat().forEach(n => (n.keys||[]).forEach(k => present.add(k)));
   return STAT_ORDER.filter(k => present.has(k));
 }
-import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
+import { bossFor, zoneBg, zoneName, zoneFlavor, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
-import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip } from '../core/items.js';
+import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
 import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
@@ -68,6 +68,7 @@ export function renderAdventure(){
   const scene = $('#scene');
   scene.style.backgroundImage = "url('"+zoneBg(state.zone)+"')";
   $('#zoneLabel').textContent = 'Zone '+(state.zone+1)+' · '+zoneName(state.zone);
+  const zf = $('#zoneFlavor'); if(zf) zf.textContent = zoneFlavor(state.zone);
   $('#sceneHero').src = heroSrc(heroTier(t.power));
   $('#findBar').style.width = Math.round(findProgress*100)+'%';
 
@@ -200,11 +201,17 @@ export function renderCharHeader(t, tier){
       '</div>'+
     '</div>'+
     '<div class="ch-actions">'+
+      '<button class="btn ghost" id="autoEquipBtn" title="Stärkste tragbare Items aus dem Inventar anlegen">⬆️ Bestes anlegen</button>'+
       '<button class="btn ghost" id="editLookBtn">✏️ Aussehen</button>'+
       '<button class="btn ghost" id="helmBtn"'+(hasHelm?'':' disabled title="Kein Helm angelegt"')+'>'+
         (hidden?'🪖 Helm zeigen':'🪖 Helm verbergen')+'</button>'+
     '</div>';
   box.querySelector('#editLookBtn').addEventListener('click', ()=> openCharacterCreator(false));
+  box.querySelector('#autoEquipBtn').addEventListener('click', ()=>{
+    const n = autoEquipBest();
+    toast(n ? '⬆️ '+n+' Gegenstand'+(n>1?'e':'')+' angelegt' : '✓ Bereits optimal ausgerüstet');
+    if(n) renderAll();
+  });
   const helm = box.querySelector('#helmBtn');
   if(helm && hasHelm) helm.addEventListener('click', ()=>{
     if(!state.settings) state.settings = {};
@@ -362,12 +369,13 @@ function renderCharStats(t){
 
 // ---- Inventar (Filter/Sortierung/Sperre, #23/#24) ------------------
 let invTab = 'gear';
-let invSort = 'value', invCat = 'all', invRar = 'all', invSearch = '';
+let invSort = 'value', invCat = 'all', invRar = 'all', invSearch = '', invWear = false;
 
 function filteredSortedInventory(){
   let items = state.inventory.filter(it => {
     if(invCat !== 'all' && it.cat !== invCat) return false;
     if(invRar !== 'all' && it.rarity !== invRar) return false;
+    if(invWear && !canEquip(it)) return false;
     if(invSearch && !it.name.toLowerCase().includes(invSearch.toLowerCase())) return false;
     return true;
   });
@@ -375,6 +383,7 @@ function filteredSortedInventory(){
     value: (a,b)=> CAT_ORDER[a.cat]-CAT_ORDER[b.cat] || itemValue(b)-itemValue(a),
     ilvl:  (a,b)=> b.ilvl-a.ilvl,
     rarity:(a,b)=> rarityIndex(b.rarity)-rarityIndex(a.rarity) || itemValue(b)-itemValue(a),
+    power: (a,b)=> itemPower(b)-itemPower(a),
     slot:  (a,b)=> a.slotKey.localeCompare(b.slotKey),
   }[invSort] || ((a,b)=>0);
   return items.sort(cmp);
@@ -416,12 +425,15 @@ export function renderInventory(){
     '<select id="invRar"><option value="all">Alle Seltenheiten</option>'+
       RARITIES.map(r=>'<option value="'+r.key+'">'+r.name+'</option>').join('')+'</select>'+
     '<select id="invSort"><option value="value">Sortieren: Wert</option>'+
-      '<option value="ilvl">Gegenstandsstufe</option><option value="rarity">Seltenheit</option><option value="slot">Slot</option></select>';
+      '<option value="power">Kampfkraft</option><option value="ilvl">Gegenstandsstufe</option>'+
+      '<option value="rarity">Seltenheit</option><option value="slot">Slot</option></select>'+
+    '<label class="inv-wear"><input id="invWear" type="checkbox"'+(invWear?' checked':'')+'> Nur tragbar</label>';
   panel.appendChild(ctrl);
   $('#invCat').value = invCat; $('#invRar').value = invRar; $('#invSort').value = invSort;
   $('#invCat').addEventListener('change', e=>{ invCat=e.target.value; renderInventory(); });
   $('#invRar').addEventListener('change', e=>{ invRar=e.target.value; renderInventory(); });
   $('#invSort').addEventListener('change', e=>{ invSort=e.target.value; renderInventory(); });
+  $('#invWear').addEventListener('change', e=>{ invWear=e.target.checked; renderInventory(); });
   $('#invSearch').addEventListener('input', e=>{ invSearch=e.target.value; renderInventoryGridOnly(); });
 
   const gridWrap = document.createElement('div');
@@ -512,15 +524,20 @@ export function renderShop(){
   panel.appendChild(note);
   const actions = document.createElement('div');
   actions.className = 'shop-actions';
-  const junkBtn = document.createElement('button');
-  junkBtn.className = 'btn ghost';
-  junkBtn.textContent = '🧹 Junk verkaufen (Grau/Grün)';
-  junkBtn.addEventListener('click', ()=>{
-    const res = sellMany(it => rarityIndex(it.rarity) <= 1);
-    renderAll();
-    if(res.n) toast('+'+fmtBig(res.gold)+' Gold ('+res.n+' verkauft)');
-  });
-  actions.appendChild(junkBtn);
+  const sellBtn = (label, filterFn)=>{
+    const b = document.createElement('button');
+    b.className = 'btn ghost';
+    b.textContent = label;
+    b.addEventListener('click', ()=>{
+      const res = sellMany(filterFn);
+      renderAll();
+      toast(res.n ? '+'+fmtBig(res.gold)+' Gold ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
+    });
+    actions.appendChild(b);
+  };
+  sellBtn('🧹 Junk verkaufen (Grau/Grün)', it => rarityIndex(it.rarity) <= 1);
+  sellBtn('⚪ Alle Gewöhnlichen', it => rarityIndex(it.rarity) === 0);
+  sellBtn('🔵 Bis Selten', it => rarityIndex(it.rarity) <= 2);
   panel.appendChild(actions);
 
   if(!items.length){

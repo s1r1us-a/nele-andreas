@@ -1,4 +1,4 @@
-# Idle Abenteuer – Entwickler-README
+# Dämmerpfad – Entwickler-README
 
 Eigenständiges Idle-/Abenteuer-RPG im WoW-Stil. Vanilla JavaScript (ES-Module),
 **kein Build-Step**, **keine Framework-Abhängigkeiten**, Persistenz über `localStorage`.
@@ -42,12 +42,13 @@ adventure/                  # gesamtes Beiwerk des Spiels gebündelt
       character.js          #   XP/Level, Gesamt-Stats, Kampfwerte
       avatar.js             #   gezeichneter SVG-Avatar
       expedition.js         #   Abenteuer auf Zeit (offline-sicher)
-      combat.js             #   Boss-Kampf-Engine (Mechaniken, Phasen, Enrage, Procs, Farm)
+      combat.js             #   Boss-Kampf-Engine + Duell-Arena (Live-PvP) gleicher Look
+      duel.js               #   Live-PvP: Lobby + host-autoritative 1-gegen-1-Engine (RTDB)
     ui/                     # Darstellung & Interaktion
       dom.js                #   DOM-Helfer, Toast, Formatierung
       tooltip.js            #   Item-Tooltip + Vergleich
-      render.js             #   Render der vier Tabs
-      modals.js             #   Slot-Picker, Vorschau, Boss-Liste/Farm, Statistik, Editor, Dev
+      render.js             #   Render der Tabs
+      modals.js             #   Slot-Picker, Vorschau, Boss-Liste/Farm, Statistik, Editor, Dev, Duell-Lobby
 ```
 
 > Nur der Einstiegspunkt `abenteuer.html` liegt im Root (wie alle anderen Mini-Apps
@@ -68,3 +69,22 @@ python3 adventure/tools/gen-adventure-sprites.py
 Alle wichtigen Stellschrauben liegen in `adventure/js/data/tuning.js`
 (Inventargröße, Heil-%, Enrage-Runde/-Rampe, Endlos-Faktoren, Farm-Multiplikatoren)
 sowie `data/bosses.js` (Roster) und `data/affixes.js` (Sekundär-Stats).
+
+## Live-PvP-Duell (`core/duel.js`)
+
+Über den ⚔️🆚-Knopf in der Topbar fordern sich Nele & Andreas live in **derselben
+Arena** wie der Bosskampf heraus – nur steht statt des Bosses der echte Gegner.
+Lobby (Code, Gold-Wetteinsatz, Bereit, Countdown) und Sync laufen über separate
+RTDB-Knoten `duel/lobbies|combat|abil|heroes/<id>` (stören den Koop-Turm nicht).
+
+- **Host-autoritär:** Der Lobby-Ersteller simuliert den 1-gegen-1-Kampf (RNG nur
+  beim Host → kein Desync) und schreibt pro Schlagabtausch einen Snapshot nach
+  `duel/combat/<id>`. Beide Clients rendern ausschließlich daraus (`applyDuelSnapshot`
+  in `combat.js`).
+- **Aktionen:** Heiltrank/Fähigkeit werden als Anfrage in `duel/abil/<id>` geschrieben
+  und vom Host angewendet (Cooldowns als Restzeit übertragen → driftfrei).
+- **Einsatz:** Beide setzen Gold; der Sieger bekommt den Pott (jeder Client verrechnet
+  den Netto-Betrag auf dem eigenen Spielstand). Im Duell zählen feste 3 Heiltränke je
+  Seite – echte Heiltränke werden nicht verbraucht. Bilanz in `stats.duelWins/Losses`.
+- **Wichtig:** Die Firebase-Schreibregeln müssen den `duel/…`-Namensraum (lesen/schreiben
+  für eingeloggte Spieler) genauso erlauben wie `tower/…`.

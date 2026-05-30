@@ -33,20 +33,25 @@ export const MECH_DEFS = {
   schwaechung:   { label:'Schwächung',    emoji:'💔', color:'#c0653a', desc:'Reduziert deine Heilung & Lebensraub.' },
   teilung:       { label:'Teilung',       emoji:'➗', color:'#ffd24a', desc:'Bei 50 % HP: Wutausbruch, Angriff stark erhöht.' },
   eskalation:    { label:'Eskalation',    emoji:'📈', color:'#ff7b7b', desc:'Je weniger HP, desto mehr Schaden.' },
+  // ---- NEU (Erweiterung) -----------------------------------------
+  reflexion:     { label:'Reflexion',     emoji:'🪞', color:'#b6d0ff', desc:'Reflektiert 25 % deines Schadens zurück.' },
+  auszehrung:    { label:'Auszehrung',    emoji:'🦴', color:'#c9b6a0', desc:'Alle 3 Runden sinkt deine maximale HP um 3 %.' },
 };
 
-// ---- Gebiete (Name + Bild-Index 0–4) -------------------------------
+// ---- Gebiete (Name + Bild-Index 0–4 + Flavor-Text) -----------------
 export const ZONES = [
-  { name:'Blühende Wiesen',   bg:0 },
-  { name:'Dunkelwald',        bg:1 },
-  { name:'Tiefe Höhlen',      bg:2 },
-  { name:'Vulkanschlund',     bg:3 },
-  { name:'Frostgipfel',       bg:4 },
-  { name:'Versunkene Tiefen', bg:2 },
-  { name:'Schattenreich',     bg:1 },
-  { name:'Aschewüste',        bg:3 },
-  { name:'Himmelszitadelle',  bg:4 },
-  { name:'Die Leere',         bg:0 },
+  { name:'Blühende Wiesen',   bg:0, flavor:'Wo die Reise beginnt: sonnige Hügel, in denen erstes Ungeziefer lauert.' },
+  { name:'Dunkelwald',        bg:1, flavor:'Uralte Bäume verschlucken das Licht – etwas beobachtet dich zwischen den Stämmen.' },
+  { name:'Tiefe Höhlen',      bg:2, flavor:'Tropfendes Echo und glühende Adern im Fels. Hier hausen, was die Sonne nie sah.' },
+  { name:'Vulkanschlund',     bg:3, flavor:'Asche regnet vom Himmel, und der Boden selbst brennt unter deinen Sohlen.' },
+  { name:'Frostgipfel',       bg:4, flavor:'Eisiger Sturm und gläserne Stille. Jeder Atemzug gefriert zu Kristall.' },
+  { name:'Versunkene Tiefen', bg:2, flavor:'Vergessene Ruinen unter schwarzem Wasser – die Tiefe drückt von allen Seiten.' },
+  { name:'Schattenreich',     bg:1, flavor:'Eine Welt aus geronnener Finsternis, in der Albträume Gestalt annehmen.' },
+  { name:'Aschewüste',        bg:3, flavor:'Endlose Dünen aus verbrannter Welt, über denen Glutdämonen kreisen.' },
+  { name:'Himmelszitadelle',  bg:4, flavor:'Über den Wolken thronen gefallene Götter, die kein Sterblicher herausfordern sollte.' },
+  { name:'Die Leere',         bg:0, flavor:'Jenseits aller Schöpfung – hier endet das Licht und beginnt das Nichts.' },
+  { name:'Sternennarbe',      bg:4, flavor:'Eine Wunde im Firmament, aus der sterbende Sterne und kosmische Bestien quellen.' },
+  { name:'Jenseits der Zeit', bg:0, flavor:'Wo Vergangenheit und Zukunft zerfallen – nur der Ewige Zerfall wartet noch.' },
 ];
 
 // Hilfs-Phase: ab HP-Anteil weitere Mechaniken aktivieren (#13)
@@ -99,6 +104,14 @@ export const BOSS_DEFS = [
   { name:'Sternenfresser Astaroth',     area:9, spr:3, maxHp:21910000000, atk:6936500, recPower:2542000000, mechanic:['enrage','hinrichtung','schwaechung'] },
   { name:'Urzeit-Drache Bahamut',       area:9, spr:4, maxHp:31770000000, atk:9849830, recPower:3711000000, mechanic:['add_spawn','eskalation','berserk','gift'], phases:[phase(0.5,'feueratem'), phase(0.2,'enrage')] },
   { name:'Erzdämon der Ewigkeit',       area:9, spr:0, maxHp:46070000000, atk:13986750, recPower:5418000000, mechanic:['enrage','teilung','hinrichtung','dornen','eskalation'], phases:[phase(0.7,'verbrennung'), phase(0.4,'add_spawn'), phase(0.2,'schildphase')], loot:{slots:['waffe']} },
+  // ---- Sternennarbe ----
+  { name:'Nebularch der Sternenfresser', area:10, spr:3, maxHp:66800000000,  atk:20000000, recPower:7910000000,  mechanic:['reflexion','enrage'], phases:[phase(0.5,'eskalation')] },
+  { name:'Singularität Vortex',          area:10, spr:4, maxHp:96900000000,  atk:28600000, recPower:11550000000, mechanic:['auszehrung','schildphase'], phases:[phase(0.4,'enrage')], loot:{slots:['umhang','ring1','ring2']} },
+  { name:'Kometenkönig Aldebaran',       area:10, spr:0, maxHp:140000000000, atk:40900000, recPower:16870000000, mechanic:['eskalation','verbrennung','reflexion'] },
+  // ---- Jenseits der Zeit ----
+  { name:'Chronarch der Zeitlose',       area:11, spr:4, maxHp:204000000000, atk:58500000, recPower:24500000000, mechanic:['auszehrung','teilung'], phases:[phase(0.6,'enrage'), phase(0.3,'hinrichtung')], loot:{slots:['waffe','amulett']} },
+  { name:'Paradox-Entität',              area:11, spr:3, maxHp:296000000000, atk:83700000, recPower:35700000000, mechanic:['reflexion','fluch','frost'] },
+  { name:'Der Ewige Zerfall',            area:11, spr:0, maxHp:429000000000, atk:119700000, recPower:52100000000, mechanic:['enrage','auszehrung','reflexion','eskalation'], phases:[phase(0.7,'verbrennung'), phase(0.4,'add_spawn'), phase(0.2,'schildphase')], loot:{slots:['waffe']} },
 ];
 
 export const BOSS_COUNT = BOSS_DEFS.length;
@@ -129,6 +142,7 @@ export function bossFor(zone){
 }
 export const zoneBg = z => buildZoneBgSVG(ZONES[bossFor(z).area].bg);
 export const zoneName = z => ZONES[bossFor(z).area].name + (z >= BOSS_DEFS.length ? ' +' + (z-BOSS_DEFS.length+1) : '');
+export const zoneFlavor = z => ZONES[bossFor(z).area].flavor || '';
 
 // Garantierte Drop-Seltenheit je Boss-Index (#15): später → besser.
 export function guaranteedRarityIndex(bossIndex){

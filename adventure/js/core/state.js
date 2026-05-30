@@ -31,7 +31,8 @@ function genId(){ return 'c_' + Math.random().toString(36).slice(2,8) + Date.now
 function blankStats(){
   return { createdAt: Date.now(), goldEarned: 0, bossKills: 0, farmKills: 0,
            bestItemValue: 0, drops: { gewoehnlich:0, ungewoehnlich:0, selten:0,
-           episch:0, legendaer:0, mythisch:0 }, expeditionsDone: 0 };
+           episch:0, legendaer:0, mythisch:0 }, expeditionsDone: 0,
+           duelWins: 0, duelLosses: 0 };
 }
 
 export function freshState(){

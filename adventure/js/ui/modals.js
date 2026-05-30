@@ -22,7 +22,14 @@ import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, rollItem, inventoryFull, canEquip } from '../core/items.js';
 import { startExpedition } from '../core/expedition.js';
 import { ITEM_TYPES } from '../data/itemTypes.js';
-import { startBossFight, updatePotionBtn, setGodmode, isGodmode } from '../core/combat.js';
+import { startBossFight, updatePotionBtn, setGodmode, isGodmode,
+         openDuelArena, applyDuelSnapshot } from '../core/combat.js';
+import { computePlayerStats } from '../core/tower.js';
+import { userKey } from '../core/firebase.js';
+import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
+         setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
+         startDuelHost, stopDuelHost, serverNow, otherKey, loadGuestSave,
+         resolveActiveSlot } from '../core/duel.js';
 import { $, fmtVal, fmtBig, IS_TOUCH, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { renderAll } from './render.js';
@@ -513,4 +520,179 @@ export function openDevBossPicker(){
     const idx = parseInt(btn.dataset.devfight,10); closeModal(); startBossFight(idx);
   }));
   modal().querySelector('#dbpClose').addEventListener('click', closeModal);
+}
+
+// =====================================================================
+//  LIVE-PvP-DUELL – Lobby (nutzt das vorhandene Lobby-System aus duel.js)
+// =====================================================================
+let _dId = null, _dHost = false, _dStake = 0;
+let _dUnsubLobby = null, _dUnsubCombat = null, _dCountTimer = null;
+let _dStarting = false, _dArena = false;
+
+function cap(k){ return k ? k[0].toUpperCase() + k.slice(1) : ''; }
+function dMyName(){ return cap(userKey) || 'Du'; }
+
+function stopDuelCountdown(){ if(_dCountTimer){ clearInterval(_dCountTimer); _dCountTimer = null; } }
+
+function cleanupDuel(leaveDb){
+  stopDuelCountdown();
+  stopDuelHost();
+  if(_dUnsubLobby){ _dUnsubLobby(); _dUnsubLobby = null; }
+  if(_dUnsubCombat){ _dUnsubCombat(); _dUnsubCombat = null; }
+  if(leaveDb && _dId){ leaveDuel(_dId); }
+  _dId = null; _dHost = false; _dStarting = false; _dArena = false;
+}
+
+export function openDuelLobby(){
+  if(!state.character){ toast('Erst einen Charakter erstellen.'); return; }
+  cleanupDuel(false);
+  openModal(
+    '<h2>⚔️🆚 Duell – Live-PvP</h2>'+
+    '<div class="sub">Tritt live gegen <b>'+cap(otherKey())+'</b> an – beide setzen Gold ein, der Sieger bekommt den Pott. '+
+      'Eure echten Werte zählen. (Dein Gold: 💰 '+fmtBig(state.gold)+')</div>'+
+    '<div class="duel-box">'+
+      '<label class="duel-row">Einsatz 💰 <input id="duelStake" type="number" min="0" value="50"></label>'+
+      '<label class="duel-row">Code <input id="duelCode" type="text" placeholder="z. B. nele"></label>'+
+      '<div class="duel-actions">'+
+        '<button class="btn" id="duelCreateBtn">Lobby erstellen</button>'+
+        '<button class="btn ghost" id="duelJoinBtn">Beitreten</button>'+
+        '<button class="btn ghost" id="duelHomeClose">Schließen</button>'+
+      '</div>'+
+      '<div class="duel-status" id="duelStatus"></div>'+
+    '</div>');
+  $('#duelCreateBtn').addEventListener('click', duelCreate);
+  $('#duelJoinBtn').addEventListener('click', duelJoin);
+  $('#duelHomeClose').addEventListener('click', ()=>{ cleanupDuel(false); closeModal(); });
+}
+
+async function duelCreate(){
+  const stake = Math.max(0, parseInt($('#duelStake').value, 10) || 0);
+  if(state.gold < stake){ toast('💰 Dafür reicht dein Gold nicht.'); return; }
+  const code = ($('#duelCode').value || '').trim();
+  try {
+    _dHost = true; _dStake = stake;
+    _dId = await createDuel(dMyName(), classOf(state).id, stake, code);
+    _dUnsubLobby = listenDuel(_dId, onDuelUpdate);
+  } catch(e){ toast('Fehler: ' + e.message); _dHost = false; _dId = null; }
+}
+
+async function duelJoin(){
+  const code = ($('#duelCode').value || '').trim();
+  if(!code){ toast('Bitte einen Lobby-Code eingeben.'); return; }
+  try {
+    _dHost = false;
+    await joinDuel(code, dMyName(), classOf(state).id);
+    _dId = code;
+    _dUnsubLobby = listenDuel(_dId, onDuelUpdate);
+  } catch(e){ toast('Fehler: ' + e.message); _dId = null; }
+}
+
+function onDuelUpdate(lobby){
+  if(!lobby || lobby.status === 'ended'){
+    if(!_dArena){ stopDuelCountdown(); toast('Duell-Lobby geschlossen.'); cleanupDuel(false); closeModal(); renderAll(); }
+    return;
+  }
+  _dStake = lobby.stake || 0;
+
+  if(lobby.status === 'in_progress'){ enterDuelArena(lobby); return; }
+
+  // Host steuert den Auto-Start-Countdown.
+  if(_dHost){
+    if(lobby.hostReady && lobby.guestReady && !lobby.startAt) setStartAt(_dId, serverNow() + 5000);
+    else if((!lobby.hostReady || !lobby.guestReady) && lobby.startAt) setStartAt(_dId, null);
+  }
+  renderDuelLobby(lobby);
+
+  stopDuelCountdown();
+  if(lobby.startAt){
+    _dCountTimer = setInterval(()=>{
+      const rem = Math.max(0, Math.ceil((lobby.startAt - serverNow())/1000));
+      const el = $('#duelStatus'); if(el) el.textContent = rem > 0 ? ('⚔️ Duell startet in ' + rem + '…') : '⚔️ Los!';
+      if(rem <= 0){ stopDuelCountdown(); if(_dHost) hostBeginDuel(lobby); }
+    }, 200);
+  }
+}
+
+function chip(name, ready, present){
+  return '<div class="duel-chip'+(ready?' ready':'')+'">'+
+    '<div class="dc-name">'+(present?(name||'…'):'wartet…')+'</div>'+
+    '<div class="dc-state">'+(present?(ready?'✓ Bereit':'…'):'offen')+'</div></div>';
+}
+
+function renderDuelLobby(lobby){
+  const both = lobby.host && lobby.guest;
+  const meReady = _dHost ? lobby.hostReady : lobby.guestReady;
+  openModal(
+    '<h2>⚔️🆚 Duell-Lobby</h2>'+
+    '<div class="sub">Einsatz: 💰 '+fmtBig(lobby.stake||0)+' · Code: <b>'+_dId+'</b> (teile ihn mit '+cap(otherKey())+')</div>'+
+    '<div class="duel-vs">'+chip(lobby.hostName, lobby.hostReady, lobby.host)+
+      '<span class="duel-vs-mid">VS</span>'+chip(lobby.guestName, lobby.guestReady, lobby.guest)+'</div>'+
+    '<div class="duel-status" id="duelStatus"></div>'+
+    '<div class="duel-actions">'+
+      (both ? '<button class="btn" id="duelReadyBtn">'+(meReady?'Bereit ✓ (abbrechen)':'Bereit!')+'</button>' : '')+
+      '<button class="btn ghost" id="duelLeaveBtn">Verlassen</button>'+
+    '</div>');
+  const rb = $('#duelReadyBtn');
+  if(rb) rb.addEventListener('click', ()=>{
+    if(!meReady && state.gold < (lobby.stake||0)){ toast('💰 Dafür reicht dein Gold nicht.'); return; }
+    setDuelReady(_dId, _dHost, !meReady);
+  });
+  $('#duelLeaveBtn').addEventListener('click', ()=>{ cleanupDuel(true); closeModal(); renderAll(); });
+}
+
+// Host: lädt beide Spielstände, prüft den Einsatz, startet die Engine.
+async function hostBeginDuel(lobby){
+  if(_dStarting) return;
+  _dStarting = true;
+  try {
+    const oppKey = otherKey();
+    const oppLoaded = await loadGuestSave(oppKey);
+    const oppSave = resolveActiveSlot(oppLoaded);
+    const hostStats = computePlayerStats(state);
+    const guestStats = computePlayerStats(oppSave);
+    const stake = lobby.stake || 0;
+    if(state.gold < stake || (oppSave.gold || 0) < stake){
+      toast('💰 Einer von euch hat nicht genug Gold für den Einsatz.');
+      setDuelStatus(_dId, { hostReady:false, guestReady:false, startAt:null });
+      _dStarting = false; return;
+    }
+    // Aussehen beider Helden veröffentlichen (optional – Clients laden ohnehin selbst).
+    setDuelHeroes(_dId, { tier: hostStats.tier }, { tier: guestStats.tier });
+    // Engine starten, DANN Status auf in_progress (erster Snapshot existiert schon).
+    startDuelHost(_dId, hostStats, guestStats, {
+      hostName: lobby.hostName, guestName: lobby.guestName,
+      hostKey: userKey, guestKey: oppKey,
+    });
+    setDuelStatus(_dId, { status: 'in_progress', startAt: null });
+  } catch(e){
+    toast('Duell-Start fehlgeschlagen: ' + e.message);
+    _dStarting = false;
+  }
+}
+
+// Beide Clients: Arena öffnen und auf Kampf-Snapshots lauschen.
+function enterDuelArena(lobby){
+  if(_dArena) return;
+  _dArena = true;
+  stopDuelCountdown();
+  const role = _dHost ? 'host' : 'guest';
+  const oppKey = otherKey();
+  loadGuestSave(oppKey).then(loaded => {
+    const opp = resolveActiveSlot(loaded);
+    const oppStats = computePlayerStats(opp);
+    const oppSrc = buildHeroSVG(opp.character, oppStats.tier,
+      { equipped: opp.equipped || {}, hideHelmet: !!(opp.settings && opp.settings.hideHelmet) });
+    closeModal();
+    openDuelArena({
+      lobbyId: _dId, role, stake: lobby.stake || 0,
+      myName: dMyName(), oppName: _dHost ? lobby.guestName : lobby.hostName,
+      oppSrc, ability: classOf(state).ability,
+      onAction: (kind) => requestDuelAction(_dId, role, kind),
+      onClose: () => cleanupDuel(true),
+    });
+    _dUnsubCombat = listenDuelCombat(_dId, snap => { if(snap) applyDuelSnapshot(snap); });
+  }).catch(e => {
+    toast('Gegner-Spielstand fehlt: ' + e.message);
+    cleanupDuel(true); closeModal(); renderAll();
+  });
 }

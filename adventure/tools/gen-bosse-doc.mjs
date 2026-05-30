@@ -4,7 +4,7 @@ import { writeFileSync } from 'fs';
 const { BOSS_DEFS, ZONES, MECH_DEFS } = await import('../js/data/bosses.js');
 const { ENDLESS } = await import('../js/data/tuning.js');
 const fmt = n => n>=1e9?(n/1e9).toFixed(2).replace(/\.?0+$/,'')+' Mrd':n>=1e6?(n/1e6).toFixed(2).replace(/\.?0+$/,'')+' Mio':n>=1e3?(n/1e3).toFixed(1).replace(/\.0$/,'')+'k':''+n;
-let m='# Boss-Übersicht – Idle Abenteuer\n\n';
+let m='# Boss-Übersicht – Dämmerpfad\n\n';
 m+='> **Automatisch generiert** aus `adventure/js/data/bosses.js` (Single Source of Truth).\n';
 m+='> Nicht von Hand editieren – stattdessen die Datendatei ändern und `node adventure/tools/gen-bosse-doc.mjs` neu ausführen.\n\n';
 m+='Bosse sind das Fortschritts-Gate: Wer einen Boss besiegt, schaltet den nächsten frei und erhält\n';
