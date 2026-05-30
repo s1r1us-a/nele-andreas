@@ -14,7 +14,8 @@ import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
-import { state, saveState, resetState } from '../core/state.js';
+import { state, saveState, resetState, listCharacters, createCharacter,
+         switchCharacter, deleteCharacter, canAddCharacter, activeCharId } from '../core/state.js';
 import { recomputeTotals, heroTier, gainXp } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
@@ -294,17 +295,27 @@ export function maybeOnboarding(){
 }
 
 // ---- Charakter-Editor ----------------------------------------------
-let _draftChar = null, _creatorForced = false;
+let _draftChar = null, _creatorForced = false, _creatingNew = false, _prevCharId = null;
 const creatorOverlay = () => $('#creatorOverlay');
 const creatorModal = () => $('#creatorModal');
 export function isCreatorForced(){ return _creatorForced; }
-export function openCharacterCreator(forced){
+export function openCharacterCreator(forced, isNew){
   _creatorForced = !!forced;
+  _creatingNew = !!isNew;
   _draftChar = Object.assign({}, DEFAULT_CHARACTER, state.character || {});
   // Erst-Erstellung: keine Klasse vorausgewählt → bewusste Wahl erzwingen.
   if(!state.character) _draftChar.classId = null;
   renderCreator();
   creatorOverlay().classList.add('show');
+}
+// Abbruch beim Anlegen eines NEUEN Charakters: leeren Slot entfernen und
+// auf den vorigen Charakter zurückwechseln.
+function cancelNewCharacter(){
+  const newId = activeCharId();
+  if(_prevCharId && _prevCharId !== newId) switchCharacter(_prevCharId);
+  deleteCharacter(newId);
+  _creatingNew = false; _prevCharId = null;
+  renderAll();
 }
 function renderCreator(){
   const tier = heroTier(recomputeTotals().power);
@@ -332,6 +343,9 @@ function renderCreator(){
   creatorModal().innerHTML =
     '<h2>👤 Charakter erstellen</h2>'+
     '<img class="creator-preview" id="creatorPreview" alt="Vorschau">'+
+    '<div class="creator-section"><h3>Name</h3>'+
+      '<input type="text" id="creatorName" class="creator-name" maxlength="16" '+
+      'placeholder="Name deines Helden" value="'+(_draftChar.name||'').replace(/"/g,'&quot;')+'"></div>'+
     '<div class="creator-section"><h3>Klasse'+(classLocked?' (dauerhaft)':'')+'</h3>'+
       '<div class="opt-grid cols3">'+classBtns+'</div>'+
       '<div class="sub" style="margin-top:6px;">'+classDesc+'</div></div>'+
@@ -342,9 +356,11 @@ function renderCreator(){
     '<div class="creator-section"><h3>Augenfarbe</h3><div class="color-grid">'+eyeBtns+'</div></div>'+
     '<div class="preview-actions">'+
       '<button class="btn" id="saveCharBtn">✓ Fertig</button>'+
-      (_creatorForced ? '' : '<button class="btn ghost" id="cancelCharBtn">Abbrechen</button>')+
+      ((_creatorForced && !_creatingNew) ? '' : '<button class="btn ghost" id="cancelCharBtn">Abbrechen</button>')+
     '</div>';
   creatorModal().querySelector('#creatorPreview').src = buildHeroSVG(_draftChar, tier);
+  const nameInput = creatorModal().querySelector('#creatorName');
+  if(nameInput) nameInput.addEventListener('input', e=>{ _draftChar.name = e.target.value; });
   creatorModal().querySelectorAll('[data-class]').forEach(el =>
     el.addEventListener('click', ()=>{ _draftChar.classId = el.dataset.class; renderCreator(); }));
   creatorModal().querySelectorAll('[data-gender]').forEach(el =>
@@ -359,12 +375,18 @@ function renderCreator(){
     el.addEventListener('click', ()=>{ _draftChar.eyeColor = el.dataset.eye; renderCreator(); }));
   creatorModal().querySelector('#saveCharBtn').addEventListener('click', applyCharacter);
   const cancel = creatorModal().querySelector('#cancelCharBtn');
-  if(cancel) cancel.addEventListener('click', ()=> creatorOverlay().classList.remove('show'));
+  if(cancel) cancel.addEventListener('click', ()=>{
+    creatorOverlay().classList.remove('show');
+    if(_creatingNew) cancelNewCharacter();
+  });
 }
 function applyCharacter(){
   if(!_draftChar.classId){ toast('Bitte wähle eine Klasse.'); return; }
   // Vorhandene Klasse ist unveränderlich – nie überschreiben.
   if(state.character && state.character.classId) _draftChar.classId = state.character.classId;
+  // Name: leer → Klassenname als Standard.
+  if(!_draftChar.name || !_draftChar.name.trim()) _draftChar.name = CLASS_BY_ID[_draftChar.classId].label;
+  else _draftChar.name = _draftChar.name.trim();
   // Talente/Punkte beim Aussehen-Ändern bewahren bzw. neu initialisieren.
   const prevTalents = (state.character && state.character.talents) || {};
   const prevPoints  = (state.character && typeof state.character.talentPoints === 'number')
@@ -372,7 +394,55 @@ function applyCharacter(){
   state.character = Object.assign({}, _draftChar, { talents: prevTalents, talentPoints: prevPoints });
   saveState();
   creatorOverlay().classList.remove('show');
+  _creatingNew = false; _prevCharId = null;
   renderAll();
+}
+
+// ---- Charakter-Roster (Wechsel / Neu / Löschen) --------------------
+export function openRosterModal(){
+  hideTooltip();
+  const chars = listCharacters();
+  let rows = '';
+  for(const c of chars){
+    const cls = c.classId ? CLASS_BY_ID[c.classId] : null;
+    const icon = cls ? cls.icon : '👤';
+    const name = c.name || (cls ? cls.label : 'Neuer Held');
+    const sub = (cls ? cls.label : 'Ohne Klasse') + ' · Level ' + c.level;
+    rows += '<div class="bl-row'+(c.isActive?' current':'')+'">'+
+      '<span class="cr-list-ico">'+icon+'</span>'+
+      '<div class="bl-info"><div class="bl-name">'+name+(c.isActive?' <span class="bl-tag cur">Aktiv</span>':'')+'</div>'+
+        '<div class="bl-meta">'+sub+'</div></div>'+
+      (c.isActive ? '' : '<button class="btn ghost" data-pick="'+c.id+'">Wählen</button>')+
+      (chars.length>1 ? '<button class="btn ghost cr-del" data-del="'+c.id+'" title="Löschen">🗑️</button>' : '')+
+    '</div>';
+  }
+  const addDisabled = !canAddCharacter();
+  openModal('<h2>👥 Charaktere</h2>'+
+    '<div class="sub">Wechsle zwischen Helden oder erstelle einen neuen – jeder startet komplett bei 0.</div>'+
+    '<div class="boss-list">'+rows+'</div>'+
+    '<div class="preview-actions">'+
+      '<button class="btn" id="newCharBtn"'+(addDisabled?' disabled':'')+'>➕ Neuer Charakter</button>'+
+      '<button class="btn ghost" id="rosterClose">Schließen</button>'+
+    '</div>'+
+    (addDisabled?'<div class="preview-hint">Maximale Charakterzahl erreicht.</div>':''));
+  modal().querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', ()=>{
+    if(switchCharacter(btn.dataset.pick)){ closeModal(); renderAll(); }
+  }));
+  modal().querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', ()=>{
+    const c = listCharacters().find(x => x.id === btn.dataset.del);
+    const nm = c && c.name ? c.name : 'diesen Charakter';
+    if(!confirm('„'+nm+'" wirklich löschen? Der gesamte Fortschritt geht verloren.')) return;
+    deleteCharacter(btn.dataset.del); renderAll(); openRosterModal();
+  }));
+  const nb = modal().querySelector('#newCharBtn');
+  if(nb) nb.addEventListener('click', ()=>{
+    if(!canAddCharacter()){ toast('Maximale Charakterzahl erreicht.'); return; }
+    _prevCharId = activeCharId();
+    closeModal();
+    createCharacter();                 // leerer Slot, sofort aktiv
+    openCharacterCreator(true, true);  // forced + isNew (Abbruch räumt leeren Slot)
+  });
+  modal().querySelector('#rosterClose').addEventListener('click', closeModal);
 }
 
 // ---- Dev-/Test-Werkzeuge -------------------------------------------

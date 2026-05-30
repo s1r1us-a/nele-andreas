@@ -8,9 +8,10 @@ import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
 import { EXPEDITIONS } from '../data/expeditions.js';
 import { STAT_HELP } from '../data/statHelp.js';
 import { classOf } from '../data/classes.js';
-import { talentTreeFor, isRealTalent } from '../data/talents.js';
+import { RESPEC_COST } from '../data/tuning.js';
+import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked } from '../data/talents.js';
 import { bossFor, zoneBg, zoneName, MECH_DEFS } from '../data/bosses.js';
-import { state, saveState } from '../core/state.js';
+import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
@@ -19,7 +20,7 @@ import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
-import { openSlotPicker, openItemPreview, openSellModal, previewExpedition } from './modals.js';
+import { openSlotPicker, openItemPreview, openSellModal, previewExpedition, openRosterModal } from './modals.js';
 
 export function renderAll(){
   hideTooltip(); renderTopStats(); renderAdventure();
@@ -163,61 +164,102 @@ export function renderCharacter(){
   LEFT_SLOTS.forEach(s => L.appendChild(slotEl(s)));
   RIGHT_SLOTS.forEach(s => R.appendChild(slotEl(s)));
   BOTTOM_SLOTS.forEach(s => B.appendChild(slotEl(s)));
+  renderRosterBar();
   renderCharStats(t);
   renderTalents();
 }
 
-// ---- Talentbaum (B16, Gerüst) --------------------------------------
+// ---- Charakter-Roster-Leiste (Wechsel / Neu) -----------------------
+export function renderRosterBar(){
+  const box = $('#charRoster'); if(!box) return;
+  const cls = classOf(state);
+  const ch = state.character;
+  const name = (ch && ch.name) ? ch.name : (ch ? cls.label : 'Neuer Held');
+  const count = listCharacters().length;
+  box.innerHTML =
+    '<div class="cr-current">'+
+      '<span class="cr-ico">'+cls.icon+'</span>'+
+      '<span class="cr-name">'+name+'</span>'+
+      '<span class="cr-meta">'+cls.label+' · Level '+(state.level||1)+'</span>'+
+    '</div>'+
+    '<button class="btn ghost cr-switch" id="rosterBtn">👥 Charaktere ('+count+')</button>';
+  const btn = box.querySelector('#rosterBtn');
+  if(btn) btn.addEventListener('click', openRosterModal);
+}
+
+// ---- Talentbaum: 10 Stufen, pro Stufe genau EIN Talent -------------
 export function renderTalents(){
   const box = $('#talentsPanel'); if(!box) return;
   if(!state.character){ box.innerHTML = ''; return; }
   const cls = classOf(state);
   const tree = talentTreeFor(cls.id);
   if(!tree.length){ box.innerHTML = ''; return; }
-  const ranks = state.character.talents || {};
   const points = state.character.talentPoints || 0;
+  const chosenCount = chosenTalentCount(state);
 
   let html = '<div class="talents-head">'+
     '<h4>🌳 Talente – '+cls.icon+' '+cls.label+'</h4>'+
     '<span class="talent-points">Verfügbare Punkte: <b>'+points+'</b></span>'+
     '</div>'+
-    '<p class="talents-hint">Talente werden bald freigeschaltet. Pro Level erhältst du einen Punkt.</p>';
+    '<p class="talents-hint">Pro Level erhältst du einen Talentpunkt. <b>Pro Stufe</b> wählst du <b>genau ein</b> Talent – die nächste Stufe öffnet sich danach.</p>'+
+    '<div class="talents-respec">'+
+      '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
+        '♻️ Talente zurücksetzen (💰 '+fmtBig(RESPEC_COST)+')</button>'+
+    '</div>';
 
   tree.forEach((tier, ti) => {
-    html += '<div class="talent-tier"><span class="talent-tier-label">Stufe '+(ti+1)+'</span><div class="talent-row">';
+    const unlocked = stufeUnlocked(state, ti);
+    const chosenId = chosenTalentId(state, ti);
+    html += '<div class="talent-tier'+(unlocked?'':' locked')+'">'+
+      '<span class="talent-tier-label">Stufe '+(ti+1)+(unlocked?'':' 🔒')+'</span>'+
+      '<div class="talent-row">';
     tier.forEach(node => {
-      const real = isRealTalent(node);
-      const rank = ranks[node.id] || 0;
-      const cssCls = 'talent-node' + (real ? '' : ' placeholder') + (rank>0 ? ' taken' : '');
-      const icon = real ? (node.icon || '✦') : '🔒';
-      const name = real ? node.name : 'Bald verfügbar';
-      const rankTxt = real ? '<span class="talent-rank">'+rank+'/'+(node.maxRank||1)+'</span>' : '';
-      html += '<button class="'+cssCls+'" data-talent="'+node.id+'"'+(real?'':' disabled')+
-        ' title="'+((real?node.desc:'Dieses Talent wird später freigeschaltet.')||'').replace(/"/g,'&quot;')+'">'+
-        '<span class="talent-icon">'+icon+'</span>'+
-        '<span class="talent-name">'+name+'</span>'+rankTxt+'</button>';
+      const isChosen = chosenId === node.id;
+      const dimmed = chosenId != null && !isChosen;   // andere Option der Stufe gewählt
+      const dis = !unlocked || (chosenId != null);
+      const cssCls = 'talent-node' + (isChosen ? ' taken' : '') +
+        (!unlocked ? ' locked' : '') + (dimmed ? ' dimmed' : '');
+      html += '<button class="'+cssCls+'" data-stufe="'+ti+'" data-talent="'+node.id+'"'+(dis?' disabled':'')+
+        ' title="'+(node.desc||'').replace(/"/g,'&quot;')+'">'+
+        '<span class="talent-icon">'+(node.icon||'✦')+'</span>'+
+        '<span class="talent-name">'+node.name+'</span>'+
+        '<span class="talent-rank">'+node.desc+'</span></button>';
     });
     html += '</div></div>';
   });
   box.innerHTML = html;
 
   box.querySelectorAll('.talent-node[data-talent]').forEach(btn => {
-    btn.addEventListener('click', () => spendTalentPoint(btn.dataset.talent));
+    btn.addEventListener('click', () => chooseTalent(parseInt(btn.dataset.stufe,10), btn.dataset.talent));
   });
+  const respec = box.querySelector('#respecBtn');
+  if(respec) respec.addEventListener('click', respecTalents);
 }
 
-function spendTalentPoint(talentId){
-  const cls = classOf(state);
-  const node = talentTreeFor(cls.id).flat().find(n => n.id === talentId);
-  if(!node || !isRealTalent(node)) return;
-  const ranks = state.character.talents || (state.character.talents = {});
-  const cur = ranks[talentId] || 0;
-  if(cur >= (node.maxRank||1)){ toast('Talent bereits maximiert.'); return; }
+function chooseTalent(stufeIndex, optionId){
+  if(!stufeUnlocked(state, stufeIndex)){ toast('Erst die vorige Stufe wählen.'); return; }
+  if(chosenTalentId(state, stufeIndex) != null){
+    toast('Pro Stufe nur ein Talent – erst zurücksetzen.'); return;
+  }
   if((state.character.talentPoints||0) <= 0){ toast('Keine Talentpunkte verfügbar.'); return; }
-  ranks[talentId] = cur + 1;
+  const ranks = state.character.talents || (state.character.talents = {});
+  ranks[stufeIndex] = optionId;
   state.character.talentPoints--;
   saveState();
   renderAll();
+}
+
+function respecTalents(){
+  const chosenCount = chosenTalentCount(state);
+  if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
+  if((state.gold||0) < RESPEC_COST){ toast('Nicht genug Gold ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
+  if(!confirm('Alle Talente zurücksetzen für '+fmtBig(RESPEC_COST)+' Gold? Die Punkte erhältst du zurück.')) return;
+  state.gold -= RESPEC_COST;
+  state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
+  state.character.talents = {};
+  saveState();
+  renderAll();
+  toast('♻️ Talente zurückgesetzt – '+chosenCount+' Punkte zurück.');
 }
 function renderCharStats(t){
   const c = heroCombat(t);

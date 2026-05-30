@@ -140,7 +140,10 @@ export function affixScore(it){
 export const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat + affixScore(it);
 export const inventoryFull = () => state.inventory.length >= INV_SLOTS;
 export const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
-export const sellPrice = it => Math.max(1, Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6));
+export const sellPrice = it => {
+  const base = Math.max(1, Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6));
+  return it.cat === 'waffen' ? base*10 : base;   // Waffenpreise ×10
+};
 
 // Einzel-Item-Kampfkraft (Vergleich im Vorschau-Modal)
 export function itemPower(it){
