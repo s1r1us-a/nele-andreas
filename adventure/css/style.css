@@ -598,9 +598,32 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .talent-node:not(:disabled):hover { border-color:var(--gold-hi); transform:translateY(-2px); }
 .talent-node.placeholder { opacity:.5; cursor:not-allowed; }
 .talent-node.taken { border-color:#37d67a; box-shadow:0 0 10px rgba(55,214,122,.3); }
+.talent-node.locked { opacity:.4; cursor:not-allowed; }
+.talent-node.dimmed { opacity:.35; cursor:not-allowed; }
+.talent-node.taken.dimmed { opacity:1; }
+.talent-tier.locked .talent-tier-label { color:var(--txt-mute); opacity:.7; }
 .talent-icon { font-size:20px; }
-.talent-name { font-size:11px; text-align:center; line-height:1.2; }
-.talent-rank { font-size:10px; color:var(--gold-hi); font-weight:700; }
+.talent-name { font-size:11px; text-align:center; line-height:1.2; font-weight:600; }
+.talent-rank { font-size:10px; color:var(--gold-hi); font-weight:700; text-align:center; line-height:1.15; }
+.talents-respec { margin:2px 0 12px; }
+.talent-respec { font-size:11px; padding:5px 10px; }
+.talent-respec:disabled { opacity:.45; cursor:not-allowed; }
+/* ---- Charakter-Roster ---- */
+.char-roster { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  gap:8px; margin-bottom:12px; background:var(--stone); border:1px solid var(--line);
+  border-radius:12px; padding:8px 12px; }
+.char-roster:empty { display:none; }
+.cr-current { display:flex; align-items:center; gap:8px; min-width:0; }
+.cr-ico { font-size:20px; }
+.cr-name { font-weight:700; color:var(--gold-hi); }
+.cr-meta { font-size:11px; color:var(--txt-dim); }
+.cr-switch { font-size:12px; padding:6px 12px; white-space:nowrap; }
+.cr-list-ico { font-size:24px; width:30px; text-align:center; }
+.cr-del { padding:6px 8px; }
+.creator-name { width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px;
+  background:rgba(255,255,255,.05); border:1px solid var(--line); color:var(--txt);
+  font-family:inherit; font-size:14px; }
+.creator-name:focus { outline:none; border-color:var(--gold-hi); }
 .creator-preview { display:block; margin:0 auto 14px; width:auto; height:180px; aspect-ratio:5/8;
   border-radius:14px; background:radial-gradient(circle at 50% 35%, #2a2335, #16121f);
   border:1px solid var(--line); }
