@@ -14,7 +14,17 @@
    - Eine Stufe ist erst wählbar, wenn die vorige belegt ist (sequentiell).
    - Jede Wahl kostet 1 Talentpunkt (1 je Level). Respec (Gold) in der UI.
    ===================================================================== */
-import { STAT_INFO } from './statHelp.js';
+// Lokale Wert-Metadaten (label + pct) für die Auto-Beschreibung. BEWUSST lokal,
+// damit talents.js KEINE Imports braucht und durch kein anderes (ggf. veraltet
+// gecachtes) Modul beim Laden brechen kann. Reihenfolge = Anzeige-Reihenfolge.
+const MOD_META = {
+  damage:{label:'Schaden',pct:false}, maxHp:{label:'Leben',pct:false},
+  armor:{label:'Rüstung',pct:false}, critPhys:{label:'Physischer Krit',pct:true},
+  critMagic:{label:'Magischer Krit',pct:true}, critDamage:{label:'Krit-Schaden',pct:true},
+  attackSpeed:{label:'Angriffstempo',pct:true}, lifesteal:{label:'Lebensraub',pct:true},
+  dodge:{label:'Ausweichen',pct:true}, versatility:{label:'Vielseitigkeit',pct:true},
+  thorns:{label:'Dornen',pct:false}, block:{label:'Block',pct:false},
+};
 
 // Effekt-Helfer: add = flache Boni, mult = prozentuale Boni (auf Bundle-Keys).
 // Bundle-Keys: armor, damage, maxHp, critPhys, critMagic, critDamage,
@@ -27,7 +37,7 @@ function eff(mods){
 }
 // Anzeige eines Einzel-Mods: mult IMMER als %, add je nach Wert-Typ (% oder flach).
 function fmtMod(key, v, isMult){
-  const info = STAT_INFO[key] || { label:key, pct:false };
+  const info = MOD_META[key] || { label:key, pct:false };
   const pct = isMult || info.pct;
   const num = pct ? '+'+Math.round(v*100)+' %' : '+'+v;
   return num + ' ' + info.label;
@@ -141,7 +151,7 @@ export function talentNodes(classId){
 export function talentStatKeys(classId){
   const present = new Set();
   for(const n of talentNodes(classId)) for(const k of n.keys) present.add(k);
-  return Object.keys(STAT_INFO).filter(k => present.has(k));
+  return Object.keys(MOD_META).filter(k => present.has(k));
 }
 
 // Gewählte Option einer Stufe (optionId oder null).

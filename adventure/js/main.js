@@ -8,7 +8,7 @@ import { startBossFight, toggleSpeed, closeArena, usePotion, useAbility } from '
 import { $, fmtRemain } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
 import { openBossList, openStats, openDevPanel, openCharacterCreator,
-         maybeOnboarding, isCreatorForced } from './ui/modals.js';
+         openRosterModal, maybeOnboarding, isCreatorForced } from './ui/modals.js';
 
 // ---- Tabs -----------------------------------------------------------
 function switchTab(view){
@@ -23,6 +23,7 @@ document.querySelectorAll('.tab').forEach(tab =>
 $('#challengeBtn').addEventListener('click', ()=> startBossFight());
 $('#bossListBtn').addEventListener('click', openBossList);
 $('#statsBtn').addEventListener('click', openStats);
+$('#rosterTopBtn').addEventListener('click', openRosterModal);
 $('#devBtn').addEventListener('click', openDevPanel);
 // „Aussehen ändern" und „Helm" liegen jetzt im dynamischen Charakter-Header
 // (in render.js verdrahtet, da bei jedem Render neu aufgebaut).
