@@ -349,24 +349,32 @@
   <!-- CHARAKTER -->
   <div class="view" id="view-character">
     <div class="panel">
-      <div class="char-roster" id="charRoster"></div>
-      <div class="char-actions">
-        <button class="btn ghost" id="editLookBtn">✏️ Aussehen ändern</button>
-        <button class="btn ghost" id="toggleHelmBtn">🪖 Helm</button>
-      </div>
-      <div class="doll">
-        <div class="col left" id="dollLeft"></div>
-        <div class="center">
-          <div class="hero-frame">
-            <span class="tier-badge" id="tierBadge"></span>
-            <img id="dollHero" alt="Charakter">
+      <div class="char-header" id="charHeader"></div>
+
+      <section class="char-section">
+        <h3 class="char-section-h">🎽 Ausrüstung</h3>
+        <div class="doll">
+          <div class="col left" id="dollLeft"></div>
+          <div class="center">
+            <div class="hero-frame">
+              <span class="tier-badge" id="tierBadge"></span>
+              <img id="dollHero" alt="Charakter">
+            </div>
           </div>
+          <div class="col right" id="dollRight"></div>
+          <div class="bottom" id="dollBottom"></div>
         </div>
-        <div class="col right" id="dollRight"></div>
-        <div class="bottom" id="dollBottom"></div>
-      </div>
-      <div class="char-stats" id="charStats"></div>
-      <div class="talents-panel" id="talentsPanel"></div>
+      </section>
+
+      <section class="char-section">
+        <h3 class="char-section-h">📊 Werte</h3>
+        <div class="char-stats" id="charStats"></div>
+      </section>
+
+      <section class="char-section">
+        <h3 class="char-section-h">🌳 Talente</h3>
+        <div class="talents-panel" id="talentsPanel"></div>
+      </section>
     </div>
   </div>
 

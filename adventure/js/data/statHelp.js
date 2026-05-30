@@ -21,3 +21,29 @@ export const STAT_HELP = {
   dornen:        'Dornen: Reflektiert einen festen Schaden zurück, wenn du getroffen wirst.',
   block:         'Block: Zusätzlicher fester Schadensabzug pro gegnerischem Treffer.',
 };
+
+/* =====================================================================
+   STAT_INFO – EINE Quelle pro Bundle-Wert (wie in recomputeTotals):
+   { label, pct, help }. Verbindet Anzeige-Label (nutzerfreundlich),
+   Format (Prozent/flach) und Erklärung. Genutzt von Talenten (auto-
+   generierte Beschreibung) und der UI (Werte-Zeilen, Tooltips, Legende).
+   pct stammt aus AFFIX_DEFS; Labels hier bewusst kurz/sprechend.
+   ===================================================================== */
+import { AFFIX_DEFS } from './affixes.js';
+const _info = (key, label, helpKey) => ({
+  label, pct: !!(AFFIX_DEFS[key] && AFFIX_DEFS[key].pct), help: STAT_HELP[helpKey] || '',
+});
+export const STAT_INFO = {
+  damage:      _info('damage',      'Schaden',         'schaden'),
+  maxHp:       _info('maxHp',       'Leben',           'leben'),
+  armor:       _info('armor',       'Rüstung',         'ruestung'),
+  critPhys:    _info('critPhys',    'Physischer Krit', 'kritphys'),
+  critMagic:   _info('critMagic',   'Magischer Krit',  'kritmagic'),
+  critDamage:  _info('critDamage',  'Krit-Schaden',    'kritschaden'),
+  attackSpeed: _info('attackSpeed', 'Angriffstempo',   'angriffstempo'),
+  lifesteal:   _info('lifesteal',   'Lebensraub',      'lebensraub'),
+  dodge:       _info('dodge',       'Ausweichen',      'ausweichen'),
+  versatility: _info('versatility', 'Vielseitigkeit',  'vielseitigkeit'),
+  thorns:      _info('thorns',      'Dornen',          'dornen'),
+  block:       _info('block',       'Block',           'block'),
+};

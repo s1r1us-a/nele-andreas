@@ -584,8 +584,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .talents-panel { margin-top:18px; background:var(--stone); border:1px solid var(--line);
   border-radius:12px; padding:12px 14px; }
 .talents-panel:empty { display:none; }
-.talents-head { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:6px; }
-.talents-head h4 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--gold-hi); margin:0; }
+.talents-head { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:6px; }
 .talent-points { font-size:12px; color:var(--txt-dim); }
 .talent-points b { color:#ffd95e; }
 .talents-hint { font-size:11px; color:var(--txt-mute); margin:4px 0 10px; }
@@ -596,28 +595,74 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   gap:3px; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:10px;
   padding:8px 6px; cursor:pointer; color:var(--txt); transition:border-color .15s, transform .15s; }
 .talent-node:not(:disabled):hover { border-color:var(--gold-hi); transform:translateY(-2px); }
-.talent-node.placeholder { opacity:.5; cursor:not-allowed; }
-.talent-node.taken { border-color:#37d67a; box-shadow:0 0 10px rgba(55,214,122,.3); }
+.talent-node { position:relative; }
+.talent-node.taken { border-color:#37d67a; background:rgba(55,214,122,.10);
+  box-shadow:0 0 12px rgba(55,214,122,.35); }
 .talent-node.locked { opacity:.4; cursor:not-allowed; }
-.talent-node.dimmed { opacity:.35; cursor:not-allowed; }
+.talent-node.dimmed { opacity:.4; cursor:not-allowed; }
 .talent-node.taken.dimmed { opacity:1; }
-.talent-tier.locked .talent-tier-label { color:var(--txt-mute); opacity:.7; }
-.talent-icon { font-size:20px; }
-.talent-name { font-size:11px; text-align:center; line-height:1.2; font-weight:600; }
-.talent-rank { font-size:10px; color:var(--gold-hi); font-weight:700; text-align:center; line-height:1.15; }
-.talents-respec { margin:2px 0 12px; }
-.talent-respec { font-size:11px; padding:5px 10px; }
+.talent-node.pickable { border-color:var(--gold-dim); }
+.talent-node.pickable:hover { border-color:var(--gold-hi); }
+.talent-check { position:absolute; top:4px; right:6px; color:#37d67a; font-weight:700; font-size:12px; }
+.talent-icon { font-size:22px; }
+.talent-name { font-size:12px; text-align:center; line-height:1.2; font-weight:700; }
+.talent-val { font-size:10px; color:var(--gold-hi); font-weight:700; text-align:center; line-height:1.2; }
+/* Talent-Kopf: Klasse · Fortschritt · Punkte · Respec */
+.talents-class { font-family:'Cinzel',serif; font-size:14px; color:var(--gold-hi); font-weight:700; }
+.talents-progress { font-size:12px; color:var(--txt-dim); }
+.talents-progress b { color:var(--gold-hi); }
+.talent-respec { font-size:11px; padding:5px 10px; margin-left:auto; }
 .talent-respec:disabled { opacity:.45; cursor:not-allowed; }
-/* ---- Charakter-Roster ---- */
-.char-roster { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
-  gap:8px; margin-bottom:12px; background:var(--stone); border:1px solid var(--line);
-  border-radius:12px; padding:8px 12px; }
-.char-roster:empty { display:none; }
-.cr-current { display:flex; align-items:center; gap:8px; min-width:0; }
-.cr-ico { font-size:20px; }
-.cr-name { font-weight:700; color:var(--gold-hi); }
-.cr-meta { font-size:11px; color:var(--txt-dim); }
-.cr-switch { font-size:12px; padding:6px 12px; white-space:nowrap; }
+/* Stufen-Block */
+.talent-tier { margin-bottom:10px; padding:8px 10px; border-radius:10px;
+  background:rgba(255,255,255,.02); border:1px solid var(--line); }
+.talent-tier.done { border-color:rgba(55,214,122,.4); }
+.talent-tier.locked { opacity:.85; }
+.talent-tier-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
+.talent-tier-state { font-size:10px; color:var(--txt-mute); text-transform:uppercase; letter-spacing:.05em; }
+.talent-tier.done .talent-tier-state { color:#37d67a; }
+/* Werte-Legende */
+.talent-legend { margin-top:12px; border-top:1px solid var(--line); padding-top:8px; }
+.talent-legend > summary { cursor:pointer; font-size:12px; color:var(--gold-hi); font-weight:600;
+  list-style:none; }
+.talent-legend > summary::-webkit-details-marker { display:none; }
+.legend-list { margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+.legend-row { display:grid; grid-template-columns:130px 1fr; gap:8px; font-size:12px; }
+.legend-label { color:var(--gold-hi); font-weight:600; }
+.legend-help { color:var(--txt-dim); line-height:1.35; }
+@media (max-width:560px){ .legend-row { grid-template-columns:1fr; gap:2px; } }
+/* ---- Charakter-Header ---- */
+.char-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  gap:14px; margin-bottom:16px; background:linear-gradient(180deg, var(--stone-hi), var(--stone));
+  border:1px solid var(--gold-dim); border-radius:14px; padding:12px 16px; }
+.char-header:empty { display:none; }
+.ch-id { display:flex; align-items:center; gap:14px; min-width:0; }
+.ch-avatar { position:relative; width:64px; height:84px; flex:0 0 auto; border-radius:10px;
+  background:radial-gradient(circle at 50% 35%, var(--stone-hi), var(--bg-0) 80%);
+  border:1px solid var(--gold-dim); overflow:hidden; display:flex; align-items:flex-end; justify-content:center; }
+.ch-avatar img { width:100%; height:100%; object-fit:contain; object-position:center bottom; }
+.ch-tier { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:8px;
+  background:rgba(0,0,0,.55); color:var(--gold-hi); padding:1px 0; }
+.ch-main { min-width:0; }
+.ch-name { font-family:'Cinzel',serif; font-size:20px; font-weight:700; color:var(--gold-hi); line-height:1.1; }
+.ch-class { font-size:13px; color:var(--txt-dim); margin-top:1px; }
+.ch-level { font-size:12px; color:var(--txt-dim); margin-top:6px; }
+.ch-level b { color:#ffd95e; }
+.ch-xpbar { height:6px; border-radius:4px; background:rgba(0,0,0,.4); overflow:hidden;
+  margin:4px 0 6px; max-width:240px; }
+.ch-xpbar i { display:block; height:100%; background:linear-gradient(90deg, var(--gold-dim), var(--gold-hi)); }
+.ch-power { font-size:13px; color:var(--power); font-weight:700; }
+.ch-power b { color:var(--gold-hi); }
+.ch-actions { display:flex; flex-direction:column; gap:8px; }
+.ch-actions .btn { font-size:12px; padding:7px 12px; white-space:nowrap; }
+@media (max-width:560px){ .ch-actions { flex-direction:row; flex-wrap:wrap; } }
+/* Abschnitte im Charakter-Tab */
+.char-section { margin-bottom:18px; }
+.char-section-h { font-size:13px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--gold-hi); border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:12px; }
+.char-section .char-stats { margin-top:0; }
+.cs-row.has-help { cursor:pointer; }
+/* Roster-Liste & Creator-Name */
 .cr-list-ico { font-size:24px; width:30px; text-align:center; }
 .cr-del { padding:6px 8px; }
 .creator-name { width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px;
