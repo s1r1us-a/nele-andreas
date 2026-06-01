@@ -13,12 +13,14 @@ import { openBossList, openStats, openCharacterCreator,
          openOtherProfile } from './ui/modals.js';
 import { checkAdventureBadges } from './core/badges.js';
 import { otherKey } from './core/duel.js';
+import { initTradeTab, renderTrade } from './ui/trade.js';
 
 // ---- Tabs -----------------------------------------------------------
 function switchTab(view){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const el = $('#view-'+view); if(el) el.classList.add('active');
+  if(view==='trade') renderTrade();
 }
 document.querySelectorAll('.tab').forEach(tab =>
   tab.addEventListener('click', ()=> switchTab(tab.dataset.view)));
@@ -67,7 +69,7 @@ document.addEventListener('keydown', e=>{
   const tag = (e.target && e.target.tagName) || '';
   if(tag==='INPUT' || tag==='SELECT' || tag==='TEXTAREA') return;
   if($('#arenaOverlay').classList.contains('show')) return;
-  const map = { '1':'adventure', '2':'character', '3':'talents', '4':'inventory', '5':'shop' };
+  const map = { '1':'adventure', '2':'character', '3':'talents', '4':'inventory', '5':'shop', '6':'trade' };
   if(map[e.key]) { switchTab(map[e.key]); return; }
   if(e.key==='b' || e.key==='B') openBossList();
   else if(e.key==='c' || e.key==='C') $('#challengeBtn').click();
@@ -127,6 +129,7 @@ window.addEventListener('beforeunload', flushSave);
   if(opBtn){ opBtn.title = otherName + 's Profil ansehen'; opBtn.addEventListener('click', openOtherProfile); }
   // Globalen Coinstand live in die Topbar spiegeln (geteiltes Wallet mit Farm/Slot).
   watchCoins(c => { const el = $('#miniGold'); if(el) el.textContent = fmtBig(c); });
+  initTradeTab();   // Live-Handel: Presence + Trade-Knoten abonnieren.
   startLoop();
   if(!state.character) openCharacterCreator(true);
   else maybeOnboarding();
