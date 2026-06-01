@@ -34,6 +34,20 @@ const ARMOR_MATERIALS = [
   { key:'seide',         material:'stoff',  prefix:'Seiden',        variant:4, statMult:0.72, weight:3,   affixBias:{ critMagic:4, versatility:3, maxHp:2 }, flavorAffix:'critMagic' },
   { key:'drachenleder',  material:'leder',  prefix:'Drachenleder',  variant:2, statMult:1.12, weight:2.5, affixBias:{ dodge:4, attackSpeed:3, critPhys:2 },  flavorAffix:'dodge' },
   { key:'drachenplatte', material:'platte', prefix:'Drachenplatten',variant:0, statMult:1.90, weight:1.4, affixBias:{ armor:5, maxHp:3, block:3 },           flavorAffix:'armor' },
+  // 🧵 Zusätzliche Stoffrüstungen für Heiler & Hexer (Stoffträger). variant ∈ {3,4,5}
+  //    = verschiedene Roben-Farben (ARMOR_MAT). Affixe nur aus dem Rüstungs-Pool
+  //    (critMagic, versatility, maxHp, dodge, attackSpeed, armor) – kein lifesteal/critDamage.
+  { key:'magierstoff',   material:'stoff',  prefix:'Magier',        variant:4, statMult:0.62, weight:6,   affixBias:{ critMagic:4, versatility:2 },          flavorAffix:'critMagic' },
+  { key:'hexenstoff',    material:'stoff',  prefix:'Hexen',         variant:5, statMult:0.66, weight:5,   affixBias:{ critMagic:3, maxHp:2, versatility:2 }, flavorAffix:'critMagic' },
+  { key:'heilerstoff',   material:'stoff',  prefix:'Heiler',        variant:3, statMult:0.70, weight:5,   affixBias:{ maxHp:4, versatility:2 },              flavorAffix:'maxHp' },
+  { key:'arkanstoff',    material:'stoff',  prefix:'Arkan',         variant:4, statMult:0.74, weight:4,   affixBias:{ critMagic:4, attackSpeed:2 },          flavorAffix:'critMagic' },
+  { key:'runenstoff',    material:'stoff',  prefix:'Runen',         variant:5, statMult:0.68, weight:4,   affixBias:{ versatility:4, critMagic:2 },          flavorAffix:'versatility' },
+  { key:'astralstoff',   material:'stoff',  prefix:'Astral',        variant:3, statMult:0.78, weight:3,   affixBias:{ critMagic:3, maxHp:3 },                flavorAffix:'maxHp' },
+  { key:'nebelstoff',    material:'stoff',  prefix:'Nebel',         variant:4, statMult:0.60, weight:3,   affixBias:{ dodge:4, versatility:2 },              flavorAffix:'dodge' },
+  { key:'geisterstoff',  material:'stoff',  prefix:'Geister',       variant:5, statMult:0.72, weight:2.5, affixBias:{ dodge:3, critMagic:3 },                flavorAffix:'dodge' },
+  { key:'schattenstoff', material:'stoff',  prefix:'Schatten',      variant:5, statMult:0.80, weight:2,   affixBias:{ critMagic:3, attackSpeed:3 },          flavorAffix:'attackSpeed' },
+  { key:'phoenixstoff',  material:'stoff',  prefix:'Phönix',        variant:3, statMult:0.92, weight:1.4, affixBias:{ maxHp:4, critMagic:3, versatility:2 }, flavorAffix:'maxHp' },
+  { key:'sternenseide',  material:'stoff',  prefix:'Sternenseiden', variant:4, statMult:0.95, weight:1.1, affixBias:{ critMagic:5, versatility:3 },          flavorAffix:'critMagic' },
 ];
 export const ARMOR_MATERIAL_KEYS = ['stoff','leder','platte'];
 export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
@@ -77,6 +91,20 @@ export const ITEM_TYPES = {
     { key:'nekrostab',   name:'Nekromantenstab', g:'m', variant:6, statMult:0.88, weight:5, affixBias:{ lifesteal:4, critMagic:2 },              flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
     { key:'sturmstab',   name:'Sturmstab',    g:'m', variant:6, statMult:0.86, weight:5,  affixBias:{ attackSpeed:3, critMagic:3 },               flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
     { key:'erzmagierstab', name:'Erzmagierstab', g:'m', variant:6, statMult:1.00, weight:1.1, affixBias:{ critMagic:5, critDamage:3 },           flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
+    // 🪄 Weitere Zauberstäbe (nur magische Klassen). Affixe aus dem Waffen-Pool:
+    //    critPhys, critMagic, critDamage, attackSpeed, damage, lifesteal, versatility.
+    { key:'flammenstab',   name:'Flammenstab',   g:'m', variant:6, statMult:0.88, weight:6,  affixBias:{ critMagic:4, critDamage:3 },              flavorAffix:'critDamage', material:'zauberstab', orb:'rot' },
+    { key:'froststab',     name:'Froststab',     g:'m', variant:6, statMult:0.84, weight:6,  affixBias:{ critMagic:3, attackSpeed:3 },             flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
+    { key:'naturstab',     name:'Naturstab',     g:'m', variant:6, statMult:0.78, weight:5,  affixBias:{ lifesteal:4, critMagic:2 },               flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'schattenstab',  name:'Schattenstab',  g:'m', variant:6, statMult:0.86, weight:5,  affixBias:{ critMagic:3, lifesteal:3 },               flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'arkanstab',     name:'Arkanstab',     g:'m', variant:6, statMult:0.90, weight:5,  affixBias:{ critMagic:4, versatility:2 },             flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
+    { key:'blitzstab',     name:'Blitzstab',     g:'m', variant:6, statMult:0.85, weight:5,  affixBias:{ attackSpeed:4, critMagic:2 },             flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
+    { key:'seelenstab',    name:'Seelenstab',    g:'m', variant:6, statMult:0.82, weight:4,  affixBias:{ lifesteal:4, critDamage:2 },              flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'mondstab',      name:'Mondstab',      g:'m', variant:6, statMult:0.80, weight:4,  affixBias:{ versatility:4, critMagic:2 },             flavorAffix:'versatility', material:'zauberstab', orb:'blau' },
+    { key:'sonnenstab',    name:'Sonnenstab',    g:'m', variant:6, statMult:0.88, weight:4,  affixBias:{ critMagic:3, critDamage:3 },              flavorAffix:'critDamage', material:'zauberstab', orb:'rot' },
+    { key:'donnerzepter',  name:'Donnerzepter',  g:'n', variant:6, statMult:0.92, weight:3,  affixBias:{ critMagic:3, attackSpeed:3 },             flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
+    { key:'weltenstab',    name:'Weltenbaumstab',g:'m', variant:6, statMult:0.84, weight:2.5,affixBias:{ lifesteal:5, critMagic:2 },               flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'urzeitstab',    name:'Urzeitstab',    g:'m', variant:6, statMult:1.05, weight:1.0,affixBias:{ critMagic:5, critDamage:3 },              flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
   ],
   // 🛡️ Schild – Pool: armor, maxHp, block, thorns, dodge
   schild: [

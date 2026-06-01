@@ -406,6 +406,12 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .shop-item:not(.locked):hover::before { content:'Verkaufen'; position:absolute; inset:0; border-radius:8px;
   background:rgba(212,168,75,.85); color:#1a1208; display:flex; align-items:center;
   justify-content:center; font-weight:700; font-size:12px; }
+.shop-expand-card { display:flex; align-items:center; gap:14px; padding:12px 14px;
+  background:var(--panel-2,#1a1626); border:1px solid var(--gold-dim); border-radius:12px; margin-top:6px; }
+.shop-expand-card .se-icon { font-size:38px; }
+.shop-expand-card .se-body { flex:1; }
+.shop-expand-card .se-name { font-weight:700; color:var(--gold-hi); }
+.shop-expand-card .se-desc { color:var(--txt-dim); font-size:12px; margin-top:2px; }
 .gold-pop { position:fixed; z-index:95; pointer-events:none; color:var(--gold-hi);
   font-family:'Press Start 2P',monospace; font-size:14px; text-shadow:0 2px 3px #000;
   animation:goldpop 1s ease forwards; }

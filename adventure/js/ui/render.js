@@ -1,7 +1,7 @@
 /* =====================================================================
    RENDERING – Top-Leiste, Abenteuer, Charakter, Inventar, Shop.
    ===================================================================== */
-import { INV_SLOTS } from '../data/tuning.js';
+import { INV_SLOTS_MAX } from '../data/tuning.js';
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, SLOT_ICON, LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS,
          CAT_ICON, CAT_ORDER } from '../data/slots.js';
@@ -29,12 +29,13 @@ import { state, saveState, listCharacters } from '../core/state.js';
 import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
-import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
+import { itemValue, isLocked, gearScore, canEquip, autoEquipBest, itemPower,
+         invCapacity, nextExpandCost, buyInventoryExpansion } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
-import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast, confirmDialog } from './dom.js';
+import { $, timeAgo, fmtRemain, fmtBig, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
-import { openSlotPicker, openItemPreview, openSellModal, previewExpedition,
+import { openSlotPicker, openItemPreview, previewExpedition,
          openRosterModal, openCharacterCreator } from './modals.js';
 
 export function renderAll(){
@@ -42,7 +43,7 @@ export function renderAll(){
   renderCharacter(); renderInventory(); renderShop();
 }
 
-const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
+const freeSlots = () => Math.max(0, invCapacity() - state.inventory.length);
 
 // ---- Top-Leiste -----------------------------------------------------
 export function renderTopStats(){
@@ -445,11 +446,12 @@ export function renderInventory(){
   if(invTab === 'consum'){ renderConsumables(panel); return; }
 
   const total = state.inventory.length;
-  const full = total >= INV_SLOTS;
+  const cap = invCapacity();
+  const full = total >= cap;
   const head = document.createElement('div');
   head.className = 'inv-head';
   head.innerHTML = '<h2>🎒 Ausrüstung</h2>'+
-    '<span class="count'+(full?' full':'')+'">'+total+' / '+INV_SLOTS+'</span>';
+    '<span class="count'+(full?' full':'')+'">'+total+' / '+cap+'</span>';
   panel.appendChild(head);
 
   // Filter-/Sortier-Leiste
@@ -481,7 +483,7 @@ export function renderInventory(){
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
   if(!total) hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
-  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten/Sperren oder verkaufe im <b>Shop</b>.';
+  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten, Sperren oder direkt <b>Verkaufen</b> – oder kauf beim Händler mehr Platz.';
   else hint.textContent = 'Klick ein Item: ausrüsten, vergleichen oder 🔒 sperren.';
   panel.appendChild(hint);
 }
@@ -493,7 +495,7 @@ function buildInvGrid(wrap){
   const items = filteredSortedInventory();
   const grid = document.createElement('div');
   grid.className = 'backpack';
-  const cells = Math.max(INV_SLOTS, state.inventory.length, items.length);
+  const cells = Math.max(invCapacity(), state.inventory.length, items.length);
   for(let i=0;i<cells;i++){
     const it = items[i];
     const cell = document.createElement('div');
@@ -547,65 +549,53 @@ function renderConsumables(panel){
   panel.appendChild(hint);
 }
 
-// ---- Shop -----------------------------------------------------------
+// ---- Händler --------------------------------------------------------
+// Verkauf läuft jetzt direkt aus dem Inventar (Item-Modal). Der Händler bietet
+// stattdessen Inventarerweiterungen: je Kauf +5 Plätze, Preis steigt pro Kauf
+// (50k, 100k, …) bis maximal INV_SLOTS_MAX Plätze.
 export function renderShop(){
   const panel = $('#shopPanel');
-  const items = sortedInventory();
   panel.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'shop-head';
   head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Coins</span>';
   panel.appendChild(head);
+
+  const cap = invCapacity();
   const note = document.createElement('p');
   note.className = 'shop-note';
-  note.textContent = 'Verkaufe Gegenstände für Coins. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
+  note.innerHTML = 'Erweitere dein Inventar. Aktuell <b>'+cap+' / '+INV_SLOTS_MAX+'</b> Plätzen. '+
+    'Verkaufen kannst du Gegenstände direkt im Inventar.';
   panel.appendChild(note);
-  const actions = document.createElement('div');
-  actions.className = 'shop-actions';
-  const sellBtn = (label, filterFn)=>{
-    const b = document.createElement('button');
-    b.className = 'btn ghost';
-    b.textContent = label;
-    b.addEventListener('click', ()=>{
-      const res = sellMany(filterFn);
-      renderAll();
-      toast(res.n ? '+'+fmtBig(res.coins)+' Coins ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
-    });
-    actions.appendChild(b);
-  };
-  sellBtn('🧹 Junk verkaufen (Grau/Grün)', it => rarityIndex(it.rarity) <= 1);
-  sellBtn('⚪ Alle Gewöhnlichen', it => rarityIndex(it.rarity) === 0);
-  sellBtn('🔵 Bis Selten', it => rarityIndex(it.rarity) <= 2);
-  panel.appendChild(actions);
 
-  if(!items.length){
-    const p = document.createElement('p');
-    p.className = 'inv-hint';
-    p.textContent = 'Dein Inventar ist leer – nichts zu verkaufen.';
-    panel.appendChild(p);
-    return;
-  }
-  const grid = document.createElement('div');
-  grid.className = 'inv-grid';
-  grid.style.marginTop = '6px';
-  for(const it of items){
-    const r = rarityOf(it.rarity);
-    const cell = document.createElement('div');
-    cell.className = 'inv-item shop-item' + (isLocked(it.id)?' locked':'');
-    cell.style.setProperty('--rc', r.color);
-    cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">'+
-      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
-      '<span class="price">🪙 '+fmtBig(sellPrice(it))+'</span>';
-    bindTooltip(cell, it);
-    cell.addEventListener('click', (e)=>{
-      hideTooltip();
-      if(isLocked(it.id)){ toast('🔒 Gesperrt – erst entsperren'); return; }
-      if(IS_TOUCH){ openSellModal(it); return; }
-      const price = sellItem(it.id);
+  const cost = nextExpandCost();
+  const maxed = cost == null;
+  const canAfford = !maxed && getCoins() >= cost;
+
+  const card = document.createElement('div');
+  card.className = 'shop-expand-card';
+  card.innerHTML = '<div class="se-icon">🎒</div>'+
+    '<div class="se-body">'+
+      '<div class="se-name">Inventarerweiterung · +5 Plätze</div>'+
+      '<div class="se-desc">'+(maxed
+        ? 'Maximale Inventargröße ('+INV_SLOTS_MAX+' Plätze) erreicht.'
+        : 'Preis: 🪙 <b>'+fmtBig(cost)+'</b> Coins'+(canAfford?'':' – nicht genug Coins'))+'</div>'+
+    '</div>'+
+    '<button class="btn" id="expandBuy"'+(canAfford?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>'+
+      (maxed?'Maximum':'Kaufen')+'</button>';
+  panel.appendChild(card);
+
+  if(canAfford){
+    card.querySelector('#expandBuy').addEventListener('click', async ()=>{
+      const ok = await confirmDialog({ title:'Inventar erweitern?', emoji:'🎒',
+        body:'+5 Inventarplätze für 🪙 <b>'+fmtBig(cost)+'</b> Coins kaufen?',
+        confirmText:'Kaufen', cancelText:'Abbrechen' });
+      if(!ok) return;
+      const res = await buyInventoryExpansion();
       renderAll();
-      if(price) goldPop(e.clientX, e.clientY, '+'+fmtBig(price));
+      if(res.ok) toast('🎒 +5 Inventarplätze!');
+      else if(res.reason === 'coins') toast('Nicht genug Coins');
+      else toast('Maximale Inventargröße erreicht');
     });
-    grid.appendChild(cell);
   }
-  panel.appendChild(grid);
 }

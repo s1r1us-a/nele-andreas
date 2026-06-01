@@ -61,6 +61,18 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Nekromantenstab | v6 | normal | 0.88 | 49 / 128 | Lebensraub, Magischer Krit | Lebensraub |
 | Sturmstab | v6 | normal | 0.86 | 48 / 125 | Angriffstempo, Magischer Krit | Angriffstempo |
 | Erzmagierstab | v6 | sehr selten | 1.0 | 56 / 146 | Magischer Krit, Krit-Schaden | Magischer Krit |
+| Flammenstab | v6 | häufig | 0.88 | 49 / 128 | Magischer Krit, Krit-Schaden | Krit-Schaden |
+| Froststab | v6 | häufig | 0.84 | 47 / 122 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Naturstab | v6 | normal | 0.78 | 44 / 114 | Lebensraub, Magischer Krit | Lebensraub |
+| Schattenstab | v6 | normal | 0.86 | 48 / 125 | Magischer Krit, Lebensraub | Lebensraub |
+| Arkanstab | v6 | normal | 0.9 | 50 / 131 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Blitzstab | v6 | normal | 0.85 | 48 / 124 | Angriffstempo, Magischer Krit | Angriffstempo |
+| Seelenstab | v6 | normal | 0.82 | 46 / 119 | Lebensraub, Krit-Schaden | Lebensraub |
+| Mondstab | v6 | normal | 0.8 | 45 / 116 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Sonnenstab | v6 | normal | 0.88 | 49 / 128 | Magischer Krit, Krit-Schaden | Krit-Schaden |
+| Donnerzepter | v6 | selten | 0.92 | 52 / 134 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Weltenbaumstab | v6 | selten | 0.84 | 47 / 122 | Lebensraub, Magischer Krit | Lebensraub |
+| Urzeitstab | v6 | sehr selten | 1.05 | 59 / 153 | Magischer Krit, Krit-Schaden | Magischer Krit |
 
 ### 🛡️ Rüstung
 
@@ -74,6 +86,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Helm | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Helm | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Helm | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Schultern  ·  Primär: Rüstung
 
@@ -85,6 +108,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Schulterplatten | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Schulterplatten | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Schulterplatten | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Brust  ·  Primär: Rüstung
 
@@ -96,6 +130,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Brustpanzer | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Brustpanzer | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Brustpanzer | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Hände  ·  Primär: Rüstung
 
@@ -107,6 +152,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Handschuhe | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Handschuhe | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Handschuhe | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Beine  ·  Primär: Rüstung
 
@@ -118,6 +174,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Beinschienen | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Beinschienen | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Beinschienen | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Füße  ·  Primär: Rüstung
 
@@ -129,6 +196,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Stiefel | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Stiefel | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Stiefel | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Umhang  ·  Primär: Rüstung
 
@@ -140,6 +218,17 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 | Seiden-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Magischer Krit, Vielseitigkeit, Lebenspunkte | Magischer Krit |
 | Drachenleder-Umhang | Leder | Kämpfer, Verteidiger | selten | 1.12 | 47 / 122 | Ausweichen, Angriffstempo, Physischer Krit | Ausweichen |
 | Drachenplatten-Umhang | Platte | Verteidiger | sehr selten | 1.9 | 80 / 207 | Rüstung, Lebenspunkte, Block | Rüstung |
+| Magier-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | häufig | 0.62 | 26 / 68 | Magischer Krit, Vielseitigkeit | Magischer Krit |
+| Hexen-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.66 | 28 / 72 | Magischer Krit, Lebenspunkte, Vielseitigkeit | Magischer Krit |
+| Heiler-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.7 | 29 / 76 | Lebenspunkte, Vielseitigkeit | Lebenspunkte |
+| Arkan-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.74 | 31 / 81 | Magischer Krit, Angriffstempo | Magischer Krit |
+| Runen-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | normal | 0.68 | 29 / 74 | Vielseitigkeit, Magischer Krit | Vielseitigkeit |
+| Astral-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.78 | 33 / 85 | Magischer Krit, Lebenspunkte | Lebenspunkte |
+| Nebel-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.6 | 25 / 66 | Ausweichen, Vielseitigkeit | Ausweichen |
+| Geister-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.72 | 30 / 79 | Ausweichen, Magischer Krit | Ausweichen |
+| Schatten-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | selten | 0.8 | 34 / 87 | Magischer Krit, Angriffstempo | Angriffstempo |
+| Phönix-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.92 | 39 / 100 | Lebenspunkte, Magischer Krit, Vielseitigkeit | Lebenspunkte |
+| Sternenseiden-Umhang | Stoff | Heiler, Kämpfer, Verteidiger, Hexer | sehr selten | 0.95 | 40 / 104 | Magischer Krit, Vielseitigkeit | Magischer Krit |
 
 #### Schild  ·  Primär: Rüstung
 
@@ -219,7 +308,7 @@ Der **Primärwert** (Schaden bzw. Rüstung) skaliert mit Gegenstandsstufe und Se
 
 ---
 
-**Summe:** 97 Basis-Typen × 6 Seltenheiten = 582 Item-Ausprägungen.
+**Summe:** 186 Basis-Typen × 6 Seltenheiten = 1116 Item-Ausprägungen.
 
 > Sprites sind prozedural (SVG, Variante 0–6). Mehrere Typen können sich eine Silhouette teilen –
 > sie unterscheiden sich über Name, Primärwert (StatMult), Affix-Fokus und Fund-Häufigkeit.

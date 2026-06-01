@@ -1,16 +1,18 @@
 /* =====================================================================
    ITEMS: Generierung, Affixe, Procs, Wert, Verkauf, Ausrüsten.
    ===================================================================== */
-import { ASSETS, BASE_STAT, ILVL_K, ILVL_QUAD, INV_SLOTS } from '../data/tuning.js';
+import { ASSETS, BASE_STAT, ILVL_K, ILVL_QUAD, INV_SLOTS,
+         INV_SLOTS_MAX, INV_EXPAND_STEP, INV_EXPAND_BASE_COST } from '../data/tuning.js';
 import { rarityOf, rarityIndex } from '../data/rarities.js';
 import { weightedRarity } from './loot.js';
 import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
-import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf, itemDisplayName } from '../data/itemTypes.js';
+import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf, itemDisplayName,
+         defaultTypeKey } from '../data/itemTypes.js';
 import { allowedMaterials, classOf } from '../data/classes.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
-import { awardCoins } from './coins.js';
+import { awardCoins, spendCoins, getCoins } from './coins.js';
 import { toast } from '../ui/dom.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
@@ -124,6 +126,18 @@ export function rollItem(zone, lootBoost=0, opts={}){
   };
 }
 
+// Sprite eines Items sicherstellen/neu bauen (spiegelt hydrateItems in state.js).
+// Wird z. B. für aus Firebase geladene Gast-Items gebraucht, deren Sprites beim
+// Speichern entfernt wurden (stripItem) – sonst rendert <img src="undefined">.
+export function ensureItemSprite(it){
+  if(!it) return it;
+  if(!it.affixes) it.affixes = {};
+  if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
+  const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
+  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb);
+  return it;
+}
+
 // ---- Wert / Verkauf / Sperre ---------------------------------------
 // Affix-Bewertung über die zentrale Kampfkraft-Gewichtung (POWER_W) – damit
 // flache Defensiv-Affixe (Block/Dornen/Rüstung) nicht länger gegenüber
@@ -136,8 +150,12 @@ export function affixScore(it){
   return s;
 }
 export const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat + affixScore(it);
-export const inventoryFull = () => state.inventory.length >= INV_SLOTS;
-export const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
+// Effektive Inventar-Kapazität: Basis + beim Händler gekaufte Plätze, gedeckelt.
+export function invCapacity(){
+  return Math.min(INV_SLOTS + (state.extraSlots||0), INV_SLOTS_MAX);
+}
+export const inventoryFull = () => state.inventory.length >= invCapacity();
+export const freeSlots = () => Math.max(0, invCapacity() - state.inventory.length);
 export const sellPrice = it => {
   const base = Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6);
   const price = it.cat === 'waffen' ? base*10 : base;   // Waffenpreise ×10
@@ -178,16 +196,25 @@ export function sellItem(id){
   saveState();
   return price;
 }
-export function sellMany(filterFn){
-  let coins = 0, n = 0;
-  const keep = [];
-  for(const it of state.inventory){
-    if(!isLocked(it.id) && filterFn(it)){ coins += sellPrice(it); n++; } else keep.push(it);
-  }
-  state.inventory = keep;
-  if(coins > 0){ awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins; }
+// ---- Inventarerweiterung (Händler) ---------------------------------
+// Kosten der nächsten +5-Erweiterung: steigt je Kauf um INV_EXPAND_BASE_COST
+// (1. Kauf 50k, dann 100k, 150k …). null = Maximum bereits erreicht.
+export function nextExpandCost(){
+  if(invCapacity() >= INV_SLOTS_MAX) return null;
+  const done = (state.extraSlots||0) / INV_EXPAND_STEP;   // bisher getätigte Käufe
+  return (done + 1) * INV_EXPAND_BASE_COST;
+}
+// Kauf einer Inventarerweiterung. Zieht Coins kontoweit ab (spendCoins) und
+// erhöht die Kapazität pro Charakter um INV_EXPAND_STEP. Rückgabe:
+// { ok:true, cost } oder { ok:false, reason:'max'|'coins' }.
+export async function buyInventoryExpansion(){
+  const cost = nextExpandCost();
+  if(cost == null) return { ok:false, reason:'max' };
+  if(getCoins() < cost) return { ok:false, reason:'coins' };
+  if(!(await spendCoins(cost))) return { ok:false, reason:'coins' };
+  state.extraSlots = (state.extraSlots||0) + INV_EXPAND_STEP;
   saveState();
-  return { coins, n };
+  return { ok:true, cost };
 }
 
 // ---- Ausrüsten ------------------------------------------------------
