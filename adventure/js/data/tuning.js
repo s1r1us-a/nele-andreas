@@ -6,7 +6,7 @@ export const ASSETS = 'adventure/assets/';
 export const SAVE_KEY = 'idleAbenteuer_v1';
 export const SAVE_VERSION = 9;            // erhöht bei Strukturänderungen → Migration
 export const MAX_CHARACTERS = 5;          // max. Charaktere je Spieler (Roster)
-export const RESPEC_COST = 500;           // Coinkosten zum Zurücksetzen der Talente
+export const RESPEC_COST = 5000;          // Coinkosten zum Zurücksetzen der Talente
 export const VARIANTS = 6;                // Sprite-Varianten je Slot (= Item-Typen je Slot)
 export const INV_SLOTS = 30;             // Inventar-Obergrenze (von 20 erhöht, mehr Grind-Platz)
 export const HEAL_PCT = 0.5;             // Heiltrank stellt 50 % der maximalen HP wieder her
@@ -53,4 +53,5 @@ export const FARM = {
   goldMult: 0.5,
   xpMult: 0.4,
   dropRarityDrop: 1,   // garantierter Drop eine Stufe niedriger als beim Erstkill
+  coinMult: 0.3,       // Wiederholungskämpfe geben 30 % der Erstkill-Münzen
 };

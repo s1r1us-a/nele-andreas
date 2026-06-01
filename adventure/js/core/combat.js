@@ -23,9 +23,10 @@ let combatSpeed = 1, combatTimer = null;
 export let currentFight = null;
 const arenaOverlay = () => $('#arenaOverlay');
 
-// Coin-Belohnung für den ECHTEN Erstkill eines Bosses (kuratiert, gedeckelt).
-// Zonenabhängig 10 … 50, damit das Abenteuer die geteilte Ökonomie nicht flutet.
-function bossCoinReward(i){ return Math.min(50, 10 + i*2); }
+// Coin-Belohnung für den Erstkill eines Bosses, skaliert mit dem Boss-Index.
+// Frühe Bosse ~100, späte mehrere Tausend; Endlos-Stufen wachsen weiter. Eine
+// leicht justierbare Stellschraube. Farmkills geben hiervon 30 % (FARM.coinMult).
+function bossCoinReward(i){ return Math.round(100 + i*50); }
 
 export function setCombatSpeed(v){ combatSpeed = v; }
 export function getCombatSpeed(){ return combatSpeed; }
@@ -833,7 +834,7 @@ function endFight(fight, win){
       bonusTxt = ' + '+rarityOf(rk).name+' Beute: '+drop.name;
     }
 
-    let firstTxt = '';
+    let coinTxt = '';
     if(!isFarm){
       state.stats.bossKills++;
       if(bossIndex === state.zone){
@@ -841,20 +842,28 @@ function endFight(fight, win){
         state.bossesBeaten++;
         if(!state.firstClears[bossIndex]){
           state.firstClears[bossIndex] = true;
-          // Erstkill-Bonus (#16): kuratierte Coins (global) + Heiltrank.
+          // Erstkill-Bonus (#16): volle Coins (global) + Heiltrank.
           // Nur beim ECHTEN Erstkill – Farmen erreicht diesen Zweig nie.
           const coins = bossCoinReward(bossIndex);
           awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
           state.potions = (state.potions||0) + 1;
-          firstTxt = '<br>🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Coins + 🧪 Heiltrank!';
+          coinTxt = '<br>🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Coins + 🧪 Heiltrank!';
         }
       }
-    } else { state.stats.farmKills++; }
+    } else {
+      state.stats.farmKills++;
+      // Wiederholungskämpfe geben 30 % der Erstkill-Münzen (kein Heiltrank).
+      const coins = Math.round(bossCoinReward(bossIndex) * FARM.coinMult);
+      if(coins > 0){
+        awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
+        coinTxt = '<br>🪙 +'+fmtBig(coins)+' Coins (Farm – 30 %)';
+      }
+    }
 
     res.className = 'arena-result win show';
     res.innerHTML = '<div class="big">⚔️ Sieg!</div>'+
       '<div class="sub">'+boss.name+' besiegt! ⭐ '+fmtBig(xpGain)+' XP'+bonusTxt+
-      (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+firstTxt+'</div>';
+      (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+coinTxt+'</div>';
     saveState();
     checkAdventureBadges();   // Boss-/Zonen-/Sammel-Badges prüfen
   } else {

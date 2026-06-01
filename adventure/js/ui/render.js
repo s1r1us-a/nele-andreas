@@ -254,7 +254,7 @@ export function renderTalents(){
     '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+'</span>'+
     '<span class="talent-points">Punkte: <b>'+points+'</b></span>'+
     '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
-      '♻️ Zurücksetzen (🪙 '+fmtBig(RESPEC_COST)+')</button>'+
+      '♻️ Zurücksetzen (🪙 '+fmtBig(RESPEC_COST*Math.max(1,chosenCount))+')</button>'+
     '</div>'+
     '<p class="talents-hint"><b>Pro Stufe</b> wählst du <b>genau ein</b> Talent (kostet 1 Punkt). Die nächste Stufe öffnet sich danach.</p>';
 
@@ -329,14 +329,18 @@ function chooseTalent(stufeIndex, optionId){
 function respecTalents(){
   const chosenCount = chosenTalentCount(state);
   if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
-  if(getCoins() < RESPEC_COST){ toast('Nicht genug Coins ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
+  // Kosten skalieren pro belegter Talentstufe: RESPEC_COST × Anzahl Stufen.
+  const cost = RESPEC_COST * chosenCount;
+  if(getCoins() < cost){ toast('Nicht genug Coins ('+fmtBig(cost)+' nötig).'); return; }
   confirmDialog({
     title:'Talente zurücksetzen?',
-    body:'Kostet 🪙 '+fmtBig(RESPEC_COST)+' Coins. Du erhältst alle '+chosenCount+' Punkte zurück.',
+    body:'Kostet 🪙 '+fmtBig(cost)+' Coins ('+fmtBig(RESPEC_COST)+' pro Stufe × '+chosenCount+'). Du erhältst alle '+chosenCount+' Punkte zurück.',
     emoji:'♻️', confirmText:'Zurücksetzen', cancelText:'Abbrechen',
-  }).then(ok => {
+  }).then(async ok => {
     if(!ok) return;
-    spendCoins(RESPEC_COST).catch(()=>{});
+    // Erst zahlen, dann erstatten – schlägt die Transaktion fehl, kein Gratis-Respec.
+    const paid = await spendCoins(cost);
+    if(!paid){ toast('Zahlung fehlgeschlagen – nicht genug Coins.'); return; }
     state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
     state.character.talents = {};
     saveState();
