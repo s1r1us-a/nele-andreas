@@ -2,7 +2,8 @@
    ITEMS: Generierung, Affixe, Procs, Wert, Verkauf, Ausrüsten.
    ===================================================================== */
 import { ASSETS, BASE_STAT, ILVL_K, ILVL_QUAD, INV_SLOTS } from '../data/tuning.js';
-import { RARITIES, rarityOf, rarityIndex, rarityByIndex, maxRarityIndex } from '../data/rarities.js';
+import { rarityOf, rarityIndex } from '../data/rarities.js';
+import { weightedRarity } from './loot.js';
 import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
 import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf } from '../data/itemTypes.js';
@@ -103,15 +104,7 @@ export function rollItem(zone, lootBoost=0, opts={}){
   }
   let rarity;
   if(opts.forceRarityKey) rarity = rarityOf(opts.forceRarityKey);
-  else {
-    // lokale Gewichtung ohne Zyklus zu loot.js: identische Formel + Cap (Teil 3b)
-    const boost = zone*0.6 + lootBoost;
-    const cap = maxRarityIndex(zone);
-    const weights = RARITIES.map((r,i)=> i>cap ? 0 : Math.max(0.05, r.weight + i*boost - (i===0?boost*4:0)));
-    const total = weights.reduce((a,b)=>a+b,0); let roll = Math.random()*total;
-    rarity = RARITIES[0];
-    for(let i=0;i<RARITIES.length;i++){ roll -= weights[i]; if(roll<=0){ rarity = RARITIES[i]; break; } }
-  }
+  else rarity = weightedRarity(zone, lootBoost);   // zentrale Gewichtung + Cap (loot.js)
   // Item-Level: sanft konvex (Teil 3) – Zusatz ist bei Zone 0 = 0.
   let ilvl = Math.max(1, Math.round((zone*5 + 1) + zone*zone*ILVL_QUAD + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
   if(opts.minIlvl) ilvl = Math.max(ilvl, opts.minIlvl);
@@ -132,9 +125,13 @@ export function rollItem(zone, lootBoost=0, opts={}){
 }
 
 // ---- Wert / Verkauf / Sperre ---------------------------------------
+// Affix-Bewertung über die zentrale Kampfkraft-Gewichtung (POWER_W) – damit
+// flache Defensiv-Affixe (Block/Dornen/Rüstung) nicht länger gegenüber
+// Prozent-Affixen unterbewertet werden. Faktor 0.5 hält die Größenordnung der
+// bisherigen Verkaufspreise grob bei.
 export function affixScore(it){
   let s = 0; const a = it.affixes || {};
-  for(const [k,v] of Object.entries(a)){ if(AFFIX_DEFS[k]) s += AFFIX_DEFS[k].pct ? v*100 : v*0.5; }
+  for(const [k,v] of Object.entries(a)){ if(POWER_W[k] != null) s += v * POWER_W[k] * 0.5; }
   if(it.proc) s += 40;  // Proc-Effekt zählt zum Wert
   return s;
 }
