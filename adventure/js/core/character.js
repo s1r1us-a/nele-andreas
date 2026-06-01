@@ -8,6 +8,7 @@ import { applyTalents } from '../data/talents.js';
 import { state } from './state.js';
 import { powerOfBundle } from './items.js';
 import { toast } from '../ui/dom.js';
+import { awardAccountXp } from './account-xp.js';
 
 // ---- XP / Level -----------------------------------------------------
 // Steilere Levelkosten (grind-lastig). Basis 40→100, Exponent 1.55→1.8.
@@ -29,6 +30,9 @@ export function levelBonus(level){
 export function gainXp(amount){
   amount = Math.max(0, Math.round(amount||0));
   if(!amount) return 0;
+  // Dieselbe XP zusätzlich der projektweiten Account-XP gutschreiben
+  // (Profil-Level). Floating-/Level-Up-Feedback läuft über xp-helper-Events.
+  awardAccountXp(amount);
   const oldLevel = state.level || 1;
   state.xp = (state.xp||0) + amount;
   const newLevel = levelFromTotal(state.xp);
