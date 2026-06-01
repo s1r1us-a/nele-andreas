@@ -197,16 +197,37 @@ export function resolveTargetSlot(item){
   }
   return item.slotKey;
 }
-// Klassen-Restriktion: Rüstungs-Material muss zur Klasse passen
-// (Waffe/Schild/Schmuck haben kein Material → immer tragbar).
+// Klassen-Restriktion (Tragbarkeit):
+//  • Schild  → nur Verteidiger.
+//  • Waffe   → magische Klassen (Heiler/Hexer) nur Zauberstäbe,
+//              physische Klassen (Kämpfer/Verteidiger) nur physische Waffen.
+//  • Rüstung → Material muss zur Klasse passen (Stoff/Leder/Platte).
+//  • Schmuck → kein Material → von allen tragbar.
 export function canEquip(item){
+  const cls = classOf(state);
+  if(item.slotKey === 'schild') return cls.id === 'verteidiger';
+  if(item.slotKey === 'waffe'){
+    const isStaff = materialOf(item) === 'zauberstab';
+    return cls.damageSchool === 'magisch' ? isStaff : !isStaff;
+  }
   const mat = materialOf(item);
   if(!mat) return true;
   return allowedMaterials(state).includes(mat);
 }
+// Begründung, warum ein Item nicht angelegt werden kann (für Toast/Tooltip).
+export function equipBlockReason(item){
+  const cls = classOf(state);
+  if(item.slotKey === 'schild') return cls.label+' kann keine Schilde tragen – nur der Verteidiger.';
+  if(item.slotKey === 'waffe'){
+    return cls.damageSchool === 'magisch'
+      ? cls.label+' kann nur Zauberstäbe als Waffe tragen.'
+      : cls.label+' kann keine Zauberstäbe tragen – nur physische Waffen.';
+  }
+  return cls.label+' kann '+(MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.';
+}
 export function equip(item, explicitTarget){
   if(!canEquip(item)){
-    toast('✋ '+classOf(state).label+' kann '+(MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.');
+    toast('✋ '+equipBlockReason(item));
     return;
   }
   const isRing = item.slotKey==='ring1' || item.slotKey==='ring2';

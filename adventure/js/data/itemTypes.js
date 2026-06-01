@@ -24,10 +24,16 @@ export function itemDisplayName(rarityKey, itype){
 // Klassen-Tragbarkeit: stoff = alle, leder = Kämpfer/Verteidiger, platte = nur Verteidiger.
 // Stoff: kaum Rüstung, magisch (critMagic). Leder: mehr Rüstung, physisch. Platte: viel Rüstung.
 // Affixe im Rüstungs-Pool: armor, maxHp, attackSpeed, dodge, block, versatility, critMagic, critPhys.
+// Pro Material ein häufiger Grund-Archetyp + ein seltener, stärkerer Elite-Archetyp.
+// Elite teilt sich das Material (→ gleiche Klassen-Regel), hat aber höheren statMult,
+// schärferen Affix-Fokus und ein kleines Fund-Gewicht (selten).
 const ARMOR_MATERIALS = [
-  { key:'stoff',  material:'stoff',  prefix:'Stoff',  variant:4, statMult:0.55, affixBias:{ critMagic:3, versatility:2, maxHp:1 }, flavorAffix:'critMagic' },
-  { key:'leder',  material:'leder',  prefix:'Leder',  variant:2, statMult:0.95, affixBias:{ dodge:3, critPhys:2, attackSpeed:2 },  flavorAffix:'critPhys' },
-  { key:'platte', material:'platte', prefix:'Platte', variant:0, statMult:1.60, affixBias:{ armor:4, block:3, maxHp:2 },          flavorAffix:'armor' },
+  { key:'stoff',         material:'stoff',  prefix:'Stoff',         variant:4, statMult:0.55, weight:11,  affixBias:{ critMagic:3, versatility:2, maxHp:1 }, flavorAffix:'critMagic' },
+  { key:'leder',         material:'leder',  prefix:'Leder',         variant:2, statMult:0.95, weight:11,  affixBias:{ dodge:3, critPhys:2, attackSpeed:2 },  flavorAffix:'critPhys' },
+  { key:'platte',        material:'platte', prefix:'Platte',        variant:0, statMult:1.60, weight:9,   affixBias:{ armor:4, block:3, maxHp:2 },           flavorAffix:'armor' },
+  { key:'seide',         material:'stoff',  prefix:'Seiden',        variant:4, statMult:0.72, weight:3,   affixBias:{ critMagic:4, versatility:3, maxHp:2 }, flavorAffix:'critMagic' },
+  { key:'drachenleder',  material:'leder',  prefix:'Drachenleder',  variant:2, statMult:1.12, weight:2.5, affixBias:{ dodge:4, attackSpeed:3, critPhys:2 },  flavorAffix:'dodge' },
+  { key:'drachenplatte', material:'platte', prefix:'Drachenplatten',variant:0, statMult:1.90, weight:1.4, affixBias:{ armor:5, maxHp:3, block:3 },           flavorAffix:'armor' },
 ];
 export const ARMOR_MATERIAL_KEYS = ['stoff','leder','platte'];
 export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
@@ -37,7 +43,7 @@ export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', z
 function armorTypes(noun, g){
   return ARMOR_MATERIALS.map(m => ({
     key:m.key, material:m.material, name:m.prefix+'-'+noun, variant:m.variant,
-    statMult:m.statMult, affixBias:m.affixBias, flavorAffix:m.flavorAffix, g,
+    statMult:m.statMult, weight:m.weight, affixBias:m.affixBias, flavorAffix:m.flavorAffix, g,
   }));
 }
 
@@ -45,43 +51,74 @@ function armorTypes(noun, g){
 export const ITEM_TYPES = {
   // ⚔️ Waffen – Pool: critPhys, critMagic, critDamage, attackSpeed, damage, lifesteal, versatility
   waffe: [
-    { key:'schwert',     name:'Schwert',      g:'n', variant:0, statMult:1.00, affixBias:{ damage:2, critPhys:2 },                 flavorAffix:'damage' },
-    { key:'dolch',       name:'Dolch',        g:'m', variant:1, statMult:0.85, affixBias:{ critPhys:3, critDamage:2, attackSpeed:2 }, flavorAffix:'critPhys' },
-    { key:'streitkolben',name:'Streitkolben', g:'m', variant:2, statMult:1.20, affixBias:{ damage:3, versatility:2 },                flavorAffix:'damage' },
-    { key:'axt',         name:'Axt',          g:'f', variant:3, statMult:1.10, affixBias:{ damage:2, lifesteal:3 },                  flavorAffix:'lifesteal' },
-    { key:'speer',       name:'Speer',        g:'m', variant:4, statMult:1.05, affixBias:{ versatility:3, attackSpeed:2 },           flavorAffix:'versatility' },
-    { key:'kriegshammer',name:'Kriegshammer', g:'m', variant:5, statMult:1.25, affixBias:{ damage:3, critDamage:2 },                 flavorAffix:'critDamage' },
-    // 🪄 Zauberstäbe – nur für Heiler (material:'zauberstab'). Weniger Schaden,
-    // dafür Magie-/Heilungs-Affixe. Eigene Orb-Farbe (orb) fürs SVG.
-    { key:'stab',        name:'Kristallstab', g:'m', variant:6, statMult:0.85, affixBias:{ critMagic:4, critDamage:3, attackSpeed:1 },        flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
-    { key:'heilstab',    name:'Heilstab',     g:'m', variant:6, statMult:0.70, affixBias:{ lifesteal:4, maxHp:2, critMagic:1 },              flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
-    { key:'runenstab',   name:'Runenstab',    g:'m', variant:6, statMult:0.80, affixBias:{ attackSpeed:4, critMagic:2, versatility:1 },      flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
+    // ⚔️ Physische Waffen (Kämpfer/Verteidiger) – Variante = Silhouette (0–5).
+    { key:'schwert',     name:'Schwert',      g:'n', variant:0, statMult:1.00, weight:11, affixBias:{ damage:2, critPhys:2 },                 flavorAffix:'damage' },
+    { key:'langschwert', name:'Langschwert',  g:'n', variant:0, statMult:1.08, weight:7,  affixBias:{ damage:3, critPhys:2 },                 flavorAffix:'damage' },
+    { key:'dolch',       name:'Dolch',        g:'m', variant:1, statMult:0.85, weight:11, affixBias:{ critPhys:3, critDamage:2, attackSpeed:2 }, flavorAffix:'critPhys' },
+    { key:'rapier',      name:'Rapier',       g:'n', variant:1, statMult:0.92, weight:7,  affixBias:{ critPhys:3, attackSpeed:3 },            flavorAffix:'attackSpeed' },
+    { key:'streitkolben',name:'Streitkolben', g:'m', variant:2, statMult:1.20, weight:6,  affixBias:{ damage:3, versatility:2 },              flavorAffix:'damage' },
+    { key:'morgenstern', name:'Morgenstern',  g:'m', variant:2, statMult:1.22, weight:3,  affixBias:{ damage:3, critDamage:2 },               flavorAffix:'critDamage' },
+    { key:'axt',         name:'Axt',          g:'f', variant:3, statMult:1.10, weight:8,  affixBias:{ damage:2, lifesteal:3 },                flavorAffix:'lifesteal' },
+    { key:'kriegsbeil',  name:'Kriegsbeil',   g:'n', variant:3, statMult:1.15, weight:5,  affixBias:{ lifesteal:3, damage:3 },                flavorAffix:'lifesteal' },
+    { key:'speer',       name:'Speer',        g:'m', variant:4, statMult:1.05, weight:8,  affixBias:{ versatility:3, attackSpeed:2 },         flavorAffix:'versatility' },
+    { key:'hellebarde',  name:'Hellebarde',   g:'f', variant:4, statMult:1.18, weight:4,  affixBias:{ versatility:3, damage:3 },              flavorAffix:'damage' },
+    { key:'kriegshammer',name:'Kriegshammer', g:'m', variant:5, statMult:1.25, weight:4,  affixBias:{ damage:3, critDamage:2 },               flavorAffix:'critDamage' },
+    // 🌟 Selten & stärkster Primärwert (kleine Fund-Chance).
+    { key:'flammenklinge', name:'Flammenklinge', g:'f', variant:0, statMult:1.32, weight:1.4, affixBias:{ damage:4, critDamage:3 },           flavorAffix:'critDamage' },
+    { key:'drachenlanze',  name:'Drachenlanze',  g:'f', variant:4, statMult:1.36, weight:0.9, affixBias:{ versatility:4, critDamage:3 },      flavorAffix:'critDamage' },
+    { key:'zweihaender',   name:'Zweihänder',    g:'m', variant:5, statMult:1.45, weight:0.7, affixBias:{ damage:5, critDamage:3 },           flavorAffix:'damage' },
+    // 🪄 Zauberstäbe – nur für magische Klassen (Heiler & Hexer, material:'zauberstab').
+    //    Physische Klassen (Kämpfer/Verteidiger) können sie NICHT tragen. Weniger Schaden,
+    //    dafür Magie-/Heilungs-Affixe. Eigene Orb-Farbe (orb) fürs SVG.
+    { key:'stab',        name:'Kristallstab', g:'m', variant:6, statMult:0.85, weight:10, affixBias:{ critMagic:4, critDamage:3, attackSpeed:1 },  flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
+    { key:'heilstab',    name:'Heilstab',     g:'m', variant:6, statMult:0.70, weight:9,  affixBias:{ lifesteal:4, maxHp:2, critMagic:1 },        flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'runenstab',   name:'Runenstab',    g:'m', variant:6, statMult:0.80, weight:9,  affixBias:{ attackSpeed:4, critMagic:2, versatility:1 },flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
+    { key:'zepter',      name:'Zepter',       g:'n', variant:6, statMult:0.90, weight:6,  affixBias:{ critMagic:3, critDamage:3 },                flavorAffix:'critDamage', material:'zauberstab', orb:'rot' },
+    { key:'nekrostab',   name:'Nekromantenstab', g:'m', variant:6, statMult:0.88, weight:5, affixBias:{ lifesteal:4, critMagic:2 },              flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
+    { key:'sturmstab',   name:'Sturmstab',    g:'m', variant:6, statMult:0.86, weight:5,  affixBias:{ attackSpeed:3, critMagic:3 },               flavorAffix:'attackSpeed', material:'zauberstab', orb:'blau' },
+    { key:'erzmagierstab', name:'Erzmagierstab', g:'m', variant:6, statMult:1.00, weight:1.1, affixBias:{ critMagic:5, critDamage:3 },           flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
   ],
   // 🛡️ Schild – Pool: armor, maxHp, block, thorns, dodge
   schild: [
-    { key:'turmschild',   name:'Turmschild',    g:'m', variant:0, statMult:1.10, affixBias:{ armor:3, block:2 },  flavorAffix:'block' },
-    { key:'rundschild',   name:'Rundschild',    g:'m', variant:1, statMult:1.00, affixBias:{ armor:2, thorns:3 }, flavorAffix:'thorns' },
-    { key:'buckler',      name:'Buckler',       g:'m', variant:2, statMult:0.90, affixBias:{ dodge:3, block:2 },  flavorAffix:'dodge' },
-    { key:'pavese',       name:'Pavese',        g:'f', variant:3, statMult:1.15, affixBias:{ armor:2, maxHp:3 },  flavorAffix:'maxHp' },
-    { key:'spiegelschild',name:'Spiegelschild', g:'m', variant:4, statMult:1.00, affixBias:{ block:3, dodge:2 },  flavorAffix:'block' },
-    { key:'drachenschild',name:'Drachenschild', g:'m', variant:5, statMult:1.05, affixBias:{ armor:3, thorns:2 }, flavorAffix:'armor' },
+    { key:'holzschild',   name:'Holzschild',    g:'m', variant:1, statMult:0.85, weight:11, affixBias:{ armor:2, dodge:3 },  flavorAffix:'dodge' },
+    { key:'rundschild',   name:'Rundschild',    g:'m', variant:1, statMult:1.00, weight:10, affixBias:{ armor:2, thorns:3 }, flavorAffix:'thorns' },
+    { key:'buckler',      name:'Buckler',       g:'m', variant:2, statMult:0.90, weight:9,  affixBias:{ dodge:3, block:2 },  flavorAffix:'dodge' },
+    { key:'wappenschild', name:'Wappenschild',  g:'m', variant:0, statMult:1.05, weight:8,  affixBias:{ armor:3, block:2 },  flavorAffix:'block' },
+    { key:'turmschild',   name:'Turmschild',    g:'m', variant:0, statMult:1.10, weight:7,  affixBias:{ armor:3, block:2 },  flavorAffix:'block' },
+    { key:'spiegelschild',name:'Spiegelschild', g:'m', variant:4, statMult:1.00, weight:7,  affixBias:{ block:3, dodge:2 },  flavorAffix:'block' },
+    { key:'dornenschild', name:'Dornenschild',  g:'m', variant:1, statMult:1.02, weight:5,  affixBias:{ thorns:4, armor:2 }, flavorAffix:'thorns' },
+    { key:'pavese',       name:'Pavese',        g:'f', variant:3, statMult:1.15, weight:5,  affixBias:{ armor:2, maxHp:3 },  flavorAffix:'maxHp' },
+    { key:'drachenschild',name:'Drachenschild', g:'m', variant:5, statMult:1.08, weight:4,  affixBias:{ armor:3, thorns:2 }, flavorAffix:'armor' },
+    { key:'bollwerk',     name:'Bollwerk',      g:'n', variant:3, statMult:1.22, weight:2.5,affixBias:{ armor:4, maxHp:3 },  flavorAffix:'maxHp' },
+    { key:'aegis',        name:'Aegis',         g:'f', variant:4, statMult:1.20, weight:1.8,affixBias:{ block:4, dodge:3 },  flavorAffix:'block' },
+    { key:'titanenschild',name:'Titanenschild', g:'m', variant:0, statMult:1.32, weight:0.9,affixBias:{ armor:5, maxHp:3 },  flavorAffix:'armor' },
   ],
   // 💍 Schmuck – Pool: critPhys, critMagic, critDamage, maxHp, attackSpeed, armor, damage, lifesteal, versatility, dodge
   amulett: [
-    { key:'kriegsamulett', name:'Kriegsamulett', g:'n', variant:0, statMult:1.00, affixBias:{ damage:3, critDamage:2 },     flavorAffix:'critDamage' },
-    { key:'lebensamulett', name:'Lebensamulett', g:'n', variant:1, statMult:1.00, affixBias:{ maxHp:3, lifesteal:2 },       flavorAffix:'maxHp' },
-    { key:'schutzamulett', name:'Schutzamulett', g:'n', variant:2, statMult:1.00, affixBias:{ armor:3, versatility:2 },     flavorAffix:'versatility' },
-    { key:'kritamulett',   name:'Krit-Amulett',  g:'n', variant:3, statMult:1.00, affixBias:{ critPhys:3, critDamage:2 }, flavorAffix:'critPhys' },
-    { key:'tempoamulett',  name:'Tempo-Amulett', g:'n', variant:4, statMult:1.00, affixBias:{ attackSpeed:3, dodge:2 },     flavorAffix:'attackSpeed' },
-    { key:'raeuberamulett',name:'Räuber-Amulett',g:'n', variant:5, statMult:1.00, affixBias:{ lifesteal:3, critPhys:2 },  flavorAffix:'lifesteal' },
+    { key:'kriegsamulett', name:'Kriegsamulett', g:'n', variant:0, statMult:1.00, weight:10, affixBias:{ damage:3, critDamage:2 },     flavorAffix:'critDamage' },
+    { key:'lebensamulett', name:'Lebensamulett', g:'n', variant:1, statMult:1.00, weight:10, affixBias:{ maxHp:3, lifesteal:2 },       flavorAffix:'maxHp' },
+    { key:'schutzamulett', name:'Schutzamulett', g:'n', variant:2, statMult:1.00, weight:9,  affixBias:{ armor:3, versatility:2 },     flavorAffix:'versatility' },
+    { key:'kritamulett',   name:'Krit-Amulett',  g:'n', variant:3, statMult:1.00, weight:9,  affixBias:{ critPhys:3, critDamage:2 },   flavorAffix:'critPhys' },
+    { key:'tempoamulett',  name:'Tempo-Amulett', g:'n', variant:4, statMult:1.00, weight:9,  affixBias:{ attackSpeed:3, dodge:2 },     flavorAffix:'attackSpeed' },
+    { key:'raeuberamulett',name:'Räuber-Amulett',g:'n', variant:5, statMult:1.00, weight:8,  affixBias:{ lifesteal:3, critPhys:2 },    flavorAffix:'lifesteal' },
+    { key:'magieamulett',  name:'Magie-Amulett', g:'n', variant:5, statMult:1.00, weight:8,  affixBias:{ critMagic:3, critDamage:2 },  flavorAffix:'critMagic' },
+    { key:'gluecksamulett',name:'Glücks-Amulett',g:'n', variant:3, statMult:1.00, weight:7,  affixBias:{ dodge:3, critPhys:2 },        flavorAffix:'dodge' },
+    { key:'titanamulett',  name:'Titanen-Amulett',g:'n',variant:2, statMult:1.00, weight:6,  affixBias:{ maxHp:3, armor:3 },           flavorAffix:'maxHp' },
+    { key:'drachenauge',   name:'Drachenauge',   g:'n', variant:3, statMult:1.05, weight:2,  affixBias:{ critDamage:4, critPhys:3 },   flavorAffix:'critDamage' },
+    { key:'phoenixanhaenger',name:'Phönix-Anhänger',g:'m',variant:1,statMult:1.05,weight:1.5,affixBias:{ maxHp:4, lifesteal:3 },       flavorAffix:'lifesteal' },
   ],
   ring: [
-    { key:'siegelring',  name:'Siegelring',       g:'m', variant:0, statMult:1.00, affixBias:{ critPhys:3, critDamage:2 }, flavorAffix:'critPhys' },
-    { key:'bluttropfen', name:'Bluttropfen-Ring', g:'m', variant:1, statMult:1.00, affixBias:{ lifesteal:3, maxHp:2 },       flavorAffix:'lifesteal' },
-    { key:'waechterring',name:'Wächterring',      g:'m', variant:2, statMult:1.00, affixBias:{ armor:3, dodge:2 },           flavorAffix:'dodge' },
-    { key:'machtring',   name:'Macht-Ring',       g:'m', variant:3, statMult:1.00, affixBias:{ damage:3, critDamage:2 },     flavorAffix:'critDamage' },
-    { key:'vitalring',   name:'Vitalring',        g:'m', variant:4, statMult:1.00, affixBias:{ maxHp:3, armor:2 },           flavorAffix:'maxHp' },
-    { key:'talisman',    name:'Talisman',         g:'m', variant:5, statMult:1.00, affixBias:{ versatility:3, attackSpeed:2 }, flavorAffix:'versatility' },
+    { key:'siegelring',  name:'Siegelring',       g:'m', variant:0, statMult:1.00, weight:10, affixBias:{ critPhys:3, critDamage:2 }, flavorAffix:'critPhys' },
+    { key:'bluttropfen', name:'Bluttropfen-Ring', g:'m', variant:1, statMult:1.00, weight:10, affixBias:{ lifesteal:3, maxHp:2 },       flavorAffix:'lifesteal' },
+    { key:'waechterring',name:'Wächterring',      g:'m', variant:2, statMult:1.00, weight:9,  affixBias:{ armor:3, dodge:2 },           flavorAffix:'dodge' },
+    { key:'machtring',   name:'Macht-Ring',       g:'m', variant:3, statMult:1.00, weight:9,  affixBias:{ damage:3, critDamage:2 },     flavorAffix:'critDamage' },
+    { key:'vitalring',   name:'Vitalring',        g:'m', variant:4, statMult:1.00, weight:9,  affixBias:{ maxHp:3, armor:2 },           flavorAffix:'maxHp' },
+    { key:'talisman',    name:'Talisman',         g:'m', variant:5, statMult:1.00, weight:8,  affixBias:{ versatility:3, attackSpeed:2 }, flavorAffix:'versatility' },
+    { key:'arkanring',   name:'Arkan-Ring',       g:'m', variant:5, statMult:1.00, weight:8,  affixBias:{ critMagic:3, critDamage:2 },  flavorAffix:'critMagic' },
+    { key:'jagdring',    name:'Jäger-Ring',       g:'m', variant:0, statMult:1.00, weight:7,  affixBias:{ critPhys:3, attackSpeed:2 },  flavorAffix:'attackSpeed' },
+    { key:'bollwerkring',name:'Bollwerk-Ring',    g:'m', variant:2, statMult:1.00, weight:6,  affixBias:{ armor:3, maxHp:2 },           flavorAffix:'armor' },
+    { key:'sturmring',   name:'Sturm-Ring',       g:'m', variant:4, statMult:1.04, weight:2,  affixBias:{ attackSpeed:4, critPhys:3 },  flavorAffix:'attackSpeed' },
+    { key:'drachenring', name:'Drachenring',      g:'m', variant:3, statMult:1.05, weight:1.3, affixBias:{ critDamage:4, damage:3 },    flavorAffix:'critDamage' },
   ],
   // 🛡️ Rüstungs-Slots: gemeinsame Material-Archetypen mit Slot-Substantiv.
   // Genus des Slot-Nomens: Helm/Brustpanzer/Umhang = m; Schulterplatten/
@@ -107,11 +144,17 @@ function fallbackType(slotKey){
   return { key:'base', name:(slot && slot.base) || 'Gegenstand', variant:0, statMult:1, affixBias:{}, flavorAffix:null };
 }
 
-// Zufälligen Typ für einen Slot wählen.
+// Gewichtete Typ-Auswahl für einen Slot: `weight` steuert die Fund-Häufigkeit
+// (hoch = häufig, niedrig = selten). So bleiben die besten Waffen/Rüstungen/
+// Schilde selten. Fehlt das Gewicht, gilt ein neutraler Standard.
 export function pickItemType(slotKey){
   const list = ITEM_TYPES[artOf(slotKey)];
   if(!list || !list.length) return fallbackType(slotKey);
-  return list[Math.floor(Math.random()*list.length)];
+  let total = 0;
+  for(const t of list) total += (t.weight > 0 ? t.weight : 6);
+  let r = Math.random() * total;
+  for(const t of list){ r -= (t.weight > 0 ? t.weight : 6); if(r < 0) return t; }
+  return list[list.length-1];
 }
 
 // Typ-Objekt zu einem Item (null-sicher mit Fallback).
@@ -128,8 +171,9 @@ export function defaultTypeKey(slotKey){
   return (list && list[0]) ? list[0].key : 'base';
 }
 
-// Rüstungs-Material eines Items (stoff/leder/platte) oder null für
-// Waffe/Schild/Schmuck (= klassenunabhängig tragbar).
+// Material eines Items: stoff/leder/platte (Rüstung) bzw. 'zauberstab' (Stab-Waffe),
+// sonst null (physische Waffe/Schild/Schmuck). Die Klassen-Tragbarkeit von
+// Waffe & Schild läuft slot-basiert in canEquip (items.js), nicht über das Material.
 export function materialOf(item){
   return typeOf(item).material || null;
 }
