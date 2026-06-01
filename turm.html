@@ -196,15 +196,18 @@
 import { initAuth, displayName as getDisplayName, db, ref, update, onValue, get, set }
   from './adventure/js/core/firebase.js';
 import { grantDammerpfadBadges } from './dammerpfad-badges.js';
-import { loadSave } from './adventure/js/core/state.js';
+import { loadSave, saveState } from './adventure/js/core/state.js';
 import {
   computePlayerStats, towerBossFor,
   createLobby, joinLobby, listenLobby, listenCombat,
   setReady, leaveLobby, loadGuestSave,
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
   requestAbility, sanitizeLobbyCode,
-  setTowerHeroes, listenHeroes,
+  setTowerHeroes, listenHeroes, rollTowerLoot,
 } from './adventure/js/core/tower.js';
+import { rarityOf } from './adventure/js/data/rarities.js';
+import { SLOTS } from './adventure/js/data/slots.js';
+import { INV_SLOTS } from './adventure/js/data/tuning.js';
 import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from './adventure/js/data/classes.js';
 import { MECH_DEFS } from './adventure/js/data/bosses.js';
@@ -986,16 +989,38 @@ function removeShieldDome(){ const d = $('shieldDome'); if(d) d.remove(); }
 // ---- Ergebnis ----
 function showResult(won, floor){
   if($('resultOverlay').classList.contains('show')) return;
-  // Turm-Badges vergeben: erreichtes Stockwerk = geräumtes Stockwerk.
+  let lootHtml = '';
+  // Turm-Badges vergeben + INDIVIDUELLEN Loot in den EIGENEN Spielstand legen.
   if(won && myKey){
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
+    try {
+      const drop = rollTowerLoot(floor);   // Seltenheit/Itemlevel skaliert mit Stockwerk
+      if(myState){
+        myState.inventory = myState.inventory || [];
+        myState.inventory.push(drop);
+        saveState();                        // persistiert den eigenen Adventure-Spielstand
+      }
+      const r = rarityOf(drop.rarity);
+      const slotName = (SLOTS[drop.slotKey] && SLOTS[drop.slotKey].name) || drop.slotKey;
+      const full = myState && myState.inventory.length > INV_SLOTS;
+      lootHtml =
+        '<div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-top:14px;'+
+        'padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.28);border:1px solid '+r.color+'66">'+
+          '<img src="'+drop.sprite+'" alt="" width="46" height="46" style="image-rendering:pixelated">'+
+          '<div style="text-align:left">'+
+            '<div style="font-weight:800;color:'+r.color+'">🎁 '+drop.name+'</div>'+
+            '<div style="font-size:12px;color:var(--txt-mute)">'+r.name+' · '+slotName+' · Gegenstandsstufe '+drop.ilvl+'</div>'+
+            (full ? '<div style="font-size:12px;color:#ffb454;margin-top:2px">🎒 Inventar voll – verkaufe bald etwas im Abenteuer.</div>' : '')+
+          '</div>'+
+        '</div>';
+    } catch(e){ console.warn('Turm-Loot fehlgeschlagen', e); }
   }
   $('resultEmoji').textContent = won ? '🏆' : '💀';
   $('resultTitle').textContent = won ? 'Sieg!' : 'Niederlage';
-  $('resultSub').textContent   = won
+  $('resultSub').innerHTML     = (won
     ? 'Stockwerk ' + floor + ' gemeistert! Auf zum nächsten Abschnitt des Turms.'
-    : 'Beide Helden gefallen. Der Turm des Wahnsinns wartet weiter…';
+    : 'Beide Helden gefallen. Der Turm des Wahnsinns wartet weiter…') + lootHtml;
 
   const btns = $('resultBtns'); btns.innerHTML = '';
   if(won && isHost){
