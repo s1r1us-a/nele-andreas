@@ -30,7 +30,11 @@ $('#duelBtn').addEventListener('click', openDuelLobby);
 // (in render.js verdrahtet, da bei jedem Render neu aufgebaut).
 $('#speedBtn').addEventListener('click', toggleSpeed);
 $('#potionBtn').addEventListener('click', usePotion);
-$('#abilityBtn').addEventListener('click', useAbility);
+// Mehrere Fähigkeits-Knöpfe (dynamisch gerendert) per Delegation verdrahten.
+$('#abilityBar').addEventListener('click', e => {
+  const btn = e.target.closest('[data-ability-id]');
+  if(btn && !btn.disabled) useAbility(btn.dataset.abilityId);
+});
 $('#arenaCloseBtn').addEventListener('click', closeArena);
 $('#expCancelBtn').addEventListener('click', ()=>{
   if(confirm('Abenteuer abbrechen? Die mitgebrachten Items gehen verloren.')) cancelExpedition();

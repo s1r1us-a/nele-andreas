@@ -520,6 +520,82 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   .heal-fx .heal-core, .heal-fx .heal-ring, .heal-fx .heal-particle,
   .magic-barrier, .magic-barrier::before, .magic-barrier::after { animation:none; }
 }
+
+/* ==== Spektakuläre Aktiv-Effekte (VFX) ========================= */
+/* Vollbild-Flash bei Detonationen/Einschlägen. */
+.arena-flash { position:absolute; inset:0; pointer-events:none; z-index:11; opacity:0;
+  background:radial-gradient(circle at 50% 60%, var(--flash-col,#fff) 0%, rgba(0,0,0,0) 70%); }
+.arena-flash.on { animation:arenaFlash .3s ease-out; }
+@keyframes arenaFlash { 0%{opacity:0;} 18%{opacity:.85;} 100%{opacity:0;} }
+/* Heftigerer Screen-Shake für wuchtige Fähigkeiten. */
+.arena-stage.shake-hard { animation:shakeHard .45s cubic-bezier(.36,.07,.19,.97); }
+@keyframes shakeHard { 10%,90%{transform:translate(-2px,1px);} 20%,80%{transform:translate(5px,-2px);}
+  30%,50%,70%{transform:translate(-11px,2px);} 40%,60%{transform:translate(11px,-2px);} }
+/* Große, schnelle Schwert-Slashes (physischer Burst). */
+.slash.slash-big { width:130px; height:130px;
+  background:linear-gradient(45deg, transparent 42%, #fff 50%, transparent 58%);
+  filter:drop-shadow(0 0 8px #ffe9a8); }
+/* Expandierende Druckwelle / Ring. */
+.vfx-shock { position:absolute; width:14px; height:14px; transform:translate(-50%,-50%);
+  border-radius:50%; pointer-events:none; z-index:9;
+  border:3px solid var(--shock-col,#fff);
+  box-shadow:0 0 18px 4px var(--shock-col,#fff), inset 0 0 12px 2px var(--shock-col,#fff);
+  animation:vfxShock .6s ease-out forwards; }
+@keyframes vfxShock { 0%{opacity:.95; width:14px; height:14px;}
+  100%{opacity:0; width:190px; height:190px;} }
+/* Partikel-Burst (Funken/Sterne/Blut/Seelen). */
+.vfx-particle { position:absolute; transform:translate(-50%,-50%); pointer-events:none; z-index:10;
+  font-size:15px; font-weight:700; text-shadow:0 0 6px currentColor; opacity:0;
+  animation:vfxParticle .85s ease-out forwards; }
+@keyframes vfxParticle { 0%{opacity:0; transform:translate(-50%,-50%) scale(.4);}
+  20%{opacity:1;} 100%{opacity:0;
+    transform:translate(calc(-50% + var(--dx,0px)), calc(-50% + var(--dy,0px))) scale(1.1);} }
+/* Meteor stürzt von oben in die Arena. */
+.vfx-meteor { position:absolute; width:26px; height:26px; transform:translate(-50%,-50%);
+  border-radius:50%; pointer-events:none; z-index:10;
+  background:radial-gradient(circle at 35% 35%, #fff, var(--mcol,#9be7ff) 55%, rgba(0,0,0,0));
+  box-shadow:0 0 26px 10px var(--mcol,#9be7ff), 0 -120px 40px 8px var(--mcol,#9be7ff);
+  animation:vfxMeteor .47s cubic-bezier(.6,.05,.9,.4) forwards; }
+@keyframes vfxMeteor { 0%{opacity:.2; transform:translate(-50%,-360px) scale(.5);}
+  60%{opacity:1;} 100%{opacity:1; transform:translate(-50%,-50%) scale(1.25);} }
+/* Seelen-Strahl zwischen zwei Sprites. */
+.vfx-beam { position:absolute; height:10px; transform-origin:0 50%; pointer-events:none; z-index:9;
+  border-radius:5px; background:linear-gradient(90deg, rgba(255,255,255,0),
+    var(--beam-col,#c0392b) 30%, #fff 50%, var(--beam-col,#c0392b) 70%, rgba(255,255,255,0));
+  box-shadow:0 0 16px 4px var(--beam-col,#c0392b);
+  animation:vfxBeam .8s ease-out forwards; }
+@keyframes vfxBeam { 0%{opacity:0; filter:brightness(2);} 15%{opacity:1;} 100%{opacity:0;} }
+.vfx-beam-orb { position:absolute; top:50%; left:0; width:14px; height:14px; transform:translate(-50%,-50%);
+  border-radius:50%; background:radial-gradient(circle,#fff,var(--beam-col,#c0392b));
+  box-shadow:0 0 12px 3px var(--beam-col,#c0392b); animation:vfxBeamOrb .8s linear forwards; }
+@keyframes vfxBeamOrb { 0%{left:100%; opacity:0;} 15%{opacity:1;} 90%{opacity:1;} 100%{left:0; opacity:0;} }
+/* Heil-Lichtsäule. */
+.vfx-pillar { position:absolute; width:64px; height:220px; transform:translate(-50%,-78%);
+  pointer-events:none; z-index:8; border-radius:32px 32px 18px 18px;
+  background:linear-gradient(180deg, rgba(255,236,150,0) 0%, rgba(255,236,150,.5) 40%, rgba(120,255,180,.6) 100%);
+  box-shadow:0 0 30px 10px rgba(120,255,180,.4);
+  animation:vfxPillar .9s ease-out forwards; }
+@keyframes vfxPillar { 0%{opacity:0; transform:translate(-50%,-78%) scaleY(.3);}
+  30%{opacity:1;} 100%{opacity:0; transform:translate(-50%,-78%) scaleY(1.05);} }
+/* Persistente Buff-Auren am Sprite (Buff-Dauer). */
+.combatant.aura-fire { filter:drop-shadow(0 0 12px #ff5a00) drop-shadow(0 0 22px #ffb000) brightness(1.18) saturate(1.5);
+  animation:ablazePulse .5s ease-in-out infinite alternate; }
+.combatant.aura-crit { filter:drop-shadow(0 0 12px #ffe066) drop-shadow(0 0 22px #ffd24a) brightness(1.16);
+  animation:ablazePulse .45s ease-in-out infinite alternate; }
+.combatant.aura-blood { filter:drop-shadow(0 0 12px #e0466e) drop-shadow(0 0 22px #8a0030) saturate(1.5);
+  animation:ablazePulse .55s ease-in-out infinite alternate; }
+.combatant.aura-shadow { filter:drop-shadow(0 0 12px #9b30ff) drop-shadow(0 0 22px #4a0080) brightness(.92) saturate(1.4);
+  animation:ablazePulse .55s ease-in-out infinite alternate; }
+.combatant.aura-shield { filter:drop-shadow(0 0 12px #7fd0ff) drop-shadow(0 0 20px #3a7bff); }
+.combatant.desat { filter:grayscale(.85) brightness(.7); transition:filter .2s; }
+@media(prefers-reduced-motion: reduce){
+  .arena-flash.on, .arena-stage.shake-hard, .vfx-meteor, .vfx-beam, .vfx-beam-orb,
+  .combatant.aura-fire, .combatant.aura-crit, .combatant.aura-blood, .combatant.aura-shadow { animation:none; }
+}
+
+/* Fähigkeits-Leiste (mehrere Kampf-Knöpfe). */
+.ability-bar { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+.ability-bar:empty { display:none; }
 /* Turm-Teaser auf dem Abenteuer-Tab */
 .tower-teaser { margin:18px 0 4px; text-align:center; }
 .tower-btn { display:inline-block; background:linear-gradient(135deg,#5a2080,#9a3ab0);
@@ -616,6 +692,15 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .talent-icon { font-size:22px; }
 .talent-name { font-size:12px; text-align:center; line-height:1.2; font-weight:700; }
 .talent-val { font-size:10px; color:var(--gold-hi); font-weight:700; text-align:center; line-height:1.2; }
+/* Aktive Fähigkeiten heben sich klar von passiven Talenten ab. */
+.talent-node.active-skill { border-color:rgba(180,120,255,.6);
+  background:linear-gradient(160deg, rgba(150,90,255,.14), rgba(255,255,255,.03)); }
+.talent-node.active-skill:not(:disabled):hover { border-color:#c79aff; }
+.talent-node.active-skill.taken { border-color:#b67aff;
+  box-shadow:0 0 14px rgba(150,90,255,.5); }
+.talent-active-badge { position:absolute; top:4px; left:6px; font-size:8px; font-weight:800;
+  letter-spacing:.06em; color:#d8b6ff; background:rgba(110,60,180,.6);
+  border-radius:5px; padding:1px 4px; }
 /* Talent-Kopf: Klasse · Fortschritt · Punkte · Respec */
 .talents-class { font-family:'Cinzel',serif; font-size:14px; color:var(--gold-hi); font-weight:700; }
 .talents-progress { font-size:12px; color:var(--txt-dim); }
@@ -687,6 +772,7 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .opt-grid { display:grid; gap:8px; }
 .opt-grid.cols2 { grid-template-columns:repeat(2,1fr); }
 .opt-grid.cols3 { grid-template-columns:repeat(3,1fr); }
+.opt-grid.class-grid { grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); }
 .opt-btn { padding:10px 8px; border-radius:10px; cursor:pointer; text-align:center;
   background:var(--stone); border:2px solid var(--line); color:var(--txt);
   font-size:13px; font-family:'Quicksand',sans-serif; transition:border-color .12s; }

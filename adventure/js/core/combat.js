@@ -7,7 +7,7 @@ import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities
 import { SLOTS } from '../data/slots.js';
 import { rollAffixes } from '../core/items.js';
 import { materialOf, typeOf } from '../data/itemTypes.js';
-import { classOf } from '../data/classes.js';
+import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
@@ -81,9 +81,10 @@ export function startBossFight(bossIndex){
     enrageMult:1,
     // Meter
     startedAt: Date.now(), dmgDealt:0, log:[],
-    // Klassen-Spezialfähigkeit (B13)
-    ability: classOf(state).ability || null,
-    abilityCdUntil: 0, critBoostUntil: 0, dmgReduceUntil: 0,
+    // Aktive Fähigkeiten: Grundfähigkeit + geskillte Talent-Aktive (max. 3).
+    abilities: abilitiesOf(state),
+    abilityCd: {},                 // ability.id → Timestamp (Cooldown-Ende)
+    buffs: freshBuffs(),           // temporäre Buff-Fenster (Krit/Schaden/etc.)
   };
   currentFight = fight;
   updateHpBars(fight);
@@ -154,17 +155,21 @@ function exchange(fight){
   } else if(fight.invulnTurns > 0){
     mechFloat('boss', '✨ Immun', '#9ec5ff');
   } else {
+    const now = Date.now();
     let effCrit = fight.heroCritChance * (fight.curseTurns>0 ? 0.5 : 1);
-    if(Date.now() < fight.critBoostUntil && fight.ability){ effCrit = Math.min(1, effCrit + (fight.ability.critBonus||0)); }
+    if(now < fight.buffs.crit.until){ effCrit = Math.min(1, effCrit + fight.buffs.crit.val); }
     const heroCrit = Math.random() < effCrit;
     let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
+    if(now < fight.buffs.dmgBoost.until) dmg = Math.max(1, Math.round(dmg * (1 + fight.buffs.dmgBoost.val)));
     if(fight.shieldTurns > 0) dmg = Math.max(1, Math.round(dmg*0.4));  // Eispanzer
     fight.bossHp = Math.max(0, fight.bossHp - dmg);
     fight.dmgDealt += dmg;
     attackAnim('hero', dmg, heroCrit, ()=> updateHpBars(fight));
-    // Lebensraub-Affix (#20)
-    if(fight.lifesteal > 0){
-      const heal = Math.round(dmg * fight.lifesteal * fight.healDebuff);
+    // Lebensraub-Affix (#20) + temporärer Lebensraub-Buff
+    let ls = fight.lifesteal;
+    if(now < fight.buffs.lifesteal.until) ls += fight.buffs.lifesteal.val;
+    if(ls > 0){
+      const heal = Math.round(dmg * ls * fight.healDebuff);
       if(heal>0){ fight.heroHp = Math.min(fight.heroMaxHp, fight.heroHp + heal); }
     }
     // Procs (#22)
@@ -246,8 +251,8 @@ function exchange(fight){
       const armorRed = ignoreArmor ? 0 : (fight.heroArmor*COMBAT.armorReduction + fight.heroBlock);
       let bd = Math.max(1, Math.round((atk * rnd(0.15) * mult) - armorRed));
       bd = Math.round(bd * (1 - fight.versatility));   // Vielseitigkeit senkt erlittenen Schaden
-      // Schildwall (Verteidiger): erlittener Schaden stark reduziert.
-      if(Date.now() < fight.dmgReduceUntil && fight.ability){ bd = Math.max(1, Math.round(bd * (1 - (fight.ability.dmgReduce||0)))); }
+      // Schadensreduktions-Buff (Schildwall / Trotzschlag / Unbeugsam …).
+      if(Date.now() < fight.buffs.dmgReduce.until){ bd = Math.max(1, Math.round(bd * (1 - fight.buffs.dmgReduce.val))); }
       fight.heroHp = Math.max(0, fight.heroHp - bd);
       if(breath) mechFloat('boss', '🔥 Feueratem', '#ff8a3d');
       attackAnim('boss', bd, bossCrit, ()=> updateHpBars(fight));
@@ -415,64 +420,129 @@ export function usePotion(){
   updatePotionBtn();
 }
 
-// ---- Klassen-Spezialfähigkeit (B13) --------------------------------
+// ---- Aktive Fähigkeiten (Grundfähigkeit + geskillte Talent-Aktive) -
+// Buff-Fenster: jedes mit { until, val }. Eine Quelle für PvE + Duell.
+function freshBuffs(){
+  return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
+           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0} };
+}
 let _abilityTicker = null;
-export function updateAbilityBtn(){
-  const btn = $('#abilityBtn'); if(!btn) return;
+// Mehrere Fähigkeits-Knöpfe rendern/aktualisieren (eigener Cooldown je Knopf).
+export function updateAbilityBtns(){
+  const bar = $('#abilityBar'); if(!bar) return;
   const f = currentFight;
-  const ab = f && f.ability;
-  if(!ab){ btn.style.display = 'none'; return; }
-  btn.style.display = '';
+  const abilities = (f && f.abilities) || [];
+  if(!abilities.length){ bar.innerHTML = ''; bar.dataset.ids = ''; bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  const ids = abilities.map(a => a.id).join(',');
+  if(bar.dataset.ids !== ids){
+    bar.dataset.ids = ids;
+    bar.innerHTML = abilities.map(a =>
+      '<button class="btn ghost ability-btn" data-ability-id="'+a.id+'" title="'+(a.desc||'').replace(/"/g,'&quot;')+'">'+
+      a.icon+' '+a.name+'</button>').join('');
+  }
   const now = Date.now();
-  const cd = Math.max(0, Math.ceil((f.abilityCdUntil - now)/1000));
-  if(!f || f.over){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = ab.icon+' '+ab.name; return; }
-  if(cd > 0){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = ab.icon+' '+ab.name+' ('+cd+'s)'; }
-  else      { btn.disabled = false; btn.style.opacity = '1';  btn.textContent = ab.icon+' '+ab.name; }
+  abilities.forEach(a => {
+    const btn = bar.querySelector('[data-ability-id="'+a.id+'"]'); if(!btn) return;
+    const cd = Math.max(0, Math.ceil(((f.abilityCd[a.id]||0) - now)/1000));
+    const ready = !f.over && cd <= 0;
+    btn.disabled = !ready;
+    btn.style.opacity = ready ? '1' : '0.5';
+    btn.textContent = a.icon+' '+a.name + (cd>0 ? ' ('+cd+'s)' : '');
+  });
+}
+// Alias für bestehende Aufrufstellen.
+export function updateAbilityBtn(){ updateAbilityBtns(); }
+
+// Persistente Buff-Auren am Helden je nach laufendem Buff-Fenster (PvE).
+function refreshAuras(f){
+  if(!f || !f.buffs) return;
+  const now = Date.now();
+  setSpriteClass('heroSprite','aura-crit',  now < f.buffs.crit.until);
+  setSpriteClass('heroSprite','aura-fire',  now < f.buffs.dmgBoost.until);
+  setSpriteClass('heroSprite','aura-blood', now < f.buffs.lifesteal.until);
+  if(now < f.buffs.dmgReduce.until){ if(!$('#shieldDome')) spawnShieldDome('heroSprite'); }
+  else removeShieldDome();
 }
 function startAbilityTicker(){
   if(_abilityTicker) return;
   _abilityTicker = setInterval(()=>{
     const f = currentFight;
-    if(!f || f.over){ updateAbilityBtn(); return; }
-    // Buff-Visuals beenden, wenn Dauer abgelaufen
-    if(f.critBoostUntil && Date.now() >= f.critBoostUntil){ f.critBoostUntil = 0; $('#heroSprite').classList.remove('ablaze'); }
-    if(f.dmgReduceUntil && Date.now() >= f.dmgReduceUntil){ f.dmgReduceUntil = 0; removeShieldDome(); }
-    if(Date.now() >= f.abilityCdUntil){ updateAbilityBtn(); if(Date.now() >= f.abilityCdUntil + 1500 && !f.critBoostUntil && !f.dmgReduceUntil){ stopAbilityTicker(); } }
-    else updateAbilityBtn();
+    if(!f){ stopAbilityTicker(); return; }
+    if(!f.isDuel) refreshAuras(f);
+    updateAbilityBtns();
   }, 250);
 }
 function stopAbilityTicker(){ if(_abilityTicker){ clearInterval(_abilityTicker); _abilityTicker = null; } }
 function resetAbilityVisuals(){
-  $('#heroSprite').classList.remove('ablaze');
+  $('#heroSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','desat');
+  $('#bossSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','desat');
   removeShieldDome();
   stopAbilityTicker();
 }
-export function useAbility(){
-  const f = currentFight;
-  if(f && f.isDuel){ if(!f.over && f.ability && Date.now() >= f.abilityCdUntil) f.onAction('ability'); return; }
-  if(!f || f.over || !f.ability) return;
-  if(Date.now() < f.abilityCdUntil) return;
-  const ab = f.ability;
-  f.abilityCdUntil = Date.now() + ab.cd;
-  if(ab.id === 'heilkreis'){
+
+// Wendet den Effekt einer Fähigkeit lokal im PvE-Kampf an (Held → Boss).
+function applyAbilityEffect(f, ab){
+  const now = Date.now();
+  const magic = classOf(state).damageSchool === 'magisch';
+  if(ab.kind === 'heal'){
     const heal = Math.round(f.heroMaxHp * ab.healPct * f.healDebuff);
     f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
     updateHpBars(f);
-    spawnHealCircle('heroSprite');
+    vfxHeal('heroSprite');
     mechFloat('hero', '➕ +'+fmtBig(heal), '#37d67a');
-    addCombatLog(f, '➕ Heilkreis: +'+fmtBig(heal)+' HP', '#37d67a');
-  } else if(ab.id === 'raserei'){
-    f.critBoostUntil = Date.now() + ab.dur;
-    $('#heroSprite').classList.add('ablaze');
-    mechFloat('hero', '🔥 Raserei!', '#ff6b3c');
-    addCombatLog(f, '🔥 Raserei entfacht – +100 % Krit für '+(ab.dur/1000)+'s!', '#ff8a3d');
-  } else if(ab.id === 'schildwall'){
-    f.dmgReduceUntil = Date.now() + ab.dur;
-    spawnShieldDome('heroSprite');
-    mechFloat('hero', '🛡️ Schildwall!', '#7fd0ff');
-    addCombatLog(f, '🛡️ Schildwall – '+Math.round(ab.dmgReduce*100)+'% weniger Schaden für '+(ab.dur/1000)+'s!', '#7fd0ff');
+    addCombatLog(f, ab.icon+' '+ab.name+': +'+fmtBig(heal)+' HP', '#37d67a');
+  } else if(ab.kind === 'burst' || ab.kind === 'drain'){
+    const dmg = Math.max(1, Math.round(f.heroAtk * ab.burstMult));
+    f.bossHp = Math.max(0, f.bossHp - dmg);
+    f.dmgDealt += dmg;
+    if(ab.kind === 'drain'){
+      vfxDrain('bossSprite','heroSprite');
+      const heal = Math.round(dmg * (f.healDebuff||1));
+      f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+      mechFloat('hero', '🩸 +'+fmtBig(heal), '#e0466e');
+    } else {
+      vfxBurst('bossSprite', magic, magic ? '#9be7ff' : '#ffd24a');
+    }
+    mechFloat('boss', '💥 -'+fmtBig(dmg), '#ffd24a');
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
+  } else if(ab.kind === 'critBoost'){
+    f.buffs.crit = { until: now+ab.dur, val: ab.critBonus };
+    mechFloat('hero', ab.icon+' '+ab.name+'!', '#ffd24a');
+    addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.critBonus*100)+'% Krit für '+(ab.dur/1000)+'s!', '#ffd24a');
+  } else if(ab.kind === 'dmgBoost'){
+    f.buffs.dmgBoost = { until: now+ab.dur, val: ab.dmgBonus };
+    mechFloat('hero', ab.icon+' '+ab.name+'!', '#ff6b3c');
+    addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.dmgBonus*100)+'% Schaden für '+(ab.dur/1000)+'s!', '#ff8a3d');
+  } else if(ab.kind === 'dmgReduce'){
+    f.buffs.dmgReduce = { until: now+ab.dur, val: ab.dmgReduce };
+    mechFloat('hero', ab.icon+' '+ab.name+'!', '#7fd0ff');
+    addCombatLog(f, ab.icon+' '+ab.name+' – '+Math.round(ab.dmgReduce*100)+'% weniger Schaden für '+(ab.dur/1000)+'s!', '#7fd0ff');
+  } else if(ab.kind === 'lifesteal'){
+    f.buffs.lifesteal = { until: now+ab.dur, val: ab.lifestealBonus };
+    mechFloat('hero', ab.icon+' '+ab.name+'!', '#e0466e');
+    addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.lifestealBonus*100)+'% Lebensraub für '+(ab.dur/1000)+'s!', '#e0466e');
   }
-  updateAbilityBtn();
+  refreshAuras(f);
+}
+
+export function useAbility(abilityId){
+  const f = currentFight;
+  if(f && f.isDuel){
+    if(f.over) return;
+    const ab = (f.abilities||[]).find(a => a.id === abilityId);
+    if(ab && Date.now() >= (f.abilityCd[abilityId]||0)) f.onAction('ability:'+abilityId);
+    return;
+  }
+  if(!f || f.over) return;
+  const ab = (f.abilities||[]).find(a => a.id === abilityId);
+  if(!ab) return;
+  if(Date.now() < (f.abilityCd[abilityId]||0)) return;
+  f.abilityCd[abilityId] = Date.now() + ab.cd;
+  applyAbilityEffect(f, ab);
+  updateAbilityBtns();
   startAbilityTicker();
 }
 
@@ -510,6 +580,140 @@ function spawnShieldDome(spriteId){
   $('#dmgLayer').appendChild(bar);
 }
 function removeShieldDome(){ const d = $('#shieldDome'); if(d) d.remove(); }
+
+// ====================================================================
+//  SPEKTAKULÄRE AKTIV-EFFEKTE (VFX) – reines CSS+DOM, im #dmgLayer.
+// ====================================================================
+function reducedMotion(){ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+function anchorOf(spriteId){
+  const stage = $('#arenaStage');
+  return (currentFight && currentFight.anchor[spriteId]) ||
+         { x: stage ? stage.clientWidth/2 : 0, y: stage ? stage.clientHeight/2 : 0 };
+}
+function setSpriteClass(spriteId, cls, on){ const el = $('#'+spriteId); if(el) el.classList.toggle(cls, !!on); }
+function flashSpriteClass(spriteId, cls, ms){
+  const el = $('#'+spriteId); if(!el) return;
+  el.classList.add(cls); setTimeout(()=> el.classList.remove(cls), ms||700);
+}
+// Kurzes Vollbild-Aufleuchten in der Arena (z. B. bei Detonationen).
+function screenFlash(color, ms){
+  if(reducedMotion()) return;
+  const el = $('#arenaFlash'); if(!el) return;
+  el.style.setProperty('--flash-col', color || '#fff');
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  setTimeout(()=> el.classList.remove('on'), ms || 320);
+}
+// Wuchtiger Screen-Shake (stärker als der normale Treffer-Shake).
+function bigShake(){
+  if(reducedMotion()) return;
+  const stage = $('#arenaStage'); if(!stage) return;
+  stage.classList.remove('shake-hard'); void stage.offsetWidth; stage.classList.add('shake-hard');
+  setTimeout(()=> stage.classList.remove('shake-hard'), 460);
+}
+// Expandierende Druckwelle/Ring am Einschlagspunkt.
+function spawnShockwave(spriteId, color){
+  const a = anchorOf(spriteId);
+  const w = document.createElement('div');
+  w.className = 'vfx-shock';
+  w.style.left = a.x+'px'; w.style.top = a.y+'px';
+  w.style.setProperty('--shock-col', color || '#fff');
+  $('#dmgLayer').appendChild(w);
+  setTimeout(()=> w.remove(), 650);
+}
+// Partikel-Burst (Funken/Sterne/Blut/Seelen). rise>0 lässt sie aufsteigen.
+function spawnParticles(spriteId, opts){
+  opts = opts || {};
+  const count = opts.count || 12, glyph = opts.glyph || '✦', color = opts.color || '#fff';
+  const spread = opts.spread || 70, rise = opts.rise || 0;
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  for(let i=0;i<count;i++){
+    const p = document.createElement('div');
+    p.className = 'vfx-particle'; p.textContent = glyph; p.style.color = color;
+    p.style.left = a.x+'px'; p.style.top = a.y+'px';
+    const ang = Math.random()*Math.PI*2, dist = spread*(0.4+Math.random()*0.8);
+    p.style.setProperty('--dx', Math.round(Math.cos(ang)*dist)+'px');
+    p.style.setProperty('--dy', Math.round(Math.sin(ang)*dist - rise)+'px');
+    p.style.animationDelay = Math.round(Math.random()*120)+'ms';
+    layer.appendChild(p);
+    setTimeout(()=> p.remove(), 1000);
+  }
+}
+// Schnelle Mehrfach-Slashes mit Trail (physischer Burst).
+function spawnSlashCombo(spriteId){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  for(let i=0;i<3;i++){
+    setTimeout(()=>{
+      const s = document.createElement('div');
+      s.className = 'slash slash-big';
+      const jx = Math.round((Math.random()*2-1)*22), jy = Math.round((Math.random()*2-1)*22);
+      s.style.left = (a.x-55+jx)+'px'; s.style.top = (a.y-55+jy)+'px';
+      s.style.transform = 'rotate('+Math.round(Math.random()*70-35)+'deg)';
+      layer.appendChild(s);
+      setTimeout(()=> s.remove(), 380);
+    }, i*90);
+  }
+}
+// Meteor stürzt von oben in die Arena + Explosion (magischer Burst).
+function spawnMeteor(spriteId, color){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const m = document.createElement('div');
+  m.className = 'vfx-meteor';
+  m.style.left = a.x+'px'; m.style.top = a.y+'px';
+  m.style.setProperty('--mcol', color || '#9be7ff');
+  layer.appendChild(m);
+  setTimeout(()=>{ m.remove(); spawnShockwave(spriteId, color); }, 470);
+}
+// Leuchtender Seelen-Strahl zwischen zwei Sprites mit fließenden Orbs.
+function spawnBeam(fromId, toId, color){
+  const f = anchorOf(fromId), t = anchorOf(toId);
+  const dx = t.x - f.x, dy = t.y - f.y;
+  const len = Math.max(1, Math.hypot(dx, dy));
+  const ang = Math.atan2(dy, dx) * 180/Math.PI;
+  const b = document.createElement('div');
+  b.className = 'vfx-beam';
+  b.style.left = f.x+'px'; b.style.top = f.y+'px';
+  b.style.width = len+'px'; b.style.transform = 'rotate('+ang+'deg)';
+  b.style.setProperty('--beam-col', color || '#c0392b');
+  for(let i=0;i<4;i++){
+    const o = document.createElement('div'); o.className = 'vfx-beam-orb';
+    o.style.animationDelay = (i*120)+'ms'; b.appendChild(o);
+  }
+  $('#dmgLayer').appendChild(b);
+  setTimeout(()=> b.remove(), 820);
+}
+// Großer Heileffekt: Lichtsäule + Heilkreis + goldene Funken.
+function vfxHeal(spriteId){
+  spawnHealCircle(spriteId);
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const pillar = document.createElement('div');
+  pillar.className = 'vfx-pillar';
+  pillar.style.left = a.x+'px'; pillar.style.top = a.y+'px';
+  layer.appendChild(pillar);
+  setTimeout(()=> pillar.remove(), 900);
+  spawnParticles(spriteId, { count:14, glyph:'✦', color:'#ffe9a8', spread:46, rise:74 });
+}
+// Burst-Einschlag: physisch = Slashes+Splitter, magisch = Meteor+Sterne.
+function vfxBurst(targetId, magic, color){
+  if(magic){
+    spawnMeteor(targetId, color);
+    screenFlash(color, 240);
+    spawnParticles(targetId, { count:16, glyph:'✦', color, spread:80 });
+  } else {
+    spawnSlashCombo(targetId);
+    spawnShockwave(targetId, '#ffffff');
+    spawnParticles(targetId, { count:12, glyph:'✦', color:'#ffd24a', spread:70 });
+  }
+  flashSpriteClass(targetId, 'hit', 300);
+  bigShake();
+}
+// Drain: Seelenstrahl vom Ziel zum Wirker + Blutfunken + kurzes Entsättigen.
+function vfxDrain(fromId, toId){
+  spawnBeam(fromId, toId, '#c0306b');
+  flashSpriteClass(fromId, 'desat', 760);
+  flashSpriteClass(toId, 'aura-blood', 760);
+  spawnParticles(toId, { count:12, glyph:'🩸', color:'#e0466e', spread:40, rise:24 });
+  bigShake();
+}
 
 export function toggleSpeed(){
   combatSpeed = combatSpeed === 1 ? 2 : 1;
@@ -641,9 +845,9 @@ export function openDuelArena(cfg){
     isDuel: true, role: cfg.role, lobbyId: cfg.lobbyId, stake: cfg.stake|0,
     onAction: cfg.onAction, onClose: cfg.onClose, onForfeit: cfg.onForfeit,
     heroMaxHp: 1, heroHp: 1, bossMaxHp: 1, bossHp: 1,
-    ability: cfg.ability || null, abilityCdUntil: 0,
+    abilities: cfg.abilities || [], abilityCd: {}, buffs: freshBuffs(),
     over: false, anchor: {}, startedAt: Date.now(),
-    _animTurn: -1, _lastHealTs: 0, _ended: false,
+    _animTurn: -1, _lastHealTs: 0, _ended: false, _fxSeen: {},
   };
   currentFight = fight;
   $('#arenaResult').className = 'arena-result';
@@ -682,9 +886,11 @@ export function applyDuelSnapshot(snap){
   $('#dpsMeter').textContent = 'DPS '+fmtBig(Math.round((snap.dmgDealt||0)/sec))+
     ' · Schaden '+fmtBig(snap.dmgDealt||0)+' · Runde '+(snap.turn||0);
 
-  // Eigener Fähigkeits-Cooldown (autoritativ als Restzeit übertragen).
-  f.abilityCdUntil = Date.now() + (snap[me+'CdRemain'] || 0);
-  updateAbilityBtn();
+  // Eigene Fähigkeits-Cooldowns (autoritativ als Restzeiten je Ability-Id).
+  const cdMap = snap[me+'Cd'] || {};
+  f.abilityCd = {};
+  for(const id in cdMap) f.abilityCd[id] = Date.now() + cdMap[id];
+  updateAbilityBtns();
 
   // Heiltrank-Knopf zeigt die verbleibenden Duell-Tränke der eigenen Seite.
   const pots = snap[me+'Potions']; const pb = $('#potionBtn');
@@ -709,12 +915,8 @@ export function applyDuelSnapshot(snap){
     replayDuelEvents(snap.events || [], me);
   }
 
-  // Skill-Effekt-Visuals (Restzeit-basiert, driftfrei).
+  // Skill-Effekt-Visuals (Auren restzeit-basiert, Einschläge per Timestamp).
   applyDuelFx(snap.fx || {}, me);
-  if(snap.fx && snap.fx.healTs && snap.fx.healTs !== f._lastHealTs){
-    f._lastHealTs = snap.fx.healTs;
-    mechFloat(snap.fx.healSide === me ? 'hero' : 'boss', '💚 Heilung', '#37d67a');
-  }
 
   if(snap.over && !f._ended){ f._ended = true; endDuel(f, snap.winner, me); }
 }
@@ -733,13 +935,43 @@ function replayDuelEvents(events, me){
 }
 
 function applyDuelFx(fx, me){
-  const oppAblaze = (me === 'host' ? fx.guestAblazeRemain : fx.hostAblazeRemain) || 0;
-  const myAblaze  = (me === 'host' ? fx.hostAblazeRemain  : fx.guestAblazeRemain) || 0;
-  $('#heroSprite').classList.toggle('ablaze', myAblaze > 0);
-  $('#bossSprite').classList.toggle('ablaze', oppAblaze > 0);
-  const myShield = (me === 'host' ? fx.hostShieldRemain : fx.guestShieldRemain) || 0;
-  if(myShield > 0){ if(!$('#shieldDome')) spawnShieldDome('heroSprite'); }
+  const f = currentFight; if(!f) return;
+  const opp = me === 'host' ? 'guest' : 'host';
+  const mine = fx[me] || {}, theirs = fx[opp] || {};
+  const seen = f._fxSeen || (f._fxSeen = {});
+
+  // Persistente Buff-Auren: eigene am Helden, gegnerische am Boss.
+  setSpriteClass('heroSprite','aura-crit',  (mine.crit||0)  > 0);
+  setSpriteClass('heroSprite','aura-fire',  (mine.fire||0)  > 0);
+  setSpriteClass('heroSprite','aura-blood', (mine.blood||0) > 0);
+  setSpriteClass('bossSprite','aura-crit',  (theirs.crit||0)  > 0);
+  setSpriteClass('bossSprite','aura-fire',  (theirs.fire||0)  > 0);
+  setSpriteClass('bossSprite','aura-blood', (theirs.blood||0) > 0);
+  if((mine.shield||0) > 0){ if(!$('#shieldDome')) spawnShieldDome('heroSprite'); }
   else removeShieldDome();
+  setSpriteClass('bossSprite','aura-shield', (theirs.shield||0) > 0);
+
+  // Einmalige Einschläge (Timestamp-basiert, je Seite nur einmal auslösen).
+  if(mine.burstTs && mine.burstTs !== seen.myBurst){
+    seen.myBurst = mine.burstTs;
+    vfxBurst('bossSprite', !!mine.burstMagic, mine.burstMagic ? '#9be7ff' : '#ffd24a');
+  }
+  if(theirs.burstTs && theirs.burstTs !== seen.oppBurst){
+    seen.oppBurst = theirs.burstTs;
+    vfxBurst('heroSprite', !!theirs.burstMagic, theirs.burstMagic ? '#9be7ff' : '#ffd24a');
+  }
+  if(mine.drainTs && mine.drainTs !== seen.myDrain){
+    seen.myDrain = mine.drainTs; vfxDrain('bossSprite','heroSprite');
+  }
+  if(theirs.drainTs && theirs.drainTs !== seen.oppDrain){
+    seen.oppDrain = theirs.drainTs; vfxDrain('heroSprite','bossSprite');
+  }
+  if(mine.healTs && mine.healTs !== seen.myHeal){
+    seen.myHeal = mine.healTs; vfxHeal('heroSprite'); mechFloat('hero','💚 Heilung','#37d67a');
+  }
+  if(theirs.healTs && theirs.healTs !== seen.oppHeal){
+    seen.oppHeal = theirs.healTs; vfxHeal('bossSprite'); mechFloat('boss','💚 Heilung','#37d67a');
+  }
 }
 
 function endDuel(f, winner, me){
