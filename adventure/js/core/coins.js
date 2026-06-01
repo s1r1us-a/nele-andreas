@@ -35,11 +35,17 @@ export async function awardCoins(amount){
   await runTransaction(ref(db, `stats/${userKey}/coinsEarned`),   c => (c || 0) + amount);
 }
 
-// Münzen abziehen (+ Lebenszeit-Statistik). Geht nie unter 0.
+// Münzen abziehen (+ Lebenszeit-Statistik). Bricht ab, wenn das Guthaben nicht
+// reicht (Rückgabe false) – die „ausgegeben"-Statistik wächst nur bei echtem Abzug.
 export async function spendCoins(amount){
   amount = Math.round(amount || 0);
   if(!COINS_ENABLED || !userKey || amount <= 0) return false;
-  await runTransaction(ref(db, `coins/${userKey}`),             c => Math.max(0, (c || 0) - amount));
+  const res = await runTransaction(ref(db, `coins/${userKey}`), c => {
+    c = c || 0;
+    if(c < amount) return;        // Transaktion abbrechen → kein Abzug
+    return c - amount;
+  });
+  if(!res || !res.committed) return false;   // nicht genug Münzen
   await runTransaction(ref(db, `stats/${userKey}/coinsSpent`),  c => (c || 0) + amount);
   return true;
 }
