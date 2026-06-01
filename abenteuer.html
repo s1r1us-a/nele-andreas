@@ -291,6 +291,7 @@
   <div class="tab" data-view="talents">Talente</div>
   <div class="tab" data-view="inventory">Inventar</div>
   <div class="tab" data-view="shop">Händler</div>
+  <div class="tab" data-view="trade">🤝 Handel</div>
 </div>
 
 <div class="wrap">
@@ -392,6 +393,11 @@
   <!-- SHOP -->
   <div class="view" id="view-shop">
     <div class="panel" id="shopPanel"></div>
+  </div>
+
+  <!-- HANDEL (Live-Trade) -->
+  <div class="view" id="view-trade">
+    <div class="panel" id="tradePanel"></div>
   </div>
 </div>
 
@@ -514,6 +520,8 @@
 <script type="module" src="dp-badge-notify.js"></script>
 <!-- Globales XP-/Level-Up-Feedback (Floating-Text + Modal) für Account-XP. -->
 <script type="module" src="level-up-feedback.js"></script>
+<!-- Live-Präsenz (eigener Status + Partner-Status) – nötig fürs Live-Handeln. -->
+<script type="module" src="presence.js"></script>
 <script type="module" src="adventure/js/main.js"></script>
 </body>
 </html>

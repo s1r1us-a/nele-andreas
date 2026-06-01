@@ -50,7 +50,9 @@ const PAGE_LABELS = {
   'stats.html':          'Statistiken',
   'ourhome.html':        'Unser Zuhause',
   'momente-archiv.html': 'Momente-Archiv',
-  'marienkaefer.html':   'Marienkäfer'
+  'marienkaefer.html':   'Marienkäfer',
+  'abenteuer.html':      'Dämmerpfad',
+  'turm.html':           'Turm'
 };
 
 function currentPageLabel() {
