@@ -239,9 +239,9 @@ function rollDmg(atk, crit, mult){
   return { dmg: Math.max(1, Math.round(atk * rnd(0.15) * (isCrit ? mult : 1))), crit: isCrit };
 }
 
-function takeBossDmg(atk, armor, dodge, versatility){
+function takeBossDmg(atk, armor, dodge, versatility, block){
   if(Math.random() < (dodge || 0)) return { dmg:0, dodged:true };
-  const armorRed = (armor || 0) * COMBAT.armorReduction;
+  const armorRed = (armor || 0) * COMBAT.armorReduction + (block || 0);
   let dmg = Math.max(1, Math.round(atk * rnd(0.15) - armorRed));
   dmg = Math.round(dmg * (1 - (versatility || 0)));
   return { dmg };
@@ -318,6 +318,8 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontCrit:  frontStats.critChance, frontCritMult: frontStats.critMult,
     frontInterval: frontStats.interval, frontDodge: frontStats.dodge,
     frontVers:  frontStats.versatility, frontLifesteal: frontStats.lifesteal,
+    frontBlock: frontStats.block || 0, frontThorns: frontStats.thorns || 0,
+    frontHealMult: frontStats.healMult,
     frontIsHealer: frontStats.classId === 'heiler',
     frontUsesStab: frontStats.usesStab || false,
     frontName, frontTier: frontStats.tier,
@@ -328,6 +330,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backCrit:   backStats.critChance, backCritMult: backStats.critMult,
     backInterval:  backStats.interval, backDodge: backStats.dodge,
     backVers:   backStats.versatility, backLifesteal: backStats.lifesteal,
+    backBlock:  backStats.block || 0, backThorns: backStats.thorns || 0,
     backIsHealer: backStats.classId === 'heiler',
     backHealMult: backStats.healMult,
     backUsesStab: backStats.usesStab || false,
@@ -414,23 +417,33 @@ function exchange(fight){
   const effFrontCrit = Math.min(1, fight.frontCrit + fCritBonus);
   const effBackCrit  = Math.min(1, fight.backCrit  + bCritBonus);
 
-  // ---- Vorne schlägt Boss ---
+  // ---- Vorne: heilt den Partner bei < 35% (Heiler) oder schlägt den Boss ---
   if(fight.frontHp > 0){
-    const { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
-    fight.bossHp = Math.max(0, fight.bossHp - fd);
-    fight.dmgDealt += fd;
-    addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
-    events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}) });
-    // Dornen reflektiert
-    if(mechs.includes('dornen')){
-      const refl = Math.max(1, Math.round(fd * 0.15));
-      fight.frontHp = Math.max(0, fight.frontHp - refl);
-      addLog(fight, '🌵 Dornen: -' + refl, '#9acd32');
-    }
-    // Lifesteal
-    if(fight.frontLifesteal > 0){
-      const h = Math.round(fd * fight.frontLifesteal);
-      if(h > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + h);
+    const backLow = fight.backHp > 0 && fight.backHp < fight.backMaxHp * 0.35;
+    if(fight.frontIsHealer && backLow){
+      const healAmt = Math.round(fight.frontAtk * 2.0 * (fight.frontHealMult || 1));
+      fight.backHp = Math.min(fight.backMaxHp, fight.backHp + healAmt);
+      addLog(fight, '💚 ' + fight.frontName + ' heilt ' + fight.backName + ': +' + fmtBig(healAmt) + ' HP', '#37d67a');
+      events.push({ s:'front', t:'back', d:healAmt, h:1 });
+    } else {
+      const { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
+      fight.bossHp = Math.max(0, fight.bossHp - fd);
+      fight.dmgDealt += fd;
+      addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
+      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}) });
+      // Dornen reflektiert
+      if(mechs.includes('dornen')){
+        const refl = Math.max(1, Math.round(fd * 0.15));
+        fight.frontHp = Math.max(0, fight.frontHp - refl);
+        addLog(fight, '🌵 Dornen: -' + refl, '#9acd32');
+      }
+      // Lifesteal
+      if(fight.frontLifesteal > 0){
+        const h = Math.round(fd * fight.frontLifesteal);
+        if(h > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + h);
+      }
+      // Dornen-Affix: flacher Bonusschaden an den Boss (analog Solo-Kampf).
+      if(fight.frontThorns > 0){ fight.bossHp = Math.max(0, fight.bossHp - fight.frontThorns); fight.dmgDealt += fight.frontThorns; }
     }
   }
 
@@ -458,6 +471,8 @@ function exchange(fight){
         const h = Math.round(bd * fight.backLifesteal);
         if(h > 0) fight.backHp = Math.min(fight.backMaxHp, fight.backHp + h);
       }
+      // Dornen-Affix: flacher Bonusschaden an den Boss (analog Solo-Kampf).
+      if(fight.backThorns > 0){ fight.bossHp = Math.max(0, fight.bossHp - fight.backThorns); fight.dmgDealt += fight.backThorns; }
     }
   }
 
@@ -500,8 +515,9 @@ function exchange(fight){
     // Front-Treffer
     if(!frontDead){
       const effArmorFront = breathTurn ? 0 : fight.frontArmor;
+      const effBlockFront = breathTurn ? 0 : fight.frontBlock;
       const effAtkFront   = fight.shieldTurns > 0 ? bossAtk * 0.4 * FRONT_SHARE : bossAtk * FRONT_SHARE;
-      let { dmg: fd, dodged: dFront } = takeBossDmg(effAtkFront, effArmorFront, fight.frontDodge, fight.frontVers);
+      let { dmg: fd, dodged: dFront } = takeBossDmg(effAtkFront, effArmorFront, fight.frontDodge, fight.frontVers, effBlockFront);
       if(fd > 0 && wallFactor < 1) fd = Math.max(1, Math.round(fd * wallFactor));
       if(dFront){
         addLog(fight, '💨 ' + fight.frontName + ' weicht aus!', '#9ec5ff');
@@ -530,7 +546,8 @@ function exchange(fight){
     const backShare = frontDead ? 1.0 : BACK_SHARE;
     const effAtkBack = fight.shieldTurns > 0 ? bossAtk * 0.4 * backShare : bossAtk * backShare;
     const effArmorBack = breathTurn ? 0 : fight.backArmor;
-    let { dmg: bd, dodged: dBack } = takeBossDmg(effAtkBack, effArmorBack, fight.backDodge, fight.backVers);
+    const effBlockBack = breathTurn ? 0 : fight.backBlock;
+    let { dmg: bd, dodged: dBack } = takeBossDmg(effAtkBack, effArmorBack, fight.backDodge, fight.backVers, effBlockBack);
     if(bd > 0 && wallFactor < 1) bd = Math.max(1, Math.round(bd * wallFactor));
     if(dBack){
       addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');

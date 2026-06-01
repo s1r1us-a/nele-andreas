@@ -150,6 +150,7 @@ function makeSide(stats){
     atk: stats.atk, crit: stats.critChance, critMult: stats.critMult,
     interval: stats.interval, armor: stats.armor, dodge: stats.dodge || 0,
     vers: stats.versatility || 0, lifesteal: stats.lifesteal || 0,
+    block: stats.block || 0, thorns: stats.thorns || 0,
     usesStab: !!stats.usesStab, tier: stats.tier, classId: stats.classId,
     ability: abilityOf(stats.classId),
     potions: DUEL_POTIONS, abilUntil: 0, critUntil: 0, dmgReduceUntil: 0,
@@ -248,7 +249,7 @@ function strike(att, def, enr){
   const isCrit = Math.random() < critChance;
   let dmg = Math.max(1, Math.round(att.atk * enr * rnd(0.15) * (isCrit ? att.critMult : 1)));
   if(Math.random() < def.dodge) return { dodged: true };
-  const armorRed = def.armor * COMBAT.armorReduction;
+  const armorRed = def.armor * COMBAT.armorReduction + (def.block || 0);
   dmg = Math.max(1, Math.round(dmg - armorRed));
   dmg = Math.max(1, Math.round(dmg * (1 - def.vers)));
   if(now < def.dmgReduceUntil && def.ability && def.ability.id === 'schildwall'){
@@ -314,6 +315,8 @@ function applyStrike(fight, attKey, defKey, res, events){
     const heal = Math.round(res.dmg * att.lifesteal);
     if(heal > 0) att.hp = Math.min(att.maxHp, att.hp + heal);
   }
+  // Dornen-Affix: flacher Bonusschaden am Verteidiger (analog Solo-Kampf).
+  if(att.thorns > 0){ def.hp -= att.thorns; fight.dmgDealt += att.thorns; }
 }
 
 async function syncDuel(fight, finalWrite){
