@@ -103,7 +103,11 @@ export function toast(msg){
   if(!el){ el = document.createElement('div'); el.id='toast';
     el.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);'+
       'background:#0b0910;border:1px solid var(--gold-dim);color:var(--gold-hi);'+
-      'padding:10px 18px;border-radius:10px;z-index:130;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.5);';
+      'padding:10px 18px;border-radius:10px;z-index:130;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.5);'+
+      // Rein informativ: darf darunterliegende Buttons NIE blockieren. Sonst
+      // schluckt der ausgeblendete (opacity:0) Toast unten-mittig weiter Klicks
+      // → „Buttons reagieren nach Bosskampf/Modalen erst nach ein paar Sekunden".
+      'pointer-events:none;';
     document.body.appendChild(el); }
   el.textContent = msg; el.style.opacity = '1';
   clearTimeout(toastTimer);
