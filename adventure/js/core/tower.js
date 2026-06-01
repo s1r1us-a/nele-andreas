@@ -380,6 +380,18 @@ function applyAbility(fight, slot, abilityId){
     fight.groupDmgReduceUntil = now + ab.dur;
     fight.groupDmgReducePct   = ab.dmgReduce || 0;
     addLog(fight, '🛡️ Schildwall – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff');
+  } else if(ab.kind === 'drain' || ab.kind === 'burst'){
+    // Hexer-Grundfähigkeit (Seelenraub) & burst-Aktive: Sofortschaden am Boss.
+    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
+    const dmg = Math.max(1, Math.round(atk * (ab.burstMult || 2)));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg);
+    fight.dmgDealt += dmg;
+    if(ab.kind === 'drain'){
+      if(slot === 'front') fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + dmg);
+      else                 fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + dmg);
+    }
+    addLog(fight, ab.icon+' '+ab.name+': '+dmg+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
+    if(fight.bossHp <= 0) fight.over = true;
   }
   syncFight(fight);
 }

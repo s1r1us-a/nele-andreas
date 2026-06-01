@@ -13,7 +13,7 @@
    ===================================================================== */
 import { db, ref, get, set, update, remove, push, onValue, onDisconnect, userKey } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
-import { abilityOf } from '../data/classes.js';
+import { abilityOf, abilitiesOf, CLASS_BY_ID } from '../data/classes.js';
 import { computePlayerStats, loadGuestSave } from './tower.js';
 import { fmtBig } from '../ui/dom.js';
 
@@ -144,16 +144,25 @@ let _timer = null, _fight = null, _abilUnsub = null;
 
 function rnd(v){ return 1 + (Math.random()*2 - 1)*v; }
 
+function freshBuffs(){
+  return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
+           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0} };
+}
 function makeSide(stats){
+  const classId = stats.classId;
   return {
     maxHp: stats.maxHp, hp: stats.maxHp,
     atk: stats.atk, crit: stats.critChance, critMult: stats.critMult,
     interval: stats.interval, armor: stats.armor, dodge: stats.dodge || 0,
     vers: stats.versatility || 0, lifesteal: stats.lifesteal || 0,
     block: stats.block || 0, thorns: stats.thorns || 0,
-    usesStab: !!stats.usesStab, tier: stats.tier, classId: stats.classId,
-    ability: abilityOf(stats.classId),
-    potions: DUEL_POTIONS, abilUntil: 0, critUntil: 0, dmgReduceUntil: 0,
+    usesStab: !!stats.usesStab, tier: stats.tier, classId,
+    magic: (CLASS_BY_ID[classId] || {}).damageSchool === 'magisch',
+    // Grundfähigkeit + geskillte Talent-Aktive (max. 3).
+    abilities: abilitiesOf({ character: stats.character }),
+    potions: DUEL_POTIONS,
+    abilCd: {}, buffs: freshBuffs(),
+    burstTs: 0, healTs: 0, drainTs: 0, burstMagic: 0,
   };
 }
 
@@ -206,6 +215,7 @@ function applyAction(fight, role, kind){
     return;
   }
   const side = role === 'host' ? fight.host : fight.guest;
+  const opp  = role === 'host' ? fight.guest : fight.host;
   const name = role === 'host' ? fight.hostName : fight.guestName;
   if(!side || side.hp <= 0) return;
   const now = Date.now();
@@ -214,27 +224,52 @@ function applyAction(fight, role, kind){
     const heal = Math.round(side.maxHp * DUEL_HEAL_PCT);
     side.hp = Math.min(side.maxHp, side.hp + heal);
     side.potions--;
-    fight.lastHealTs = now; fight.healSide = role;
+    side.healTs = now;
     logLine(fight, '🧪 ' + name + ' trinkt einen Heiltrank: +' + fmtBig(heal) + ' HP', '#37d67a');
-  } else if(kind === 'ability'){
-    const ab = side.ability;
-    if(!ab || now < side.abilUntil) return;
-    side.abilUntil = now + (ab.cd || 0);
-    if(ab.id === 'heilkreis'){
-      const heal = Math.round(side.maxHp * ab.healPct);
-      side.hp = Math.min(side.maxHp, side.hp + heal);
-      fight.lastHealTs = now; fight.healSide = role;
-      logLine(fight, '➕ ' + name + ' zündet Heilkreis: +' + fmtBig(heal) + ' HP', '#37d67a');
-    } else if(ab.id === 'raserei'){
-      side.critUntil = now + ab.dur;
-      logLine(fight, '🔥 ' + name + ' entfacht Raserei!', '#ff8a3d');
-    } else if(ab.id === 'schildwall'){
-      side.dmgReduceUntil = now + ab.dur;
-      logLine(fight, '🛡️ ' + name + ' errichtet einen Schildwall!', '#7fd0ff');
-    }
+  } else if(typeof kind === 'string' && kind.indexOf('ability') === 0){
+    const abilityId = kind.split(':')[1] || (side.abilities[0] && side.abilities[0].id);
+    const ab = (side.abilities || []).find(a => a.id === abilityId);
+    if(!ab || now < (side.abilCd[abilityId] || 0)) return;
+    side.abilCd[abilityId] = now + (ab.cd || 0);
+    applyDuelAbility(fight, role, side, opp, name, ab, now);
   }
   fight.events = [];
-  syncDuel(fight, false);
+  syncDuel(fight, !!fight.over);
+}
+
+// Effekt einer aktiven Fähigkeit autoritativ anwenden (Host-Engine).
+function applyDuelAbility(fight, role, side, opp, name, ab, now){
+  if(ab.kind === 'heal'){
+    const heal = Math.round(side.maxHp * ab.healPct);
+    side.hp = Math.min(side.maxHp, side.hp + heal);
+    side.healTs = now;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': +' + fmtBig(heal) + ' HP', '#37d67a');
+  } else if(ab.kind === 'burst' || ab.kind === 'drain'){
+    const dmg = Math.max(1, Math.round(side.atk * ab.burstMult));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0;
+    if(ab.kind === 'drain'){ side.hp = Math.min(side.maxHp, side.hp + dmg); side.drainTs = now; }
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden' +
+      (ab.kind === 'drain' ? ' (+Heilung)' : ''), '#ffd24a');
+    if(opp.hp <= 0){
+      opp.hp = 0; fight.over = true; fight.winner = role;
+      const wname = role === 'host' ? fight.hostName : fight.guestName;
+      logLine(fight, '🏆 ' + wname + ' gewinnt das Duell!', '#ffd24a');
+      clearTimeout(_timer);
+    }
+  } else if(ab.kind === 'critBoost'){
+    side.buffs.crit = { until: now + ab.dur, val: ab.critBonus };
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.critBonus*100) + '% Krit!', '#ffd24a');
+  } else if(ab.kind === 'dmgBoost'){
+    side.buffs.dmgBoost = { until: now + ab.dur, val: ab.dmgBonus };
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.dmgBonus*100) + '% Schaden!', '#ff8a3d');
+  } else if(ab.kind === 'dmgReduce'){
+    side.buffs.dmgReduce = { until: now + ab.dur, val: ab.dmgReduce };
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – ' + Math.round(ab.dmgReduce*100) + '% weniger Schaden!', '#7fd0ff');
+  } else if(ab.kind === 'lifesteal'){
+    side.buffs.lifesteal = { until: now + ab.dur, val: ab.lifestealBonus };
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.lifestealBonus*100) + '% Lebensraub!', '#e0466e');
+  }
 }
 
 function schedule(fight){
@@ -245,15 +280,17 @@ function schedule(fight){
 // Ein Schlag eines Angreifers gegen den Verteidiger (gibt Schaden + Crit zurück).
 function strike(att, def, enr){
   const now = Date.now();
-  const critChance = Math.min(1, att.crit + (now < att.critUntil && att.ability ? (att.ability.critBonus || 0) : 0));
-  const isCrit = Math.random() < critChance;
+  let critChance = att.crit;
+  if(now < att.buffs.crit.until) critChance += att.buffs.crit.val;
+  const isCrit = Math.random() < Math.min(1, critChance);
   let dmg = Math.max(1, Math.round(att.atk * enr * rnd(0.15) * (isCrit ? att.critMult : 1)));
+  if(now < att.buffs.dmgBoost.until) dmg = Math.max(1, Math.round(dmg * (1 + att.buffs.dmgBoost.val)));
   if(Math.random() < def.dodge) return { dodged: true };
   const armorRed = def.armor * COMBAT.armorReduction + (def.block || 0);
   dmg = Math.max(1, Math.round(dmg - armorRed));
   dmg = Math.max(1, Math.round(dmg * (1 - def.vers)));
-  if(now < def.dmgReduceUntil && def.ability && def.ability.id === 'schildwall'){
-    dmg = Math.max(1, Math.round(dmg * (1 - (def.ability.dmgReduce || 0))));
+  if(now < def.buffs.dmgReduce.until){
+    dmg = Math.max(1, Math.round(dmg * (1 - def.buffs.dmgReduce.val)));
   }
   return { dmg, crit: isCrit };
 }
@@ -311,14 +348,33 @@ function applyStrike(fight, attKey, defKey, res, events){
   fight.dmgDealt += res.dmg;
   events.push({ s: attKey, t: defKey, d: res.dmg, ...(res.crit ? { c: 1 } : {}), ...(att.usesStab ? { p: 1 } : {}) });
   logLine(fight, '⚔️ ' + attName + (res.crit ? ' ✨KRIT' : '') + ': -' + fmtBig(res.dmg) + ' HP', res.crit ? '#ffd24a' : '#cfc6dd');
-  if(att.lifesteal > 0){
-    const heal = Math.round(res.dmg * att.lifesteal);
+  let ls = att.lifesteal;
+  if(Date.now() < att.buffs.lifesteal.until) ls += att.buffs.lifesteal.val;
+  if(ls > 0){
+    const heal = Math.round(res.dmg * ls);
     if(heal > 0) att.hp = Math.min(att.maxHp, att.hp + heal);
   }
   // Dornen-Affix: flacher Bonusschaden am Verteidiger (analog Solo-Kampf).
   if(att.thorns > 0){ def.hp -= att.thorns; fight.dmgDealt += att.thorns; }
 }
 
+// Verbleibende Cooldowns je Ability-Id (leeres Objekt, wenn alles bereit).
+function cdMapOf(side, now){
+  const o = {};
+  for(const id in side.abilCd){ const r = side.abilCd[id] - now; if(r > 0) o[id] = r; }
+  return o;
+}
+// Buff-/Einschlag-Visualdaten einer Seite (Restzeiten + Einmal-Timestamps).
+function fxOf(side, now){
+  return {
+    crit:   Math.max(0, side.buffs.crit.until - now),
+    fire:   Math.max(0, side.buffs.dmgBoost.until - now),
+    shield: Math.max(0, side.buffs.dmgReduce.until - now),
+    blood:  Math.max(0, side.buffs.lifesteal.until - now),
+    burstTs: side.burstTs || 0, burstMagic: side.burstMagic || 0,
+    healTs: side.healTs || 0, drainTs: side.drainTs || 0,
+  };
+}
 async function syncDuel(fight, finalWrite){
   const now = Date.now();
   fight.seq++;
@@ -332,17 +388,10 @@ async function syncDuel(fight, finalWrite){
     hostHp: Math.ceil(Math.max(0, fight.host.hp)), hostMaxHp: fight.host.maxHp,
     guestHp: Math.ceil(Math.max(0, fight.guest.hp)), guestMaxHp: fight.guest.maxHp,
     hostPotions: fight.host.potions, guestPotions: fight.guest.potions,
-    hostCdRemain: Math.max(0, fight.host.abilUntil - now),
-    guestCdRemain: Math.max(0, fight.guest.abilUntil - now),
+    hostCd: cdMapOf(fight.host, now), guestCd: cdMapOf(fight.guest, now),
     events: fight.events || [],
     log: fight.log,
-    fx: {
-      hostAblazeRemain: Math.max(0, fight.host.critUntil - now),
-      guestAblazeRemain: Math.max(0, fight.guest.critUntil - now),
-      hostShieldRemain: Math.max(0, fight.host.dmgReduceUntil - now),
-      guestShieldRemain: Math.max(0, fight.guest.dmgReduceUntil - now),
-      healTs: fight.lastHealTs, healSide: fight.healSide,
-    },
+    fx: { host: fxOf(fight.host, now), guest: fxOf(fight.guest, now) },
     over: fight.over, winner: fight.winner,
   };
   try { await set(ref(db, COMBATP(fight.lobbyId)), data); } catch(e){ console.warn('Duell-Sync', e); }

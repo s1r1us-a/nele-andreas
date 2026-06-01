@@ -257,11 +257,14 @@ export function renderTalents(){
       // Tooltip: Wert + Wirk-Erklärung der betroffenen Stats.
       const explain = node.keys.map(k => STAT_INFO[k] ? STAT_INFO[k].help : '').filter(Boolean).join('\n');
       const tip = node.desc + (explain ? '\n\n' + explain : '');
+      const isActive = !!node.active;
       const cssCls = 'talent-node' + (isChosen ? ' taken' : '') +
-        (!unlocked ? ' locked' : '') + (dimmed ? ' dimmed' : '') + (canPick ? ' pickable' : '');
+        (!unlocked ? ' locked' : '') + (dimmed ? ' dimmed' : '') + (canPick ? ' pickable' : '') +
+        (isActive ? ' active-skill' : '');
       html += '<button class="'+cssCls+'" data-stufe="'+ti+'" data-talent="'+node.id+'"'+(dis?' disabled':'')+
         ' title="'+esc(tip)+'">'+
         (isChosen?'<span class="talent-check">✓</span>':'')+
+        (isActive?'<span class="talent-active-badge">AKTIV</span>':'')+
         '<span class="talent-icon">'+(node.icon||'✦')+'</span>'+
         '<span class="talent-name">'+node.name+'</span>'+
         '<span class="talent-val">'+node.desc+'</span></button>';

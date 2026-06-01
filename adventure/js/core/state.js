@@ -14,6 +14,7 @@ import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
 import { defaultTypeKey, typeOf } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
+import { isValidChoice } from '../data/talents.js';
 import { db, ref, get, set, remove } from './firebase.js';
 
 export let state = null;        // aktiver Slot (flacher Spielstand)
@@ -86,6 +87,20 @@ function migrateSlot(s){
     if(!s.character.talents || typeof s.character.talents !== 'object') s.character.talents = {};
     if(typeof s.character.talentPoints !== 'number'){
       s.character.talentPoints = Math.max(0, (s.level||1) - 1);
+    }
+    // Talent-Migration: nach Baum-Umbau ungültige Wahlen entfernen und die
+    // dafür ausgegebenen Punkte zurückerstatten (kein manueller Respec nötig).
+    const cid = s.character.classId;
+    if(cid){
+      let refunded = 0;
+      for(const k of Object.keys(s.character.talents)){
+        const idx = parseInt(k, 10);
+        if(!isValidChoice(cid, idx, s.character.talents[k])){
+          delete s.character.talents[k];
+          refunded++;
+        }
+      }
+      if(refunded > 0) s.character.talentPoints = (s.character.talentPoints||0) + refunded;
     }
   }
   for(let i=0;i<s.zone;i++){ if(!s.firstClears[i]) s.firstClears[i] = true; }

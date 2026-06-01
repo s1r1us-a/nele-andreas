@@ -8,7 +8,7 @@ import { SLOTS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { GENDERS, HAIR_STYLES, HAIR_COLORS, SKIN_TONES, EYE_COLORS,
          DEFAULT_CHARACTER } from '../data/character-options.js';
-import { CLASSES, CLASS_BY_ID, classOf } from '../data/classes.js';
+import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf } from '../data/classes.js';
 import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
@@ -353,7 +353,7 @@ function renderCreator(){
       '<input type="text" id="creatorName" class="creator-name" maxlength="16" '+
       'placeholder="Name deines Helden" value="'+(_draftChar.name||'').replace(/"/g,'&quot;')+'"></div>'+
     '<div class="creator-section"><h3>Klasse'+(classLocked?' (dauerhaft)':'')+'</h3>'+
-      '<div class="opt-grid cols3">'+classBtns+'</div>'+
+      '<div class="opt-grid class-grid">'+classBtns+'</div>'+
       '<div class="sub" style="margin-top:6px;">'+classDesc+'</div></div>'+
     '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols3">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
@@ -619,7 +619,7 @@ function enterDuelArena(lobby){
     openDuelArena({
       lobbyId: _dId, role, stake: lobby.stake || 0,
       myName: dMyName(), oppName: _dHost ? lobby.guestName : lobby.hostName,
-      oppSrc, ability: classOf(state).ability,
+      oppSrc, abilities: abilitiesOf(state),
       onAction: (kind) => requestDuelAction(_dId, role, kind),
       onForfeit: () => requestDuelForfeit(_dId, role),
       onClose: () => cleanupDuel(true),
