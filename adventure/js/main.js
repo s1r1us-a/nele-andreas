@@ -9,7 +9,10 @@ import { watchCoins } from './core/coins.js';
 import { $, fmtRemain, fmtBig, confirmDialog } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
 import { openBossList, openStats, openCharacterCreator,
-         openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby } from './ui/modals.js';
+         openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby,
+         openOtherProfile } from './ui/modals.js';
+import { checkAdventureBadges } from './core/badges.js';
+import { otherKey } from './core/duel.js';
 
 // ---- Tabs -----------------------------------------------------------
 function switchTab(view){
@@ -111,6 +114,12 @@ window.addEventListener('beforeunload', flushSave);
 
   await loadSave(userKey);               // lädt /adventure/<userKey> (sonst lokaler Cache / frisch)
   renderAll();
+  // Bereits verdiente Dämmerpfad-Badges einmalig still nachtragen (kein Modal).
+  checkAdventureBadges(false);
+  // Profil-Ansicht des anderen Spielers: Button-Beschriftung personalisieren.
+  const otherName = otherKey()[0].toUpperCase() + otherKey().slice(1);
+  const opBtn = $('#otherProfileBtn');
+  if(opBtn){ opBtn.title = otherName + 's Profil ansehen'; opBtn.addEventListener('click', openOtherProfile); }
   // Globalen Münzstand live in die Topbar spiegeln (geteiltes Wallet mit Farm/Slot).
   watchCoins(c => { const el = $('#miniGold'); if(el) el.textContent = fmtBig(c); });
   startLoop();

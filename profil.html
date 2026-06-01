@@ -259,6 +259,8 @@
 
     /* BADGE GRID */
     .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .badge-subgroup { grid-column: 1 / -1; margin: 10px 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .4px; color: var(--text-mid); text-transform: uppercase; }
+    .badge-subgroup:first-child { margin-top: 0; }
     .badge-item { border-radius: 14px; padding: 8px 4px; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s ease; position: relative; }
     .badge-item.owned { background: var(--ui-quote-card-bg); border-color: var(--ui-quote-card-border); }
     .badge-item.owned:hover { border-color: var(--rose); transform: translateY(-2px); }
@@ -1194,6 +1196,16 @@
     </div>
   </div>
 
+  <div class="section collapsible collapsed" id="dammerpfadBadgeSection" data-collapsible>
+    <div class="section-label" role="button" tabindex="0" aria-expanded="false">🌙 Dämmerpfad Badges<span class="badge-count" id="dammerpfadBadgeCount">–</span><span class="collapse-chevron" aria-hidden="true">▾</span></div>
+    <div class="collapsible-body">
+      <div class="section-hint">Verdient im Abenteuer-Spiel „Dämmerpfad" 🌙</div>
+      <div class="badge-grid" id="dammerpfadBadgeGrid">
+        <div style="font-size:12px;color:var(--text-mid);grid-column:1/-1;text-align:center;padding:12px 0;">Lade Badges…</div>
+      </div>
+    </div>
+  </div>
+
   <div class="section">
     <div class="section-label">🖼️ Meine Rahmen</div>
     <div class="section-hint" id="frameHint">Klick auf einen Rahmen um ihn zu aktivieren ✨</div>
@@ -1252,6 +1264,7 @@
   import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { awardXp, XP_VALUES, XP_LABELS, XP_DISPLAY, LEVEL_BADGES, MAX_LEVEL, COIN_PER_LEVEL, xpForLevel, levelFromTotal, currentXpInLevel, reconcileRewards, claimReward } from './xp-helper.js';
+  import { DAMMERPFAD_BADGES, DP_GROUPS } from './dammerpfad-badges.js';
   import './level-up-feedback.js';
 
   const app = initializeApp({
@@ -1363,6 +1376,7 @@
   let loggedInUserName = null;
   let ownedBadges    = [];
   let ownedSlotBadges = [];
+  let ownedDammerpfadBadges = [];
   let ownedFrames    = [];
   let equippedBadge  = null;
   let equippedFrame  = null;
@@ -2124,7 +2138,7 @@
     const emoji = document.getElementById('activeBadgeEmoji');
     const name  = document.getElementById('activeBadgeName');
     if (!equippedBadge) { pill.style.display = 'none'; return; }
-    const b = [...ALL_BADGES, ...SLOT_BADGES, ...LEVEL_BADGE_LIST].find(x => x.id === equippedBadge);
+    const b = [...ALL_BADGES, ...SLOT_BADGES, ...LEVEL_BADGE_LIST, ...DAMMERPFAD_BADGES].find(x => x.id === equippedBadge);
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;
@@ -2183,6 +2197,41 @@
     setBadgeCount('slotBadgeCount', SLOT_BADGES);
   }
 
+  function renderDammerpfadBadges() {
+    const grid = document.getElementById('dammerpfadBadgeGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    // Nach Untergruppen sortiert, je mit Überschrift (Bosse/Turm/PvP/Sammeln).
+    DP_GROUPS.forEach(g => {
+      const list = DAMMERPFAD_BADGES.filter(b => b.group === g.key);
+      if (!list.length) return;
+      const head = document.createElement('div');
+      head.className = 'badge-subgroup';
+      head.textContent = g.emoji + ' ' + g.label;
+      grid.appendChild(head);
+      list.forEach(b => {
+        const isOwned    = ownedDammerpfadBadges.includes(b.id);
+        const isEquipped = equippedBadge === b.id;
+        const el = document.createElement('div');
+        el.className = `badge-item ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''} ${isOwned ? 'rarity-' + b.rarity : ''}`;
+        el.innerHTML = `
+          ${isEquipped ? '<span class="badge-equipped-star">⭐</span>' : ''}
+          <span class="badge-item-emoji">${isOwned ? b.emoji : '❓'}</span>
+          <div class="badge-item-name">${isOwned ? b.name : '???'}</div>
+          <div class="badge-rarity-dot ${b.rarity}"></div>`;
+        if (isOwned && !isReadOnly) el.addEventListener('click', () => equipBadge(b.id));
+        grid.appendChild(el);
+      });
+    });
+    // Zähler „X / Y" für den Abschnitt.
+    const countEl = document.getElementById('dammerpfadBadgeCount');
+    if (countEl) {
+      const owned = DAMMERPFAD_BADGES.filter(b => ownedDammerpfadBadges.includes(b.id)).length;
+      countEl.textContent = owned + ' / ' + DAMMERPFAD_BADGES.length;
+      countEl.classList.toggle('complete', owned === DAMMERPFAD_BADGES.length && DAMMERPFAD_BADGES.length > 0);
+    }
+  }
+
   function renderFrames() {
     const grid = document.getElementById('profileFrameGrid');
     grid.innerHTML = '';
@@ -2203,7 +2252,7 @@
   }
 
   function findBadge(id) {
-    return [...ALL_BADGES, ...SLOT_BADGES, ...LEVEL_BADGE_LIST].find(b => b.id === id) || null;
+    return [...ALL_BADGES, ...SLOT_BADGES, ...LEVEL_BADGE_LIST, ...DAMMERPFAD_BADGES].find(b => b.id === id) || null;
   }
 
   function getBadgeDesc(id) {
@@ -2211,6 +2260,8 @@
     if (inAll)  return inAll.desc || '';
     const inSlot = SLOT_BADGES.find(b => b.id === id);
     if (inSlot) return inSlot.desc || '';
+    const inDp = DAMMERPFAD_BADGES.find(b => b.id === id);
+    if (inDp) return inDp.desc || '';
     const m = /^level_(\d+)$/.exec(id);
     if (m) return 'Erreicht in Level ' + m[1];
     return '';
@@ -2222,6 +2273,7 @@
     await set(ref(db, `shop/${key}/equippedBadge`), equippedBadge);
     renderBadges();
     renderSlotBadges();
+    renderDammerpfadBadges();
     renderLevelBadges(xpState.total, xpState.unclaimed);
     updateBadgePill();
   }
@@ -2466,20 +2518,23 @@
       }
     });
 
-    const [badgesSnap, slotBadgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
+    const [badgesSnap, slotBadgesSnap, dpBadgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
       get(ref(db, `shop/${key}/badges`)),
       get(ref(db, `slotbadges/${key}`)),
+      get(ref(db, `dammerpfad/${key}/badges`)),
       get(ref(db, `shop/${key}/frames`)),
       get(ref(db, `shop/${key}/equippedBadge`)),
       get(ref(db, `shop/${key}/equippedFrame`)),
     ]);
-    ownedBadges     = badgesSnap.val()     || [];
-    ownedSlotBadges = Object.keys(slotBadgesSnap.val() || {});
-    ownedFrames     = framesSnap.val()     || [];
-    equippedBadge   = equippedBSnap.val()  || null;
-    equippedFrame   = equippedFSnap.val()  || null;
+    ownedBadges        = badgesSnap.val()     || [];
+    ownedSlotBadges    = Object.keys(slotBadgesSnap.val() || {});
+    ownedDammerpfadBadges = Object.keys(dpBadgesSnap.val() || {});
+    ownedFrames        = framesSnap.val()     || [];
+    equippedBadge      = equippedBSnap.val()  || null;
+    equippedFrame      = equippedFSnap.val()  || null;
     renderBadges();
     renderSlotBadges();
+    renderDammerpfadBadges();
     renderFrames();
     renderLevelBadges(xpState.total, xpState.unclaimed);
     updateBadgePill();

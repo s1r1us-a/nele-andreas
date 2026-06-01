@@ -271,7 +271,7 @@
     <span class="uc-ico">👤</span><b id="userName">…</b>
   </div>
   <button class="dev-btn" id="rosterTopBtn" title="Charakter wechseln / verwalten">👥</button>
-  <button class="dev-btn" id="duelBtn" title="Live-Duell gegen den anderen Spieler">⚔️🆚</button>
+  <button class="dev-btn" id="otherProfileBtn" title="Profil des anderen Spielers ansehen">👁️</button>
   <button class="dev-btn" id="statsBtn" title="Statistik">📊</button>
   <div class="stats-mini">
     <div class="stat-chip level" id="levelChip" title="Level">
@@ -340,6 +340,7 @@
       <div class="tower-teaser">
         <a href="turm.html" class="btn tower-btn">🗼 Turm des Wahnsinns – Koop-Modus</a>
         <p class="tower-sub">Bezwinge endlose Stockwerke gemeinsam mit einem Partner – nur zu zweit!</p>
+        <button class="btn duel-btn" id="duelBtn">⚔️🆚 Live-Duell gegen den anderen Spieler</button>
       </div>
 
       <div class="log">
@@ -489,6 +490,7 @@
   }, 5500);
 })();
 </script>
+<script type="module" src="dp-badge-notify.js"></script>
 <script type="module" src="adventure/js/main.js"></script>
 </body>
 </html>

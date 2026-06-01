@@ -4,7 +4,7 @@
    Onboarding (#29).
    ===================================================================== */
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
-import { SLOTS, FITS } from '../data/slots.js';
+import { SLOTS, FITS, SLOT_KEYS, SLOT_ICON } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { GENDERS, HAIR_STYLES, HAIR_COLORS, BEARD_STYLES, SKIN_TONES, EYE_COLORS,
          DEFAULT_CHARACTER } from '../data/character-options.js';
@@ -293,6 +293,83 @@ export function openStats(){
     '</div>'+
     '<div class="close-row"><button class="btn" id="statsClose">Schließen</button></div>');
   modal().querySelector('#statsClose').addEventListener('click', closeModal);
+}
+
+// ---- Profil des anderen Spielers (read-only Ansicht) ---------------
+export async function openOtherProfile(){
+  hideTooltip();
+  const ok = otherKey();
+  const oName = ok[0].toUpperCase() + ok.slice(1);
+  openModal('<h2>👁️ '+oName+'s Held</h2><div class="sub">Lädt …</div>');
+  let slot, st;
+  try {
+    const loaded = await loadGuestSave(ok);
+    slot = resolveActiveSlot(loaded);
+    if(!slot || !slot.character) throw new Error('no-char');
+    st = computePlayerStats(slot);
+  } catch(e) {
+    openModal('<h2>👁️ '+oName+'s Held</h2>'+
+      '<p style="text-align:center; color:var(--txt-dim); margin:18px 0;">'+oName+
+      ' hat noch keinen Helden im Dämmerpfad erstellt.</p>'+
+      '<div class="close-row"><button class="btn ghost" id="opClose">Schließen</button></div>');
+    modal().querySelector('#opClose').addEventListener('click', closeModal);
+    return;
+  }
+  const cls = CLASS_BY_ID[st.classId] || classOf(slot);
+  const charName = (slot.character && slot.character.name) || (cls ? cls.label : 'Held');
+  const avatar = buildHeroSVG(slot.character, st.tier, { equipped: slot.equipped || {} });
+
+  // Ausrüstung (read-only) – belegte Slots als Item-Zellen, leere dezent.
+  let gear = '';
+  for(const sk of SLOT_KEYS){
+    const it = (slot.equipped || {})[sk];
+    if(it){
+      const r = rarityOf(it.rarity);
+      gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-op="'+sk+'">'+
+        '<img src="'+it.sprite+'" alt="'+(it.name||'')+'"></div>';
+    } else {
+      gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+
+        '<span>'+(SLOT_ICON[sk]||'')+'</span></div>';
+    }
+  }
+
+  const pct = v => Math.round((v||0)*100)+'%';
+  const row = (label, val, cls2) => '<div class="cs-row"><span class="cs-l">'+label+
+    '</span><b class="cs-v'+(cls2?' '+cls2:'')+'">'+val+'</b></div>';
+  let sec = '';
+  if(st.lifesteal>0)   sec += row('Lebensraub', pct(st.lifesteal), 'hp');
+  if(st.dodge>0)       sec += row('Ausweichen', pct(st.dodge), 'armor');
+  if(st.versatility>0) sec += row('Vielseitigkeit', pct(st.versatility), 'crit');
+  if(st.block>0)       sec += row('Block', Math.round(st.block), 'armor');
+  if(st.thorns>0)      sec += row('Dornen', Math.round(st.thorns), 'damage');
+
+  openModal('<h2>👁️ '+oName+'s Held</h2>'+
+    '<div class="op-head">'+
+      '<img class="op-avatar" src="'+avatar+'" alt="">'+
+      '<div class="op-meta">'+
+        '<div class="op-name">'+charName+'</div>'+
+        '<div class="op-cls">'+(cls?cls.icon+' '+cls.label:'')+'</div>'+
+        '<div class="op-lvl">⭐ Level <b>'+(st.level||1)+'</b> · ⚔️ Kampfkraft <b>'+fmtBig(st.power)+'</b></div>'+
+      '</div>'+
+    '</div>'+
+    '<h3 class="op-sub">Ausrüstung</h3>'+
+    '<div class="picker-list op-gear">'+gear+'</div>'+
+    '<h3 class="op-sub">Werte</h3>'+
+    '<div class="preview-stats">'+
+      row('⚔️ Kampfkraft', fmtBig(st.power), 'power')+
+      row('❤️ Max HP', fmtBig(Math.round(st.maxHp)), 'hp')+
+      row('🗡️ Schaden', fmtBig(st.atk), 'damage')+
+      row('🛡️ Rüstung', fmtBig(Math.round(st.armor)), 'armor')+
+      row('🎯 Krit-Chance', pct(st.critChance), 'crit')+
+      sec+
+    '</div>'+
+    '<div class="close-row"><button class="btn ghost" id="opClose">Schließen</button></div>');
+  // Tooltips für ausgerüstete Items (read-only, kein Vergleich).
+  modal().querySelectorAll('.op-cell[data-op]').forEach(cell => {
+    const it = (slot.equipped || {})[cell.dataset.op];
+    if(it) bindTooltip(cell, it, { compare:false });
+  });
+  modal().querySelector('#opClose').addEventListener('click', closeModal);
 }
 
 // ---- Onboarding (#29) ----------------------------------------------
