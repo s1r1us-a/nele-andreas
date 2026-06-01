@@ -3,10 +3,10 @@
    ===================================================================== */
 import { state, loadSave, saveState, flushSave } from './core/state.js';
 import { initAuth } from './core/firebase.js';
-import { expeditionReady, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
+import { expeditionReady, expeditionActive, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
 import { startBossFight, toggleSpeed, closeArena, usePotion, useAbility } from './core/combat.js';
 import { watchCoins } from './core/coins.js';
-import { $, fmtRemain, fmtBig, confirmDialog } from './ui/dom.js';
+import { $, fmtRemain, fmtBig, confirmDialog, toast } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
 import { openBossList, openStats, openCharacterCreator,
          openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby,
@@ -29,6 +29,11 @@ $('#bossListBtn').addEventListener('click', openBossList);
 $('#statsBtn').addEventListener('click', openStats);
 $('#rosterTopBtn').addEventListener('click', openRosterModal);
 $('#duelBtn').addEventListener('click', openDuelLobby);
+// Turm: während eines laufenden Abenteuers gesperrt (Held ist unterwegs).
+const towerLink = document.querySelector('.tower-btn');
+if(towerLink) towerLink.addEventListener('click', e => {
+  if(expeditionActive()){ e.preventDefault(); toast('🧭 Dein Held ist gerade auf Abenteuer – erst zurückkehren.'); }
+});
 // „Aussehen ändern" und „Helm" liegen jetzt im dynamischen Charakter-Header
 // (in render.js verdrahtet, da bei jedem Render neu aufgebaut).
 $('#speedBtn').addEventListener('click', toggleSpeed);

@@ -32,7 +32,7 @@ import { heroSrc } from '../core/avatar.js';
 import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { materialOf } from '../data/itemTypes.js';
-import { expeditionReady, findProgress } from '../core/expedition.js';
+import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { openSlotPicker, openItemPreview, openSellModal, previewExpedition,
@@ -93,6 +93,20 @@ export function renderAdventure(){
   rec.innerHTML = '<span class="diff-badge '+diff.cls+'">'+diff.label+'</span> '
     + 'Empfohlene Kampfkraft: <b>'+fmtBig(boss.recPower)+'</b> · deine: <b>'+t.power+'</b>'
     + (mechs ? '<br><span class="boss-mechs">'+mechs+'</span>' : '');
+
+  // Während eines laufenden Abenteuers ist der Held unterwegs: Bosskampf,
+  // Duell und Turm sperren (man kann nichts anderes gleichzeitig machen).
+  const onAdventure = expeditionActive();
+  const lockBtn = (el, locked) => {
+    if(!el) return;
+    el.classList.toggle('adv-locked', locked);
+    if(el.tagName === 'BUTTON') el.disabled = locked;
+    else el.setAttribute('aria-disabled', locked ? 'true' : 'false');
+    el.title = locked ? 'Dein Held ist gerade auf Abenteuer – erst zurückkehren.' : '';
+  };
+  lockBtn($('#challengeBtn'), onAdventure);
+  lockBtn($('#duelBtn'), onAdventure);
+  lockBtn(document.querySelector('.tower-btn'), onAdventure);
 
   const log = $('#logEntries');
   log.innerHTML = state.log.length ? '' : '<div class="entry" style="color:var(--txt-mute)">Noch keine Funde…</div>';

@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>⚔️ Dämmerpfad – Nele & Andreas</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Quicksand:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="adventure/css/style.css">
@@ -228,6 +228,9 @@
     .adv-intro-rays, .adv-intro-title, .adv-intro-divider, .adv-intro-divider-wing, .adv-intro-sub { opacity: 1; }
     .adv-intro-divider-wing { width: 64px; }
   }
+
+  /* Kein Zoom auf Mobil: Doppeltipp-Zoom unterbinden (ergänzt das Viewport-Meta). */
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 </style>
 </head>
 <body>
@@ -431,6 +434,27 @@
 </div>
 
 <script>
+/* Kein Zoom auf Mobil: iOS ignoriert „user-scalable=no", daher Pinch- und
+   Doppeltipp-Zoom zusätzlich per JS unterbinden. */
+(function(){
+  // Pinch-Zoom (Safari-Gesten)
+  ['gesturestart','gesturechange','gestureend'].forEach(function(ev){
+    document.addEventListener(ev, function(e){ e.preventDefault(); }, { passive:false });
+  });
+  // Mehrfinger-Pinch
+  document.addEventListener('touchmove', function(e){
+    if(e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive:false });
+  // Doppeltipp-Zoom
+  var lastTouch = 0;
+  document.addEventListener('touchend', function(e){
+    var now = Date.now();
+    if(now - lastTouch <= 300) e.preventDefault();
+    lastTouch = now;
+  }, { passive:false });
+})();
+</script>
+<script>
 /* Episches Wappen-Intro: Glut/Funken erzeugen, personalisieren, ausblenden. */
 (function(){
   var overlay = document.getElementById('advIntro');
@@ -488,6 +512,8 @@
 })();
 </script>
 <script type="module" src="dp-badge-notify.js"></script>
+<!-- Globales XP-/Level-Up-Feedback (Floating-Text + Modal) für Account-XP. -->
+<script type="module" src="level-up-feedback.js"></script>
 <script type="module" src="adventure/js/main.js"></script>
 </body>
 </html>

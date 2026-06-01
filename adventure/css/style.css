@@ -123,6 +123,10 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 }
 .btn:hover { filter:brightness(1.07); } .btn:active { transform:translateY(1px); }
 .btn[disabled] { opacity:.4; cursor:not-allowed; filter:grayscale(.5); }
+/* Während eines laufenden Abenteuers gesperrte Aktionen (Boss/Duell/Turm).
+   Links (a.tower-btn) behalten pointer-events, damit der Klick-Hinweis erscheint. */
+.adv-locked { opacity:.4; filter:grayscale(.6); cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
 .btn.ghost { background:var(--stone); color:var(--txt); box-shadow:none;
   border:1px solid var(--line); }
 
@@ -225,6 +229,8 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 #tooltip .tt-cmp-zero { color:var(--txt-mute); }
 
 /* ---- Modal (Picker + Offline) --------------------------------- */
+/* Hintergrund nicht scrollbar, solange ein Overlay/Modal offen ist. */
+html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavior:none; }
 .overlay { position:fixed; inset:0; background:rgba(5,4,9,.78); z-index:80;
   display:none; align-items:center; justify-content:center; padding:18px; }
 .overlay.show { display:flex; }
@@ -408,7 +414,10 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 
 /* ---- Boss-Kampf-Arena ----------------------------------------- */
 .arena-overlay { position:fixed; inset:0; z-index:120; display:none;
-  background:rgba(3,2,6,.86); align-items:center; justify-content:center; padding:16px; }
+  background:#050308;
+  background-image:radial-gradient(ellipse at 50% 30%, rgba(40,28,60,.5) 0%, transparent 60%), linear-gradient(160deg,#0b0814 0%,#050308 100%);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  align-items:center; justify-content:center; padding:16px; overflow-y:auto; }
 .arena-overlay.show { display:flex; }
 .arena { width:100%; max-width:760px; }
 .arena-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
@@ -468,7 +477,30 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   box-shadow:0 0 8px 4px #33dd66, 0 0 2px 1px #b6f5c2;
 }
 /* ---- Klassen-Spezialfähigkeiten (Animationen) ---- */
-.ability-btn { border-color:rgba(180,120,255,.5); }
+.ability-btn { border-color:rgba(180,120,255,.5);
+  display:inline-flex; flex-direction:column; align-items:center; gap:1px; line-height:1.15; padding:7px 12px; }
+.ability-btn .ab-head { font-weight:700; }
+.ability-btn .ab-eff  { font-size:11px; color:var(--gold-hi); font-family:'Quicksand',sans-serif; opacity:.95; }
+.ability-btn .ab-cd   { font-size:11px; color:var(--txt-dim); }
+.ability-btn .ab-cd:empty { display:none; }
+.ability-btn.on-cd .ab-cd { color:#ff9a6b; font-weight:700; }
+
+/* Beim Aktivieren kurz eingeblendeter Effekt-Text über dem Helden. */
+.ability-cast-float { position:absolute; transform:translate(-50%,0); text-align:center;
+  pointer-events:none; z-index:14; white-space:nowrap; animation:abilityCastRise 1.5s ease-out forwards; }
+.ability-cast-float .acf-name { display:block; font-family:'Cinzel',serif; font-weight:900; font-size:18px;
+  color:var(--gold-hi); text-shadow:0 2px 6px #000, 0 0 12px rgba(242,205,107,.6); }
+.ability-cast-float .acf-eff { display:block; font-family:'Quicksand',sans-serif; font-weight:700; font-size:13px;
+  color:#fff; text-shadow:0 2px 4px #000; margin-top:2px; }
+@keyframes abilityCastRise {
+  0%   { opacity:0; transform:translate(-50%,14px) scale(.8); }
+  15%  { opacity:1; transform:translate(-50%,0)    scale(1); }
+  70%  { opacity:1; transform:translate(-50%,-12px) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-38px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce){
+  .ability-cast-float { animation-duration:1.2s; }
+}
 /* Heilung: aufblühender Lichtkern + expandierender Ring + aufsteigende Funken.
    Wirkt wie echte Heilmagie statt nur eines Kreises (identisch zum Turm-Modus). */
 .heal-fx { position:absolute; transform:translate(-50%,-50%);
@@ -842,6 +874,22 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 .opt-grid.cols2 { grid-template-columns:repeat(2,1fr); }
 .opt-grid.cols3 { grid-template-columns:repeat(3,1fr); }
 .opt-grid.class-grid { grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); }
+/* Klassen-Infokarte (Charaktererstellung): Spielstil, Stärken/Schwächen, Fähigkeit. */
+.class-info { margin-top:10px; padding:12px 14px; border-radius:12px;
+  background:rgba(20,16,32,.55); border:1px solid var(--line);
+  font-family:'Quicksand',sans-serif; text-align:left; }
+.class-info .ci-title { font-family:'Cinzel',serif; font-weight:900; color:var(--gold-hi); font-size:16px; margin-bottom:4px; }
+.class-info .ci-play { color:var(--txt-dim); font-size:13px; line-height:1.45; margin-bottom:10px; }
+.class-info .ci-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.class-info .ci-h { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--txt-mute); margin-bottom:4px; font-weight:700; }
+.class-info ul { list-style:none; margin:0; padding:0; }
+.class-info .ci-pros li, .class-info .ci-cons li { font-size:12.5px; line-height:1.4; padding-left:14px; position:relative; color:var(--txt); }
+.class-info .ci-pros li::before { content:'▪'; position:absolute; left:0; color:#37d67a; }
+.class-info .ci-cons li::before { content:'▪'; position:absolute; left:0; color:#ff9a6b; }
+.class-info .ci-ability { margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+.class-info .ci-ability-desc { font-size:12.5px; color:var(--txt-dim); line-height:1.45; margin-top:3px; }
+.class-info .ci-meta { margin-top:10px; font-size:11.5px; color:var(--txt-mute); }
+@media (max-width:480px){ .class-info .ci-cols { grid-template-columns:1fr; } }
 .opt-btn { padding:10px 8px; border-radius:10px; cursor:pointer; text-align:center;
   background:var(--stone); border:2px solid var(--line); color:var(--txt);
   font-size:13px; font-family:'Quicksand',sans-serif; transition:border-color .12s; }

@@ -20,7 +20,7 @@ import { recomputeTotals, heroTier } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, canEquip } from '../core/items.js';
-import { startExpedition } from '../core/expedition.js';
+import { startExpedition, expeditionActive } from '../core/expedition.js';
 import { startBossFight, updatePotionBtn,
          openDuelArena, applyDuelSnapshot, resolveArenaOpponentLeft } from '../core/combat.js';
 import { computePlayerStats } from '../core/tower.js';
@@ -411,6 +411,27 @@ function cancelNewCharacter(){
   _creatingNew = false; _prevCharId = null;
   renderAll();
 }
+// Detaillierte Klassen-Infokarte für die Charaktererstellung:
+// Spielstil, Stärken, Schwächen, Rüstungen und Spezialfähigkeit.
+function classInfoHtml(c){
+  if(!c) return '';
+  const MAT = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
+  const mats = (c.allowedMaterials||[]).map(m => MAT[m]||m).join(', ');
+  const pros = (c.pros||[]).map(p => '<li>'+p+'</li>').join('');
+  const cons = (c.cons||[]).map(p => '<li>'+p+'</li>').join('');
+  const ab = c.ability;
+  return ''+
+    '<div class="ci-title">'+c.icon+' '+c.label+'</div>'+
+    '<div class="ci-play">'+(c.playstyle||c.desc||'')+'</div>'+
+    '<div class="ci-cols">'+
+      '<div class="ci-pros"><span class="ci-h">✅ Stärken</span><ul>'+pros+'</ul></div>'+
+      '<div class="ci-cons"><span class="ci-h">⚠️ Schwächen</span><ul>'+cons+'</ul></div>'+
+    '</div>'+
+    (ab ? '<div class="ci-ability"><span class="ci-h">'+ab.icon+' Spezialfähigkeit: '+ab.name+'</span>'+
+          '<div class="ci-ability-desc">'+(ab.desc||'')+' · Abklingzeit '+Math.round(ab.cd/1000)+' s</div></div>' : '')+
+    '<div class="ci-meta">⚔️ Schaden: '+c.damageSchool+' · 🛡️ Rüstung: '+mats+'</div>';
+}
+
 function renderCreator(){
   const tier = heroTier(recomputeTotals().power);
   // Klasse ist dauerhaft: einmal gesetzt (im gespeicherten Charakter) → gesperrt.
@@ -423,7 +444,8 @@ function renderCreator(){
       (dis?' style="opacity:.4;cursor:not-allowed"':'')+'>'+c.icon+' '+c.label+'</div>';
   }).join('');
   const selClass = _draftChar.classId ? CLASS_BY_ID[_draftChar.classId] : null;
-  const classDesc = selClass ? selClass.desc : 'Wähle eine Klasse – sie ist dauerhaft und kann später nicht geändert werden.';
+  const classDesc = selClass ? classInfoHtml(selClass)
+    : '<span class="sub">Wähle eine Klasse – sie ist dauerhaft und kann später nicht geändert werden. Tippe eine Klasse an, um ihre Stärken, Schwächen und Spezialfähigkeit zu sehen.</span>';
   const genderBtns = GENDERS.map(g =>
     '<div class="opt-btn'+(_draftChar.gender===g.id?' sel':'')+'" data-gender="'+g.id+'">'+g.icon+' '+g.label+'</div>').join('');
   const hairBtns = HAIR_STYLES.map(h =>
@@ -447,7 +469,7 @@ function renderCreator(){
       'placeholder="Name deines Helden" value="'+(_draftChar.name||'').replace(/"/g,'&quot;')+'"></div>'+
     '<div class="creator-section"><h3>Klasse'+(classLocked?' (dauerhaft)':'')+'</h3>'+
       '<div class="opt-grid class-grid">'+classBtns+'</div>'+
-      '<div class="sub" style="margin-top:6px;">'+classDesc+'</div></div>'+
+      '<div class="class-info">'+classDesc+'</div></div>'+
     '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols3">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
     '<div class="creator-section"><h3>Haarfarbe</h3><div class="color-grid">'+colorBtns+'</div></div>'+
@@ -580,6 +602,8 @@ function cleanupDuel(leaveDb){
 
 export function openDuelLobby(){
   if(!state.character){ toast('Erst einen Charakter erstellen.'); return; }
+  // Während eines laufenden Abenteuers ist der Held unterwegs – kein Duell.
+  if(expeditionActive()){ toast('🧭 Dein Held ist gerade auf Abenteuer – erst zurückkehren.'); return; }
   cleanupDuel(false);
   openModal(
     '<h2>⚔️🆚 Duell – Live-PvP</h2>'+
