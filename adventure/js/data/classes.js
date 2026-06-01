@@ -43,13 +43,13 @@ export const CLASSES = [
   { id:'hexer',       label:'Hexer',       icon:'🔮',
     desc:'Hexenmeister. Trägt nur Stoff. Magischer Schaden mit starkem Lebensraub – heilt sich durch Verschlingen.',
     playstyle:'Magier mit Lebensraub: hält sich selbst durch ausgeteilten Schaden am Leben – schlagkräftig, aber zerbrechlich.',
-    pros:['Magischer Schaden mit Lebensraub','Heilt sich selbst (×1,5 Heilwirkung)','Zauberstäbe mit starken Magie-Affixen','Seelenraub: 250 % Schaden/s + Selbstheilung (4 s)'],
+    pros:['Magischer Schaden mit Lebensraub','Heilt sich selbst (×1,5 Heilwirkung)','Zauberstäbe mit starken Magie-Affixen','Seelenraub: 200 % Schaden/s + Selbstheilung (4 s)'],
     cons:['Sehr zerbrechlich – nur Stoffrüstung','Nur Zauberstäbe als Waffe','Kann keine Schilde tragen','Mittlerer Schaden (×0,8)'],
     allowedMaterials:['stoff'],      damageSchool:'magisch',
     dmgMult:0.8,  healMult:1.5,
     ability:{ id:'seelenraub', name:'Seelenraub', icon:'💀', kind:'drain', cd:30000,
-              dur:4000, tickMs:1000, burstMult:2.5,
-              desc:'Entfesselt 4 Sekunden lang einen Seelenstrahl – 250 % Schaden pro Sekunde und heilt dich um den gesamten verursachten Schaden.' } },
+              dur:4000, tickMs:1000, burstMult:2.0,
+              desc:'Entfesselt 4 Sekunden lang einen Seelenstrahl – 200 % Schaden pro Sekunde und heilt dich um den gesamten verursachten Schaden.' } },
 ];
 export const CLASS_BY_ID = Object.fromEntries(CLASSES.map(c => [c.id, c]));
 export const DEFAULT_CLASS_ID = 'kaempfer';
