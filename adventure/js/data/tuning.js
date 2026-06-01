@@ -14,7 +14,7 @@ export const INV_EXPAND_STEP = 5;        // Inventarplätze pro Kauf beim Händl
 export const INV_EXPAND_BASE_COST = 50000; // Kosten der 1. Erweiterung; jede weitere +50000
 export const HEAL_PCT = 0.5;             // Heiltrank stellt 50 % der maximalen HP wieder her
 export const POTION_BASE_CHANCE = 0.20;  // Basis-Chance auf einen Heiltrank je Expedition
-export const ITEMS_PER_EXPEDITION = 2;   // genau zwei Items pro Abenteuer
+export const ITEMS_PER_EXPEDITION = 2;   // Basis/Fallback; Anzahl je Dauer in expeditions.js (2…7)
 
 export const BASE_STAT = { armor: 6, damage: 8 };  // Basiswert je Stattyp
 export const ILVL_K = 0.12;                         // Item-Level-Skalierung

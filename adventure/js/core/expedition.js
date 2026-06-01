@@ -26,8 +26,10 @@ export function startExpedition(durKey){
   const exp = expeditionOf(durKey); if(!exp) return;
   const now = Date.now();
   const items = [];
+  // Anzahl Items steigt mit der Dauer (siehe expeditions.js); Fallback auf 2.
+  const count = exp.items || ITEMS_PER_EXPEDITION;
   // Abenteuer schalten mind. „Episch" frei (auch in frühen Zonen).
-  for(let i=0;i<ITEMS_PER_EXPEDITION;i++) items.push(rollItem(state.zone, exp.boost, { minRarityCap: EXPEDITION_MIN_CAP }));
+  for(let i=0;i<count;i++) items.push(rollItem(state.zone, exp.boost, { minRarityCap: EXPEDITION_MIN_CAP }));
   state.expedition = { durKey, startedAt:now, endsAt:now + exp.ms, items };
   saveState(); renderAll();
 }

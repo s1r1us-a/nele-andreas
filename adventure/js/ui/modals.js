@@ -164,15 +164,17 @@ export function previewExpedition(durKey){
       '<span class="chance-bar"><i style="width:'+w+'%; background:'+c.rarity.color+'"></i></span>'+
       '<span class="chance-pct">'+pct+'%</span></div>';
   }
-  // Inventar-Platz VOR dem Start prüfen (Expedition bringt 2 Items mit).
+  // Anzahl der Items hängt von der Dauer ab (5 Min → 2 … 8 Std → 7).
+  const count = exp.items || 2;
+  // Inventar-Platz VOR dem Start prüfen (Expedition bringt mehrere Items mit).
   const free = invCapacity() - state.inventory.length;
-  const tooFull = free < 2;
+  const tooFull = free < count;
   const warn = tooFull
-    ? '<div class="exp-warn">🎒 Zu wenig Platz im Inventar – du brauchst <b>2 freie Plätze</b> '+
+    ? '<div class="exp-warn">🎒 Zu wenig Platz im Inventar – du brauchst <b>'+count+' freie Plätze</b> '+
       '(aktuell '+Math.max(0,free)+'). Verkaufe erst etwas im Inventar.</div>'
     : '';
   openModal('<h2>'+exp.icon+' '+exp.label+'</h2>'+
-    '<div class="sub">Dein Held bringt genau <b>2 Gegenstände</b> mit. Chancen je Seltenheit:</div>'+
+    '<div class="sub">Dein Held bringt genau <b>'+count+' Gegenstände</b> mit. Chancen je Seltenheit:</div>'+
     '<div class="chance-list">'+rows+'</div>'+ warn +
     '<div class="preview-actions">'+
       '<button class="btn" id="startExpBtn"'+(tooFull?' disabled':'')+'>⚔️ Los geht’s</button>'+
