@@ -13,6 +13,7 @@ import { otherKey } from './duel.js';
 import { state, nextItemId, saveState } from './state.js';
 import { freeSlots, isLocked, ensureItemSprite } from './items.js';
 import { getCoins, spendCoins } from './coins.js';
+import { renderAll } from '../ui/render.js';
 
 export const FEE_PER_ITEM = 10000;
 const PRESENCE_STALE_MS = 60 * 1000;
@@ -158,6 +159,7 @@ async function maybeSettle(){
     state.inventory.push(it);
   }
   saveState();
+  renderAll();          // Inventar/Stats sofort aktualisieren (nicht erst nach Reload).
   _appliedRev = d.rev;
   try { await update(ref(db, NODE()), { [`settle/${me}`]: true, updatedAt: Date.now() }); } catch(e){}
   if(d.settle && d.settle[other]){ try { await remove(ref(db, NODE())); } catch(e){} }
