@@ -207,7 +207,7 @@ export const TALENT_TREES = {
       node('hexer_s8_hexm',  '💫', 'Hexenmeister', {add:{critMagic:0.10}}) ],
     [ activeNode('hexer_a9_fresser','💀', 'Seelenfresser',   'drain',    {cd:30000, burstMult:4.0}),
       activeNode('hexer_a9_explo',  '🌑', 'Schattenexplosion','burst',   {cd:30000, burstMult:4.2}),
-      activeNode('hexer_a9_orgie',  '🩸', 'Blutorgie',       'lifesteal',{cd:28000, dur:8000, lifestealBonus:0.40}) ],
+      activeNode('hexer_a9_orgie',  '🩸', 'Blutritual',      'lifesteal',{cd:28000, dur:8000, lifestealBonus:0.40}) ],
     [ node('hexer_s10_daemon','👑', 'Dämonenfürst', {mult:{damage:0.25}, add:{lifesteal:0.12}}),
       node('hexer_s10_herr',  '💀', 'Seelenherr',   {mult:{damage:0.22}, add:{critMagic:0.12}}),
       node('hexer_s10_koenig','🩸', 'Blutkönig',    {mult:{maxHp:0.15}, add:{lifesteal:0.30}}) ],

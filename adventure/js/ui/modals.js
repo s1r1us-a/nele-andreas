@@ -6,11 +6,12 @@
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
-import { GENDERS, HAIR_STYLES, HAIR_COLORS, SKIN_TONES, EYE_COLORS,
+import { GENDERS, HAIR_STYLES, HAIR_COLORS, BEARD_STYLES, SKIN_TONES, EYE_COLORS,
          DEFAULT_CHARACTER } from '../data/character-options.js';
 import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf } from '../data/classes.js';
 import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances } from '../core/loot.js';
+import { INV_SLOTS } from '../data/tuning.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters, createCharacter,
@@ -29,9 +30,9 @@ import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
          loadGuestSave, resolveActiveSlot } from '../core/duel.js';
-import { $, fmtVal, fmtBig, IS_TOUCH, toast } from './dom.js';
+import { $, fmtVal, fmtBig, IS_TOUCH, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
-import { renderAll } from './render.js';
+import { renderAll, bossDifficulty } from './render.js';
 
 const overlay = () => $('#overlay');
 const modal = () => $('#modal');
@@ -180,14 +181,22 @@ export function previewExpedition(durKey){
       '<span class="chance-bar"><i style="width:'+w+'%; background:'+c.rarity.color+'"></i></span>'+
       '<span class="chance-pct">'+pct+'%</span></div>';
   }
+  // Inventar-Platz VOR dem Start prüfen (Expedition bringt 2 Items mit).
+  const free = INV_SLOTS - state.inventory.length;
+  const tooFull = free < 2;
+  const warn = tooFull
+    ? '<div class="exp-warn">🎒 Zu wenig Platz im Inventar – du brauchst <b>2 freie Plätze</b> '+
+      '(aktuell '+Math.max(0,free)+'). Verkaufe erst etwas im Shop.</div>'
+    : '';
   openModal('<h2>'+exp.icon+' '+exp.label+'</h2>'+
     '<div class="sub">Dein Held bringt genau <b>2 Gegenstände</b> mit. Chancen je Seltenheit:</div>'+
-    '<div class="chance-list">'+rows+'</div>'+
+    '<div class="chance-list">'+rows+'</div>'+ warn +
     '<div class="preview-actions">'+
-      '<button class="btn" id="startExpBtn">⚔️ Los geht’s</button>'+
+      '<button class="btn" id="startExpBtn"'+(tooFull?' disabled':'')+'>⚔️ Los geht’s</button>'+
       '<button class="btn ghost" id="cancelExpBtn">Abbrechen</button>'+
     '</div>');
-  modal().querySelector('#startExpBtn').addEventListener('click', ()=>{ closeModal(); startExpedition(durKey); });
+  const startBtn = modal().querySelector('#startExpBtn');
+  if(!tooFull) startBtn.addEventListener('click', ()=>{ closeModal(); startExpedition(durKey); });
   modal().querySelector('#cancelExpBtn').addEventListener('click', closeModal);
 }
 
@@ -233,9 +242,11 @@ export function openBossList(){
     const lootSlots = b.loot && b.loot.slots ? b.loot.slots.map(s=>SLOTS[s]?SLOTS[s].name:s).join(', ') : '–';
     const tag = isCurrent ? '<span class="bl-tag cur">Aktuell</span>'
       : (beaten ? '<span class="bl-tag done">✓ '+(first?'Erstkill':'')+'</span>' : '');
+    const diff = bossDifficulty(t.power, b.recPower);
+    const diffBadge = '<span class="diff-badge '+diff.cls+'">'+diff.label+'</span>';
     rows += '<div class="bl-row'+(isCurrent?' current':'')+'">'+
       '<img class="bl-portrait" src="'+b.sprite+'" alt="">'+
-      '<div class="bl-info"><div class="bl-name">'+(beaten?'↻ ':'👑 ')+b.name+' '+tag+'</div>'+
+      '<div class="bl-info"><div class="bl-name">'+(beaten?'↻ ':'👑 ')+b.name+' '+tag+' '+diffBadge+'</div>'+
         '<div class="bl-meta">'+zoneName(i)+' · Kraft '+fmtBig(b.recPower)+' '+mechs+
         (kills?(' · '+kills+'× besiegt'):'')+'</div>'+
         '<div class="bl-loot">🎁 Beute-Fokus: '+lootSlots+'</div>'+
@@ -342,6 +353,11 @@ function renderCreator(){
     '<div class="opt-btn'+(_draftChar.hairId===h.id?' sel':'')+'" data-hair="'+h.id+'">'+h.label+'</div>').join('');
   const colorBtns = HAIR_COLORS.map(c =>
     '<div class="color-swatch'+(_draftChar.hairColor===c.color?' sel':'')+'" data-color="'+c.color+'" title="'+c.label+'" style="background:'+c.color+'"></div>').join('');
+  const beardBtns = BEARD_STYLES.map(b =>
+    '<div class="opt-btn'+(_draftChar.beardId===b.id?' sel':'')+'" data-beard="'+b.id+'">'+b.label+'</div>').join('');
+  const hasBeard = _draftChar.beardId && _draftChar.beardId !== 'kein';
+  const beardColorBtns = HAIR_COLORS.map(c =>
+    '<div class="color-swatch'+(_draftChar.beardColor===c.color?' sel':'')+'" data-beardcolor="'+c.color+'" title="'+c.label+'" style="background:'+c.color+'"></div>').join('');
   const skinBtns = SKIN_TONES.map(s =>
     '<div class="color-swatch'+(_draftChar.skinTone===s.color?' sel':'')+'" data-skin="'+s.color+'" title="'+s.label+'" style="background:'+s.color+'"></div>').join('');
   const eyeBtns = EYE_COLORS.map(e =>
@@ -358,6 +374,8 @@ function renderCreator(){
     '<div class="creator-section"><h3>Geschlecht</h3><div class="opt-grid cols3">'+genderBtns+'</div></div>'+
     '<div class="creator-section"><h3>Frisur</h3><div class="opt-grid cols3">'+hairBtns+'</div></div>'+
     '<div class="creator-section"><h3>Haarfarbe</h3><div class="color-grid">'+colorBtns+'</div></div>'+
+    '<div class="creator-section"><h3>Bart</h3><div class="opt-grid cols2">'+beardBtns+'</div></div>'+
+    '<div class="creator-section"'+(hasBeard?'':' style="opacity:.4;pointer-events:none;')+'"><h3>Bartfarbe</h3><div class="color-grid">'+beardColorBtns+'</div></div>'+
     '<div class="creator-section"><h3>Hautton</h3><div class="color-grid">'+skinBtns+'</div></div>'+
     '<div class="creator-section"><h3>Augenfarbe</h3><div class="color-grid">'+eyeBtns+'</div></div>'+
     '<div class="preview-actions">'+
@@ -375,6 +393,10 @@ function renderCreator(){
     el.addEventListener('click', ()=>{ _draftChar.hairId = el.dataset.hair; renderCreator(); }));
   creatorModal().querySelectorAll('[data-color]').forEach(el =>
     el.addEventListener('click', ()=>{ _draftChar.hairColor = el.dataset.color; renderCreator(); }));
+  creatorModal().querySelectorAll('[data-beard]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.beardId = el.dataset.beard; renderCreator(); }));
+  creatorModal().querySelectorAll('[data-beardcolor]').forEach(el =>
+    el.addEventListener('click', ()=>{ _draftChar.beardColor = el.dataset.beardcolor; renderCreator(); }));
   creatorModal().querySelectorAll('[data-skin]').forEach(el =>
     el.addEventListener('click', ()=>{ _draftChar.skinTone = el.dataset.skin; renderCreator(); }));
   creatorModal().querySelectorAll('[data-eye]').forEach(el =>
@@ -437,8 +459,15 @@ export function openRosterModal(){
   modal().querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', ()=>{
     const c = listCharacters().find(x => x.id === btn.dataset.del);
     const nm = c && c.name ? c.name : 'diesen Charakter';
-    if(!confirm('„'+nm+'" wirklich löschen? Der gesamte Fortschritt geht verloren.')) return;
-    deleteCharacter(btn.dataset.del); renderAll(); openRosterModal();
+    const esc = s => (s||'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    confirmDialog({
+      title:'Charakter löschen?',
+      body:'„<b>'+esc(nm)+'</b>" wird unwiderruflich gelöscht – der gesamte Fortschritt geht verloren.',
+      emoji:'🗑️', confirmText:'Löschen', cancelText:'Abbrechen', danger:true,
+    }).then(ok => {
+      if(!ok) return;
+      deleteCharacter(btn.dataset.del); renderAll(); openRosterModal();
+    });
   }));
   const nb = modal().querySelector('#newCharBtn');
   if(nb) nb.addEventListener('click', ()=>{

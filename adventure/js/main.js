@@ -6,7 +6,7 @@ import { initAuth } from './core/firebase.js';
 import { expeditionReady, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
 import { startBossFight, toggleSpeed, closeArena, usePotion, useAbility } from './core/combat.js';
 import { watchCoins } from './core/coins.js';
-import { $, fmtRemain, fmtBig } from './ui/dom.js';
+import { $, fmtRemain, fmtBig, confirmDialog } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
 import { openBossList, openStats, openCharacterCreator,
          openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby } from './ui/modals.js';
@@ -37,19 +37,29 @@ $('#abilityBar').addEventListener('click', e => {
 });
 $('#arenaCloseBtn').addEventListener('click', closeArena);
 $('#expCancelBtn').addEventListener('click', ()=>{
-  if(confirm('Abenteuer abbrechen? Die mitgebrachten Items gehen verloren.')) cancelExpedition();
+  confirmDialog({
+    title:'Abenteuer abbrechen?',
+    body:'Die mitgebrachten Items gehen verloren.',
+    emoji:'🧭', confirmText:'Abbrechen', cancelText:'Weiterlaufen', danger:true,
+  }).then(ok => { if(ok) cancelExpedition(); });
 });
 $('#expCollectBtn').addEventListener('click', collectExpedition);
 
 $('#overlay').addEventListener('click', e=>{ if(e.target===$('#overlay')) $('#overlay').classList.remove('show'); });
 $('#creatorOverlay').addEventListener('click', e=>{ if(e.target===$('#creatorOverlay') && !isCreatorForced()) $('#creatorOverlay').classList.remove('show'); });
+// ESC schließt offene Modale (Content-Modal bzw. Creator, sofern nicht erzwungen).
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  if($('#overlay').classList.contains('show')){ $('#overlay').classList.remove('show'); return; }
+  if($('#creatorOverlay').classList.contains('show') && !isCreatorForced()) $('#creatorOverlay').classList.remove('show');
+});
 
 // ---- Tastenkürzel (#31) --------------------------------------------
 document.addEventListener('keydown', e=>{
   const tag = (e.target && e.target.tagName) || '';
   if(tag==='INPUT' || tag==='SELECT' || tag==='TEXTAREA') return;
   if($('#arenaOverlay').classList.contains('show')) return;
-  const map = { '1':'adventure', '2':'character', '3':'inventory', '4':'shop' };
+  const map = { '1':'adventure', '2':'character', '3':'talents', '4':'inventory', '5':'shop' };
   if(map[e.key]) { switchTab(map[e.key]); return; }
   if(e.key==='b' || e.key==='B') openBossList();
   else if(e.key==='c' || e.key==='C') $('#challengeBtn').click();
