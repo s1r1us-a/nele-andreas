@@ -31,7 +31,6 @@ import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
 import { heroSrc } from '../core/avatar.js';
 import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip, autoEquipBest, itemPower } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
-import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
@@ -499,8 +498,9 @@ function buildInvGrid(wrap){
       const r = rarityOf(it.rarity);
       cell.classList.add('filled');
       cell.style.setProperty('--rc', r.color);
-      // Material vorhanden + Klasse kann es nicht tragen → Sperr-Markierung (B8).
-      const blocked = !!materialOf(it) && !canEquip(it);
+      // Klasse kann es nicht tragen → Sperr-Markierung (B8). Gilt auch für
+      // Schilde/Waffen ohne Material (Klassen-Restriktion per Slot).
+      const blocked = !canEquip(it);
       if(blocked) cell.classList.add('not-equippable');
       cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
         (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+

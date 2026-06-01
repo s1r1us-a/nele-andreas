@@ -19,7 +19,7 @@ import { state, saveState, listCharacters, createCharacter,
 import { recomputeTotals, heroTier } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
-         isLocked, toggleLock, canEquip } from '../core/items.js';
+         isLocked, toggleLock, canEquip, equipBlockReason } from '../core/items.js';
 import { startExpedition, expeditionActive } from '../core/expedition.js';
 import { startBossFight, updatePotionBtn,
          openDuelArena, applyDuelSnapshot, resolveArenaOpponentLeft } from '../core/combat.js';
@@ -120,8 +120,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
   const locked = isLocked(item.id);
   const equipOk = canEquip(item);
   const blockLine = equipOk ? '' :
-    '<div class="preview-hint" style="color:#ff6b6b">✋ '+classOf(state).label+' kann '+
-    (MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.</div>';
+    '<div class="preview-hint" style="color:#ff6b6b">✋ '+equipBlockReason(item)+'</div>';
   openModal('<h2 style="color:'+r.color+'">'+item.name+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
     (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
@@ -415,8 +414,11 @@ function cancelNewCharacter(){
 // Spielstil, Stärken, Schwächen, Rüstungen und Spezialfähigkeit.
 function classInfoHtml(c){
   if(!c) return '';
-  const MAT = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
-  const mats = (c.allowedMaterials||[]).map(m => MAT[m]||m).join(', ');
+  const MAT = { stoff:'Stoff', leder:'Leder', platte:'Platte' };
+  const mats = (c.allowedMaterials||[]).filter(m=>m!=='zauberstab').map(m => MAT[m]||m).join(', ');
+  const magic = c.damageSchool === 'magisch';
+  const weapons = magic ? 'Zauberstäbe' : 'physische Waffen';
+  const shield  = c.id === 'verteidiger' ? 'Schild ✅' : 'kein Schild ❌';
   const pros = (c.pros||[]).map(p => '<li>'+p+'</li>').join('');
   const cons = (c.cons||[]).map(p => '<li>'+p+'</li>').join('');
   const ab = c.ability;
@@ -429,7 +431,9 @@ function classInfoHtml(c){
     '</div>'+
     (ab ? '<div class="ci-ability"><span class="ci-h">'+ab.icon+' Spezialfähigkeit: '+ab.name+'</span>'+
           '<div class="ci-ability-desc">'+(ab.desc||'')+' · Abklingzeit '+Math.round(ab.cd/1000)+' s</div></div>' : '')+
-    '<div class="ci-meta">⚔️ Schaden: '+c.damageSchool+' · 🛡️ Rüstung: '+mats+'</div>';
+    '<div class="ci-meta">⚔️ Schaden: '+c.damageSchool+
+      '<br>🗡️ Waffen: '+weapons+' · 🛡️ '+shield+
+      '<br>🪖 Rüstung: '+mats+'</div>';
 }
 
 function renderCreator(){

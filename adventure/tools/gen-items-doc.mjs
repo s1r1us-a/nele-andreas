@@ -14,6 +14,9 @@ const affixLbl = k => (AFFIX_DEFS[k] ? AFFIX_DEFS[k].label : k);
 const biasStr  = b => Object.keys(b||{}).map(affixLbl).join(', ') || '–';
 const mult     = m => (m===1 ? '1.0' : String(m));
 const fmtAffixCount = rk => { const c = AFFIX_COUNT[rk]; return typeof c==='function' ? '2–3' : String(c); };
+// Fund-Häufigkeit aus dem Typ-Gewicht (höher = häufiger).
+const freqLbl  = w => { const x = (w>0?w:6);
+  return x>=9?'sehr häufig':x>=6?'häufig':x>=4?'normal':x>=2?'selten':x>=1?'sehr selten':'extrem selten'; };
 
 // Referenz-Gegenstandsstufe für Beispielwerte (mittleres Spiel).
 const ILVL_REF = 50;
@@ -43,14 +46,17 @@ m += '> **Automatisch generiert** aus den Daten-Dateien (Single Source of Truth)
 m += '> Nicht von Hand editieren – Datendatei ändern und `node adventure/tools/gen-items-doc.mjs` neu ausführen.\n\n';
 
 // ---- Klassen & Materialien -------------------------------------------
-m += '## 🧙 Klassen & Rüstungsmaterialien\n\n';
-m += 'Die bei der Erstellung gewählte **Klasse** ist dauerhaft und bestimmt, welche Rüstungsmaterialien getragen werden dürfen und welche Schadensschule zählt.\n\n';
-m += '| Klasse | Schule | Tragbare Materialien | Schadens-× | Heil-× |\n|---|---|---|---|---|\n';
+m += '## 🧙 Klassen & Ausrüstung\n\n';
+m += 'Die bei der Erstellung gewählte **Klasse** ist dauerhaft und bestimmt, welche Rüstung, Waffen und Schilde getragen werden dürfen und welche Schadensschule zählt.\n\n';
+m += '| Klasse | Schule | Rüstung | Waffen | Schild | Schadens-× | Heil-× |\n|---|---|---|---|---|---|---|\n';
 for(const c of CLASSES){
-  const mats = c.allowedMaterials.map(k => MATERIAL_LABEL[k]||k).join(', ');
-  m += `| ${c.icon} ${c.label} | ${c.damageSchool} | ${mats} | ${c.dmgMult}× | ${c.healMult}× |\n`;
+  const mats = c.allowedMaterials.filter(k => k !== 'zauberstab').map(k => MATERIAL_LABEL[k]||k).join(', ');
+  const weapons = c.damageSchool === 'magisch' ? 'Zauberstäbe' : 'physische Waffen';
+  const shield  = c.id === 'verteidiger' ? '✅' : '❌';
+  m += `| ${c.icon} ${c.label} | ${c.damageSchool} | ${mats} | ${weapons} | ${shield} | ${c.dmgMult}× | ${c.healMult}× |\n`;
 }
-m += '\nRüstung gibt es in **3 Materialien**: **Stoff** (kaum Rüstung, magisch), **Leder** (mehr Rüstung, physisch), **Platte** (sehr viel Rüstung, wenig Schaden).\n\n';
+m += '\nRüstung gibt es in **3 Materialien**: **Stoff** (kaum Rüstung, magisch), **Leder** (mehr Rüstung, physisch), **Platte** (sehr viel Rüstung, wenig Schaden).\n';
+m += 'Waffen: **physische Waffen** (Schwert/Dolch/…) für Kämpfer & Verteidiger, **Zauberstäbe** nur für Heiler & Hexer. **Schilde** kann nur der Verteidiger tragen. Schmuck (Amulett/Ringe) ist klassenunabhängig.\n\n';
 
 // ---- Seltenheiten ----------------------------------------------------
 m += '## ✨ Seltenheiten\n\n';
@@ -81,19 +87,19 @@ for(const g of GROUPS){
     const slotLbl = art==='ring' ? 'Ring 1 & 2' : (slot ? slot.name : art);
     m += `#### ${slotLbl}  ·  Primär: ${prim}\n\n`;
     if(isArmor){
-      m += '| Typ | Material | Tragbar | StatMult | '+prim+' (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |\n|---|---|---|---|---|---|---|\n';
+      m += '| Typ | Material | Tragbar | Fund | StatMult | '+prim+' (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |\n|---|---|---|---|---|---|---|---|\n';
       for(const t of types){
         totalTypes++;
         const matLbl = MATERIAL_LABEL[t.material] || '–';
-        m += `| ${t.name} | ${matLbl} | ${classesFor(t.material)} | ${mult(t.statMult)} | `+
+        m += `| ${t.name} | ${matLbl} | ${classesFor(t.material)} | ${freqLbl(t.weight)} | ${mult(t.statMult)} | `+
              `${primStat(statType, gew.mult, t.statMult)} / ${primStat(statType, epis.mult, t.statMult)} | `+
              `${biasStr(t.affixBias)} | ${t.flavorAffix?affixLbl(t.flavorAffix):'–'} |\n`;
       }
     } else {
-      m += '| Typ | Variante | StatMult | '+prim+' (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |\n|---|---|---|---|---|---|\n';
+      m += '| Typ | Variante | Fund | StatMult | '+prim+' (Gew./Epis.) | Affix-Bias | Flavor (Episch+) |\n|---|---|---|---|---|---|---|\n';
       for(const t of types){
         totalTypes++;
-        m += `| ${t.name} | v${t.variant} | ${mult(t.statMult)} | `+
+        m += `| ${t.name} | v${t.variant} | ${freqLbl(t.weight)} | ${mult(t.statMult)} | `+
              `${primStat(statType, gew.mult, t.statMult)} / ${primStat(statType, epis.mult, t.statMult)} | `+
              `${biasStr(t.affixBias)} | ${t.flavorAffix?affixLbl(t.flavorAffix):'–'} |\n`;
       }
@@ -122,8 +128,9 @@ m += '- **Verkaufspreis** = `max(1, (Primärwert + Affix-Score × 2) × (Seltenh
 m += '- **Kampfkraft** eines Items gewichtet alle Werte (z. B. Krit ×200, Schaden ×1,5, Rüstung ×1) zu einer Vergleichszahl.\n\n';
 
 m += `---\n\n**Summe:** ${totalTypes} Basis-Typen × ${RARITIES.length} Seltenheiten = ${totalTypes*RARITIES.length} Item-Ausprägungen.\n`;
-m += '\n> Sprites: `icon_<slot>_<variante>.png` (0–5). Waffen besitzen je Variante eine eigene Form\n';
-m += '> (Schwert/Dolch/Streitkolben/Axt/Speer/Kriegshammer); Rüstung nutzt 3 Material-Varianten (Stoff v4, Leder v2, Platte v0).\n';
+m += '\n> Sprites sind prozedural (SVG, Variante 0–6). Mehrere Typen können sich eine Silhouette teilen –\n';
+m += '> sie unterscheiden sich über Name, Primärwert (StatMult), Affix-Fokus und Fund-Häufigkeit.\n';
+m += '> Die **Fund**-Spalte spiegelt das Typ-Gewicht: Top-Typen (z. B. Zweihänder, Drachenplatten, Titanenschild) sind selten.\n';
 
 writeFileSync(new URL('../ITEMS.md', import.meta.url), m);
 console.log('adventure/ITEMS.md generiert ('+totalTypes+' Basis-Typen)');

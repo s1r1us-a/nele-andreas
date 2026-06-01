@@ -7,7 +7,7 @@ import { typeOf, materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityOf } from '../data/rarities.js';
 import { classOf } from '../data/classes.js';
 import { state } from '../core/state.js';
-import { itemPower, isLocked, procText, resolveTargetSlot, canEquip } from '../core/items.js';
+import { itemPower, isLocked, procText, resolveTargetSlot, canEquip, equipBlockReason } from '../core/items.js';
 import { $ } from './dom.js';
 
 let tt = null;
@@ -57,9 +57,10 @@ export function tooltipHTML(it, opts={}){
   let matLine = '';
   if(mat){
     matLine = '<div class="tt-mat">🧵 Material: '+(MATERIAL_LABEL[mat]||mat)+'</div>';
-    if(!canEquip(it)){
-      matLine += '<div class="tt-locked">✋ '+classOf(state).label+' kann das nicht tragen</div>';
-    }
+  }
+  // Klassen-Sperre (auch für Schilde/Waffen ohne Material) anzeigen.
+  if(!canEquip(it)){
+    matLine += '<div class="tt-locked">✋ '+equipBlockReason(it)+'</div>';
   }
   return '<div class="tt-name" style="color:'+r.color+'">'+it.name+lock+'</div>'+
     '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
