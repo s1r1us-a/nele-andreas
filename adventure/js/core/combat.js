@@ -907,10 +907,12 @@ function endFight(fight, win){
     if(isFarm){ xpBase = Math.round(xpBase*FARM.xpMult); }
     const xpGain = gainXp(xpBase);
 
-    // Garantierter Drop (#15): Seltenheit steigt mit Boss-Index
+    // Garantierter Erstkill-Drop (#15): Seltenheit steigt mit Boss-Index.
+    // Beim Abfarmen eine Stufe niedriger – der hohe (epische+) Drop bleibt dem
+    // Erstkill vorbehalten (kein Episch-Mindestfloor mehr).
     let dropBlock = '';
     let rIdx = guaranteedRarityIndex(bossIndex);
-    if(isFarm) rIdx = Math.max(3, rIdx - FARM.dropRarityDrop);
+    if(isFarm) rIdx = Math.max(0, rIdx - FARM.dropRarityDrop);
     if(!inventoryFull()){
       const rk = rarityByIndex(rIdx).key;
       const drop = rollItem(bossIndex, 0, { slots: boss.loot && boss.loot.slots, forceRarityKey: rk, minIlvl: bossIndex*5 });
