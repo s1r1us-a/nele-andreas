@@ -94,7 +94,7 @@ function migrateSlot(s){
     if(typeof s.character.beardColor !== 'string') s.character.beardColor = '#6b3f1d';
     if(!s.character.talents || typeof s.character.talents !== 'object') s.character.talents = {};
     if(typeof s.character.talentPoints !== 'number'){
-      s.character.talentPoints = Math.max(0, (s.level||1) - 1);
+      s.character.talentPoints = Math.floor((s.level||1) / 5);
     }
     // Talent-Migration: nach Baum-Umbau ungültige Wahlen entfernen und die
     // dafür ausgegebenen Punkte zurückerstatten (kein manueller Respec nötig).

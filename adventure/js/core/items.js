@@ -139,8 +139,9 @@ export const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat + affixScor
 export const inventoryFull = () => state.inventory.length >= INV_SLOTS;
 export const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
 export const sellPrice = it => {
-  const base = Math.max(1, Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6));
-  return it.cat === 'waffen' ? base*10 : base;   // Waffenpreise ×10
+  const base = Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6);
+  const price = it.cat === 'waffen' ? base*10 : base;   // Waffenpreise ×10
+  return Math.max(500, price);                          // Mindestpreis 500 Coins
 };
 
 // Einzel-Item-Kampfkraft (Vergleich im Vorschau-Modal)
@@ -163,7 +164,7 @@ export function toggleLock(id){
   saveState();
 }
 
-// Verkauf: Item entfernen und seinen Wert (sellPrice) als globale Münzen
+// Verkauf: Item entfernen und seinen Wert (sellPrice) als globale Coins
 // gutschreiben. Liefert den ausgezahlten Betrag zurück (0, wenn nichts ging).
 export function sellItem(id){
   if(isLocked(id)) return 0;

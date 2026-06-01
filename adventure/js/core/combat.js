@@ -22,7 +22,7 @@ let combatSpeed = 1, combatTimer = null;
 export let currentFight = null;
 const arenaOverlay = () => $('#arenaOverlay');
 
-// Münz-Belohnung für den ECHTEN Erstkill eines Bosses (kuratiert, gedeckelt).
+// Coin-Belohnung für den ECHTEN Erstkill eines Bosses (kuratiert, gedeckelt).
 // Zonenabhängig 10 … 50, damit das Abenteuer die geteilte Ökonomie nicht flutet.
 function bossCoinReward(i){ return Math.min(50, 10 + i*2); }
 
@@ -800,12 +800,12 @@ function endFight(fight, win){
         state.bossesBeaten++;
         if(!state.firstClears[bossIndex]){
           state.firstClears[bossIndex] = true;
-          // Erstkill-Bonus (#16): kuratierte Münzen (global) + Heiltrank.
+          // Erstkill-Bonus (#16): kuratierte Coins (global) + Heiltrank.
           // Nur beim ECHTEN Erstkill – Farmen erreicht diesen Zweig nie.
           const coins = bossCoinReward(bossIndex);
           awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
           state.potions = (state.potions||0) + 1;
-          firstTxt = '<br>🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Münzen + 🧪 Heiltrank!';
+          firstTxt = '<br>🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Coins + 🧪 Heiltrank!';
         }
       }
     } else { state.stats.farmKills++; }
@@ -983,7 +983,7 @@ function endDuel(f, winner, me){
   const draw = winner === 'draw';
   const win = winner === me;
   const stake = f.stake|0;
-  // Jeder Client verrechnet den Einsatz über das globale Münz-Wallet (Netto-Pott).
+  // Jeder Client verrechnet den Einsatz über das globale Coin-Wallet (Netto-Pott).
   if(!draw && stake > 0){
     if(win){ awardCoins(stake).catch(()=>{}); state.stats.goldEarned += stake; }
     else   { spendCoins(stake).catch(()=>{}); }
@@ -1002,10 +1002,10 @@ function endDuel(f, winner, me){
     res.innerHTML = '<div class="big">🤝 Unentschieden</div><div class="sub">Beide Helden fallen gleichzeitig – kein Einsatz wechselt den Besitzer.</div>';
   } else if(win){
     res.className = 'arena-result win show';
-    res.innerHTML = '<div class="big">🏆 Sieg!</div><div class="sub">Du gewinnst das Duell!'+(stake>0?' 🪙 +'+fmtBig(stake)+' Münzen':'')+'</div>';
+    res.innerHTML = '<div class="big">🏆 Sieg!</div><div class="sub">Du gewinnst das Duell!'+(stake>0?' 🪙 +'+fmtBig(stake)+' Coins':'')+'</div>';
   } else {
     res.className = 'arena-result lose show';
-    res.innerHTML = '<div class="big">💀 Niederlage</div><div class="sub">Dein Gegner war stärker.'+(stake>0?' 🪙 −'+fmtBig(stake)+' Münzen':'')+'</div>';
+    res.innerHTML = '<div class="big">💀 Niederlage</div><div class="sub">Dein Gegner war stärker.'+(stake>0?' 🪙 −'+fmtBig(stake)+' Coins':'')+'</div>';
   }
   $('#potionBtn').disabled = true; $('#potionBtn').style.opacity = '0.5';
   $('#arenaCloseBtn').textContent = 'Schließen';

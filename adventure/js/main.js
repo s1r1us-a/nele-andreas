@@ -120,7 +120,7 @@ window.addEventListener('beforeunload', flushSave);
   const otherName = otherKey()[0].toUpperCase() + otherKey().slice(1);
   const opBtn = $('#otherProfileBtn');
   if(opBtn){ opBtn.title = otherName + 's Profil ansehen'; opBtn.addEventListener('click', openOtherProfile); }
-  // Globalen Münzstand live in die Topbar spiegeln (geteiltes Wallet mit Farm/Slot).
+  // Globalen Coinstand live in die Topbar spiegeln (geteiltes Wallet mit Farm/Slot).
   watchCoins(c => { const el = $('#miniGold'); if(el) el.textContent = fmtBig(c); });
   startLoop();
   if(!state.character) openCharacterCreator(true);

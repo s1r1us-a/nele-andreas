@@ -154,14 +154,14 @@ export function openSellModal(item){
   openModal('<h2 style="color:'+r.color+'">'+item.name+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
     '<div class="preview-stats">'+stats+'</div>'+
-    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 🪙 '+fmtBig(price)+' Münzen?</div>'+
+    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 🪙 '+fmtBig(price)+' Coins?</div>'+
     '<div class="preview-actions">'+
       '<button class="btn" id="sellConfirm">Verkaufen</button>'+
       '<button class="btn ghost" id="sellLock">'+(isLocked(item.id)?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="sellCancel">Abbrechen</button>'+
     '</div>');
   modal().querySelector('#sellConfirm').addEventListener('click', ()=>{
-    const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Münzen');
+    const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Coins');
   });
   modal().querySelector('#sellLock').addEventListener('click', ()=>{ toggleLock(item.id); openSellModal(item); });
   modal().querySelector('#sellCancel').addEventListener('click', closeModal);
@@ -286,7 +286,7 @@ export function openStats(){
       '<div class="cs-group"><h4>Beute</h4>'+
         row('Funde gesamt', state.totalFinds||0)+
         row('Expeditionen', s.expeditionsDone)+
-        row('Münzen verdient', fmtBig(s.goldEarned))+
+        row('Coins verdient', fmtBig(s.goldEarned))+
         row('Bestes Item', best)+
       '</div>'+
       '<div class="cs-group" style="grid-column:1 / -1;"><h4>Drops nach Seltenheit</h4>'+dropRows+'</div>'+
@@ -583,8 +583,8 @@ export function openDuelLobby(){
   cleanupDuel(false);
   openModal(
     '<h2>⚔️🆚 Duell – Live-PvP</h2>'+
-    '<div class="sub">Tritt live gegen <b>'+cap(otherKey())+'</b> an – beide setzen Münzen ein, der Sieger bekommt den Pott. '+
-      'Eure echten Werte zählen. (Deine Münzen: 🪙 '+fmtBig(getCoins())+')</div>'+
+    '<div class="sub">Tritt live gegen <b>'+cap(otherKey())+'</b> an – beide setzen Coins ein, der Sieger bekommt den Pott. '+
+      'Eure echten Werte zählen. (Deine Coins: 🪙 '+fmtBig(getCoins())+')</div>'+
     '<div class="duel-box">'+
       '<label class="duel-row">Einsatz 🪙 <input id="duelStake" type="number" min="0" value="50"></label>'+
       '<label class="duel-row">Code <input id="duelCode" type="text" placeholder="z. B. nele"></label>'+
@@ -602,7 +602,7 @@ export function openDuelLobby(){
 
 async function duelCreate(){
   const stake = Math.max(0, parseInt($('#duelStake').value, 10) || 0);
-  if(getCoins() < stake){ toast('🪙 Dafür reichen deine Münzen nicht.'); return; }
+  if(getCoins() < stake){ toast('🪙 Dafür reichen deine Coins nicht.'); return; }
   const code = ($('#duelCode').value || '').trim();
   try {
     _dHost = true; _dStake = stake;
@@ -670,7 +670,7 @@ function renderDuelLobby(lobby){
     '</div>');
   const rb = $('#duelReadyBtn');
   if(rb) rb.addEventListener('click', ()=>{
-    if(!meReady && getCoins() < (lobby.stake||0)){ toast('🪙 Dafür reichen deine Münzen nicht.'); return; }
+    if(!meReady && getCoins() < (lobby.stake||0)){ toast('🪙 Dafür reichen deine Coins nicht.'); return; }
     setDuelReady(_dId, _dHost, !meReady);
   });
   $('#duelLeaveBtn').addEventListener('click', ()=>{ cleanupDuel(true); closeModal(); renderAll(); });
@@ -687,11 +687,11 @@ async function hostBeginDuel(lobby){
     const hostStats = computePlayerStats(state);
     const guestStats = computePlayerStats(oppSave);
     const stake = lobby.stake || 0;
-    // Münzstände beider Spieler aus dem globalen Wallet prüfen (nicht aus dem Save).
+    // Coinstände beider Spieler aus dem globalen Wallet prüfen (nicht aus dem Save).
     let oppCoins = 0;
     try { oppCoins = Number((await get(ref(db, `coins/${oppKey}`))).val()) || 0; } catch(e){}
     if(getCoins() < stake || oppCoins < stake){
-      toast('🪙 Einer von euch hat nicht genug Münzen für den Einsatz.');
+      toast('🪙 Einer von euch hat nicht genug Coins für den Einsatz.');
       setDuelStatus(_dId, { hostReady:false, guestReady:false, startAt:null });
       _dStarting = false; return;
     }
