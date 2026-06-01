@@ -655,12 +655,36 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   border-radius:50%; background:radial-gradient(circle,#fff,var(--beam-col,#c0392b));
   box-shadow:0 0 12px 3px var(--beam-col,#c0392b); animation:vfxBeamOrb .8s linear forwards; }
 @keyframes vfxBeamOrb { 0%{left:100%; opacity:0;} 15%{opacity:1;} 90%{opacity:1;} 100%{left:0; opacity:0;} }
-/* Stehender Seelenstrahl des Hexers – läuft die ganze Kanal-Dauer (Seelenraub). */
-.vfx-beam.drain-beam { opacity:1; animation:drainBeamPulse .5s ease-in-out infinite alternate; }
+/* Stehender Seelenstrahl des Hexers – läuft die ganze Kanal-Dauer (Seelenraub).
+   Mehrlagiger, pulsierender Strahl à la WoW-Aderlass: ein heller Kern, ein
+   wabernder Glanz und Lebensessenz, die sichtbar vom Boss zum Hexer strömt. */
+.vfx-beam.drain-beam {
+  opacity:1; height:13px; border-radius:7px;
+  background:linear-gradient(90deg,
+    rgba(192,48,107,0) 0%, rgba(192,48,107,.9) 12%,
+    #ff6aa6 46%, #ffffff 50%, #ff6aa6 54%,
+    rgba(192,48,107,.9) 88%, rgba(192,48,107,0) 100%);
+  box-shadow:0 0 18px 5px var(--beam-col,#c0306b), 0 0 34px 9px rgba(192,48,107,.45);
+  animation:drainBeamPulse .4s ease-in-out infinite alternate; }
 @keyframes drainBeamPulse {
-  0%   { filter:brightness(1);   box-shadow:0 0 14px 4px var(--beam-col,#c0306b); }
-  100% { filter:brightness(1.7); box-shadow:0 0 24px 8px var(--beam-col,#c0306b); } }
-.vfx-beam.drain-beam .vfx-beam-orb { animation:vfxBeamOrb .8s linear infinite; }
+  0%   { filter:brightness(1)    saturate(1.1); }
+  100% { filter:brightness(1.85) saturate(1.5); } }
+/* Strömende Lebensessenz (heller Glanz, der zum Hexer wandert). */
+.vfx-beam.drain-beam::after {
+  content:''; position:absolute; inset:-3px 0; border-radius:8px; pointer-events:none;
+  background:repeating-linear-gradient(90deg,
+    rgba(255,255,255,0) 0, rgba(255,255,255,0) 16px,
+    rgba(255,196,221,.95) 22px, rgba(255,255,255,0) 28px);
+  background-size:44px 100%; mix-blend-mode:screen;
+  animation:drainFlow .55s linear infinite; }
+@keyframes drainFlow { from { background-position:0 0; } to { background-position:44px 0; } }
+/* Seelen-Orbs werden vom Opfer (Boss) zum Wirker (Held) gezogen. */
+.vfx-beam.drain-beam .vfx-beam-orb { animation:drainOrbFlow .9s linear infinite; }
+@keyframes drainOrbFlow {
+  0%   { left:0;    opacity:0; transform:translate(-50%,-50%) scale(.55); }
+  14%  { opacity:1; }
+  82%  { opacity:1; }
+  100% { left:100%; opacity:0; transform:translate(-50%,-50%) scale(1.15); } }
 /* Heil-Lichtsäule. */
 .vfx-pillar { position:absolute; width:64px; height:220px; transform:translate(-50%,-78%);
   pointer-events:none; z-index:8; border-radius:32px 32px 18px 18px;
@@ -682,7 +706,7 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .combatant.desat { filter:grayscale(.85) brightness(.7); transition:filter .2s; }
 @media(prefers-reduced-motion: reduce){
   .arena-flash.on, .arena-stage.shake-hard, .vfx-meteor, .vfx-beam, .vfx-beam-orb,
-  .vfx-beam.drain-beam, .vfx-beam.drain-beam .vfx-beam-orb,
+  .vfx-beam.drain-beam, .vfx-beam.drain-beam::after, .vfx-beam.drain-beam .vfx-beam-orb,
   .combatant.aura-fire, .combatant.aura-crit, .combatant.aura-blood, .combatant.aura-shadow { animation:none; }
   .vfx-beam.drain-beam { opacity:1; }
 }
