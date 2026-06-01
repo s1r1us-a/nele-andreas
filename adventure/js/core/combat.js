@@ -17,6 +17,7 @@ import { $, toast, fmtBig } from '../ui/dom.js';
 import { renderAll } from '../ui/render.js';
 import { awardCoins, spendCoins } from './coins.js';
 import { checkAdventureBadges } from './badges.js';
+import { expeditionActive } from './expedition.js';
 
 let combatSpeed = 1, combatTimer = null;
 export let currentFight = null;
@@ -48,6 +49,8 @@ function updateMeter(fight){
 }
 
 export function startBossFight(bossIndex){
+  // Während eines laufenden Abenteuers ist der Held unterwegs – kein Bosskampf.
+  if(expeditionActive()){ toast('🧭 Dein Held ist gerade auf Abenteuer – erst zurückkehren.'); return; }
   if(typeof bossIndex !== 'number') bossIndex = state.zone;
   const isFarm = bossIndex < state.zone;
   const t = recomputeTotals();
@@ -329,6 +332,39 @@ function mechFloat(who, text, color){
   setTimeout(()=> num.remove(), FLOAT / combatSpeed);
 }
 
+// Prägnante Effekt-Beschreibung einer Fähigkeit (für Knopf + Floating-Text).
+export function abilityEffectShort(a){
+  if(!a) return '';
+  const pct = v => Math.round((v||0)*100);
+  const s = a.dur ? ' ('+Math.round(a.dur/1000)+'s)' : '';
+  switch(a.kind){
+    case 'heal':      return '+'+pct(a.healPct)+'% HP';
+    case 'burst':     return pct(a.burstMult)+'% Schaden';
+    case 'drain':     return pct(a.burstMult)+'% Schaden +Lebensraub';
+    case 'critBoost': return '+'+pct(a.critBonus)+'% Krit'+s;
+    case 'dmgBoost':  return '+'+pct(a.dmgBonus)+'% Schaden'+s;
+    case 'dmgReduce': return '−'+pct(a.dmgReduce)+'% erlittener Schaden'+s;
+    case 'lifesteal': return '+'+pct(a.lifestealBonus)+'% Lebensraub'+s;
+  }
+  return '';
+}
+
+// Beim Aktivieren kurz Name + Effekt als aufsteigender Text über dem Helden.
+function abilityCastFloat(ab){
+  if(!ab) return;
+  const stage = $('#arenaStage'); if(!stage) return;
+  const anc = (currentFight && currentFight.anchor.heroSprite) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
+  const eff = abilityEffectShort(ab);
+  const el = document.createElement('div');
+  el.className = 'ability-cast-float';
+  el.innerHTML = '<span class="acf-name">'+ab.icon+' '+ab.name+'</span>'+
+                 (eff ? '<span class="acf-eff">'+eff+'</span>' : '');
+  el.style.left = anc.x+'px';
+  el.style.top  = (anc.y-58)+'px';
+  const layer = $('#dmgLayer'); if(layer) layer.appendChild(el);
+  setTimeout(()=> el.remove(), 1500);
+}
+
 function heroUsesStab(){
   const w = state.equipped && state.equipped.waffe;
   return !!(w && materialOf(w) === 'zauberstab');
@@ -438,9 +474,15 @@ export function updateAbilityBtns(){
   const ids = abilities.map(a => a.id).join(',');
   if(bar.dataset.ids !== ids){
     bar.dataset.ids = ids;
-    bar.innerHTML = abilities.map(a =>
-      '<button class="btn ghost ability-btn" data-ability-id="'+a.id+'" title="'+(a.desc||'').replace(/"/g,'&quot;')+'">'+
-      a.icon+' '+a.name+'</button>').join('');
+    bar.innerHTML = abilities.map(a => {
+      const eff = abilityEffectShort(a);
+      const tip = ((a.desc||'') + (a.cd ? ' · CD '+Math.round(a.cd/1000)+'s' : '')).replace(/"/g,'&quot;');
+      return '<button class="btn ghost ability-btn" data-ability-id="'+a.id+'" title="'+tip+'">'+
+        '<span class="ab-head">'+a.icon+' '+a.name+'</span>'+
+        (eff ? '<span class="ab-eff">'+eff+'</span>' : '')+
+        '<span class="ab-cd"></span>'+
+      '</button>';
+    }).join('');
   }
   const now = Date.now();
   abilities.forEach(a => {
@@ -449,7 +491,9 @@ export function updateAbilityBtns(){
     const ready = !f.over && cd <= 0;
     btn.disabled = !ready;
     btn.style.opacity = ready ? '1' : '0.5';
-    btn.textContent = a.icon+' '+a.name + (cd>0 ? ' ('+cd+'s)' : '');
+    btn.classList.toggle('on-cd', cd>0);
+    const cdEl = btn.querySelector('.ab-cd');
+    if(cdEl) cdEl.textContent = cd>0 ? cd+'s' : '';
   });
 }
 // Alias für bestehende Aufrufstellen.
@@ -511,19 +555,15 @@ function applyAbilityEffect(f, ab){
     if(f.bossHp <= 0){ endFight(f, true); return; }
   } else if(ab.kind === 'critBoost'){
     f.buffs.crit = { until: now+ab.dur, val: ab.critBonus };
-    mechFloat('hero', ab.icon+' '+ab.name+'!', '#ffd24a');
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.critBonus*100)+'% Krit für '+(ab.dur/1000)+'s!', '#ffd24a');
   } else if(ab.kind === 'dmgBoost'){
     f.buffs.dmgBoost = { until: now+ab.dur, val: ab.dmgBonus };
-    mechFloat('hero', ab.icon+' '+ab.name+'!', '#ff6b3c');
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.dmgBonus*100)+'% Schaden für '+(ab.dur/1000)+'s!', '#ff8a3d');
   } else if(ab.kind === 'dmgReduce'){
     f.buffs.dmgReduce = { until: now+ab.dur, val: ab.dmgReduce };
-    mechFloat('hero', ab.icon+' '+ab.name+'!', '#7fd0ff');
     addCombatLog(f, ab.icon+' '+ab.name+' – '+Math.round(ab.dmgReduce*100)+'% weniger Schaden für '+(ab.dur/1000)+'s!', '#7fd0ff');
   } else if(ab.kind === 'lifesteal'){
     f.buffs.lifesteal = { until: now+ab.dur, val: ab.lifestealBonus };
-    mechFloat('hero', ab.icon+' '+ab.name+'!', '#e0466e');
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.lifestealBonus*100)+'% Lebensraub für '+(ab.dur/1000)+'s!', '#e0466e');
   }
   refreshAuras(f);
@@ -534,7 +574,7 @@ export function useAbility(abilityId){
   if(f && f.isDuel){
     if(f.over) return;
     const ab = (f.abilities||[]).find(a => a.id === abilityId);
-    if(ab && Date.now() >= (f.abilityCd[abilityId]||0)) f.onAction('ability:'+abilityId);
+    if(ab && Date.now() >= (f.abilityCd[abilityId]||0)){ f.onAction('ability:'+abilityId); abilityCastFloat(ab); }
     return;
   }
   if(!f || f.over) return;
@@ -542,6 +582,7 @@ export function useAbility(abilityId){
   if(!ab) return;
   if(Date.now() < (f.abilityCd[abilityId]||0)) return;
   f.abilityCd[abilityId] = Date.now() + ab.cd;
+  abilityCastFloat(ab);
   applyAbilityEffect(f, ab);
   updateAbilityBtns();
   startAbilityTicker();

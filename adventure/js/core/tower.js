@@ -20,8 +20,11 @@ const ABIL_PATH   = id => 'tower/abil/'     + id;
 const HEROES_PATH = id => 'tower/heroes/'   + id;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
-const TOWER_BASE_HP  = 700;
-const TOWER_BASE_ATK = 14;
+// Koop-Modus (immer zu zweit): Gegner deutlich zäher & gefährlicher als
+// Solo-Bosse. Basiswerte gegenüber dem Solo-Einstieg ~3× HP / ~2× ATK,
+// damit auch ein gut ausgerüstetes Duo schon die ersten Stockwerke spürt.
+const TOWER_BASE_HP  = 2200;
+const TOWER_BASE_ATK = 28;
 const TOWER_HP_SCALE = 1.75;
 const TOWER_ATK_SCALE = 1.55;
 const TOWER_ENRAGE_TURN = 40;

@@ -72,6 +72,31 @@ export function confirmDialog({ title, body='', emoji='⚠️',
     ov.querySelector('[data-act="ok"]').focus();
   });
 }
+/* ---------------------------------------------------------------------
+   Scroll-Sperre: Solange irgendein Overlay/Modal offen ist, darf die Seite
+   im Hintergrund nicht scrollen. Zentral per MutationObserver, damit jedes
+   Overlay (Modal, Charakter-Editor, Arena, Bestätigungs-Dialog) erfasst wird.
+   --------------------------------------------------------------------- */
+const OVERLAY_SELECTOR = '.overlay.show, .arena-overlay.show, .cdlg-overlay.show, .adv-intro-overlay:not(.fade-out)';
+function refreshScrollLock(){
+  const anyOpen = !!document.querySelector(OVERLAY_SELECTOR);
+  document.documentElement.classList.toggle('modal-open', anyOpen);
+  document.body.classList.toggle('modal-open', anyOpen);
+}
+(function initScrollLock(){
+  if(!document.body) { document.addEventListener('DOMContentLoaded', initScrollLock); return; }
+  // Auswertung pro Frame bündeln: Kampf-VFX ändern viele Klassen – wir prüfen nur 1× je Frame.
+  let queued = false;
+  const schedule = () => {
+    if(queued) return;
+    queued = true;
+    requestAnimationFrame(()=>{ queued = false; refreshScrollLock(); });
+  };
+  const obs = new MutationObserver(schedule);
+  obs.observe(document.body, { subtree:true, childList:true, attributes:true, attributeFilter:['class'] });
+  refreshScrollLock();
+})();
+
 let toastTimer = null;
 export function toast(msg){
   let el = $('#toast');
