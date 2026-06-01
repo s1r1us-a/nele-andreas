@@ -93,7 +93,7 @@ function randSlotKey(slots){
   const keys = (slots && slots.length) ? slots : SLOT_KEYS;
   return keys[Math.floor(Math.random()*keys.length)];
 }
-// opts: { slots?, forceRarityKey?, minIlvl?, forceType? }
+// opts: { slots?, forceRarityKey?, minIlvl?, forceType?, minRarityCap? }
 export function rollItem(zone, lootBoost=0, opts={}){
   const slotKey = randSlotKey(opts.slots);
   const slot = SLOTS[slotKey];
@@ -106,7 +106,7 @@ export function rollItem(zone, lootBoost=0, opts={}){
   }
   let rarity;
   if(opts.forceRarityKey) rarity = rarityOf(opts.forceRarityKey);
-  else rarity = weightedRarity(zone, lootBoost);   // zentrale Gewichtung + Cap (loot.js)
+  else rarity = weightedRarity(zone, lootBoost, opts.minRarityCap ?? -1);   // zentrale Gewichtung + Cap (loot.js)
   // Item-Level: sanft konvex (Teil 3) – Zusatz ist bei Zone 0 = 0.
   let ilvl = Math.max(1, Math.round((zone*5 + 1) + zone*zone*ILVL_QUAD + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
   if(opts.minIlvl) ilvl = Math.max(ilvl, opts.minIlvl);

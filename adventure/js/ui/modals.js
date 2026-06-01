@@ -10,7 +10,7 @@ import { GENDERS, HAIR_STYLES, HAIR_COLORS, BEARD_STYLES, SKIN_TONES, EYE_COLORS
          DEFAULT_CHARACTER } from '../data/character-options.js';
 import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf } from '../data/classes.js';
 import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
-import { rarityChances } from '../core/loot.js';
+import { rarityChances, EXPEDITION_MIN_CAP } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters, createCharacter,
@@ -153,7 +153,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
 // ---- Chancen-Vorschau vor dem Abenteuer-Start ----------------------
 export function previewExpedition(durKey){
   const exp = expeditionOf(durKey); if(!exp) return;
-  const chances = rarityChances(state.zone, exp.boost);
+  const chances = rarityChances(state.zone, exp.boost, EXPEDITION_MIN_CAP);
   let rows = '';
   for(const c of chances){
     if(c.p < 0.0005) continue;

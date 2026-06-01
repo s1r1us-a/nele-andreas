@@ -7,6 +7,7 @@ import { rarityIndex } from '../data/rarities.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { state, saveState } from './state.js';
 import { rollItem, freeSlots, addLog, recordDrop } from './items.js';
+import { EXPEDITION_MIN_CAP } from './loot.js';
 import { gainXp } from './character.js';
 import { awardCoins } from './coins.js';
 import { toast } from '../ui/dom.js';
@@ -25,7 +26,8 @@ export function startExpedition(durKey){
   const exp = expeditionOf(durKey); if(!exp) return;
   const now = Date.now();
   const items = [];
-  for(let i=0;i<ITEMS_PER_EXPEDITION;i++) items.push(rollItem(state.zone, exp.boost));
+  // Abenteuer schalten mind. „Episch" frei (auch in frühen Zonen).
+  for(let i=0;i<ITEMS_PER_EXPEDITION;i++) items.push(rollItem(state.zone, exp.boost, { minRarityCap: EXPEDITION_MIN_CAP }));
   state.expedition = { durKey, startedAt:now, endsAt:now + exp.ms, items };
   saveState(); renderAll();
 }
