@@ -47,14 +47,8 @@ const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
 
 // ---- Top-Leiste -----------------------------------------------------
 export function renderTopStats(){
-  const t = recomputeTotals();
-  // #miniGold (Münzstand) wird vom globalen Coin-Listener in main.js gepflegt.
-  $('#miniArmor').textContent = t.armor;
-  $('#miniDamage').textContent = t.damage;
-  $('#miniPower').textContent = t.power;
-  if($('#miniArmor').parentElement)  $('#miniArmor').parentElement.title  = STAT_HELP.ruestung;
-  if($('#miniDamage').parentElement) $('#miniDamage').parentElement.title = STAT_HELP.schaden;
-  if($('#miniPower').parentElement)  $('#miniPower').parentElement.title  = STAT_HELP.kampfkraft;
+  // Header zeigt nur noch Level + Münzen; Rüstung/Schaden/Kampfkraft stehen
+  // (ohne Dopplung) im Charakter-Bildschirm. #miniGold pflegt der Coin-Listener.
   const lvl = state.level || 1;
   const need = xpForLevel(lvl);
   const cur = xpInLevel(state.xp || 0, lvl);

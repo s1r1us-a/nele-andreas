@@ -690,8 +690,10 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
 
 /* ---- Dev-Button ----------------------------------------------- */
 .dev-btn { background:var(--stone); color:var(--txt-dim);
-  border:1px solid var(--line); border-radius:8px; padding:6px 10px;
-  font-size:12px; cursor:pointer; font-family:'Quicksand',sans-serif; }
+  border:1px solid var(--line); border-radius:8px; padding:6px 11px;
+  font-size:12px; cursor:pointer; font-family:'Quicksand',sans-serif;
+  display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+.dev-btn .dev-lbl { font-weight:600; }
 .dev-btn:hover { color:var(--txt); border-color:var(--gold-dim); }
 
 /* ---- Expeditions-Steuerung ------------------------------------ */

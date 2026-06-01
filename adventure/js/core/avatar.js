@@ -238,21 +238,41 @@ export function buildHeroSVG(character, tier, gear){
     `<path d="M100 84 Q104 91 99 93" stroke="${skinSh}" stroke-width="2" fill="none" stroke-linecap="round"/>`+   // Nase
     `<path d="M89 99 Q100 108 111 99" stroke="#b5566f" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;  // Mund
 
-  // ---- Bart (optional, über der Kieferpartie; Mund bleibt frei) -----
-  // Kopf cx=100 cy=78 r=34 → Kinn ~y112, Mund ~y99-108. Symmetrisch um x=100.
+  // ---- Bart (optional) – natürlicher Vollbart entlang des Kiefers ---
+  // Kopf cx=100 cy=78 r=34 → Kinn ~y112, Mund y99-108. Symmetrisch um x=100.
+  // Aufbau: Vollbart-Kontur (Koteletten→Kiefer→Kinn) + freie Mundpartie +
+  // Schnauzer + feine Strähnen/Glanz, damit nichts flächig/eckig wirkt.
   let beard = '';
-  if(beardId === 'kurz'){
-    beard = `<path d="M80 100 C84 112 90 120 100 121 C110 120 116 112 120 100 `+
-            `C113 106 107 107 100 107 C93 107 87 106 80 100 Z" fill="url(#bd${uid})"/>`;
-  } else if(beardId === 'mittel'){
-    beard = `<path d="M72 92 C74 108 86 122 100 125 C114 122 126 108 128 92 `+
-            `C120 100 112 103 100 103 C88 103 80 100 72 92 Z" fill="url(#bd${uid})"/>`+
-            `<path d="M88 97 Q100 102 112 97 Q100 100 88 97 Z" fill="${bcd}" opacity="0.85"/>`;  // Schnauzer
-  } else if(beardId === 'lang'){
-    beard = `<path d="M72 92 C74 110 83 124 88 135 C92 144 108 144 112 135 `+
-            `C117 124 126 110 128 92 C120 100 112 103 100 103 C88 103 80 100 72 92 Z" fill="url(#bd${uid})"/>`+
-            `<path d="M94 132 L100 150 L106 132 Z" fill="${bcd}" opacity="0.7"/>`+          // Spitze
-            `<path d="M88 97 Q100 102 112 97 Q100 100 88 97 Z" fill="${bcd}" opacity="0.85"/>`;  // Schnauzer
+  if(beardId !== 'kein'){
+    // Gemeinsame innere Oberkante: zieht von den Koteletten über die Wangen
+    // bis knapp unter die Mundwinkel und lässt den Mund frei.
+    const cheeks = `C125 98 117 103 109 104 C105 110 95 110 91 104 C83 103 75 98 70 87 Z`;
+    // Äußere Kontur je Länge (Koteletten bei y87 → Kinn bzw. Bartspitze).
+    let outline;
+    if(beardId === 'kurz'){            // kurzer, kiefernaher Bart
+      outline = `M70 87 C71 102 77 113 88 118 C93 121 107 121 112 118 C123 113 129 102 130 87 `;
+    } else if(beardId === 'mittel'){   // voller Bart, etwas über das Kinn
+      outline = `M70 87 C70 105 75 121 85 131 C91 138 109 138 115 131 C125 121 130 105 130 87 `;
+    } else {                           // langer, weich auslaufender Bart
+      outline = `M70 87 C70 109 77 129 83 143 C87 154 92 161 100 163 C108 161 113 154 117 143 C123 129 130 109 130 87 `;
+    }
+    // Schnauzer: zwei Flügel mit Philtrum-Mulde, sitzt knapp über dem Mund.
+    const must = `<path d="M100 100 C96 102 90 101 85 96 C90 95 95 96 100 98 `+
+                 `C105 96 110 95 115 96 C110 101 104 102 100 100 Z" fill="url(#bd${uid})"/>`;
+    // Feine Strähnen (symmetrisch) – Länge passend zum Bart.
+    let strands;
+    if(beardId === 'kurz'){
+      strands = mirror(`<path d="M82 100 Q86 112 94 119" stroke="${bcd}" stroke-width="1.2" fill="none" opacity="0.30" stroke-linecap="round"/>`);
+    } else if(beardId === 'mittel'){
+      strands = mirror(`<path d="M80 100 Q85 118 95 130" stroke="${bcd}" stroke-width="1.3" fill="none" opacity="0.30" stroke-linecap="round"/>`)+
+                `<path d="M100 109 L100 133" stroke="${bcd}" stroke-width="1.1" fill="none" opacity="0.22" stroke-linecap="round"/>`;
+    } else {
+      strands = mirror(`<path d="M79 101 Q86 128 96 150" stroke="${bcd}" stroke-width="1.4" fill="none" opacity="0.32" stroke-linecap="round"/>`)+
+                mirror(`<path d="M91 108 Q95 132 99 154" stroke="${bcd}" stroke-width="1.0" fill="none" opacity="0.22" stroke-linecap="round"/>`);
+    }
+    // Sanfter Glanz auf den Wangen (beide Seiten).
+    const sheen = mirror(`<path d="M77 95 Q84 101 91 105" stroke="${bch}" stroke-width="1.6" fill="none" opacity="0.26" stroke-linecap="round"/>`);
+    beard = `<path d="${outline}${cheeks}" fill="url(#bd${uid})"/>` + sheen + strands + must;
   }
 
   // ---- Tier-Akzente -------------------------------------------------
