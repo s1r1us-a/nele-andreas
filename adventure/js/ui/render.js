@@ -334,9 +334,11 @@ function respecTalents(){
     title:'Talente zurücksetzen?',
     body:'Kostet 🪙 '+fmtBig(RESPEC_COST)+' Coins. Du erhältst alle '+chosenCount+' Punkte zurück.',
     emoji:'♻️', confirmText:'Zurücksetzen', cancelText:'Abbrechen',
-  }).then(ok => {
+  }).then(async ok => {
     if(!ok) return;
-    spendCoins(RESPEC_COST).catch(()=>{});
+    // Erst zahlen, dann erstatten – schlägt die Transaktion fehl, kein Gratis-Respec.
+    const paid = await spendCoins(RESPEC_COST);
+    if(!paid){ toast('Zahlung fehlgeschlagen – nicht genug Coins.'); return; }
     state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
     state.character.talents = {};
     saveState();
