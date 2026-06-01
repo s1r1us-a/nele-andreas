@@ -2521,14 +2521,16 @@
     const [badgesSnap, slotBadgesSnap, dpBadgesSnap, framesSnap, equippedBSnap, equippedFSnap] = await Promise.all([
       get(ref(db, `shop/${key}/badges`)),
       get(ref(db, `slotbadges/${key}`)),
-      get(ref(db, `dammerpfad/${key}/badges`)),
+      // Non-fatal: schlägt der Read fehl (z. B. fehlende Firebase-Regel), darf er
+      // NICHT den gesamten Badge-Block (Promise.all) abbrechen.
+      get(ref(db, `dammerpfad/${key}/badges`)).catch(() => null),
       get(ref(db, `shop/${key}/frames`)),
       get(ref(db, `shop/${key}/equippedBadge`)),
       get(ref(db, `shop/${key}/equippedFrame`)),
     ]);
     ownedBadges        = badgesSnap.val()     || [];
     ownedSlotBadges    = Object.keys(slotBadgesSnap.val() || {});
-    ownedDammerpfadBadges = Object.keys(dpBadgesSnap.val() || {});
+    ownedDammerpfadBadges = dpBadgesSnap ? Object.keys(dpBadgesSnap.val() || {}) : [];
     ownedFrames        = framesSnap.val()     || [];
     equippedBadge      = equippedBSnap.val()  || null;
     equippedFrame      = equippedFSnap.val()  || null;
