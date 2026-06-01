@@ -4,7 +4,7 @@
 import { state, loadSave, saveState, flushSave } from './core/state.js';
 import { initAuth } from './core/firebase.js';
 import { expeditionReady, expeditionActive, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
-import { startBossFight, toggleSpeed, closeArena, usePotion, useAbility } from './core/combat.js';
+import { startBossFight, closeArena, usePotion, useAbility } from './core/combat.js';
 import { watchCoins } from './core/coins.js';
 import { $, fmtRemain, fmtBig, confirmDialog, toast } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
@@ -38,7 +38,6 @@ if(towerLink) towerLink.addEventListener('click', e => {
 });
 // „Aussehen ändern" und „Helm" liegen jetzt im dynamischen Charakter-Header
 // (in render.js verdrahtet, da bei jedem Render neu aufgebaut).
-$('#speedBtn').addEventListener('click', toggleSpeed);
 $('#potionBtn').addEventListener('click', usePotion);
 // Mehrere Fähigkeits-Knöpfe (dynamisch gerendert) per Delegation verdrahten.
 $('#abilityBar').addEventListener('click', e => {

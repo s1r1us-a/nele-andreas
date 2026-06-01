@@ -115,7 +115,7 @@ export function startBossFight(bossIndex){
   $('#arenaResult').classList.remove('show');
   // Während eines Boss-Kampfes ist „Verlassen" ausgeblendet (kein Abbrechen).
   $('#arenaCloseBtn').style.display = 'none';
-  combatSpeed = 1; $('#speedBtn').textContent = '⏩ Tempo 1×'; $('#speedBtn').style.display = '';
+  combatSpeed = 1;
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   updatePotionBtn();
   resetAbilityVisuals();
@@ -842,10 +842,6 @@ function stopDrainBeam(){
   const b = $('#drainBeam'); if(b) b.remove();
 }
 
-export function toggleSpeed(){
-  combatSpeed = combatSpeed === 1 ? 2 : 1;
-  $('#speedBtn').textContent = '⏩ Tempo '+combatSpeed+'×';
-}
 // Reiner DOM-Teardown der Arena – kein Duell-Wissen. Ruft erst NACH der
 // Verrechnung das onClose() (→ cleanupDuel/leaveDuel) auf, damit ein
 // terminaler Forfeit-Snapshot nicht vorzeitig gelöscht wird.
@@ -855,7 +851,6 @@ function hardCloseArena(f){
   arenaOverlay().classList.remove('show');
   clearTimeout(combatTimer); combatTimer = null;
   resetAbilityVisuals();
-  $('#speedBtn').style.display = '';
   if(currentFight === f || !currentFight) currentFight = null;
   if(f && f.onClose) f.onClose();
   renderAll();
@@ -995,7 +990,6 @@ export function openDuelArena(cfg){
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
   $('#arenaCloseBtn').style.display = ''; $('#arenaCloseBtn').textContent = '🚪 Verlassen';
-  $('#speedBtn').style.display = 'none';   // Tempo ist im Duell host-autoritär
   combatSpeed = 1;
   if($('#combatLog')) $('#combatLog').innerHTML = '';
   resetAbilityVisuals();
