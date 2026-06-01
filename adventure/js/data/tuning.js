@@ -48,7 +48,7 @@ export const ENDLESS = {
   // Faktor pro Stufe jenseits des letzten definierten Bosses.
   hpFactor: 1.6,
   atkFactor: 1.55,
-  powFactor: 1.6,
+  powFactor: 1.05,
 };
 
 // ---- Farmen (#17): Wiederholungskämpfe geben weniger -----------------

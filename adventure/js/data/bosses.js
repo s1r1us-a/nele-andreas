@@ -5,6 +5,11 @@
      ohne Item-Grind nicht besiegbar (zusätzlich Soft-Enrage, siehe combat.js).
    - area = Index in ZONES (Name); bg = Bild-Index (0–4); spr = Boss-Sprite (0–4).
      Mehrere Bosse/Gebiete teilen sich vorhandene Grafiken (kein neues Asset nötig).
+   - recPower = empfohlene Kampfkraft. Per Simulation der echten Kampf-Engine an
+     einen FAIREN (~50 %) Kampf der schwächsten Klasse gekoppelt (glatte, monoton
+     steigende Kurve). Nicht von Hand schätzen – mit
+     `node adventure/tools/calibrate-recpower.mjs --write` neu kalibrieren,
+     danach `node adventure/tools/gen-bosse-doc.mjs`.
    ===================================================================== */
 import { ASSETS, ENDLESS } from './tuning.js';
 import { buildBossSVG } from '../core/boss-art.js';
@@ -59,59 +64,59 @@ const phase = (hp, ...add) => ({ hp, add });
 
 // ---- Roster (40 Bosse, danach endlose Skalierung) ------------------
 export const BOSS_DEFS = [
-  { name:'Grollzahn der Goblin',        area:0, spr:0, maxHp:800,        atk:16,       recPower:70,        mechanic:['wut'] },
-  { name:'Borkenschreck der Waldgeist', area:0, spr:1, maxHp:1700,       atk:23,       recPower:150,       mechanic:['dornen'] },
-  { name:'Königin Summbrand',           area:0, spr:2, maxHp:3600,       atk:33,       recPower:320,       mechanic:['gift'], loot:{slots:['amulett','ring1']} },
-  { name:'Schattenrudel-Alpha',         area:0, spr:3, maxHp:7700,       atk:48,       recPower:680,       mechanic:['berserk'] },
-  { name:'Webmutter Schwarzbein',       area:1, spr:1, maxHp:16000,      atk:68,       recPower:1450,      mechanic:['gift','dornen'], loot:{slots:['beine','fuesse']} },
-  { name:'Nachtmar der Schrecken',      area:1, spr:0, maxHp:34000,      atk:96,       recPower:3100,      mechanic:['betaeubung'] },
-  { name:'Gorrak der Höhlentroll',      area:1, spr:2, maxHp:71000,      atk:136,      recPower:6600,      mechanic:['regen'] },
-  { name:'Kristallweber',               area:1, spr:4, maxHp:150000,     atk:194,      recPower:14000,     mechanic:['eispanzer'], loot:{slots:['waffe']} },
-  { name:'Erzfresser',                  area:2, spr:3, maxHp:316000,     atk:275,      recPower:29800,     mechanic:['ruestungsbruch','wut'] },
-  { name:'Pyraxis der Lavadrache',      area:2, spr:3, maxHp:664000,     atk:390,      recPower:63600,     mechanic:['feueratem'], loot:{slots:['brust','kopf']} },
-  { name:'Magmaherz der Elementar',     area:2, spr:4, maxHp:963000,     atk:540,      recPower:92800,     mechanic:['lebensentzug'] },
-  { name:'Aschefürst Zinnober',         area:2, spr:0, maxHp:1400000,    atk:760,      recPower:135000,    mechanic:['hinrichtung','berserk'] },
-  { name:'Frostherz der Golem',         area:3, spr:4, maxHp:2020000,    atk:1080,     recPower:198000,    mechanic:['eispanzer','regen'], loot:{slots:['schild','schultern']} },
-  { name:'Eiskönigin Glacira',          area:3, spr:1, maxHp:2940000,    atk:1530,     recPower:289000,    mechanic:['frost'] },
-  { name:'Sturmtitan Boreas',           area:3, spr:2, maxHp:4260000,    atk:2180,     recPower:422000,    mechanic:['berserk','betaeubung'] },
-  { name:'Schattendrache Nyx',          area:3, spr:3, maxHp:6180000,    atk:3100,     recPower:616000,    mechanic:['feueratem','lebensentzug'], loot:{slots:['waffe','amulett']} },
-  { name:'Der Vergessene Wächter',      area:4, spr:4, maxHp:8960000,    atk:4400,     recPower:899000,    mechanic:['regen','eispanzer','dornen'] },
-  { name:'Weltenfresser',               area:4, spr:4, maxHp:13000000,   atk:6240,     recPower:1313000,   mechanic:['hinrichtung','dornen','berserk'] },
+  { name:'Grollzahn der Goblin',        area:0, spr:0, maxHp:800,        atk:16,       recPower:706,        mechanic:['wut'] },
+  { name:'Borkenschreck der Waldgeist', area:0, spr:1, maxHp:1700,       atk:23,       recPower:741,       mechanic:['dornen'] },
+  { name:'Königin Summbrand',           area:0, spr:2, maxHp:3600,       atk:33,       recPower:778,       mechanic:['gift'], loot:{slots:['amulett','ring1']} },
+  { name:'Schattenrudel-Alpha',         area:0, spr:3, maxHp:7700,       atk:48,       recPower:867,       mechanic:['berserk'] },
+  { name:'Webmutter Schwarzbein',       area:1, spr:1, maxHp:16000,      atk:68,       recPower:1338,      mechanic:['gift','dornen'], loot:{slots:['beine','fuesse']} },
+  { name:'Nachtmar der Schrecken',      area:1, spr:0, maxHp:34000,      atk:96,       recPower:1910,      mechanic:['betaeubung'] },
+  { name:'Gorrak der Höhlentroll',      area:1, spr:2, maxHp:71000,      atk:136,      recPower:4677,      mechanic:['regen'] },
+  { name:'Kristallweber',               area:1, spr:4, maxHp:150000,     atk:194,      recPower:5204,     mechanic:['eispanzer'], loot:{slots:['waffe']} },
+  { name:'Erzfresser',                  area:2, spr:3, maxHp:316000,     atk:275,      recPower:8800,     mechanic:['ruestungsbruch','wut'] },
+  { name:'Pyraxis der Lavadrache',      area:2, spr:3, maxHp:664000,     atk:390,      recPower:16552,     mechanic:['feueratem'], loot:{slots:['brust','kopf']} },
+  { name:'Magmaherz der Elementar',     area:2, spr:4, maxHp:963000,     atk:540,      recPower:17609,     mechanic:['lebensentzug'] },
+  { name:'Aschefürst Zinnober',         area:2, spr:0, maxHp:1400000,    atk:760,      recPower:18555,    mechanic:['hinrichtung','berserk'] },
+  { name:'Frostherz der Golem',         area:3, spr:4, maxHp:2020000,    atk:1080,     recPower:19827,    mechanic:['eispanzer','regen'], loot:{slots:['schild','schultern']} },
+  { name:'Eiskönigin Glacira',          area:3, spr:1, maxHp:2940000,    atk:1530,     recPower:20818,    mechanic:['frost'] },
+  { name:'Sturmtitan Boreas',           area:3, spr:2, maxHp:4260000,    atk:2180,     recPower:22058,    mechanic:['berserk','betaeubung'] },
+  { name:'Schattendrache Nyx',          area:3, spr:3, maxHp:6180000,    atk:3100,     recPower:23437,    mechanic:['feueratem','lebensentzug'], loot:{slots:['waffe','amulett']} },
+  { name:'Der Vergessene Wächter',      area:4, spr:4, maxHp:8960000,    atk:4400,     recPower:24611,    mechanic:['regen','eispanzer','dornen'] },
+  { name:'Weltenfresser',               area:4, spr:4, maxHp:13000000,   atk:6240,     recPower:25842,   mechanic:['hinrichtung','dornen','berserk'] },
   // ---- Versunkene Tiefen ----
-  { name:'Tiefenleviathan Abyssal',     area:5, spr:2, maxHp:18840000,   atk:8870,     recPower:1917000,   mechanic:['enrage','schildphase'], phases:[phase(0.5,'wut')] },
-  { name:'Korallentyrann Murlok',       area:5, spr:3, maxHp:27300000,   atk:12590,    recPower:2799000,   mechanic:['add_spawn'], loot:{slots:['fuesse','haende','beine']} },
-  { name:'Versunkener König Na.this',   area:5, spr:0, maxHp:39600000,   atk:17880,    recPower:4087000,   mechanic:['fluch','frost'] },
-  { name:'Gezeitenfürst Maelstrom',     area:5, spr:4, maxHp:57500000,   atk:25380,    recPower:5967000,   mechanic:['verbrennung','lebensentzug'], phases:[phase(0.4,'enrage')] },
+  { name:'Tiefenleviathan Abyssal',     area:5, spr:2, maxHp:18840000,   atk:8870,     recPower:27134,   mechanic:['enrage','schildphase'], phases:[phase(0.5,'wut')] },
+  { name:'Korallentyrann Murlok',       area:5, spr:3, maxHp:27300000,   atk:12590,    recPower:28491,   mechanic:['add_spawn'], loot:{slots:['fuesse','haende','beine']} },
+  { name:'Versunkener König Na.this',   area:5, spr:0, maxHp:39600000,   atk:17880,    recPower:29916,   mechanic:['fluch','frost'] },
+  { name:'Gezeitenfürst Maelstrom',     area:5, spr:4, maxHp:57500000,   atk:25380,    recPower:31412,   mechanic:['verbrennung','lebensentzug'], phases:[phase(0.4,'enrage')] },
   // ---- Schattenreich ----
-  { name:'Schattenweber Umbral',        area:6, spr:1, maxHp:83300000,   atk:36040,    recPower:8712000,   mechanic:['schwaechung','gift'], loot:{slots:['umhang','amulett']} },
-  { name:'Albtraumfürst Mordeth',       area:6, spr:0, maxHp:120800000,  atk:51180,    recPower:12718000,  mechanic:['teilung'], phases:[phase(0.5,'berserk')] },
-  { name:'Leerenpriester Vex',          area:6, spr:3, maxHp:175200000,  atk:72680,    recPower:18569000,  mechanic:['eskalation','fluch'], phases:[phase(0.6,'verbrennung'), phase(0.3,'enrage')] },
-  { name:'Seelenschnitter Grimm',       area:6, spr:4, maxHp:254000000,  atk:103200,   recPower:27110000,  mechanic:['schildphase','hinrichtung'], loot:{slots:['waffe']} },
+  { name:'Schattenweber Umbral',        area:6, spr:1, maxHp:83300000,   atk:36040,    recPower:46687,   mechanic:['schwaechung','gift'], loot:{slots:['umhang','amulett']} },
+  { name:'Albtraumfürst Mordeth',       area:6, spr:0, maxHp:120800000,  atk:51180,    recPower:49021,  mechanic:['teilung'], phases:[phase(0.5,'berserk')] },
+  { name:'Leerenpriester Vex',          area:6, spr:3, maxHp:175200000,  atk:72680,    recPower:51472,  mechanic:['eskalation','fluch'], phases:[phase(0.6,'verbrennung'), phase(0.3,'enrage')] },
+  { name:'Seelenschnitter Grimm',       area:6, spr:4, maxHp:254000000,  atk:103200,   recPower:54046,  mechanic:['schildphase','hinrichtung'], loot:{slots:['waffe']} },
   // ---- Aschewüste ----
-  { name:'Ascheboss Cinderon',          area:7, spr:0, maxHp:368000000,  atk:146540,   recPower:39581000,  mechanic:['add_spawn','berserk'], phases:[phase(0.5,'feueratem')] },
-  { name:'Magmakoloss Vulcanar',        area:7, spr:3, maxHp:534000000,  atk:208090,   recPower:57788000,  mechanic:['fluch','frost'], loot:{slots:['schild','brust']} },
-  { name:'Glutdämon Infernox',          area:7, spr:4, maxHp:774000000,  atk:295490,   recPower:84370000,  mechanic:['verbrennung','lebensentzug'], phases:[phase(0.4,'enrage'), phase(0.2,'hinrichtung')] },
-  { name:'Pyroklast der Verbrenner',    area:7, spr:0, maxHp:1120000000, atk:419600,   recPower:123181000, mechanic:['enrage','dornen','verbrennung'] },
+  { name:'Ascheboss Cinderon',          area:7, spr:0, maxHp:368000000,  atk:146540,   recPower:56748,  mechanic:['add_spawn','berserk'], phases:[phase(0.5,'feueratem')] },
+  { name:'Magmakoloss Vulcanar',        area:7, spr:3, maxHp:534000000,  atk:208090,   recPower:59585,  mechanic:['fluch','frost'], loot:{slots:['schild','brust']} },
+  { name:'Glutdämon Infernox',          area:7, spr:4, maxHp:774000000,  atk:295490,   recPower:62564,  mechanic:['verbrennung','lebensentzug'], phases:[phase(0.4,'enrage'), phase(0.2,'hinrichtung')] },
+  { name:'Pyroklast der Verbrenner',    area:7, spr:0, maxHp:1120000000, atk:419600,   recPower:65692, mechanic:['enrage','dornen','verbrennung'] },
   // ---- Himmelszitadelle ----
-  { name:'Himmelsrichter Solarius',     area:8, spr:1, maxHp:1630000000, atk:595830,   recPower:179844000, mechanic:['teilung','eskalation'], phases:[phase(0.5,'enrage')], loot:{slots:['amulett','ring1','ring2']} },
-  { name:'Sturmgott Tempest',           area:8, spr:2, maxHp:2360000000, atk:846080,   recPower:262500000, mechanic:['schwaechung','ruestungsbruch','gift'] },
-  { name:'Lichtbringer Auriel',         area:8, spr:4, maxHp:3420000000, atk:1201430,  recPower:383250000, mechanic:['add_spawn','feueratem'], phases:[phase(0.6,'berserk'), phase(0.3,'enrage')] },
-  { name:'Titanenwächter Aegis',        area:8, spr:4, maxHp:4960000000, atk:1706030,  recPower:559545000, mechanic:['eskalation','hinrichtung','berserk'], loot:{slots:['schild','kopf','brust']} },
+  { name:'Himmelsrichter Solarius',     area:8, spr:1, maxHp:1630000000, atk:595830,   recPower:68977, mechanic:['teilung','eskalation'], phases:[phase(0.5,'enrage')], loot:{slots:['amulett','ring1','ring2']} },
+  { name:'Sturmgott Tempest',           area:8, spr:2, maxHp:2360000000, atk:846080,   recPower:72426, mechanic:['schwaechung','ruestungsbruch','gift'] },
+  { name:'Lichtbringer Auriel',         area:8, spr:4, maxHp:3420000000, atk:1201430,  recPower:76047, mechanic:['add_spawn','feueratem'], phases:[phase(0.6,'berserk'), phase(0.3,'enrage')] },
+  { name:'Titanenwächter Aegis',        area:8, spr:4, maxHp:4960000000, atk:1706030,  recPower:79849, mechanic:['eskalation','hinrichtung','berserk'], loot:{slots:['schild','kopf','brust']} },
   // ---- Die Leere ----
-  { name:'Voidfürst Nihil',             area:9, spr:3, maxHp:7190000000, atk:2422560,  recPower:816935000, mechanic:['schildphase','regen','lebensentzug'], phases:[phase(0.5,'enrage')] },
-  { name:'Entropiebestie Chaos',        area:9, spr:0, maxHp:10420000000, atk:3440040, recPower:1192800000, mechanic:['fluch','verbrennung','frost'] },
-  { name:'Der Namenlose',               area:9, spr:4, maxHp:15110000000, atk:4884860, recPower:1741500000, mechanic:['teilung','dornen','eskalation'], phases:[phase(0.6,'enrage'), phase(0.3,'hinrichtung')], loot:{slots:['waffe','amulett']} },
-  { name:'Sternenfresser Astaroth',     area:9, spr:3, maxHp:21910000000, atk:6936500, recPower:2542000000, mechanic:['enrage','hinrichtung','schwaechung'] },
-  { name:'Urzeit-Drache Bahamut',       area:9, spr:4, maxHp:31770000000, atk:9849830, recPower:3711000000, mechanic:['add_spawn','eskalation','berserk','gift'], phases:[phase(0.5,'feueratem'), phase(0.2,'enrage')] },
-  { name:'Erzdämon der Ewigkeit',       area:9, spr:0, maxHp:46070000000, atk:13986750, recPower:5418000000, mechanic:['enrage','teilung','hinrichtung','dornen','eskalation'], phases:[phase(0.7,'verbrennung'), phase(0.4,'add_spawn'), phase(0.2,'schildphase')], loot:{slots:['waffe']} },
+  { name:'Voidfürst Nihil',             area:9, spr:3, maxHp:7190000000, atk:2422560,  recPower:111804, mechanic:['schildphase','regen','lebensentzug'], phases:[phase(0.5,'enrage')] },
+  { name:'Entropiebestie Chaos',        area:9, spr:0, maxHp:10420000000, atk:3440040, recPower:117394, mechanic:['fluch','verbrennung','frost'] },
+  { name:'Der Namenlose',               area:9, spr:4, maxHp:15110000000, atk:4884860, recPower:123264, mechanic:['teilung','dornen','eskalation'], phases:[phase(0.6,'enrage'), phase(0.3,'hinrichtung')], loot:{slots:['waffe','amulett']} },
+  { name:'Sternenfresser Astaroth',     area:9, spr:3, maxHp:21910000000, atk:6936500, recPower:129427, mechanic:['enrage','hinrichtung','schwaechung'] },
+  { name:'Urzeit-Drache Bahamut',       area:9, spr:4, maxHp:31770000000, atk:9849830, recPower:135898, mechanic:['add_spawn','eskalation','berserk','gift'], phases:[phase(0.5,'feueratem'), phase(0.2,'enrage')] },
+  { name:'Erzdämon der Ewigkeit',       area:9, spr:0, maxHp:46070000000, atk:13986750, recPower:142693, mechanic:['enrage','teilung','hinrichtung','dornen','eskalation'], phases:[phase(0.7,'verbrennung'), phase(0.4,'add_spawn'), phase(0.2,'schildphase')], loot:{slots:['waffe']} },
   // ---- Sternennarbe ----
-  { name:'Nebularch der Sternenfresser', area:10, spr:3, maxHp:66800000000,  atk:20000000, recPower:7910000000,  mechanic:['reflexion','enrage'], phases:[phase(0.5,'eskalation')] },
-  { name:'Singularität Vortex',          area:10, spr:4, maxHp:96900000000,  atk:28600000, recPower:11550000000, mechanic:['auszehrung','schildphase'], phases:[phase(0.4,'enrage')], loot:{slots:['umhang','ring1','ring2']} },
-  { name:'Kometenkönig Aldebaran',       area:10, spr:0, maxHp:140000000000, atk:40900000, recPower:16870000000, mechanic:['eskalation','verbrennung','reflexion'] },
+  { name:'Nebularch der Sternenfresser', area:10, spr:3, maxHp:66800000000,  atk:20000000, recPower:149828,  mechanic:['reflexion','enrage'], phases:[phase(0.5,'eskalation')] },
+  { name:'Singularität Vortex',          area:10, spr:4, maxHp:96900000000,  atk:28600000, recPower:157319, mechanic:['auszehrung','schildphase'], phases:[phase(0.4,'enrage')], loot:{slots:['umhang','ring1','ring2']} },
+  { name:'Kometenkönig Aldebaran',       area:10, spr:0, maxHp:140000000000, atk:40900000, recPower:165185, mechanic:['eskalation','verbrennung','reflexion'] },
   // ---- Jenseits der Zeit ----
-  { name:'Chronarch der Zeitlose',       area:11, spr:4, maxHp:204000000000, atk:58500000, recPower:24500000000, mechanic:['auszehrung','teilung'], phases:[phase(0.6,'enrage'), phase(0.3,'hinrichtung')], loot:{slots:['waffe','amulett']} },
-  { name:'Paradox-Entität',              area:11, spr:3, maxHp:296000000000, atk:83700000, recPower:35700000000, mechanic:['reflexion','fluch','frost'] },
-  { name:'Der Ewige Zerfall',            area:11, spr:0, maxHp:429000000000, atk:119700000, recPower:52100000000, mechanic:['enrage','auszehrung','reflexion','eskalation'], phases:[phase(0.7,'verbrennung'), phase(0.4,'add_spawn'), phase(0.2,'schildphase')], loot:{slots:['waffe']} },
+  { name:'Chronarch der Zeitlose',       area:11, spr:4, maxHp:204000000000, atk:58500000, recPower:173444, mechanic:['auszehrung','teilung'], phases:[phase(0.6,'enrage'), phase(0.3,'hinrichtung')], loot:{slots:['waffe','amulett']} },
+  { name:'Paradox-Entität',              area:11, spr:3, maxHp:296000000000, atk:83700000, recPower:182116, mechanic:['reflexion','fluch','frost'] },
+  { name:'Der Ewige Zerfall',            area:11, spr:0, maxHp:429000000000, atk:119700000, recPower:191222, mechanic:['enrage','auszehrung','reflexion','eskalation'], phases:[phase(0.7,'verbrennung'), phase(0.4,'add_spawn'), phase(0.2,'schildphase')], loot:{slots:['waffe']} },
 ];
 
 export const BOSS_COUNT = BOSS_DEFS.length;
