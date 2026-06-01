@@ -6,7 +6,7 @@ import { rarityOf, rarityIndex } from '../data/rarities.js';
 import { weightedRarity } from './loot.js';
 import { SLOTS, SLOT_KEYS, FITS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } from '../data/affixes.js';
-import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf } from '../data/itemTypes.js';
+import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf, itemDisplayName } from '../data/itemTypes.js';
 import { allowedMaterials, classOf } from '../data/classes.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
@@ -120,7 +120,7 @@ export function rollItem(zone, lootBoost=0, opts={}){
     affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
     sprite: buildItemSVG(slot.art, variant, rarity.key, elementOf(id), itype.orb),
-    name: rarity.adj + ' ' + itype.name,
+    name: itemDisplayName(rarity.key, itype),
   };
 }
 

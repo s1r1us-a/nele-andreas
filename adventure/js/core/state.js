@@ -12,7 +12,7 @@
    ===================================================================== */
 import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
-import { defaultTypeKey, typeOf } from '../data/itemTypes.js';
+import { defaultTypeKey, typeOf, itemDisplayName } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
 import { db, ref, get, set, remove } from './firebase.js';
@@ -73,6 +73,11 @@ function migrateSlot(s){
   Object.keys(SLOTS).forEach(k => eq[k] = prev[k] || null);
   s.equipped = eq;
   if(!Array.isArray(s.inventory)) s.inventory = [];
+  // Item-Namen neu berechnen → korrigiert deutsche Adjektiv-Deklination auch
+  // in bestehenden Spielständen (Namen werden gespeichert, nicht live gebaut).
+  const fixName = it => { if(it && it.slotKey) it.name = itemDisplayName(it.rarity, typeOf(it)); };
+  s.inventory.forEach(fixName);
+  Object.values(s.equipped).forEach(fixName);
   if(!Array.isArray(s.log)) s.log = [];
   if(!s.firstClears || typeof s.firstClears !== 'object') s.firstClears = {};
   if(!s.killCounts || typeof s.killCounts !== 'object') s.killCounts = {};
@@ -84,6 +89,9 @@ function migrateSlot(s){
   // Talentbaum-/Charakterfelder defensiv ergänzen.
   if(s.character && typeof s.character === 'object'){
     if(typeof s.character.name !== 'string') s.character.name = '';
+    // Bart-Felder defensiv ergänzen (Altstände → bartlos).
+    if(typeof s.character.beardId !== 'string') s.character.beardId = 'kein';
+    if(typeof s.character.beardColor !== 'string') s.character.beardColor = '#6b3f1d';
     if(!s.character.talents || typeof s.character.talents !== 'object') s.character.talents = {};
     if(typeof s.character.talentPoints !== 'number'){
       s.character.talentPoints = Math.max(0, (s.level||1) - 1);

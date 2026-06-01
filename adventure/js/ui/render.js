@@ -33,7 +33,7 @@ import { itemValue, sellPrice, isLocked, gearScore, sellItem, sellMany, canEquip
 import { getCoins, spendCoins } from '../core/coins.js';
 import { materialOf } from '../data/itemTypes.js';
 import { expeditionReady, findProgress } from '../core/expedition.js';
-import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast } from './dom.js';
+import { $, timeAgo, fmtRemain, fmtBig, IS_TOUCH, goldPop, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { openSlotPicker, openItemPreview, openSellModal, previewExpedition,
          openRosterModal, openCharacterCreator } from './modals.js';
@@ -64,6 +64,15 @@ export function renderTopStats(){
 }
 
 // ---- Abenteuer ------------------------------------------------------
+// Schwierigkeit aus Verhältnis eigene Kampfkraft : empfohlene Boss-Kraft.
+export function bossDifficulty(power, recPower){
+  const r = recPower > 0 ? power / recPower : 2;
+  if(r >= 1.5) return { label:'Leicht',  cls:'diff-leicht' };
+  if(r >= 1.0) return { label:'Normal',  cls:'diff-normal' };
+  if(r >= 0.7) return { label:'Schwer',  cls:'diff-schwer' };
+  return { label:'Tödlich', cls:'diff-toedlich' };
+}
+
 export function renderAdventure(){
   const t = recomputeTotals();
   const scene = $('#scene');
@@ -86,8 +95,9 @@ export function renderAdventure(){
   rec.classList.toggle('weak', weak);
   const mechs = (Array.isArray(boss.mechanic)?boss.mechanic:[boss.mechanic]).filter(Boolean)
     .map(m => MECH_DEFS[m] ? MECH_DEFS[m].emoji+' '+MECH_DEFS[m].label : m).join(' · ');
-  rec.innerHTML = 'Empfohlene Kampfkraft: <b>'+fmtBig(boss.recPower)+'</b> · deine: <b>'+t.power+'</b>'
-    + (weak ? ' &nbsp;— riskant!' : ' &nbsp;✓')
+  const diff = bossDifficulty(t.power, boss.recPower);
+  rec.innerHTML = '<span class="diff-badge '+diff.cls+'">'+diff.label+'</span> '
+    + 'Empfohlene Kampfkraft: <b>'+fmtBig(boss.recPower)+'</b> · deine: <b>'+t.power+'</b>'
     + (mechs ? '<br><span class="boss-mechs">'+mechs+'</span>' : '');
 
   const log = $('#logEntries');
@@ -260,8 +270,11 @@ export function renderTalents(){
       const isActive = !!node.active;
       const cssCls = 'talent-node' + (isChosen ? ' taken' : '') +
         (!unlocked ? ' locked' : '') + (dimmed ? ' dimmed' : '') + (canPick ? ' pickable' : '') +
-        (isActive ? ' active-skill' : '');
-      html += '<button class="'+cssCls+'" data-stufe="'+ti+'" data-talent="'+node.id+'"'+(dis?' disabled':'')+
+        (isActive ? ' active-skill' : '') + (dis ? ' is-locked' : '');
+      // Kein disabled-Attribut: nicht wählbare Nodes bleiben antippbar und zeigen
+      // ihre Beschreibung als Toast (Touch-freundlich). Auswahl prüft canPick in JS.
+      html += '<button class="'+cssCls+'" data-stufe="'+ti+'" data-talent="'+node.id+'"'+
+        (dis?' aria-disabled="true"':'')+' data-pick="'+(canPick?'1':'0')+'" data-tip="'+esc(tip)+'"'+
         ' title="'+esc(tip)+'">'+
         (isChosen?'<span class="talent-check">✓</span>':'')+
         (isActive?'<span class="talent-active-badge">AKTIV</span>':'')+
@@ -284,7 +297,10 @@ export function renderTalents(){
   box.innerHTML = html;
 
   box.querySelectorAll('.talent-node[data-talent]').forEach(btn => {
-    btn.addEventListener('click', () => chooseTalent(parseInt(btn.dataset.stufe,10), btn.dataset.talent));
+    btn.addEventListener('click', () => {
+      if(btn.dataset.pick === '1') chooseTalent(parseInt(btn.dataset.stufe,10), btn.dataset.talent);
+      else toast((btn.dataset.tip || '').replace(/\n+/g, ' · '));  // Touch: Erklärung zeigen
+    });
   });
   const respec = box.querySelector('#respecBtn');
   if(respec) respec.addEventListener('click', respecTalents);
@@ -307,13 +323,19 @@ function respecTalents(){
   const chosenCount = chosenTalentCount(state);
   if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
   if(getCoins() < RESPEC_COST){ toast('Nicht genug Münzen ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
-  if(!confirm('Alle Talente zurücksetzen für '+fmtBig(RESPEC_COST)+' Münzen? Die Punkte erhältst du zurück.')) return;
-  spendCoins(RESPEC_COST).catch(()=>{});
-  state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
-  state.character.talents = {};
-  saveState();
-  renderAll();
-  toast('♻️ Talente zurückgesetzt – '+chosenCount+' Punkte zurück.');
+  confirmDialog({
+    title:'Talente zurücksetzen?',
+    body:'Kostet 🪙 '+fmtBig(RESPEC_COST)+' Münzen. Du erhältst alle '+chosenCount+' Punkte zurück.',
+    emoji:'♻️', confirmText:'Zurücksetzen', cancelText:'Abbrechen',
+  }).then(ok => {
+    if(!ok) return;
+    spendCoins(RESPEC_COST).catch(()=>{});
+    state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
+    state.character.talents = {};
+    saveState();
+    renderAll();
+    toast('♻️ Talente zurückgesetzt – '+chosenCount+' Punkte zurück.');
+  });
 }
 function renderCharStats(t){
   const c = heroCombat(t);

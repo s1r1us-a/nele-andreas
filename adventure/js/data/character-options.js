@@ -10,6 +10,12 @@ export const HAIR_STYLES = [
   { id:'locken',        label:'Locken' },
   { id:'kahl',          label:'Glatze' },
 ];
+export const BEARD_STYLES = [
+  { id:'kein',   label:'Kein Bart' },
+  { id:'kurz',   label:'Kurz' },
+  { id:'mittel', label:'Mittel' },
+  { id:'lang',   label:'Lang' },
+];
 export const HAIR_COLORS = [
   { label:'Blond',   color:'#f5d04a' },
   { label:'Braun',   color:'#6b3f1d' },
@@ -36,4 +42,4 @@ export const EYE_COLORS = [
 ];
 export const SKIN_TONE = '#f0c9a8';  // Fallback für Altstände ohne skinTone
 export const EYE_DEFAULT = '#5b3a2e';
-export const DEFAULT_CHARACTER = { name:'', gender:'w', hairId:'lang', hairColor:'#f5d04a', skinTone:'#f3d3b3', eyeColor:'#5b3a2e', classId:'kaempfer' };
+export const DEFAULT_CHARACTER = { name:'', gender:'w', hairId:'lang', hairColor:'#f5d04a', beardId:'kein', beardColor:'#6b3f1d', skinTone:'#f3d3b3', eyeColor:'#5b3a2e', classId:'kaempfer' };

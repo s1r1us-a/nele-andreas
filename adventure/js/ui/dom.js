@@ -34,6 +34,44 @@ export function goldPop(x, y, text){
   document.body.appendChild(el);
   setTimeout(()=> el.remove(), 1000);
 }
+// Spielinterner Bestätigungs-Dialog (ersetzt natives confirm()). Baut ein
+// eigenes Overlay mit hohem z-index → liegt auch über offenen Modalen.
+// Gibt ein Promise<boolean> zurück (true = bestätigt). title/body sind HTML –
+// benutzergetragene Texte (z. B. Namen) müssen vom Aufrufer escaped werden.
+export function confirmDialog({ title, body='', emoji='⚠️',
+    confirmText='Bestätigen', cancelText='Abbrechen', danger=false } = {}){
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'cdlg-overlay';
+    ov.innerHTML =
+      '<div class="cdlg-card" role="alertdialog" aria-modal="true">'+
+        '<div class="cdlg-emoji">'+emoji+'</div>'+
+        '<div class="cdlg-title">'+(title||'')+'</div>'+
+        (body ? '<div class="cdlg-body">'+body+'</div>' : '')+
+        '<div class="cdlg-actions">'+
+          '<button class="btn ghost" data-act="cancel">'+cancelText+'</button>'+
+          '<button class="btn'+(danger?' danger':'')+'" data-act="ok">'+confirmText+'</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=> ov.classList.add('show'));
+    const done = val => {
+      document.removeEventListener('keydown', onKey);
+      ov.classList.remove('show');
+      setTimeout(()=> ov.remove(), 200);
+      resolve(val);
+    };
+    const onKey = e => {
+      if(e.key === 'Escape') done(false);
+      else if(e.key === 'Enter') done(true);
+    };
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', e => { if(e.target === ov) done(false); });
+    ov.querySelector('[data-act="cancel"]').addEventListener('click', ()=> done(false));
+    ov.querySelector('[data-act="ok"]').addEventListener('click', ()=> done(true));
+    ov.querySelector('[data-act="ok"]').focus();
+  });
+}
 let toastTimer = null;
 export function toast(msg){
   let el = $('#toast');

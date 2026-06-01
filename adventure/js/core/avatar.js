@@ -119,6 +119,10 @@ export function buildHeroSVG(character, tier, gear){
   const skin = c.skinTone || SKIN_TONE;
   const skinHi = shade(skin, 1.08), skinSh = shade(skin, 0.82);
   const eye = c.eyeColor || EYE_DEFAULT;
+  const beardId = c.beardId || 'kein';
+  const bc  = c.beardColor || hc;          // Bartfarbe (Standard: Haarfarbe)
+  const bcd = shade(bc, 0.68);             // Bart-Lowlight
+  const bch = shade(bc, 1.18);             // Bart-Glanz
   const t = Math.max(0, Math.min(3, tier|0));
   const outfit = TIER_OUTFIT[t] || TIER_OUTFIT[0];
   const trim   = TIER_TRIM[t]   || TIER_TRIM[0];
@@ -133,6 +137,8 @@ export function buildHeroSVG(character, tier, gear){
       `<stop offset="0" stop-color="${skinHi}"/><stop offset="1" stop-color="${skinSh}"/></radialGradient>`+
     `<linearGradient id="ha${uid}" x1="0" y1="0" x2="0" y2="1">`+
       `<stop offset="0" stop-color="${hch}"/><stop offset="0.5" stop-color="${hc}"/><stop offset="1" stop-color="${hcd}"/></linearGradient>`+
+    `<linearGradient id="bd${uid}" x1="0" y1="0" x2="0" y2="1">`+
+      `<stop offset="0" stop-color="${bch}"/><stop offset="0.55" stop-color="${bc}"/><stop offset="1" stop-color="${bcd}"/></linearGradient>`+
     `<linearGradient id="ou${uid}" x1="0" y1="0" x2="0" y2="1">`+
       `<stop offset="0" stop-color="${shade(outfit,1.16)}"/><stop offset="0.55" stop-color="${outfit}"/><stop offset="1" stop-color="${outfitSh}"/></linearGradient>`+
     `<linearGradient id="tr${uid}" x1="0" y1="0" x2="0" y2="1">`+
@@ -232,6 +238,23 @@ export function buildHeroSVG(character, tier, gear){
     `<path d="M100 84 Q104 91 99 93" stroke="${skinSh}" stroke-width="2" fill="none" stroke-linecap="round"/>`+   // Nase
     `<path d="M89 99 Q100 108 111 99" stroke="#b5566f" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;  // Mund
 
+  // ---- Bart (optional, über der Kieferpartie; Mund bleibt frei) -----
+  // Kopf cx=100 cy=78 r=34 → Kinn ~y112, Mund ~y99-108. Symmetrisch um x=100.
+  let beard = '';
+  if(beardId === 'kurz'){
+    beard = `<path d="M80 100 C84 112 90 120 100 121 C110 120 116 112 120 100 `+
+            `C113 106 107 107 100 107 C93 107 87 106 80 100 Z" fill="url(#bd${uid})"/>`;
+  } else if(beardId === 'mittel'){
+    beard = `<path d="M72 92 C74 108 86 122 100 125 C114 122 126 108 128 92 `+
+            `C120 100 112 103 100 103 C88 103 80 100 72 92 Z" fill="url(#bd${uid})"/>`+
+            `<path d="M88 97 Q100 102 112 97 Q100 100 88 97 Z" fill="${bcd}" opacity="0.85"/>`;  // Schnauzer
+  } else if(beardId === 'lang'){
+    beard = `<path d="M72 92 C74 110 83 124 88 135 C92 144 108 144 112 135 `+
+            `C117 124 126 110 128 92 C120 100 112 103 100 103 C88 103 80 100 72 92 Z" fill="url(#bd${uid})"/>`+
+            `<path d="M94 132 L100 150 L106 132 Z" fill="${bcd}" opacity="0.7"/>`+          // Spitze
+            `<path d="M88 97 Q100 102 112 97 Q100 100 88 97 Z" fill="${bcd}" opacity="0.85"/>`;  // Schnauzer
+  }
+
   // ---- Tier-Akzente -------------------------------------------------
   const aura = t>=3 ? `<ellipse cx="100" cy="175" rx="96" ry="150" fill="url(#au${uid})"/>` : '';
   const tierCape = t>=2
@@ -324,7 +347,7 @@ export function buildHeroSVG(character, tier, gear){
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
     defs + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
-    pauldronG + head + face + hairFront + helm + weaponG +
+    pauldronG + head + face + beard + hairFront + helm + weaponG +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
