@@ -9,7 +9,8 @@ import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
 import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
-import { powerOfBundle } from './items.js';
+import { powerOfBundle, rollItem } from './items.js';
+import { rarityByIndex } from '../data/rarities.js';
 import { buildBossSVG } from './boss-art.js';
 import { buildZoneBgSVG } from './zone-art.js';
 import { fmtBig } from '../ui/dom.js';
@@ -71,6 +72,27 @@ export function towerBossFor(floor){
     sprite: buildBossSVG({ spr, area: realArea, zone: floor + 40, mechColor }),
     bg:     buildZoneBgSVG(floor % 2 === 0 ? 2 : 4), // Höhle / Eis alternierend
   };
+}
+
+// ---- Turm-Loot ------------------------------------------------------
+// Belohnung pro geräumtem Stockwerk. Seltenheit & Gegenstandsstufe steigen mit
+// der Stockwerk-/Bossstärke. Jeder Client würfelt eigenständig für den lokalen
+// Spieler → jeder bekommt INDIVIDUELLEN Loot in den eigenen Spielstand.
+export function towerLootMinRarity(floor){
+  if(floor >= 15) return 5; // Mythisch
+  if(floor >= 9)  return 4; // Legendär
+  if(floor >= 4)  return 3; // Episch
+  if(floor >= 2)  return 2; // Selten
+  return 1;                 // Ungewöhnlich (Stockwerk 1)
+}
+export function rollTowerLoot(floor){
+  floor = Math.max(1, floor | 0);
+  let idx = towerLootMinRarity(floor);
+  // Aufstiegs-Chance: höhere Stockwerke geben öfter eine Stufe besser (bis Mythisch).
+  const up = Math.min(0.5, 0.05 * floor);
+  while(idx < 5 && Math.random() < up) idx++;
+  const ilvl = Math.max(1, Math.round(floor * 6));   // Itemlevel skaliert mit Stockwerk
+  return rollItem(floor, 0, { forceRarityKey: rarityByIndex(idx).key, minIlvl: ilvl });
 }
 
 // ---- Spieler-Stats aus Spielstand berechnen (ohne globalen State) -----
