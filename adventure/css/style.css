@@ -406,6 +406,12 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .shop-item:not(.locked):hover::before { content:'Verkaufen'; position:absolute; inset:0; border-radius:8px;
   background:rgba(212,168,75,.85); color:#1a1208; display:flex; align-items:center;
   justify-content:center; font-weight:700; font-size:12px; }
+.shop-expand-card { display:flex; align-items:center; gap:14px; padding:12px 14px;
+  background:var(--panel-2,#1a1626); border:1px solid var(--gold-dim); border-radius:12px; margin-top:6px; }
+.shop-expand-card .se-icon { font-size:38px; }
+.shop-expand-card .se-body { flex:1; }
+.shop-expand-card .se-name { font-weight:700; color:var(--gold-hi); }
+.shop-expand-card .se-desc { color:var(--txt-dim); font-size:12px; margin-top:2px; }
 .gold-pop { position:fixed; z-index:95; pointer-events:none; color:var(--gold-hi);
   font-family:'Press Start 2P',monospace; font-size:14px; text-shadow:0 2px 3px #000;
   animation:goldpop 1s ease forwards; }
@@ -711,6 +717,13 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .arena-result.win .big { color:var(--gold-hi); }
 .arena-result.lose .big { color:#e23b3b; }
 .arena-result .sub { font-size:15px; color:var(--txt); margin-top:8px; font-family:'Quicksand',sans-serif; }
+.arena-drop-head { margin-top:14px; font-family:'Quicksand',sans-serif; font-weight:700;
+  font-size:13px; color:var(--gold-hi); }
+.arena-result .arena-drop { margin-top:6px; max-width:240px; font-family:'Quicksand',sans-serif;
+  font-weight:600; }
+.arena-result .arena-drop .rc-slot { font-size:11px; color:var(--txt-dim); margin-bottom:4px; }
+.arena-drop-note { margin-top:14px; max-width:280px; font-family:'Quicksand',sans-serif;
+  font-weight:600; font-size:13px; color:var(--txt-dim); }
 .arena-controls { display:flex; gap:10px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
 
 /* ---- Kampflog & DPS-Meter (#26) ------------------------------- */

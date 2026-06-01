@@ -8,7 +8,10 @@ export const SAVE_VERSION = 9;            // erhöht bei Strukturänderungen →
 export const MAX_CHARACTERS = 5;          // max. Charaktere je Spieler (Roster)
 export const RESPEC_COST = 5000;          // Coinkosten zum Zurücksetzen der Talente
 export const VARIANTS = 6;                // Sprite-Varianten je Slot (= Item-Typen je Slot)
-export const INV_SLOTS = 30;             // Inventar-Obergrenze (von 20 erhöht, mehr Grind-Platz)
+export const INV_SLOTS = 15;             // Basis-Inventar (Ausgangsgröße; per Händler erweiterbar)
+export const INV_SLOTS_MAX = 50;         // harte Obergrenze inkl. gekaufter Erweiterungen
+export const INV_EXPAND_STEP = 5;        // Inventarplätze pro Kauf beim Händler
+export const INV_EXPAND_BASE_COST = 50000; // Kosten der 1. Erweiterung; jede weitere +50000
 export const HEAL_PCT = 0.5;             // Heiltrank stellt 50 % der maximalen HP wieder her
 export const POTION_BASE_CHANCE = 0.20;  // Basis-Chance auf einen Heiltrank je Expedition
 export const ITEMS_PER_EXPEDITION = 2;   // genau zwei Items pro Abenteuer

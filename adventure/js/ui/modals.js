@@ -11,7 +11,6 @@ import { GENDERS, HAIR_STYLES, HAIR_COLORS, BEARD_STYLES, SKIN_TONES, EYE_COLORS
 import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf } from '../data/classes.js';
 import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances } from '../core/loot.js';
-import { INV_SLOTS } from '../data/tuning.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters, createCharacter,
@@ -19,7 +18,8 @@ import { state, saveState, listCharacters, createCharacter,
 import { recomputeTotals, heroTier } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
-         isLocked, toggleLock, canEquip, equipBlockReason } from '../core/items.js';
+         isLocked, toggleLock, canEquip, equipBlockReason, invCapacity,
+         ensureItemSprite } from '../core/items.js';
 import { startExpedition, expeditionActive } from '../core/expedition.js';
 import { startBossFight, updatePotionBtn,
          openDuelArena, applyDuelSnapshot, resolveArenaOpponentLeft } from '../core/combat.js';
@@ -30,7 +30,7 @@ import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
          loadGuestSave, resolveActiveSlot } from '../core/duel.js';
-import { $, fmtVal, fmtBig, IS_TOUCH, toast, confirmDialog } from './dom.js';
+import { $, fmtVal, fmtBig, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { renderAll, bossDifficulty } from './render.js';
 
@@ -121,6 +121,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
   const equipOk = canEquip(item);
   const blockLine = equipOk ? '' :
     '<div class="preview-hint" style="color:#ff6b6b">✋ '+equipBlockReason(item)+'</div>';
+  const price = sellPrice(item);
   openModal('<h2 style="color:'+r.color+'">'+item.name+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
     (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
@@ -128,42 +129,20 @@ export function openItemPreview(item, fromSlotKey, backFn){
     '<div class="preview-stats">'+body+'</div>'+procLine+blockLine+
     '<div class="preview-actions">'+
       '<button class="btn" id="previewEquip"'+(equipOk?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Anlegen</button>'+
+      '<button class="btn ghost" id="previewSell"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+'>💰 Verkaufen (🪙 '+fmtBig(price)+')</button>'+
       '<button class="btn ghost" id="previewLock">'+(locked?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
     '</div>');
   if(equipOk) modal().querySelector('#previewEquip').addEventListener('click', ()=>{ equip(item, target); renderAll(); closeModal(); });
-  modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn); });
-  modal().querySelector('#previewCancel').addEventListener('click', ()=>{ backFn ? backFn() : closeModal(); });
-}
-
-// ---- Verkaufs-Modal (v.a. Touch) -----------------------------------
-export function openSellModal(item){
-  hideTooltip();
-  const r = rarityOf(item.rarity);
-  const sLbl = item.statType==='armor' ? 'Rüstung' : 'Schaden';
-  let stats = '<div class="diff-row"><span class="diff-label">'+sLbl+'</span>'+
-    '<span class="diff-new '+item.statType+'">+'+item.stat+'</span></div>';
-  for(const k of AFFIX_KEYS){
-    const v = item.affixes && item.affixes[k];
-    if(v == null) continue;
-    stats += '<div class="diff-row"><span class="diff-label">'+AFFIX_DEFS[k].label+'</span>'+
-      '<span class="diff-new">+'+fmtVal(v, AFFIX_DEFS[k].pct)+'</span></div>';
-  }
-  const price = sellPrice(item);
-  openModal('<h2 style="color:'+r.color+'">'+item.name+'</h2>'+
-    '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
-    '<div class="preview-stats">'+stats+'</div>'+
-    '<div class="preview-hint" style="margin-top:12px;">Verkaufen für 🪙 '+fmtBig(price)+' Coins?</div>'+
-    '<div class="preview-actions">'+
-      '<button class="btn" id="sellConfirm">Verkaufen</button>'+
-      '<button class="btn ghost" id="sellLock">'+(isLocked(item.id)?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
-      '<button class="btn ghost" id="sellCancel">Abbrechen</button>'+
-    '</div>');
-  modal().querySelector('#sellConfirm').addEventListener('click', ()=>{
+  if(!locked) modal().querySelector('#previewSell').addEventListener('click', async ()=>{
+    const ok = await confirmDialog({ title:'Verkaufen?', emoji:'🪙',
+      body: item.name+'<br>für 🪙 <b>'+fmtBig(price)+'</b> Coins verkaufen?',
+      confirmText:'Verkaufen', cancelText:'Abbrechen' });
+    if(!ok) return;
     const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Coins');
   });
-  modal().querySelector('#sellLock').addEventListener('click', ()=>{ toggleLock(item.id); openSellModal(item); });
-  modal().querySelector('#sellCancel').addEventListener('click', closeModal);
+  modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn); });
+  modal().querySelector('#previewCancel').addEventListener('click', ()=>{ backFn ? backFn() : closeModal(); });
 }
 
 // ---- Chancen-Vorschau vor dem Abenteuer-Start ----------------------
@@ -181,11 +160,11 @@ export function previewExpedition(durKey){
       '<span class="chance-pct">'+pct+'%</span></div>';
   }
   // Inventar-Platz VOR dem Start prüfen (Expedition bringt 2 Items mit).
-  const free = INV_SLOTS - state.inventory.length;
+  const free = invCapacity() - state.inventory.length;
   const tooFull = free < 2;
   const warn = tooFull
     ? '<div class="exp-warn">🎒 Zu wenig Platz im Inventar – du brauchst <b>2 freie Plätze</b> '+
-      '(aktuell '+Math.max(0,free)+'). Verkaufe erst etwas im Shop.</div>'
+      '(aktuell '+Math.max(0,free)+'). Verkaufe erst etwas im Inventar.</div>'
     : '';
   openModal('<h2>'+exp.icon+' '+exp.label+'</h2>'+
     '<div class="sub">Dein Held bringt genau <b>2 Gegenstände</b> mit. Chancen je Seltenheit:</div>'+
@@ -323,6 +302,7 @@ export async function openOtherProfile(){
   for(const sk of SLOT_KEYS){
     const it = (slot.equipped || {})[sk];
     if(it){
+      ensureItemSprite(it);   // Gast-Items haben kein Sprite (stripItem beim Speichern)
       const r = rarityOf(it.rarity);
       gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-op="'+sk+'">'+
         '<img src="'+it.sprite+'" alt="'+(it.name||'')+'"></div>';

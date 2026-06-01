@@ -14,6 +14,7 @@ import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc } from './avatar.js';
 import { rollItem, inventoryFull, addLog, recordDrop } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
+import { affixLinesHTML } from '../ui/tooltip.js';
 import { renderAll } from '../ui/render.js';
 import { awardCoins, spendCoins } from './coins.js';
 import { checkAdventureBadges } from './badges.js';
@@ -27,6 +28,23 @@ const arenaOverlay = () => $('#arenaOverlay');
 // Frühe Bosse ~100, späte mehrere Tausend; Endlos-Stufen wachsen weiter. Eine
 // leicht justierbare Stellschraube. Farmkills geben hiervon 30 % (FARM.coinMult).
 function bossCoinReward(i){ return Math.round(100 + i*50); }
+
+// Beute-Karte für den Sieg-Bildschirm: zeigt das gedroppte Item klar mit Icon,
+// Seltenheit, Slot, Primärwert und Affixen (statt nur dem Namen im Fließtext).
+export function dropCardHTML(drop){
+  if(!drop) return '';
+  const r = rarityOf(drop.rarity);
+  const sLbl = drop.statType==='armor' ? 'Rüstung' : 'Schaden';
+  return '<div class="arena-drop-head">🎁 Beute erhalten:</div>'+
+    '<div class="reward-card arena-drop" style="--rc:'+r.color+'">'+
+      '<img src="'+drop.sprite+'" alt="'+(drop.name||'')+'">'+
+      '<div class="rc-name" style="color:'+r.color+'">'+drop.name+'</div>'+
+      '<div class="rc-slot">'+r.name+' · '+(SLOTS[drop.slotKey]?SLOTS[drop.slotKey].name:'')+
+        ' · Gegenstandsstufe '+drop.ilvl+'</div>'+
+      '<div class="tt-stat '+drop.statType+'">+'+drop.stat+' '+sLbl+'</div>'+
+      affixLinesHTML(drop)+
+    '</div>';
+}
 
 export function setCombatSpeed(v){ combatSpeed = v; }
 export function getCombatSpeed(){ return combatSpeed; }
@@ -824,14 +842,17 @@ function endFight(fight, win){
     const xpGain = gainXp(xpBase);
 
     // Garantierter Drop (#15): Seltenheit steigt mit Boss-Index
-    let bonusTxt = '';
+    let dropBlock = '';
     let rIdx = guaranteedRarityIndex(bossIndex);
     if(isFarm) rIdx = Math.max(3, rIdx - FARM.dropRarityDrop);
     if(!inventoryFull()){
       const rk = rarityByIndex(rIdx).key;
       const drop = rollItem(bossIndex, 0, { slots: boss.loot && boss.loot.slots, forceRarityKey: rk, minIlvl: bossIndex*5 });
       state.inventory.push(drop); addLog(drop); recordDrop(drop);
-      bonusTxt = ' + '+rarityOf(rk).name+' Beute: '+drop.name;
+      dropBlock = dropCardHTML(drop);
+    } else {
+      dropBlock = '<div class="arena-drop-note">🎒 Inventar voll – kein Gegenstand erhalten. '+
+        'Mach erst Platz im Inventar.</div>';
     }
 
     let coinTxt = '';
@@ -862,8 +883,9 @@ function endFight(fight, win){
 
     res.className = 'arena-result win show';
     res.innerHTML = '<div class="big">⚔️ Sieg!</div>'+
-      '<div class="sub">'+boss.name+' besiegt! ⭐ '+fmtBig(xpGain)+' XP'+bonusTxt+
-      (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+coinTxt+'</div>';
+      '<div class="sub">'+boss.name+' besiegt! ⭐ '+fmtBig(xpGain)+' XP'+
+      (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+coinTxt+'</div>'+
+      dropBlock;
     saveState();
     checkAdventureBadges();   // Boss-/Zonen-/Sammel-Badges prüfen
   } else {

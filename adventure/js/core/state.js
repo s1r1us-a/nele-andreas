@@ -46,6 +46,7 @@ export function freshState(){
     firstClears:{},        // bossIndex -> true (#16)
     killCounts:{},         // bossIndex -> Anzahl Siege
     lockedIds:[],          // gesperrte Item-Ids (#24)
+    extraSlots:0,          // beim Händler gekaufte Zusatz-Inventarplätze (Vielfaches von 5)
     stats: blankStats(),   // Statistiken (#28)
     settings:{ seenOnboarding:false }, // (#29)
   };
@@ -96,6 +97,7 @@ function migrateSlot(s){
   if(!s.firstClears || typeof s.firstClears !== 'object') s.firstClears = {};
   if(!s.killCounts || typeof s.killCounts !== 'object') s.killCounts = {};
   if(!Array.isArray(s.lockedIds)) s.lockedIds = [];
+  if(typeof s.extraSlots !== 'number') s.extraSlots = 0;
   if(!s.stats || typeof s.stats !== 'object') s.stats = blankStats();
   else { const b = blankStats(); s.stats = Object.assign(b, s.stats);
          s.stats.drops = Object.assign(b.drops, s.stats.drops||{}); }
