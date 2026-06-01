@@ -359,7 +359,8 @@ export function abilityEffectShort(a){
   switch(a.kind){
     case 'heal':      return '+'+pct(a.healPct)+'% HP';
     case 'burst':     return pct(a.burstMult)+'% Schaden';
-    case 'drain':     return pct(a.burstMult)+'% Schaden +Lebensraub';
+    case 'drain':     return a.dur ? pct(a.burstMult)+'% Schaden/s +Lebensraub'+s
+                                   : pct(a.burstMult)+'% Schaden +Lebensraub';
     case 'critBoost': return '+'+pct(a.critBonus)+'% Krit'+s;
     case 'dmgBoost':  return '+'+pct(a.dmgBonus)+'% Schaden'+s;
     case 'dmgReduce': return '−'+pct(a.dmgReduce)+'% erlittener Schaden'+s;
@@ -542,6 +543,7 @@ function resetAbilityVisuals(){
   $('#heroSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','desat');
   $('#bossSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','desat');
   removeShieldDome();
+  stopDrainChannel();
   stopAbilityTicker();
 }
 
@@ -557,6 +559,9 @@ function applyAbilityEffect(f, ab){
     mechFloat('hero', '➕ +'+fmtBig(heal), '#37d67a');
     addCombatLog(f, ab.icon+' '+ab.name+': +'+fmtBig(heal)+' HP', '#37d67a');
   } else if(ab.kind === 'burst' || ab.kind === 'drain'){
+    // Kanalisierter Seelenraub (Hexer-Grundfähigkeit): Lebensentzug über mehrere
+    // Sekunden statt eines Einzeltreffers. Talent-Drains (ohne `dur`) bleiben sofort.
+    if(ab.kind === 'drain' && ab.dur){ startDrainChannel(f, ab); return; }
     const dmg = Math.max(1, Math.round(f.heroAtk * ab.burstMult));
     f.bossHp = Math.max(0, f.bossHp - dmg);
     f.dmgDealt += dmg;
@@ -774,6 +779,67 @@ function vfxDrain(fromId, toId){
   flashSpriteClass(toId, 'aura-blood', 760);
   spawnParticles(toId, { count:12, glyph:'🩸', color:'#e0466e', spread:40, rise:24 });
   bigShake();
+}
+
+// Kanalisierter Seelenraub: pro Sekunde `burstMult` Schaden am Boss + Heilung
+// in gleicher Höhe, über die gesamte `dur`. Der Seelenstrahl steht durchgehend,
+// solange der Effekt läuft – Animation und Wirkung enden gemeinsam.
+let _drainTimer = null, _drainBeamTimer = null;
+function startDrainChannel(f, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
+  startDrainBeam('bossSprite', 'heroSprite', ab.dur);
+  let i = 0;
+  const tick = () => {
+    _drainTimer = null;
+    if(currentFight !== f || f.over){ stopDrainChannel(); return; }
+    const dmg = Math.max(1, Math.round(f.heroAtk * ab.burstMult));
+    f.bossHp = Math.max(0, f.bossHp - dmg);
+    f.dmgDealt += dmg;
+    const heal = Math.round(dmg * (f.healDebuff || 1));
+    f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+    mechFloat('boss', '💥 -'+fmtBig(dmg), '#ffd24a');
+    mechFloat('hero', '🩸 +'+fmtBig(heal), '#e0466e');
+    spawnParticles('heroSprite', { count:6, glyph:'🩸', color:'#e0466e', spread:38, rise:22 });
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden (+Heilung)', '#ffd24a');
+    if(f.bossHp <= 0){ stopDrainChannel(); endFight(f, true); return; }
+    if(++i < ticks) _drainTimer = setTimeout(tick, tickMs / combatSpeed);
+    else stopDrainChannel();
+  };
+  // Erster Tick am Ende der ersten Sekunde – so deckt sich das letzte Tick mit
+  // dem Strahl-Ende (4 Ticks bei 4 s Dauer).
+  _drainTimer = setTimeout(tick, tickMs / combatSpeed);
+}
+function stopDrainChannel(){
+  if(_drainTimer){ clearTimeout(_drainTimer); _drainTimer = null; }
+  stopDrainBeam();
+}
+// Stehender Seelenstrahl Boss→Held für die volle Kanal-Dauer (pulsierend).
+function startDrainBeam(fromId, toId, dur){
+  stopDrainBeam();
+  const a = anchorOf(fromId), t = anchorOf(toId);
+  const dx = t.x - a.x, dy = t.y - a.y;
+  const len = Math.max(1, Math.hypot(dx, dy));
+  const ang = Math.atan2(dy, dx) * 180/Math.PI;
+  const real = dur / combatSpeed;
+  const b = document.createElement('div');
+  b.className = 'vfx-beam drain-beam'; b.id = 'drainBeam';
+  b.style.left = a.x+'px'; b.style.top = a.y+'px';
+  b.style.width = len+'px'; b.style.transform = 'rotate('+ang+'deg)';
+  b.style.setProperty('--beam-col', '#c0306b');
+  for(let k = 0; k < 4; k++){
+    const o = document.createElement('div'); o.className = 'vfx-beam-orb';
+    o.style.animationDelay = (k*220)+'ms'; b.appendChild(o);
+  }
+  $('#dmgLayer').appendChild(b);
+  flashSpriteClass(fromId, 'desat', real);
+  flashSpriteClass(toId, 'aura-blood', real);
+  _drainBeamTimer = setTimeout(stopDrainBeam, real + 120);
+}
+function stopDrainBeam(){
+  if(_drainBeamTimer){ clearTimeout(_drainBeamTimer); _drainBeamTimer = null; }
+  const b = $('#drainBeam'); if(b) b.remove();
 }
 
 export function toggleSpeed(){

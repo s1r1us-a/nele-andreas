@@ -405,8 +405,13 @@ function applyAbility(fight, slot, abilityId){
     fight.groupDmgReduceUntil = now + ab.dur;
     fight.groupDmgReducePct   = ab.dmgReduce || 0;
     addLog(fight, '🛡️ Schildwall – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff');
+  } else if(ab.kind === 'drain' && ab.dur){
+    // Kanalisierter Seelenraub (Hexer-Grundfähigkeit): Lebensentzug am Boss pro
+    // Sekunde + Heilung in gleicher Höhe, über die volle Dauer.
+    startTowerDrain(fight, slot, ab);
+    return;
   } else if(ab.kind === 'drain' || ab.kind === 'burst'){
-    // Hexer-Grundfähigkeit (Seelenraub) & burst-Aktive: Sofortschaden am Boss.
+    // burst-Aktive & sofortige Drain-Talente: Sofortschaden am Boss.
     const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
     const dmg = Math.max(1, Math.round(atk * (ab.burstMult || 2)));
     fight.bossHp = Math.max(0, fight.bossHp - dmg);
@@ -419,6 +424,30 @@ function applyAbility(fight, slot, abilityId){
     if(fight.bossHp <= 0) fight.over = true;
   }
   syncFight(fight);
+}
+
+// Host-seitiger Kanal des Seelenraubs im Turm: pro Sekunde Schaden am Boss +
+// Heilung des wirkenden Slots, über die volle Dauer. Tickt unabhängig von der
+// regulären Kampfschleife und reicht jeden Tick per syncFight an beide Clients.
+function startTowerDrain(fight, slot, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
+  syncFight(fight); // Cooldown sofort an die Clients propagieren.
+  let i = 0;
+  const tick = () => {
+    if(fight.over || _fight !== fight) return;
+    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
+    const dmg = Math.max(1, Math.round(atk * (ab.burstMult || 2)));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg);
+    fight.dmgDealt += dmg;
+    if(slot === 'front') fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + dmg);
+    else                 fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + dmg);
+    addLog(fight, ab.icon+' '+ab.name+': '+dmg+' Schaden (+Heilung)', '#ffd24a');
+    if(fight.bossHp <= 0) fight.over = true;
+    syncFight(fight);
+    if(!fight.over && ++i < ticks) setTimeout(tick, tickMs);
+  };
+  setTimeout(tick, tickMs);
 }
 
 function scheduleExchange(fight){

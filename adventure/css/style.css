@@ -655,6 +655,12 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   border-radius:50%; background:radial-gradient(circle,#fff,var(--beam-col,#c0392b));
   box-shadow:0 0 12px 3px var(--beam-col,#c0392b); animation:vfxBeamOrb .8s linear forwards; }
 @keyframes vfxBeamOrb { 0%{left:100%; opacity:0;} 15%{opacity:1;} 90%{opacity:1;} 100%{left:0; opacity:0;} }
+/* Stehender Seelenstrahl des Hexers – läuft die ganze Kanal-Dauer (Seelenraub). */
+.vfx-beam.drain-beam { opacity:1; animation:drainBeamPulse .5s ease-in-out infinite alternate; }
+@keyframes drainBeamPulse {
+  0%   { filter:brightness(1);   box-shadow:0 0 14px 4px var(--beam-col,#c0306b); }
+  100% { filter:brightness(1.7); box-shadow:0 0 24px 8px var(--beam-col,#c0306b); } }
+.vfx-beam.drain-beam .vfx-beam-orb { animation:vfxBeamOrb .8s linear infinite; }
 /* Heil-Lichtsäule. */
 .vfx-pillar { position:absolute; width:64px; height:220px; transform:translate(-50%,-78%);
   pointer-events:none; z-index:8; border-radius:32px 32px 18px 18px;
@@ -676,7 +682,9 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .combatant.desat { filter:grayscale(.85) brightness(.7); transition:filter .2s; }
 @media(prefers-reduced-motion: reduce){
   .arena-flash.on, .arena-stage.shake-hard, .vfx-meteor, .vfx-beam, .vfx-beam-orb,
+  .vfx-beam.drain-beam, .vfx-beam.drain-beam .vfx-beam-orb,
   .combatant.aura-fire, .combatant.aura-crit, .combatant.aura-blood, .combatant.aura-shadow { animation:none; }
+  .vfx-beam.drain-beam { opacity:1; }
 }
 
 /* Fähigkeits-Leiste (mehrere Kampf-Knöpfe). */

@@ -245,6 +245,9 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
     side.healTs = now;
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': +' + fmtBig(heal) + ' HP', '#37d67a');
   } else if(ab.kind === 'burst' || ab.kind === 'drain'){
+    // Kanalisierter Seelenraub: Lebensentzug pro Sekunde über die volle Dauer.
+    // Jeder Tick setzt drainTs neu → der Strahl wird auf den Clients erneut gespielt.
+    if(ab.kind === 'drain' && ab.dur){ startDuelDrain(fight, role, side, opp, name, ab); return; }
     const dmg = Math.max(1, Math.round(side.atk * ab.burstMult));
     opp.hp -= dmg; fight.dmgDealt += dmg;
     side.burstTs = now; side.burstMagic = side.magic ? 1 : 0;
@@ -270,6 +273,34 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
     side.buffs.lifesteal = { until: now + ab.dur, val: ab.lifestealBonus };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.lifestealBonus*100) + '% Lebensraub!', '#e0466e');
   }
+}
+
+// Host-seitiger Kanal des Seelenraubs: pro Sekunde Schaden am Gegner + Heilung
+// in gleicher Höhe, über die gesamte Dauer. Reicht jeden Tick per syncDuel weiter.
+function startDuelDrain(fight, role, side, opp, name, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
+  let i = 0;
+  const tick = () => {
+    if(fight.over || _fight !== fight || side.hp <= 0) return;
+    const now = Date.now();
+    const dmg = Math.max(1, Math.round(side.atk * ab.burstMult));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.hp = Math.min(side.maxHp, side.hp + dmg);
+    side.drainTs = now; side.burstTs = now; side.burstMagic = side.magic ? 1 : 0;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden (+Heilung)', '#ffd24a');
+    if(opp.hp <= 0){
+      opp.hp = 0; fight.over = true; fight.winner = role;
+      const wname = role === 'host' ? fight.hostName : fight.guestName;
+      logLine(fight, '🏆 ' + wname + ' gewinnt das Duell!', '#ffd24a');
+      clearTimeout(_timer);
+      fight.events = []; syncDuel(fight, true);
+      return;
+    }
+    fight.events = []; syncDuel(fight, false);
+    if(++i < ticks) setTimeout(tick, tickMs);
+  };
+  setTimeout(tick, tickMs);
 }
 
 function schedule(fight){
