@@ -171,7 +171,7 @@ function exchange(fight){
     for(const pr of fight.procs){
       if(Math.random() >= pr.chance) continue;
       if(pr.type==='blitz'){ const ed = Math.round(pr.value); fight.bossHp = Math.max(0, fight.bossHp-ed); fight.dmgDealt+=ed; mechFloat('boss','⚡-'+ed,'#7fd0ff'); }
-      else if(pr.type==='lebensquell'){ fight.heroHp = Math.min(fight.heroMaxHp, fight.heroHp + pr.value); mechFloat('hero','💚+'+pr.value,'#37d67a'); }
+      else if(pr.type==='lebensquell'){ const lq = Math.round(pr.value * fight.healDebuff); fight.heroHp = Math.min(fight.heroMaxHp, fight.heroHp + lq); mechFloat('hero','💚+'+lq,'#37d67a'); }
       else if(pr.type==='zorn'){ fight.zornTurns = Math.max(fight.zornTurns, pr.value); mechFloat('hero','🔆 Zorn','#ffd24a'); }
     }
     // Boss-Dornen reflektieren
@@ -455,7 +455,7 @@ export function useAbility(){
   const ab = f.ability;
   f.abilityCdUntil = Date.now() + ab.cd;
   if(ab.id === 'heilkreis'){
-    const heal = Math.round(f.heroMaxHp * ab.healPct);
+    const heal = Math.round(f.heroMaxHp * ab.healPct * f.healDebuff);
     f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
     updateHpBars(f);
     spawnHealCircle('heroSprite');
