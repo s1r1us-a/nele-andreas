@@ -169,9 +169,11 @@
 
 </div><!-- /container -->
 
+<script type="module" src="dp-badge-notify.js"></script>
 <script type="module">
-import { initAuth, displayName as getDisplayName, db, ref, update, onValue }
+import { initAuth, displayName as getDisplayName, db, ref, update, onValue, get, set }
   from './adventure/js/core/firebase.js';
+import { grantDammerpfadBadges } from './dammerpfad-badges.js';
 import { loadSave } from './adventure/js/core/state.js';
 import {
   computePlayerStats, towerBossFor,
@@ -962,6 +964,11 @@ function removeShieldDome(){ const d = $('shieldDome'); if(d) d.remove(); }
 // ---- Ergebnis ----
 function showResult(won, floor){
   if($('resultOverlay').classList.contains('show')) return;
+  // Turm-Badges vergeben: erreichtes Stockwerk = geräumtes Stockwerk.
+  if(won && myKey){
+    grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
+      userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
+  }
   $('resultEmoji').textContent = won ? '🏆' : '💀';
   $('resultTitle').textContent = won ? 'Sieg!' : 'Niederlage';
   $('resultSub').textContent   = won

@@ -2896,6 +2896,7 @@
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { contributeToTopf } from './savings-helper.js';
   import { awardXp, XP_VALUES } from './xp-helper.js';
+  import { DAMMERPFAD_BADGES } from './dammerpfad-badges.js';
   import './level-up-feedback.js';
   const app = initializeApp({
     apiKey: "AIzaSyDSkijSdMeV4WcsWGGXcQjVPwEvzDCZvW8",
@@ -5565,7 +5566,7 @@
     const name  = document.getElementById('activeBadgeName');
     pill.classList.remove('rarity-bronze', 'rarity-common', 'rarity-rare', 'rarity-legendary', 'rarity-mythic');
     if (!userEquippedBadge) { pill.style.display = 'none'; return; }
-    const b = [...ALL_BADGES, ...SLOT_BADGES].find(x => x.id === userEquippedBadge);
+    const b = [...ALL_BADGES, ...SLOT_BADGES, ...DAMMERPFAD_BADGES].find(x => x.id === userEquippedBadge);
     if (!b) { pill.style.display = 'none'; return; }
     emoji.textContent = b.emoji;
     name.textContent  = b.name;

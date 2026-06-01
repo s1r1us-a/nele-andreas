@@ -650,6 +650,27 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   transition:transform .15s,box-shadow .15s; border:none; cursor:pointer; }
 .tower-btn:hover { transform:translateY(-2px); box-shadow:0 7px 24px rgba(120,30,180,.6); }
 .tower-sub { font-size:12px; color:var(--txt-mute); margin-top:6px; }
+/* PvP-/Duell-Button (jetzt unter dem Turm-Button statt im Header) */
+.duel-btn { display:inline-block; margin-top:12px; background:linear-gradient(135deg,#7a1d2e,#c0392b);
+  color:#ffe1de; font-size:14px; padding:11px 22px; border-radius:10px; font-weight:700;
+  letter-spacing:.02em; border:none; cursor:pointer; box-shadow:0 4px 16px rgba(192,57,43,.4);
+  transition:transform .15s, box-shadow .15s; }
+.duel-btn:hover { transform:translateY(-2px); box-shadow:0 7px 22px rgba(192,57,43,.55); }
+
+/* Read-only Profil-Ansicht des anderen Spielers */
+.op-head { display:flex; gap:16px; align-items:center; background:#0d0a13;
+  border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:6px; }
+.op-avatar { width:84px; height:134px; flex:none; object-fit:contain;
+  filter:drop-shadow(0 4px 10px #000); }
+.op-meta { text-align:left; }
+.op-name { font-family:'Cinzel',serif; font-weight:700; font-size:19px; color:var(--gold-hi); }
+.op-cls { color:var(--txt-dim); font-size:14px; margin:2px 0 6px; }
+.op-lvl { font-size:13px; color:var(--txt); }
+.op-sub { margin:16px 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.5px;
+  color:var(--txt-mute); }
+.op-gear .op-empty { display:flex; align-items:center; justify-content:center; opacity:.35;
+  font-size:24px; border-style:dashed; }
+.op-cell { cursor:help; }
 .arena-result { position:absolute; inset:0; display:none; align-items:center;
   justify-content:center; flex-direction:column; background:rgba(0,0,0,.55);
   font-family:'Cinzel',serif; font-weight:900; text-align:center; padding:16px; }

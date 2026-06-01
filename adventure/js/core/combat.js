@@ -16,6 +16,7 @@ import { rollItem, inventoryFull, addLog, recordDrop } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
 import { renderAll } from '../ui/render.js';
 import { awardCoins, spendCoins } from './coins.js';
+import { checkAdventureBadges } from './badges.js';
 
 let combatSpeed = 1, combatTimer = null;
 export let currentFight = null;
@@ -814,6 +815,7 @@ function endFight(fight, win){
       '<div class="sub">'+boss.name+' besiegt! ⭐ '+fmtBig(xpGain)+' XP'+bonusTxt+
       (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+firstTxt+'</div>';
     saveState();
+    checkAdventureBadges();   // Boss-/Zonen-/Sammel-Badges prüfen
   } else {
     gainXp(Math.round(boss.recPower * 0.6 * 0.15));
     saveState();
@@ -992,6 +994,7 @@ function endDuel(f, winner, me){
                else    state.stats.duelLosses = (state.stats.duelLosses||0)+1; }
   }
   saveState();
+  checkAdventureBadges();   // PvP-Badges prüfen
 
   const res = $('#arenaResult');
   if(draw){
