@@ -12,9 +12,10 @@
    ===================================================================== */
 import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
-import { defaultTypeKey, typeOf, itemDisplayName } from '../data/itemTypes.js';
+import { defaultTypeKey, typeOf, itemDisplayName, materialOf } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
+import { CLASS_BY_ID } from '../data/classes.js';
 import { db, ref, get, set, remove } from './firebase.js';
 
 export let state = null;        // aktiver Slot (flacher Spielstand)
@@ -59,6 +60,19 @@ function freshRoster(){
 // Defensive Feld-Ergänzung eines einzelnen Slots (ohne Versions-Reset – der
 // passiert auf Roster-Ebene). Härtet gegen RTDB-Serialisierung (null/leere
 // Container gehen beim Schreiben verloren und werden hier rekonstruiert).
+// Tragbarkeits-Check für die Migration (entspricht canEquip in items.js,
+// arbeitet aber direkt mit dem Klassen-Objekt statt dem globalen State).
+function unwearableForClass(item, cls){
+  if(!item || !cls) return false;
+  if(item.slotKey === 'schild') return cls.id !== 'verteidiger';
+  if(item.slotKey === 'waffe'){
+    const isStaff = materialOf(item) === 'zauberstab';
+    return cls.damageSchool === 'magisch' ? !isStaff : isStaff;
+  }
+  const mat = materialOf(item);
+  if(!mat) return false;
+  return !(cls.allowedMaterials || []).includes(mat);
+}
 function migrateSlot(s){
   if(typeof s.zone !== 'number') s.zone = 0;
   if(typeof s.gold !== 'number') s.gold = 0;
@@ -112,6 +126,16 @@ function migrateSlot(s){
     }
   }
   for(let i=0;i<s.zone;i++){ if(!s.firstClears[i]) s.firstClears[i] = true; }
+  // Klassen-Regel-Migration: nach der Tragbarkeits-Verschärfung (nur Verteidiger
+  // → Schild, magische Klassen → nur Zauberstäbe, physische → nur phys. Waffen)
+  // jetzt unzulässige, angelegte Items sicher zurück ins Inventar legen.
+  const cls = s.character && CLASS_BY_ID[s.character.classId];
+  if(cls){
+    for(const k of Object.keys(s.equipped)){
+      const it = s.equipped[k];
+      if(it && unwearableForClass(it, cls)){ s.inventory.push(it); s.equipped[k] = null; }
+    }
+  }
   s.version = SAVE_VERSION;
   return s;
 }
