@@ -717,6 +717,13 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .arena-result.win .big { color:var(--gold-hi); }
 .arena-result.lose .big { color:#e23b3b; }
 .arena-result .sub { font-size:15px; color:var(--txt); margin-top:8px; font-family:'Quicksand',sans-serif; }
+.arena-drop-head { margin-top:14px; font-family:'Quicksand',sans-serif; font-weight:700;
+  font-size:13px; color:var(--gold-hi); }
+.arena-result .arena-drop { margin-top:6px; max-width:240px; font-family:'Quicksand',sans-serif;
+  font-weight:600; }
+.arena-result .arena-drop .rc-slot { font-size:11px; color:var(--txt-dim); margin-bottom:4px; }
+.arena-drop-note { margin-top:14px; max-width:280px; font-family:'Quicksand',sans-serif;
+  font-weight:600; font-size:13px; color:var(--txt-dim); }
 .arena-controls { display:flex; gap:10px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
 
 /* ---- Kampflog & DPS-Meter (#26) ------------------------------- */
