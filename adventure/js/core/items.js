@@ -252,6 +252,32 @@ export function equipBlockReason(item){
   }
   return cls.label+' kann '+(MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.';
 }
+// Kurzlabel für Material/Typ eines Items (Anzeige im Item-Modal).
+//  • Waffe   → Typname + „Zauberstab" bzw. „Physische Waffe"
+//  • Schild  → Typname (z. B. „Holzschild")
+//  • Rüstung → Material (Stoff/Leder/Platte)
+//  • Schmuck → „Schmuck (für alle)"
+export function itemKindLabel(item){
+  const t = typeOf(item);
+  if(item.slotKey === 'schild') return t.name || 'Schild';
+  if(item.slotKey === 'waffe'){
+    const kind = materialOf(item) === 'zauberstab' ? 'Zauberstab' : 'Physische Waffe';
+    return (t.name || 'Waffe') + ' · ' + kind;
+  }
+  const mat = materialOf(item);
+  if(mat) return MATERIAL_LABEL[mat] || mat;
+  return 'Schmuck (für alle tragbar)';
+}
+// Passendes Emoji-Icon zur Item-Kategorie (Anzeige im Item-Modal).
+export function itemKindIcon(item){
+  if(item.slotKey === 'schild') return '🛡️';
+  if(item.slotKey === 'waffe')  return materialOf(item) === 'zauberstab' ? '🪄' : '⚔️';
+  const mat = materialOf(item);
+  if(mat === 'stoff')  return '🧵';
+  if(mat === 'leder')  return '🟫';
+  if(mat === 'platte') return '⛓️';
+  return '💍';
+}
 export function equip(item, explicitTarget){
   if(!canEquip(item)){
     toast('✋ '+equipBlockReason(item));

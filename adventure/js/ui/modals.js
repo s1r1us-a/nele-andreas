@@ -19,7 +19,7 @@ import { recomputeTotals, heroTier } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, canEquip, equipBlockReason, invCapacity,
-         ensureItemSprite } from '../core/items.js';
+         ensureItemSprite, itemKindLabel, itemKindIcon } from '../core/items.js';
 import { startExpedition, expeditionActive } from '../core/expedition.js';
 import { startBossFight, updatePotionBtn,
          openDuelArena, applyDuelSnapshot, resolveArenaOpponentLeft } from '../core/combat.js';
@@ -122,8 +122,13 @@ export function openItemPreview(item, fromSlotKey, backFn){
   const blockLine = equipOk ? '' :
     '<div class="preview-hint" style="color:#ff6b6b">✋ '+equipBlockReason(item)+'</div>';
   const price = sellPrice(item);
+  const kindColor = equipOk ? '#d8cfe6' : '#ff6b6b';
+  const kindLine = '<div class="preview-kind">'+itemKindIcon(item)+
+    ' <b style="color:'+kindColor+'">'+itemKindLabel(item)+'</b>'+
+    (equipOk ? '' : ' <span style="color:#ff6b6b">— nicht tragbar</span>')+'</div>';
   openModal('<h2 style="color:'+r.color+'">'+item.name+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
+    kindLine+
     (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
          : '<div class="preview-hint">Dieser Slot ist noch frei.</div>')+
     '<div class="preview-stats">'+body+'</div>'+procLine+blockLine+

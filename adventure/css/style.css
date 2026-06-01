@@ -300,6 +300,8 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .cur-stats .tt-stat.affix{color:var(--r-ungewoehnlich);}
 
 .preview-hint { text-align:center; color:var(--txt-dim); font-size:13px; margin:4px 0 12px; }
+.preview-kind { text-align:center; font-size:14px; margin:-8px 0 12px; letter-spacing:.2px; }
+.preview-kind b { font-weight:700; }
 .preview-stats { background:#0d0a13; border:1px solid var(--line); border-radius:10px;
   padding:10px 14px; }
 .diff-row { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:baseline;
