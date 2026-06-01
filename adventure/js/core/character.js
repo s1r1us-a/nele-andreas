@@ -10,8 +10,8 @@ import { powerOfBundle } from './items.js';
 import { toast } from '../ui/dom.js';
 
 // ---- XP / Level -----------------------------------------------------
-// Steilere Levelkosten (Teil 3b: grind-lastiger). Exponent 1.45 → 1.55.
-export function xpForLevel(n){ return Math.round(40 * Math.pow(n, 1.55)); }
+// Steilere Levelkosten (grind-lastig). Basis 40→100, Exponent 1.55→1.8.
+export function xpForLevel(n){ return Math.round(100 * Math.pow(n, 1.8)); }
 export function levelFromTotal(totalXp){
   let total = Number(totalXp)||0, level = 1, cum = 0;
   while(cum + xpForLevel(level) <= total){ cum += xpForLevel(level); level++; if(level>=9999) break; }
@@ -35,10 +35,10 @@ export function gainXp(amount){
   if(newLevel > oldLevel){
     state.level = newLevel;
     const lb = levelBonus(newLevel);
-    // Pro Levelaufstieg 1 Talentpunkt (nur wenn bereits eine Klasse gewählt wurde).
+    // Pro 5 Level 1 Talentpunkt (erster ab Level 5), nur mit gewählter Klasse.
     if(state.character){
-      const gained = newLevel - oldLevel;
-      state.character.talentPoints = (state.character.talentPoints || 0) + gained;
+      const gained = Math.floor(newLevel/5) - Math.floor(oldLevel/5);
+      if(gained > 0) state.character.talentPoints = (state.character.talentPoints || 0) + gained;
     }
     toast('⭐ Level '+newLevel+'! +'+(lb.hp)+' HP · +'+Math.round(lb.dmg)+' Schaden · +'+lb.armor+' Rüstung');
   }

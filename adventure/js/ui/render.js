@@ -47,7 +47,7 @@ const freeSlots = () => Math.max(0, INV_SLOTS - state.inventory.length);
 
 // ---- Top-Leiste -----------------------------------------------------
 export function renderTopStats(){
-  // Header zeigt nur noch Level + Münzen; Rüstung/Schaden/Kampfkraft stehen
+  // Header zeigt nur noch Level + Coins; Rüstung/Schaden/Kampfkraft stehen
   // (ohne Dopplung) im Charakter-Bildschirm. #miniGold pflegt der Coin-Listener.
   const lvl = state.level || 1;
   const need = xpForLevel(lvl);
@@ -316,10 +316,10 @@ function chooseTalent(stufeIndex, optionId){
 function respecTalents(){
   const chosenCount = chosenTalentCount(state);
   if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
-  if(getCoins() < RESPEC_COST){ toast('Nicht genug Münzen ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
+  if(getCoins() < RESPEC_COST){ toast('Nicht genug Coins ('+fmtBig(RESPEC_COST)+' nötig).'); return; }
   confirmDialog({
     title:'Talente zurücksetzen?',
-    body:'Kostet 🪙 '+fmtBig(RESPEC_COST)+' Münzen. Du erhältst alle '+chosenCount+' Punkte zurück.',
+    body:'Kostet 🪙 '+fmtBig(RESPEC_COST)+' Coins. Du erhältst alle '+chosenCount+' Punkte zurück.',
     emoji:'♻️', confirmText:'Zurücksetzen', cancelText:'Abbrechen',
   }).then(ok => {
     if(!ok) return;
@@ -536,11 +536,11 @@ export function renderShop(){
   panel.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'shop-head';
-  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Münzen</span>';
+  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Coins</span>';
   panel.appendChild(head);
   const note = document.createElement('p');
   note.className = 'shop-note';
-  note.textContent = 'Verkaufe Gegenstände für Münzen. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
+  note.textContent = 'Verkaufe Gegenstände für Coins. Gesperrte (🔒) & ausgerüstete Teile werden nicht verkauft.';
   panel.appendChild(note);
   const actions = document.createElement('div');
   actions.className = 'shop-actions';
@@ -551,7 +551,7 @@ export function renderShop(){
     b.addEventListener('click', ()=>{
       const res = sellMany(filterFn);
       renderAll();
-      toast(res.n ? '+'+fmtBig(res.coins)+' Münzen ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
+      toast(res.n ? '+'+fmtBig(res.coins)+' Coins ('+res.n+' verkauft)' : 'Nichts zu verkaufen');
     });
     actions.appendChild(b);
   };

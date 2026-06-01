@@ -49,7 +49,7 @@ export function collectExpedition(){
   const potionChance = Math.min(0.6, POTION_BASE_CHANCE + (exp ? exp.boost*0.1 : 0));
   let potionGained = false;
   if(Math.random() < potionChance){ state.potions = (state.potions||0) + 1; potionGained = true; toast('🧪 Heiltrank gefunden!'); }
-  // Kuratierte Münzen für lange Expeditionen (≥ 1 Std): 1h→1, 3h→2, 8h→3.
+  // Kuratierte Coins für lange Expeditionen (≥ 1 Std): 1h→1, 3h→2, 8h→3.
   if(exp && exp.ms >= 60*60*1000){
     const coins = exp.ms >= 480*60*1000 ? 3 : exp.ms >= 180*60*1000 ? 2 : 1;
     awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
