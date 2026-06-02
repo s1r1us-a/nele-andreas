@@ -71,6 +71,7 @@ export function openSlotPicker(slotKey){
       const r = rarityOf(it.rarity);
       const cell = document.createElement('div');
       cell.className = 'inv-item';
+      cell.dataset.rarity = it.rarity;
       cell.style.setProperty('--rc', r.color);
       if(!canEquip(it)) cell.style.opacity = '.45';   // Material nicht tragbar
       cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
@@ -195,7 +196,7 @@ export function showRewardModal(items, potionGained){
   for(const it of items){
     const r = rarityOf(it.rarity);
     const sLbl = it.statType==='armor' ? 'Rüstung' : 'Schaden';
-    cards += '<div class="reward-card" style="--rc:'+r.color+'">'+
+    cards += '<div class="reward-card" data-rarity="'+it.rarity+'" style="--rc:'+r.color+'">'+
       '<img src="'+it.sprite+'" alt="'+it.name+'">'+
       '<div class="rc-name" style="color:'+r.color+'">'+it.name+'</div>'+
       '<div class="rc-kind">'+itemKindIcon(it)+' '+itemKindLabel(it)+'</div>'+
@@ -345,7 +346,7 @@ export async function openOtherProfile(){
       if(it){
         ensureItemSprite(it);   // Gast-Items haben kein Sprite (stripItem beim Speichern)
         const r = rarityOf(it.rarity);
-        gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-op="'+sk+'">'+
+        gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-rarity="'+it.rarity+'" data-op="'+sk+'">'+
           '<img src="'+it.sprite+'" alt="'+(it.name||'')+'"></div>';
       } else {
         gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+

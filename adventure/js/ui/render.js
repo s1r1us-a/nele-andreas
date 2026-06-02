@@ -67,6 +67,21 @@ export function bossDifficulty(power, recPower){
   return { label:'Tödlich', cls:'diff-toedlich' };
 }
 
+// Top-Seltenheit der angelegten Items → CSS-Klasse für den pulsierenden Figur-Glow.
+function heroRarityClass(){
+  const eq = state.equipped || {};
+  let leg = false;
+  for(const k in eq){ const it = eq[k]; if(!it) continue;
+    if(it.rarity === 'mythisch') return 'rare-myth';
+    if(it.rarity === 'legendaer') leg = true; }
+  return leg ? 'rare-leg' : '';
+}
+function applyHeroRarity(sel){
+  const el = $(sel); if(!el) return;
+  el.classList.remove('rare-leg','rare-myth');
+  const c = heroRarityClass(); if(c) el.classList.add(c);
+}
+
 export function renderAdventure(){
   const t = recomputeTotals();
   const scene = $('#scene');
@@ -74,6 +89,7 @@ export function renderAdventure(){
   $('#zoneLabel').textContent = 'Zone '+(state.zone+1)+' · '+zoneName(state.zone);
   const zf = $('#zoneFlavor'); if(zf) zf.textContent = zoneFlavor(state.zone);
   $('#sceneHero').src = heroSrc(heroTier(t.power));
+  applyHeroRarity('#sceneHero');
   $('#findBar').style.width = Math.round(findProgress*100)+'%';
 
   renderExpeditionBox();
@@ -190,6 +206,7 @@ export function renderCharacter(){
   const t = recomputeTotals();
   const tier = heroTier(t.power);
   $('#dollHero').src = heroSrc(tier);
+  applyHeroRarity('#dollHero');
   $('#tierBadge').textContent = TIER_NAME[tier] + ' · ' + t.power + ' Kampfkraft';
   $('#tierBadge').title = STAT_HELP.kampfkraft;
   const L = $('#dollLeft'), R = $('#dollRight'), B = $('#dollBottom');
@@ -509,6 +526,7 @@ function buildInvGrid(wrap){
     if(it){
       const r = rarityOf(it.rarity);
       cell.classList.add('filled');
+      cell.dataset.rarity = it.rarity;
       cell.style.setProperty('--rc', r.color);
       // Klasse kann es nicht tragen → Sperr-Markierung (B8). Gilt auch für
       // Schilde/Waffen ohne Material (Klassen-Restriktion per Slot).
