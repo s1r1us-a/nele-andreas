@@ -150,6 +150,12 @@ function renderExpeditionBox(){
     const e = EXPEDITIONS.find(x=>x.key===exp.durKey);
     $('#expRunTitle').textContent = (e?e.icon:'⏳') + ' Unterwegs' + (e ? ' ('+e.label+')' : '') + '…';
     $('#expRemain').textContent = 'Zurück in ' + fmtRemain(exp.endsAt - Date.now());
+  } else {
+    // Abenteuer fertig: tatsächliche Beute-Anzahl anzeigen (steigt mit der Dauer,
+    // nicht fest „2") – Quelle ist die beim Start gewürfelte Item-Liste.
+    const n = (exp.items||[]).length;
+    const sub = $('#expDoneSub');
+    if(sub) sub.innerHTML = 'Dein Held hat <b>' + (n===1 ? '1 Gegenstand' : n+' Gegenstände') + '</b> mitgebracht.';
   }
 }
 
