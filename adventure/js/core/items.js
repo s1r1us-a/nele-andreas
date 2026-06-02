@@ -340,9 +340,18 @@ export function unequip(slotKey){
   saveState();
 }
 
+// Material-Rang: schwerere Rüstung ist für die tragende Klasse das „bessere"
+// Material. Beim Auto-Anlegen wird darum nie ein leichteres Material angelegt,
+// solange ein schwereres erlaubtes Teil für den Slot existiert (z. B. nie Stoff
+// für den Schurken, wenn Leder verfügbar ist). Schmuck/Waffen haben Rang 0 und
+// werden nicht eingeschränkt.
+const MAT_RANK = { stoff:1, leder:2, platte:3 };
+const matRank = it => MAT_RANK[materialOf(it)] || 0;
+
 // Auto-Equip: legt Slot für Slot das stärkste tragbare Item aus dem Inventar an
-// (nach itemPower). Ringe werden einzeln behandelt; gesperrte/falsche Klasse bleiben
-// unberührt. equip() legt das jeweils ersetzte Teil zurück ins Inventar.
+// (nach itemPower), bevorzugt aber das schwerste verfügbare Material. Ringe werden
+// einzeln behandelt; gesperrte/falsche Klasse bleiben unberührt. equip() legt das
+// jeweils ersetzte Teil zurück ins Inventar.
 export function autoEquipBest(){
   const fits = (it, target) =>
     (target==='ring1' || target==='ring2')
@@ -350,9 +359,19 @@ export function autoEquipBest(){
       : it.slotKey === target;
   let changes = 0;
   for(const target of SLOT_KEYS){
-    let bestItem = null, bestP = itemPower(state.equipped[target]);
-    for(const it of state.inventory){
-      if(!fits(it, target) || !canEquip(it)) continue;
+    const cur = state.equipped[target];
+    const cands = state.inventory.filter(it => fits(it, target) && canEquip(it));
+    // Bestes verfügbares Material aus angelegtem Teil + Inventar bestimmen.
+    let bestRank = matRank(cur);
+    for(const it of cands) if(matRank(it) > bestRank) bestRank = matRank(it);
+    // Liegt schon das beste Material an? → nur bei mehr Kampfkraft tauschen.
+    // Sonst (leichteres Material angelegt oder Slot leer) das beste Teil des
+    // besten Materials anlegen, auch wenn es etwas schwächer ist – so wird ein
+    // angelegtes Stoffteil durch vorhandenes Leder/Platte ersetzt.
+    const curIsBestMat = cur && matRank(cur) === bestRank;
+    let bestItem = null, bestP = curIsBestMat ? itemPower(cur) : -1;
+    for(const it of cands){
+      if(matRank(it) > 0 && matRank(it) < bestRank) continue;   // leichteres Material überspringen
       const p = itemPower(it);
       if(p > bestP){ bestP = p; bestItem = it; }
     }
