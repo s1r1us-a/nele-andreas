@@ -520,15 +520,14 @@ export function updateAbilityBtns(){
 // Alias für bestehende Aufrufstellen.
 export function updateAbilityBtn(){ updateAbilityBtns(); }
 
-// Persistente Buff-Auren am Helden je nach laufendem Buff-Fenster (PvE).
+// Persistente Buff-Signaturen am Helden je nach laufendem Buff-Fenster (PvE).
 function refreshAuras(f){
   if(!f || !f.buffs) return;
   const now = Date.now();
-  setSpriteClass('heroSprite','aura-crit',  now < f.buffs.crit.until);
-  setSpriteClass('heroSprite','aura-fire',  now < f.buffs.dmgBoost.until);
-  setSpriteClass('heroSprite','aura-blood', now < f.buffs.lifesteal.until);
-  if(now < f.buffs.dmgReduce.until){ if(!$('#shieldDome')) spawnShieldDome('heroSprite'); }
-  else removeShieldDome();
+  applyBuffAura('heroSprite', 'crit',      f.buffs.crit,      now);
+  applyBuffAura('heroSprite', 'dmgBoost',  f.buffs.dmgBoost,  now);
+  applyBuffAura('heroSprite', 'lifesteal', f.buffs.lifesteal, now);
+  applyDefenseAura('heroSprite', f.buffs.dmgReduce, now);
 }
 function startAbilityTicker(){
   if(_abilityTicker) return;
@@ -541,10 +540,13 @@ function startAbilityTicker(){
 }
 function stopAbilityTicker(){ if(_abilityTicker){ clearInterval(_abilityTicker); _abilityTicker = null; } }
 function resetAbilityVisuals(){
-  $('#heroSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield','desat');
-  $('#bossSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield','desat');
+  const auraCls = ['ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield',
+                   'aura-steel','aura-arcane','aura-blood-strong','stealth','freeze','desat'];
+  ['heroSprite','bossSprite'].forEach(id => { const el = $('#'+id); if(el) el.classList.remove(...auraCls); });
   removeShieldDome();
   removeShieldDome('shieldDomeOpp');
+  const layer = $('#dmgLayer');
+  if(layer) layer.querySelectorAll('.vfx-orbit, .vfx-rune-ring').forEach(n => n.remove());
   stopDrainChannel();
   stopAbilityTicker();
 }
@@ -569,7 +571,7 @@ function applyAbilityEffect(f, ab){
     const heal = Math.round(f.heroMaxHp * ab.healPct * healMult * f.healDebuff);
     f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
     updateHpBars(f);
-    vfxHeal('heroSprite');
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     mechFloat('hero', '➕ +'+fmtBig(heal), '#37d67a');
     addCombatLog(f, ab.icon+' '+ab.name+': +'+fmtBig(heal)+' HP', '#37d67a');
   } else if(ab.kind === 'burst' || ab.kind === 'drain'){
@@ -580,29 +582,31 @@ function applyAbilityEffect(f, ab){
     f.bossHp = Math.max(0, f.bossHp - dmg);
     f.dmgDealt += dmg;
     if(ab.kind === 'drain'){
-      vfxDrain('bossSprite','heroSprite');
       // Selbstheilung skaliert mit der Heilwirkung (Hexer ×1,5).
       const heal = Math.round(dmg * healMult * (f.healDebuff||1));
       f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
       mechFloat('hero', '🩸 +'+fmtBig(heal), '#e0466e');
-    } else {
-      vfxBurst('bossSprite', magic, magic ? '#9be7ff' : '#ffd24a');
     }
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     mechFloat('boss', (crit?'✸ ':'💥 ')+'-'+fmtBig(dmg), '#ffd24a');
     updateHpBars(f); updateMeter(f);
     addCombatLog(f, ab.icon+' '+ab.name+': '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
     if(f.bossHp <= 0){ endFight(f, true); return; }
   } else if(ab.kind === 'critBoost'){
-    f.buffs.crit = { until: now+ab.dur, val: ab.critBonus };
+    f.buffs.crit = { until: now+ab.dur, val: ab.critBonus, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.critBonus*100)+'% Krit für '+(ab.dur/1000)+'s!', '#ffd24a');
   } else if(ab.kind === 'dmgBoost'){
-    f.buffs.dmgBoost = { until: now+ab.dur, val: ab.dmgBonus };
+    f.buffs.dmgBoost = { until: now+ab.dur, val: ab.dmgBonus, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.dmgBonus*100)+'% Schaden für '+(ab.dur/1000)+'s!', '#ff8a3d');
   } else if(ab.kind === 'dmgReduce'){
-    f.buffs.dmgReduce = { until: now+ab.dur, val: ab.dmgReduce };
+    f.buffs.dmgReduce = { until: now+ab.dur, val: ab.dmgReduce, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – '+Math.round(ab.dmgReduce*100)+'% weniger Schaden für '+(ab.dur/1000)+'s!', '#7fd0ff');
   } else if(ab.kind === 'lifesteal'){
-    f.buffs.lifesteal = { until: now+ab.dur, val: ab.lifestealBonus };
+    f.buffs.lifesteal = { until: now+ab.dur, val: ab.lifestealBonus, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.lifestealBonus*100)+'% Lebensraub für '+(ab.dur/1000)+'s!', '#e0466e');
   }
   refreshAuras(f);
@@ -797,6 +801,277 @@ function vfxDrain(fromId, toId){
   bigShake();
 }
 
+// ====================================================================
+//  SIGNATUR-EFFEKTE pro aktiver Fähigkeit (WoW-Style).
+//  Wiederverwendbare Primitive + ID-basiertes Dispatch. Fehlt eine Signatur,
+//  greift der kind-basierte Fallback (vfxBurst/vfxHeal/vfxDrain). Identisch
+//  in Boss-Kampf und Duell; der Turm ist log-basiert (keine VFX).
+// ====================================================================
+function clearById(id){ const e = $('#'+id); if(e) e.remove(); }
+
+// Rotierender Runen-/Sigil-Bodenkreis unter einem Sprite (WoW-Cast-Circle).
+function spawnGroundRune(spriteId, opts){
+  opts = opts || {};
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const r = document.createElement('div');
+  r.className = 'vfx-rune-ring' + (opts.persistent ? ' persist' : '');
+  if(opts.id) r.id = opts.id;
+  r.style.left = a.x+'px'; r.style.top = (a.y + 36)+'px';
+  r.style.setProperty('--rune-col', opts.color || '#9be7ff');
+  layer.appendChild(r);
+  if(!opts.persistent) setTimeout(()=> r.remove(), opts.dur || 950);
+  return r;
+}
+
+// Um den Sprite kreisende Glüh-Orbs/Glyphen (Buff-Auren, Sterne, Klingen).
+function makeOrbit(spriteId, opts){
+  opts = opts || {};
+  const a = anchorOf(spriteId);
+  const c = document.createElement('div');
+  c.className = 'vfx-orbit';
+  c.style.left = a.x+'px'; c.style.top = (a.y - 6)+'px';
+  const n = opts.count || 3, period = opts.period || 2600, R = opts.radius || 50;
+  for(let i=0;i<n;i++){
+    const g = document.createElement('div'); g.className = 'vfx-orbit-g';
+    g.style.setProperty('--r', R+'px');
+    g.style.setProperty('--period', period+'ms');
+    g.style.animationDelay = (-(i*period/n))+'ms';
+    g.style.setProperty('--orb-col', opts.color || '#fff');
+    if(opts.glyph){
+      const inner = document.createElement('span'); inner.className = 'vfx-orbit-i';
+      inner.textContent = opts.glyph;
+      inner.style.setProperty('--period', period+'ms');
+      inner.style.setProperty('--orb-col', opts.color || '#fff');
+      inner.style.animationDelay = (-(i*period/n))+'ms';
+      g.appendChild(inner);
+    } else g.classList.add('orb');
+    c.appendChild(g);
+  }
+  return c;
+}
+function spawnOrbit(spriteId, opts){
+  opts = opts || {};
+  if(reducedMotion()) return null;
+  const c = makeOrbit(spriteId, opts);
+  $('#dmgLayer').appendChild(c);
+  if(!opts.persistent) setTimeout(()=> c.remove(), opts.dur || 1300);
+  return c;
+}
+
+// Gestaffelte Geschoss-Salve Caster→Ziel (Sternenregen, Klingen, Arkan).
+function spawnProjectileVolley(fromId, toId, opts){
+  opts = opts || {};
+  const from = anchorOf(fromId), to = anchorOf(toId), layer = $('#dmgLayer');
+  const n = opts.count || 5, stag = opts.stagger || 110, col = opts.color || '#9be7ff';
+  for(let i=0;i<n;i++){
+    setTimeout(()=>{
+      if(!currentFight) return;
+      const jx = Math.round((Math.random()*2-1)*34), jy = Math.round((Math.random()*2-1)*26);
+      const sx = opts.fromTop ? (to.x + jx) : from.x;
+      const sy = opts.fromTop ? (to.y - 360) : from.y;
+      const ex = to.x + (opts.fromTop ? 0 : jx), ey = to.y + (opts.fromTop ? 0 : jy);
+      const p = document.createElement('div'); p.className = 'vfx-proj';
+      if(opts.glyph) p.textContent = opts.glyph;
+      p.style.left = sx+'px'; p.style.top = sy+'px';
+      p.style.setProperty('--col', col);
+      p.style.setProperty('--tx', (ex - sx)+'px');
+      p.style.setProperty('--ty', (ey - sy)+'px');
+      p.style.animationDuration = (0.42/combatSpeed)+'s';
+      layer.appendChild(p);
+      setTimeout(()=>{ p.remove(); spawnShockwave(toId, col); spawnParticles(toId, { count:5, glyph:'✦', color:col, spread:34 }); }, 440/combatSpeed);
+    }, (i*stag)/combatSpeed);
+  }
+}
+
+// Großer Crescent-/Sensen-Slash mit Glüh-Trail.
+function spawnSlashArc(spriteId, opts){
+  opts = opts || {};
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const s = document.createElement('div'); s.className = 'vfx-arc';
+  s.style.left = a.x+'px'; s.style.top = a.y+'px';
+  s.style.setProperty('--arc-col', opts.color || '#fff');
+  s.style.setProperty('--arc-rot', (opts.angle != null ? opts.angle : -35)+'deg');
+  layer.appendChild(s);
+  setTimeout(()=> s.remove(), 460);
+}
+
+// Gefüllte, expandierende Detonation (stärker als der dünne Schock-Ring).
+function spawnNova(spriteId, color){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const n = document.createElement('div'); n.className = 'vfx-nova';
+  n.style.left = a.x+'px'; n.style.top = a.y+'px';
+  n.style.setProperty('--nova-col', color || '#9b30ff');
+  layer.appendChild(n);
+  setTimeout(()=> n.remove(), 640);
+}
+
+// Einschlag mit Boden-Rissen + Schutt (Schildwucht, Komet).
+function spawnImpact(spriteId, color){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const c = document.createElement('div'); c.className = 'vfx-crater';
+  c.style.left = a.x+'px'; c.style.top = (a.y + 40)+'px';
+  c.style.setProperty('--crater-col', color || '#bfe3ff');
+  layer.appendChild(c);
+  spawnShockwave(spriteId, color || '#fff');
+  spawnParticles(spriteId, { count:12, glyph:'✦', color: color || '#cfd6e6', spread:90, rise:10 });
+  setTimeout(()=> c.remove(), 720);
+}
+
+// Großes Emblem/Sigil blitzt über dem Sprite (Totenkopf, Wappen, Sternbild).
+function spawnSigilFlash(spriteId, opts){
+  opts = opts || {};
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const s = document.createElement('div'); s.className = 'vfx-sigil';
+  s.textContent = opts.glyph || '💀';
+  s.style.left = a.x+'px'; s.style.top = (a.y - 36)+'px';
+  s.style.color = opts.color || '#fff';
+  layer.appendChild(s);
+  setTimeout(()=> s.remove(), 760);
+}
+
+// Einsaugender Spiral-Wirbel (Implosion vor der Detonation).
+function spawnVortex(spriteId, color){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  const v = document.createElement('div'); v.className = 'vfx-vortex';
+  v.style.left = a.x+'px'; v.style.top = a.y+'px';
+  v.style.setProperty('--vtx-col', color || '#9b30ff');
+  layer.appendChild(v);
+  setTimeout(()=> v.remove(), 520);
+}
+
+// Rauchwolke (Stealth-Einstieg).
+function spawnSmoke(spriteId){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer');
+  for(let i=0;i<5;i++){
+    const p = document.createElement('div'); p.className = 'vfx-smoke';
+    const jx = Math.round((Math.random()*2-1)*40), jy = Math.round((Math.random()*2-1)*26);
+    p.style.left = (a.x+jx)+'px'; p.style.top = (a.y+jy)+'px';
+    p.style.animationDelay = (i*40)+'ms';
+    layer.appendChild(p);
+    setTimeout(()=> p.remove(), 900);
+  }
+}
+
+// Vollbild-Rand-Vignette (Hinrichtung, Berserk, heiliger Schein).
+function screenVignette(color, ms){
+  if(reducedMotion()) return;
+  const layer = $('#dmgLayer'); if(!layer) return;
+  const v = document.createElement('div'); v.className = 'arena-vignette';
+  v.style.setProperty('--vig-col', color || '#c0306b');
+  layer.appendChild(v);
+  setTimeout(()=> v.remove(), ms || 700);
+}
+
+// ---- Persistente Buff-Signaturen (per Fähigkeits-ID) --------------------
+const DEFAULT_SIG = {
+  crit:      { aura:'aura-crit' },
+  dmgBoost:  { aura:'aura-fire' },
+  lifesteal: { aura:'aura-blood' },
+};
+const BUFF_SIG = {
+  // critBoost
+  kaltblut:        { aura:'aura-steel',  orbit:{ glyph:'🗡️', color:'#bfe3ff', count:3, radius:52 } },
+  heiler_a9_klar:  { aura:'aura-arcane', orbit:{ glyph:'✨',  color:'#cdeeff', count:4, radius:54 } },
+  // dmgBoost
+  schurke_a5_tanz: { aura:'aura-shadow', orbit:{ color:'#b06bff', count:3, radius:50 }, rune:'#9b30ff' },
+  heiler_a5_inf:   { aura:'aura-arcane', orbit:{ glyph:'🔮', color:'#9be7ff', count:3, radius:52 } },
+  hexer_a5_brand:  { aura:'aura-shadow', orbit:{ glyph:'🔥', color:'#b06bff', count:3, radius:50 } },
+  // lifesteal
+  schurke_a5_beute:   { aura:'aura-blood',        orbit:{ glyph:'🩸', color:'#ff6a8a', count:3, radius:50 } },
+  schurke_a9_toetung: { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 } },
+  hexer_a9_orgie:     { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 }, rune:'#c0306b' },
+};
+
+// Toggelt Aura-Klasse + persistente Deko (Orbit/Rune) eines Buffs an einem Sprite.
+function applyBuffAura(spriteId, type, buff, now){
+  const active = !!buff && now < (buff.until || 0);
+  const sig = (active && buff && BUFF_SIG[buff.src]) || DEFAULT_SIG[type] || {};
+  if(sig.aura) setSpriteClass(spriteId, sig.aura, active);
+  const oid = 'sig-orbit-'+spriteId+'-'+type, rid = 'sig-rune-'+spriteId+'-'+type;
+  if(active && sig.orbit && !reducedMotion()){
+    if(!$('#'+oid)){ const c = makeOrbit(spriteId, sig.orbit); c.id = oid; $('#dmgLayer').appendChild(c); }
+  } else clearById(oid);
+  if(active && sig.rune){ if(!$('#'+rid)) spawnGroundRune(spriteId, { color: sig.rune, persistent:true, id:rid }); }
+  else clearById(rid);
+}
+
+// Defensiver Buff (dmgReduce): Kuppel / Stealth je nach Fähigkeit.
+function applyDefenseAura(spriteId, buff, now, domeId, domeDir){
+  domeId = domeId || 'shieldDome'; domeDir = domeDir || 1;
+  const active = !!buff && now < (buff.until || 0);
+  const src = buff && buff.src;
+  const runeId = 'sig-rune-'+spriteId+'-def';
+  if(active && src === 'schurke_a9_versch'){
+    setSpriteClass(spriteId, 'stealth', true);
+    removeShieldDome(domeId); setSpriteClass(spriteId, 'aura-shield', false);
+    clearById(runeId);
+    return;
+  }
+  setSpriteClass(spriteId, 'stealth', false);
+  if(active){
+    if(!$('#'+domeId)) spawnShieldDome(spriteId, domeId, domeDir);
+    const dome = $('#'+domeId);
+    if(dome) dome.classList.toggle('dome-gold', src === 'verteidiger_a9_unbeug');
+    setSpriteClass(spriteId, 'aura-shield', true);
+    if(src === 'verteidiger_a9_unbeug'){ if(!$('#'+runeId)) spawnGroundRune(spriteId, { color:'#ffd24a', persistent:true, id:runeId }); }
+    else clearById(runeId);
+  } else {
+    removeShieldDome(domeId); setSpriteClass(spriteId, 'aura-shield', false);
+    clearById(runeId);
+  }
+}
+
+// ---- Signatur-Renderer je Fähigkeit (Cast-Moment) -----------------------
+// hero = Wirker-Sprite, boss = Ziel-Sprite (im Duell ggf. getauscht).
+const ABILITY_VFX = {
+  // ---- SCHURKE ----
+  kaltblut(hero){ spawnGroundRune(hero, { color:'#bfe3ff' }); spawnParticles(hero, { count:10, glyph:'❄', color:'#bfe3ff', spread:46, rise:30 }); flashSpriteClass(hero, 'aura-steel', 700); },
+  schurke_a5_ausweid(hero, boss){ spawnSlashArc(boss, { color:'#ff5a5a', angle:-32 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:34 }), 90); spawnParticles(boss, { count:10, glyph:'🩸', color:'#e0466e', spread:58 }); flashSpriteClass(boss, 'freeze', 280); flashSpriteClass(boss, 'hit', 300); bigShake(); },
+  schurke_a5_beute(hero){ spawnGroundRune(hero, { color:'#ff6a8a' }); spawnParticles(hero, { count:10, glyph:'🩸', color:'#ff6a8a', spread:44, rise:30 }); },
+  schurke_a5_tanz(hero){ spawnGroundRune(hero, { color:'#9b30ff' }); spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#b06bff', spread:46, rise:24 }); },
+  schurke_a9_todes(hero, boss){ spawnSlashArc(boss, { color:'#ffffff', angle:-28 }); spawnSigilFlash(boss, { glyph:'💀', color:'#ff5a5a' }); flashSpriteClass(boss, 'freeze', 380); spawnParticles(boss, { count:14, glyph:'🩸', color:'#e0466e', spread:70 }); screenVignette('#c0306b', 700); screenFlash('#ffffff', 170); bigShake(); },
+  schurke_a9_toetung(hero){ spawnGroundRune(hero, { color:'#ff5a7a' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); screenVignette('#c0306b', 480); },
+  schurke_a9_versch(hero){ spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#9b6bff', spread:50, rise:18 }); },
+  // ---- VERTEIDIGER ----
+  schildwall(hero){ spawnGroundRune(hero, { color:'#7fd0ff' }); spawnParticles(hero, { count:8, glyph:'🛡', color:'#7fd0ff', spread:42, rise:20 }); },
+  verteidiger_a5_trotz(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#7fd0ff' }); spawnGroundRune(hero, { color:'#7fd0ff' }); },
+  verteidiger_a5_schild(hero, boss){ spawnShockwave(boss, '#ffffff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); spawnOrbit(boss, { glyph:'⭐', color:'#ffe066', count:4, radius:46, period:1400, dur:1300 }); spawnParticles(boss, { count:8, glyph:'✦', color:'#bfe3ff', spread:60 }); flashSpriteClass(boss, 'hit', 300); bigShake(); },
+  verteidiger_a5_bastion(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#7fd0ff' }); },
+  verteidiger_a9_unbeug(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); screenFlash('#bfe3ff', 150); },
+  verteidiger_a9_wucht(hero, boss){ spawnImpact(boss, '#bfe3ff'); spawnNova(boss, '#7fd0ff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); screenFlash('#ffffff', 180); bigShake(); },
+  verteidiger_a9_halten(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#7fd0ff', count:4, radius:54, period:1600, dur:1400 }); },
+  // ---- HEILER ----
+  heilkreis(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); },
+  heiler_a5_blitz(hero){ vfxHeal(hero); screenFlash('#ffe9a8', 150); },
+  heiler_a5_arkan(hero, boss){ spawnMeteor(boss, '#9be7ff'); spawnParticles(boss, { count:14, glyph:'✦', color:'#9be7ff', spread:78 }); screenFlash('#9be7ff', 200); bigShake(); },
+  heiler_a5_inf(hero){ spawnGroundRune(hero, { color:'#9be7ff' }); spawnParticles(hero, { count:10, glyph:'🔮', color:'#9be7ff', spread:46, rise:26 }); },
+  heiler_a9_segen(hero){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); const pil = document.createElement('div'); pil.className = 'vfx-pillar'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; pil.style.filter = 'hue-rotate(-12deg) brightness(1.15)'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 900); spawnParticles(hero, { count:16, glyph:'✦', color:'#ffe9a8', spread:54, rise:80 }); screenVignette('#ffe9a8', 480); },
+  heiler_a9_stern(hero, boss){ spawnProjectileVolley(hero, boss, { count:6, color:'#9be7ff', glyph:'⭐', stagger:120, fromTop:true }); setTimeout(()=>{ screenFlash('#9be7ff', 220); bigShake(); }, 360); },
+  heiler_a9_klar(hero){ spawnGroundRune(hero, { color:'#cdeeff' }); spawnOrbit(hero, { glyph:'✨', color:'#cdeeff', count:4, radius:52, period:1500, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✨', color:'#cdeeff', spread:44, rise:28 }); },
+  // ---- HEXER (Seelenraub-Strahl bleibt unverändert) ----
+  hexer_a5_brand(hero){ spawnGroundRune(hero, { color:'#9b30ff' }); spawnParticles(hero, { count:10, glyph:'🔥', color:'#b06bff', spread:46, rise:26 }); },
+  hexer_a5_rausch(hero, boss){ spawnBeam(hero, boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnParticles(boss, { count:10, glyph:'🌑', color:'#b06bff', spread:60 }); }, 200); bigShake(); },
+  hexer_a9_explo(hero, boss){ spawnVortex(boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnShockwave(boss, '#b06bff'); spawnParticles(boss, { count:16, glyph:'🌑', color:'#b06bff', spread:90 }); screenFlash('#9b30ff', 220); bigShake(); }, 240); },
+  hexer_a9_orgie(hero){ spawnGroundRune(hero, { color:'#c0306b' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
+};
+
+// Spielt die Signatur einer Fähigkeit; fehlt sie, greift der kind-basierte Fallback.
+function playAbilityVfx(ab, heroId, bossId, magic){
+  if(ab && ABILITY_VFX[ab.id]){ ABILITY_VFX[ab.id](heroId, bossId); return; }
+  if(!ab) return;
+  if(ab.kind === 'heal') vfxHeal(heroId);
+  else if(ab.kind === 'burst') vfxBurst(bossId, !!magic, magic ? '#9be7ff' : '#ffd24a');
+  else if(ab.kind === 'drain') vfxDrain(bossId, heroId);
+  else spawnParticles(heroId, { count:8, glyph:'✦', color:'#fff', spread:40, rise:20 });
+}
+// Wie playAbilityVfx, aber per ID (Duell-Sync kennt nur die ID + Art).
+function playAbilityVfxById(id, heroId, bossId, magic, kind){
+  if(ABILITY_VFX[id]){ ABILITY_VFX[id](heroId, bossId); return; }
+  if(kind === 'heal') vfxHeal(heroId);
+  else if(kind === 'drain') vfxDrain(bossId, heroId);
+  else vfxBurst(bossId, !!magic, magic ? '#9be7ff' : '#ffd24a');
+}
+
 // Kanalisierter Seelenraub: pro Sekunde `burstMult` Schaden am Boss + Heilung
 // in gleicher Höhe, über die gesamte `dur`. Der Seelenstrahl steht durchgehend,
 // solange der Effekt läuft – Animation und Wirkung enden gemeinsam.
@@ -804,7 +1079,8 @@ let _drainTimer = null, _drainBeamTimer = null;
 function startDrainChannel(f, ab){
   const tickMs = ab.tickMs || 1000;
   const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
-  startDrainBeam('bossSprite', 'heroSprite', ab.dur);
+  startDrainBeam('bossSprite', 'heroSprite', ab.dur, ab);
+  if(ab.id === 'hexer_a9_fresser') spawnSigilFlash('bossSprite', { glyph:'💀', color:'#b06bff' });
   let i = 0;
   const healMult = classOf(state).healMult || 1;
   const tick = () => {
@@ -834,7 +1110,7 @@ function stopDrainChannel(){
   stopDrainBeam();
 }
 // Stehender Seelenstrahl Boss→Held für die volle Kanal-Dauer (pulsierend).
-function startDrainBeam(fromId, toId, dur){
+function startDrainBeam(fromId, toId, dur, ab){
   stopDrainBeam();
   const a = anchorOf(fromId), t = anchorOf(toId);
   const dx = t.x - a.x, dy = t.y - a.y;
@@ -842,10 +1118,17 @@ function startDrainBeam(fromId, toId, dur){
   const ang = Math.atan2(dy, dx) * 180/Math.PI;
   const real = dur / combatSpeed;
   const b = document.createElement('div');
-  b.className = 'vfx-beam drain-beam'; b.id = 'drainBeam';
+  // Seelenraub (Grundfähigkeit) = Referenz-Strahl. Talent-Kanäle sind verwandte
+  // Varianten: Aderlass-Ritual dünner, Seelenfresser dicker & dunkler.
+  const id = ab && ab.id;
+  let beamCol = '#c0306b';
+  b.className = 'vfx-beam drain-beam' +
+    (id === 'hexer_a5_ritual' ? ' drain-small' : id === 'hexer_a9_fresser' ? ' drain-big' : '');
+  if(id === 'hexer_a9_fresser') beamCol = '#7a1fb0';
+  b.id = 'drainBeam';
   b.style.left = a.x+'px'; b.style.top = a.y+'px';
   b.style.width = len+'px'; b.style.transform = 'rotate('+ang+'deg)';
-  b.style.setProperty('--beam-col', '#c0306b');
+  b.style.setProperty('--beam-col', beamCol);
   for(let k = 0; k < 4; k++){
     const o = document.createElement('div'); o.className = 'vfx-beam-orb';
     o.style.animationDelay = (k*220)+'ms'; b.appendChild(o);
@@ -1113,43 +1396,40 @@ function applyDuelFx(fx, me){
   const opp = me === 'host' ? 'guest' : 'host';
   const mine = fx[me] || {}, theirs = fx[opp] || {};
   const seen = f._fxSeen || (f._fxSeen = {});
+  const now = Date.now();
 
-  // Persistente Buff-Auren: eigene am Helden, gegnerische am Boss.
-  setSpriteClass('heroSprite','aura-crit',  (mine.crit||0)  > 0);
-  setSpriteClass('heroSprite','aura-fire',  (mine.fire||0)  > 0);
-  setSpriteClass('heroSprite','aura-blood', (mine.blood||0) > 0);
-  setSpriteClass('bossSprite','aura-crit',  (theirs.crit||0)  > 0);
-  setSpriteClass('bossSprite','aura-fire',  (theirs.fire||0)  > 0);
-  setSpriteClass('bossSprite','aura-blood', (theirs.blood||0) > 0);
-  // Schildwall: beide Seiten zeigen Kuppel UND Glow – eigene am Helden (Richtung
-  // Boss), gegnerische gespiegelt am Boss (Richtung Held).
-  if((mine.shield||0) > 0){ if(!$('#shieldDome')) spawnShieldDome('heroSprite', 'shieldDome', 1); }
-  else removeShieldDome('shieldDome');
-  setSpriteClass('heroSprite','aura-shield', (mine.shield||0) > 0);
-  if((theirs.shield||0) > 0){ if(!$('#shieldDomeOpp')) spawnShieldDome('bossSprite', 'shieldDomeOpp', -1); }
-  else removeShieldDome('shieldDomeOpp');
-  setSpriteClass('bossSprite','aura-shield', (theirs.shield||0) > 0);
+  // Persistente Buff-Signaturen: eigene am Helden, gegnerische am Boss. Die
+  // Restzeiten (ms) werden in absolute `until` umgerechnet, die `*Src`-IDs
+  // wählen dieselbe Signatur wie im PvE.
+  applyBuffAura('heroSprite', 'crit',      { until: now + (mine.crit||0),    src: mine.critSrc  }, now);
+  applyBuffAura('heroSprite', 'dmgBoost',  { until: now + (mine.fire||0),    src: mine.fireSrc  }, now);
+  applyBuffAura('heroSprite', 'lifesteal', { until: now + (mine.blood||0),   src: mine.bloodSrc }, now);
+  applyBuffAura('bossSprite', 'crit',      { until: now + (theirs.crit||0),  src: theirs.critSrc  }, now);
+  applyBuffAura('bossSprite', 'dmgBoost',  { until: now + (theirs.fire||0),  src: theirs.fireSrc  }, now);
+  applyBuffAura('bossSprite', 'lifesteal', { until: now + (theirs.blood||0), src: theirs.bloodSrc }, now);
+  applyDefenseAura('heroSprite', { until: now + (mine.shield||0),  src: mine.shieldSrc  }, now, 'shieldDome',    1);
+  applyDefenseAura('bossSprite', { until: now + (theirs.shield||0), src: theirs.shieldSrc }, now, 'shieldDomeOpp', -1);
 
   // Einmalige Einschläge (Timestamp-basiert, je Seite nur einmal auslösen).
   if(mine.burstTs && mine.burstTs !== seen.myBurst){
     seen.myBurst = mine.burstTs;
-    vfxBurst('bossSprite', !!mine.burstMagic, mine.burstMagic ? '#9be7ff' : '#ffd24a');
+    playAbilityVfxById(mine.burstAb, 'heroSprite', 'bossSprite', !!mine.burstMagic, 'burst');
   }
   if(theirs.burstTs && theirs.burstTs !== seen.oppBurst){
     seen.oppBurst = theirs.burstTs;
-    vfxBurst('heroSprite', !!theirs.burstMagic, theirs.burstMagic ? '#9be7ff' : '#ffd24a');
+    playAbilityVfxById(theirs.burstAb, 'bossSprite', 'heroSprite', !!theirs.burstMagic, 'burst');
   }
   if(mine.drainTs && mine.drainTs !== seen.myDrain){
-    seen.myDrain = mine.drainTs; vfxDrain('bossSprite','heroSprite');
+    seen.myDrain = mine.drainTs; playAbilityVfxById(mine.drainAb, 'heroSprite', 'bossSprite', false, 'drain');
   }
   if(theirs.drainTs && theirs.drainTs !== seen.oppDrain){
-    seen.oppDrain = theirs.drainTs; vfxDrain('heroSprite','bossSprite');
+    seen.oppDrain = theirs.drainTs; playAbilityVfxById(theirs.drainAb, 'bossSprite', 'heroSprite', false, 'drain');
   }
   if(mine.healTs && mine.healTs !== seen.myHeal){
-    seen.myHeal = mine.healTs; vfxHeal('heroSprite'); mechFloat('hero','💚 Heilung','#37d67a');
+    seen.myHeal = mine.healTs; playAbilityVfxById(mine.healAb, 'heroSprite', 'bossSprite', false, 'heal'); mechFloat('hero','💚 Heilung','#37d67a');
   }
   if(theirs.healTs && theirs.healTs !== seen.oppHeal){
-    seen.oppHeal = theirs.healTs; vfxHeal('bossSprite'); mechFloat('boss','💚 Heilung','#37d67a');
+    seen.oppHeal = theirs.healTs; playAbilityVfxById(theirs.healAb, 'bossSprite', 'heroSprite', false, 'heal'); mechFloat('boss','💚 Heilung','#37d67a');
   }
 }
 
