@@ -170,7 +170,7 @@ function hydrateItems(){
     if(!it.affixes) it.affixes = {};
     if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
     const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb);
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb, typeOf(it).material);
   }
 }
 
