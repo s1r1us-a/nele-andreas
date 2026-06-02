@@ -753,6 +753,11 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .op-gear .op-empty { display:flex; align-items:center; justify-content:center; opacity:.35;
   font-size:24px; border-style:dashed; }
 .op-cell { cursor:help; }
+.op-pager { display:flex; align-items:center; justify-content:center; gap:14px;
+  margin:2px 0 10px; }
+.op-pager .op-nav { padding:2px 12px; font-size:20px; line-height:1; min-width:0; }
+.op-pager .op-count { font-size:13px; color:var(--txt-dim); min-width:90px;
+  text-align:center; letter-spacing:.3px; }
 .arena-result { position:absolute; inset:0; display:none; align-items:center;
   justify-content:center; flex-direction:column; background:rgba(0,0,0,.55);
   font-family:'Cinzel',serif; font-weight:900; text-align:center; padding:16px; }
