@@ -460,6 +460,7 @@ function attackAnim(who, dmg, crit, onHit){
 // ---- Heiltrank im Kampf --------------------------------------------
 export function updatePotionBtn(){
   const btn = $('#potionBtn'); if(!btn) return;
+  btn.style.display = '';   // im Duell ausgeblendet → für PvE-Bosskampf wieder zeigen
   const n = state.potions || 0;
   btn.textContent = '🧪 Heiltrank ('+n+')';
   btn.disabled = n <= 0 || !currentFight || currentFight.over;
@@ -467,7 +468,7 @@ export function updatePotionBtn(){
 }
 export function usePotion(){
   const f = currentFight;
-  if(f && f.isDuel){ if(!f.over) f.onAction('potion'); return; }
+  if(f && f.isDuel) return;   // Heiltränke sind im Duell deaktiviert
   if(!f || f.over || (state.potions||0) <= 0) return;
   if(f.heroHp >= f.heroMaxHp){ toast('Bereits volle HP'); return; }
   const heal = Math.round(f.heroMaxHp * HEAL_PCT * f.healDebuff);
@@ -1320,7 +1321,7 @@ export function openDuelArena(cfg){
   $('#heroHp').style.width = '0%'; $('#bossHp').style.width = '0%';
   $('#heroHpText').textContent = ''; $('#bossHpText').textContent = '';
   const _pb = $('#potionBtn');
-  if(_pb){ _pb.textContent = '🧪 Heiltrank'; _pb.disabled = true; _pb.style.opacity = '0.5'; }
+  if(_pb){ _pb.style.display = 'none'; }   // im Duell gibt es keine Heiltränke
   arenaOverlay().classList.add('show');
 
   requestAnimationFrame(()=> measureAnchors(fight));
@@ -1348,14 +1349,6 @@ export function applyDuelSnapshot(snap){
   f.abilityCd = {};
   for(const id in cdMap) f.abilityCd[id] = Date.now() + cdMap[id];
   updateAbilityBtns();
-
-  // Heiltrank-Knopf zeigt die verbleibenden Duell-Tränke der eigenen Seite.
-  const pots = snap[me+'Potions']; const pb = $('#potionBtn');
-  if(pb && pots != null){
-    pb.textContent = '🧪 Heiltrank ('+pots+')';
-    pb.disabled = f.over || pots <= 0 || f.heroHp >= f.heroMaxHp;
-    pb.style.opacity = pb.disabled ? '0.5' : '1';
-  }
 
   // Kampflog (Map vom Host → nach Index absteigend).
   if(snap.log){
