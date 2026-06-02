@@ -635,14 +635,28 @@ export function openRosterModal(){
 let _dId = null, _dHost = false, _dStake = 0;
 let _dUnsubLobby = null, _dUnsubCombat = null, _dCountTimer = null;
 let _dStarting = false, _dArena = false;
+let _dCountTarget = 0, _dStartWatchdog = null;
 
 function cap(k){ return k ? k[0].toUpperCase() + k.slice(1) : ''; }
 function dMyName(){ return cap(userKey) || 'Du'; }
 
-function stopDuelCountdown(){ if(_dCountTimer){ clearInterval(_dCountTimer); _dCountTimer = null; } }
+function stopDuelCountdown(){
+  if(_dCountTimer){ clearInterval(_dCountTimer); _dCountTimer = null; }
+  _dCountTarget = 0;
+}
+
+// Host-autoritativ, idempotent: startet das Duell, sobald der Countdown abgelaufen
+// ist. Aufrufbar aus onDuelUpdate (DB-Event weckt gedrosselte Tabs) und dem Tick.
+function maybeBeginDuel(lobby){
+  if(!_dHost || !lobby || lobby.status !== 'waiting') return;
+  if(!lobby.startAt || serverNow() < lobby.startAt) return;   // noch nicht fällig
+  if(_dStarting) return;
+  hostBeginDuel(lobby);
+}
 
 function cleanupDuel(leaveDb){
   stopDuelCountdown();
+  clearTimeout(_dStartWatchdog); _dStartWatchdog = null;
   stopDuelHost();
   if(_dUnsubLobby){ _dUnsubLobby(); _dUnsubLobby = null; }
   if(_dUnsubCombat){ _dUnsubCombat(); _dUnsubCombat = null; }
@@ -706,21 +720,41 @@ function onDuelUpdate(lobby){
 
   if(lobby.status === 'in_progress'){ enterDuelArena(lobby); return; }
 
-  // Host steuert den Auto-Start-Countdown.
+  // Host steuert den Auto-Start-Countdown. startAt wird SOFORT lokal übernommen
+  // (selbe Referenz wie das Lobby-Objekt), damit Countdown und maybeBeginDuel
+  // nicht erst auf das DB-Echo des eigenen Writes warten müssen.
   if(_dHost){
-    if(lobby.hostReady && lobby.guestReady && !lobby.startAt) setStartAt(_dId, serverNow() + 5000);
-    else if((!lobby.hostReady || !lobby.guestReady) && lobby.startAt) setStartAt(_dId, null);
+    if(lobby.hostReady && lobby.guestReady && !lobby.startAt){
+      const target = serverNow() + 5000;
+      lobby.startAt = target;
+      setStartAt(_dId, target);
+    } else if((!lobby.hostReady || !lobby.guestReady) && lobby.startAt){
+      lobby.startAt = null;
+      setStartAt(_dId, null);
+    }
   }
   renderDuelLobby(lobby);
 
-  stopDuelCountdown();
-  if(lobby.startAt){
-    _dCountTimer = setInterval(()=>{
+  // Countdown-Ticker nur (neu) aufsetzen, wenn sich startAt geändert hat – ein
+  // laufender Ticker bleibt sonst erhalten (kein Kill/Neuaufbau je Snapshot).
+  if(!lobby.startAt){
+    stopDuelCountdown();
+  } else if(lobby.startAt !== _dCountTarget){
+    stopDuelCountdown();
+    _dCountTarget = lobby.startAt;
+    const tick = ()=>{
       const rem = Math.max(0, Math.ceil((lobby.startAt - serverNow())/1000));
       const el = $('#duelStatus'); if(el) el.textContent = rem > 0 ? ('⚔️ Duell startet in ' + rem + '…') : '⚔️ Los!';
-      if(rem <= 0){ stopDuelCountdown(); if(_dHost) hostBeginDuel(lobby); }
-    }, 200);
+      maybeBeginDuel(lobby);
+    };
+    tick();
+    _dCountTimer = setInterval(tick, 200);
   }
+
+  // Auch hier prüfen: onDuelUpdate feuert bei JEDER DB-Änderung und weckt damit
+  // selbst einen zwischenzeitlich gedrosselten Tab – der Start löst zuverlässig
+  // aus, nicht nur abhängig vom setInterval-Tick.
+  maybeBeginDuel(lobby);
 }
 
 function chip(name, ready, present){
@@ -754,6 +788,11 @@ function renderDuelLobby(lobby){
 async function hostBeginDuel(lobby){
   if(_dStarting) return;
   _dStarting = true;
+  // Watchdog: selbst wenn ein Firebase-Aufruf hängt, wird _dStarting wieder
+  // freigegeben → kein dauerhaftes Verklemmen, maybeBeginDuel kann es erneut
+  // versuchen (startAt bleibt bis 'in_progress' als Retry-Signal erhalten).
+  clearTimeout(_dStartWatchdog);
+  _dStartWatchdog = setTimeout(()=>{ _dStarting = false; _dStartWatchdog = null; }, 8000);
   try {
     const oppKey = otherKey();
     const oppLoaded = await loadGuestSave(oppKey);
@@ -767,6 +806,7 @@ async function hostBeginDuel(lobby){
     if(getCoins() < stake || oppCoins < stake){
       toast('🪙 Einer von euch hat nicht genug Coins für den Einsatz.');
       setDuelStatus(_dId, { hostReady:false, guestReady:false, startAt:null });
+      clearTimeout(_dStartWatchdog); _dStartWatchdog = null;
       _dStarting = false; return;
     }
     // Aussehen beider Helden veröffentlichen (optional – Clients laden ohnehin selbst).
@@ -777,8 +817,10 @@ async function hostBeginDuel(lobby){
       hostKey: userKey, guestKey: oppKey,
     });
     setDuelStatus(_dId, { status: 'in_progress', startAt: null });
+    clearTimeout(_dStartWatchdog); _dStartWatchdog = null;
   } catch(e){
     toast('Duell-Start fehlgeschlagen: ' + e.message);
+    clearTimeout(_dStartWatchdog); _dStartWatchdog = null;
     _dStarting = false;
   }
 }

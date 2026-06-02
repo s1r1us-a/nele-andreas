@@ -540,9 +540,10 @@ function startAbilityTicker(){
 }
 function stopAbilityTicker(){ if(_abilityTicker){ clearInterval(_abilityTicker); _abilityTicker = null; } }
 function resetAbilityVisuals(){
-  $('#heroSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','desat');
-  $('#bossSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','desat');
+  $('#heroSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield','desat');
+  $('#bossSprite').classList.remove('ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield','desat');
   removeShieldDome();
+  removeShieldDome('shieldDomeOpp');
   stopDrainChannel();
   stopAbilityTicker();
 }
@@ -647,18 +648,19 @@ function spawnHealCircle(spriteId){
   if(hero){ hero.classList.add('heal-glow'); setTimeout(()=> hero.classList.remove('heal-glow'), 1150); }
   setTimeout(()=> fx.remove(), 1250);
 }
-// Große magische Energiebarriere VOR dem Helden Richtung Boss (bleibt bis Buff endet).
-function spawnShieldDome(spriteId){
-  removeShieldDome();
+// Große magische Energiebarriere VOR einem Kämpfer (bleibt bis Buff endet).
+// dir = +1: Barriere rechts vom Sprite (Held Richtung Boss), -1: links (Boss Richtung Held).
+function spawnShieldDome(spriteId, domeId = 'shieldDome', dir = 1){
+  removeShieldDome(domeId);
   const stage = $('#arenaStage');
   const a = (currentFight && currentFight.anchor[spriteId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
   const bar = document.createElement('div');
-  bar.className = 'magic-barrier'; bar.id = 'shieldDome';
-  // Vor dem Helden Richtung Boss (rechts) versetzt.
-  bar.style.left = (a.x + 70)+'px'; bar.style.top = a.y+'px';
+  bar.className = 'magic-barrier'; bar.id = domeId;
+  // Vor dem Kämpfer in Richtung Gegner versetzt.
+  bar.style.left = (a.x + 70 * dir)+'px'; bar.style.top = a.y+'px';
   $('#dmgLayer').appendChild(bar);
 }
-function removeShieldDome(){ const d = $('#shieldDome'); if(d) d.remove(); }
+function removeShieldDome(domeId = 'shieldDome'){ const d = $('#'+domeId); if(d) d.remove(); }
 
 // ====================================================================
 //  SPEKTAKULÄRE AKTIV-EFFEKTE (VFX) – reines CSS+DOM, im #dmgLayer.
@@ -1098,8 +1100,13 @@ function applyDuelFx(fx, me){
   setSpriteClass('bossSprite','aura-crit',  (theirs.crit||0)  > 0);
   setSpriteClass('bossSprite','aura-fire',  (theirs.fire||0)  > 0);
   setSpriteClass('bossSprite','aura-blood', (theirs.blood||0) > 0);
-  if((mine.shield||0) > 0){ if(!$('#shieldDome')) spawnShieldDome('heroSprite'); }
-  else removeShieldDome();
+  // Schildwall: beide Seiten zeigen Kuppel UND Glow – eigene am Helden (Richtung
+  // Boss), gegnerische gespiegelt am Boss (Richtung Held).
+  if((mine.shield||0) > 0){ if(!$('#shieldDome')) spawnShieldDome('heroSprite', 'shieldDome', 1); }
+  else removeShieldDome('shieldDome');
+  setSpriteClass('heroSprite','aura-shield', (mine.shield||0) > 0);
+  if((theirs.shield||0) > 0){ if(!$('#shieldDomeOpp')) spawnShieldDome('bossSprite', 'shieldDomeOpp', -1); }
+  else removeShieldDome('shieldDomeOpp');
   setSpriteClass('bossSprite','aura-shield', (theirs.shield||0) > 0);
 
   // Einmalige Einschläge (Timestamp-basiert, je Seite nur einmal auslösen).
