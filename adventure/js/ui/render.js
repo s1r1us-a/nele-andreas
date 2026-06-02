@@ -446,6 +446,16 @@ let invSort = 'value', invCat = 'all', invRar = 'all', invSearch = '', invWear =
 // geschützt. Wird beim Verlassen des Inventars / Tab-Wechsel zurückgesetzt.
 let invSellMode = false;
 
+// Verkaufsmodus beenden – z. B. beim Verlassen des Inventar-Tabs (etwa zum
+// Händler). War der Modus aktiv, wird das Inventar neu gezeichnet, damit der
+// „Verkaufen"-Button beim nächsten Öffnen wieder deaktiviert ist.
+export function resetInvSellMode(){
+  if(!invSellMode) return;
+  invSellMode = false;
+  hideTooltip();
+  renderInventory();
+}
+
 function filteredSortedInventory(){
   let items = state.inventory.filter(it => {
     if(invCat !== 'all' && it.cat !== invCat) return false;
