@@ -42,22 +42,26 @@ const mirror = frag => frag + '<g transform="translate(200,0) scale(-1,1)">'+fra
 // Eindeutige Gradient-IDs pro Build (mehrere Avatare rendern gleichzeitig).
 let GRAD_SEQ = 0;
 
-// Getragene Waffe in der rechten Hand (Handkreis bei cx=124, cy=194), Klinge nach oben.
-function heldWeapon(item, uid){
+// Getragene Waffe in einer Hand (Standard: rechte Hand, Handkreis cx=124, cy=194),
+// Klinge nach oben. `opt` erlaubt das Wiederverwenden für die linke Nebenhand:
+//   opt.hx = Hand-X (z. B. 76 für links), opt.tilt = Neigung, opt.scale = Grundgröße.
+function heldWeapon(item, uid, opt){
   if(!item || typeof item.variant !== 'number') return '';
+  opt = opt || {};
   const v = ((item.variant|0)%6+6)%6;
   const lvl = armorLvl(item.rarity);            // Episch+ → Element-Glow
   const el = elementOf(item.id), E = ELEM[el];
   const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
-  const hx = 124;
+  const hx = opt.hx != null ? opt.hx : 124;
   // Größe nach Seltenheit: Legendär (lvl2) & Mythisch (lvl3) sind deutlich
   // größer als normale Waffen; skaliert um den Handpunkt, damit die Hand sitzt.
-  const SCALE = [1, 1, 1.16, 1.32][lvl] || 1;
-  const grow = inner => SCALE>1 ? `<g transform="translate(${hx} 194) scale(${SCALE}) translate(${-hx} -194)">${inner}</g>` : inner;
+  // opt.scale verkleinert Zweitwaffen (Nebenhand) gegenüber der Hauptwaffe.
+  const SCALE = ([1, 1, 1.16, 1.32][lvl] || 1) * (opt.scale || 1);
+  const grow = inner => SCALE!==1 ? `<g transform="translate(${hx} 194) scale(${SCALE}) translate(${-hx} -194)">${inner}</g>` : inner;
   const ty = typeOf(item);
   // Waffe natürlicher halten: leicht von der Körpermitte weg kippen (Drehpunkt =
-  // Handkreis 124,194). Zauberstab bleibt aufrechter, damit die Kugel oben bleibt.
-  const tilt = (ty && ty.material === 'zauberstab') ? 6 : 15;
+  // Handkreis hx,194). Zauberstab bleibt aufrechter, damit die Kugel oben bleibt.
+  const tilt = (ty && ty.material === 'zauberstab') ? 6 : (opt.tilt != null ? opt.tilt : 15);
   const tiltWrap = inner => `<g transform="rotate(${tilt} ${hx} 194)">${inner}</g>`;
   // Zauberstab: langer Stab mit leuchtender Kugel oben (Farbe je nach Stab-Typ).
   if(ty && ty.material === 'zauberstab'){
@@ -119,6 +123,20 @@ function heldWeapon(item, uid){
   }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
   return tiltWrap(halo + grow(w) + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`);
+}
+
+// Nebenhand-Kugel (Heiler/Hexer) an der linken Hand – schwebende Magie-Sphäre.
+// Farbe aus dem Item-Typ (orb: rot/blau/gruen); Episch+ → größerer Glow.
+function offhandOrb(item){
+  const P = ORB_PAL[typeOf(item).orb] || ORB_PAL.blau;
+  const cx = 74, cy = 174;
+  const lvl = armorLvl(item.rarity);
+  const r = (11 * ([1, 1.12, 1.26, 1.4][lvl] || 1)).toFixed(1);
+  const glow = `<circle cx="${cx}" cy="${cy}" r="${(+r+7).toFixed(1)}" fill="${P.glow}" opacity="${(0.18+lvl*0.06).toFixed(2)}"/>`+
+               `<circle cx="${cx}" cy="${cy}" r="${(+r+3).toFixed(1)}" fill="${P.glow}" opacity="0.34"/>`;
+  const sphere = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${P.mid}" stroke="${P.lo}" stroke-width="1.4"/>`+
+                 `<circle cx="${(cx-r*0.32).toFixed(1)}" cy="${(cy-r*0.32).toFixed(1)}" r="${(r*0.3).toFixed(1)}" fill="${P.hi}" opacity="0.75"/>`;
+  return glow + sphere;
 }
 
 export function buildHeroSVG(character, tier, gear){
@@ -368,22 +386,35 @@ export function buildHeroSVG(character, tier, gear){
     ? mirror(`<circle cx="124" cy="194" r="9" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1.2"/><rect x="116" y="186" width="16" height="7" rx="2" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1"/>`)
     : '';
 
-  // Schild am linken Arm (Episch+ → größer + leuchtend)
+  // Nebenhand am linken Arm – Form richtet sich nach der Item-Art:
+  //   art:'waffe' → Zweitwaffe als Klinge in der linken Hand (Kämpfer),
+  //   art:'orb'   → schwebende Magie-Kugel (Heiler/Hexer),
+  //   sonst       → klassisches Schild (Episch+ → größer + leuchtend).
   const sc = eq.schild; let schild = '';
-  if(sc){ const v=(((sc.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
-    const lvl = armorLvl(sc.rarity), el = elementOf(sc.id), E = ELEM[el];
-    let shp;
-    if(v===1||v===4)      shp=`<circle cx="${cx}" cy="${cy}" r="20" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-    else if(v===2)        shp=`<circle cx="${cx}" cy="${cy}" r="15" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-    else if(v===0||v===3) shp=`<rect x="${cx-17}" y="${cy-22}" width="34" height="46" rx="7" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-    else                  shp=`<path d="M${cx-17} ${cy-20} L${cx+17} ${cy-20} L${cx+17} ${cy-2} Q${cx+17} ${cy+18} ${cx} ${cy+26} Q${cx-17} ${cy+18} ${cx-17} ${cy-2} Z" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-    let inner = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
-    if(lvl>0){
-      const S=[1,1.18,1.34,1.5][lvl];
-      const halo = `<ellipse cx="${cx}" cy="${cy}" rx="${(24*S).toFixed(1)}" ry="${(27*S).toFixed(1)}" fill="${E.glow}" opacity="${(0.18+lvl*0.08).toFixed(2)}"/>`;
-      const rim = `<ellipse cx="${cx}" cy="${cy}" rx="${(22*S).toFixed(1)}" ry="${(25*S).toFixed(1)}" fill="none" stroke="${E.glow}" stroke-width="2.5" opacity="0.6"/>`;
-      schild = halo + `<g transform="translate(${cx},${cy}) scale(${S}) translate(${-cx},${-cy})">${inner}</g>` + rim;
-    } else schild = inner;
+  if(sc){
+    const art = typeOf(sc).art || 'schild';
+    if(art === 'waffe'){
+      // Zweitwaffe gespiegelt in die linke Hand (hx=76), leicht nach links
+      // gekippt und etwas kleiner als die Hauptwaffe.
+      schild = heldWeapon(sc, uid, { hx:76, tilt:-14, scale:0.82 });
+    } else if(art === 'orb'){
+      schild = offhandOrb(sc);
+    } else {
+      const v=(((sc.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
+      const lvl = armorLvl(sc.rarity), el = elementOf(sc.id), E = ELEM[el];
+      let shp;
+      if(v===1||v===4)      shp=`<circle cx="${cx}" cy="${cy}" r="20" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+      else if(v===2)        shp=`<circle cx="${cx}" cy="${cy}" r="15" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+      else if(v===0||v===3) shp=`<rect x="${cx-17}" y="${cy-22}" width="34" height="46" rx="7" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+      else                  shp=`<path d="M${cx-17} ${cy-20} L${cx+17} ${cy-20} L${cx+17} ${cy-2} Q${cx+17} ${cy+18} ${cx} ${cy+26} Q${cx-17} ${cy+18} ${cx-17} ${cy-2} Z" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+      let inner = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
+      if(lvl>0){
+        const S=[1,1.18,1.34,1.5][lvl];
+        const halo = `<ellipse cx="${cx}" cy="${cy}" rx="${(24*S).toFixed(1)}" ry="${(27*S).toFixed(1)}" fill="${E.glow}" opacity="${(0.18+lvl*0.08).toFixed(2)}"/>`;
+        const rim = `<ellipse cx="${cx}" cy="${cy}" rx="${(22*S).toFixed(1)}" ry="${(25*S).toFixed(1)}" fill="none" stroke="${E.glow}" stroke-width="2.5" opacity="0.6"/>`;
+        schild = halo + `<g transform="translate(${cx},${cy}) scale(${S}) translate(${-cx},${-cy})">${inner}</g>` + rim;
+      } else schild = inner;
+    }
   }
 
   // Schulterplatten (sonst Tier-Pauldrons)
