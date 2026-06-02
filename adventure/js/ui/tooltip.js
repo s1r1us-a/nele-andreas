@@ -3,11 +3,11 @@
    ===================================================================== */
 import { AFFIX_DEFS, AFFIX_KEYS, fmtAffix } from '../data/affixes.js';
 import { SLOTS } from '../data/slots.js';
-import { typeOf, materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
+import { typeOf } from '../data/itemTypes.js';
 import { rarityOf } from '../data/rarities.js';
 import { classOf } from '../data/classes.js';
 import { state } from '../core/state.js';
-import { itemPower, isLocked, procText, resolveTargetSlot, canEquip, equipBlockReason } from '../core/items.js';
+import { itemPower, isLocked, procText, resolveTargetSlot, canEquip, equipBlockReason, itemKindLabel, itemKindIcon } from '../core/items.js';
 import { $ } from './dom.js';
 
 let tt = null;
@@ -52,13 +52,11 @@ export function tooltipHTML(it, opts={}){
   const ty = typeOf(it);
   const focus = (ty && ty.flavorAffix && AFFIX_DEFS[ty.flavorAffix])
     ? '<div class="tt-focus">🎯 Fokus: '+AFFIX_DEFS[ty.flavorAffix].label+'</div>' : '';
-  // Material-Zeile (Stoff/Leder/Platte/Zauberstab) + Klassen-Sperre.
-  const mat = materialOf(it);
-  let matLine = '';
-  if(mat){
-    matLine = '<div class="tt-mat">🧵 Material: '+(MATERIAL_LABEL[mat]||mat)+'</div>';
-  }
-  // Klassen-Sperre (auch für Schilde/Waffen ohne Material) anzeigen.
+  // Typ-/Material-Zeile für JEDES Item: Waffe → „Schwert · Physische Waffe"
+  // bzw. „Kristallstab · Zauberstab", Rüstung → Stoff/Leder/Platte,
+  // Schild → Typname, Schmuck → „Schmuck (für alle tragbar)".
+  let matLine = '<div class="tt-mat">'+itemKindIcon(it)+' '+itemKindLabel(it)+'</div>';
+  // Klassen-Sperre (auch für Schilde/Waffen) anzeigen.
   if(!canEquip(it)){
     matLine += '<div class="tt-locked">✋ '+equipBlockReason(it)+'</div>';
   }

@@ -981,9 +981,11 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   background:var(--stone); border:2px solid var(--rc, var(--line)); }
 .reward-card img { width:56px; height:56px; }
 .reward-card .rc-emoji { font-size:48px; line-height:56px; height:56px; }
-.reward-card .rc-name { font-weight:700; font-size:13px; margin:6px 0; }
+.reward-card .rc-name { font-weight:700; font-size:13px; margin:6px 0 2px; }
+.reward-card .rc-kind { font-size:11px; color:var(--txt-mute); font-weight:600; margin-bottom:6px; }
 .reward-card .rc-ilvl { font-size:11px; color:var(--txt-mute); margin-top:6px; }
 .cur-equip .cur-ilvl { font-size:11px; color:var(--txt-mute); margin-top:4px; }
+.cur-equip .cur-kind { font-size:11px; color:var(--txt-mute); font-weight:600; margin:3px 0 6px; }
 .inv-subtabs { display:flex; gap:8px; margin-bottom:14px; }
 .inv-subtab { flex:1; padding:9px 10px; border-radius:10px; cursor:pointer;
   text-align:center; font-weight:600; font-size:13px; background:var(--stone);
