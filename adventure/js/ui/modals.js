@@ -54,7 +54,8 @@ export function openSlotPicker(slotKey){
     html += '<div class="cur-equip">'+
       '<div class="cur-label">Aktuell ausgerüstet</div>'+
       '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+'</span>'+
-      '<div class="cur-stats"><div class="tt-stat '+cur.statType+'">+'+cur.stat+' '+sLbl+'</div>'+affixLinesHTML(cur)+'</div>'+
+      '<div class="cur-stats"><div class="tt-stat '+cur.statType+'">+'+cur.stat+' '+sLbl+'</div>'+affixLinesHTML(cur)+
+        '<div class="cur-ilvl">Gegenstandsstufe '+cur.ilvl+'</div></div>'+
       '<button class="btn ghost" id="unequipBtn" style="margin-top:10px;">Ablegen</button></div>';
   }
   html += candidates.length ? '<div class="picker-list" id="pickerList"></div>'
@@ -197,7 +198,8 @@ export function showRewardModal(items, potionGained){
       '<img src="'+it.sprite+'" alt="'+it.name+'">'+
       '<div class="rc-name" style="color:'+r.color+'">'+it.name+'</div>'+
       '<div class="tt-stat '+it.statType+'">+'+it.stat+' '+sLbl+'</div>'+
-      affixLinesHTML(it)+'</div>';
+      affixLinesHTML(it)+
+      '<div class="rc-ilvl">Gegenstandsstufe '+it.ilvl+'</div></div>';
   }
   if(potionGained){
     cards += '<div class="reward-card" style="--rc:#37d67a">'+

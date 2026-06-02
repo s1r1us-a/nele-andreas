@@ -3,7 +3,7 @@
    Zwei Angebotsspalten + eigenes Inventar zum Anbieten, Gebühr-Anzeige,
    „Bereit"/„Abbrechen". Reagiert live auf den Firebase-Trade-Knoten.
    ===================================================================== */
-import { $, toast, fmtBig } from './dom.js';
+import { $, toast, fmtBig, confirmDialog } from './dom.js';
 import { state } from '../core/state.js';
 import { isLocked, freeSlots, ensureItemSprite } from '../core/items.js';
 import { getCoins } from '../core/coins.js';
@@ -18,6 +18,7 @@ import {
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : '');
 let _inited = false;
 let _lastOpen = false;   // zum Erkennen eines abgeschlossenen/abgebrochenen Handels
+let _notifyOpen = false; // verhindert mehrfache Vorschlag-Modale für denselben Handel
 
 export function initTradeTab(){
   if(_inited) return;
@@ -31,15 +32,45 @@ function isTradeVisible(){
   return v && v.classList.contains('active');
 }
 
+// ---- Hinweis auf eingehenden Handel (Badge am Tab + Live-Modal) -------
+function showTradeBadge(){ const b = $('#tradeBadge'); if(b) b.hidden = false; }
+function hideTradeBadge(){ const b = $('#tradeBadge'); if(b) b.hidden = true; }
+
+// Direkt zum Handel-Tab springen (klickt den vorhandenen Tab → switchTab).
+function goToTrade(){
+  hideTradeBadge();
+  const tab = $('.tab[data-view="trade"]');
+  if(tab) tab.click();
+}
+
+// Live-Modal „<Partner> hat einen Handel vorgeschlagen" mit Schließen / Zum Handel.
+function notifyIncomingTrade(){
+  if(_notifyOpen) return;
+  _notifyOpen = true;
+  confirmDialog({
+    emoji: '🤝',
+    title: cap(partnerKey()) + ' hat einen Handel vorgeschlagen',
+    body: 'Möchtest du jetzt handeln?',
+    confirmText: 'Zum Handel',
+    cancelText: 'Schließen',
+  }).then(ok => { _notifyOpen = false; if(ok) goToTrade(); });
+}
+
 function onTradeUpdate(d){
-  // Abschluss/Abbruch erkennen (war offen → jetzt weg/zu).
   const open = !!(d && d.open && !d.canceledBy);
+  // Eingehenden Vorschlag des Partners erkennen (Übergang nach „offen").
+  if(open && !_lastOpen && d.openedBy && d.openedBy === partnerKey()){
+    showTradeBadge();
+    if(!isTradeVisible()) notifyIncomingTrade();
+  }
+  // Abschluss/Abbruch erkennen (war offen → jetzt weg/zu).
   if(_lastOpen && !open){
     if(d && d.canceledBy && d.canceledBy !== myKey()) toast('✖️ Handel abgebrochen.');
     else if(!d) toast('✅ Handel abgeschlossen!');
+    hideTradeBadge();
   }
   _lastOpen = open;
-  if(isTradeVisible()) renderTrade();
+  if(isTradeVisible()){ hideTradeBadge(); renderTrade(); }
 }
 
 // Item-Objekt (ohne Sprite, aus dem Netz) → Anzeige-Sprite sicherstellen.
@@ -65,6 +96,7 @@ function addCell(container, raw, onClick, extraCls){
 export function renderTrade(){
   const panel = $('#tradePanel');
   if(!panel) return;
+  hideTradeBadge();   // Tab ist offen → Hinweis nicht mehr nötig.
   const partner = cap(partnerKey());
 
   if(!state || !state.character){
