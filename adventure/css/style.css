@@ -864,10 +864,23 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .arena.fight-over .combat-log,
 .arena.fight-over .ability-bar,
 .arena.fight-over #potionBtn { display:none !important; }
-/* Ruhiger, deckender Hintergrund statt durchscheinender Kampfszene. */
+/* Sieg-Fenster als Vollbild: Bisher steckte die Sieg-Karte in der 300px hohen
+   Arena-Bühne und musste mit overflow-y:auto gescrollt werden (Beutekarte
+   abgeschnitten). Im Sieg-Zustand lösen wir die Karte aus der Bühne – die
+   Bühne wächst mit dem Inhalt, die Karte fließt normal und der „Schließen"-
+   Knopf sitzt direkt darunter. Das Overlay liefert weiterhin den deckenden
+   Vollbild-Hintergrund, daher braucht die Karte keinen eigenen mehr. */
+.arena.fight-over .arena-stage {
+  height:auto; min-height:0; overflow:visible;
+  border:none; border-radius:0; background:none; }
+/* Bühnen-Deko (Sprites, Schadens-/Blitz-Layer) im Sieg-Moment ausblenden,
+   da die Karte die Bühne nicht mehr deckend überlagert. */
+.arena.fight-over .combatant,
+.arena.fight-over .dmg-layer,
+.arena.fight-over .arena-flash { display:none !important; }
 .arena.fight-over .arena-result {
-  background:radial-gradient(120% 90% at 50% 0%, rgba(44,30,64,.97), rgba(12,9,18,.99));
-  justify-content:flex-start; overflow-y:auto; padding:20px 16px; }
+  position:static; inset:auto; overflow:visible;
+  background:none; justify-content:center; padding:8px 12px 4px; }
 .arena.fight-over .arena-result .big { font-size:34px; margin-top:6px; }
 .ar-boss { font-family:'Quicksand',sans-serif; font-weight:700; font-size:15px;
   color:var(--txt); margin-top:6px; }
