@@ -113,6 +113,7 @@ export function startBossFight(bossIndex){
   updateHpBars(fight);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
+  $('#arena').classList.remove('fight-over');   // Kampf-UI wieder einblenden
   // Während eines Boss-Kampfes ist „Verlassen" ausgeblendet (kein Abbrechen).
   $('#arenaCloseBtn').style.display = 'none';
   combatSpeed = 1;
@@ -935,9 +936,15 @@ function endFight(fight, win){
         'Mach erst Platz im Inventar.</div>';
     }
 
-    let coinTxt = '';
+    // Belohnungs-Bausteine für die aufgeräumte Sieg-Karte sammeln.
+    let coinAmount = 0;     // Coins für den Coin-Chip (0 = kein Chip)
+    let coinNote = '';      // kleiner Zusatz im Coin-Chip (z. B. Farm-Hinweis)
+    let statusNote = '';    // Statuszeile (neuer Boss / Farm-Kampf)
+    let statusKind = '';    // CSS-Variante der Statuszeile
+    let bonusNote = '';     // Erstkill-Bonus-Hinweis
     if(!isFarm){
       state.stats.bossKills++;
+      statusNote = 'Neuer Boss freigeschaltet!'; statusKind = 'unlock';
       if(bossIndex === state.zone){
         state.zone++;
         state.bossesBeaten++;
@@ -948,23 +955,33 @@ function endFight(fight, win){
           const coins = bossCoinReward(bossIndex);
           awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
           state.potions = (state.potions||0) + 1;
-          coinTxt = '<br>🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Coins + 🧪 Heiltrank!';
+          coinAmount = coins;
+          bonusNote = '🏆 Erstkill-Bonus: 🪙 +'+fmtBig(coins)+' Coins + 🧪 Heiltrank!';
         }
       }
     } else {
       state.stats.farmKills++;
+      statusNote = 'Farm-Kampf – reduzierte Belohnung'; statusKind = 'farm';
       // Wiederholungskämpfe geben 30 % der Erstkill-Münzen (kein Heiltrank).
       const coins = Math.round(bossCoinReward(bossIndex) * FARM.coinMult);
       if(coins > 0){
         awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
-        coinTxt = '<br>🪙 +'+fmtBig(coins)+' Coins (Farm – 30 %)';
+        coinAmount = coins; coinNote = 'Farm – 30 %';
       }
     }
 
+    const chips = '<div class="ar-chips">'+
+        '<span class="ar-chip xp">⭐ +'+fmtBig(xpGain)+' XP</span>'+
+        (coinAmount>0 ? '<span class="ar-chip coin">🪙 +'+fmtBig(coinAmount)+
+          (coinNote?' <small>'+coinNote+'</small>':'')+'</span>' : '')+
+      '</div>';
+
     res.className = 'arena-result win show';
     res.innerHTML = '<div class="big">⚔️ Sieg!</div>'+
-      '<div class="sub">'+boss.name+' besiegt! ⭐ '+fmtBig(xpGain)+' XP'+
-      (isFarm ? '<br>(Farm-Kampf – reduzierte Belohnung)' : '<br>Neuer Boss freigeschaltet!')+coinTxt+'</div>'+
+      '<div class="ar-boss">'+boss.name+' besiegt!</div>'+
+      chips+
+      (statusNote ? '<div class="ar-status '+statusKind+'">'+statusNote+'</div>' : '')+
+      (bonusNote ? '<div class="ar-bonus">'+bonusNote+'</div>' : '')+
       dropBlock;
     saveState();
     checkAdventureBadges();   // Boss-/Zonen-/Sammel-Badges prüfen
@@ -975,6 +992,9 @@ function endFight(fight, win){
     res.innerHTML = '<div class="big">💀 Niederlage</div>'+
       '<div class="sub">'+boss.name+' war zu stark. Grinde bessere Items und versuch es erneut!</div>';
   }
+  // Kampf-UI (HP-Balken, DPS-Meter, Log, Buffs, Heiltrank) ausblenden, damit
+  // die Belohnung ungestört und fokussiert wirkt.
+  $('#arena').classList.add('fight-over');
   $('#arenaCloseBtn').textContent = 'Schließen';
   $('#arenaCloseBtn').style.display = '';
 }
@@ -1006,6 +1026,7 @@ export function openDuelArena(cfg){
   currentFight = fight;
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
+  $('#arena').classList.remove('fight-over');   // Kampf-UI wieder einblenden
   $('#arenaCloseBtn').style.display = ''; $('#arenaCloseBtn').textContent = '🚪 Verlassen';
   combatSpeed = 1;
   if($('#combatLog')) $('#combatLog').innerHTML = '';
@@ -1164,6 +1185,7 @@ function endDuel(f, winner, me){
     res.innerHTML = '<div class="big">💀 Niederlage</div><div class="sub">Dein Gegner war stärker.'+(stake>0?' 🪙 −'+fmtBig(stake)+' Coins':'')+'</div>';
   }
   $('#potionBtn').disabled = true; $('#potionBtn').style.opacity = '0.5';
+  $('#arena').classList.add('fight-over');   // Kampf-UI ausblenden, Ergebnis fokussieren
   $('#arenaCloseBtn').textContent = 'Schließen';
   $('#arenaCloseBtn').style.display = '';
 }
