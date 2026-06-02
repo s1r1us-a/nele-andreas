@@ -50,8 +50,12 @@ function heldWeapon(item, uid){
   const el = elementOf(item.id), E = ELEM[el];
   const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
   const hx = 124;
-  // Zauberstab: langer Stab mit leuchtender Kugel oben (Farbe je nach Stab-Typ).
   const ty = typeOf(item);
+  // Waffe natürlicher halten: leicht von der Körpermitte weg kippen (Drehpunkt =
+  // Handkreis 124,194). Zauberstab bleibt aufrechter, damit die Kugel oben bleibt.
+  const tilt = (ty && ty.material === 'zauberstab') ? 6 : 15;
+  const tiltWrap = inner => `<g transform="rotate(${tilt} ${hx} 194)">${inner}</g>`;
+  // Zauberstab: langer Stab mit leuchtender Kugel oben (Farbe je nach Stab-Typ).
   if(ty && ty.material === 'zauberstab'){
     const P = ORB_PAL[ty.orb] || ORB_PAL.rot;
     const oy = 112;                                   // Höhe der Kugel
@@ -63,7 +67,7 @@ function heldWeapon(item, uid){
     const orb  = `<circle cx="${hx}" cy="${oy}" r="9" fill="${P.mid}" stroke="${P.lo}" stroke-width="1"/>`+
                  `<circle cx="${hx-3}" cy="${oy-3}" r="3.4" fill="${P.hi}" opacity="0.9"/>`;
     const hand = `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
-    return glow + pole + orb + hand;
+    return tiltWrap(glow + pole + orb + hand);
   }
   const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
                `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
@@ -105,7 +109,7 @@ function heldWeapon(item, uid){
     if(lvl>=3) halo += `<ellipse cx="${hx}" cy="150" rx="9" ry="34" fill="${E.core}" opacity="0.35"/>`;
   }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
-  return halo + w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
+  return tiltWrap(halo + w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`);
 }
 
 export function buildHeroSVG(character, tier, gear){
