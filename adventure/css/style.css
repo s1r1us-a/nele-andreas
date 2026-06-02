@@ -797,6 +797,158 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   .vfx-beam.drain-beam { opacity:1; }
 }
 
+/* ====================================================================
+   SIGNATUR-EFFEKTE pro Fähigkeit (WoW-Style). Reines DOM+CSS im #dmgLayer,
+   identisch auf Mobile/PC und in allen Modi (Boss-Kampf & Duell). Alle mit
+   prefers-reduced-motion-Fallback am Ende.
+   ==================================================================== */
+
+/* Drain-Strahl-Varianten (Seelenraub bleibt der Standard-drain-beam). */
+.vfx-beam.drain-beam.drain-small { height:9px;
+  box-shadow:0 0 12px 3px var(--beam-col,#c0306b), 0 0 22px 6px rgba(192,48,107,.4); }
+.vfx-beam.drain-beam.drain-big { height:18px;
+  background:linear-gradient(90deg, rgba(90,20,120,0) 0%, rgba(122,31,176,.92) 12%,
+    #c06bff 46%, #ffffff 50%, #c06bff 54%, rgba(122,31,176,.92) 88%, rgba(90,20,120,0) 100%);
+  box-shadow:0 0 26px 8px #7a1fb0, 0 0 46px 14px rgba(122,31,176,.5); }
+
+/* Runen-/Sigil-Bodenkreis (Cast-Circle); zwei gegenläufige Ringe + Glüh-Ellipse. */
+.vfx-rune-ring { position:absolute; width:120px; height:58px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:4; border-radius:50%;
+  background:radial-gradient(50% 90% at 50% 50%, var(--rune-col,#9be7ff) 0%, rgba(0,0,0,0) 62%);
+  box-shadow:0 0 22px 4px var(--rune-col,#9be7ff);
+  opacity:0; animation:runeFade .95s ease-out forwards; }
+.vfx-rune-ring.persist { animation:runeFadeIn .4s ease-out forwards; }
+.vfx-rune-ring::before, .vfx-rune-ring::after { content:''; position:absolute; inset:0;
+  border-radius:50%; border:2px solid var(--rune-col,#9be7ff); }
+.vfx-rune-ring::before { animation:spinCW 5s linear infinite; }
+.vfx-rune-ring::after  { inset:-7px; border-width:1px; border-style:dashed; opacity:.7;
+  animation:spinCCW 7s linear infinite; }
+@keyframes runeFade   { 0%{opacity:0;} 15%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
+@keyframes runeFadeIn { from{opacity:0;} to{opacity:1;} }
+@keyframes spinCW  { to { transform:rotate(360deg); } }
+@keyframes spinCCW { to { transform:rotate(-360deg); } }
+
+/* Um den Sprite kreisende Glüh-Orbs/Glyphen (Buff-Auren, Sterne, Klingen). */
+.vfx-orbit { position:absolute; width:0; height:0; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:10; }
+.vfx-orbit-g { position:absolute; left:0; top:0; transform-origin:0 0;
+  animation:orbitSpin var(--period,2600ms) linear infinite; }
+.vfx-orbit-g.orb { width:13px; height:13px; margin:-6px 0 0 -6px; border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff, var(--orb-col,#fff) 60%, rgba(0,0,0,0));
+  box-shadow:0 0 12px 3px var(--orb-col,#fff); }
+@keyframes orbitSpin { from{ transform:rotate(0)      translateX(var(--r,50px)); }
+                       to  { transform:rotate(360deg) translateX(var(--r,50px)); } }
+.vfx-orbit-i { position:absolute; left:0; top:0; font-size:17px; line-height:1;
+  text-shadow:0 0 8px var(--orb-col,#fff);
+  transform:translate(-50%,-50%); animation:orbitCounter var(--period,2600ms) linear infinite; }
+@keyframes orbitCounter { from{ transform:translate(-50%,-50%) rotate(0); }
+                          to  { transform:translate(-50%,-50%) rotate(-360deg); } }
+
+/* Geschoss-Salve Caster→Ziel. */
+.vfx-proj { position:absolute; width:16px; height:16px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:10; border-radius:50%; font-size:16px; text-align:center; line-height:16px;
+  background:radial-gradient(circle at 40% 40%, #fff, var(--col,#9be7ff) 60%, rgba(0,0,0,0));
+  box-shadow:0 0 16px 5px var(--col,#9be7ff);
+  animation:projFly .42s cubic-bezier(.4,.1,.7,.6) forwards; }
+.vfx-proj:not(:empty) { background:none; box-shadow:none; color:var(--col,#9be7ff);
+  text-shadow:0 0 10px var(--col,#9be7ff), 0 0 18px var(--col,#9be7ff); }
+@keyframes projFly { 0%{ opacity:0; } 12%{ opacity:1; }
+  100%{ opacity:1; transform:translate(calc(-50% + var(--tx,0px)), calc(-50% + var(--ty,0px))) scale(1.1); } }
+
+/* Crescent-/Sensen-Slash. */
+.vfx-arc { position:absolute; width:160px; height:160px; pointer-events:none; z-index:11; border-radius:50%;
+  background:conic-gradient(from -40deg, rgba(0,0,0,0) 0deg, var(--arc-col,#fff) 30deg,
+    #fff 45deg, var(--arc-col,#fff) 60deg, rgba(0,0,0,0) 95deg);
+  -webkit-mask:radial-gradient(circle, rgba(0,0,0,0) 54%, #000 57%, #000 72%, rgba(0,0,0,0) 75%);
+          mask:radial-gradient(circle, rgba(0,0,0,0) 54%, #000 57%, #000 72%, rgba(0,0,0,0) 75%);
+  filter:drop-shadow(0 0 10px var(--arc-col,#fff));
+  opacity:0; transform:translate(-50%,-50%) rotate(var(--arc-rot,-35deg));
+  animation:arcSweep .42s ease-out forwards; }
+@keyframes arcSweep {
+  0%   { opacity:0; transform:translate(-50%,-50%) rotate(calc(var(--arc-rot,-35deg) - 40deg)) scale(.7); }
+  30%  { opacity:1; }
+  100% { opacity:0; transform:translate(-50%,-50%) rotate(calc(var(--arc-rot,-35deg) + 30deg)) scale(1.12); } }
+
+/* Gefüllte Detonations-Nova. */
+.vfx-nova { position:absolute; width:300px; height:300px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:10; border-radius:50%; mix-blend-mode:screen; opacity:0;
+  background:radial-gradient(circle, #fff 0%, var(--nova-col,#9b30ff) 30%, rgba(0,0,0,0) 70%);
+  animation:novaPop .6s ease-out forwards; }
+@keyframes novaPop { 0%{ opacity:.95; transform:translate(-50%,-50%) scale(.12); }
+  60%{ opacity:.9; } 100%{ opacity:0; transform:translate(-50%,-50%) scale(1); } }
+
+/* Einschlag-Krater mit Boden-Rissen. */
+.vfx-crater { position:absolute; width:150px; height:60px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:6; border-radius:50%; opacity:0;
+  background:radial-gradient(50% 90% at 50% 50%, var(--crater-col,#bfe3ff) 0%, rgba(0,0,0,0) 66%);
+  box-shadow:0 0 26px 8px var(--crater-col,#bfe3ff);
+  animation:craterPop .7s ease-out forwards; }
+.vfx-crater::before { content:''; position:absolute; inset:0; border-radius:50%; opacity:.85;
+  background:conic-gradient(from 0deg, rgba(0,0,0,0) 0 18deg, var(--crater-col,#bfe3ff) 20deg 22deg,
+    rgba(0,0,0,0) 24deg 70deg, var(--crater-col,#bfe3ff) 72deg 74deg, rgba(0,0,0,0) 76deg 140deg,
+    var(--crater-col,#bfe3ff) 142deg 144deg, rgba(0,0,0,0) 146deg 360deg); }
+@keyframes craterPop { 0%{ opacity:0; transform:translate(-50%,-50%) scale(.5); }
+  25%{ opacity:1; } 100%{ opacity:0; transform:translate(-50%,-50%) scale(1.15); } }
+
+/* Großes Emblem/Sigil-Aufblitzen. */
+.vfx-sigil { position:absolute; transform:translate(-50%,-50%); pointer-events:none; z-index:13;
+  font-size:64px; line-height:1; opacity:0;
+  text-shadow:0 0 18px currentColor, 0 0 36px currentColor;
+  animation:sigilFlash .76s ease-out forwards; }
+@keyframes sigilFlash { 0%{ opacity:0; transform:translate(-50%,-50%) scale(.4) rotate(-12deg); }
+  25%{ opacity:1; transform:translate(-50%,-50%) scale(1.12) rotate(0); }
+  60%{ opacity:.95; transform:translate(-50%,-50%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1.25); } }
+
+/* Einsaugender Spiral-Wirbel. */
+.vfx-vortex { position:absolute; width:200px; height:200px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:10; border-radius:50%; mix-blend-mode:screen; opacity:0;
+  background:conic-gradient(from 0deg, rgba(0,0,0,0), var(--vtx-col,#9b30ff), rgba(0,0,0,0),
+    var(--vtx-col,#9b30ff), rgba(0,0,0,0));
+  animation:vortexSpin .52s ease-in forwards; }
+@keyframes vortexSpin { 0%{ opacity:0; transform:translate(-50%,-50%) rotate(0) scale(1.3); }
+  25%{ opacity:.9; } 100%{ opacity:0; transform:translate(-50%,-50%) rotate(420deg) scale(.1); } }
+
+/* Rauchwolke (Stealth-Einstieg). */
+.vfx-smoke { position:absolute; width:70px; height:70px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:9; border-radius:50%; opacity:0;
+  background:radial-gradient(circle, rgba(60,40,90,.7) 0%, rgba(40,30,60,.4) 50%, rgba(0,0,0,0) 72%);
+  animation:smokeRise .9s ease-out forwards; }
+@keyframes smokeRise { 0%{ opacity:0; transform:translate(-50%,-50%) scale(.4); }
+  25%{ opacity:.85; } 100%{ opacity:0; transform:translate(-50%,-130%) scale(1.5); } }
+
+/* Vollbild-Rand-Vignette. */
+.arena-vignette { position:absolute; inset:0; pointer-events:none; z-index:13; opacity:0;
+  background:radial-gradient(circle at 50% 55%, rgba(0,0,0,0) 42%, var(--vig-col,#c0306b) 100%);
+  animation:vignettePulse .7s ease-out forwards; }
+@keyframes vignettePulse { 0%{ opacity:0; } 25%{ opacity:.82; } 100%{ opacity:0; } }
+
+/* Neue persistente Buff-Auren + Sprite-Zustände. */
+.combatant.aura-steel { filter:drop-shadow(0 0 12px #9fd0ff) drop-shadow(0 0 22px #4a78c0) brightness(1.14) saturate(1.2);
+  animation:critRagePulse .5s ease-in-out infinite alternate; }
+.combatant.aura-arcane { filter:drop-shadow(0 0 14px #9be7ff) drop-shadow(0 0 26px #6a9bff) brightness(1.2) saturate(1.4);
+  animation:ablazePulse .5s ease-in-out infinite alternate; }
+.combatant.aura-blood-strong { filter:drop-shadow(0 0 16px #ff466e) drop-shadow(0 0 30px #8a0030) brightness(1.12) saturate(1.7);
+  animation:ablazePulse .45s ease-in-out infinite alternate; }
+.combatant.stealth { opacity:.45; filter:grayscale(.3) brightness(.8) drop-shadow(0 0 10px #6a4bb0);
+  transition:opacity .3s, filter .3s; }
+.combatant.freeze { animation:none !important; filter:brightness(1.6) saturate(.4) drop-shadow(0 0 12px #fff); }
+
+/* Goldene Avatar-Kuppel (Unbeugsam). */
+.magic-barrier.dome-gold { border-color:rgba(255,210,80,.85);
+  background:repeating-linear-gradient(0deg, rgba(255,220,140,.12) 0 7px, rgba(255,200,90,0) 7px 14px),
+    radial-gradient(60% 80% at 50% 50%, rgba(255,200,90,.34) 0%, rgba(255,170,40,.2) 50%,
+      rgba(255,170,40,.05) 78%, rgba(255,170,40,0) 100%);
+  box-shadow:0 0 36px 12px rgba(255,180,40,.55), inset 0 0 30px 12px rgba(255,220,150,.4); }
+
+@media(prefers-reduced-motion: reduce){
+  .vfx-rune-ring, .vfx-rune-ring::before, .vfx-rune-ring::after,
+  .vfx-orbit-g, .vfx-orbit-i, .vfx-proj, .vfx-arc, .vfx-nova, .vfx-crater, .vfx-crater::before,
+  .vfx-sigil, .vfx-vortex, .vfx-smoke, .arena-vignette,
+  .combatant.aura-steel, .combatant.aura-arcane, .combatant.aura-blood-strong { animation:none; }
+  .vfx-rune-ring, .vfx-rune-ring.persist, .vfx-sigil, .vfx-arc, .vfx-nova, .vfx-crater { opacity:1; }
+}
+
 /* Fähigkeits-Leiste (mehrere Kampf-Knöpfe). */
 .ability-bar { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
 .ability-bar:empty { display:none; }

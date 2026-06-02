@@ -242,7 +242,7 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
   if(ab.kind === 'heal'){
     const heal = Math.round(side.maxHp * ab.healPct);
     side.hp = Math.min(side.maxHp, side.hp + heal);
-    side.healTs = now;
+    side.healTs = now; side.healAb = ab.id;
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': +' + fmtBig(heal) + ' HP', '#37d67a');
   } else if(ab.kind === 'burst' || ab.kind === 'drain'){
     // Kanalisierter Seelenraub: Lebensentzug pro Sekunde über die volle Dauer.
@@ -250,8 +250,8 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
     if(ab.kind === 'drain' && ab.dur){ startDuelDrain(fight, role, side, opp, name, ab); return; }
     const dmg = Math.max(1, Math.round(side.atk * ab.burstMult));
     opp.hp -= dmg; fight.dmgDealt += dmg;
-    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0;
-    if(ab.kind === 'drain'){ side.hp = Math.min(side.maxHp, side.hp + dmg); side.drainTs = now; }
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = ab.id;
+    if(ab.kind === 'drain'){ side.hp = Math.min(side.maxHp, side.hp + dmg); side.drainTs = now; side.drainAb = ab.id; }
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden' +
       (ab.kind === 'drain' ? ' (+Heilung)' : ''), '#ffd24a');
     if(opp.hp <= 0){
@@ -261,16 +261,16 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
       clearTimeout(_timer);
     }
   } else if(ab.kind === 'critBoost'){
-    side.buffs.crit = { until: now + ab.dur, val: ab.critBonus };
+    side.buffs.crit = { until: now + ab.dur, val: ab.critBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.critBonus*100) + '% Krit!', '#ffd24a');
   } else if(ab.kind === 'dmgBoost'){
-    side.buffs.dmgBoost = { until: now + ab.dur, val: ab.dmgBonus };
+    side.buffs.dmgBoost = { until: now + ab.dur, val: ab.dmgBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.dmgBonus*100) + '% Schaden!', '#ff8a3d');
   } else if(ab.kind === 'dmgReduce'){
-    side.buffs.dmgReduce = { until: now + ab.dur, val: ab.dmgReduce };
+    side.buffs.dmgReduce = { until: now + ab.dur, val: ab.dmgReduce, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – ' + Math.round(ab.dmgReduce*100) + '% weniger Schaden!', '#7fd0ff');
   } else if(ab.kind === 'lifesteal'){
-    side.buffs.lifesteal = { until: now + ab.dur, val: ab.lifestealBonus };
+    side.buffs.lifesteal = { until: now + ab.dur, val: ab.lifestealBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.lifestealBonus*100) + '% Lebensraub!', '#e0466e');
   }
 }
@@ -288,6 +288,7 @@ function startDuelDrain(fight, role, side, opp, name, ab){
     opp.hp -= dmg; fight.dmgDealt += dmg;
     side.hp = Math.min(side.maxHp, side.hp + dmg);
     side.drainTs = now; side.burstTs = now; side.burstMagic = side.magic ? 1 : 0;
+    side.drainAb = ab.id; side.burstAb = ab.id;
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden (+Heilung)', '#ffd24a');
     if(opp.hp <= 0){
       opp.hp = 0; fight.over = true; fight.winner = role;
@@ -402,8 +403,11 @@ function fxOf(side, now){
     fire:   Math.max(0, side.buffs.dmgBoost.until - now),
     shield: Math.max(0, side.buffs.dmgReduce.until - now),
     blood:  Math.max(0, side.buffs.lifesteal.until - now),
-    burstTs: side.burstTs || 0, burstMagic: side.burstMagic || 0,
-    healTs: side.healTs || 0, drainTs: side.drainTs || 0,
+    critSrc: side.buffs.crit.src || '', fireSrc: side.buffs.dmgBoost.src || '',
+    shieldSrc: side.buffs.dmgReduce.src || '', bloodSrc: side.buffs.lifesteal.src || '',
+    burstTs: side.burstTs || 0, burstMagic: side.burstMagic || 0, burstAb: side.burstAb || '',
+    healTs: side.healTs || 0, healAb: side.healAb || '',
+    drainTs: side.drainTs || 0, drainAb: side.drainAb || '',
   };
 }
 async function syncDuel(fight, finalWrite){
