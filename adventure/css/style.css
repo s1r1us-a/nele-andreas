@@ -68,9 +68,15 @@ h1,h2,h3 { font-family:'Cinzel',serif; }
   color:var(--txt-dim); background:var(--panel); border:1px solid var(--line);
   border-bottom:none; padding:10px 22px; border-radius:10px 10px 0 0; user-select:none;
 }
+.tab { position:relative; }
 .tab.active { color:var(--gold-hi); background:var(--panel-2);
   box-shadow:0 -2px 0 var(--gold) inset; }
 .tab:hover:not(.active){ color:var(--txt); }
+.tab .tab-badge { position:absolute; top:5px; right:7px; width:10px; height:10px;
+  border-radius:50%; background:#ff5b5b; box-shadow:0 0 0 2px var(--panel), 0 0 8px #ff5b5b;
+  animation:tab-badge-pulse 1.4s ease-in-out infinite; }
+.tab .tab-badge[hidden] { display:none; }
+@keyframes tab-badge-pulse { 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.35); opacity:.7; } }
 
 .wrap { max-width:1000px; margin:0 auto; padding:0 14px 60px; }
 .view { display:none; animation:fade .25s ease; }
@@ -302,6 +308,7 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .preview-hint { text-align:center; color:var(--txt-dim); font-size:13px; margin:4px 0 12px; }
 .preview-kind { text-align:center; font-size:14px; margin:-8px 0 12px; letter-spacing:.2px; }
 .preview-kind b { font-weight:700; }
+.preview-ilvl { text-align:center; color:var(--txt-mute); font-size:11px; margin-top:12px; }
 .preview-stats { background:#0d0a13; border:1px solid var(--line); border-radius:10px;
   padding:10px 14px; }
 .diff-row { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:baseline;
@@ -970,6 +977,8 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .reward-card img { width:56px; height:56px; }
 .reward-card .rc-emoji { font-size:48px; line-height:56px; height:56px; }
 .reward-card .rc-name { font-weight:700; font-size:13px; margin:6px 0; }
+.reward-card .rc-ilvl { font-size:11px; color:var(--txt-mute); margin-top:6px; }
+.cur-equip .cur-ilvl { font-size:11px; color:var(--txt-mute); margin-top:4px; }
 .inv-subtabs { display:flex; gap:8px; margin-bottom:14px; }
 .inv-subtab { flex:1; padding:9px 10px; border-radius:10px; cursor:pointer;
   text-align:center; font-weight:600; font-size:13px; background:var(--stone);

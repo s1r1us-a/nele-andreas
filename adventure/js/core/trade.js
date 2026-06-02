@@ -50,7 +50,7 @@ export async function openTrade(){
   const cur = snap.val();
   if(!cur || !cur.open || cur.canceledBy){
     await set(ref(db, node), {
-      open: true, rev: 0, updatedAt: Date.now(),
+      open: true, rev: 0, updatedAt: Date.now(), openedBy: userKey,
       offers: { [userKey]: { items: [], accepted: false }, [otherKey()]: { items: [], accepted: false } },
       settle: { [userKey]: false, [otherKey()]: false },
       canceledBy: null,

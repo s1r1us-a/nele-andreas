@@ -159,7 +159,11 @@ export const freeSlots = () => Math.max(0, invCapacity() - state.inventory.lengt
 export const sellPrice = it => {
   const base = Math.round((it.stat + affixScore(it)*2) * (rarityIndex(it.rarity)+1) * 0.6);
   const price = it.cat === 'waffen' ? base*10 : base;   // Waffenpreise ×10
-  return Math.max(500, price);                          // Mindestpreis 500 Coins
+  // Mindestpreis steigt mit der Seltenheit (gewöhnlich 500 … mythisch 3000),
+  // damit ein besseres Item bei niedrigen Stufen nie so wenig wie das
+  // schlechteste bringt. Höher berechnete Preise bleiben unverändert.
+  const floor = 500 * (rarityIndex(it.rarity) + 1);
+  return Math.max(floor, price);
 };
 
 // Einzel-Item-Kampfkraft (Vergleich im Vorschau-Modal)
