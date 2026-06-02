@@ -431,6 +431,24 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   0%,100% { filter:drop-shadow(0 0 5px #ffe7a8) drop-shadow(0 0 11px rgba(230,204,128,.7)) brightness(1.06); }
   50%     { filter:drop-shadow(0 0 12px #fff4cf) drop-shadow(0 0 24px rgba(255,224,150,1)) brightness(1.26) saturate(1.25); }
 }
+/* Dezenter Puls schon ab Selten/Episch (langsamer & schwächer als Leg/Myth),
+   damit „höhere Seltenheit = mehr Glow" über die ganze Skala sichtbar ist. */
+@keyframes rarePulseRare {
+  0%,100% { filter:drop-shadow(0 0 2px rgba(0,112,221,.5)); }
+  50%     { filter:drop-shadow(0 0 5px rgba(0,112,221,.85)) brightness(1.05); }
+}
+@keyframes rarePulseEpic {
+  0%,100% { filter:drop-shadow(0 0 2px #a335ee) drop-shadow(0 0 5px rgba(163,53,238,.5)); }
+  50%     { filter:drop-shadow(0 0 5px #b766f0) drop-shadow(0 0 11px rgba(163,53,238,.85)) brightness(1.09); }
+}
+.slot[data-rarity="selten"] img,
+.bp-slot.filled[data-rarity="selten"] img,
+.reward-card[data-rarity="selten"] img,
+.inv-item[data-rarity="selten"] img { animation:rarePulseRare 2.6s ease-in-out infinite; }
+.slot[data-rarity="episch"] img,
+.bp-slot.filled[data-rarity="episch"] img,
+.reward-card[data-rarity="episch"] img,
+.inv-item[data-rarity="episch"] img { animation:rarePulseEpic 2.1s ease-in-out infinite; }
 .slot[data-rarity="legendaer"] img,
 .bp-slot.filled[data-rarity="legendaer"] img,
 .reward-card[data-rarity="legendaer"] img,
@@ -448,6 +466,8 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 #dollHero.rare-leg, #sceneHero.rare-leg { animation:rarePulseLeg 2.0s ease-in-out infinite; }
 #dollHero.rare-myth, #sceneHero.rare-myth { animation:rarePulseMyth 1.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce){
+  .slot[data-rarity="selten"] img, .bp-slot.filled[data-rarity="selten"] img, .inv-item[data-rarity="selten"] img,
+  .slot[data-rarity="episch"] img, .bp-slot.filled[data-rarity="episch"] img, .inv-item[data-rarity="episch"] img,
   .slot[data-rarity="legendaer"] img, .bp-slot.filled[data-rarity="legendaer"] img, .inv-item[data-rarity="legendaer"] img,
   .slot[data-rarity="mythisch"] img, .bp-slot.filled[data-rarity="mythisch"] img, .inv-item[data-rarity="mythisch"] img,
   #dollHero.rare-leg, #sceneHero.rare-leg, #dollHero.rare-myth, #sceneHero.rare-myth { animation:none; }

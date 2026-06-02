@@ -70,7 +70,7 @@ const ARMOR_MATERIALS = [
   { key:'urweltstoff',   material:'stoff',  prefix:'Urwelt',        variant:11, statMult:0.96, weight:1.0, affixBias:{ critMagic:5, versatility:3 },          flavorAffix:'critMagic' },
 ];
 export const ARMOR_MATERIAL_KEYS = ['stoff','leder','platte'];
-export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab' };
+export const MATERIAL_LABEL = { stoff:'Stoff', leder:'Leder', platte:'Platte', zauberstab:'Zauberstab', kugel:'Kugel' };
 
 // g = grammatisches Genus des Slot-Nomens (m/f/n/pl) → korrekte
 // Adjektiv-Endung im Item-Namen (siehe itemDisplayName in items.js).
@@ -197,6 +197,76 @@ export const ITEM_TYPES = {
     { key:'festungsschild',name:'Festungsschild', g:'m', variant:3, statMult:1.20, weight:2.5,affixBias:{ armor:4, maxHp:3 },  flavorAffix:'maxHp' },
     { key:'drachenhornschild',name:'Drachenhornschild',g:'m',variant:8,statMult:1.18,weight:2,affixBias:{ thorns:4, armor:3 }, flavorAffix:'thorns' },
     { key:'titanenwall',  name:'Titanenwall',     g:'m', variant:0, statMult:1.30, weight:0.9,affixBias:{ armor:5, maxHp:3 },  flavorAffix:'armor' },
+    // ⚔️ Nebenhand-Zweitwaffen (NUR Kämpfer) – liegen im Nebenhand-Slot, geben Schaden
+    //    (`statType:'damage'`), aber reduziert (statMult ~0.50–0.68 ≈ 60 % einer Hauptwaffe).
+    //    `art:'waffe'` → Waffen-Sprite + Waffen-Glow; `affixGroup:'waffe'` → Waffen-Affixe.
+    //    Kein `material` (physisch). Können NICHT in den Haupt-Waffenslot (slotKey bleibt 'schild').
+    { key:'parierdolch',  name:'Parierdolch',   g:'m', variant:1, statMult:0.55, weight:9, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, attackSpeed:3 }, flavorAffix:'critPhys' },
+    { key:'kurzschwert',  name:'Kurzschwert',   g:'n', variant:0, statMult:0.62, weight:9, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:3, critPhys:2 },     flavorAffix:'damage' },
+    { key:'handaxt',      name:'Handaxt',       g:'f', variant:3, statMult:0.60, weight:8, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ lifesteal:3, damage:2 },   flavorAffix:'lifesteal' },
+    { key:'kriegsdolch',  name:'Kriegsdolch',   g:'m', variant:1, statMult:0.58, weight:8, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, critDamage:2 }, flavorAffix:'critPhys' },
+    { key:'faustklinge',  name:'Faustklinge',   g:'f', variant:1, statMult:0.56, weight:8, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ attackSpeed:4, critPhys:2 }, flavorAffix:'attackSpeed' },
+    { key:'hakenklinge',  name:'Hakenklinge',   g:'f', variant:7, statMult:0.58, weight:7, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, attackSpeed:2 }, flavorAffix:'critPhys' },
+    { key:'wurfmesser',   name:'Wurfmesser',    g:'n', variant:1, statMult:0.50, weight:7, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ attackSpeed:4, critPhys:2 }, flavorAffix:'attackSpeed' },
+    { key:'kampfsichel',  name:'Kampfsichel',   g:'f', variant:9, statMult:0.60, weight:7, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ lifesteal:3, critDamage:2 }, flavorAffix:'lifesteal' },
+    { key:'maingauche',   name:'Main-Gauche',   g:'f', variant:1, statMult:0.57, weight:7, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, attackSpeed:2 }, flavorAffix:'critPhys' },
+    { key:'bucklerklinge',name:'Buckler-Klinge',g:'f', variant:2, statMult:0.59, weight:6, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:2, versatility:3 },  flavorAffix:'versatility' },
+    { key:'sax',          name:'Sax',           g:'m', variant:1, statMult:0.58, weight:7, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:3, critPhys:2 },     flavorAffix:'damage' },
+    { key:'kukri',        name:'Kukri',         g:'m', variant:7, statMult:0.60, weight:6, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, lifesteal:2 },  flavorAffix:'critPhys' },
+    { key:'stossdolch',   name:'Stoßdolch',     g:'m', variant:1, statMult:0.55, weight:6, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critDamage:3, critPhys:2 }, flavorAffix:'critDamage' },
+    { key:'jagdmesser',   name:'Jagdmesser',    g:'n', variant:1, statMult:0.54, weight:6, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ attackSpeed:3, critPhys:3 }, flavorAffix:'critPhys' },
+    { key:'wurfaxt',      name:'Wurfaxt',       g:'f', variant:3, statMult:0.56, weight:6, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ lifesteal:3, attackSpeed:2 }, flavorAffix:'lifesteal' },
+    { key:'kriegssichel', name:'Kriegssichel',  g:'f', variant:9, statMult:0.62, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ lifesteal:4, critDamage:2 }, flavorAffix:'lifesteal' },
+    { key:'doppeldolch',  name:'Doppeldolch',   g:'m', variant:1, statMult:0.60, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ attackSpeed:4, critDamage:2 }, flavorAffix:'attackSpeed' },
+    { key:'kurzaxt',      name:'Kurzaxt',       g:'f', variant:3, statMult:0.62, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:3, lifesteal:2 },   flavorAffix:'damage' },
+    { key:'stilettklinge',name:'Stilett-Klinge',g:'f', variant:1, statMult:0.55, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:4, critDamage:2 }, flavorAffix:'critPhys' },
+    { key:'dornklinge',   name:'Dornklinge',    g:'f', variant:0, statMult:0.58, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:2, critDamage:3 },  flavorAffix:'critDamage' },
+    { key:'faustdolch',   name:'Faustdolch',    g:'m', variant:1, statMult:0.56, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ attackSpeed:3, critPhys:3 }, flavorAffix:'attackSpeed' },
+    { key:'klauenklinge', name:'Klauenklinge',  g:'f', variant:7, statMult:0.59, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, lifesteal:2 },  flavorAffix:'critPhys' },
+    { key:'schattenklinge',name:'Schattenklinge',g:'f',variant:1, statMult:0.63, weight:4, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critDamage:3, critPhys:3 }, flavorAffix:'critDamage' },
+    { key:'eisendorn',    name:'Eisendorn',     g:'m', variant:4, statMult:0.57, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ versatility:3, damage:2 },  flavorAffix:'versatility' },
+    { key:'kriegshaken',  name:'Kriegshaken',   g:'m', variant:7, statMult:0.58, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ lifesteal:3, critPhys:2 },  flavorAffix:'lifesteal' },
+    { key:'spaltbeil',    name:'Spaltbeil',     g:'n', variant:3, statMult:0.64, weight:4, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:3, critDamage:2 },  flavorAffix:'damage' },
+    { key:'kurzsaebel',   name:'Kurzsäbel',     g:'m', variant:7, statMult:0.60, weight:5, art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critPhys:3, attackSpeed:2 }, flavorAffix:'critPhys' },
+    { key:'brechdolch',   name:'Brechdolch',    g:'m', variant:1, statMult:0.66, weight:2.2,art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ critDamage:4, critPhys:2 }, flavorAffix:'critDamage' },
+    { key:'henkerklinge', name:'Henkerklinge',  g:'f', variant:8, statMult:0.68, weight:1.6,art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ damage:4, critDamage:3 },  flavorAffix:'critDamage' },
+    { key:'zwillingsklinge',name:'Zwillingsklinge',g:'f',variant:0,statMult:0.66, weight:1.2,art:'waffe', statType:'damage', cat:'waffen', affixGroup:'waffe', affixBias:{ attackSpeed:5, critDamage:3 }, flavorAffix:'attackSpeed' },
+    // 🔮 Nebenhand-Kugeln/Orbs (NUR Heiler & Hexer) – `art:'orb'`, `statType:'damage'` (magisch),
+    //    reduziert (statMult ~0.50–0.62), gemischter Magie-/Support-Affixpool (`affixGroup:'kugel'`).
+    //    `material:'kugel'` nur zur Klassifikation. `orb`-Farbe + variant (0–2) steuern den Look.
+    //    Beide Magie-Klassen können beide Flavors tragen (wie bei Zauberstäben).
+    // — Heiler-Flavor (leuchtend, grün/blau, support-lastig) —
+    { key:'heilkugel',    name:'Heilkugel',     g:'f', variant:0, statMult:0.55, weight:9, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:4, maxHp:2 },       flavorAffix:'lifesteal' },
+    { key:'lebensodem',   name:'Lebensodem',    g:'m', variant:2, statMult:0.52, weight:8, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ maxHp:4, lifesteal:2 },       flavorAffix:'maxHp' },
+    { key:'segenskugel',  name:'Segenskugel',   g:'f', variant:1, statMult:0.54, weight:8, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ versatility:4, maxHp:2 },     flavorAffix:'versatility' },
+    { key:'mondkugel',    name:'Mondkugel',     g:'f', variant:0, statMult:0.56, weight:8, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ critMagic:3, versatility:2 }, flavorAffix:'critMagic' },
+    { key:'lichtkugel',   name:'Lichtkugel',    g:'f', variant:1, statMult:0.55, weight:7, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ versatility:3, critMagic:3 }, flavorAffix:'critMagic' },
+    { key:'quellkugel',   name:'Quellkugel',    g:'f', variant:0, statMult:0.53, weight:7, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:4, maxHp:2 },       flavorAffix:'lifesteal' },
+    { key:'naturkugel',   name:'Naturkugel',    g:'f', variant:2, statMult:0.54, weight:7, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:3, versatility:2 }, flavorAffix:'lifesteal' },
+    { key:'friedenskugel',name:'Friedenskugel', g:'f', variant:1, statMult:0.55, weight:6, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ versatility:3, maxHp:3 },     flavorAffix:'maxHp' },
+    { key:'sonnenkugel',  name:'Sonnenkugel',   g:'f', variant:0, statMult:0.56, weight:6, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ critMagic:3, versatility:2 }, flavorAffix:'critMagic' },
+    { key:'sternkugel',   name:'Sternenkugel',  g:'f', variant:2, statMult:0.55, weight:6, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ critMagic:3, critDamage:3 },  flavorAffix:'critDamage' },
+    { key:'reinheitskugel',name:'Reinheitskugel',g:'f',variant:1, statMult:0.54, weight:5, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ versatility:4, maxHp:2 },     flavorAffix:'versatility' },
+    { key:'hoffnungskugel',name:'Hoffnungskugel',g:'f',variant:0, statMult:0.55, weight:5, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:3, maxHp:3 },       flavorAffix:'maxHp' },
+    { key:'lebenskristall',name:'Lebenskristall',g:'m',variant:1, statMult:0.57, weight:5, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ maxHp:4, lifesteal:3 },       flavorAffix:'maxHp' },
+    { key:'heilkristall', name:'Heilkristall',  g:'m', variant:2, statMult:0.58, weight:3, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ versatility:3, critMagic:3 }, flavorAffix:'critMagic' },
+    { key:'engelskugel',  name:'Engelskugel',   g:'f', variant:0, statMult:0.60, weight:1.4,art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'blau',  affixBias:{ critMagic:4, versatility:3 }, flavorAffix:'critMagic' },
+    // — Hexer-Flavor (dunkel, rot/dunkelgrün, magie/lebensraub-lastig) —
+    { key:'seelenkugel',  name:'Seelenkugel',   g:'f', variant:0, statMult:0.55, weight:9, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ lifesteal:4, critMagic:2 },   flavorAffix:'lifesteal' },
+    { key:'totenkugel',   name:'Totenkugel',    g:'f', variant:2, statMult:0.54, weight:8, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:3, critDamage:3 },  flavorAffix:'critDamage' },
+    { key:'schattenkugel',name:'Schattenkugel', g:'f', variant:1, statMult:0.56, weight:8, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critMagic:4, lifesteal:2 },   flavorAffix:'critMagic' },
+    { key:'blutkugel',    name:'Blutkugel',     g:'f', variant:0, statMult:0.55, weight:8, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ lifesteal:4, critDamage:2 },  flavorAffix:'lifesteal' },
+    { key:'fluchkugel',   name:'Fluchkugel',    g:'f', variant:1, statMult:0.57, weight:7, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critMagic:4, critDamage:2 },  flavorAffix:'critMagic' },
+    { key:'daemonenauge', name:'Dämonenauge',   g:'n', variant:2, statMult:0.56, weight:7, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critDamage:3, critMagic:3 },  flavorAffix:'critDamage' },
+    { key:'chaoskugel',   name:'Chaoskugel',    g:'f', variant:0, statMult:0.58, weight:6, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critDamage:4, critMagic:3 },  flavorAffix:'critDamage' },
+    { key:'nachtkugel',   name:'Nachtkugel',    g:'f', variant:1, statMult:0.54, weight:7, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:3, critMagic:3 },   flavorAffix:'critMagic' },
+    { key:'hexenkugel',   name:'Hexenkugel',    g:'f', variant:0, statMult:0.55, weight:6, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critMagic:3, lifesteal:3 },   flavorAffix:'lifesteal' },
+    { key:'verderbniskugel',name:'Verderbniskugel',g:'f',variant:2,statMult:0.56,weight:6, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:4, critDamage:2 },  flavorAffix:'lifesteal' },
+    { key:'qualkugel',    name:'Qualkugel',     g:'f', variant:1, statMult:0.55, weight:5, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critDamage:3, lifesteal:3 },  flavorAffix:'critDamage' },
+    { key:'abgrundkugel', name:'Abgrundkugel',  g:'f', variant:0, statMult:0.57, weight:5, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critMagic:4, critDamage:2 },  flavorAffix:'critMagic' },
+    { key:'seelenkristall',name:'Seelenkristall',g:'m',variant:1, statMult:0.58, weight:4, art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'gruen', affixBias:{ lifesteal:4, critMagic:2 },   flavorAffix:'lifesteal' },
+    { key:'daemonenkugel',name:'Dämonenkugel',  g:'f', variant:2, statMult:0.60, weight:1.6,art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critDamage:4, critMagic:3 },  flavorAffix:'critDamage' },
+    { key:'hoellenauge',  name:'Höllenauge',    g:'n', variant:0, statMult:0.62, weight:1.2,art:'orb', statType:'damage', cat:'waffen', affixGroup:'kugel', material:'kugel', orb:'rot',   affixBias:{ critDamage:5, critMagic:3 },  flavorAffix:'critDamage' },
   ],
   // 💍 Schmuck – Pool: critPhys, critMagic, critDamage, maxHp, attackSpeed, armor, damage, lifesteal, versatility, dodge
   amulett: [

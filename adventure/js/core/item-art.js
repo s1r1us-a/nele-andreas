@@ -55,7 +55,7 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
   // Materialklasse (nur Kopf/Brust verzweigen darauf). Fallback: Platte.
   const matKey = (material==='stoff'||material==='leder'||material==='platte') ? material : 'platte';
   const matArt = (art==='kopf' || art==='brust');
-  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+(variant===6?'_'+orbKey:'')+(matArt?'_'+matKey:'');
+  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+((variant===6||art==='orb')?'_'+orbKey:'')+(matArt?'_'+matKey:'');
   if(_cache.has(key)) return _cache.get(key);
 
   const rc = (rarityOf(rarityKey) || {}).color || '#9d9d9d';
@@ -255,6 +255,30 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
     if(elemFx){                                      // leuchtender Element-Rand
       const rs = ring || `<path d="M9 7 L55 7 L55 30 Q55 53 32 63 Q9 53 9 30 Z" fill="none"`;
       body += rs+` stroke="${E.glow}" stroke-width="3" opacity="0.85"/>`;
+    }
+
+  } else if(art==='orb'){   // 🔮 Nebenhand-Kugel (Heiler/Hexer) – freistehende Magie-Sphäre
+    const O = ORB[orbKey];
+    defs += `<radialGradient id="orbG${uid}" cx="38%" cy="34%" r="62%">`+
+            `<stop offset="0" stop-color="${O.lo}"/><stop offset="0.5" stop-color="${O.mid}"/>`+
+            `<stop offset="1" stop-color="${O.dk}"/></radialGradient>`;
+    // Ständer/Halterung unter der Kugel
+    const base = `<path d="M22 50 Q32 47 42 50 L45 59 Q32 63 19 59 Z" fill="${GOLD}" stroke="${shade(GOLD,0.7)}" stroke-width="1"/>`+
+                 `<rect x="26" y="47" width="12" height="4" rx="2" fill="${shade(GOLD,0.85)}"/>`;
+    // Halos + Sphäre + Glanzlicht
+    body = base +
+      `<circle cx="32" cy="29" r="20" fill="${O.halo1}" opacity="0.22"/>`+
+      `<circle cx="32" cy="29" r="17" fill="${O.halo2}" opacity="0.40"/>`+
+      `<circle cx="32" cy="29" r="15" fill="url(#orbG${uid})"/>`+
+      `<circle cx="32" cy="29" r="15" fill="none" stroke="${O.ring}" stroke-width="1.6"/>`+
+      `<circle cx="26.5" cy="23.5" r="4.5" fill="#fff" opacity="0.5"/>`;
+    const vshape = variant % 3;
+    if(vshape===1){          // umlaufender Lichtring
+      body += `<ellipse cx="32" cy="29" rx="21" ry="7" fill="none" stroke="${O.ring}" stroke-width="1.4" opacity="0.6" transform="rotate(-18 32 29)"/>`;
+    } else if(vshape===2){   // innere Rune (Stern)
+      body += star(32,29,7,2.8,5,'#fff',0.5);
+    } else {                 // wirbelnde Glanzpunkte
+      body += `<circle cx="36" cy="34" r="2" fill="#fff" opacity="0.4"/><circle cx="29" cy="36" r="1.4" fill="#fff" opacity="0.35"/>`;
     }
 
   } else if(art==='amulett'){

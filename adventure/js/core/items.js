@@ -110,18 +110,23 @@ export function rollItem(zone, lootBoost=0, opts={}){
   // Item-Level: sanft konvex (Teil 3) – Zusatz ist bei Zone 0 = 0.
   let ilvl = Math.max(1, Math.round((zone*5 + 1) + zone*zone*ILVL_QUAD + (Math.random()*6-2) + rarityIndex(rarity.key)*2));
   if(opts.minIlvl) ilvl = Math.max(ilvl, opts.minIlvl);
+  // Item-Typ darf statType/art/cat des Slots überschreiben (Nebenhand-Slot trägt
+  // Schilde=Rüstung, Zweitwaffen=Schaden, Orbs=Schaden mit eigenem Sprite/Glow).
+  const statType = itype.statType ?? slot.statType;
+  const art      = itype.art      ?? slot.art;
+  const cat      = itype.cat      ?? slot.cat;
   const quality = 0.80 + Math.random()*0.40;
-  const stat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * quality * (itype.statMult ?? 1)));
+  const stat = Math.max(1, Math.round(BASE_STAT[statType] * rarity.mult * (1 + ilvl*ILVL_K) * quality * (itype.statMult ?? 1)));
   const variant = itype.variant;   // Typ bestimmt das Sprite (Teil 0/1)
   const id = nextItemId();
   return {
     id,
-    slotKey, cat: slot.cat, statType: slot.statType,
+    slotKey, cat, statType,
     rarity: rarity.key, ilvl, stat, variant, itemType: itype.key,
     quality: Math.round(quality*100),
     affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
-    sprite: buildItemSVG(slot.art, variant, rarity.key, elementOf(id), itype.orb, itype.material),
+    sprite: buildItemSVG(art, variant, rarity.key, elementOf(id), itype.orb, itype.material),
     name: itemDisplayName(rarity.key, itype),
   };
 }
@@ -133,8 +138,10 @@ export function ensureItemSprite(it){
   if(!it) return it;
   if(!it.affixes) it.affixes = {};
   if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
-  const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb, typeOf(it).material);
+  const t = typeOf(it);
+  // art aus dem Item-Typ (Nebenhand: schild/waffe/orb), Fallback = Slot-art.
+  const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
+  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material);
   return it;
 }
 
@@ -236,7 +243,16 @@ export function resolveTargetSlot(item){
 //  • Schmuck → kein Material → von allen tragbar.
 export function canEquip(item){
   const cls = classOf(state);
-  if(item.slotKey === 'schild') return cls.id === 'verteidiger';
+  // Nebenhand-Slot: je nach Item-Art eine andere Klasse.
+  //  • Orb   → magische Klassen (Heiler/Hexer)
+  //  • Waffe → Kämpfer (Zweitwaffe)
+  //  • Schild→ Verteidiger
+  if(item.slotKey === 'schild'){
+    const art = typeOf(item).art || 'schild';
+    if(art === 'orb')   return cls.damageSchool === 'magisch';
+    if(art === 'waffe') return cls.id === 'kaempfer';
+    return cls.id === 'verteidiger';
+  }
   if(item.slotKey === 'waffe'){
     const isStaff = materialOf(item) === 'zauberstab';
     return cls.damageSchool === 'magisch' ? isStaff : !isStaff;
@@ -248,7 +264,12 @@ export function canEquip(item){
 // Begründung, warum ein Item nicht angelegt werden kann (für Toast/Tooltip).
 export function equipBlockReason(item){
   const cls = classOf(state);
-  if(item.slotKey === 'schild') return cls.label+' kann keine Schilde tragen – nur der Verteidiger.';
+  if(item.slotKey === 'schild'){
+    const art = typeOf(item).art || 'schild';
+    if(art === 'orb')   return cls.label+' kann keine Kugeln tragen – nur Heiler und Hexer.';
+    if(art === 'waffe') return cls.label+' kann keine Zweitwaffe tragen – nur der Kämpfer.';
+    return cls.label+' kann keine Schilde tragen – nur der Verteidiger.';
+  }
   if(item.slotKey === 'waffe'){
     return cls.damageSchool === 'magisch'
       ? cls.label+' kann nur Zauberstäbe als Waffe tragen.'
@@ -263,7 +284,12 @@ export function equipBlockReason(item){
 //  • Schmuck → „Schmuck (für alle)"
 export function itemKindLabel(item){
   const t = typeOf(item);
-  if(item.slotKey === 'schild') return t.name || 'Schild';
+  if(item.slotKey === 'schild'){
+    const art = t.art || 'schild';
+    if(art === 'orb')   return (t.name || 'Kugel') + ' · Kugel';
+    if(art === 'waffe') return (t.name || 'Waffe') + ' · Zweitwaffe';
+    return t.name || 'Schild';
+  }
   if(item.slotKey === 'waffe'){
     const kind = materialOf(item) === 'zauberstab' ? 'Zauberstab' : 'Physische Waffe';
     return (t.name || 'Waffe') + ' · ' + kind;
@@ -274,7 +300,12 @@ export function itemKindLabel(item){
 }
 // Passendes Emoji-Icon zur Item-Kategorie (Anzeige im Item-Modal).
 export function itemKindIcon(item){
-  if(item.slotKey === 'schild') return '🛡️';
+  if(item.slotKey === 'schild'){
+    const art = typeOf(item).art || 'schild';
+    if(art === 'orb')   return '🔮';
+    if(art === 'waffe') return '⚔️';
+    return '🛡️';
+  }
   if(item.slotKey === 'waffe')  return materialOf(item) === 'zauberstab' ? '🪄' : '⚔️';
   const mat = materialOf(item);
   if(mat === 'stoff')  return '🧵';
