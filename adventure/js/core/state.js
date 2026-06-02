@@ -175,8 +175,14 @@ function hydrateItems(){
   for(const it of all){
     if(!it.affixes) it.affixes = {};
     if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
-    const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb, typeOf(it).material);
+    const t = typeOf(it);
+    // Variante folgt dem Typ → Typ-Updates wirken rückwirkend auf alte Stände.
+    it.variant = t.variant;
+    // art aus dem Item-Typ (Nebenhand: schild/waffe/orb), Fallback = Slot-art.
+    // (Vorher fälschlich nur die Slot-art → Nebenhand-Waffen/Kugeln wurden beim
+    //  Laden als Schild neu gerendert.)
+    const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material);
   }
 }
 
