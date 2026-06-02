@@ -31,10 +31,11 @@ onValue(ref(db, '.info/serverTimeOffset'), snap => { _serverOffset = snap.val() 
 export function serverNow(){ return Date.now() + _serverOffset; }
 
 // ---- Duell-Regeln ----------------------------------------------------
-const DUEL_POTIONS     = 3;       // feste Heiltränke je Duellant (verbraucht KEINE echten)
-const DUEL_HEAL_PCT    = 0.5;     // Heiltrank stellt 50 % der max. HP wieder her
-const DUEL_ENRAGE_TURN = 35;      // ab hier eskalieren BEIDE Kämpfer → erzwingt ein Ende
-const DUEL_ENRAGE_RAMP = 1.06;
+// Heiltränke sind im Duell bewusst NICHT erlaubt (sie heilen 50 % der Max-HP und
+// würden den HP-starken Tank überproportional begünstigen).
+const DUEL_TICK_MS     = 90;      // feiner Host-Takt; jede Seite schlägt nach EIGENEM Intervall
+const DUEL_ENRAGE_MS   = 35000;   // ab hier eskalieren BEIDE Kämpfer → erzwingt ein Ende
+const DUEL_ENRAGE_RAMP = 1.06;    // Schadensfaktor PRO SEKUNDE nach dem Enrage
 
 // ---- Lobby-Verwaltung ------------------------------------------------
 export function sanitizeCode(code){
@@ -160,7 +161,7 @@ function makeSide(stats){
     magic: (CLASS_BY_ID[classId] || {}).damageSchool === 'magisch',
     // Grundfähigkeit + geskillte Talent-Aktive (max. 3).
     abilities: abilitiesOf({ character: stats.character }),
-    potions: DUEL_POTIONS,
+    nextSwingAt: 0,
     abilCd: {}, buffs: freshBuffs(),
     burstTs: 0, healTs: 0, drainTs: 0, burstMagic: 0,
   };
@@ -177,12 +178,16 @@ export function startDuelHost(lobbyId, hostStats, guestStats, info){
     hostKey: info.hostKey, guestKey: info.guestKey,
     hostClass: hostStats.classId, guestClass: guestStats.classId,
     hostStab: !!hostStats.usesStab, guestStab: !!guestStats.usesStab,
-    turn: 0, seq: 0, over: false, winner: null, enrageMult: 1,
+    turn: 0, seq: 0, over: false, winner: null, enrageMult: 1, enrageAnnounced: false,
     startedAt: Date.now(), dmgDealt: 0, log: {}, logCount: 0,
     lastHealTs: 0, healSide: '', lastAbilTs: 0,
     events: [],
   };
   _fight = fight;
+  // Eigene Schlag-Timer je Seite (Angriffstempo zählt wieder).
+  const t0 = Date.now();
+  fight.host.nextSwingAt  = t0 + fight.host.interval;
+  fight.guest.nextSwingAt = t0 + fight.guest.interval;
   _abilUnsub = onValue(ref(db, ABIL(lobbyId)), snap => {
     if(!snap.exists() || fight.over) return;
     const req = snap.val();
@@ -219,14 +224,7 @@ function applyAction(fight, role, kind){
   const name = role === 'host' ? fight.hostName : fight.guestName;
   if(!side || side.hp <= 0) return;
   const now = Date.now();
-  if(kind === 'potion'){
-    if(side.potions <= 0 || side.hp >= side.maxHp) return;
-    const heal = Math.round(side.maxHp * DUEL_HEAL_PCT);
-    side.hp = Math.min(side.maxHp, side.hp + heal);
-    side.potions--;
-    side.healTs = now;
-    logLine(fight, '🧪 ' + name + ' trinkt einen Heiltrank: +' + fmtBig(heal) + ' HP', '#37d67a');
-  } else if(typeof kind === 'string' && kind.indexOf('ability') === 0){
+  if(typeof kind === 'string' && kind.indexOf('ability') === 0){
     const abilityId = kind.split(':')[1] || (side.abilities[0] && side.abilities[0].id);
     const ab = (side.abilities || []).find(a => a.id === abilityId);
     if(!ab || now < (side.abilCd[abilityId] || 0)) return;
@@ -304,10 +302,8 @@ function startDuelDrain(fight, role, side, opp, name, ab){
   setTimeout(tick, tickMs);
 }
 
-function schedule(fight){
-  const iv = Math.min(900, Math.max(420, Math.min(fight.host.interval, fight.guest.interval)));
-  _timer = setTimeout(() => exchange(fight), iv);
-}
+// Feiner Host-Takt: jede Seite schlägt nach ihrem EIGENEN Intervall (Tempo zählt).
+function schedule(fight){ _timer = setTimeout(() => tick(fight), DUEL_TICK_MS); }
 
 // Ein Schlag eines Angreifers gegen den Verteidiger (gibt Schaden + Crit zurück).
 function strike(att, def, enr){
@@ -327,24 +323,39 @@ function strike(att, def, enr){
   return { dmg, crit: isCrit };
 }
 
-function exchange(fight){
+function tick(fight){
   if(fight.over) return;
-  fight.turn++;
+  const now = Date.now();
   const events = [];
 
-  // Soft-Enrage: ab DUEL_ENRAGE_TURN werden beide Kämpfer tödlicher.
-  if(fight.turn > DUEL_ENRAGE_TURN){
-    fight.enrageMult *= DUEL_ENRAGE_RAMP;
-    if(fight.turn === DUEL_ENRAGE_TURN + 1) logLine(fight, '⏱️ ENRAGE! Beide Kämpfer werden mit jeder Runde tödlicher.', '#ff3b3b');
+  // Soft-Enrage zeitbasiert: ab DUEL_ENRAGE_MS eskalieren beide Kämpfer pro Sekunde.
+  const overEnrage = now - fight.startedAt - DUEL_ENRAGE_MS;
+  if(overEnrage > 0){
+    fight.enrageMult = Math.pow(DUEL_ENRAGE_RAMP, overEnrage / 1000);
+    if(!fight.enrageAnnounced){
+      fight.enrageAnnounced = true;
+      logLine(fight, '⏱️ ENRAGE! Beide Kämpfer werden mit jeder Sekunde tödlicher.', '#ff3b3b');
+    }
   }
   const enr = fight.enrageMult;
 
-  // Beide schlagen gleichzeitig (gegen die HP VOR diesem Schlagabtausch).
-  const hRes = strike(fight.host, fight.guest, enr);
-  const gRes = strike(fight.guest, fight.host, enr);
-
-  applyStrike(fight, 'host', 'guest', hRes, events);
-  applyStrike(fight, 'guest', 'host', gRes, events);
+  // Jede Seite schlägt, sobald ihr eigenes Intervall verstrichen ist. Beide Seiten
+  // dürfen im selben Tick zuschlagen (gegen die HP zu Beginn ihres Schlags), damit
+  // ein gleichzeitiges Fallen weiterhin als Unentschieden gewertet werden kann.
+  let swung = false;
+  for(const [aKey, dKey] of [['host', 'guest'], ['guest', 'host']]){
+    const att = fight[aKey];
+    let guard = 0;
+    while(now >= att.nextSwingAt && guard < 2){
+      applyStrike(fight, aKey, dKey, strike(att, fight[dKey], enr), events);
+      att.nextSwingAt += att.interval;
+      // Nach langer Pause (z. B. gedrosselter Tab) nicht nachfeuern.
+      if(att.nextSwingAt < now - att.interval) att.nextSwingAt = now + att.interval;
+      swung = true; guard++;
+      if(fight[dKey].hp <= 0) break;   // keinen bereits Gefallenen mehrfach treffen
+    }
+  }
+  if(swung) fight.turn++;
 
   // Sieg-/Niederlage-Bestimmung (Werte können kurz negativ werden → fairer Vergleich).
   const hDead = fight.host.hp <= 0, gDead = fight.guest.hp <= 0;
@@ -363,7 +374,7 @@ function exchange(fight){
   }
 
   fight.events = events;
-  syncDuel(fight, false);
+  if(events.length) syncDuel(fight, false);   // leere Ticks nicht synchronisieren
   schedule(fight);
 }
 
@@ -422,7 +433,6 @@ async function syncDuel(fight, finalWrite){
     hostTier: fight.host.tier, guestTier: fight.guest.tier,
     hostHp: Math.ceil(Math.max(0, fight.host.hp)), hostMaxHp: fight.host.maxHp,
     guestHp: Math.ceil(Math.max(0, fight.guest.hp)), guestMaxHp: fight.guest.maxHp,
-    hostPotions: fight.host.potions, guestPotions: fight.guest.potions,
     hostCd: cdMapOf(fight.host, now), guestCd: cdMapOf(fight.guest, now),
     events: fight.events || [],
     log: fight.log,
@@ -438,5 +448,3 @@ export function stopDuelHost(){
   if(_fight) _fight.over = true;
   _fight = null;
 }
-
-export const DUEL = { POTIONS: DUEL_POTIONS };
