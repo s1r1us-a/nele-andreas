@@ -361,13 +361,16 @@ export async function openOtherProfile(){
     if(st.thorns>0)      sec += row('Dornen', Math.round(st.thorns), 'damage');
 
     // Blätter-Leiste: nur bei mehr als einem Charakter; idx 0 ist der aktive.
+    // Deutlich tippbare Buttons (kein „ghost") + Hinweistext, damit die
+    // Umschaltung auch auf dem Handy klar als Steuerung erkennbar ist.
     const pager = multi
       ? '<div class="op-pager">'+
-          '<button class="btn ghost op-nav" id="opPrev" aria-label="Voriger Charakter">‹</button>'+
-          '<span class="op-count">'+(idx+1)+' / '+slots.length+
+          '<button class="btn op-nav" id="opPrev" aria-label="Voriger Held">‹</button>'+
+          '<span class="op-count">Held '+(idx+1)+' / '+slots.length+
             (idx===0?' · ⚔️ aktiv':'')+'</span>'+
-          '<button class="btn ghost op-nav" id="opNext" aria-label="Nächster Charakter">›</button>'+
-        '</div>'
+          '<button class="btn op-nav" id="opNext" aria-label="Nächster Held">›</button>'+
+        '</div>'+
+        '<div class="op-pager-hint">👈 Mit den Pfeilen durch '+oName+'s '+slots.length+' Helden blättern 👉</div>'
       : '';
 
     openModal('<h2>👁️ '+oName+'s Held</h2>'+

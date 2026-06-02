@@ -754,10 +754,14 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   font-size:24px; border-style:dashed; }
 .op-cell { cursor:help; }
 .op-pager { display:flex; align-items:center; justify-content:center; gap:14px;
-  margin:2px 0 10px; }
-.op-pager .op-nav { padding:2px 12px; font-size:20px; line-height:1; min-width:0; }
-.op-pager .op-count { font-size:13px; color:var(--txt-dim); min-width:90px;
-  text-align:center; letter-spacing:.3px; }
+  margin:2px 0 4px; }
+/* Touch-freundliche, deutlich erkennbare Blätter-Buttons (min. 44px Tippziel). */
+.op-pager .op-nav { padding:8px 22px; font-size:24px; line-height:1;
+  min-width:56px; min-height:44px; font-weight:700; }
+.op-pager .op-count { font-size:14px; color:var(--txt); min-width:120px;
+  text-align:center; letter-spacing:.3px; font-weight:600; }
+.op-pager-hint { text-align:center; font-size:12px; color:var(--txt-dim);
+  margin:0 0 12px; }
 .arena-result { position:absolute; inset:0; display:none; align-items:center;
   justify-content:center; flex-direction:column; background:rgba(0,0,0,.55);
   font-family:'Cinzel',serif; font-weight:900; text-align:center; padding:16px; }
