@@ -856,6 +856,35 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   font-weight:600; font-size:13px; color:var(--txt-dim); }
 .arena-controls { display:flex; gap:10px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
 
+/* ---- Sieg-/Belohnungsfenster: aufgeräumt & fokussiert -------------- */
+/* Nach Kampfende die Kampf-Hektik (HP-Balken, DPS-Meter, Log, Buff-Leiste,
+   Heiltrank) ausblenden – der Sieg-Moment soll für sich stehen. */
+.arena.fight-over .arena-top,
+.arena.fight-over .dps-meter,
+.arena.fight-over .combat-log,
+.arena.fight-over .ability-bar,
+.arena.fight-over #potionBtn { display:none !important; }
+/* Ruhiger, deckender Hintergrund statt durchscheinender Kampfszene. */
+.arena.fight-over .arena-result {
+  background:radial-gradient(120% 90% at 50% 0%, rgba(44,30,64,.97), rgba(12,9,18,.99));
+  justify-content:flex-start; overflow-y:auto; padding:20px 16px; }
+.arena.fight-over .arena-result .big { font-size:34px; margin-top:6px; }
+.ar-boss { font-family:'Quicksand',sans-serif; font-weight:700; font-size:15px;
+  color:var(--txt); margin-top:6px; }
+.ar-chips { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+.ar-chip { font-family:'Quicksand',sans-serif; font-weight:700; font-size:14px;
+  padding:6px 13px; border-radius:999px; border:1px solid var(--line);
+  background:rgba(0,0,0,.32); }
+.ar-chip.xp { color:var(--gold-hi); border-color:rgba(255,210,74,.5); }
+.ar-chip.coin { color:#ffd24a; }
+.ar-chip small { font-weight:600; opacity:.7; font-size:11px; }
+.ar-status { font-family:'Quicksand',sans-serif; font-weight:600; font-size:12px;
+  margin-top:12px; color:var(--txt-dim); }
+.ar-status.unlock { color:#7fe08a; }
+.ar-bonus { font-family:'Quicksand',sans-serif; font-weight:700; font-size:12px;
+  margin-top:8px; color:var(--gold-hi); }
+.arena.fight-over .arena-result .arena-drop-head { margin-top:16px; }
+
 /* ---- Kampflog & DPS-Meter (#26) ------------------------------- */
 .dps-meter { margin-top:8px; text-align:center; font-family:'Press Start 2P',monospace;
   font-size:11px; color:var(--gold-hi); }
