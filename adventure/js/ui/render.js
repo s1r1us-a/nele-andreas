@@ -12,7 +12,7 @@ import { EXPEDITIONS } from '../data/expeditions.js';
 import * as STATHELP from '../data/statHelp.js';
 const STAT_HELP = STATHELP.STAT_HELP || {};
 const STAT_INFO = STATHELP.STAT_INFO || {};
-import { classOf } from '../data/classes.js';
+import { classOf, classLabelOf } from '../data/classes.js';
 import { RESPEC_COST } from '../data/tuning.js';
 import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked } from '../data/talents.js';
 // Klassen-Statkeys lokal ableiten (statt talentStatKeys zu importieren) – die
@@ -184,6 +184,14 @@ export function flashFullBanner(){
   _fullFlashTimer = setTimeout(()=> b.classList.remove('flash'), 1200);
 }
 
+// Leerslot-Symbol. Die Nebenhand zeigt je nach Klasse ein passendes Symbol:
+// Heiler/Hexer → Kugel, Kämpfer → Zweitwaffe, Verteidiger → Schild.
+const OFFHAND_EMPTY_ICON = { heiler:'🔮', hexer:'🔮', kaempfer:'⚔️', verteidiger:'🛡️' };
+function emptySlotIcon(slotKey){
+  if(slotKey === 'schild') return OFFHAND_EMPTY_ICON[classOf(state).id] || SLOT_ICON.schild;
+  return SLOT_ICON[slotKey];
+}
+
 // ---- Charakter ------------------------------------------------------
 function slotEl(slotKey){
   const slot = SLOTS[slotKey];
@@ -197,7 +205,7 @@ function slotEl(slotKey){
     el.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
     bindTooltip(el, it);
   } else {
-    el.innerHTML = '<span class="empty-ic">'+SLOT_ICON[slotKey]+'</span>';
+    el.innerHTML = '<span class="empty-ic">'+emptySlotIcon(slotKey)+'</span>';
   }
   el.innerHTML += '<span class="slot-name">'+slot.name+'</span>';
   el.addEventListener('click', ()=> openSlotPicker(slotKey));
@@ -225,7 +233,8 @@ export function renderCharHeader(t, tier){
   const box = $('#charHeader'); if(!box) return;
   const cls = classOf(state);
   const ch = state.character;
-  const name = (ch && ch.name) ? ch.name : (ch ? cls.label : 'Neuer Held');
+  const clsLabel = classLabelOf(state);
+  const name = (ch && ch.name) ? ch.name : (ch ? clsLabel : 'Neuer Held');
   const lvl = state.level || 1;
   const need = xpForLevel(lvl), cur = xpInLevel(state.xp || 0, lvl);
   const xpPct = Math.max(0, Math.min(100, cur/need*100));
@@ -237,7 +246,7 @@ export function renderCharHeader(t, tier){
         '<span class="ch-tier">'+TIER_NAME[tier]+'</span></div>'+
       '<div class="ch-main">'+
         '<div class="ch-name">'+name+'</div>'+
-        '<div class="ch-class">'+cls.icon+' '+cls.label+'</div>'+
+        '<div class="ch-class">'+cls.icon+' '+clsLabel+'</div>'+
         '<div class="ch-level">Level <b>'+lvl+'</b> <small>'+cur+' / '+need+' XP</small></div>'+
         '<div class="ch-xpbar"><i style="width:'+xpPct+'%"></i></div>'+
         '<div class="ch-power" title="'+STAT_HELP.kampfkraft.replace(/"/g,'&quot;')+'">⚔️ Kampfkraft <b>'+t.power+'</b></div>'+
@@ -275,7 +284,7 @@ export function renderTalents(){
   const esc = s => (s||'').replace(/"/g,'&quot;');
 
   let html = '<div class="talents-head">'+
-    '<span class="talents-class">'+cls.icon+' '+cls.label+'</span>'+
+    '<span class="talents-class">'+cls.icon+' '+classLabelOf(state)+'</span>'+
     '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+'</span>'+
     '<span class="talent-points">Punkte: <b>'+points+'</b></span>'+
     '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
@@ -404,7 +413,7 @@ function renderCharStats(t){
   const box = $('#charStats');
   box.innerHTML =
     '<div class="cs-group"><h4>Übersicht</h4>'+
-      row('Klasse', cls.icon+' '+cls.label, 'power', 'klasse')+
+      row('Klasse', cls.icon+' '+classLabelOf(state), 'power', 'klasse')+
       row('Level', lvl + ' <small>('+cur+' / '+need+' XP)</small>', 'level')+
       row('Kampfkraft', t.power, 'power', 'kampfkraft')+
       row('Gegenstandsstufe', gearScore(), 'crit', 'gegenstandsstufe')+

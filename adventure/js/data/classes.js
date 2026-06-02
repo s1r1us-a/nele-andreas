@@ -16,8 +16,8 @@ export const CLASSES = [
   { id:'heiler',      label:'Heiler',      icon:'✨',
     desc:'Magier-Heiler. Trägt Stoff und Zauberstäbe. Starke Heilung, magischer Fernkampf.',
     playstyle:'Magischer Fernkämpfer mit enormer Heilung. Sehr überlebensfähig, braucht aber Geduld, um Gegner niederzuringen.',
-    pros:['Stärkste Heilung (×1,6 Heilwirkung)','Magischer Fernkampf mit Zauberstäben','Sehr robust – kämpft lange durch','Top-Stütze im Koop-Turm'],
-    cons:['Geringster Schaden (×0,65)','Nur Stoffrüstung','Nur Zauberstäbe als Waffe','Kann keine Schilde tragen'],
+    pros:['Stärkste Heilung (×1,6 Heilwirkung)','Magischer Fernkampf mit Zauberstäben','Magische Kugel als Nebenhand','Sehr robust – kämpft lange durch'],
+    cons:['Geringster Schaden (×0,65)','Nur Stoffrüstung','Nur Zauberstäbe als Waffe','Nebenhand nur Kugeln – keine Schilde'],
     allowedMaterials:['stoff'],      damageSchool:'magisch',
     dmgMult:0.65, healMult:1.6,
     ability:{ id:'heilkreis', name:'Heilkreis', icon:'➕', kind:'heal', cd:30000, healPct:0.5,
@@ -25,8 +25,8 @@ export const CLASSES = [
   { id:'kaempfer',    label:'Kämpfer',     icon:'⚔️',
     desc:'Krieger. Trägt Stoff und Leder. Ausgewogener physischer Schaden.',
     playstyle:'Ausgewogener Nahkämpfer ohne echte Schwächen – der einfachste Einstieg und solide in jeder Lage.',
-    pros:['Höchster Grundschaden (×1,0)','Ausgewogen & anfängerfreundlich','Stoff- & Lederrüstung','Raserei: +100 % Krit-Chance (7 s)'],
-    cons:['Keine eigene Heilung','Keine Platte','Keine Zauberstäbe – nur physische Waffen','Kann keine Schilde tragen'],
+    pros:['Höchster Grundschaden (×1,0)','Zweitwaffe in der Nebenhand (Dual-Wield)','Stoff- & Lederrüstung','Raserei: +100 % Krit-Chance (7 s)'],
+    cons:['Keine eigene Heilung','Keine Platte','Keine Zauberstäbe – nur physische Waffen','Keine Schilde – dafür Zweitwaffe'],
     allowedMaterials:['stoff','leder'],          damageSchool:'physisch',
     dmgMult:1.0,  healMult:1.0,
     ability:{ id:'raserei', name:'Raserei', icon:'🔥', kind:'critBoost', cd:28000, dur:7000, critBonus:1.0,
@@ -43,8 +43,8 @@ export const CLASSES = [
   { id:'hexer',       label:'Hexer',       icon:'🔮',
     desc:'Hexenmeister. Trägt nur Stoff. Magischer Schaden mit starkem Lebensraub – heilt sich durch Verschlingen.',
     playstyle:'Magier mit Lebensraub: hält sich selbst durch ausgeteilten Schaden am Leben – schlagkräftig, aber zerbrechlich.',
-    pros:['Magischer Schaden mit Lebensraub','Heilt sich selbst (×1,5 Heilwirkung)','Zauberstäbe mit starken Magie-Affixen','Seelenraub: 200 % Schaden/s + Selbstheilung (4 s)'],
-    cons:['Sehr zerbrechlich – nur Stoffrüstung','Nur Zauberstäbe als Waffe','Kann keine Schilde tragen','Mittlerer Schaden (×0,8)'],
+    pros:['Magischer Schaden mit Lebensraub','Heilt sich selbst (×1,5 Heilwirkung)','Seelenkugel als Nebenhand','Seelenraub: 200 % Schaden/s + Selbstheilung (4 s)'],
+    cons:['Sehr zerbrechlich – nur Stoffrüstung','Nur Zauberstäbe als Waffe','Nebenhand nur Kugeln – keine Schilde','Mittlerer Schaden (×0,8)'],
     allowedMaterials:['stoff'],      damageSchool:'magisch',
     dmgMult:0.8,  healMult:1.5,
     ability:{ id:'seelenraub', name:'Seelenraub', icon:'💀', kind:'drain', cd:26000,
@@ -53,6 +53,24 @@ export const CLASSES = [
 ];
 export const CLASS_BY_ID = Object.fromEntries(CLASSES.map(c => [c.id, c]));
 export const DEFAULT_CLASS_ID = 'kaempfer';
+
+// Geschlechtsspezifischer Klassenname: männlich = Basis (Hexer), weiblich = +"in"
+// (Hexerin), divers = +":in" (Hexer:in). Gilt einheitlich für alle Klassen
+// (Heiler/Heilerin/Heiler:in, Kämpfer/Kämpferin/Kämpfer:in, Verteidiger/…).
+const GENDER_SUFFIX = { w:'in', d:':in' };   // 'm' → kein Suffix
+export function genderedLabel(baseLabel, gender){
+  return (baseLabel || '') + (GENDER_SUFFIX[gender] || '');
+}
+export function classLabelFor(classId, gender){
+  const c = CLASS_BY_ID[classId] || CLASS_BY_ID[DEFAULT_CLASS_ID];
+  return genderedLabel(c.label, gender);
+}
+// Aus einem Spielstand/Slot (null-sicher): Klassenname passend zum Geschlecht.
+export function classLabelOf(stateLike){
+  const ch = stateLike && stateLike.character;
+  const c = classOf(stateLike);
+  return genderedLabel(c.label, ch && ch.gender);
+}
 
 // Aktuelle Klasse aus dem State (null-sicher mit Fallback).
 export function classOf(state){ return CLASS_BY_ID[state && state.character && state.character.classId] || CLASS_BY_ID[DEFAULT_CLASS_ID]; }

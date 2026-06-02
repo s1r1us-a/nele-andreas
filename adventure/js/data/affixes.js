@@ -24,6 +24,8 @@ export const AFFIX_KEYS = Object.keys(AFFIX_DEFS);
 export const AFFIX_POOL = {
   waffe:   ['critPhys','critMagic','critDamage','attackSpeed','damage','lifesteal','versatility'],
   schild:  ['armor','maxHp','block','thorns','dodge'],
+  // Nebenhand-Kugel (Heiler/Hexer): gemischter Magie-/Support-Fokus.
+  kugel:   ['critMagic','critDamage','lifesteal','versatility','maxHp'],
   ruestung:['armor','maxHp','attackSpeed','dodge','block','versatility','critMagic','critPhys'],
   schmuck: ['critPhys','critMagic','critDamage','maxHp','attackSpeed','armor','damage','lifesteal','versatility','dodge'],
 };
@@ -37,8 +39,11 @@ export function affixPool(slotKey){
 // Gewichteter Pool für einen Item-Typ: jeder Affix-Key kommt entsprechend
 // itemType.affixBias mehrfach vor (Default-Gewicht 1). Nur pool-gültige
 // Affixe wirken. Ziehen erfolgt ohne Zurücklegen (alle Kopien per Key raus).
+// Ein Item-Typ kann über `affixGroup` einen anderen Pool als seinen Slot wählen
+// (z. B. Offhand-Zweitwaffen → 'waffe', Offhand-Kugeln → 'kugel' im schild-Slot).
 export function weightedAffixPool(slotKey, itemType){
-  const base = affixPool(slotKey);
+  const base = (itemType && itemType.affixGroup && AFFIX_POOL[itemType.affixGroup])
+    ? AFFIX_POOL[itemType.affixGroup] : affixPool(slotKey);
   const bias = (itemType && itemType.affixBias) || {};
   const out = [];
   for(const k of base){

@@ -12,7 +12,7 @@ export const SLOTS = {
   amulett:   { name:'Amulett',    art:'amulett',   cat:'schmuck',  statType:'armor',  base:'Amulett' },
   ring1:     { name:'Ring 1',     art:'ring',      cat:'schmuck',  statType:'armor',  base:'Ring' },
   ring2:     { name:'Ring 2',     art:'ring',      cat:'schmuck',  statType:'armor',  base:'Ring' },
-  schild:    { name:'Schild',     art:'schild',    cat:'ruestung', statType:'armor',  base:'Schild' },
+  schild:    { name:'Nebenhand',  art:'schild',    cat:'ruestung', statType:'armor',  base:'Schild' },
   waffe:     { name:'Waffe',      art:'waffe',     cat:'waffen',   statType:'damage', base:'Schwert' },
 };
 // Zwei Ring-Slots teilen sich dieselbe Inventar-Kategorie/„passt-in"-Logik

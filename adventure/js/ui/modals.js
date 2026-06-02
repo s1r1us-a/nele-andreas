@@ -8,7 +8,7 @@ import { SLOTS, FITS, SLOT_KEYS, SLOT_ICON } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { GENDERS, HAIR_STYLES, HAIR_COLORS, BEARD_STYLES, SKIN_TONES, EYE_COLORS,
          DEFAULT_CHARACTER } from '../data/character-options.js';
-import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf } from '../data/classes.js';
+import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf, genderedLabel } from '../data/classes.js';
 import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances, EXPEDITION_MIN_CAP } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
@@ -336,7 +336,8 @@ export async function openOtherProfile(){
     const slot = slots[idx];
     const st = computePlayerStats(slot);
     const cls = CLASS_BY_ID[st.classId] || classOf(slot);
-    const charName = (slot.character && slot.character.name) || (cls ? cls.label : 'Held');
+    const clsLabel = cls ? genderedLabel(cls.label, slot.character && slot.character.gender) : 'Held';
+    const charName = (slot.character && slot.character.name) || clsLabel;
     const avatar = buildHeroSVG(slot.character, st.tier, { equipped: slot.equipped || {} });
 
     // Ausrüstung (read-only) – belegte Slots als Item-Zellen, leere dezent.
@@ -380,7 +381,7 @@ export async function openOtherProfile(){
         '<img class="op-avatar" src="'+avatar+'" alt="">'+
         '<div class="op-meta">'+
           '<div class="op-name">'+charName+'</div>'+
-          '<div class="op-cls">'+(cls?cls.icon+' '+cls.label:'')+'</div>'+
+          '<div class="op-cls">'+(cls?cls.icon+' '+clsLabel:'')+'</div>'+
           '<div class="op-lvl">⭐ Level <b>'+(st.level||1)+'</b> · ⚔️ Kampfkraft <b>'+fmtBig(st.power)+'</b></div>'+
         '</div>'+
       '</div>'+
@@ -456,7 +457,7 @@ function cancelNewCharacter(){
 }
 // Detaillierte Klassen-Infokarte für die Charaktererstellung:
 // Spielstil, Stärken, Schwächen, Rüstungen und Spezialfähigkeit.
-function classInfoHtml(c){
+function classInfoHtml(c, gender){
   if(!c) return '';
   const MAT = { stoff:'Stoff', leder:'Leder', platte:'Platte' };
   const mats = (c.allowedMaterials||[]).filter(m=>m!=='zauberstab').map(m => MAT[m]||m).join(', ');
@@ -467,7 +468,7 @@ function classInfoHtml(c){
   const cons = (c.cons||[]).map(p => '<li>'+p+'</li>').join('');
   const ab = c.ability;
   return ''+
-    '<div class="ci-title">'+c.icon+' '+c.label+'</div>'+
+    '<div class="ci-title">'+c.icon+' '+genderedLabel(c.label, gender)+'</div>'+
     '<div class="ci-play">'+(c.playstyle||c.desc||'')+'</div>'+
     '<div class="ci-cols">'+
       '<div class="ci-pros"><span class="ci-h">✅ Stärken</span><ul>'+pros+'</ul></div>'+
@@ -489,10 +490,10 @@ function renderCreator(){
     const dis = classLocked && !sel;
     return '<div class="opt-btn'+(sel?' sel':'')+(dis?' disabled':'')+'"'+
       (classLocked?'':' data-class="'+c.id+'"')+' title="'+c.desc.replace(/"/g,'&quot;')+'"'+
-      (dis?' style="opacity:.4;cursor:not-allowed"':'')+'>'+c.icon+' '+c.label+'</div>';
+      (dis?' style="opacity:.4;cursor:not-allowed"':'')+'>'+c.icon+' '+genderedLabel(c.label, _draftChar.gender)+'</div>';
   }).join('');
   const selClass = _draftChar.classId ? CLASS_BY_ID[_draftChar.classId] : null;
-  const classDesc = selClass ? classInfoHtml(selClass)
+  const classDesc = selClass ? classInfoHtml(selClass, _draftChar.gender)
     : '<span class="sub">Wähle eine Klasse – sie ist dauerhaft und kann später nicht geändert werden. Tippe eine Klasse an, um ihre Stärken, Schwächen und Spezialfähigkeit zu sehen.</span>';
   const genderBtns = GENDERS.map(g =>
     '<div class="opt-btn'+(_draftChar.gender===g.id?' sel':'')+'" data-gender="'+g.id+'">'+g.icon+' '+g.label+'</div>').join('');
@@ -560,7 +561,7 @@ function applyCharacter(){
   // Vorhandene Klasse ist unveränderlich – nie überschreiben.
   if(state.character && state.character.classId) _draftChar.classId = state.character.classId;
   // Name: leer → Klassenname als Standard.
-  if(!_draftChar.name || !_draftChar.name.trim()) _draftChar.name = CLASS_BY_ID[_draftChar.classId].label;
+  if(!_draftChar.name || !_draftChar.name.trim()) _draftChar.name = genderedLabel(CLASS_BY_ID[_draftChar.classId].label, _draftChar.gender);
   else _draftChar.name = _draftChar.name.trim();
   // Talente/Punkte beim Aussehen-Ändern bewahren bzw. neu initialisieren.
   const prevTalents = (state.character && state.character.talents) || {};
@@ -581,8 +582,9 @@ export function openRosterModal(){
   for(const c of chars){
     const cls = c.classId ? CLASS_BY_ID[c.classId] : null;
     const icon = cls ? cls.icon : '👤';
-    const name = c.name || (cls ? cls.label : 'Neuer Held');
-    const sub = (cls ? cls.label : 'Ohne Klasse') + ' · Level ' + c.level;
+    const clsLabel = cls ? genderedLabel(cls.label, c.gender) : null;
+    const name = c.name || (clsLabel || 'Neuer Held');
+    const sub = (clsLabel || 'Ohne Klasse') + ' · Level ' + c.level;
     rows += '<div class="bl-row'+(c.isActive?' current':'')+'">'+
       '<span class="cr-list-ico">'+icon+'</span>'+
       '<div class="bl-info"><div class="bl-name">'+name+(c.isActive?' <span class="bl-tag cur">Aktiv</span>':'')+'</div>'+

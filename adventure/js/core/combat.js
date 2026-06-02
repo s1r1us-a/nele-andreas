@@ -547,12 +547,24 @@ function resetAbilityVisuals(){
   stopAbilityTicker();
 }
 
+// Fähigkeitsschaden: skaliert mit heroAtk (inkl. Schadens-/Magie-Stats & Vielseitigkeit)
+// und kann mit der Krit-Chance/-Stärke des Helden kritten – bei Magiern zählt der Magie-Krit
+// (z. B. von der Nebenhand-Kugel). Fluch halbiert die Krit-Chance, Raserei-Buff erhöht sie.
+function abilityDamage(f, mult){
+  let crit = f.heroCritChance * (f.curseTurns>0 ? 0.5 : 1);
+  if(Date.now() < f.buffs.crit.until) crit = Math.min(1, crit + f.buffs.crit.val);
+  const isCrit = Math.random() < crit;
+  return { dmg: Math.max(1, Math.round(f.heroAtk * mult * (isCrit ? f.heroCritMult : 1))), crit:isCrit };
+}
+
 // Wendet den Effekt einer Fähigkeit lokal im PvE-Kampf an (Held → Boss).
 function applyAbilityEffect(f, ab){
   const now = Date.now();
   const magic = classOf(state).damageSchool === 'magisch';
+  const healMult = classOf(state).healMult || 1;
   if(ab.kind === 'heal'){
-    const heal = Math.round(f.heroMaxHp * ab.healPct * f.healDebuff);
+    // Heilkreis skaliert mit der Heilwirkung der Klasse (Heiler ×1,6 usw.).
+    const heal = Math.round(f.heroMaxHp * ab.healPct * healMult * f.healDebuff);
     f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
     updateHpBars(f);
     vfxHeal('heroSprite');
@@ -562,20 +574,21 @@ function applyAbilityEffect(f, ab){
     // Kanalisierter Seelenraub (Hexer-Grundfähigkeit): Lebensentzug über mehrere
     // Sekunden statt eines Einzeltreffers. Talent-Drains (ohne `dur`) bleiben sofort.
     if(ab.kind === 'drain' && ab.dur){ startDrainChannel(f, ab); return; }
-    const dmg = Math.max(1, Math.round(f.heroAtk * ab.burstMult));
+    const { dmg, crit } = abilityDamage(f, ab.burstMult);
     f.bossHp = Math.max(0, f.bossHp - dmg);
     f.dmgDealt += dmg;
     if(ab.kind === 'drain'){
       vfxDrain('bossSprite','heroSprite');
-      const heal = Math.round(dmg * (f.healDebuff||1));
+      // Selbstheilung skaliert mit der Heilwirkung (Hexer ×1,5).
+      const heal = Math.round(dmg * healMult * (f.healDebuff||1));
       f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
       mechFloat('hero', '🩸 +'+fmtBig(heal), '#e0466e');
     } else {
       vfxBurst('bossSprite', magic, magic ? '#9be7ff' : '#ffd24a');
     }
-    mechFloat('boss', '💥 -'+fmtBig(dmg), '#ffd24a');
+    mechFloat('boss', (crit?'✸ ':'💥 ')+'-'+fmtBig(dmg), '#ffd24a');
     updateHpBars(f); updateMeter(f);
-    addCombatLog(f, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
+    addCombatLog(f, ab.icon+' '+ab.name+': '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
     if(f.bossHp <= 0){ endFight(f, true); return; }
   } else if(ab.kind === 'critBoost'){
     f.buffs.crit = { until: now+ab.dur, val: ab.critBonus };
@@ -790,19 +803,21 @@ function startDrainChannel(f, ab){
   const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
   startDrainBeam('bossSprite', 'heroSprite', ab.dur);
   let i = 0;
+  const healMult = classOf(state).healMult || 1;
   const tick = () => {
     _drainTimer = null;
     if(currentFight !== f || f.over){ stopDrainChannel(); return; }
-    const dmg = Math.max(1, Math.round(f.heroAtk * ab.burstMult));
+    // Schaden skaliert mit Magie-Stats und kann kritten; Heilung mit der Heilwirkung.
+    const { dmg, crit } = abilityDamage(f, ab.burstMult);
     f.bossHp = Math.max(0, f.bossHp - dmg);
     f.dmgDealt += dmg;
-    const heal = Math.round(dmg * (f.healDebuff || 1));
+    const heal = Math.round(dmg * healMult * (f.healDebuff || 1));
     f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
-    mechFloat('boss', '💥 -'+fmtBig(dmg), '#ffd24a');
+    mechFloat('boss', (crit?'✸ ':'💥 ')+'-'+fmtBig(dmg), '#ffd24a');
     mechFloat('hero', '🩸 +'+fmtBig(heal), '#e0466e');
     spawnParticles('heroSprite', { count:6, glyph:'🩸', color:'#e0466e', spread:38, rise:22 });
     updateHpBars(f); updateMeter(f);
-    addCombatLog(f, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden (+Heilung)', '#ffd24a');
+    addCombatLog(f, ab.icon+' '+ab.name+': '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden (+Heilung)', '#ffd24a');
     if(f.bossHp <= 0){ stopDrainChannel(); endFight(f, true); return; }
     if(++i < ticks) _drainTimer = setTimeout(tick, tickMs / combatSpeed);
     else stopDrainChannel();

@@ -65,7 +65,13 @@ function freshRoster(){
 // arbeitet aber direkt mit dem Klassen-Objekt statt dem globalen State).
 function unwearableForClass(item, cls){
   if(!item || !cls) return false;
-  if(item.slotKey === 'schild') return cls.id !== 'verteidiger';
+  // Nebenhand: Orb → Heiler/Hexer, Zweitwaffe → Kämpfer, Schild → Verteidiger.
+  if(item.slotKey === 'schild'){
+    const art = typeOf(item).art || 'schild';
+    if(art === 'orb')   return cls.damageSchool !== 'magisch';
+    if(art === 'waffe') return cls.id !== 'kaempfer';
+    return cls.id !== 'verteidiger';
+  }
   if(item.slotKey === 'waffe'){
     const isStaff = materialOf(item) === 'zauberstab';
     return cls.damageSchool === 'magisch' ? !isStaff : isStaff;
@@ -268,6 +274,7 @@ export function listCharacters(){
       id,
       name: (ch && ch.name) ? ch.name : '',
       classId: ch ? ch.classId : null,
+      gender: ch ? ch.gender : null,
       level: s.level || 1,
       hasChar: !!ch,
       isActive: id === roster.activeId,
