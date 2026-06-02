@@ -285,17 +285,33 @@ export function openStats(){
 }
 
 // ---- Profil des anderen Spielers (read-only Ansicht) ---------------
+// Alle Charaktere (Slots) eines geladenen Rosters – der aktive Charakter
+// steht zuerst, die übrigen folgen in Roster-Reihenfolge. So kann man im
+// Profil des anderen Spielers durch all seine Helden durchschalten.
+function orderedGuestSlots(loaded){
+  const out = [];
+  if(loaded && loaded.slots && typeof loaded.slots === 'object'){
+    const ids = Object.keys(loaded.slots);
+    const activeId = (loaded.activeId && loaded.slots[loaded.activeId]) ? loaded.activeId : null;
+    if(activeId) out.push(loaded.slots[activeId]);
+    for(const id of ids){ if(id !== activeId) out.push(loaded.slots[id]); }
+  } else {
+    const flat = resolveActiveSlot(loaded);
+    if(flat) out.push(flat);
+  }
+  return out.filter(s => s && s.character);
+}
+
 export async function openOtherProfile(){
   hideTooltip();
   const ok = otherKey();
   const oName = ok[0].toUpperCase() + ok.slice(1);
   openModal('<h2>👁️ '+oName+'s Held</h2><div class="sub">Lädt …</div>');
-  let slot, st;
+  let slots;
   try {
     const loaded = await loadGuestSave(ok);
-    slot = resolveActiveSlot(loaded);
-    if(!slot || !slot.character) throw new Error('no-char');
-    st = computePlayerStats(slot);
+    slots = orderedGuestSlots(loaded);
+    if(!slots.length) throw new Error('no-char');
   } catch(e) {
     openModal('<h2>👁️ '+oName+'s Held</h2>'+
       '<p style="text-align:center; color:var(--txt-dim); margin:18px 0;">'+oName+
@@ -304,62 +320,93 @@ export async function openOtherProfile(){
     modal().querySelector('#opClose').addEventListener('click', closeModal);
     return;
   }
-  const cls = CLASS_BY_ID[st.classId] || classOf(slot);
-  const charName = (slot.character && slot.character.name) || (cls ? cls.label : 'Held');
-  const avatar = buildHeroSVG(slot.character, st.tier, { equipped: slot.equipped || {} });
-
-  // Ausrüstung (read-only) – belegte Slots als Item-Zellen, leere dezent.
-  let gear = '';
-  for(const sk of SLOT_KEYS){
-    const it = (slot.equipped || {})[sk];
-    if(it){
-      ensureItemSprite(it);   // Gast-Items haben kein Sprite (stripItem beim Speichern)
-      const r = rarityOf(it.rarity);
-      gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-op="'+sk+'">'+
-        '<img src="'+it.sprite+'" alt="'+(it.name||'')+'"></div>';
-    } else {
-      gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+
-        '<span>'+(SLOT_ICON[sk]||'')+'</span></div>';
-    }
-  }
 
   const pct = v => Math.round((v||0)*100)+'%';
   const row = (label, val, cls2) => '<div class="cs-row"><span class="cs-l">'+label+
     '</span><b class="cs-v'+(cls2?' '+cls2:'')+'">'+val+'</b></div>';
-  let sec = '';
-  if(st.lifesteal>0)   sec += row('Lebensraub', pct(st.lifesteal), 'hp');
-  if(st.dodge>0)       sec += row('Ausweichen', pct(st.dodge), 'armor');
-  if(st.versatility>0) sec += row('Vielseitigkeit', pct(st.versatility), 'crit');
-  if(st.block>0)       sec += row('Block', Math.round(st.block), 'armor');
-  if(st.thorns>0)      sec += row('Dornen', Math.round(st.thorns), 'damage');
 
-  openModal('<h2>👁️ '+oName+'s Held</h2>'+
-    '<div class="op-head">'+
-      '<img class="op-avatar" src="'+avatar+'" alt="">'+
-      '<div class="op-meta">'+
-        '<div class="op-name">'+charName+'</div>'+
-        '<div class="op-cls">'+(cls?cls.icon+' '+cls.label:'')+'</div>'+
-        '<div class="op-lvl">⭐ Level <b>'+(st.level||1)+'</b> · ⚔️ Kampfkraft <b>'+fmtBig(st.power)+'</b></div>'+
+  // Aktiver Charakter steht in slots[0] → wird als erstes angezeigt.
+  let idx = 0;
+  const multi = slots.length > 1;
+
+  function render(){
+    const slot = slots[idx];
+    const st = computePlayerStats(slot);
+    const cls = CLASS_BY_ID[st.classId] || classOf(slot);
+    const charName = (slot.character && slot.character.name) || (cls ? cls.label : 'Held');
+    const avatar = buildHeroSVG(slot.character, st.tier, { equipped: slot.equipped || {} });
+
+    // Ausrüstung (read-only) – belegte Slots als Item-Zellen, leere dezent.
+    let gear = '';
+    for(const sk of SLOT_KEYS){
+      const it = (slot.equipped || {})[sk];
+      if(it){
+        ensureItemSprite(it);   // Gast-Items haben kein Sprite (stripItem beim Speichern)
+        const r = rarityOf(it.rarity);
+        gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-op="'+sk+'">'+
+          '<img src="'+it.sprite+'" alt="'+(it.name||'')+'"></div>';
+      } else {
+        gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+
+          '<span>'+(SLOT_ICON[sk]||'')+'</span></div>';
+      }
+    }
+
+    let sec = '';
+    if(st.lifesteal>0)   sec += row('Lebensraub', pct(st.lifesteal), 'hp');
+    if(st.dodge>0)       sec += row('Ausweichen', pct(st.dodge), 'armor');
+    if(st.versatility>0) sec += row('Vielseitigkeit', pct(st.versatility), 'crit');
+    if(st.block>0)       sec += row('Block', Math.round(st.block), 'armor');
+    if(st.thorns>0)      sec += row('Dornen', Math.round(st.thorns), 'damage');
+
+    // Blätter-Leiste: nur bei mehr als einem Charakter; idx 0 ist der aktive.
+    const pager = multi
+      ? '<div class="op-pager">'+
+          '<button class="btn ghost op-nav" id="opPrev" aria-label="Voriger Charakter">‹</button>'+
+          '<span class="op-count">'+(idx+1)+' / '+slots.length+
+            (idx===0?' · ⚔️ aktiv':'')+'</span>'+
+          '<button class="btn ghost op-nav" id="opNext" aria-label="Nächster Charakter">›</button>'+
+        '</div>'
+      : '';
+
+    openModal('<h2>👁️ '+oName+'s Held</h2>'+
+      pager+
+      '<div class="op-head">'+
+        '<img class="op-avatar" src="'+avatar+'" alt="">'+
+        '<div class="op-meta">'+
+          '<div class="op-name">'+charName+'</div>'+
+          '<div class="op-cls">'+(cls?cls.icon+' '+cls.label:'')+'</div>'+
+          '<div class="op-lvl">⭐ Level <b>'+(st.level||1)+'</b> · ⚔️ Kampfkraft <b>'+fmtBig(st.power)+'</b></div>'+
+        '</div>'+
       '</div>'+
-    '</div>'+
-    '<h3 class="op-sub">Ausrüstung</h3>'+
-    '<div class="picker-list op-gear">'+gear+'</div>'+
-    '<h3 class="op-sub">Werte</h3>'+
-    '<div class="preview-stats">'+
-      row('⚔️ Kampfkraft', fmtBig(st.power), 'power')+
-      row('❤️ Max HP', fmtBig(Math.round(st.maxHp)), 'hp')+
-      row('🗡️ Schaden', fmtBig(st.atk), 'damage')+
-      row('🛡️ Rüstung', fmtBig(Math.round(st.armor)), 'armor')+
-      row('🎯 Krit-Chance', pct(st.critChance), 'crit')+
-      sec+
-    '</div>'+
-    '<div class="close-row"><button class="btn ghost" id="opClose">Schließen</button></div>');
-  // Tooltips für ausgerüstete Items (read-only, kein Vergleich).
-  modal().querySelectorAll('.op-cell[data-op]').forEach(cell => {
-    const it = (slot.equipped || {})[cell.dataset.op];
-    if(it) bindTooltip(cell, it, { compare:false });
-  });
-  modal().querySelector('#opClose').addEventListener('click', closeModal);
+      '<h3 class="op-sub">Ausrüstung</h3>'+
+      '<div class="picker-list op-gear">'+gear+'</div>'+
+      '<h3 class="op-sub">Werte</h3>'+
+      '<div class="preview-stats">'+
+        row('⚔️ Kampfkraft', fmtBig(st.power), 'power')+
+        row('❤️ Max HP', fmtBig(Math.round(st.maxHp)), 'hp')+
+        row('🗡️ Schaden', fmtBig(st.atk), 'damage')+
+        row('🛡️ Rüstung', fmtBig(Math.round(st.armor)), 'armor')+
+        row('🎯 Krit-Chance', pct(st.critChance), 'crit')+
+        sec+
+      '</div>'+
+      '<div class="close-row"><button class="btn ghost" id="opClose">Schließen</button></div>');
+    // Tooltips für ausgerüstete Items (read-only, kein Vergleich).
+    modal().querySelectorAll('.op-cell[data-op]').forEach(cell => {
+      const it = (slot.equipped || {})[cell.dataset.op];
+      if(it) bindTooltip(cell, it, { compare:false });
+    });
+    if(multi){
+      modal().querySelector('#opPrev').addEventListener('click', () => {
+        hideTooltip(); idx = (idx - 1 + slots.length) % slots.length; render();
+      });
+      modal().querySelector('#opNext').addEventListener('click', () => {
+        hideTooltip(); idx = (idx + 1) % slots.length; render();
+      });
+    }
+    modal().querySelector('#opClose').addEventListener('click', closeModal);
+  }
+
+  render();
 }
 
 // ---- Onboarding (#29) ----------------------------------------------
