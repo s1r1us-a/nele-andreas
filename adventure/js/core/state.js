@@ -65,11 +65,11 @@ function freshRoster(){
 // arbeitet aber direkt mit dem Klassen-Objekt statt dem globalen State).
 function unwearableForClass(item, cls){
   if(!item || !cls) return false;
-  // Nebenhand: Orb → Heiler/Hexer, Zweitwaffe → Kämpfer, Schild → Verteidiger.
+  // Nebenhand: Orb → Heiler/Hexer, Zweitklinge → Schurke, Schild → Verteidiger.
   if(item.slotKey === 'schild'){
     const art = typeOf(item).art || 'schild';
     if(art === 'orb')   return cls.damageSchool !== 'magisch';
-    if(art === 'waffe') return cls.id !== 'kaempfer';
+    if(art === 'waffe') return cls.id !== 'schurke';
     return cls.id !== 'verteidiger';
   }
   if(item.slotKey === 'waffe'){
@@ -110,6 +110,11 @@ function migrateSlot(s){
   if(!s.settings || typeof s.settings !== 'object') s.settings = { seenOnboarding:false };
   // Talentbaum-/Charakterfelder defensiv ergänzen.
   if(s.character && typeof s.character === 'object'){
+    // Klassen-Umbenennung: der frühere "Kämpfer" ist jetzt der "Schurke".
+    // Altstände auf die neue Klassen-Id heben (vor der Talent-Validierung,
+    // damit alte Kämpfer-Talente sauber als ungültig erkannt und zurück-
+    // erstattet werden).
+    if(s.character.classId === 'kaempfer') s.character.classId = 'schurke';
     if(typeof s.character.name !== 'string') s.character.name = '';
     // Bart-Felder defensiv ergänzen (Altstände → bartlos).
     if(typeof s.character.beardId !== 'string') s.character.beardId = 'kein';

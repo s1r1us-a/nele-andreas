@@ -551,7 +551,7 @@ function resetAbilityVisuals(){
 
 // Fähigkeitsschaden: skaliert mit heroAtk (inkl. Schadens-/Magie-Stats & Vielseitigkeit)
 // und kann mit der Krit-Chance/-Stärke des Helden kritten – bei Magiern zählt der Magie-Krit
-// (z. B. von der Nebenhand-Kugel). Fluch halbiert die Krit-Chance, Raserei-Buff erhöht sie.
+// (z. B. von der Nebenhand-Kugel). Fluch halbiert die Krit-Chance, Krit-Buff erhöht sie.
 function abilityDamage(f, mult){
   let crit = f.heroCritChance * (f.curseTurns>0 ? 0.5 : 1);
   if(Date.now() < f.buffs.crit.until) crit = Math.min(1, crit + f.buffs.crit.val);
@@ -649,7 +649,7 @@ function spawnHealCircle(spriteId){
   if(hero){ hero.classList.add('heal-glow'); setTimeout(()=> hero.classList.remove('heal-glow'), 1150); }
   setTimeout(()=> fx.remove(), 1250);
 }
-// Große magische Energiebarriere VOR einem Kämpfer (bleibt bis Buff endet).
+// Große magische Energiebarriere VOR einem Helden (bleibt bis Buff endet).
 // dir = +1: Barriere rechts vom Sprite (Held Richtung Boss), -1: links (Boss Richtung Held).
 function spawnShieldDome(spriteId, domeId = 'shieldDome', dir = 1){
   removeShieldDome(domeId);
@@ -657,7 +657,7 @@ function spawnShieldDome(spriteId, domeId = 'shieldDome', dir = 1){
   const a = (currentFight && currentFight.anchor[spriteId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
   const bar = document.createElement('div');
   bar.className = 'magic-barrier'; bar.id = domeId;
-  // Vor dem Kämpfer in Richtung Gegner versetzt.
+  // Vor dem Helden in Richtung Gegner versetzt.
   bar.style.left = (a.x + 70 * dir)+'px'; bar.style.top = a.y+'px';
   $('#dmgLayer').appendChild(bar);
 }

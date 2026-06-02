@@ -398,9 +398,9 @@ function applyAbility(fight, slot, abilityId){
     if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + Math.round(fight.backMaxHp  * ab.healPct));
     fight.lastHealTs = now;
     addLog(fight, '➕ Heilkreis: alle Helden +'+Math.round(ab.healPct*100)+'% HP', '#37d67a');
-  } else if(ab.id === 'raserei'){
+  } else if(ab.kind === 'critBoost'){
     if(slot === 'front') fight.frontCritUntil = now + ab.dur; else fight.backCritUntil = now + ab.dur;
-    addLog(fight, '🔥 '+(slot==='front'?fight.frontName:fight.backName)+' entfacht Raserei!', '#ff8a3d');
+    addLog(fight, ab.icon+' '+(slot==='front'?fight.frontName:fight.backName)+' – '+ab.name+'!', '#ff8a3d');
   } else if(ab.id === 'schildwall'){
     fight.groupDmgReduceUntil = now + ab.dur;
     fight.groupDmgReducePct   = ab.dmgReduce || 0;
@@ -476,7 +476,7 @@ function exchange(fight){
   // Frost → slow (handled via longer interval this turn)
   const frosted = mechs.includes('frost') && fight.turn % 3 === 0;
 
-  // Skill: Raserei-Krit-Boost (B14)
+  // Skill: Krit-Boost-Fähigkeit (z. B. Kaltblütigkeit) (B14)
   const now = Date.now();
   const fCritBonus = (now < (fight.frontCritUntil||0) && fight.frontAbility) ? (fight.frontAbility.critBonus||0) : 0;
   const bCritBonus = (now < (fight.backCritUntil ||0) && fight.backAbility)  ? (fight.backAbility.critBonus ||0) : 0;

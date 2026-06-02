@@ -16,7 +16,7 @@ lifesteal`). Layout bleibt 10 Stufen × 3 Optionen, Aktiv-Stufen auf 5 & 9.
 ## 1. Befund: Was am alten Design schwach war
 
 1. **Keine Build-Identität.** Die drei Optionen je Stufe gehörten keinem durchgehenden
-   Pfad an (z. B. Kämpfer Stufe 4: Schaden / Leben / Tempo – drei Themen ohne roten
+   Pfad an (z. B. Schurke Stufe 4: Schaden / Leben / Tempo – drei Themen ohne roten
    Faden). In WoW „geht man eine Säule herunter" und wird dafür belohnt – das fehlte
    völlig. Talente waren austauschbare Einzel-Stat-Picks statt Strategie.
 
@@ -44,20 +44,26 @@ Jede Stufe behält 3 Optionen, aber **Spalte 1 / 2 / 3 gehört durchgehend derse
 Spezialisierung an**. Wer konsequent dieselbe Spalte wählt, baut einen kohärenten,
 WoW-artigen Spec; die Aktiv-Stufen (5/9) und der Schlussstein (10) verstärken genau
 diese Säule. Die Dateistruktur bleibt identisch – nur Reihenfolge, Werte, Namen/Icons
-wurden angepasst. **Alle 120 Talent-IDs bleiben erhalten**, daher bleiben bestehende
-Spielstände kompatibel (siehe `isValidChoice`).
+wurden angepasst. Bei den anderen drei Klassen **bleiben alle Talent-IDs erhalten**,
+daher bleiben bestehende Spielstände kompatibel (siehe `isValidChoice`).
+
+> **Hinweis Schurke:** Der frühere **Kämpfer** wurde zum **Schurken** umgestaltet
+> (neuer Talentbaum mit eigenen IDs `schurke_*` und neuer Grundfähigkeit
+> *Kaltblütigkeit*). Altstände werden in `migrateSlot` automatisch auf die neue
+> Klassen-Id gehoben; nicht mehr gültige Kämpfer-Talente werden erkannt und die
+> Punkte erstattet (kein manueller Respec nötig).
 
 | Klasse | Säule 1 | Säule 2 | Säule 3 |
 |---|---|---|---|
-| **⚔️ Kämpfer** | **Vernichter** – Krit & Krit-Schaden, Burst | **Furor** – Tempo & Lebensraub, Sustain | **Hüne** – Schaden % & Leben, Bruiser |
+| **🗡️ Schurke** | **Meucheln** – Krit & Krit-Schaden, Gift-Burst | **Gesetzloser** – Tempo & Lebensraub, Sustain | **Täuschung** – Schatten-Schaden, Ausweichen & Leben |
 | **🛡️ Verteidiger** | **Bollwerk** – Rüstung & Block, Defensive | **Rächer** – Dornen & Schaden, Konter | **Ausweicher** – Ausweichen & Leben, Heilung |
 | **✨ Heiler** | **Lichtwirker** – Leben & Heilung | **Sternenmagier** – Schaden % & Magie-Krit | **Bewahrer** – Vielseitigkeit & Rüstung, Utility |
 | **🔮 Hexer** | **Verderbnis** – Schaden % & Magie-Krit | **Seelensauger** – Lebensraub, Drain-Kanal | **Schattenweber** – Krit-Schaden & Leben |
 
 ### Begleitende Balance-Prinzipien
-- **EV-Angleichung:** Frühe `%Schaden`-Knoten leicht angehoben (z. B. Kämpfer-`Wucht`
-  `+8 %` → `+10 %`); reine `critDamage`-Knoten **immer an Krit-Chance gekoppelt**
-  (z. B. `Brutalität` = `+4 % Krit · +15 % Krit-Schaden`), damit sie sich lohnen.
+- **EV-Angleichung:** Frühe `%Schaden`-Knoten leicht angehoben (z. B. Schurke-`Schattenschritt`
+  `+10 %`); reine `critDamage`-Knoten **immer an Krit-Chance gekoppelt**
+  (z. B. `Verstümmeln` = `+4 % Krit · +15 % Krit-Schaden`), damit sie sich lohnen.
 - **CD-Spreizung** statt 4×30 s: **Nukes 20–24 s**, **Buffs 24–26 s**,
   **starke Defensiven 28–32 s** → echte Tempo-Entscheidungen.
 - **Aktiv-Rollen pro Stufe getrennt:** Spalte 1 = Nuke/Defensive der Säule,
@@ -72,10 +78,11 @@ Spielstände kompatibel (siehe `isValidChoice`).
 
 | Klasse · Stufe | Fähigkeit | Vorher | Nachher | Rolle |
 |---|---|---|---|---|
-| Kämpfer 5 | Wirbelsturm | burst 250 % · CD 22 s | **burst 240 % · CD 20 s** | Nuke (Vernichter) |
-| Kämpfer 5 | Kampfrausch | dmgBoost +40 % | **lifesteal +30 % / 8 s** | Sustain (Furor) |
-| Kämpfer 5 | Schlachtwut | critBoost +60 % (war „Klingentanz") | **dmgBoost +40 % / 8 s** | Ramp (Hüne) |
-| Kämpfer 9 | Hinrichtung | burst 450 % · CD 30 s | **burst 400 % · CD 24 s** | Execute-Nuke |
+| Schurke 5 | Ausweiden | burst (war „Wirbelsturm") | **burst 240 % · CD 20 s** | Nuke (Meucheln) |
+| Schurke 5 | Beutejagd | dmgBoost (war „Kampfrausch") | **lifesteal +30 % / 8 s** | Sustain (Gesetzloser) |
+| Schurke 5 | Schattentanz | critBoost (war „Schlachtwut") | **dmgBoost +40 % / 8 s** | Ramp (Täuschung) |
+| Schurke 9 | Todesstoß | burst (war „Hinrichtung") | **burst 400 % · CD 24 s** | Execute-Nuke |
+| Schurke 9 | Verschwinden | dmgBoost (war „Berserkermodus") | **dmgReduce −60 % / 9 s** | Defensive (Täuschung) |
 | Verteidiger 5 | Schildschlag | burst 200 % · CD 22 s | **burst 200 % · CD 20 s** | Konter (Rächer) |
 | Verteidiger 9 | Schildwucht | burst 300 % · CD 30 s | **burst 300 % · CD 24 s** | Konter-Nuke |
 | Heiler 5 | Arkanschlag | burst 260 % · CD 22 s | **burst 250 % · CD 20 s** | Nuke (Sternenmagier) |
@@ -85,7 +92,7 @@ Spielstände kompatibel (siehe `isValidChoice`).
 | Hexer 9 | Seelenfresser | **Einmal-Burst** 400 % | **Kanal 80 %/s · 5 s** (heilt) | Drain |
 
 > **Grundfähigkeiten** (`classes.js`): leichte CD-Differenzierung statt überall 30 s –
-> Raserei 28 s, Seelenraub 26 s, Schildwall 32 s (sehr starke Defensive), Heilkreis 30 s.
+> Kaltblütigkeit 28 s, Seelenraub 26 s, Schildwall 32 s (sehr starke Defensive), Heilkreis 30 s.
 
 ---
 
@@ -93,19 +100,19 @@ Spielstände kompatibel (siehe `isValidChoice`).
 
 Lesart: **[ Säule 1 · Säule 2 · Säule 3 ]**. Aktiv-Stufen sind **fett** markiert.
 
-### ⚔️ Kämpfer — Vernichter · Furor · Hüne
-| St. | Säule 1 (Vernichter) | Säule 2 (Furor) | Säule 3 (Hüne) |
+### 🗡️ Schurke — Meucheln · Gesetzloser · Täuschung
+| St. | Säule 1 (Meucheln) | Säule 2 (Gesetzloser) | Säule 3 (Täuschung) |
 |---|---|---|---|
-| 1 | Treffsicher +6 % Krit | Flink +6 % Tempo | Wucht +10 % Schaden |
-| 2 | Brutalität +4 % Krit · +15 % Krit-Schaden | Rasanz +7 % Tempo | Schwere Hiebe +12 % Schaden |
-| 3 | Scharfe Klinge +7 % Krit | Blutdurst +5 % Lebensraub | Zähigkeit +12 % Leben |
-| 4 | Tödliche Präzision +5 % Krit · +20 % Krit-Schaden | Sturmangriff +9 % Tempo | Berserker +15 % Schaden |
-| **5** | **Wirbelsturm** burst 240 % | **Kampfrausch** +30 % Lebensraub | **Schlachtwut** +40 % Schaden |
-| 6 | Meisterschütze +9 % Krit | Vampirklinge +7 % Lebensraub | Eisenleib +18 % Leben |
-| 7 | Henkershieb +6 % Krit · +25 % Krit-Schaden | Windläufer +10 % Tempo | Klingenmeister +18 % Schaden |
-| 8 | Henkersbeil +6 % Krit · +30 % Krit-Schaden | Blutklinge +8 % Lebensraub | Wildschlag +18 % Schaden |
-| **9** | **Hinrichtung** burst 400 % | **Blutrausch** +40 % Lebensraub | **Berserkermodus** +50 % Schaden |
-| 10 | Schlachtmeister +18 % Schaden · +12 % Krit · +30 % Krit-Schaden | Blutfürst +15 % Schaden · +12 % Tempo · +10 % Lebensraub | Kriegsfürst +25 % Schaden · +15 % Leben |
+| 1 | Tödliche Gifte +6 % Krit | Flinke Klingen +6 % Tempo | Schattenschritt +10 % Schaden |
+| 2 | Verstümmeln +4 % Krit · +15 % Krit-Schaden | Säbelhieb +7 % Tempo | Hinterhältig +12 % Schaden |
+| 3 | Scharfe Klingen +7 % Krit | Beutezug +5 % Lebensraub | Zähigkeit +12 % Leben |
+| 4 | Tödliche Präzision +5 % Krit · +20 % Krit-Schaden | Schwertkunst +9 % Tempo | Finsternis +15 % Schaden |
+| **5** | **Ausweiden** burst 240 % | **Beutejagd** +30 % Lebensraub | **Schattentanz** +40 % Schaden |
+| 6 | Meistergift +9 % Krit | Freibeuter +7 % Lebensraub | Abgehärtet +18 % Leben |
+| 7 | Auslöschen +6 % Krit · +25 % Krit-Schaden | Klingentanz +10 % Tempo | Schattenklinge +18 % Schaden |
+| 8 | Aufschlitzen +6 % Krit · +30 % Krit-Schaden | Räuberblut +8 % Lebensraub | Meucheltechnik +18 % Schaden |
+| **9** | **Todesstoß** burst 400 % | **Tötungsrausch** +40 % Lebensraub | **Verschwinden** −60 % Schaden / 9 s |
+| 10 | Großmeuchler +18 % Schaden · +12 % Krit · +30 % Krit-Schaden | Freibeuterkönig +15 % Schaden · +12 % Tempo · +10 % Lebensraub | Meister der Schatten +25 % Schaden · +15 % Leben |
 
 ### 🛡️ Verteidiger — Bollwerk · Rächer · Ausweicher
 | St. | Säule 1 (Bollwerk) | Säule 2 (Rächer) | Säule 3 (Ausweicher) |

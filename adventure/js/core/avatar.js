@@ -419,7 +419,7 @@ export function buildHeroSVG(character, tier, gear){
     : '';
 
   // Nebenhand am linken Arm – Form richtet sich nach der Item-Art:
-  //   art:'waffe' → Zweitwaffe als Klinge in der linken Hand (Kämpfer),
+  //   art:'waffe' → Zweitklinge als Klinge in der linken Hand (Schurke),
   //   art:'orb'   → schwebende Magie-Kugel (Heiler/Hexer),
   //   sonst       → klassisches Schild (Episch+ → größer + leuchtend).
   const sc = eq.schild; let schild = '';

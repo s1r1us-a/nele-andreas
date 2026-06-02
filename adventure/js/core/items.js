@@ -240,19 +240,19 @@ export function resolveTargetSlot(item){
 // Klassen-Restriktion (Tragbarkeit):
 //  • Schild  → nur Verteidiger.
 //  • Waffe   → magische Klassen (Heiler/Hexer) nur Zauberstäbe,
-//              physische Klassen (Kämpfer/Verteidiger) nur physische Waffen.
+//              physische Klassen (Schurke/Verteidiger) nur physische Waffen.
 //  • Rüstung → Material muss zur Klasse passen (Stoff/Leder/Platte).
 //  • Schmuck → kein Material → von allen tragbar.
 export function canEquip(item){
   const cls = classOf(state);
   // Nebenhand-Slot: je nach Item-Art eine andere Klasse.
   //  • Orb   → magische Klassen (Heiler/Hexer)
-  //  • Waffe → Kämpfer (Zweitwaffe)
+  //  • Waffe → Schurke (Zweitklinge)
   //  • Schild→ Verteidiger
   if(item.slotKey === 'schild'){
     const art = typeOf(item).art || 'schild';
     if(art === 'orb')   return cls.damageSchool === 'magisch';
-    if(art === 'waffe') return cls.id === 'kaempfer';
+    if(art === 'waffe') return cls.id === 'schurke';
     return cls.id === 'verteidiger';
   }
   if(item.slotKey === 'waffe'){
@@ -269,7 +269,7 @@ export function equipBlockReason(item){
   if(item.slotKey === 'schild'){
     const art = typeOf(item).art || 'schild';
     if(art === 'orb')   return cls.label+' kann keine Kugeln tragen – nur Heiler und Hexer.';
-    if(art === 'waffe') return cls.label+' kann keine Zweitwaffe tragen – nur der Kämpfer.';
+    if(art === 'waffe') return cls.label+' kann keine Zweitklinge tragen – nur der Schurke.';
     return cls.label+' kann keine Schilde tragen – nur der Verteidiger.';
   }
   if(item.slotKey === 'waffe'){

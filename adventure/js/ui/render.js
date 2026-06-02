@@ -185,8 +185,8 @@ export function flashFullBanner(){
 }
 
 // Leerslot-Symbol. Die Nebenhand zeigt je nach Klasse ein passendes Symbol:
-// Heiler/Hexer → Kugel, Kämpfer → Zweitwaffe, Verteidiger → Schild.
-const OFFHAND_EMPTY_ICON = { heiler:'🔮', hexer:'🔮', kaempfer:'⚔️', verteidiger:'🛡️' };
+// Heiler/Hexer → Kugel, Schurke → Zweitklinge, Verteidiger → Schild.
+const OFFHAND_EMPTY_ICON = { heiler:'🔮', hexer:'🔮', schurke:'🗡️', verteidiger:'🛡️' };
 function emptySlotIcon(slotKey){
   if(slotKey === 'schild') return OFFHAND_EMPTY_ICON[classOf(state).id] || SLOT_ICON.schild;
   return SLOT_ICON[slotKey];

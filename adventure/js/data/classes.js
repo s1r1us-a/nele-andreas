@@ -22,15 +22,15 @@ export const CLASSES = [
     dmgMult:0.65, healMult:1.6,
     ability:{ id:'heilkreis', name:'Heilkreis', icon:'➕', kind:'heal', cd:30000, healPct:0.5,
               desc:'Zündet einen leuchtenden Heilkreis – heilt alle Helden um 50 % ihrer maximalen HP.' } },
-  { id:'kaempfer',    label:'Kämpfer',     icon:'⚔️',
-    desc:'Krieger. Trägt Stoff und Leder. Ausgewogener physischer Schaden.',
-    playstyle:'Ausgewogener Nahkämpfer ohne echte Schwächen – der einfachste Einstieg und solide in jeder Lage.',
-    pros:['Höchster Grundschaden (×1,0)','Zweitwaffe in der Nebenhand (Dual-Wield)','Stoff- & Lederrüstung','Raserei: +100 % Krit-Chance (7 s)'],
-    cons:['Keine eigene Heilung','Keine Platte','Keine Zauberstäbe – nur physische Waffen','Keine Schilde – dafür Zweitwaffe'],
+  { id:'schurke',     label:'Schurke',     icon:'🗡️',
+    desc:'Meuchelmörder. Trägt Stoff und Leder. Wendiger physischer Schaden mit zwei Klingen.',
+    playstyle:'Flinker Schurke, der aus dem Verborgenen zuschlägt – höchstes Tempo und tödliche Krits, aber zerbrechlich, wenn er steht.',
+    pros:['Höchster Grundschaden (×1,0)','Zweitklinge in der Nebenhand (Dual-Wield)','Stoff- & Lederrüstung','Kaltblütigkeit: +100 % Krit-Chance (7 s)'],
+    cons:['Keine eigene Heilung','Keine Platte','Keine Zauberstäbe – nur physische Waffen','Keine Schilde – dafür Zweitklinge'],
     allowedMaterials:['stoff','leder'],          damageSchool:'physisch',
     dmgMult:1.0,  healMult:1.0,
-    ability:{ id:'raserei', name:'Raserei', icon:'🔥', kind:'critBoost', cd:28000, dur:7000, critBonus:1.0,
-              desc:'Entfacht 7 Sekunden lang flammende Raserei – +100 % Krit-Chance.' } },
+    ability:{ id:'kaltblut', name:'Kaltblütigkeit', icon:'🩸', kind:'critBoost', cd:28000, dur:7000, critBonus:1.0,
+              desc:'Versetzt dich 7 Sekunden lang in kalte Mordlust – +100 % Krit-Chance.' } },
   { id:'verteidiger', label:'Verteidiger', icon:'🛡️',
     desc:'Tank. Trägt Stoff, Leder und Platte. Sehr viel Rüstung, wenig Schaden.',
     playstyle:'Robuster Tank, der Treffer wegsteckt und Verbündete schützt. Stirbt selten, tötet aber langsam.',
@@ -52,14 +52,20 @@ export const CLASSES = [
               desc:'Entfesselt 4 Sekunden lang einen Seelenstrahl – 200 % Schaden pro Sekunde und heilt dich um den gesamten verursachten Schaden.' } },
 ];
 export const CLASS_BY_ID = Object.fromEntries(CLASSES.map(c => [c.id, c]));
-export const DEFAULT_CLASS_ID = 'kaempfer';
+export const DEFAULT_CLASS_ID = 'schurke';
 
 // Geschlechtsspezifischer Klassenname: männlich = Basis (Hexer), weiblich = +"in"
 // (Hexerin), divers = +":in" (Hexer:in). Gilt einheitlich für alle Klassen
-// (Heiler/Heilerin/Heiler:in, Kämpfer/Kämpferin/Kämpfer:in, Verteidiger/…).
+// (Heiler/Heilerin/Heiler:in, Verteidiger/Verteidigerin/Verteidiger:in, …).
+// Endet die Basis auf "-e" (z. B. "Schurke"), entfällt das "e" vor dem Suffix
+// → Schurke / Schurkin / Schurk:in.
 const GENDER_SUFFIX = { w:'in', d:':in' };   // 'm' → kein Suffix
 export function genderedLabel(baseLabel, gender){
-  return (baseLabel || '') + (GENDER_SUFFIX[gender] || '');
+  const suffix = GENDER_SUFFIX[gender];
+  const base = baseLabel || '';
+  if(!suffix) return base;                       // männlich = Basis
+  const stem = base.endsWith('e') ? base.slice(0, -1) : base;
+  return stem + suffix;
 }
 export function classLabelFor(classId, gender){
   const c = CLASS_BY_ID[classId] || CLASS_BY_ID[DEFAULT_CLASS_ID];

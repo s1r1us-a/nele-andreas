@@ -82,43 +82,43 @@ function activeNode(id, icon, name, kind, params){
    DERSELBEN Spezialisierung an. Wer konsequent dieselbe Spalte wählt, baut
    einen kohärenten Spec; die Aktiv-Stufen (5/9) und der Schlussstein (10)
    verstärken genau diese Säule.
-     Kämpfer:     1 Vernichter (Krit/Burst) · 2 Furor (Tempo/Lebensraub) · 3 Hüne (Schaden/Leben)
+     Schurke:     1 Meucheln (Krit/Gift-Burst) · 2 Gesetzloser (Tempo/Lebensraub) · 3 Täuschung (Schatten-Schaden/Ausweichen)
      Verteidiger: 1 Bollwerk (Rüstung/Block) · 2 Rächer (Dornen/Konter)   · 3 Ausweicher (Ausweichen/Leben)
      Heiler:      1 Lichtwirker (Leben/Heilung) · 2 Sternenmagier (Schaden/Krit) · 3 Bewahrer (Vielseitigkeit/Rüstung)
      Hexer:       1 Verderbnis (Schaden/Krit) · 2 Seelensauger (Lebensraub) · 3 Schattenweber (Krit-Schaden/Leben) */
 export const TALENT_TREES = {
-  // ---- KÄMPFER · 1 Vernichter · 2 Furor · 3 Hüne -------------------
-  kaempfer: [
-    [ node('kaempfer_s1_treff', '🎯', 'Treffsicher',  {add:{critPhys:0.06}}),
-      node('kaempfer_s1_flink', '🏃', 'Flink',        {add:{attackSpeed:0.06}}),
-      node('kaempfer_s1_wucht', '💥', 'Wucht',        {mult:{damage:0.10}}) ],
-    [ node('kaempfer_s2_brutal','💢', 'Brutalität',   {add:{critPhys:0.04, critDamage:0.15}}),
-      node('kaempfer_s2_rasanz','⚡', 'Rasanz',        {add:{attackSpeed:0.07}}),
-      node('kaempfer_s2_hiebe', '⚔️', 'Schwere Hiebe',{mult:{damage:0.12}}) ],
-    [ node('kaempfer_s3_klinge','🗡️', 'Scharfe Klinge',{add:{critPhys:0.07}}),
-      node('kaempfer_s3_blut',  '🩸', 'Blutdurst',    {add:{lifesteal:0.05}}),
-      node('kaempfer_s3_wuchts','🐂', 'Zähigkeit',    {mult:{maxHp:0.12}}) ],
-    [ node('kaempfer_s4_haerte','🎯', 'Tödliche Präzision',{add:{critPhys:0.05, critDamage:0.20}}),
-      node('kaempfer_s4_sturm', '⚡', 'Sturmangriff',  {add:{attackSpeed:0.09}}),
-      node('kaempfer_s4_bers',  '🔥', 'Berserker',    {mult:{damage:0.15}}) ],
-    [ activeNode('kaempfer_a5_wirbel', '🌀', 'Wirbelsturm', 'burst',     {cd:20000, burstMult:2.4}),
-      activeNode('kaempfer_a5_rausch', '🩸', 'Kampfrausch', 'lifesteal', {cd:24000, dur:8000, lifestealBonus:0.30}),
-      activeNode('kaempfer_a5_tanz',   '🔥', 'Schlachtwut', 'dmgBoost',  {cd:25000, dur:8000, dmgBonus:0.40}) ],
-    [ node('kaempfer_s6_meist', '🎯', 'Meisterschütze',{add:{critPhys:0.09}}),
-      node('kaempfer_s6_vampir','🩸', 'Vampirklinge', {add:{lifesteal:0.07}}),
-      node('kaempfer_s6_schlae','🐂', 'Eisenleib',    {mult:{maxHp:0.18}}) ],
-    [ node('kaempfer_s7_eisen', '💢', 'Henkershieb',  {add:{critPhys:0.06, critDamage:0.25}}),
-      node('kaempfer_s7_wind',  '⚡', 'Windläufer',   {add:{attackSpeed:0.10}}),
-      node('kaempfer_s7_kmeist','💥', 'Klingenmeister',{mult:{damage:0.18}}) ],
-    [ node('kaempfer_s8_henker','💢', 'Henkersbeil',  {add:{critPhys:0.06, critDamage:0.30}}),
-      node('kaempfer_s8_scharf','🩸', 'Blutklinge',   {add:{lifesteal:0.08}}),
-      node('kaempfer_s8_wut',   '🔥', 'Wildschlag',   {mult:{damage:0.18}}) ],
-    [ activeNode('kaempfer_a9_hinricht','💀', 'Hinrichtung',   'burst',     {cd:24000, burstMult:4.0}),
-      activeNode('kaempfer_a9_blut',    '🩸', 'Blutrausch',    'lifesteal', {cd:26000, dur:8000, lifestealBonus:0.40}),
-      activeNode('kaempfer_a9_modus',   '💥', 'Berserkermodus','dmgBoost',  {cd:28000, dur:8000, dmgBonus:0.50}) ],
-    [ node('kaempfer_s10_meist', '⚔️', 'Schlachtmeister',{mult:{damage:0.18}, add:{critPhys:0.12, critDamage:0.30}}),
-      node('kaempfer_s10_blut',  '🩸', 'Blutfürst',    {mult:{damage:0.15}, add:{attackSpeed:0.12, lifesteal:0.10}}),
-      node('kaempfer_s10_fuerst','👑', 'Kriegsfürst',  {mult:{damage:0.25, maxHp:0.15}}) ],
+  // ---- SCHURKE · 1 Meucheln · 2 Gesetzloser · 3 Täuschung ----------
+  schurke: [
+    [ node('schurke_s1_gift',   '☠️', 'Tödliche Gifte', {add:{critPhys:0.06}}),
+      node('schurke_s1_flink',  '⚡', 'Flinke Klingen',  {add:{attackSpeed:0.06}}),
+      node('schurke_s1_schatt', '🌑', 'Schattenschritt', {mult:{damage:0.10}}) ],
+    [ node('schurke_s2_verst',  '🔪', 'Verstümmeln',     {add:{critPhys:0.04, critDamage:0.15}}),
+      node('schurke_s2_saebel', '🗡️', 'Säbelhieb',       {add:{attackSpeed:0.07}}),
+      node('schurke_s2_hinter', '🌑', 'Hinterhältig',    {mult:{damage:0.12}}) ],
+    [ node('schurke_s3_klinge', '🗡️', 'Scharfe Klingen', {add:{critPhys:0.07}}),
+      node('schurke_s3_beute',  '🍷', 'Beutezug',        {add:{lifesteal:0.05}}),
+      node('schurke_s3_zaeh',   '🐂', 'Zähigkeit',       {mult:{maxHp:0.12}}) ],
+    [ node('schurke_s4_praez',  '🎯', 'Tödliche Präzision',{add:{critPhys:0.05, critDamage:0.20}}),
+      node('schurke_s4_kunst',  '⚔️', 'Schwertkunst',    {add:{attackSpeed:0.09}}),
+      node('schurke_s4_finst',  '🌑', 'Finsternis',      {mult:{damage:0.15}}) ],
+    [ activeNode('schurke_a5_ausweid', '💥', 'Ausweiden',    'burst',     {cd:20000, burstMult:2.4}),
+      activeNode('schurke_a5_beute',   '🍻', 'Beutejagd',    'lifesteal', {cd:24000, dur:8000, lifestealBonus:0.30}),
+      activeNode('schurke_a5_tanz',    '🥷', 'Schattentanz', 'dmgBoost',  {cd:25000, dur:8000, dmgBonus:0.40}) ],
+    [ node('schurke_s6_meist',  '☠️', 'Meistergift',     {add:{critPhys:0.09}}),
+      node('schurke_s6_frei',   '🍷', 'Freibeuter',      {add:{lifesteal:0.07}}),
+      node('schurke_s6_hart',   '🐂', 'Abgehärtet',      {mult:{maxHp:0.18}}) ],
+    [ node('schurke_s7_enven',  '🔪', 'Auslöschen',      {add:{critPhys:0.06, critDamage:0.25}}),
+      node('schurke_s7_tanz',   '💃', 'Klingentanz',     {add:{attackSpeed:0.10}}),
+      node('schurke_s7_schatt', '🌑', 'Schattenklinge',  {mult:{damage:0.18}}) ],
+    [ node('schurke_s8_aufsch', '🩸', 'Aufschlitzen',    {add:{critPhys:0.06, critDamage:0.30}}),
+      node('schurke_s8_raeub',  '🍷', 'Räuberblut',      {add:{lifesteal:0.08}}),
+      node('schurke_s8_meuch',  '🌑', 'Meucheltechnik',  {mult:{damage:0.18}}) ],
+    [ activeNode('schurke_a9_todes',  '💀', 'Todesstoß',     'burst',     {cd:24000, burstMult:4.0}),
+      activeNode('schurke_a9_toetung','🌀', 'Tötungsrausch', 'lifesteal', {cd:26000, dur:8000, lifestealBonus:0.40}),
+      activeNode('schurke_a9_versch', '💨', 'Verschwinden',  'dmgReduce', {cd:28000, dur:9000, dmgReduce:0.60}) ],
+    [ node('schurke_s10_meuch',  '☠️', 'Großmeuchler',    {mult:{damage:0.18}, add:{critPhys:0.12, critDamage:0.30}}),
+      node('schurke_s10_frei',   '🪙', 'Freibeuterkönig', {mult:{damage:0.15}, add:{attackSpeed:0.12, lifesteal:0.10}}),
+      node('schurke_s10_meister','👑', 'Meister der Schatten',{mult:{damage:0.25, maxHp:0.15}}) ],
   ],
 
   // ---- VERTEIDIGER · 1 Bollwerk · 2 Rächer · 3 Ausweicher ----------
