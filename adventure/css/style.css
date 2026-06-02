@@ -403,6 +403,23 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .bp-slot .bp-noequip { position:absolute; bottom:3px; left:5px; font-size:12px; filter:grayscale(.3); }
 .bp-slot.not-equippable img { opacity:.55; filter:grayscale(.4); }
 
+/* ---- Verkaufsmodus (Schnellverkauf) ---------------------------- */
+.inv-head-right { display:flex; align-items:center; gap:10px; }
+.inv-sell-toggle { font-size:12px; padding:7px 12px; white-space:nowrap; }
+/* Erlös-Overlay auf jeder verkaufbaren Zelle */
+.bp-slot .bp-sell { position:absolute; bottom:0; left:0; right:0;
+  font-family:'Press Start 2P',monospace; font-size:8px; line-height:1.2;
+  text-align:center; padding:3px 2px; color:#fff;
+  background:linear-gradient(180deg,transparent,rgba(181,50,43,.92));
+  border-bottom-left-radius:9px; border-bottom-right-radius:9px; pointer-events:none; }
+.backpack.sell-mode .bp-slot.sellable { border-color:#e0584f;
+  box-shadow:0 0 10px -1px rgba(224,88,79,.7); }
+.backpack.sell-mode .bp-slot.sellable:hover { transform:scale(1.08);
+  box-shadow:0 0 16px 0 rgba(224,88,79,.95); }
+/* Gesperrte Items sind im Verkaufsmodus klar als geschützt erkennbar */
+.backpack.sell-mode .bp-slot.sell-locked { opacity:.5; cursor:not-allowed; }
+.backpack.sell-mode .bp-slot.sell-locked:hover { transform:none; }
+
 /* ---- Legendär & Mythisch: echter pulsierender Glow (Raserei-Stil) ----
    Pulst die Item-Grafik bzw. die Figur selbst per CSS-Filter – läuft auch
    als <img> (SVG-SMIL würde dort nicht animieren). Mythisch ist stärker. */
