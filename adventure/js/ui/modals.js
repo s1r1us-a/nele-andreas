@@ -88,19 +88,27 @@ function statRows(neu, alt){
   const get = (it, key) => !it ? 0 : (key==='__main' ? it.stat : (it.affixes && it.affixes[key]) || 0);
   const rows = [];
   const mainLbl = neu.statType==='armor' ? 'Rüstung' : 'Schaden';
+  // Grundwert und der gleichnamige Affix (Rüstung↔armor, Schaden↔damage) werden
+  // zu EINER Zeile zusammengeführt – sonst erscheint z. B. „Rüstung" doppelt.
+  const mainAffix = neu.statType==='armor' ? 'armor' : 'damage';
   const altMain = (alt && alt.statType===neu.statType) ? alt.stat : 0;
-  rows.push({ key:'__main', label:mainLbl, val:neu.stat, delta:neu.stat-altMain, pct:false, type:neu.statType });
+  const newMain = neu.stat + get(neu, mainAffix);
+  const oldMain = altMain + get(alt, mainAffix);
+  rows.push({ key:'__main', label:mainLbl, val:newMain, old:oldMain, delta:newMain-oldMain, pct:false, type:neu.statType });
   for(const k of AFFIX_KEYS){
+    if(k === mainAffix) continue;   // bereits in den Hauptwert eingerechnet
     const nv = get(neu, k), av = get(alt, k);
     if(nv === 0 && av === 0) continue;
-    rows.push({ key:k, label:AFFIX_DEFS[k].label, val:nv, delta:nv-av, pct:AFFIX_DEFS[k].pct });
+    rows.push({ key:k, label:AFFIX_DEFS[k].label, val:nv, old:av, delta:nv-av, pct:AFFIX_DEFS[k].pct });
   }
   return rows;
 }
+// Sekundärer Delta-Chip (WoW-Stil): grünes ▲ bei Aufwertung, rotes ▼ bei
+// Abwertung, dezenter „–" bei keiner Änderung.
 function deltaSpan(delta, pct){
-  if(Math.abs(delta) < (pct?0.0005:0.5)) return '<span class="diff-zero">±0</span>';
-  const cls = delta>0 ? 'diff-pos' : 'diff-neg';
-  return '<span class="'+cls+'">'+(delta>0?'+':'−')+fmtVal(Math.abs(delta), pct)+'</span>';
+  if(Math.abs(delta) < (pct?0.0005:0.5)) return '<span class="diff-delta zero">–</span>';
+  const up = delta>0;
+  return '<span class="diff-delta '+(up?'pos':'neg')+'">'+(up?'▲ +':'▼ −')+fmtVal(Math.abs(delta), pct)+'</span>';
 }
 export function openItemPreview(item, fromSlotKey, backFn){
   hideTooltip();
@@ -112,12 +120,12 @@ export function openItemPreview(item, fromSlotKey, backFn){
   let body = '';
   for(const row of rows){
     body += '<div class="diff-row"><span class="diff-label">'+row.label+'</span>'+
-      '<span class="diff-new'+(row.type? ' '+row.type:'')+'">+'+fmtVal(row.val, row.pct)+'</span>'+
-      deltaSpan(row.delta, row.pct)+'</div>';
+      '<span class="diff-new'+(row.type? ' '+row.type:'')+'">'+fmtVal(row.val, row.pct)+'</span>'+
+      (cur ? deltaSpan(row.delta, row.pct) : '')+'</div>';
   }
   const powDelta = itemPower(item) - itemPower(cur);
   body += '<div class="diff-row power-row"><span class="diff-label">Kampfkraft</span>'+
-    '<span class="diff-new power">'+itemPower(item)+'</span>'+deltaSpan(powDelta, false)+'</div>';
+    '<span class="diff-new power">'+itemPower(item)+'</span>'+(cur ? deltaSpan(powDelta, false) : '')+'</div>';
   const procLine = item.proc ? '<div class="preview-hint" style="color:'+item.proc.color+'">'+
     '★ '+item.proc.label+'</div>' : '';
   const locked = isLocked(item.id);
