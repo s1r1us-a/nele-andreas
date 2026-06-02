@@ -1,8 +1,9 @@
 /* =====================================================================
    ITEM-ART – prozedurale SVG-Icons (ersetzt icon_*.png).
-   buildItemSVG(art, variant, rarityKey) → Data-URI, viewBox 0 0 64 64.
+   buildItemSVG(art, variant, rarityKey, element, orb, material) → Data-URI, viewBox 0 0 64 64.
    - waffe/schild/amulett/ring: variant = Form.
-   - Rüstungs-Slots (kopf…umhang): variant = Material (Recolor).
+   - Rüstungs-Slots (kopf…umhang): variant = Farbe; material (stoff/leder/platte)
+     bestimmt bei kopf/brust zusätzlich die Form (Kapuze/Kappe/Helm bzw. Robe/Weste/Panzer).
    - Seltenheit als dezenter Glow/Edelstein (Hauptanzeige = Slot-Rahmen).
    ===================================================================== */
 import { rarityOf, rarityIndex } from '../data/rarities.js';
@@ -44,14 +45,17 @@ const ORB = {
   blau:  { lo:'#b9a6ff', mid:'#6a3ed0', dk:'#2a1466', halo1:'#6a3ed0', halo2:'#3a1f8c', ring:'#b08bff' },
 };
 
-export function buildItemSVG(art, variant, rarityKey, element, orb){
+export function buildItemSVG(art, variant, rarityKey, element, orb, material){
   variant = Math.max(0, variant|0);
   const el = (element==='ice') ? 'ice' : 'fire';
   const eff = effLvl(rarityKey);                                // Seltenheits-Effekt für ALLE Arten
   const elemFx = (art==='waffe' || art==='schild') && eff>0;    // Flammen/Frost nur Waffe/Schild
   const E = ELEM[el];
   const orbKey = ORB[orb] ? orb : 'rot';
-  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+(variant===6?'_'+orbKey:'');
+  // Materialklasse (nur Kopf/Brust verzweigen darauf). Fallback: Platte.
+  const matKey = (material==='stoff'||material==='leder'||material==='platte') ? material : 'platte';
+  const matArt = (art==='kopf' || art==='brust');
+  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+(variant===6?'_'+orbKey:'')+(matArt?'_'+matKey:'');
   if(_cache.has(key)) return _cache.get(key);
 
   const rc = (rarityOf(rarityKey) || {}).color || '#9d9d9d';
@@ -285,17 +289,42 @@ export function buildItemSVG(art, variant, rarityKey, element, orb){
     defs += lg('a',c);
     const st = shade(c,0.5);
     const A = U('a');
-    if(art==='kopf'){            // Helm
-      body = `<path d="M16 38 Q16 12 32 12 Q48 12 48 38 L44 38 L44 26 Q44 18 32 18 Q20 18 20 26 L20 38 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
-             `<rect x="20" y="36" width="24" height="8" rx="2" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
-             `<rect x="30" y="14" width="4" height="26" fill="${st}" opacity="0.5"/>`; // Nasenschutz/Kamm
+    if(art==='kopf'){            // Helm – Form je Material
+      if(matKey==='stoff'){       // Kapuze
+        body = `<path d="M32 8 Q50 10 52 34 Q53 48 46 54 L42 52 Q46 40 44 30 Q40 18 32 18 Q24 18 20 30 Q18 40 22 52 L18 54 Q11 48 12 34 Q14 10 32 8 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M32 18 Q24 20 22 32 Q22 42 26 50 M32 18 Q40 20 42 32 Q42 42 38 50" fill="none" stroke="${shade(c,0.8)}" stroke-width="1.4" opacity="0.7"/>`+
+               `<path d="M32 9 Q42 12 44 28" fill="none" stroke="${shade(c,1.2)}" stroke-width="1.4" opacity="0.4"/>`;
+      } else if(matKey==='leder'){ // Lederkappe/Coif
+        body = `<path d="M32 12 Q50 13 51 34 Q52 46 44 52 L41 50 Q46 38 44 30 Q40 20 32 19 Q24 20 20 30 Q18 38 23 50 L20 52 Q12 46 13 34 Q14 13 32 12 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M20 32 Q22 22 32 21 Q42 22 44 32" fill="none" stroke="${shade(c,0.8)}" stroke-width="1.5" opacity="0.7"/>`+
+               `<path d="M32 12 L32 20" stroke="${st}" stroke-width="1.3" opacity="0.5"/>`+
+               `<ellipse cx="24" cy="24" rx="6" ry="3.5" fill="${shade(c,1.2)}" opacity="0.35"/>`;
+      } else {                     // Platte: Barbute mit Visierschlitz
+        body = `<path d="M16 36 Q14 12 32 10 Q50 12 48 36 L48 46 Q40 52 32 52 Q24 52 16 46 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M32 10 Q34 28 32 50 Q30 28 32 10 Z" fill="${shade(c,1.2)}" opacity="0.45"/>`+
+               `<rect x="30" y="30" width="4" height="16" rx="2" fill="#120b0f" opacity="0.9"/>`+
+               `<rect x="22" y="46" width="20" height="3" rx="1.5" fill="#120b0f" opacity="0.7"/>`+
+               `<ellipse cx="24" cy="24" rx="6" ry="3.5" fill="${shade(c,1.2)}" opacity="0.45"/>`;
+      }
     } else if(art==='schultern'){ // Schulterplatten
       body = mir(`<path d="M34 22 Q56 22 54 44 Q44 46 34 42 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
                  `<path d="M40 26 Q52 28 50 40" stroke="${shade(c,1.2)}" stroke-width="1.5" fill="none" opacity="0.6"/>`);
-    } else if(art==='brust'){     // Brustpanzer
-      body = `<path d="M18 16 L46 16 L48 30 Q48 50 32 56 Q16 50 16 30 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
-             `<path d="M32 18 L32 54" stroke="${st}" stroke-width="1.5" opacity="0.6"/>`+
-             mir(`<path d="M34 22 Q42 30 40 44" stroke="${shade(c,1.2)}" stroke-width="1.5" fill="none" opacity="0.5"/>`);
+    } else if(art==='brust'){     // Brust – Form je Material
+      if(matKey==='stoff'){       // Robe: V-Kragen, breiter Saum, Falten
+        body = `<path d="M22 14 L32 22 L42 14 Q50 18 52 34 L54 56 Q32 62 10 56 L12 34 Q14 18 22 14 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M22 14 L32 24 L42 14" fill="none" stroke="${shade(c,0.8)}" stroke-width="1.5" opacity="0.8"/>`+
+               `<path d="M32 26 L32 58" stroke="${st}" stroke-width="1.4" opacity="0.5"/>`+
+               mir(`<path d="M40 30 Q48 42 50 54" fill="none" stroke="${st}" stroke-width="1.2" opacity="0.4"/>`);
+      } else if(matKey==='leder'){ // Lederweste mit Kreuzschnürung
+        body = `<path d="M18 16 L46 16 L48 30 Q48 50 32 56 Q16 50 16 30 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M32 18 L32 54" stroke="${st}" stroke-width="1.4" opacity="0.6"/>`+
+               mir(`<path d="M32 24 L40 30 M32 32 L40 38 M32 40 L40 46" stroke="${shade(c,0.8)}" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>`)+
+               `<path d="M20 48 Q32 54 44 48" fill="none" stroke="${st}" stroke-width="1.3" opacity="0.5"/>`;
+      } else {                     // Platte: Brustpanzer
+        body = `<path d="M18 16 L46 16 L48 30 Q48 50 32 56 Q16 50 16 30 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M32 18 L32 54" stroke="${st}" stroke-width="1.5" opacity="0.6"/>`+
+               mir(`<path d="M34 22 Q42 30 40 44" stroke="${shade(c,1.2)}" stroke-width="1.5" fill="none" opacity="0.5"/>`);
+      }
     } else if(art==='haende'){    // Handschuhe
       body = `<path d="M22 28 L22 18 Q22 14 26 14 L38 14 Q42 14 42 18 L42 30 Q42 50 32 52 Q22 50 22 36 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
              `<rect x="22" y="44" width="20" height="8" rx="2" fill="${shade(c,0.85)}" stroke="${st}" stroke-width="1.2"/>`+

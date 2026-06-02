@@ -301,17 +301,44 @@ export function buildHeroSVG(character, tier, gear){
     else if(gender==='d') beine = mirror(`<path d="M102 238 L120 238 L116 290 L106 290 Z" fill="${c}" stroke="${cs}" stroke-width="1.5"/>`);
   }
 
-  // Brustpanzer
+  // Brust (Material bestimmt die Form: Stoff=Robe, Leder=Lederweste,
+  // Platte=Brustpanzer). Fallback: Platte. Outline wird – wo möglich – aus
+  // einer rechten Hälfte per mirror() gespiegelt (garantierte Symmetrie).
   const br = eq.brust; let brust = '';
-  if(br){ const c=matOf(br), cs=shade(c,0.5), ch=shade(c,1.2);
-    if(gender==='w')
-      brust = `<path d="M100 126 L120 132 C124 150 120 172 113 182 C108 186 92 186 87 182 C80 172 76 150 80 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
-              `<path d="M100 130 L100 182" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
-              `<ellipse cx="92" cy="148" rx="6" ry="9" fill="${ch}" opacity="0.4"/>`;
-    else
-      brust = `<path d="M100 126 L124 132 C128 150 126 174 122 186 L78 186 C74 174 72 150 76 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
-              `<path d="M100 130 L100 186" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
-              `<ellipse cx="90" cy="150" rx="7" ry="10" fill="${ch}" opacity="0.4"/>`;
+  if(br){
+    const c=matOf(br), cs=shade(c,0.5), ch=shade(c,1.2), cm=shade(c,0.8);
+    const mat = typeOf(br).material || 'platte';
+    const female = (gender==='w');
+    if(mat === 'stoff'){
+      // Robe: V-Ausschnitt oben, breit ausgestellter Saum (~y200), Drapierfalten.
+      const flareR = female ? 130 : 134;
+      const half = `<path d="M100 138 L118 128 Q126 132 ${flareR-8} 160 L${flareR} 200 Q112 207 100 206 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`;
+      brust = mirror(half)+
+              `<path d="M82 128 L100 140 L118 128" fill="none" stroke="${cm}" stroke-width="2" opacity="0.8"/>`+
+              `<path d="M100 142 L100 204" stroke="${cs}" stroke-width="1.5" opacity="0.5"/>`+
+              mirror(`<path d="M112 146 Q118 172 ${flareR-4} 198" fill="none" stroke="${cs}" stroke-width="1.3" opacity="0.4"/>`)+
+              `<path d="M86 138 Q92 160 ${(female?70:66)+6} 196" fill="none" stroke="${ch}" stroke-width="1.5" opacity="0.3"/>`;
+    } else if(mat === 'leder'){
+      // Lederweste/Tunika: anliegend, mittige Kreuzschnürung + unterer Saum.
+      if(female)
+        brust = `<path d="M100 126 L119 132 C123 150 119 174 112 184 C107 188 93 188 88 184 C81 174 77 150 81 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`;
+      else
+        brust = `<path d="M100 126 L123 132 C127 150 125 176 121 188 L79 188 C75 176 73 150 77 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`;
+      brust += `<path d="M100 132 L100 ${female?184:188}" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
+               mirror(`<path d="M100 140 L108 148 M100 152 L108 160 M100 164 L108 172" stroke="${cm}" stroke-width="1.5" opacity="0.7" stroke-linecap="round"/>`)+
+               `<ellipse cx="90" cy="150" rx="6" ry="9" fill="${ch}" opacity="0.35"/>`+
+               `<path d="M82 ${female?180:184} Q100 ${female?188:192} 118 ${female?180:184}" fill="none" stroke="${cs}" stroke-width="1.5" opacity="0.5"/>`;
+    } else {
+      // Platte: Brustpanzer (bisheriges Aussehen).
+      if(female)
+        brust = `<path d="M100 126 L120 132 C124 150 120 172 113 182 C108 186 92 186 87 182 C80 172 76 150 80 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+                `<path d="M100 130 L100 182" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
+                `<ellipse cx="92" cy="148" rx="6" ry="9" fill="${ch}" opacity="0.4"/>`;
+      else
+        brust = `<path d="M100 126 L124 132 C128 150 126 174 122 186 L78 186 C74 174 72 150 76 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+                `<path d="M100 130 L100 186" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
+                `<ellipse cx="90" cy="150" rx="7" ry="10" fill="${ch}" opacity="0.4"/>`;
+    }
   }
 
   // Stiefel
@@ -352,15 +379,42 @@ export function buildHeroSVG(character, tier, gear){
     ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${matOf(shp_)}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
     : tierPauldrons;
 
-  // Voller Helm (verdeckt Haare; nur wenn angelegt UND nicht ausgeblendet)
+  // Kopfbedeckung (verdeckt Haare; nur wenn angelegt UND nicht ausgeblendet).
+  // Material bestimmt die Form: Stoff=Kapuze (Gesicht frei), Leder=Lederkappe
+  // (Gesicht frei), Platte=geschlossener Ritterhelm (Visier). Fallback: Platte.
   const kp = eq.kopf; let helm = '';
-  if(kp && !hideHelmet){ const c=matOf(kp), cs=shade(c,0.5), ch=shade(c,1.2);
-    helm = `<path d="M64 80 Q60 40 100 40 Q140 40 136 80 L136 86 L64 86 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
-           `<rect x="64" y="84" width="72" height="8" rx="3" fill="${shade(c,0.85)}" stroke="${cs}" stroke-width="1.5"/>`+
-           `<rect x="97" y="84" width="6" height="22" rx="1" fill="${cs}"/>`+
-           `<rect x="78" y="74" width="16" height="6" rx="3" fill="#160d12" opacity="0.85"/>`+
-           `<rect x="106" y="74" width="16" height="6" rx="3" fill="#160d12" opacity="0.85"/>`+
-           `<ellipse cx="88" cy="56" rx="10" ry="6" fill="${ch}" opacity="0.4"/>`;
+  if(kp && !hideHelmet){
+    const c=matOf(kp), cs=shade(c,0.5), ch=shade(c,1.2), cm=shade(c,0.78);
+    const mat = typeOf(kp).material || 'platte';
+    if(mat === 'stoff'){
+      // Kapuze: weicher Spitzbogen über dem Kopf (Spitze ~y32), fällt seitlich
+      // an den Wangen vorbei bis auf die Schultern (y132). Gesicht bleibt frei.
+      helm = `<path d="M100 32 Q132 34 138 78 Q142 110 128 132 L118 132 Q124 108 120 92 Q116 70 100 66 Q84 70 80 92 Q76 108 82 132 L72 132 Q58 110 62 78 Q68 34 100 32 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+             // Innensaum, der das Gesicht umrandet (dunkler → Tiefe)
+             `<path d="M100 66 Q120 70 120 92 Q120 108 116 124 M100 66 Q80 70 80 92 Q80 108 84 124" fill="none" stroke="${cm}" stroke-width="2.5" opacity="0.8" stroke-linecap="round"/>`+
+             // Faltenlinien je Seite + Spitzen-Glanz
+             mirror(`<path d="M130 60 Q134 90 124 126" fill="none" stroke="${cs}" stroke-width="1.5" opacity="0.45"/>`)+
+             `<path d="M100 34 Q116 38 120 60" fill="none" stroke="${ch}" stroke-width="2" opacity="0.4" stroke-linecap="round"/>`;
+    } else if(mat === 'leder'){
+      // Lederkappe/Coif: eng über Ober-/Hinterkopf, Stirnausschnitt ~y64 →
+      // Gesicht frei. Mittelnaht + Kinnriemen entlang der Wange.
+      helm = `<path d="M100 42 Q133 44 134 78 Q135 98 124 112 L120 110 Q126 94 124 80 Q120 64 100 62 Q80 64 76 80 Q74 94 80 110 L76 112 Q65 98 66 78 Q67 44 100 42 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+             `<path d="M76 80 Q78 66 100 64 Q122 66 124 80" fill="none" stroke="${cm}" stroke-width="2" opacity="0.7"/>`+
+             `<path d="M100 43 L100 62" stroke="${cs}" stroke-width="1.5" opacity="0.5"/>`+
+             mirror(`<path d="M122 110 Q126 118 118 122" fill="none" stroke="${cs}" stroke-width="2" opacity="0.6" stroke-linecap="round"/>`)+
+             `<ellipse cx="88" cy="56" rx="9" ry="5" fill="${ch}" opacity="0.35"/>`;
+    } else {
+      // Platte: Barbute/Großhelm – gerundete Glocke, mittiger Kamm, Wangenstücke,
+      // vertikaler Visierschlitz + Atemschlitz (Gesicht verdeckt).
+      helm = `<path d="M66 82 Q62 40 100 38 Q138 40 134 82 L134 100 Q120 110 100 110 Q80 110 66 100 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+             `<path d="M100 38 Q104 60 100 100 Q96 60 100 38 Z" fill="${ch}" opacity="0.45"/>`+
+             `<path d="M74 84 Q72 102 84 108 L84 86 Z" fill="${cs}" opacity="0.5"/>`+
+             mirror(`<path d="M126 84 Q128 102 116 108 L116 86 Z" fill="${cs}" opacity="0.5"/>`)+
+             `<rect x="97" y="74" width="6" height="26" rx="3" fill="#120b0f" opacity="0.9"/>`+
+             `<rect x="86" y="100" width="28" height="4" rx="2" fill="#120b0f" opacity="0.75"/>`+
+             `<ellipse cx="86" cy="58" rx="11" ry="6" fill="${ch}" opacity="0.45"/>`+
+             `<path d="M72 78 Q100 70 128 78" fill="none" stroke="${cs}" stroke-width="2" opacity="0.6"/>`;
+    }
   }
 
   const weaponG = heldWeapon(eq.waffe, uid);

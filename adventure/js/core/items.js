@@ -121,7 +121,7 @@ export function rollItem(zone, lootBoost=0, opts={}){
     quality: Math.round(quality*100),
     affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
-    sprite: buildItemSVG(slot.art, variant, rarity.key, elementOf(id), itype.orb),
+    sprite: buildItemSVG(slot.art, variant, rarity.key, elementOf(id), itype.orb, itype.material),
     name: itemDisplayName(rarity.key, itype),
   };
 }
@@ -134,7 +134,7 @@ export function ensureItemSprite(it){
   if(!it.affixes) it.affixes = {};
   if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
   const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb);
+  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), typeOf(it).orb, typeOf(it).material);
   return it;
 }
 
@@ -295,7 +295,7 @@ export function equip(item, explicitTarget){
   const prev = state.equipped[target];
   if(prev) state.inventory.push(prev);
   item.slotKey = target;
-  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb);
+  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb, typeOf(item).material);
   state.equipped[target] = item;
   saveState();
 }
