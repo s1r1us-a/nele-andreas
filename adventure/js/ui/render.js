@@ -30,10 +30,11 @@ import { recomputeTotals, heroCombat, heroTier, TIER_NAME,
          xpForLevel, xpInLevel } from '../core/character.js';
 import { heroSrc } from '../core/avatar.js';
 import { itemValue, isLocked, gearScore, canEquip, autoEquipBest, itemPower,
-         invCapacity, nextExpandCost, buyInventoryExpansion } from '../core/items.js';
+         invCapacity, nextExpandCost, buyInventoryExpansion,
+         sellItem, sellPrice } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
-import { $, timeAgo, fmtRemain, fmtBig, toast, confirmDialog } from './dom.js';
+import { $, timeAgo, fmtRemain, fmtBig, toast, confirmDialog, goldPop } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
 import { openSlotPicker, openItemPreview, previewExpedition,
          openRosterModal, openCharacterCreator } from './modals.js';
@@ -431,6 +432,10 @@ function renderCharStats(t){
 // ---- Inventar (Filter/Sortierung/Sperre, #23/#24) ------------------
 let invTab = 'gear';
 let invSort = 'value', invCat = 'all', invRar = 'all', invSearch = '', invWear = false;
+// Verkaufsmodus (#Schnellverkauf): einmal aktiviert & bestätigt, verkauft jeder
+// Klick auf ein Item es sofort ohne weitere Nachfrage. Gesperrte Items bleiben
+// geschützt. Wird beim Verlassen des Inventars / Tab-Wechsel zurückgesetzt.
+let invSellMode = false;
 
 function filteredSortedInventory(){
   let items = state.inventory.filter(it => {
@@ -462,7 +467,7 @@ export function renderInventory(){
     '<div class="inv-subtab'+(invTab==='gear'?' active':'')+'" data-tab="gear">🎒 Ausrüstung</div>'+
     '<div class="inv-subtab'+(invTab==='consum'?' active':'')+'" data-tab="consum">🧪 Verbrauch</div>';
   subtabs.querySelectorAll('.inv-subtab').forEach(el => el.addEventListener('click', ()=>{
-    invTab = el.dataset.tab; hideTooltip(); renderInventory();
+    invTab = el.dataset.tab; invSellMode = false; hideTooltip(); renderInventory();
   }));
   panel.appendChild(subtabs);
 
@@ -474,8 +479,21 @@ export function renderInventory(){
   const head = document.createElement('div');
   head.className = 'inv-head';
   head.innerHTML = '<h2>🎒 Ausrüstung</h2>'+
-    '<span class="count'+(full?' full':'')+'">'+total+' / '+cap+'</span>';
+    '<div class="inv-head-right">'+
+      '<button class="btn '+(invSellMode?'danger':'ghost')+' inv-sell-toggle" id="invSellToggle">'+
+        (invSellMode?'✖️ Verkaufen beenden':'💰 Verkaufen')+'</button>'+
+      '<span class="count'+(full?' full':'')+'">'+total+' / '+cap+'</span>'+
+    '</div>';
   panel.appendChild(head);
+  head.querySelector('#invSellToggle').addEventListener('click', async ()=>{
+    if(invSellMode){ invSellMode = false; renderInventory(); return; }
+    const ok = await confirmDialog({
+      title:'Verkaufsmodus aktivieren?', emoji:'💰', danger:true,
+      body:'Solange der Modus aktiv ist, wird jedes angeklickte Item <b>sofort und ohne weitere Nachfrage</b> verkauft.<br>Gesperrte Items (🔒) sind geschützt.',
+      confirmText:'Aktivieren', cancelText:'Abbrechen' });
+    if(!ok) return;
+    invSellMode = true; hideTooltip(); renderInventory();
+  });
 
   // Filter-/Sortier-Leiste
   const ctrl = document.createElement('div');
@@ -506,6 +524,7 @@ export function renderInventory(){
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
   if(!total) hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
+  else if(invSellMode) hint.innerHTML = '💰 <b>Verkaufsmodus aktiv</b> – tippe ein Item, um es sofort zu verkaufen. 🔒 gesperrte Items bleiben geschützt.';
   else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten, Sperren oder direkt <b>Verkaufen</b> – oder kauf beim Händler mehr Platz.';
   else hint.textContent = 'Klick ein Item: ausrüsten, vergleichen oder 🔒 sperren.';
   panel.appendChild(hint);
@@ -517,7 +536,7 @@ function renderInventoryGridOnly(){
 function buildInvGrid(wrap){
   const items = filteredSortedInventory();
   const grid = document.createElement('div');
-  grid.className = 'backpack';
+  grid.className = 'backpack' + (invSellMode ? ' sell-mode' : '');
   const cells = Math.max(invCapacity(), state.inventory.length, items.length);
   for(let i=0;i<cells;i++){
     const it = items[i];
@@ -532,19 +551,42 @@ function buildInvGrid(wrap){
       // Schilde/Waffen ohne Material (Klassen-Restriktion per Slot).
       const blocked = !canEquip(it);
       if(blocked) cell.classList.add('not-equippable');
+      const locked = isLocked(it.id);
+      // Im Verkaufsmodus zeigt jede (verkaufbare) Zelle den Erlös als Overlay.
+      if(invSellMode && !locked) cell.classList.add('sellable');
+      if(invSellMode && locked)  cell.classList.add('sell-locked');
       cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
-        (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
+        (locked?'<span class="bp-lock">🔒</span>':'')+
         (blocked?'<span class="bp-noequip" title="Deine Klasse kann das nicht tragen">✋</span>':'')+
         (it.proc?'<span class="bp-proc">★</span>':'')+
+        (invSellMode && !locked ? '<span class="bp-sell">🪙 '+fmtBig(sellPrice(it))+'</span>' : '')+
         '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it, { compare:true });
-      cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it); });
+      cell.addEventListener('click', (ev)=>{
+        hideTooltip();
+        if(invSellMode){ quickSell(it, ev); return; }
+        openItemPreview(it);
+      });
     } else {
       cell.innerHTML = '<span class="bp-empty">＋</span>';
     }
     grid.appendChild(cell);
   }
   wrap.appendChild(grid);
+}
+
+// Sofortverkauf im Verkaufsmodus: ohne Nachfrage verkaufen, Erlös als
+// Floating-Text an der Klickposition einblenden und das Grid neu aufbauen.
+function quickSell(it, ev){
+  if(isLocked(it.id)){ toast('🔒 Gesperrtes Item – erst entsperren.'); return; }
+  const x = ev ? ev.clientX : window.innerWidth/2;
+  const y = ev ? ev.clientY : window.innerHeight/2;
+  const price = sellItem(it.id);
+  if(!price){ toast('Konnte nicht verkauft werden.'); return; }
+  goldPop(x, y, '+'+fmtBig(price));
+  // Vollständig neu rendern, damit Zähler (x / y) und Hinweis stimmen. Der
+  // Verkaufsmodus bleibt aktiv (Modulvariable), der Coin-Stand pflegt der Listener.
+  renderInventory();
 }
 
 function renderConsumables(panel){
