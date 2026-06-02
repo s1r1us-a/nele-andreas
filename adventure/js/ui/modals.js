@@ -126,12 +126,14 @@ export function openItemPreview(item, fromSlotKey, backFn){
   const kindLine = '<div class="preview-kind">'+itemKindIcon(item)+
     ' <b style="color:'+kindColor+'">'+itemKindLabel(item)+'</b>'+
     (equipOk ? '' : ' <span style="color:#ff6b6b">— nicht tragbar</span>')+'</div>';
+  // Gegenstandsstufe immer unten in Grau zeigen (wie im Tooltip / Fremdprofil).
+  const ilvlLine = '<div class="preview-ilvl">Gegenstandsstufe '+item.ilvl+'</div>';
   openModal('<h2 style="color:'+r.color+'">'+item.name+(locked?' 🔒':'')+'</h2>'+
-    '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+' · Gegenstandsstufe '+item.ilvl+'</div>'+
+    '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+'</div>'+
     kindLine+
     (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
          : '<div class="preview-hint">Dieser Slot ist noch frei.</div>')+
-    '<div class="preview-stats">'+body+'</div>'+procLine+blockLine+
+    '<div class="preview-stats">'+body+'</div>'+procLine+blockLine+ilvlLine+
     '<div class="preview-actions">'+
       '<button class="btn" id="previewEquip"'+(equipOk?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Anlegen</button>'+
       '<button class="btn ghost" id="previewSell"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+'>💰 Verkaufen (🪙 '+fmtBig(price)+')</button>'+
