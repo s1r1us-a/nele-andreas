@@ -50,6 +50,10 @@ function heldWeapon(item, uid){
   const el = elementOf(item.id), E = ELEM[el];
   const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
   const hx = 124;
+  // Größe nach Seltenheit: Legendär (lvl2) & Mythisch (lvl3) sind deutlich
+  // größer als normale Waffen; skaliert um den Handpunkt, damit die Hand sitzt.
+  const SCALE = [1, 1, 1.16, 1.32][lvl] || 1;
+  const grow = inner => SCALE>1 ? `<g transform="translate(${hx} 194) scale(${SCALE}) translate(${-hx} -194)">${inner}</g>` : inner;
   const ty = typeOf(item);
   // Waffe natürlicher halten: leicht von der Körpermitte weg kippen (Drehpunkt =
   // Handkreis 124,194). Zauberstab bleibt aufrechter, damit die Kugel oben bleibt.
@@ -62,12 +66,14 @@ function heldWeapon(item, uid){
     const pole = `<rect x="${hx-2.5}" y="${oy}" width="5" height="${204-oy}" rx="2.5" fill="${WOOD}"/>`+
                  `<rect x="${hx-2.5}" y="${oy+4}" width="2" height="${198-oy}" fill="${shade(WOOD,1.3)}" opacity="0.5"/>`+
                  `<rect x="${hx-5}" y="${oy+6}" width="10" height="5" rx="2" fill="${GOLD}"/>`;  // Fassung
-    const glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30"/>`+
-                 `<circle cx="${hx}" cy="${oy}" r="12" fill="${P.glow}" opacity="0.35"/>`;
+    let glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30"/>`+
+               `<circle cx="${hx}" cy="${oy}" r="12" fill="${P.glow}" opacity="0.35"/>`;
+    // Legendär/Mythisch: zusätzlicher, weicher Außen-Glow um die Kugel.
+    if(lvl>0) glow = `<circle cx="${hx}" cy="${oy}" r="${22+lvl*4}" fill="${P.glow}" opacity="${(0.15+lvl*0.06).toFixed(2)}"/>`+glow;
     const orb  = `<circle cx="${hx}" cy="${oy}" r="9" fill="${P.mid}" stroke="${P.lo}" stroke-width="1"/>`+
                  `<circle cx="${hx-3}" cy="${oy-3}" r="3.4" fill="${P.hi}" opacity="0.9"/>`;
     const hand = `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
-    return tiltWrap(glow + pole + orb + hand);
+    return tiltWrap(grow(glow + pole + orb) + hand);
   }
   const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
                `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
@@ -102,14 +108,17 @@ function heldWeapon(item, uid){
         `<rect x="${hx-12}" y="131" width="6" height="12" rx="1" fill="${mh}" opacity="0.5"/>`+
         `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
   }
-  // Element-Halo hinter der Waffe (Episch+), Größe nach Stufe.
+  // Element-Glow hinter der Waffe (Episch+): mehrlagig, wächst mit Größe/Stufe;
+  // heller Kern ab Legendär für einen „coolen" leuchtenden Look.
   let halo = '';
   if(lvl>0){
-    halo = `<ellipse cx="${hx}" cy="158" rx="${12+lvl*5}" ry="${48+lvl*6}" fill="${E.glow}" opacity="${(0.16+lvl*0.07).toFixed(2)}"/>`;
-    if(lvl>=3) halo += `<ellipse cx="${hx}" cy="150" rx="9" ry="34" fill="${E.core}" opacity="0.35"/>`;
+    const gw = (12+lvl*5)*SCALE, gh = (48+lvl*7)*SCALE;
+    halo = `<ellipse cx="${hx}" cy="156" rx="${(gw+7).toFixed(1)}" ry="${(gh+10).toFixed(1)}" fill="${E.glow}" opacity="${(0.09+lvl*0.04).toFixed(2)}"/>`+
+           `<ellipse cx="${hx}" cy="156" rx="${gw.toFixed(1)}" ry="${gh.toFixed(1)}" fill="${E.glow}" opacity="${(0.16+lvl*0.07).toFixed(2)}"/>`;
+    if(lvl>=2) halo += `<ellipse cx="${hx}" cy="150" rx="8" ry="${(gh*0.66).toFixed(1)}" fill="${E.core}" opacity="0.40"/>`;
   }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
-  return tiltWrap(halo + w + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`);
+  return tiltWrap(halo + grow(w) + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`);
 }
 
 export function buildHeroSVG(character, tier, gear){
