@@ -48,10 +48,10 @@ let GRAD_SEQ = 0;
 function heldWeapon(item, uid, opt){
   if(!item || typeof item.variant !== 'number') return '';
   opt = opt || {};
-  const v = ((item.variant|0)%6+6)%6;
+  const v = ((item.variant|0)%13+13)%13;        // 0..12 (analog item-art.js)
   const lvl = armorLvl(item.rarity);            // Episch+ → Element-Glow
   const el = elementOf(item.id), E = ELEM[el];
-  const m = WEAPON_METAL[v], md = shade(m,0.55), mh = shade(m,1.25);
+  const m = WEAPON_METAL[v % WEAPON_METAL.length], md = shade(m,0.55), mh = shade(m,1.25);
   const hx = opt.hx != null ? opt.hx : 124;
   // Größe nach Seltenheit: Legendär (lvl2) & Mythisch (lvl3) sind deutlich
   // größer als normale Waffen; skaliert um den Handpunkt, damit die Hand sitzt.
@@ -106,11 +106,43 @@ function heldWeapon(item, uid, opt){
         `<path d="M${hx} 111 L${hx+6} 128 L${hx-6} 128 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
         `<rect x="${hx-5}" y="127" width="10" height="3" rx="1" fill="${GOLD}"/>`+
         `<circle cx="${hx}" cy="204" r="3" fill="${GOLD}"/>`;
-  } else {              // Kriegshammer
+  } else if(v===5){     // Kriegshammer
     w = `<rect x="${hx-2}" y="150" width="4" height="52" rx="1.5" fill="${WOOD}"/>`+
         `<rect x="${hx-15}" y="128" width="30" height="18" rx="3" fill="${m}" stroke="${md}" stroke-width="1"/>`+
         `<rect x="${hx-12}" y="131" width="6" height="12" rx="1" fill="${mh}" opacity="0.5"/>`+
         `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  } else if(v===7){     // Krummsäbel (gekrümmte Klinge)
+    w = `<rect x="${hx-7}" y="182" width="14" height="4" rx="1.5" fill="${GOLD}"/>`+
+        `<path d="M${hx-3} 182 Q${hx-15} 150 ${hx-7} 120 Q${hx+1} 116 ${hx+5} 126 Q${hx+9} 156 ${hx+3} 182 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<path d="M${hx-1} 178 Q${hx-10} 150 ${hx-4} 126" stroke="${mh}" stroke-width="1.2" fill="none" opacity="0.5"/>`+ grip;
+  } else if(v===8){     // Großschwert (breite, lange Klinge)
+    w = `<rect x="${hx-12}" y="181" width="24" height="5" rx="2" fill="${GOLD}"/>`+
+        `<path d="M${hx} 112 L${hx+6} 124 L${hx+6} 181 L${hx-6} 181 L${hx-6} 124 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-1.5}" y="124" width="3" height="56" fill="${mh}" opacity="0.5"/>`+ grip;
+  } else if(v===9){     // Sense (Sichelklinge an langem Schaft)
+    w = `<rect x="${hx-2}" y="120" width="4" height="82" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx+1} 122 Q${hx-26} 121 ${hx-31} 143 Q${hx-15} 132 ${hx+2} 134 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<path d="M${hx-1} 125 Q${hx-19} 126 ${hx-25} 140" stroke="${mh}" stroke-width="1.2" fill="none" opacity="0.5"/>`+
+        `<circle cx="${hx}" cy="204" r="3" fill="${GOLD}"/>`;
+  } else if(v===10){    // Doppelaxt (beidseitiges Blatt)
+    w = `<rect x="${hx-2}" y="124" width="4" height="78" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx+1} 128 L${hx+17} 124 Q${hx+25} 138 ${hx+17} 152 L${hx+1} 148 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<path d="M${hx-1} 128 L${hx-17} 124 Q${hx-25} 138 ${hx-17} 152 L${hx-1} 148 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<circle cx="${hx}" cy="204" r="3" fill="${GOLD}"/>`;
+  } else if(v===11){    // Glefe (Stangenklinge)
+    w = `<rect x="${hx-2}" y="126" width="4" height="76" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx} 108 Q${hx+11} 120 ${hx+7} 136 L${hx} 129 L${hx-7} 136 Q${hx-11} 120 ${hx} 108 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-5}" y="131" width="10" height="3.5" rx="1" fill="${GOLD}"/>`+
+        `<circle cx="${hx}" cy="204" r="3" fill="${GOLD}"/>`;
+  } else if(v===12){    // Kriegskeule (gestreckter, genoppter Knauf)
+    w = `<rect x="${hx-2}" y="150" width="4" height="52" rx="1.5" fill="${WOOD}"/>`+
+        `<path d="M${hx-9} 122 Q${hx+9} 120 ${hx+9} 142 Q${hx+9} 156 ${hx} 156 Q${hx-9} 154 ${hx-9} 122 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<circle cx="${hx-3}" cy="132" r="1.8" fill="${md}"/><circle cx="${hx+3}" cy="143" r="1.8" fill="${md}"/>`+
+        `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
+  } else {              // Fallback (inkl. v6) → Schwert
+    w = `<rect x="${hx-9}" y="182" width="18" height="4" rx="1.5" fill="${GOLD}"/>`+
+        `<path d="M${hx} 120 L${hx+4} 128 L${hx+4} 182 L${hx-4} 182 L${hx-4} 128 Z" fill="${m}" stroke="${md}" stroke-width="1"/>`+
+        `<rect x="${hx-1.5}" y="128" width="2" height="52" fill="${mh}" opacity="0.5"/>`+ grip;
   }
   // Element-Glow hinter der Waffe (Episch+): mehrlagig, wächst mit Größe/Stufe;
   // heller Kern ab Legendär für einen „coolen" leuchtenden Look.
