@@ -7,7 +7,7 @@ import { expeditionReady, expeditionActive, setFindProgress, cancelExpedition, c
 import { startBossFight, closeArena, usePotion, useAbility } from './core/combat.js';
 import { watchCoins } from './core/coins.js';
 import { $, fmtRemain, fmtBig, confirmDialog, toast } from './ui/dom.js';
-import { renderAll, renderAdventure, renderTopStats } from './ui/render.js';
+import { renderAll, renderAdventure, renderTopStats, resetInvSellMode } from './ui/render.js';
 import { openBossList, openStats, openCharacterCreator,
          openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby,
          openOtherProfile } from './ui/modals.js';
@@ -17,6 +17,9 @@ import { initTradeTab, renderTrade } from './ui/trade.js';
 
 // ---- Tabs -----------------------------------------------------------
 function switchTab(view){
+  // Verlässt man das Inventar (z. B. zum Händler), den Verkaufsmodus beenden,
+  // damit der „Verkaufen"-Button nicht versehentlich aktiv bleibt.
+  if(view !== 'inventory') resetInvSellMode();
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const el = $('#view-'+view); if(el) el.classList.add('active');
