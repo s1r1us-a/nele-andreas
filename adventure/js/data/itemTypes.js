@@ -21,7 +21,7 @@ export function itemDisplayName(rarityKey, itype){
 }
 
 // ---- Rüstungs-Material-Archetypen (WoW-artig, 3 Materialien) ----------
-// Klassen-Tragbarkeit: stoff = alle, leder = Kämpfer/Verteidiger, platte = nur Verteidiger.
+// Klassen-Tragbarkeit: stoff = alle, leder = Schurke/Verteidiger, platte = nur Verteidiger.
 // Stoff: kaum Rüstung, magisch (critMagic). Leder: mehr Rüstung, physisch. Platte: viel Rüstung.
 // Affixe im Rüstungs-Pool: armor, maxHp, attackSpeed, dodge, block, versatility, critMagic, critPhys.
 // Pro Material ein häufiger Grund-Archetyp + ein seltener, stärkerer Elite-Archetyp.
@@ -85,7 +85,7 @@ function armorTypes(noun, g){
 export const ITEM_TYPES = {
   // ⚔️ Waffen – Pool: critPhys, critMagic, critDamage, attackSpeed, damage, lifesteal, versatility
   waffe: [
-    // ⚔️ Physische Waffen (Kämpfer/Verteidiger) – Variante = Silhouette (0–5).
+    // ⚔️ Physische Waffen (Schurke/Verteidiger) – Variante = Silhouette (0–5).
     { key:'schwert',     name:'Schwert',      g:'n', variant:0, statMult:1.00, weight:11, affixBias:{ damage:2, critPhys:2 },                 flavorAffix:'damage' },
     { key:'langschwert', name:'Langschwert',  g:'n', variant:0, statMult:1.08, weight:7,  affixBias:{ damage:3, critPhys:2 },                 flavorAffix:'damage' },
     { key:'dolch',       name:'Dolch',        g:'m', variant:1, statMult:0.85, weight:11, affixBias:{ critPhys:3, critDamage:2, attackSpeed:2 }, flavorAffix:'critPhys' },
@@ -102,7 +102,7 @@ export const ITEM_TYPES = {
     { key:'drachenlanze',  name:'Drachenlanze',  g:'f', variant:4, statMult:1.36, weight:0.9, affixBias:{ versatility:4, critDamage:3 },      flavorAffix:'critDamage' },
     { key:'zweihaender',   name:'Zweihänder',    g:'m', variant:5, statMult:1.45, weight:0.7, affixBias:{ damage:5, critDamage:3 },           flavorAffix:'damage' },
     // 🪄 Zauberstäbe – nur für magische Klassen (Heiler & Hexer, material:'zauberstab').
-    //    Physische Klassen (Kämpfer/Verteidiger) können sie NICHT tragen. Weniger Schaden,
+    //    Physische Klassen (Schurke/Verteidiger) können sie NICHT tragen. Weniger Schaden,
     //    dafür Magie-/Heilungs-Affixe. Eigene Orb-Farbe (orb) fürs SVG.
     { key:'stab',        name:'Kristallstab', g:'m', variant:6, statMult:0.85, weight:10, affixBias:{ critMagic:4, critDamage:3, attackSpeed:1 },  flavorAffix:'critMagic', material:'zauberstab', orb:'rot' },
     { key:'heilstab',    name:'Heilstab',     g:'m', variant:6, statMult:0.70, weight:9,  affixBias:{ lifesteal:4, maxHp:2, critMagic:1 },        flavorAffix:'lifesteal', material:'zauberstab', orb:'gruen' },
@@ -197,7 +197,7 @@ export const ITEM_TYPES = {
     { key:'festungsschild',name:'Festungsschild', g:'m', variant:3, statMult:1.20, weight:2.5,affixBias:{ armor:4, maxHp:3 },  flavorAffix:'maxHp' },
     { key:'drachenhornschild',name:'Drachenhornschild',g:'m',variant:8,statMult:1.18,weight:2,affixBias:{ thorns:4, armor:3 }, flavorAffix:'thorns' },
     { key:'titanenwall',  name:'Titanenwall',     g:'m', variant:0, statMult:1.30, weight:0.9,affixBias:{ armor:5, maxHp:3 },  flavorAffix:'armor' },
-    // ⚔️ Nebenhand-Zweitwaffen (NUR Kämpfer) – liegen im Nebenhand-Slot, geben Schaden
+    // ⚔️ Nebenhand-Zweitklingen (NUR Schurke) – liegen im Nebenhand-Slot, geben Schaden
     //    (`statType:'damage'`), aber reduziert (statMult ~0.50–0.68 ≈ 60 % einer Hauptwaffe).
     //    `art:'waffe'` → Waffen-Sprite + Waffen-Glow; `affixGroup:'waffe'` → Waffen-Affixe.
     //    Kein `material` (physisch). Können NICHT in den Haupt-Waffenslot (slotKey bleibt 'schild').

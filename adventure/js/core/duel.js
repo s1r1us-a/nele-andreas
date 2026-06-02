@@ -61,7 +61,7 @@ export async function createDuel(displayName, classId, stake, desiredCode){
     lobbyId = push(ref(db, 'duel/lobbies')).key;
   }
   await set(ref(db, LOBBY(lobbyId)), {
-    host: userKey, hostName: displayName, hostClass: classId || 'kaempfer',
+    host: userKey, hostName: displayName, hostClass: classId || 'schurke',
     guest: null, guestName: null, guestClass: null,
     status: 'waiting', stake: Math.max(0, stake|0),
     createdAt: Date.now(), hostReady: false, guestReady: false, startAt: null,
@@ -78,7 +78,7 @@ export async function joinDuel(lobbyId, displayName, classId){
   if(lobby.guest && lobby.guest !== userKey) throw new Error('Lobby ist bereits voll.');
   if(lobby.host === userKey) throw new Error('Du bist bereits der Host.');
   await update(ref(db, LOBBY(lobbyId)), {
-    guest: userKey, guestName: displayName, guestClass: classId || 'kaempfer',
+    guest: userKey, guestName: displayName, guestClass: classId || 'schurke',
   });
   armCleanup(lobbyId);
   return lobby;

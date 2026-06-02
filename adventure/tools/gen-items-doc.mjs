@@ -56,7 +56,7 @@ for(const c of CLASSES){
   m += `| ${c.icon} ${c.label} | ${c.damageSchool} | ${mats} | ${weapons} | ${shield} | ${c.dmgMult}× | ${c.healMult}× |\n`;
 }
 m += '\nRüstung gibt es in **3 Materialien**: **Stoff** (kaum Rüstung, magisch), **Leder** (mehr Rüstung, physisch), **Platte** (sehr viel Rüstung, wenig Schaden).\n';
-m += 'Waffen: **physische Waffen** (Schwert/Dolch/…) für Kämpfer & Verteidiger, **Zauberstäbe** nur für Heiler & Hexer. **Schilde** kann nur der Verteidiger tragen. Schmuck (Amulett/Ringe) ist klassenunabhängig.\n\n';
+m += 'Waffen: **physische Waffen** (Schwert/Dolch/…) für Schurke & Verteidiger, **Zauberstäbe** nur für Heiler & Hexer. **Schilde** kann nur der Verteidiger tragen. Schmuck (Amulett/Ringe) ist klassenunabhängig.\n\n';
 
 // ---- Seltenheiten ----------------------------------------------------
 m += '## ✨ Seltenheiten\n\n';
