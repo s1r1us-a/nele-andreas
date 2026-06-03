@@ -410,6 +410,30 @@ function petMultOf(fight, slot, now){
   return now < (until||0) ? (1 + (bonus||0)) : 1;
 }
 
+// Nebelschritt-Überfall (Turm-Host): nach dem Unsichtbarkeits-Fenster taucht der
+// Slot aus der Rauchwolke auf und landet einen garantierten kritischen Treffer.
+function scheduleTowerNebelAmbush(fight, slot, ab){
+  const dur = ab.dur || 5000;
+  setTimeout(()=>{
+    if(fight.over || _fight !== fight) return;
+    const now = Date.now();
+    if(slot === 'front') fight.frontStealthUntil = 0; else fight.backStealthUntil = 0;
+    const atk      = slot === 'front' ? fight.frontAtk     : fight.backAtk;
+    const critMult = slot === 'front' ? fight.frontCritMult : fight.backCritMult;
+    const dmg = Math.max(1, Math.round(atk * (ab.ambushMult||4) * (critMult||2) * petMultOf(fight, slot, now)));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg;
+    if(slot === 'front'){ fight.frontCastTs = now; fight.frontCastAb = 'nebelschritt_ambush'; }
+    else               { fight.backCastTs  = now; fight.backCastAb  = 'nebelschritt_ambush'; }
+    addLog(fight, '💨 Überfall aus dem Nebel: KRIT ' + fmtBig(dmg) + ' Schaden!', '#ffd24a');
+    if(fight.bossHp <= 0){
+      fight.over = true; fight.won = true;
+      addLog(fight, '🏆 Sieg! Stockwerk ' + fight.floor + ' gemeistert!', '#ffd24a');
+      clearTimeout(_fightTimer);
+    }
+    syncFight(fight);
+  }, dur);
+}
+
 // Host wendet eine angeforderte Klassen-Fähigkeit auf den Kampf an.
 function applyAbility(fight, slot, abilityId){
   if(fight.over) return;
@@ -447,11 +471,13 @@ function applyAbility(fight, slot, abilityId){
     else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||0; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+'!', '#ff8a3d');
   } else if(ab.kind === 'vanish'){
-    // Nebelschritt: Boss betäubt, eigener Krit garantiert, Stealth-Optik.
+    // Nebelschritt: vollständig unsichtbar – Boss geblendet, der Slot greift NICHT an;
+    // beim Wiederauftauchen ein garantierter Krit-Überfall.
     fight.bossStunUntil = now + ab.dur;
-    if(slot === 'front'){ fight.frontCritUntil = now + ab.dur; fight.frontCritVal = ab.critBonus||1; fight.frontStealthUntil = now + ab.dur; }
-    else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||1; fight.backStealthUntil  = now + ab.dur; }
-    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Boss '+(ab.dur/1000)+'s geblendet!', '#b6a0ff');
+    if(slot === 'front') fight.frontStealthUntil = now + ab.dur;
+    else                 fight.backStealthUntil  = now + ab.dur;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': verschwindet im Nebel, Boss '+(ab.dur/1000)+'s blind!', '#b6a0ff');
+    scheduleTowerNebelAmbush(fight, slot, ab);
   } else if(ab.kind === 'stun'){
     // Donnerknall: Schaden + Boss-Betäubung.
     const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
@@ -547,7 +573,8 @@ function exchange(fight){
   const effBackCrit  = Math.min(1, fight.backCrit  + bCritBonus);
 
   // ---- Vorne: heilt den Partner bei < 35% (Heiler) oder schlägt den Boss ---
-  if(fight.frontHp > 0){
+  // (Im Nebelschritt verborgen → setzt diese Runde aus.)
+  if(fight.frontHp > 0 && now >= (fight.frontStealthUntil||0)){
     const backLow = fight.backHp > 0 && fight.backHp < fight.backMaxHp * 0.35;
     if(fight.frontIsHealer && backLow){
       const healAmt = Math.round(fight.frontAtk * 2.0 * (fight.frontHealMult || 1));
@@ -578,7 +605,8 @@ function exchange(fight){
   }
 
   // ---- Hinten: heilt bei < 35% oder greift an ---
-  if(fight.backHp > 0){
+  // (Im Nebelschritt verborgen → setzt diese Runde aus.)
+  if(fight.backHp > 0 && now >= (fight.backStealthUntil||0)){
     const frontLow = fight.frontHp > 0 && fight.frontHp < fight.frontMaxHp * 0.35;
     if(fight.backIsHealer && frontLow){
       const healAmt = Math.round(fight.backAtk * 2.0 * (fight.backHealMult || 1));

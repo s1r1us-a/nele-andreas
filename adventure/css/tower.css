@@ -364,6 +364,8 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 /* === VFX der neuen Zweitfähigkeiten (Turm) ============================= */
 /* Stealth (Nebelschritt): Held wird im Turm verhüllt. */
 .arena-hero.stealth img { opacity:.4; filter:grayscale(.3) brightness(.8) drop-shadow(0 0 10px #6a4bb0); }
+/* Nebelschritt: vollständig unsichtbar (in der Rauchwolke verschwunden). */
+.arena-hero.vanished img { opacity:0; transition:opacity .35s ease; }
 
 /* Lichtsäule (heilig-golden). */
 .vfx-pillar { position:absolute; width:64px; height:200px; transform:translate(-50%,-78%);

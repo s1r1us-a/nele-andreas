@@ -292,12 +292,13 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
     if(opp.hp <= 0){ opp.hp = 0; fight.over = true; fight.winner = role;
       logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a'); clearTimeout(_timer); }
   } else if(ab.kind === 'vanish'){
-    // Nebelschritt: Gegner kann nicht angreifen, eigener Krit garantiert.
+    // Nebelschritt: vollständig unsichtbar – Gegner kann nicht angreifen, der Wirker
+    // greift selbst nicht an; beim Wiederauftauchen ein garantierter Krit-Überfall.
     opp.stunUntil = now + ab.dur;
     side.stealthUntil = now + ab.dur;
-    side.buffs.crit = { until: now + ab.dur, val: ab.critBonus, src: ab.id };
-    side.burstTs = now; side.burstMagic = 0; side.burstAb = ab.id;
+    side.burstTs = now; side.burstMagic = 0; side.burstAb = ab.id;   // Rauchwolke / Verschwinden
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – verschwindet im Nebel! Gegner ' + (ab.dur/1000) + 's geblendet.', '#b6a0ff');
+    scheduleDuelNebelAmbush(fight, role, side, opp, name, ab);
   } else if(ab.kind === 'summon'){
     // Teufelswache: beschworener Dämon verstärkt den Schaden über die Dauer.
     side.petEndUntil = now + (ab.petDur || 10000);
@@ -334,6 +335,28 @@ function startDuelDrain(fight, role, side, opp, name, ab){
     if(++i < ticks) setTimeout(tick, tickMs);
   };
   setTimeout(tick, tickMs);
+}
+
+// Nebelschritt-Überfall (Host): nach dem Unsichtbarkeits-Fenster taucht der Wirker
+// aus der Rauchwolke auf und landet einen garantierten kritischen Treffer.
+function scheduleDuelNebelAmbush(fight, role, side, opp, name, ab){
+  const dur = ab.dur || 5000;
+  setTimeout(()=>{
+    if(fight.over || _fight !== fight || side.hp <= 0) return;
+    const now = Date.now();
+    side.stealthUntil = 0;
+    const petMult = now < (side.petEndUntil||0) ? (1 + (side.petBonus||0)) : 1;
+    const dmg = Math.max(1, Math.round(side.atk * (ab.ambushMult||4) * side.critMult * petMult));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = 'nebelschritt_ambush';
+    logLine(fight, '💨 ' + name + ' – Überfall aus dem Nebel: KRIT ' + fmtBig(dmg) + ' Schaden!', '#ffd24a');
+    if(opp.hp <= 0){
+      opp.hp = 0; fight.over = true; fight.winner = role;
+      logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a');
+      clearTimeout(_timer); fight.events = []; syncDuel(fight, true); return;
+    }
+    fight.events = []; syncDuel(fight, false);
+  }, dur);
 }
 
 // Feiner Host-Takt: jede Seite schlägt nach ihrem EIGENEN Intervall (Tempo zählt).
@@ -382,8 +405,9 @@ function tick(fight){
     const att = fight[aKey];
     let guard = 0;
     while(now >= att.nextSwingAt && guard < 2){
-      // Betäubt (Donnerknall/Nebelschritt des Gegners): Schlag aussetzen, Takt weiterlaufen lassen.
-      if(now < (att.stunUntil||0)){ att.nextSwingAt += att.interval; guard++; continue; }
+      // Betäubt (Donnerknall des Gegners) ODER selbst im Nebel verborgen (Nebelschritt):
+      // Schlag aussetzen, Takt weiterlaufen lassen.
+      if(now < (att.stunUntil||0) || now < (att.stealthUntil||0)){ att.nextSwingAt += att.interval; guard++; continue; }
       applyStrike(fight, aKey, dKey, strike(att, fight[dKey], enr), events);
       att.nextSwingAt += att.interval;
       // Nach langer Pause (z. B. gedrosselter Tab) nicht nachfeuern.

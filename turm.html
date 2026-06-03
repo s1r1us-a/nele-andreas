@@ -906,7 +906,7 @@ function stopAbilityUI(){
   _shieldUntil = _frontAblazeUntil = _backAblazeUntil = 0;
   _petUntil = { front:0, back:0 }; _stealthUntil = { front:0, back:0 }; _bossStunUntil = 0;
   _lastCast = { front:0, back:0 };
-  ['heroFront','heroBack'].forEach(id => $(id) && $(id).classList.remove('ablaze','stealth'));
+  ['heroFront','heroBack'].forEach(id => $(id) && $(id).classList.remove('ablaze','stealth','vanished'));
   ['sig-demon-front','sig-demon-back','sig-stun-boss'].forEach(id => { const el = $(id); if(el) el.remove(); });
   removeShieldDome();
 }
@@ -994,8 +994,8 @@ function renderFxLocal(){
   $('heroBack').classList.toggle('ablaze',  now < _backAblazeUntil);
   if(now < _shieldUntil) showShieldDome(); else removeShieldDome();
   // Stealth, Teufelswache und Boss-Betäubung persistent halten/positionieren.
-  $('heroFront').classList.toggle('stealth', now < _stealthUntil.front);
-  $('heroBack').classList.toggle('stealth',  now < _stealthUntil.back);
+  $('heroFront').classList.toggle('vanished', now < _stealthUntil.front);
+  $('heroBack').classList.toggle('vanished',  now < _stealthUntil.back);
   applyTowerDemon('front', now < _petUntil.front);
   applyTowerDemon('back',  now < _petUntil.back);
   applyTowerStun(now < _bossStunUntil);
@@ -1080,6 +1080,7 @@ function spawnTowerRune(slot){
 function playTowerAbilityVfx(slot, abId){
   if(abId === 'lichtsaeule'){ spawnTowerPillar(slot); spawnTowerShock('spriteBoss'); }
   else if(abId === 'nebelschritt'){ spawnTowerSmoke(slot); }
+  else if(abId === 'nebelschritt_ambush'){ spawnTowerSmoke(slot); spawnTowerShock('spriteBoss'); }
   else if(abId === 'donnerknall'){ spawnTowerShock('spriteBoss'); }
   else if(abId === 'teufelswache'){ spawnTowerRune(slot); applyTowerDemon(slot, true); }
 }
