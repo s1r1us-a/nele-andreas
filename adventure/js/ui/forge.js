@@ -34,24 +34,76 @@ function affixAtLevel(key, baseV, level){
 // Reiner Zahlenwert eines Affixes (ohne Label) für „X → Y"-Zeilen.
 function affixValStr(key, v){ const d = AFFIX_DEFS[key]; return d.pct ? '+'+Math.round(v*100)+'%' : '+'+v; }
 
+// Auswählbares Item finden – Inventar ODER ausgerüstet (für Aufwerten/Verzaubern).
+function findSelectable(id){
+  if(id == null) return null;
+  return state.inventory.find(i => i.id === id)
+    || Object.values(state.equipped||{}).find(e => e && e.id === id)
+    || null;
+}
+
+// Eine Auswahl-Kategorie (Überschrift + Item-Grid) anhängen. `worn` markiert
+// ausgerüstete Teile (kleines 🎽-Badge statt Kategorie-Icon).
+function appendPickSection(panel, title, items, emptyText, worn){
+  const head = document.createElement('h3');
+  head.className = 'forge-sub';
+  head.textContent = title;
+  panel.appendChild(head);
+  if(!items.length){
+    const hint = document.createElement('p');
+    hint.className = 'inv-hint'; hint.textContent = emptyText;
+    panel.appendChild(hint);
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'backpack forge-pick';
+  for(const it of items){
+    const r = rarityOf(it.rarity);
+    const cell = document.createElement('div');
+    cell.className = 'bp-slot filled' + (it.id===selectedId ? ' forge-selected' : '');
+    cell.dataset.rarity = it.rarity;
+    cell.style.setProperty('--rc', r.color);
+    cell.innerHTML = '<span class="bp-cat">'+(worn ? '🎽' : CAT_ICON[it.cat])+'</span>'+
+      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
+      ((it.upgradeLevel||0)>0?'<span class="bp-upg">+'+it.upgradeLevel+'</span>':'')+
+      (it.proc?'<span class="bp-proc">★</span>':'')+
+      '<img src="'+it.sprite+'" alt="'+it.name+'">';
+    bindTooltip(cell, it, { compare:true });
+    cell.addEventListener('click', ()=>{ hideTooltip(); selectedId = it.id; renderForge(); });
+    grid.appendChild(cell);
+  }
+  panel.appendChild(grid);
+}
+
 export function renderForge(){
   const panel = $('#forgePanel');
   if(!panel) return;
+  panel.classList.add('forge-room');   // eigene Schmiede-Optik (Eisen/Glut)
   panel.innerHTML = '';
 
-  // Gewähltes Item ggf. zurücksetzen (verkauft/zerlegt/getauscht).
-  if(selectedId != null && !state.inventory.some(i => i.id === selectedId)) selectedId = null;
+  // Gewähltes Item ggf. zurücksetzen (verkauft/zerlegt/getauscht/abgelegt).
+  if(selectedId != null && !findSelectable(selectedId)) selectedId = null;
 
-  // ---- Kopf + Materialbestand --------------------------------------
-  const head = document.createElement('div');
-  head.className = 'shop-head';
-  head.innerHTML = '<h2>⚒️ Schmiede</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Coins</span>';
-  panel.appendChild(head);
+  // ---- Schmiede-Banner (Amboss + Esse + glimmende Funken) ----------
+  const banner = document.createElement('div');
+  banner.className = 'forge-banner';
+  banner.innerHTML =
+    '<div class="fb-embers" aria-hidden="true">'+
+      '<span></span><span></span><span></span><span></span><span></span><span></span>'+
+    '</div>'+
+    '<div class="fb-fire" aria-hidden="true"></div>'+
+    '<div class="fb-row">'+
+      '<span class="fb-anvil">⚒️</span>'+
+      '<div class="fb-titles"><h2 class="fb-title">Die Schmiede</h2>'+
+        '<div class="fb-sub">Glut · Stahl · Macht</div></div>'+
+      '<span class="fb-gold">🪙 '+fmtBig(getCoins())+'</span>'+
+    '</div>';
+  panel.appendChild(banner);
 
   const note = document.createElement('p');
-  note.className = 'shop-note';
-  note.innerHTML = 'Zerlege überflüssige Items im <b>Inventar</b> (♻️ Zerlegen) zu Materialien und '+
-    'investiere sie hier gezielt: ein Item <b>aufwerten</b> (stärker) oder <b>verzaubern</b> (Affixe neu würfeln).';
+  note.className = 'forge-note';
+  note.innerHTML = '🔥 Zerlege Überflüssiges im <b>Inventar</b> (♻️) zu Materialien und schmiede daraus Macht: '+
+    'ein Item <b>aufwerten</b> oder <b>verzaubern</b>.';
   panel.appendChild(note);
 
   const matBar = document.createElement('div');
@@ -85,42 +137,23 @@ export function renderForge(){
     if(res.ok) toast('🔁 '+MATERIAL_BY_KEY[to].icon+' +1 '+MATERIAL_BY_KEY[to].name);
   }));
 
-  // ---- Item-Auswahl (Inventar) -------------------------------------
-  const pickHead = document.createElement('h3');
-  pickHead.className = 'forge-sub';
-  pickHead.textContent = '🎒 Item auswählen';
-  panel.appendChild(pickHead);
+  // ---- Item-Auswahl: zwei Kategorien (Inventar + Ausgerüstet) -------
+  const invItems = [...state.inventory].sort((a,b)=> itemPower(b)-itemPower(a));
+  const eqItems = Object.values(state.equipped||{}).filter(Boolean).sort((a,b)=> itemPower(b)-itemPower(a));
 
-  if(!state.inventory.length){
+  if(!invItems.length && !eqItems.length){
     const empty = document.createElement('p');
     empty.className = 'inv-hint';
-    empty.textContent = 'Dein Inventar ist leer – geh auf Abenteuer, um Ausrüstung zu finden.';
+    empty.textContent = 'Keine Items – geh auf Abenteuer, um Ausrüstung zu finden.';
     panel.appendChild(empty);
     return;
   }
 
-  const grid = document.createElement('div');
-  grid.className = 'backpack forge-pick';
-  const items = [...state.inventory].sort((a,b)=> itemPower(b)-itemPower(a));
-  for(const it of items){
-    const r = rarityOf(it.rarity);
-    const cell = document.createElement('div');
-    cell.className = 'bp-slot filled' + (it.id===selectedId ? ' forge-selected' : '');
-    cell.dataset.rarity = it.rarity;
-    cell.style.setProperty('--rc', r.color);
-    cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
-      (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
-      ((it.upgradeLevel||0)>0?'<span class="bp-upg">+'+it.upgradeLevel+'</span>':'')+
-      (it.proc?'<span class="bp-proc">★</span>':'')+
-      '<img src="'+it.sprite+'" alt="'+it.name+'">';
-    bindTooltip(cell, it, { compare:true });
-    cell.addEventListener('click', ()=>{ hideTooltip(); selectedId = it.id; renderForge(); });
-    grid.appendChild(cell);
-  }
-  panel.appendChild(grid);
+  appendPickSection(panel, '🎒 Im Inventar', invItems, 'Keine Items im Inventar.');
+  appendPickSection(panel, '🎽 Ausgerüstet', eqItems, 'Nichts ausgerüstet.', true);
 
   // ---- Aktions-Panel für das gewählte Item -------------------------
-  const sel = selectedId != null ? state.inventory.find(i => i.id === selectedId) : null;
+  const sel = findSelectable(selectedId);
   if(!sel){
     const hint = document.createElement('p');
     hint.className = 'inv-hint';
@@ -212,19 +245,27 @@ function buildActionCard(it){
 export function playUpgradeFx(level){
   const fx = document.createElement('div');
   fx.className = 'forge-fx';
+  // Mehr Funken + zufällige Streuung für einen wuchtigen Esse-Schlag.
   let sparks = '';
-  const N = 14;
+  const N = 22;
   for(let i=0;i<N;i++){
-    const a = Math.round(i * (360/N) + Math.random()*12);
-    const d = 130 + Math.round(Math.random()*90);
-    sparks += '<span class="ffx-spark" style="--a:'+a+'deg;--d:'+d+'px"></span>';
+    const a = Math.round(i * (360/N) + Math.random()*14);
+    const d = 150 + Math.round(Math.random()*140);
+    const delay = (Math.random()*0.12).toFixed(2);
+    sparks += '<span class="ffx-spark" style="--a:'+a+'deg;--d:'+d+'px;animation-delay:'+delay+'s"></span>';
   }
-  fx.innerHTML = '<div class="ffx-flash"></div>'+
+  fx.innerHTML =
+    '<div class="ffx-flash"></div>'+
+    '<div class="ffx-shock"></div>'+               // Schockwelle
     '<div class="ffx-ring"></div><div class="ffx-ring r2"></div>'+
+    '<div class="ffx-anvil">⚒️</div>'+             // zuschlagender Amboss/Hammer
     sparks+
     '<div class="ffx-text">+'+level+'</div>';
   document.body.appendChild(fx);
-  setTimeout(()=> fx.remove(), 1300);
+  // Kurzes Bildschirm-Wackeln (Hammerschlag).
+  document.body.classList.add('forge-shake');
+  setTimeout(()=> document.body.classList.remove('forge-shake'), 420);
+  setTimeout(()=> fx.remove(), 1400);
 }
 
 // Nach einer Crafting-Aktion: alles neu zeichnen (Werte/Kampfkraft/Charakter)

@@ -497,6 +497,8 @@ export function usePotion(){
   updateHpBars(f);
   mechFloat('hero', '💚 +'+fmtBig(heal), '#37d67a');
   updatePotionBtn();
+  // Inventar/Verbrauch sofort aktualisieren (Trank-Anzahl sinkt direkt sichtbar).
+  renderAll();
 }
 
 // ---- Aktive Fähigkeiten (Grundfähigkeit + geskillte Talent-Aktive) -

@@ -56,7 +56,7 @@ export function openSlotPicker(slotKey){
     const sLbl = cur.statType==='armor' ? 'Rüstung' : 'Schaden';
     html += '<div class="cur-equip">'+
       '<div class="cur-label">Aktuell ausgerüstet</div>'+
-      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+'</span>'+
+      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+((cur.upgradeLevel||0)>0?' <span style="color:#ffd24a">+'+cur.upgradeLevel+'</span>':'')+'</span>'+
       '<div class="cur-kind">'+itemKindIcon(cur)+' '+itemKindLabel(cur)+'</div>'+
       '<div class="cur-stats"><div class="tt-stat '+cur.statType+'">+'+cur.stat+' '+sLbl+'</div>'+affixLinesHTML(cur)+
         '<div class="cur-ilvl">Gegenstandsstufe '+cur.ilvl+'</div></div>'+
@@ -396,7 +396,8 @@ export async function openOtherProfile(){
         ensureItemSprite(it);   // Gast-Items haben kein Sprite (stripItem beim Speichern)
         const r = rarityOf(it.rarity);
         gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-rarity="'+it.rarity+'" data-op="'+sk+'">'+
-          '<img src="'+it.sprite+'" alt="'+(it.name||'')+'"></div>';
+          '<img src="'+it.sprite+'" alt="'+(it.name||'')+'">'+
+          ((it.upgradeLevel||0)>0?'<span class="bp-upg op-upg">+'+it.upgradeLevel+'</span>':'')+'</div>';
       } else {
         gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+
           '<span>'+(SLOT_ICON[sk]||'')+'</span></div>';

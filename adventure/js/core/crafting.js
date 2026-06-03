@@ -25,7 +25,17 @@ import { getCoins, spendCoins } from './coins.js';
 function mats(){ if(!state.materials) state.materials = {}; return state.materials; }
 export function materialCount(key){ return (mats()[key]||0); }
 
-function findItem(itemId){ return state.inventory.find(i => i.id === itemId) || null; }
+// Aufwerten/Verzaubern wirken auf Items im Inventar ODER auf ausgerüstete Teile.
+// (Salvage bleibt bewusst inventarexklusiv – getragene Ausrüstung zerlegt man nicht.)
+function findItem(itemId){
+  const inv = state.inventory.find(i => i.id === itemId);
+  if(inv) return inv;
+  for(const k of Object.keys(state.equipped || {})){
+    const e = state.equipped[k];
+    if(e && e.id === itemId) return e;
+  }
+  return null;
+}
 
 // ---- Basis-Snapshot & Bonus-Anwendung -------------------------------
 // Sichert die aktuell gerollten Werte als „Stufe 0"-Basis (einmalig / nach Reroll).

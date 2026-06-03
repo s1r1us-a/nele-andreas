@@ -34,7 +34,7 @@ import { itemValue, isLocked, gearScore, canEquip, autoEquipBest, itemPower,
          sellItem, sellPrice } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { salvage } from '../core/crafting.js';
-import { salvageYield, MATERIAL_BY_KEY } from '../data/materials.js';
+import { salvageYield, MATERIAL_BY_KEY, MATERIALS } from '../data/materials.js';
 import { claimPendingLoot } from '../core/items.js';
 import { renderForge } from './forge.js';
 import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
@@ -220,7 +220,8 @@ function slotEl(slotKey){
     const r = rarityOf(it.rarity);
     el.dataset.rarity = it.rarity;
     el.style.setProperty('--rc', r.color);
-    el.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
+    el.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">'+
+      ((it.upgradeLevel||0)>0 ? '<span class="slot-upg">+'+it.upgradeLevel+'</span>' : '');
     bindTooltip(el, it);
   } else {
     el.innerHTML = '<span class="empty-ic">'+emptySlotIcon(slotKey)+'</span>';
@@ -459,25 +460,11 @@ function renderCharStats(t){
 // ---- Inventar (Filter/Sortierung/Sperre, #23/#24) ------------------
 let invTab = 'gear';
 let invSort = 'value', invCat = 'all', invRar = 'all', invSearch = '', invWear = false;
-// Verkaufsmodus (#Schnellverkauf): einmal aktiviert & bestätigt, verkauft jeder
-// Klick auf ein Item es sofort ohne weitere Nachfrage. Gesperrte Items bleiben
-// geschützt. Wird beim Verlassen des Inventars / Tab-Wechsel zurückgesetzt.
-let invSellMode = false;
-// Zerlegen-Modus (analog Verkaufsmodus): einmal aktiviert, zerlegt jeder Klick
-// das Item sofort zu Crafting-Materialien. Schließt sich mit dem Verkaufsmodus
-// gegenseitig aus.
-let invSalvageMode = false;
 
-// Verkaufs-/Zerlege-Modus beenden – z. B. beim Verlassen des Inventar-Tabs (etwa
-// zum Händler). War ein Modus aktiv, wird das Inventar neu gezeichnet, damit die
-// Modus-Knöpfe beim nächsten Öffnen wieder deaktiviert sind.
-export function resetInvSellMode(){
-  if(!invSellMode && !invSalvageMode) return;
-  invSellMode = false;
-  invSalvageMode = false;
-  hideTooltip();
-  renderInventory();
-}
+// Früher gab es Verkaufs-/Zerlege-Modi; die Kopf-Knöpfe sind jetzt
+// Massen-Aktionen („Alles verkaufen"/„Alles zerlegen"). Stub bleibt erhalten,
+// da main.js ihn beim Tab-Wechsel aufruft.
+export function resetInvSellMode(){}
 
 function filteredSortedInventory(){
   let items = state.inventory.filter(it => {
@@ -509,7 +496,7 @@ export function renderInventory(){
     '<div class="inv-subtab'+(invTab==='gear'?' active':'')+'" data-tab="gear">🎒 Ausrüstung</div>'+
     '<div class="inv-subtab'+(invTab==='consum'?' active':'')+'" data-tab="consum">🧪 Verbrauch</div>';
   subtabs.querySelectorAll('.inv-subtab').forEach(el => el.addEventListener('click', ()=>{
-    invTab = el.dataset.tab; invSellMode = false; invSalvageMode = false; hideTooltip(); renderInventory();
+    invTab = el.dataset.tab; hideTooltip(); renderInventory();
   }));
   panel.appendChild(subtabs);
 
@@ -522,31 +509,13 @@ export function renderInventory(){
   head.className = 'inv-head';
   head.innerHTML = '<h2>🎒 Ausrüstung</h2>'+
     '<div class="inv-head-right">'+
-      '<button class="btn '+(invSellMode?'danger':'ghost')+' inv-sell-toggle" id="invSellToggle">'+
-        (invSellMode?'✖️ Verkaufen beenden':'💰 Verkaufen')+'</button>'+
-      '<button class="btn '+(invSalvageMode?'danger':'ghost')+' inv-salvage-toggle" id="invSalvageToggle">'+
-        (invSalvageMode?'✖️ Zerlegen beenden':'♻️ Zerlegen')+'</button>'+
+      '<button class="btn ghost inv-sell-toggle" id="invSellAll">💰 Alles verkaufen</button>'+
+      '<button class="btn ghost inv-salvage-toggle" id="invSalvageAll">♻️ Alles zerlegen</button>'+
       '<span class="count'+(full?' full':'')+'">'+total+' / '+cap+'</span>'+
     '</div>';
   panel.appendChild(head);
-  head.querySelector('#invSellToggle').addEventListener('click', async ()=>{
-    if(invSellMode){ invSellMode = false; renderInventory(); return; }
-    const ok = await confirmDialog({
-      title:'Verkaufsmodus aktivieren?', emoji:'💰', danger:true,
-      body:'Solange der Modus aktiv ist, wird jedes angeklickte Item <b>sofort und ohne weitere Nachfrage</b> verkauft.<br>Gesperrte Items (🔒) sind geschützt.',
-      confirmText:'Aktivieren', cancelText:'Abbrechen' });
-    if(!ok) return;
-    invSellMode = true; invSalvageMode = false; hideTooltip(); renderInventory();
-  });
-  head.querySelector('#invSalvageToggle').addEventListener('click', async ()=>{
-    if(invSalvageMode){ invSalvageMode = false; renderInventory(); return; }
-    const ok = await confirmDialog({
-      title:'Zerlegen-Modus aktivieren?', emoji:'♻️', danger:true,
-      body:'Solange der Modus aktiv ist, wird jedes angeklickte Item <b>sofort und ohne weitere Nachfrage</b> zu Materialien zerlegt.<br>Gesperrte Items (🔒) sind geschützt.',
-      confirmText:'Aktivieren', cancelText:'Abbrechen' });
-    if(!ok) return;
-    invSalvageMode = true; invSellMode = false; hideTooltip(); renderInventory();
-  });
+  head.querySelector('#invSellAll').addEventListener('click', sellAllItems);
+  head.querySelector('#invSalvageAll').addEventListener('click', salvageAllItems);
 
   // Filter-/Sortier-Leiste
   const ctrl = document.createElement('div');
@@ -577,10 +546,8 @@ export function renderInventory(){
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
   if(!total) hint.textContent = 'Geh auf Abenteuer, um Ausrüstung zu finden!';
-  else if(invSellMode) hint.innerHTML = '💰 <b>Verkaufsmodus aktiv</b> – tippe ein Item, um es sofort zu verkaufen. 🔒 gesperrte Items bleiben geschützt.';
-  else if(invSalvageMode) hint.innerHTML = '♻️ <b>Zerlege-Modus aktiv</b> – tippe ein Item, um es sofort zu Materialien zu zerlegen. 🔒 gesperrte Items bleiben geschützt.';
-  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten, Sperren oder direkt <b>Verkaufen</b> – oder kauf beim Händler mehr Platz.';
-  else hint.textContent = 'Klick ein Item: ausrüsten, vergleichen oder 🔒 sperren.';
+  else if(full) hint.innerHTML = '⚠️ Voll! Klick ein Item zum Ausrüsten/Sperren oder nutze oben <b>Alles verkaufen/zerlegen</b> – oder kauf beim Händler mehr Platz.';
+  else hint.innerHTML = 'Klick ein Item: ausrüsten, vergleichen, 🔒 sperren, verkaufen oder zerlegen. Oben: <b>Alles verkaufen/zerlegen</b> (🔒 ausgenommen).';
   panel.appendChild(hint);
 }
 // Nur das Grid neu bauen (für Live-Suche, ohne Fokusverlust im Suchfeld)
@@ -590,7 +557,7 @@ function renderInventoryGridOnly(){
 function buildInvGrid(wrap){
   const items = filteredSortedInventory();
   const grid = document.createElement('div');
-  grid.className = 'backpack' + (invSellMode ? ' sell-mode' : '') + (invSalvageMode ? ' salvage-mode' : '');
+  grid.className = 'backpack';
   const cells = Math.max(invCapacity(), state.inventory.length, items.length);
   for(let i=0;i<cells;i++){
     const it = items[i];
@@ -606,32 +573,14 @@ function buildInvGrid(wrap){
       const blocked = !canEquip(it);
       if(blocked) cell.classList.add('not-equippable');
       const locked = isLocked(it.id);
-      // Im Verkaufs-/Zerlege-Modus zeigt jede (nicht gesperrte) Zelle den
-      // Erlös bzw. die Material-Ausbeute als Overlay.
-      if(invSellMode && !locked) cell.classList.add('sellable');
-      if(invSellMode && locked)  cell.classList.add('sell-locked');
-      if(invSalvageMode && !locked) cell.classList.add('salvageable');
-      if(invSalvageMode && locked)  cell.classList.add('sell-locked');
-      let modeOverlay = '';
-      if(invSellMode && !locked) modeOverlay = '<span class="bp-sell">🪙 '+fmtBig(sellPrice(it))+'</span>';
-      else if(invSalvageMode && !locked){
-        const y = salvageYield(it); const m = MATERIAL_BY_KEY[y.key];
-        modeOverlay = '<span class="bp-salvage">'+(m?m.icon:'✨')+' +'+y.amount+'</span>';
-      }
       cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
         (locked?'<span class="bp-lock">🔒</span>':'')+
         (blocked?'<span class="bp-noequip" title="Deine Klasse kann das nicht tragen">✋</span>':'')+
         ((it.upgradeLevel||0)>0?'<span class="bp-upg">+'+it.upgradeLevel+'</span>':'')+
         (it.proc?'<span class="bp-proc">★</span>':'')+
-        modeOverlay+
         '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it, { compare:true });
-      cell.addEventListener('click', (ev)=>{
-        hideTooltip();
-        if(invSellMode){ quickSell(it, ev); return; }
-        if(invSalvageMode){ quickSalvage(it, ev); return; }
-        openItemPreview(it);
-      });
+      cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it); });
     } else {
       cell.innerHTML = '<span class="bp-empty">＋</span>';
     }
@@ -640,32 +589,41 @@ function buildInvGrid(wrap){
   wrap.appendChild(grid);
 }
 
-// Sofortverkauf im Verkaufsmodus: ohne Nachfrage verkaufen, Erlös als
-// Floating-Text an der Klickposition einblenden und das Grid neu aufbauen.
-function quickSell(it, ev){
-  if(isLocked(it.id)){ toast('🔒 Gesperrtes Item – erst entsperren.'); return; }
-  const x = ev ? ev.clientX : window.innerWidth/2;
-  const y = ev ? ev.clientY : window.innerHeight/2;
-  const price = sellItem(it.id);
-  if(!price){ toast('Konnte nicht verkauft werden.'); return; }
-  goldPop(x, y, '+'+fmtBig(price));
-  // Vollständig neu rendern, damit Zähler (x / y) und Hinweis stimmen. Der
-  // Verkaufsmodus bleibt aktiv (Modulvariable), der Coin-Stand pflegt der Listener.
-  renderInventory();
+// Massen-Verkauf: alle NICHT gesperrten Items des Inventars auf einmal verkaufen
+// (mit Bestätigung samt Gesamterlös). Gesperrte (🔒) bleiben unangetastet.
+async function sellAllItems(){
+  const items = state.inventory.filter(it => !isLocked(it.id));
+  if(!items.length){ toast('Nichts zu verkaufen (alles gesperrt oder leer).'); return; }
+  const total = items.reduce((s,it)=> s + sellPrice(it), 0);
+  const ok = await confirmDialog({
+    title:'Alles verkaufen?', emoji:'💰', danger:true,
+    body:'<b>'+items.length+'</b> Gegenstand'+(items.length>1?'e':'')+' für insgesamt 🪙 <b>'+fmtBig(total)+'</b> Coins verkaufen?<br>🔒 gesperrte Items bleiben erhalten.',
+    confirmText:'Alles verkaufen', cancelText:'Abbrechen' });
+  if(!ok) return;
+  let sum = 0, n = 0;
+  for(const it of items.slice()){ const p = sellItem(it.id); if(p){ sum += p; n++; } }
+  renderAll();
+  if(n) toast('💰 '+n+' verkauft · +'+fmtBig(sum)+' Coins');
 }
 
-// Sofort-Zerlegen im Zerlege-Modus: ohne Nachfrage zerlegen, gewonnene
-// Materialien als Floating-Text (wie der Coin-Pop) an der Klickposition zeigen.
-function quickSalvage(it, ev){
-  if(isLocked(it.id)){ toast('🔒 Gesperrtes Item – erst entsperren.'); return; }
-  const x = ev ? ev.clientX : window.innerWidth/2;
-  const y = ev ? ev.clientY : window.innerHeight/2;
-  const res = salvage(it.id);
-  if(!res.ok){ toast('Konnte nicht zerlegt werden.'); return; }
-  const m = MATERIAL_BY_KEY[res.key];
-  goldPop(x, y, (m?m.icon:'✨')+' +'+res.amount);
-  // Schmiede-Tab spiegelt den Materialstand → komplett neu rendern.
-  renderInventory(); renderForge();
+// Massen-Zerlegen: alle NICHT gesperrten Items zu Materialien zerlegen (mit
+// Bestätigung samt Gesamtausbeute). Gesperrte (🔒) bleiben erhalten.
+async function salvageAllItems(){
+  const items = state.inventory.filter(it => !isLocked(it.id));
+  if(!items.length){ toast('Nichts zu zerlegen (alles gesperrt oder leer).'); return; }
+  // Erwartete Gesamtausbeute je Material für die Vorschau aufsummieren.
+  const totals = {};
+  for(const it of items){ const y = salvageYield(it); totals[y.key] = (totals[y.key]||0) + y.amount; }
+  const yieldStr = MATERIALS.filter(m => totals[m.key]).map(m => m.icon+' '+totals[m.key]+' '+m.name).join(' · ');
+  const ok = await confirmDialog({
+    title:'Alles zerlegen?', emoji:'♻️', danger:true,
+    body:'<b>'+items.length+'</b> Gegenstand'+(items.length>1?'e':'')+' zerlegen zu:<br>'+yieldStr+'<br>🔒 gesperrte Items bleiben erhalten.',
+    confirmText:'Alles zerlegen', cancelText:'Abbrechen' });
+  if(!ok) return;
+  let n = 0;
+  for(const it of items.slice()){ if(salvage(it.id).ok) n++; }
+  renderAll();
+  if(n) toast('♻️ '+n+' zerlegt · '+yieldStr);
 }
 
 function renderConsumables(panel){
@@ -686,11 +644,39 @@ function renderConsumables(panel){
     list.appendChild(card);
   }
   panel.appendChild(list);
+
+  // ---- Schmiede-Materialien (eigene Kategorie) ----------------------
+  const mats = state.materials || {};
+  const ownedMats = MATERIALS.filter(m => (mats[m.key]||0) > 0);
+  const matHead = document.createElement('h3');
+  matHead.className = 'consum-cat';
+  matHead.textContent = '⚒️ Schmiede-Materialien';
+  panel.appendChild(matHead);
+  if(ownedMats.length){
+    const matList = document.createElement('div');
+    matList.className = 'consum-list';
+    for(const m of ownedMats){
+      const card = document.createElement('div');
+      card.className = 'consum-card mat-card';
+      card.innerHTML = '<div class="cc-icon">'+m.icon+'</div>'+
+        '<div class="cc-body"><div class="cc-name">'+m.name+'</div>'+
+        '<div class="cc-desc">Material zum Aufwerten & Verzaubern in der Schmiede. Im Handel tauschbar.</div></div>'+
+        '<div class="cc-count">×'+fmtBig(mats[m.key])+'</div>';
+      matList.appendChild(card);
+    }
+    panel.appendChild(matList);
+  } else {
+    const mh = document.createElement('p');
+    mh.className = 'inv-hint';
+    mh.textContent = 'Noch keine Materialien – zerlege Items im Inventar (♻️ Zerlegen).';
+    panel.appendChild(mh);
+  }
+
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
   hint.textContent = n > 0
     ? 'Heiltränke setzt du während eines Bosskampfes über den Heiltrank-Knopf ein.'
-    : 'Noch keine Verbrauchsgegenstände – finde Heiltränke auf Abenteuern!';
+    : 'Tipp: Heiltränke findest du auf Abenteuern, Materialien durch Zerlegen.';
   panel.appendChild(hint);
 }
 
