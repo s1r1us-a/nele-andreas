@@ -645,6 +645,11 @@ let _dUnsubLobby = null, _dUnsubCombat = null, _dCountTimer = null;
 let _dStarting = false, _dArena = false;
 let _dCountTarget = 0, _dStartWatchdog = null;
 
+// Code-loser Einstieg (Schiffe-versenken-Stil): genau zwei Spieler:innen teilen
+// sich EINE feste Duell-Arena. Wer zuerst „startet" wird Host, der/die andere
+// sieht automatisch die Herausforderung und nimmt sie ohne Code an.
+const DUEL_FIXED = 'arena';
+
 function cap(k){ return k ? k[0].toUpperCase() + k.slice(1) : ''; }
 function dMyName(){ return cap(userKey) || 'Du'; }
 
@@ -677,44 +682,79 @@ export function openDuelLobby(){
   // Während eines laufenden Abenteuers ist der Held unterwegs – kein Duell.
   if(expeditionActive()){ toast('🧭 Dein Held ist gerade auf Abenteuer – erst zurückkehren.'); return; }
   cleanupDuel(false);
+  // EIN Listener auf die feste Arena: zeigt zunächst Einstieg/Einladung; sobald wir
+  // erstellt/beigetreten sind (_dId gesetzt), übernimmt onDuelUpdate.
+  _dUnsubLobby = listenDuel(DUEL_FIXED, onDuelEntry);
+  renderDuelEntry(null);
+}
+
+// Einstiegs-Phase (noch nicht Teil der Arena). Battleship-Stil: existiert eine
+// Wartelobby des Partners, automatisch die Herausforderung anbieten.
+function onDuelEntry(lobby){
+  if(_dId){ onDuelUpdate(lobby); return; }   // bereits Teilnehmer:in → normaler Fluss
+  // Verwaiste eigene Lobby (z. B. nach Reload) übernehmen.
+  if(lobby && lobby.host === userKey && lobby.status !== 'ended'){
+    _dId = DUEL_FIXED; _dHost = true; _dStake = lobby.stake || 0;
+    onDuelUpdate(lobby); return;
+  }
+  const invite = lobby && lobby.host === otherKey() && lobby.status === 'waiting' && !lobby.guest;
+  renderDuelEntry(invite ? lobby : null);
+}
+
+function renderDuelEntry(invite){
+  if(invite){
+    openModal(
+      '<h2>⚔️🆚 Duell – Herausforderung!</h2>'+
+      '<div class="sub"><b>'+cap(invite.hostName || otherKey())+'</b> fordert dich heraus! '+
+        'Einsatz: 🪙 '+fmtBig(invite.stake||0)+' – der Sieger bekommt den Pott. '+
+        '(Deine Coins: 🪙 '+fmtBig(getCoins())+')</div>'+
+      '<div class="duel-box">'+
+        '<div class="duel-actions">'+
+          '<button class="btn" id="duelAcceptBtn">Annehmen ✅</button>'+
+          '<button class="btn ghost" id="duelHomeClose">Schließen</button>'+
+        '</div>'+
+        '<div class="duel-status" id="duelStatus"></div>'+
+      '</div>');
+    $('#duelAcceptBtn').addEventListener('click', duelJoin);
+    $('#duelHomeClose').addEventListener('click', ()=>{ cleanupDuel(false); closeModal(); });
+    return;
+  }
   openModal(
     '<h2>⚔️🆚 Duell – Live-PvP</h2>'+
     '<div class="sub">Tritt live gegen <b>'+cap(otherKey())+'</b> an – beide setzen Coins ein, der Sieger bekommt den Pott. '+
       'Eure echten Werte zählen. (Deine Coins: 🪙 '+fmtBig(getCoins())+')</div>'+
     '<div class="duel-box">'+
       '<label class="duel-row">Einsatz 🪙 <input id="duelStake" type="number" min="0" value="50"></label>'+
-      '<label class="duel-row">Code <input id="duelCode" type="text" placeholder="z. B. nele"></label>'+
       '<div class="duel-actions">'+
-        '<button class="btn" id="duelCreateBtn">Lobby erstellen</button>'+
-        '<button class="btn ghost" id="duelJoinBtn">Beitreten</button>'+
+        '<button class="btn" id="duelCreateBtn">Duell starten</button>'+
         '<button class="btn ghost" id="duelHomeClose">Schließen</button>'+
       '</div>'+
-      '<div class="duel-status" id="duelStatus"></div>'+
+      '<div class="duel-status" id="duelStatus">Warte auf '+cap(otherKey())+' …</div>'+
     '</div>');
   $('#duelCreateBtn').addEventListener('click', duelCreate);
-  $('#duelJoinBtn').addEventListener('click', duelJoin);
   $('#duelHomeClose').addEventListener('click', ()=>{ cleanupDuel(false); closeModal(); });
 }
 
 async function duelCreate(){
   const stake = Math.max(0, parseInt($('#duelStake').value, 10) || 0);
   if(getCoins() < stake){ toast('🪙 Dafür reichen deine Coins nicht.'); return; }
-  const code = ($('#duelCode').value || '').trim();
+  // _dId/_dHost vor dem Write setzen, damit der laufende Listener sofort als
+  // Teilnehmer:in nach onDuelUpdate delegiert.
+  _dId = DUEL_FIXED; _dHost = true; _dStake = stake;
   try {
-    _dHost = true; _dStake = stake;
-    _dId = await createDuel(dMyName(), classOf(state).id, stake, code);
-    _dUnsubLobby = listenDuel(_dId, onDuelUpdate);
-  } catch(e){ toast('Fehler: ' + e.message); _dHost = false; _dId = null; }
+    await createDuel(dMyName(), classOf(state).id, stake, DUEL_FIXED);
+  } catch(e){
+    // Feste Arena bereits belegt (z. B. verwaiste Lobby) → räumen und erneut versuchen.
+    try { await leaveDuel(DUEL_FIXED); await createDuel(dMyName(), classOf(state).id, stake, DUEL_FIXED); }
+    catch(e2){ toast('Fehler: ' + e2.message); _dHost = false; _dId = null; }
+  }
 }
 
 async function duelJoin(){
-  const code = ($('#duelCode').value || '').trim();
-  if(!code){ toast('Bitte einen Lobby-Code eingeben.'); return; }
+  // _dId vor dem Write setzen (siehe duelCreate) – der Guest-Write weckt den Listener.
+  _dId = DUEL_FIXED; _dHost = false;
   try {
-    _dHost = false;
-    await joinDuel(code, dMyName(), classOf(state).id);
-    _dId = code;
-    _dUnsubLobby = listenDuel(_dId, onDuelUpdate);
+    await joinDuel(DUEL_FIXED, dMyName(), classOf(state).id);
   } catch(e){ toast('Fehler: ' + e.message); _dId = null; }
 }
 
@@ -776,7 +816,7 @@ function renderDuelLobby(lobby){
   const meReady = _dHost ? lobby.hostReady : lobby.guestReady;
   openModal(
     '<h2>⚔️🆚 Duell-Lobby</h2>'+
-    '<div class="sub">Einsatz: 🪙 '+fmtBig(lobby.stake||0)+' · Code: <b>'+_dId+'</b> (teile ihn mit '+cap(otherKey())+')</div>'+
+    '<div class="sub">Einsatz: 🪙 '+fmtBig(lobby.stake||0)+(lobby.guest ? '' : ' · Warte auf '+cap(otherKey())+' …')+'</div>'+
     '<div class="duel-vs">'+chip(lobby.hostName, lobby.hostReady, lobby.host)+
       '<span class="duel-vs-mid">VS</span>'+chip(lobby.guestName, lobby.guestReady, lobby.guest)+'</div>'+
     '<div class="duel-status" id="duelStatus"></div>'+

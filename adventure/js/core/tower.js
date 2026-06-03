@@ -1,6 +1,8 @@
 /* =====================================================================
-   TURM DES WAHNSINNS – Multiplayer-Koop-Modus.
+   TURM DES WAHNSINNS – Solo ODER Koop.
    Lobby-Verwaltung + Kampf-Engine (Host-gesteuert, RTDB-synchronisiert).
+   Solo: nur der Front-Held; der Boss bleibt gleich stark, trifft aber nur ihn.
+   Koop: tritt der Partner einer Wartelobby bei, gilt der Spielstand des Hosts.
    ===================================================================== */
 import { db, ref, get, set, update, remove, push, onValue, onDisconnect } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
@@ -21,9 +23,9 @@ const ABIL_PATH   = id => 'tower/abil/'     + id;
 const HEROES_PATH = id => 'tower/heroes/'   + id;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
-// Koop-Modus (immer zu zweit): Gegner deutlich zäher & gefährlicher als
-// Solo-Bosse. Basiswerte gegenüber dem Solo-Einstieg ~3× HP / ~2× ATK,
-// damit auch ein gut ausgerüstetes Duo schon die ersten Stockwerke spürt.
+// Turm-Bosse sind deutlich zäher & gefährlicher als die regulären Solo-Bosse:
+// Basiswerte ~3× HP / ~2× ATK. Im Koop teilen sich zwei Helden den Schaden,
+// im Solo nimmt der eine Held alles ab – die Bosswerte bleiben dabei identisch.
 const TOWER_BASE_HP  = 2200;
 const TOWER_BASE_ATK = 28;
 const TOWER_HP_SCALE = 1.75;
@@ -147,7 +149,7 @@ export function sanitizeLobbyCode(code){
   return String(code || '').trim().replace(/[.$#\[\]\/\s]+/g, '-').slice(0, 40);
 }
 
-export async function createLobby(userKey, displayName, classId, desiredCode){
+export async function createLobby(userKey, displayName, classId, desiredCode, startFloor){
   let lobbyId;
   const code = sanitizeLobbyCode(desiredCode);
   if(code){
@@ -162,11 +164,39 @@ export async function createLobby(userKey, displayName, classId, desiredCode){
   await set(ref(db, LOBBY_PATH(lobbyId)), {
     host: userKey, hostName: displayName, hostClass: classId || DEFAULT_CLASS_ID,
     guest: null,   guestName: null,       guestClass: null,
-    status: 'waiting', floor: 1,
+    status: 'waiting', floor: Math.max(1, startFloor | 0) || 1,
     createdAt: Date.now(),
     hostReady: false, guestReady: false,
   });
   // Host-Disconnect → Lobby + Kampf-/Skill-Daten automatisch entfernen (B3, Aufräumen).
+  armDisconnectCleanup(lobbyId);
+  return lobbyId;
+}
+
+// Eigene Solo-/Koop-Lobby unter dem festen, host-bezogenen Pfad `tower/lobbies/<userKey>`
+// sicherstellen (code-loser Einstieg, Schiffe-versenken-Stil). Existiert sie bereits und
+// gehört mir, wird sie übernommen (mit ggf. neuem Startstockwerk, solange noch kein Gast
+// und kein laufender Kampf); sonst frisch angelegt. Liefert die feste Lobby-ID (= userKey).
+export async function ensureSoloLobby(userKey, displayName, classId, startFloor){
+  const lobbyId = userKey;
+  const snap = await get(ref(db, LOBBY_PATH(lobbyId)));
+  const floor = Math.max(1, startFloor | 0) || 1;
+  if(snap.exists() && snap.val().host === userKey){
+    const cur = snap.val();
+    // Verwaiste Wartelobby ohne Gast → Stockwerk aus dem Spielstand übernehmen.
+    if(cur.status !== 'in_progress' && !cur.guest){
+      await update(ref(db, LOBBY_PATH(lobbyId)), { floor, status: 'waiting', hostReady: false, guestReady: false, startAt: null });
+    }
+    armDisconnectCleanup(lobbyId);
+    return lobbyId;
+  }
+  await set(ref(db, LOBBY_PATH(lobbyId)), {
+    host: userKey, hostName: displayName, hostClass: classId || DEFAULT_CLASS_ID,
+    guest: null,   guestName: null,       guestClass: null,
+    status: 'waiting', floor,
+    createdAt: Date.now(),
+    hostReady: false, guestReady: false,
+  });
   armDisconnectCleanup(lobbyId);
   return lobbyId;
 }
@@ -282,6 +312,7 @@ async function syncFight(fight){
   const now = Date.now();
   const data = {
     floor:       fight.floor,
+    solo:        !!fight.solo,
     bossHp:      Math.ceil(fight.bossHp),
     bossMaxHp:   fight.bossMaxHp,
     frontHp:     Math.ceil(fight.frontHp),
@@ -345,8 +376,14 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
   const boss = towerBossFor(floor);
   keys = keys || {};
 
+  // Solo-Modus: kein zweiter Held. Der Boss bleibt EXAKT gleich stark, trifft aber
+  // nur den vorhandenen Front-Helden (volle ATK statt Aufteilung 70/30). Back-Felder
+  // defensiv auf 0/false, damit die Coop-Engine ohne Sonderpfade weiterläuft.
+  const solo = !backStats;
+  const bs = backStats || {};
+
   const fight = {
-    lobbyId, floor, boss,
+    lobbyId, floor, boss, solo,
     bossMaxHp:  boss.maxHp,  bossHp:  boss.maxHp,
     bossAtkBase: boss.atk,   bossMech: boss.mechanic,
     frontMaxHp: frontStats.maxHp, frontHp: frontStats.maxHp,
@@ -362,19 +399,19 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
     frontAbility: abilityOf(frontStats.classId),
     frontAbility2: ability2Of(frontStats.classId),
-    backMaxHp:  backStats.maxHp,  backHp: backStats.maxHp,
-    backAtk:    backStats.atk,    backArmor: backStats.armor,
-    backCrit:   backStats.critChance, backCritMult: backStats.critMult,
-    backInterval:  backStats.interval, backDodge: backStats.dodge,
-    backVers:   backStats.versatility, backLifesteal: backStats.lifesteal,
-    backBlock:  backStats.block || 0, backThorns: backStats.thorns || 0,
-    backIsHealer: backStats.classId === 'heiler',
-    backHealMult: backStats.healMult,
-    backUsesStab: backStats.usesStab || false,
-    backName, backTier: backStats.tier,
-    backKey: keys.backKey || '', backClass: backStats.classId || '',
-    backAbility: abilityOf(backStats.classId),
-    backAbility2: ability2Of(backStats.classId),
+    backMaxHp:  bs.maxHp || 0,  backHp: bs.maxHp || 0,
+    backAtk:    bs.atk || 0,     backArmor: bs.armor || 0,
+    backCrit:   bs.critChance || 0, backCritMult: bs.critMult || 0,
+    backInterval:  bs.interval || frontStats.interval, backDodge: bs.dodge || 0,
+    backVers:   bs.versatility || 0, backLifesteal: bs.lifesteal || 0,
+    backBlock:  bs.block || 0, backThorns: bs.thorns || 0,
+    backIsHealer: bs.classId === 'heiler',
+    backHealMult: bs.healMult,
+    backUsesStab: bs.usesStab || false,
+    backName: backName || '', backTier: bs.tier || 0,
+    backKey: keys.backKey || '', backClass: bs.classId || '',
+    backAbility:  solo ? null : abilityOf(bs.classId),
+    backAbility2: solo ? null : ability2Of(bs.classId),
     turn:0, over:false, won:false,
     enrageMult:1, berserkMult:1, poison:0, shieldTurns:0,
     speed:1, log:{}, logCount:0,
@@ -605,8 +642,9 @@ function exchange(fight){
   }
 
   // ---- Hinten: heilt bei < 35% oder greift an ---
-  // (Im Nebelschritt verborgen → setzt diese Runde aus.)
-  if(fight.backHp > 0 && now >= (fight.backStealthUntil||0)){
+  // (Im Nebelschritt verborgen → setzt diese Runde aus. Im Solo-Modus gibt es
+  //  keinen zweiten Helden.)
+  if(!fight.solo && fight.backHp > 0 && now >= (fight.backStealthUntil||0)){
     const frontLow = fight.frontHp > 0 && fight.frontHp < fight.frontMaxHp * 0.35;
     if(fight.backIsHealer && frontLow){
       const healAmt = Math.round(fight.backAtk * 2.0 * (fight.backHealMult || 1));
@@ -681,11 +719,15 @@ function exchange(fight){
     // Skill: Schildwall reduziert Gruppen-Schaden (B14)
     const wallFactor = Date.now() < (fight.groupDmgReduceUntil||0) ? (1 - (fight.groupDmgReducePct||0)) : 1;
 
+    // Schadensanteil der Front: Solo nimmt den vollen Bossschlag (kein zweiter Held),
+    // im Coop wie gehabt 70 %.
+    const frontShare = fight.solo ? 1.0 : FRONT_SHARE;
+
     // Front-Treffer
     if(!frontDead){
       const effArmorFront = breathTurn ? 0 : fight.frontArmor;
       const effBlockFront = breathTurn ? 0 : fight.frontBlock;
-      const effAtkFront   = fight.shieldTurns > 0 ? bossAtk * 0.4 * FRONT_SHARE : bossAtk * FRONT_SHARE;
+      const effAtkFront   = fight.shieldTurns > 0 ? bossAtk * 0.4 * frontShare : bossAtk * frontShare;
       let { dmg: fd, dodged: dFront } = takeBossDmg(effAtkFront, effArmorFront, fight.frontDodge, fight.frontVers, effBlockFront);
       if(fd > 0 && wallFactor < 1) fd = Math.max(1, Math.round(fd * wallFactor));
       if(dFront){
@@ -711,20 +753,23 @@ function exchange(fight){
       }
     }
 
-    // Hinten-Treffer (voller Schaden wenn Front tot)
-    const backShare = frontDead ? 1.0 : BACK_SHARE;
-    const effAtkBack = fight.shieldTurns > 0 ? bossAtk * 0.4 * backShare : bossAtk * backShare;
-    const effArmorBack = breathTurn ? 0 : fight.backArmor;
-    const effBlockBack = breathTurn ? 0 : fight.backBlock;
-    let { dmg: bd, dodged: dBack } = takeBossDmg(effAtkBack, effArmorBack, fight.backDodge, fight.backVers, effBlockBack);
-    if(bd > 0 && wallFactor < 1) bd = Math.max(1, Math.round(bd * wallFactor));
-    if(dBack){
-      addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');
-      events.push({ s:'boss', t:'back', o:1 });
-    } else if(bd > 0){
-      fight.backHp = Math.max(0, fight.backHp - bd);
-      addLog(fight, '💥 Boss → ' + fight.backName + ': -' + fmtBig(bd) + ' HP', '#ff6b6b');
-      events.push({ s:'boss', t:'back', d:bd });
+    // Hinten-Treffer (voller Schaden wenn Front tot) – im Solo-Modus entfällt er,
+    // der gesamte Bossschaden ging bereits auf die Front.
+    if(!fight.solo){
+      const backShare = frontDead ? 1.0 : BACK_SHARE;
+      const effAtkBack = fight.shieldTurns > 0 ? bossAtk * 0.4 * backShare : bossAtk * backShare;
+      const effArmorBack = breathTurn ? 0 : fight.backArmor;
+      const effBlockBack = breathTurn ? 0 : fight.backBlock;
+      let { dmg: bd, dodged: dBack } = takeBossDmg(effAtkBack, effArmorBack, fight.backDodge, fight.backVers, effBlockBack);
+      if(bd > 0 && wallFactor < 1) bd = Math.max(1, Math.round(bd * wallFactor));
+      if(dBack){
+        addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');
+        events.push({ s:'boss', t:'back', o:1 });
+      } else if(bd > 0){
+        fight.backHp = Math.max(0, fight.backHp - bd);
+        addLog(fight, '💥 Boss → ' + fight.backName + ': -' + fmtBig(bd) + ' HP', '#ff6b6b');
+        events.push({ s:'boss', t:'back', d:bd });
+      }
     }
 
     // Frost → nächste Runde verlangsamt (über erhöhtes Interval)
@@ -733,8 +778,8 @@ function exchange(fight){
     fight.events = events;
     await syncFight(fight);
 
-    // Niederlage?
-    if(fight.frontHp <= 0 && fight.backHp <= 0){
+    // Niederlage? Solo: sobald der einzige Held fällt; Coop: beide gefallen.
+    if(fight.solo ? fight.frontHp <= 0 : (fight.frontHp <= 0 && fight.backHp <= 0)){
       fight.over = true; fight.won = false;
       addLog(fight, '💀 Beide Helden gefallen. Der Turm wird euch ewig heimsuchen…', '#ff6b6b');
       clearTimeout(_fightTimer);
