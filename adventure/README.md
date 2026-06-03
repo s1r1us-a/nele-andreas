@@ -34,11 +34,13 @@ adventure/                  # gesamtes Beiwerk des Spiels gebündelt
       slots.js              #   Ausrüstungsslots / Paper-Doll
       bosses.js             #   Gebiete, Mechaniken, 40 Bosse + Endlos-Skalierung
       expeditions.js        #   Expeditions-Dauern
+      materials.js          #   Crafting-Materialien + Aufwert-/Reroll-/Salvage-Kosten
       character-options.js  #   Geschlecht/Frisuren/Farben
     core/                   # Spiel-Logik
       state.js              #   State, Laden/Speichern, Migration (Version 4)
       loot.js               #   Seltenheits-Gewichtung
-      items.js              #   Item-Generierung, Affixe, Procs, Wert, Verkauf, Equip, Sperre
+      items.js              #   Item-Generierung, Affixe, Procs, Wert, Verkauf, Equip, Sperre, Pending-Loot
+      crafting.js           #   Schmiede: Zerlegen, Aufwerten, Verzaubern, Konvertieren
       character.js          #   XP/Level, Gesamt-Stats, Kampfwerte
       avatar.js             #   gezeichneter SVG-Avatar
       expedition.js         #   Abenteuer auf Zeit (offline-sicher)
@@ -47,9 +49,33 @@ adventure/                  # gesamtes Beiwerk des Spiels gebündelt
     ui/                     # Darstellung & Interaktion
       dom.js                #   DOM-Helfer, Toast, Formatierung
       tooltip.js            #   Item-Tooltip + Vergleich
-      render.js             #   Render der Tabs
+      render.js             #   Render der Tabs (inkl. Zerlege-Modus + Pending-Loot-Banner)
+      forge.js              #   Schmiede-Tab: Material-Bestand, Aufwerten/Verzaubern + Aufwert-Animation
+      trade.js              #   Handel-UI (Items + Material-Kategorie)
       modals.js             #   Slot-Picker, Vorschau, Boss-Liste/Farm, Statistik, Editor, Dev, Duell-Lobby
 ```
+
+## Schmiede & Materialien (Crafting)
+
+Aktive Item-Progression statt reinem RNG-Loot:
+- **Zerlegen** (♻️-Modus im Inventar, wie der Verkaufsmodus): Items → Materialien.
+  Gewonnene Materialien erscheinen als Floating-Text (wie Coins).
+- **Aufwerten** (`upgradeLevel` 0→10): +6 % Hauptwert & +4 % je Affix pro Stufe.
+  Schreibt in `item.stat`/`item.affixes` (gesichert in `item.base`) → fließt
+  automatisch in Kampfkraft, Auto-Treffer UND Fähigkeits-Schaden/-Heilung.
+- **Verzaubern**: würfelt die Affixe neu (Aufwertungsstufe bleibt erhalten).
+- **Konvertieren**: 10 niedrigere → 1 höhere Material-Stufe (Dust-Sink).
+- Materialien (Arkanstaub ✨ / Magiesplitter 🔹 / Uressenz 🟠 / Urstoff 💠) sind
+  über das Handelsfenster in einer eigenen Kategorie **handelbar**.
+- Alle Crafting-Zahlen liegen zentral in `data/materials.js`.
+
+## Ausstehende Beute (kein Item-Verlust bei vollem Inventar)
+
+Boss- und Turm-Siege legen Beute über `giveLoot()` ab: ist das Inventar voll,
+wandert das Item in `state.pendingLoot` statt verloren zu gehen (Boss) bzw. das
+Inventar zu überfüllen (Turm). Sobald Platz frei wird, rücken die Items beim
+nächsten Render automatisch nach (`claimPendingLoot()` in `renderAll`); ein
+Banner im Abenteuer-Tab zeigt die wartende Menge.
 
 > Nur der Einstiegspunkt `abenteuer.html` liegt im Root (wie alle anderen Mini-Apps
 > des Repos). Alles andere Spiel-spezifische steckt im Ordner `adventure/`.

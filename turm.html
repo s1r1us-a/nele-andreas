@@ -185,6 +185,7 @@ import {
 } from './adventure/js/core/tower.js';
 import { rarityOf } from './adventure/js/data/rarities.js';
 import { SLOTS } from './adventure/js/data/slots.js';
+import { giveLoot } from './adventure/js/core/items.js';
 import { INV_SLOTS, INV_SLOTS_MAX } from './adventure/js/data/tuning.js';
 import { affixLinesHTML } from './adventure/js/ui/tooltip.js';
 import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
@@ -1166,17 +1167,19 @@ function showResult(won, floor){
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
     try {
       const drop = rollTowerLoot(floor);   // Seltenheit/Itemlevel skaliert mit Stockwerk
+      // Beute geht NIE verloren: passt sie nicht, wartet sie in der ausstehenden
+      // Beute (pendingLoot), statt das Inventar zu überfüllen.
+      let held = false;
       if(myState){
-        myState.inventory = myState.inventory || [];
-        myState.inventory.push(drop);
+        const added = giveLoot(myState, drop);
+        held = !added;
         saveState();                        // persistiert den eigenen Adventure-Spielstand
       }
       const r = rarityOf(drop.rarity);
       const slotName = (SLOTS[drop.slotKey] && SLOTS[drop.slotKey].name) || drop.slotKey;
       const sLbl = drop.statType === 'armor' ? 'Rüstung' : 'Schaden';
       const statCol = drop.statType === 'armor' ? '#7fd0ff' : '#ff8a5b';
-      const cap = Math.min(INV_SLOTS + ((myState && myState.extraSlots) || 0), INV_SLOTS_MAX);
-      const full = myState && myState.inventory.length > cap;
+      const full = held;
       lootHtml =
         '<div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-top:14px;'+
         'padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.28);border:1px solid '+r.color+'66">'+
@@ -1186,7 +1189,7 @@ function showResult(won, floor){
             '<div style="font-size:12px;color:var(--txt-mute)">'+r.name+' · '+slotName+' · Gegenstandsstufe '+drop.ilvl+'</div>'+
             '<div style="font-size:12px;font-weight:700;color:'+statCol+';margin-top:2px">+'+drop.stat+' '+sLbl+'</div>'+
             '<div style="font-size:11px;color:#cdc6e6">'+affixLinesHTML(drop)+'</div>'+
-            (full ? '<div style="font-size:12px;color:#ffb454;margin-top:2px">🎒 Inventar voll – verkaufe bald etwas im Abenteuer.</div>' : '')+
+            (full ? '<div style="font-size:12px;color:#ffb454;margin-top:2px">🎒 Inventar voll – der Gegenstand wartet in der ausstehenden Beute. Mach im Abenteuer Platz, dann rückt er nach.</div>' : '')+
           '</div>'+
         '</div>';
     } catch(e){ console.warn('Turm-Loot fehlgeschlagen', e); }

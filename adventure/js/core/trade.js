@@ -51,7 +51,7 @@ export async function openTrade(){
   if(!cur || !cur.open || cur.canceledBy){
     await set(ref(db, node), {
       open: true, rev: 0, updatedAt: Date.now(), openedBy: userKey,
-      offers: { [userKey]: { items: [], accepted: false }, [otherKey()]: { items: [], accepted: false } },
+      offers: { [userKey]: { items: [], materials: {}, accepted: false }, [otherKey()]: { items: [], materials: {}, accepted: false } },
       settle: { [userKey]: false, [otherKey()]: false },
       canceledBy: null,
     });
@@ -104,11 +104,34 @@ export async function setMyOffer(itemIds){
   });
 }
 
+// Angebotene Materialien einer Seite (Map key→Menge, nur >0).
+const matsTotal = m => Object.values(m||{}).reduce((s,n)=> s + (Number(n)||0), 0);
+
+// Mein Material-Angebot setzen (Map key→Menge). Reset beider Häkchen. Mengen
+// werden defensiv auf den eigenen Bestand begrenzt; 0/Leeres entfällt.
+export async function setMyMaterials(matsObj){
+  const clean = {};
+  const have = state.materials || {};
+  for(const [k,v] of Object.entries(matsObj||{})){
+    const n = Math.max(0, Math.min(Number(v)||0, have[k]||0));
+    if(n > 0) clean[k] = n;
+  }
+  await update(ref(db, NODE()), {
+    [`offers/${userKey}/materials`]: clean,
+    [`offers/${userKey}/accepted`]: false,
+    [`offers/${otherKey()}/accepted`]: false,
+    rev: ((_data && _data.rev) || 0) + 1,
+    updatedAt: Date.now(),
+  });
+}
+
 // Prüfung vor „Bereit": bezahlbar + genug Inventarplatz + nicht leer.
 export function canAccept(){
   if(!_data) return { ok: false, reason: 'Keine Sitzung' };
   const mine = myOffer().items || [], theirs = theirOffer().items || [];
-  if(mine.length === 0 && theirs.length === 0) return { ok: false, reason: 'Leeres Angebot' };
+  const myMats = matsTotal(myOffer().materials), theirMats = matsTotal(theirOffer().materials);
+  if(mine.length === 0 && theirs.length === 0 && myMats === 0 && theirMats === 0)
+    return { ok: false, reason: 'Leeres Angebot' };
   if(getCoins() < feeFor())                    return { ok: false, reason: 'Nicht genug Coins' };
   if(freeSlots() + mine.length < theirs.length) return { ok: false, reason: 'Inventar voll' };
   return { ok: true };
@@ -158,6 +181,12 @@ async function maybeSettle(){
     ensureItemSprite(it);
     state.inventory.push(it);
   }
+  // Materialien verrechnen: eigene angebotene abziehen, fremde gutschreiben.
+  if(!state.materials) state.materials = {};
+  for(const [k,n] of Object.entries(mine.materials || {}))
+    state.materials[k] = Math.max(0, (state.materials[k]||0) - (Number(n)||0));
+  for(const [k,n] of Object.entries(theirs.materials || {}))
+    state.materials[k] = (state.materials[k]||0) + (Number(n)||0);
   saveState();
   renderAll();          // Inventar/Stats sofort aktualisieren (nicht erst nach Reload).
   _appliedRev = d.rev;

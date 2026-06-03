@@ -48,6 +48,7 @@ export function tooltipHTML(it, opts={}){
     qLine = '<div class="tt-ilvl" style="color:'+col+'">Qualität '+it.quality+'%'+mark+'</div>';
   }
   const lock = isLocked(it.id) ? ' 🔒' : '';
+  const upg = (it.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">+'+it.upgradeLevel+'</span>' : '';
   // Archetyp-Fokus aus dem Item-Typ (z.B. „Fokus: Krit-Chance").
   const ty = typeOf(it);
   const focus = (ty && ty.flavorAffix && AFFIX_DEFS[ty.flavorAffix])
@@ -60,7 +61,7 @@ export function tooltipHTML(it, opts={}){
   if(!canEquip(it)){
     matLine += '<div class="tt-locked">✋ '+equipBlockReason(it)+'</div>';
   }
-  return '<div class="tt-name" style="color:'+r.color+'">'+it.name+lock+'</div>'+
+  return '<div class="tt-name" style="color:'+r.color+'">'+it.name+upg+lock+'</div>'+
     '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
     focus+
     matLine+

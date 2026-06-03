@@ -14,6 +14,7 @@ import { openBossList, openStats, openCharacterCreator,
 import { checkAdventureBadges } from './core/badges.js';
 import { otherKey } from './core/duel.js';
 import { initTradeTab, renderTrade } from './ui/trade.js';
+import { renderForge } from './ui/forge.js';
 
 // ---- Tabs -----------------------------------------------------------
 function switchTab(view){
@@ -24,6 +25,7 @@ function switchTab(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const el = $('#view-'+view); if(el) el.classList.add('active');
   if(view==='trade') renderTrade();
+  if(view==='forge') renderForge();
 }
 document.querySelectorAll('.tab').forEach(tab =>
   tab.addEventListener('click', ()=> switchTab(tab.dataset.view)));
@@ -71,7 +73,7 @@ document.addEventListener('keydown', e=>{
   const tag = (e.target && e.target.tagName) || '';
   if(tag==='INPUT' || tag==='SELECT' || tag==='TEXTAREA') return;
   if($('#arenaOverlay').classList.contains('show')) return;
-  const map = { '1':'adventure', '2':'character', '3':'talents', '4':'inventory', '5':'shop', '6':'trade' };
+  const map = { '1':'adventure', '2':'character', '3':'talents', '4':'inventory', '5':'shop', '6':'forge', '7':'trade' };
   if(map[e.key]) { switchTab(map[e.key]); return; }
   if(e.key==='b' || e.key==='B') openBossList();
   else if(e.key==='c' || e.key==='C') $('#challengeBtn').click();

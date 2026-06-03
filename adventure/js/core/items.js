@@ -158,10 +158,40 @@ export function affixScore(it){
   if(it.proc) s += 40;  // Proc-Effekt zählt zum Wert
   return s;
 }
-export const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat + affixScore(it);
-// Effektive Inventar-Kapazität: Basis + beim Händler gekaufte Plätze, gedeckelt.
-export function invCapacity(){
-  return Math.min(INV_SLOTS + (state.extraSlots||0), INV_SLOTS_MAX);
+// Aufgewertete Items (upgradeLevel) sind wertvoller: stat/Affixe sind bereits
+// erhöht (fließen automatisch ein), zusätzlich eine kleine Investitions-Prämie.
+export const itemValue = it => rarityIndex(it.rarity)*1000 + it.stat + affixScore(it) + (it.upgradeLevel||0)*500;
+// Effektive Inventar-Kapazität eines beliebigen Spielstands (auch fremder Slot
+// bzw. Turm-myState): Basis + gekaufte Plätze, gedeckelt.
+export function invCapacityOf(s){
+  return Math.min(INV_SLOTS + ((s && s.extraSlots)||0), INV_SLOTS_MAX);
+}
+// Effektive Inventar-Kapazität des aktiven Spielstands.
+export function invCapacity(){ return invCapacityOf(state); }
+
+// Gewonnenes Item in einen Spielstand legen ODER – bei vollem Inventar – in die
+// „ausstehende Beute" (pendingLoot) zurücklegen, sodass NICHTS verloren geht.
+// Liefert true, wenn es direkt ins Inventar ging, sonst false (es wartet).
+export function giveLoot(s, item){
+  if(!s) return false;
+  s.inventory = s.inventory || [];
+  s.pendingLoot = s.pendingLoot || [];
+  if(s.inventory.length < invCapacityOf(s)){ s.inventory.push(item); return true; }
+  s.pendingLoot.push(item);
+  return false;
+}
+
+// Ausstehende Beute des aktiven Spielstands nachrücken lassen, solange Platz
+// ist. Liefert die Anzahl der nachgerückten Items (0 = nichts bewegt).
+export function claimPendingLoot(){
+  const pend = state.pendingLoot;
+  if(!Array.isArray(pend) || !pend.length) return 0;
+  let moved = 0;
+  while(pend.length && state.inventory.length < invCapacity()){
+    state.inventory.push(pend.shift()); moved++;
+  }
+  if(moved) saveState();
+  return moved;
 }
 export const inventoryFull = () => state.inventory.length >= invCapacity();
 export const freeSlots = () => Math.max(0, invCapacity() - state.inventory.length);
@@ -172,7 +202,8 @@ export const sellPrice = it => {
   // damit ein besseres Item bei niedrigen Stufen nie so wenig wie das
   // schlechteste bringt. Höher berechnete Preise bleiben unverändert.
   const floor = 500 * (rarityIndex(it.rarity) + 1);
-  return Math.max(floor, price);
+  // Aufwertung schlägt sich im Verkaufswert nieder (+5 % je Stufe).
+  return Math.round(Math.max(floor, price) * (1 + (it.upgradeLevel||0)*0.05));
 };
 
 // Einzel-Item-Kampfkraft (Vergleich im Vorschau-Modal)

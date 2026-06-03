@@ -26,6 +26,10 @@ import { startBossFight, updatePotionBtn,
 import { computePlayerStats } from '../core/tower.js';
 import { db, ref, get, userKey } from '../core/firebase.js';
 import { getCoins } from '../core/coins.js';
+import { upgradeItem } from '../core/crafting.js';
+import { playUpgradeFx } from './forge.js';
+import { upgradeCost, canUpgrade, MATERIAL_BY_KEY } from '../data/materials.js';
+import { materialCount } from '../core/crafting.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
@@ -139,7 +143,16 @@ export function openItemPreview(item, fromSlotKey, backFn){
     (equipOk ? '' : ' <span style="color:#ff6b6b">— nicht tragbar</span>')+'</div>';
   // Gegenstandsstufe immer unten in Grau zeigen (wie im Tooltip / Fremdprofil).
   const ilvlLine = '<div class="preview-ilvl">Gegenstandsstufe '+item.ilvl+'</div>';
-  openModal('<h2 style="color:'+r.color+'">'+item.name+(locked?' 🔒':'')+'</h2>'+
+  // Aufwerten nur für Items im Inventar (MVP) und solange nicht maximal.
+  const inInventory = state.inventory.some(i => i.id === item.id);
+  const upBtn = (inInventory && canUpgrade(item)) ? (()=>{
+    const c = upgradeCost(item); const m = MATERIAL_BY_KEY[c.matKey];
+    const enough = materialCount(c.matKey) >= c.mat && getCoins() >= c.coins;
+    return '<button class="btn ghost" id="previewUpgrade"'+(enough?'':' disabled style="opacity:.5;cursor:not-allowed"')+
+      '>⚒️ Aufwerten ('+m.icon+' '+c.mat+' · 🪙 '+fmtBig(c.coins)+')</button>';
+  })() : '';
+  const upgTag = (item.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">+'+item.upgradeLevel+'</span>' : '';
+  openModal('<h2 style="color:'+r.color+'">'+item.name+upgTag+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+'</div>'+
     kindLine+
     (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
@@ -148,6 +161,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
     '<div class="preview-actions">'+
       '<button class="btn" id="previewEquip"'+(equipOk?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Anlegen</button>'+
       '<button class="btn ghost" id="previewSell"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+'>💰 Verkaufen (🪙 '+fmtBig(price)+')</button>'+
+      upBtn+
       '<button class="btn ghost" id="previewLock">'+(locked?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
     '</div>');
@@ -160,6 +174,15 @@ export function openItemPreview(item, fromSlotKey, backFn){
     const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Coins');
   });
   modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn); });
+  const upEl = modal().querySelector('#previewUpgrade');
+  if(upEl) upEl.addEventListener('click', async ()=>{
+    upEl.disabled = true;
+    const res = await upgradeItem(item.id);
+    if(res.ok){ playUpgradeFx(res.level); toast('⚒️ Aufgewertet auf +'+res.level+'!'); renderAll(); openItemPreview(item, fromSlotKey, backFn); }
+    else if(res.reason==='mat') toast('Nicht genug Material.');
+    else if(res.reason==='coins') toast('🪙 Nicht genug Coins.');
+    else toast('Aufwerten nicht möglich.');
+  });
   modal().querySelector('#previewCancel').addEventListener('click', ()=>{ backFn ? backFn() : closeModal(); });
 }
 

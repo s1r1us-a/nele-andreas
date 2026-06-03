@@ -13,7 +13,7 @@ import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc } from './avatar.js';
 import { buildDemonSVG } from './demon-art.js';
-import { rollItem, inventoryFull, addLog, recordDrop } from './items.js';
+import { rollItem, addLog, recordDrop, giveLoot } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
 import { affixLinesHTML } from '../ui/tooltip.js';
 import { renderAll } from '../ui/render.js';
@@ -1330,14 +1330,15 @@ function endFight(fight, win){
     let dropBlock = '';
     let rIdx = guaranteedRarityIndex(bossIndex);
     if(isFarm) rIdx = Math.max(0, rIdx - FARM.dropRarityDrop);
-    if(!inventoryFull()){
+    {
       const rk = rarityByIndex(rIdx).key;
       const drop = rollItem(bossIndex, 0, { slots: boss.loot && boss.loot.slots, forceRarityKey: rk, minIlvl: bossIndex*5 });
-      state.inventory.push(drop); addLog(drop); recordDrop(drop);
-      dropBlock = dropCardHTML(drop);
-    } else {
-      dropBlock = '<div class="arena-drop-note">🎒 Inventar voll – kein Gegenstand erhalten. '+
-        'Mach erst Platz im Inventar.</div>';
+      // Beute geht NIE verloren: passt sie nicht, wartet sie in der ausstehenden
+      // Beute, bis Platz frei ist (kein Verlust trotz Boss-Kill).
+      const added = giveLoot(state, drop); addLog(drop); recordDrop(drop);
+      dropBlock = dropCardHTML(drop) + (added ? '' :
+        '<div class="arena-drop-note">🎒 Inventar voll – der Gegenstand <b>wartet in der ausstehenden Beute</b>. '+
+        'Mach Platz im Inventar, dann rückt er automatisch nach.</div>');
     }
 
     // Belohnungs-Bausteine für die aufgeräumte Sieg-Karte sammeln.
