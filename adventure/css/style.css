@@ -963,6 +963,8 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   animation:ablazePulse .45s ease-in-out infinite alternate; }
 .combatant.stealth { opacity:.45; filter:grayscale(.3) brightness(.8) drop-shadow(0 0 10px #6a4bb0);
   transition:opacity .3s, filter .3s; }
+/* Nebelschritt: vollständig unsichtbar (verschwindet in der Rauchwolke). */
+.combatant.vanished { opacity:0 !important; transition:opacity .35s ease; }
 .combatant.freeze { animation:none !important; filter:brightness(1.6) saturate(.4) drop-shadow(0 0 12px #fff); }
 
 /* Goldene Avatar-Kuppel (Unbeugsam). */

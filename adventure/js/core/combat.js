@@ -179,6 +179,8 @@ function exchange(fight){
   const stunned = hasMech(fight,'betaeubung') && Math.random() < 0.12;
   if(stunned){
     mechFloat('hero', '😵 Betäubt', '#7fd0ff');
+  } else if(Date.now() < (fight.stealthUntil||0)){
+    // Nebelschritt: im Nebel verborgen – der Held greift nicht an (Überfall beim Auftauchen).
   } else if(fight.invulnTurns > 0){
     mechFloat('boss', '✨ Immun', '#9ec5ff');
   } else {
@@ -382,7 +384,7 @@ export function abilityEffectShort(a){
     case 'lifesteal': return '+'+pct(a.lifestealBonus)+'% Lebensraub'+s;
     case 'healBurst': return '+'+pct(a.healPct)+'% HP · '+pct(a.burstMult)+'% Schaden';
     case 'stun':      return pct(a.burstMult)+'% Schaden · Betäubt '+Math.round((a.stunDur||4000)/1000)+'s';
-    case 'vanish':    return 'Unsichtbar '+Math.round((a.dur||5000)/1000)+'s · Gegner betäubt';
+    case 'vanish':    return 'Unsichtbar '+Math.round((a.dur||5000)/1000)+'s, dann Überfall '+pct(a.ambushMult)+'%';
     case 'summon':    return '+'+pct(a.petBonus)+'% Schaden ('+Math.round((a.petDur||10000)/1000)+'s)';
   }
   return '';
@@ -547,8 +549,8 @@ function refreshAuras(f){
   applyBuffAura('heroSprite', 'dmgBoost',  f.buffs.dmgBoost,  now);
   applyBuffAura('heroSprite', 'lifesteal', f.buffs.lifesteal, now);
   applyDefenseAura('heroSprite', f.buffs.dmgReduce, now);
-  // Nebelschritt: solange das Fenster läuft, bleibt der Held verhüllt.
-  setSpriteClass('heroSprite', 'stealth', now < (f.stealthUntil||0));
+  // Nebelschritt: solange das Fenster läuft, ist der Held vollständig unsichtbar.
+  setSpriteClass('heroSprite', 'vanished', now < (f.stealthUntil||0));
   // Teufelswache: Dämon bleibt sichtbar, solange das Fenster läuft.
   applyDemonAura('heroSprite', now < (f.petEndUntil||0));
 }
@@ -564,7 +566,7 @@ function startAbilityTicker(){
 function stopAbilityTicker(){ if(_abilityTicker){ clearInterval(_abilityTicker); _abilityTicker = null; } }
 function resetAbilityVisuals(){
   const auraCls = ['ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield',
-                   'aura-steel','aura-arcane','aura-blood-strong','stealth','freeze','desat'];
+                   'aura-steel','aura-arcane','aura-blood-strong','stealth','vanished','freeze','desat'];
   ['heroSprite','bossSprite'].forEach(id => { const el = $('#'+id); if(el) el.classList.remove(...auraCls); });
   removeShieldDome();
   removeShieldDome('shieldDomeOpp');
@@ -656,12 +658,13 @@ function applyAbilityEffect(f, ab){
     addCombatLog(f, ab.icon+' '+ab.name+': '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden – Boss '+(ab.stunDur/1000)+'s betäubt!', '#7fd0ff');
     if(f.bossHp <= 0){ endFight(f, true); return; }
   } else if(ab.kind === 'vanish'){
-    // Nebelschritt (Schurke): Stealth → Gegner kann nicht angreifen; nächste Treffer garantierter Krit.
+    // Nebelschritt (Schurke): vollständig unsichtbar – Gegner kann nicht sehen/angreifen,
+    // der Held greift in der Zeit NICHT an. Beim Wiederauftauchen ein garantierter Krit-Überfall.
     f.bossStunUntil = now + ab.dur;
     f.stealthUntil  = now + ab.dur;
-    f.buffs.crit = { until: now+ab.dur, val: ab.critBonus, src: ab.id };
-    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
-    addCombatLog(f, ab.icon+' '+ab.name+' – du verschwindest im Nebel! Gegner blind für '+(ab.dur/1000)+'s, nächste Treffer kritisch.', '#b6a0ff');
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);   // Rauchwolke / Verschwinden
+    addCombatLog(f, ab.icon+' '+ab.name+' – du verschwindest im Nebel! Der Gegner ist '+(ab.dur/1000)+'s blind.', '#b6a0ff');
+    scheduleNebelAmbush(f, ab);
   } else if(ab.kind === 'summon'){
     // Teufelswache (Hexer): beschworener Dämon erhöht den Schaden über die Dauer.
     f.petEndUntil = now + (ab.petDur||10000);
@@ -671,6 +674,24 @@ function applyAbilityEffect(f, ab){
     addCombatLog(f, ab.icon+' '+ab.name+' – eine Teufelswache kämpft '+(ab.petDur/1000)+'s an deiner Seite (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden).', '#9b30ff');
   }
   refreshAuras(f);
+}
+
+// Nebelschritt-Überfall: nach Ablauf des Unsichtbarkeits-Fensters taucht der Held
+// aus der Rauchwolke auf und landet einen garantierten kritischen Treffer.
+function scheduleNebelAmbush(f, ab){
+  const dur = ab.dur || 5000;
+  setTimeout(()=>{
+    if(currentFight !== f || f.over) return;
+    f.stealthUntil = 0;                       // wieder sichtbar
+    const petMult = (Date.now() < (f.petEndUntil||0)) ? (1 + (f.petBonus||0)) : 1;
+    const dmg = Math.max(1, Math.round(f.heroAtk * (ab.ambushMult||4) * f.heroCritMult * petMult));
+    f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg;
+    if(ABILITY_VFX.nebelschritt_ambush) ABILITY_VFX.nebelschritt_ambush('heroSprite', 'bossSprite');
+    mechFloat('boss', '✸ -'+fmtBig(dmg), '#ffd24a');
+    addCombatLog(f, '💨 Überfall aus dem Nebel: KRIT '+fmtBig(dmg)+' Schaden!', '#ffd24a');
+    updateHpBars(f); updateMeter(f); refreshAuras(f);
+    if(f.bossHp <= 0){ endFight(f, true); }
+  }, dur);
 }
 
 export function useAbility(abilityId){
@@ -1127,7 +1148,8 @@ const ABILITY_VFX = {
   schurke_a9_todes(hero, boss){ spawnSlashArc(boss, { color:'#ffffff', angle:-28 }); spawnSigilFlash(boss, { glyph:'💀', color:'#ff5a5a' }); flashSpriteClass(boss, 'freeze', 380); spawnParticles(boss, { count:14, glyph:'🩸', color:'#e0466e', spread:70 }); screenVignette('#c0306b', 700); screenFlash('#ffffff', 170); bigShake(); },
   schurke_a9_toetung(hero){ spawnGroundRune(hero, { color:'#ff5a7a' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); screenVignette('#c0306b', 480); },
   schurke_a9_versch(hero){ spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#9b6bff', spread:50, rise:18 }); },
-  nebelschritt(hero, boss){ spawnSmoke(hero); spawnSmoke(hero); spawnGroundRune(hero, { color:'#6b4bff' }); spawnParticles(hero, { count:14, glyph:'🌑', color:'#9b6bff', spread:64, rise:18 }); setTimeout(()=>{ spawnSlashArc(boss, { color:'#b6a0ff', angle:-30 }); spawnParticles(boss, { count:6, glyph:'✦', color:'#cdbcff', spread:40 }); }, 260); },
+  nebelschritt(hero){ spawnSmoke(hero); spawnSmoke(hero); spawnGroundRune(hero, { color:'#6b4bff' }); spawnParticles(hero, { count:16, glyph:'🌫️', color:'#9b6bff', spread:70, rise:14 }); },
+  nebelschritt_ambush(hero, boss){ spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#9b6bff', spread:46, rise:10 }); spawnSlashArc(boss, { color:'#b6a0ff', angle:-30 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:32 }), 90); spawnSigilFlash(boss, { glyph:'🗡️', color:'#cdbcff' }); spawnParticles(boss, { count:12, glyph:'✦', color:'#cdbcff', spread:58 }); flashSpriteClass(boss, 'hit', 300); screenFlash('#b6a0ff', 150); bigShake(); },
   // ---- VERTEIDIGER ----
   schildwall(hero){ spawnGroundRune(hero, { color:'#7fd0ff' }); spawnParticles(hero, { count:8, glyph:'🛡', color:'#7fd0ff', spread:42, rise:20 }); },
   verteidiger_a5_trotz(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#7fd0ff' }); spawnGroundRune(hero, { color:'#7fd0ff' }); },
@@ -1525,8 +1547,8 @@ function applyDuelFx(fx, me){
 
   // Persistente Zustände: Stealth (Nebelschritt), Betäubung (Donnerknall/Nebelschritt),
   // Teufelswache (Hexer) – je Seite anhand der Restzeiten.
-  setSpriteClass('heroSprite', 'stealth', (mine.stealth||0) > 0);
-  setSpriteClass('bossSprite', 'stealth', (theirs.stealth||0) > 0);
+  setSpriteClass('heroSprite', 'vanished', (mine.stealth||0) > 0);
+  setSpriteClass('bossSprite', 'vanished', (theirs.stealth||0) > 0);
   applyStunAura('heroSprite', (mine.stun||0) > 0);
   applyStunAura('bossSprite', (theirs.stun||0) > 0);
   applyDemonAura('heroSprite', (mine.pet||0) > 0);
