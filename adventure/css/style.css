@@ -179,6 +179,14 @@ a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
 .slot .slot-name { position:absolute; bottom:-16px; left:0; right:0; text-align:center;
   font-size:10px; color:var(--txt-mute); letter-spacing:.3px; }
 .slot img { width:64px; height:64px; }
+/* Aufwertungs-Badge (+N) auf Paper-Doll-Slots */
+.slot .slot-upg { position:absolute; top:3px; right:4px; font-family:'Cinzel',serif;
+  font-weight:700; font-size:11px; color:#0d0b14; line-height:1; z-index:3;
+  background:linear-gradient(180deg,#ffe49a,#e8b84a); padding:2px 5px; border-radius:7px;
+  box-shadow:0 0 8px rgba(242,205,107,.8), 0 1px 0 var(--gold-dim); }
+/* +N im Besucher-Profil (op-cell ist position:relative über .inv-item) */
+.op-cell { position:relative; }
+.op-cell .op-upg { top:2px; right:3px; }
 .slot .empty-ic { font-size:26px; opacity:.25; }
 .slot[data-rarity]{ box-shadow:0 0 10px -1px var(--rc,transparent); border-color:var(--rc,var(--line)); }
 
@@ -1558,3 +1566,93 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .tmr-step .btn { padding:4px 12px; font-size:15px; line-height:1; }
 .tmr-step .tmr-amt { min-width:28px; text-align:center; font-family:'Cinzel',serif;
   font-weight:700; color:var(--gold-hi); }
+
+/* =====================================================================
+   SCHMIEDE-RAUM – eigenständige Optik (Eisen, Glut, Esse), hebt sich klar
+   von den übrigen (violett/gold) Menüs ab.
+   ===================================================================== */
+.panel.forge-room {
+  position:relative; overflow:hidden;
+  background:
+    /* Glut der Esse von unten */
+    radial-gradient(120% 70% at 50% 118%, rgba(255,110,30,.30), transparent 60%),
+    radial-gradient(90% 50% at 50% 120%, rgba(255,170,60,.22), transparent 55%),
+    /* kühles Eisen oben */
+    linear-gradient(180deg,#15171c 0%, #121116 55%, #0e0c11 100%);
+  border:2px solid #3a2c1e;
+  box-shadow:inset 0 0 60px -20px #000, inset 0 -30px 60px -30px rgba(255,120,40,.4);
+}
+/* genietete Eisenkante */
+.panel.forge-room::before {
+  content:''; position:absolute; inset:6px; border-radius:12px; pointer-events:none;
+  border:1px dashed rgba(120,90,60,.35);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.4);
+}
+
+/* ---- Amboss-Banner ------------------------------------------------ */
+.forge-banner { position:relative; overflow:hidden; border-radius:14px; padding:16px 18px;
+  margin-bottom:12px; isolation:isolate;
+  background:linear-gradient(180deg,#241a12,#160f0a);
+  border:1px solid #5a4126; box-shadow:0 6px 24px -12px #000, inset 0 0 30px -14px #ff8a3d; }
+.forge-banner .fb-row { display:flex; align-items:center; gap:14px; position:relative; z-index:2; }
+.forge-banner .fb-anvil { font-size:38px; filter:drop-shadow(0 0 10px rgba(255,140,60,.7));
+  animation:fbAnvilGlow 2.4s ease-in-out infinite; }
+@keyframes fbAnvilGlow { 0%,100%{ filter:drop-shadow(0 0 8px rgba(255,140,60,.5)); }
+  50%{ filter:drop-shadow(0 0 16px rgba(255,180,80,.95)); } }
+.forge-banner .fb-titles { flex:1; }
+.forge-banner .fb-title { font-family:'Cinzel',serif; font-weight:700; font-size:24px; margin:0;
+  background:linear-gradient(180deg,#ffe9c2,#ffb454 60%,#ff7a2e);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  text-shadow:0 0 18px rgba(255,140,50,.35); letter-spacing:1px; }
+.forge-banner .fb-sub { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#c8966f; }
+.forge-banner .fb-gold { font-family:'Press Start 2P',monospace; font-size:12px; color:#ffd24a;
+  background:rgba(0,0,0,.35); padding:6px 10px; border-radius:8px; border:1px solid #5a4126; white-space:nowrap; }
+/* pulsierende Esse-Glut hinter dem Banner */
+.forge-banner .fb-fire { position:absolute; left:0; right:0; bottom:-40%; height:80%; z-index:1; pointer-events:none;
+  background:radial-gradient(60% 100% at 50% 100%, rgba(255,120,30,.55), rgba(255,60,0,.15) 55%, transparent 75%);
+  filter:blur(4px); animation:fbFire 2.2s ease-in-out infinite; }
+@keyframes fbFire { 0%,100%{ opacity:.65; transform:scaleY(1); } 50%{ opacity:1; transform:scaleY(1.12); } }
+/* aufsteigende Funken im Banner */
+.forge-banner .fb-embers { position:absolute; inset:0; z-index:1; pointer-events:none; }
+.forge-banner .fb-embers span { position:absolute; bottom:6px; width:4px; height:4px; border-radius:50%;
+  background:radial-gradient(circle,#ffd98a,#ff7a2e 70%,transparent);
+  box-shadow:0 0 6px 1px rgba(255,150,60,.8); animation:fbEmber linear infinite; }
+.forge-banner .fb-embers span:nth-child(1){ left:12%; animation-duration:3.2s; animation-delay:0s; }
+.forge-banner .fb-embers span:nth-child(2){ left:28%; animation-duration:2.6s; animation-delay:.6s; }
+.forge-banner .fb-embers span:nth-child(3){ left:45%; animation-duration:3.6s; animation-delay:1.1s; }
+.forge-banner .fb-embers span:nth-child(4){ left:62%; animation-duration:2.9s; animation-delay:.3s; }
+.forge-banner .fb-embers span:nth-child(5){ left:78%; animation-duration:3.3s; animation-delay:.9s; }
+.forge-banner .fb-embers span:nth-child(6){ left:90%; animation-duration:2.7s; animation-delay:1.4s; }
+@keyframes fbEmber { 0%{ transform:translateY(0) scale(1); opacity:0; }
+  15%{ opacity:1; } 100%{ transform:translateY(-90px) scale(.3); opacity:0; } }
+.forge-note { color:#d9c3a6; font-size:13px; margin:0 0 6px; padding:0 2px; }
+
+/* Material-/Karten-Optik im Forge-Raum etwas „heißer" tönen */
+.forge-room .forge-mat { border-color:#5a4126; background:linear-gradient(160deg,#241a12,#15110d); }
+.forge-room .forge-mat .fm-have { color:#ffb454; }
+.forge-room .forge-card { border-color:#5a4126;
+  background:radial-gradient(120% 80% at 50% -10%, rgba(255,150,60,.14), transparent 60%),
+    linear-gradient(165deg,#241a12,#130f0c); }
+.forge-room .fa-title { color:#ffb454; }
+
+/* ---- Aufwert-FX: Schockwelle, Amboss-Schlag, Bildschirm-Shake ------ */
+.forge-fx .ffx-shock { position:absolute; width:80px; height:80px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,220,150,.5), rgba(255,140,50,.25) 45%, transparent 70%);
+  animation:ffxShock .55s cubic-bezier(.1,.7,.2,1) forwards; }
+@keyframes ffxShock { 0%{ transform:scale(.2); opacity:.9; } 100%{ transform:scale(6); opacity:0; } }
+.forge-fx .ffx-anvil { position:absolute; font-size:58px; filter:drop-shadow(0 0 16px rgba(255,170,70,.9));
+  animation:ffxAnvil .55s cubic-bezier(.3,1.4,.4,1) forwards; }
+@keyframes ffxAnvil { 0%{ transform:translateY(-40px) scale(.6) rotate(-18deg); opacity:0; }
+  35%{ transform:translateY(0) scale(1.15) rotate(0); opacity:1; }
+  55%{ transform:translateY(2px) scale(.96); } 100%{ transform:translateY(0) scale(1.05); opacity:0; } }
+@keyframes forgeShake { 0%,100%{ transform:translate(0,0); }
+  15%{ transform:translate(-5px,3px); } 30%{ transform:translate(6px,-2px); }
+  45%{ transform:translate(-4px,2px); } 60%{ transform:translate(4px,2px); }
+  75%{ transform:translate(-2px,-2px); } }
+body.forge-shake { animation:forgeShake .42s ease; }
+
+/* ---- Verbrauch: Schmiede-Material-Kategorie ----------------------- */
+.consum-cat { font-family:'Cinzel',serif; color:var(--gold-hi); font-size:14px;
+  margin:18px 0 10px; letter-spacing:.5px; }
+.consum-card.mat-card .cc-icon { filter:drop-shadow(0 0 6px rgba(242,205,107,.5)); }
+.consum-card.mat-card .cc-count { color:var(--gold-hi); }
