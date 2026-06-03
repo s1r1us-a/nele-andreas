@@ -19,7 +19,7 @@ const mir = f => f + '<g transform="translate(64,0) scale(-1,1)">'+f+'</g>';
 
 const METAL     = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c','#b87333','#2b2b34','#3fd0c8','#7a1f2b','#9fb0c8','#d8c06a'];
 const GEM       = ['#d23040','#3c6edc','#34be78','#aa5cdc','#ecc446','#8a86a8','#2fd6c0','#e08a2a','#e87aa8','#0e7a4a','#c0e0ff','#b06bff'];
-const ARMOR_MAT = ['#c8d0dc','#aab2be','#845c38','#3f8f5a','#7a5ca8','#4a465c','#b87333','#e8e0d0','#2f9e63','#b23a3a','#2a4a8a','#d8b24a'];
+const ARMOR_MAT = ['#c8d0dc','#aab2be','#4a3526','#3f8f5a','#7a5ca8','#4a465c','#b87333','#e8e0d0','#2f9e63','#b23a3a','#2a4a8a','#d8b24a'];
 const GOLD = '#d8b24a', WOOD = '#7a4f2a';
 
 // Element-Hervorhebung für hochstufige Waffen/Schilde (Episch+). Feuer=rot, Eis=blau.
@@ -318,11 +318,15 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
         body = `<path d="M32 8 Q50 10 52 34 Q53 48 46 54 L42 52 Q46 40 44 30 Q40 18 32 18 Q24 18 20 30 Q18 40 22 52 L18 54 Q11 48 12 34 Q14 10 32 8 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
                `<path d="M32 18 Q24 20 22 32 Q22 42 26 50 M32 18 Q40 20 42 32 Q42 42 38 50" fill="none" stroke="${shade(c,0.8)}" stroke-width="1.4" opacity="0.7"/>`+
                `<path d="M32 9 Q42 12 44 28" fill="none" stroke="${shade(c,1.2)}" stroke-width="1.4" opacity="0.4"/>`;
-      } else if(matKey==='leder'){ // Lederkappe/Coif
-        body = `<path d="M32 12 Q50 13 51 34 Q52 46 44 52 L41 50 Q46 38 44 30 Q40 20 32 19 Q24 20 20 30 Q18 38 23 50 L20 52 Q12 46 13 34 Q14 13 32 12 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
-               `<path d="M20 32 Q22 22 32 21 Q42 22 44 32" fill="none" stroke="${shade(c,0.8)}" stroke-width="1.5" opacity="0.7"/>`+
-               `<path d="M32 12 L32 20" stroke="${st}" stroke-width="1.3" opacity="0.5"/>`+
-               `<ellipse cx="24" cy="24" rx="6" ry="3.5" fill="${shade(c,1.2)}" opacity="0.35"/>`;
+      } else if(matKey==='leder'){ // Assassinen-Kapuze (Schurke): spitz, Schattengesicht + Maske
+        body = `<path d="M32 6 Q52 12 53 36 Q54 50 46 56 L41 53 Q47 41 45 29 Q41 18 32 17 Q23 18 19 29 Q17 41 23 53 L18 56 Q10 50 11 36 Q12 12 32 6 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
+               `<path d="M24 24 Q32 22 40 24 Q42 38 38 48 Q32 52 26 48 Q22 38 24 24 Z" fill="#120b0f" opacity="0.62"/>`+
+               `<path d="M19 30 Q21 18 32 16" fill="none" stroke="${shade(c,0.8)}" stroke-width="1.3" opacity="0.6"/>`+
+               `<path d="M32 9 Q44 13 46 30" fill="none" stroke="${shade(c,1.2)}" stroke-width="1.3" opacity="0.4"/>`+
+               `<path d="M25 39 Q32 41 39 39 Q40 45 37 49 Q32 52 27 49 Q24 45 25 39 Z" fill="${shade(c,0.7)}" stroke="${st}" stroke-width="0.8" opacity="0.95"/>`+
+               `<path d="M26 41 Q32 43 38 41" fill="none" stroke="${shade(c,0.45)}" stroke-width="0.9" opacity="0.7"/>`+
+               `<ellipse cx="28" cy="31" rx="1.7" ry="1.1" fill="#cfe8ff" opacity="0.85"/>`+
+               `<ellipse cx="36" cy="31" rx="1.7" ry="1.1" fill="#cfe8ff" opacity="0.85"/>`;
       } else {                     // Platte: Barbute mit Visierschlitz
         body = `<path d="M16 36 Q14 12 32 10 Q50 12 48 36 L48 46 Q40 52 32 52 Q24 52 16 46 Z" fill="${A}" stroke="${st}" stroke-width="1.5"/>`+
                `<path d="M32 10 Q34 28 32 50 Q30 28 32 10 Z" fill="${shade(c,1.2)}" opacity="0.45"/>`+
