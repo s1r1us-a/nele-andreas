@@ -100,6 +100,8 @@ export function startBossFight(bossIndex){
     mechanics, phases: (boss.phases||[]).map(p=>({...p, fired:false})),
     poison:0, burn:0, berserkMult:1, shieldTurns:0, frostTurns:0,
     curseTurns:0, zornTurns:0, invulnTurns:0, adds:0, teilungDone:false,
+    // Neue Fähigkeiten-Status: Boss-Betäubung, Stealth-Fenster, beschworene Wache.
+    bossStunUntil:0, stealthUntil:0, petEndUntil:0, petBonus:0,
     healDebuff: mechanics.includes('schwaechung') ? 0.5 : 1,
     enrageMult:1,
     // Meter
@@ -185,6 +187,8 @@ function exchange(fight){
     const heroCrit = Math.random() < effCrit;
     let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
     if(now < fight.buffs.dmgBoost.until) dmg = Math.max(1, Math.round(dmg * (1 + fight.buffs.dmgBoost.val)));
+    if(now < (fight.petEndUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 + (fight.petBonus||0))));   // Teufelswache
+
     if(fight.shieldTurns > 0) dmg = Math.max(1, Math.round(dmg*0.4));  // Eispanzer
     fight.bossHp = Math.max(0, fight.bossHp - dmg);
     fight.dmgDealt += dmg;
@@ -226,6 +230,15 @@ function exchange(fight){
   // --- Boss schlägt zurück ---
   setTimeout(()=>{
     if(fight.over) return;
+
+    // Betäubung (Donnerknall / Nebelschritt): Der Boss setzt seinen Angriff aus.
+    if(Date.now() < (fight.bossStunUntil||0)){
+      mechFloat('boss', '😵 Betäubt', '#7fd0ff');
+      updateHpBars(fight);
+      if(fight.bossHp <= 0){ return endFight(fight, true); }
+      scheduleExchange(fight);
+      return;
+    }
 
     if(fight.shieldTurns > 0) fight.shieldTurns--;
     if(hasMech(fight,'eispanzer') && fight.turn % 5 === 0){ fight.shieldTurns = 2; mechFloat('boss','🛡️ Eispanzer','#7fd0ff'); }
@@ -366,6 +379,10 @@ export function abilityEffectShort(a){
     case 'dmgBoost':  return '+'+pct(a.dmgBonus)+'% Schaden'+s;
     case 'dmgReduce': return '−'+pct(a.dmgReduce)+'% erlittener Schaden'+s;
     case 'lifesteal': return '+'+pct(a.lifestealBonus)+'% Lebensraub'+s;
+    case 'healBurst': return '+'+pct(a.healPct)+'% HP · '+pct(a.burstMult)+'% Schaden';
+    case 'stun':      return pct(a.burstMult)+'% Schaden · Betäubt '+Math.round((a.stunDur||4000)/1000)+'s';
+    case 'vanish':    return 'Unsichtbar '+Math.round((a.dur||5000)/1000)+'s · Gegner betäubt';
+    case 'summon':    return '+'+pct(a.petBonus)+'% Schaden ('+Math.round((a.petDur||10000)/1000)+'s)';
   }
   return '';
 }
@@ -529,6 +546,10 @@ function refreshAuras(f){
   applyBuffAura('heroSprite', 'dmgBoost',  f.buffs.dmgBoost,  now);
   applyBuffAura('heroSprite', 'lifesteal', f.buffs.lifesteal, now);
   applyDefenseAura('heroSprite', f.buffs.dmgReduce, now);
+  // Nebelschritt: solange das Fenster läuft, bleibt der Held verhüllt.
+  setSpriteClass('heroSprite', 'stealth', now < (f.stealthUntil||0));
+  // Teufelswache: Dämon bleibt sichtbar, solange das Fenster läuft.
+  applyDemonAura('heroSprite', now < (f.petEndUntil||0));
 }
 function startAbilityTicker(){
   if(_abilityTicker) return;
@@ -547,7 +568,7 @@ function resetAbilityVisuals(){
   removeShieldDome();
   removeShieldDome('shieldDomeOpp');
   const layer = $('#dmgLayer');
-  if(layer) layer.querySelectorAll('.vfx-orbit, .vfx-rune-ring').forEach(n => n.remove());
+  if(layer) layer.querySelectorAll('.vfx-orbit, .vfx-rune-ring, .vfx-demon').forEach(n => n.remove());
   stopDrainChannel();
   stopAbilityTicker();
 }
@@ -556,10 +577,12 @@ function resetAbilityVisuals(){
 // und kann mit der Krit-Chance/-Stärke des Helden kritten – bei Magiern zählt der Magie-Krit
 // (z. B. von der Nebenhand-Kugel). Fluch halbiert die Krit-Chance, Krit-Buff erhöht sie.
 function abilityDamage(f, mult){
+  const now = Date.now();
   let crit = f.heroCritChance * (f.curseTurns>0 ? 0.5 : 1);
-  if(Date.now() < f.buffs.crit.until) crit = Math.min(1, crit + f.buffs.crit.val);
+  if(now < f.buffs.crit.until) crit = Math.min(1, crit + f.buffs.crit.val);
   const isCrit = Math.random() < crit;
-  return { dmg: Math.max(1, Math.round(f.heroAtk * mult * (isCrit ? f.heroCritMult : 1))), crit:isCrit };
+  let petMult = (now < (f.petEndUntil||0)) ? (1 + (f.petBonus||0)) : 1;   // Teufelswache verstärkt auch Fähigkeitsschaden
+  return { dmg: Math.max(1, Math.round(f.heroAtk * mult * petMult * (isCrit ? f.heroCritMult : 1))), crit:isCrit };
 }
 
 // Wendet den Effekt einer Fähigkeit lokal im PvE-Kampf an (Held → Boss).
@@ -609,6 +632,42 @@ function applyAbilityEffect(f, ab){
     f.buffs.lifesteal = { until: now+ab.dur, val: ab.lifestealBonus, src: ab.id };
     playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.lifestealBonus*100)+'% Lebensraub für '+(ab.dur/1000)+'s!', '#e0466e');
+  } else if(ab.kind === 'healBurst'){
+    // Lichtsäule (Heiler): heilt alle Helden UND verbrennt den Gegner.
+    const heal = Math.round(f.heroMaxHp * ab.healPct * healMult * f.healDebuff);
+    f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+    const { dmg, crit } = abilityDamage(f, ab.burstMult);
+    f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg;
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('hero', '➕ +'+fmtBig(heal), '#37d67a');
+    mechFloat('boss', (crit?'✸ ':'💥 ')+'-'+fmtBig(dmg), '#ffe9a8');
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': +'+fmtBig(heal)+' HP, '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden', '#ffe9a8');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
+  } else if(ab.kind === 'stun'){
+    // Donnerknall (Verteidiger): Schaden + Betäubung des Gegners.
+    const { dmg, crit } = abilityDamage(f, ab.burstMult);
+    f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg;
+    f.bossStunUntil = now + (ab.stunDur||4000);
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('boss', (crit?'✸ ':'💥 ')+'-'+fmtBig(dmg), '#ffd24a');
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden – Boss '+(ab.stunDur/1000)+'s betäubt!', '#7fd0ff');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
+  } else if(ab.kind === 'vanish'){
+    // Nebelschritt (Schurke): Stealth → Gegner kann nicht angreifen; nächste Treffer garantierter Krit.
+    f.bossStunUntil = now + ab.dur;
+    f.stealthUntil  = now + ab.dur;
+    f.buffs.crit = { until: now+ab.dur, val: ab.critBonus, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – du verschwindest im Nebel! Gegner blind für '+(ab.dur/1000)+'s, nächste Treffer kritisch.', '#b6a0ff');
+  } else if(ab.kind === 'summon'){
+    // Teufelswache (Hexer): beschworener Dämon erhöht den Schaden über die Dauer.
+    f.petEndUntil = now + (ab.petDur||10000);
+    f.petBonus    = ab.petBonus||0.25;
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('hero', '👹 Teufelswache!', '#9b30ff');
+    addCombatLog(f, ab.icon+' '+ab.name+' – eine Teufelswache kämpft '+(ab.petDur/1000)+'s an deiner Seite (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden).', '#9b30ff');
   }
   refreshAuras(f);
 }
@@ -1022,6 +1081,39 @@ function applyDefenseAura(spriteId, buff, now, domeId, domeDir){
   }
 }
 
+// Fußpunkt eines Sprites (Boden, Mitte) + seitlicher Versatz Richtung Gegner –
+// für bodenstehende Beschwörungen wie die Teufelswache. Misst live (resize-fest).
+function groundAnchorOf(spriteId){
+  const stage = $('#arenaStage'), el = $('#'+spriteId);
+  if(!stage || !el) return null;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  return { x: r.left - sr.left + r.width/2 + 92, y: r.top - sr.top + r.height - 6 };
+}
+// Erzeugt das große Teufelswache-Element (größer als der Held) im #dmgLayer.
+function spawnDemon(spriteId, opts){
+  opts = opts || {};
+  const layer = $('#dmgLayer'); if(!layer) return null;
+  const d = document.createElement('div');
+  d.className = 'vfx-demon';
+  if(opts.id) d.id = opts.id;
+  const body = document.createElement('span'); body.className = 'vfx-demon-body'; body.textContent = opts.glyph || '👹';
+  const aura = document.createElement('span'); aura.className = 'vfx-demon-aura';
+  d.appendChild(aura); d.appendChild(body);
+  layer.appendChild(d);
+  if(opts.dur){ setTimeout(()=> d.remove(), opts.dur); }
+  return d;
+}
+// Hält die persistente Teufelswache neben dem Wirker und positioniert sie live nach.
+function applyDemonAura(spriteId, active){
+  const id = 'sig-demon-'+spriteId;
+  let d = $('#'+id);
+  if(active && !reducedMotion()){
+    const p = groundAnchorOf(spriteId); if(!p) return;
+    if(!d) d = spawnDemon(spriteId, { id, persistent:true });
+    if(d){ d.style.left = p.x+'px'; d.style.top = p.y+'px'; }
+  } else if(d){ d.remove(); }
+}
+
 // ---- Signatur-Renderer je Fähigkeit (Cast-Moment) -----------------------
 // hero = Wirker-Sprite, boss = Ziel-Sprite (im Duell ggf. getauscht).
 const ABILITY_VFX = {
@@ -1033,6 +1125,7 @@ const ABILITY_VFX = {
   schurke_a9_todes(hero, boss){ spawnSlashArc(boss, { color:'#ffffff', angle:-28 }); spawnSigilFlash(boss, { glyph:'💀', color:'#ff5a5a' }); flashSpriteClass(boss, 'freeze', 380); spawnParticles(boss, { count:14, glyph:'🩸', color:'#e0466e', spread:70 }); screenVignette('#c0306b', 700); screenFlash('#ffffff', 170); bigShake(); },
   schurke_a9_toetung(hero){ spawnGroundRune(hero, { color:'#ff5a7a' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); screenVignette('#c0306b', 480); },
   schurke_a9_versch(hero){ spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#9b6bff', spread:50, rise:18 }); },
+  nebelschritt(hero, boss){ spawnSmoke(hero); spawnSmoke(hero); spawnGroundRune(hero, { color:'#6b4bff' }); spawnParticles(hero, { count:14, glyph:'🌑', color:'#9b6bff', spread:64, rise:18 }); setTimeout(()=>{ spawnSlashArc(boss, { color:'#b6a0ff', angle:-30 }); spawnParticles(boss, { count:6, glyph:'✦', color:'#cdbcff', spread:40 }); }, 260); },
   // ---- VERTEIDIGER ----
   schildwall(hero){ spawnGroundRune(hero, { color:'#7fd0ff' }); spawnParticles(hero, { count:8, glyph:'🛡', color:'#7fd0ff', spread:42, rise:20 }); },
   verteidiger_a5_trotz(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#7fd0ff' }); spawnGroundRune(hero, { color:'#7fd0ff' }); },
@@ -1041,6 +1134,7 @@ const ABILITY_VFX = {
   verteidiger_a9_unbeug(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); screenFlash('#bfe3ff', 150); },
   verteidiger_a9_wucht(hero, boss){ spawnImpact(boss, '#bfe3ff'); spawnNova(boss, '#7fd0ff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); screenFlash('#ffffff', 180); bigShake(); },
   verteidiger_a9_halten(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#7fd0ff', count:4, radius:54, period:1600, dur:1400 }); },
+  donnerknall(hero, boss){ spawnImpact(boss, '#bfe3ff'); spawnShockwave(boss, '#ffffff'); spawnNova(boss, '#7fd0ff'); spawnSigilFlash(boss, { glyph:'⚡', color:'#ffe066' }); flashSpriteClass(boss, 'freeze', 600); spawnOrbit(boss, { glyph:'💫', color:'#ffe066', count:4, radius:42, period:900, dur:1700 }); screenFlash('#ffffff', 160); bigShake(); setTimeout(bigShake, 130); },
   // ---- HEILER ----
   heilkreis(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); },
   heiler_a5_blitz(hero){ vfxHeal(hero); screenFlash('#ffe9a8', 150); },
@@ -1049,11 +1143,13 @@ const ABILITY_VFX = {
   heiler_a9_segen(hero){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); const pil = document.createElement('div'); pil.className = 'vfx-pillar'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; pil.style.filter = 'hue-rotate(-12deg) brightness(1.15)'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 900); spawnParticles(hero, { count:16, glyph:'✦', color:'#ffe9a8', spread:54, rise:80 }); screenVignette('#ffe9a8', 480); },
   heiler_a9_stern(hero, boss){ spawnProjectileVolley(hero, boss, { count:6, color:'#9be7ff', glyph:'⭐', stagger:120, fromTop:true }); setTimeout(()=>{ screenFlash('#9be7ff', 220); bigShake(); }, 360); },
   heiler_a9_klar(hero){ spawnGroundRune(hero, { color:'#cdeeff' }); spawnOrbit(hero, { glyph:'✨', color:'#cdeeff', count:4, radius:52, period:1500, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✨', color:'#cdeeff', spread:44, rise:28 }); },
+  lichtsaeule(hero, boss){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar vfx-pillar-gold'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 950); } spawnGroundRune(hero, { color:'#ffe9a8' }); spawnProjectileVolley(hero, boss, { count:5, color:'#ffe9a8', glyph:'⭐', stagger:90, fromTop:true }); setTimeout(()=>{ spawnNova(boss, '#ffe9a8'); spawnParticles(boss, { count:14, glyph:'✦', color:'#ffe9a8', spread:80 }); screenFlash('#fff3c8', 200); bigShake(); }, 320); screenVignette('#ffe9a8', 600); },
   // ---- HEXER (Seelenraub-Strahl bleibt unverändert) ----
   hexer_a5_brand(hero){ spawnGroundRune(hero, { color:'#9b30ff' }); spawnParticles(hero, { count:10, glyph:'🔥', color:'#b06bff', spread:46, rise:26 }); },
   hexer_a5_rausch(hero, boss){ spawnBeam(hero, boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnParticles(boss, { count:10, glyph:'🌑', color:'#b06bff', spread:60 }); }, 200); bigShake(); },
   hexer_a9_explo(hero, boss){ spawnVortex(boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnShockwave(boss, '#b06bff'); spawnParticles(boss, { count:16, glyph:'🌑', color:'#b06bff', spread:90 }); screenFlash('#9b30ff', 220); bigShake(); }, 240); },
   hexer_a9_orgie(hero){ spawnGroundRune(hero, { color:'#c0306b' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
+  teufelswache(hero){ spawnGroundRune(hero, { color:'#7CFC00' }); spawnNova(hero, '#7CFC00'); spawnSigilFlash(hero, { glyph:'😈', color:'#9bff5a' }); spawnParticles(hero, { count:14, glyph:'🔥', color:'#9bff5a', spread:60, rise:20 }); applyDemonAura(hero, true); },
 };
 
 // Spielt die Signatur einer Fähigkeit; fehlt sie, greift der kind-basierte Fallback.
@@ -1424,6 +1520,23 @@ function applyDuelFx(fx, me){
   if(theirs.healTs && theirs.healTs !== seen.oppHeal){
     seen.oppHeal = theirs.healTs; playAbilityVfxById(theirs.healAb, 'bossSprite', 'heroSprite', false, 'heal'); mechFloat('boss','💚 Heilung','#37d67a');
   }
+
+  // Persistente Zustände: Stealth (Nebelschritt), Betäubung (Donnerknall/Nebelschritt),
+  // Teufelswache (Hexer) – je Seite anhand der Restzeiten.
+  setSpriteClass('heroSprite', 'stealth', (mine.stealth||0) > 0);
+  setSpriteClass('bossSprite', 'stealth', (theirs.stealth||0) > 0);
+  applyStunAura('heroSprite', (mine.stun||0) > 0);
+  applyStunAura('bossSprite', (theirs.stun||0) > 0);
+  applyDemonAura('heroSprite', (mine.pet||0) > 0);
+  applyDemonAura('bossSprite', (theirs.pet||0) > 0);
+}
+
+// Schwindel-Sterne über einem betäubten Sprite (persistent, id-verwaltet).
+function applyStunAura(spriteId, active){
+  const id = 'sig-stun-'+spriteId;
+  if(active && !reducedMotion()){
+    if(!$('#'+id)){ const c = makeOrbit(spriteId, { glyph:'💫', color:'#ffe066', count:3, radius:34, period:900 }); c.id = id; $('#dmgLayer').appendChild(c); }
+  } else clearById(id);
 }
 
 function endDuel(f, winner, me){

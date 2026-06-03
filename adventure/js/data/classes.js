@@ -21,7 +21,9 @@ export const CLASSES = [
     allowedMaterials:['stoff'],      damageSchool:'magisch',
     dmgMult:0.65, healMult:1.6,
     ability:{ id:'heilkreis', name:'Heilkreis', icon:'➕', kind:'heal', cd:30000, healPct:0.5,
-              desc:'Zündet einen leuchtenden Heilkreis – heilt alle Helden um 50 % ihrer maximalen HP.' } },
+              desc:'Zündet einen leuchtenden Heilkreis – heilt alle Helden um 50 % ihrer maximalen HP.' },
+    ability2:{ id:'lichtsaeule', name:'Lichtsäule', icon:'🌟', kind:'healBurst', cd:30000, healPct:0.35, burstMult:3.0,
+              desc:'Ruft eine gewaltige Lichtsäule herab – heilt alle Helden um 35 % ihrer maximalen HP und verbrennt den Gegner mit 300 % Schaden.' } },
   { id:'schurke',     label:'Schurke',     icon:'🗡️',
     desc:'Meuchelmörder. Trägt Stoff und Leder. Wendiger physischer Schaden mit zwei Klingen.',
     playstyle:'Flinker Schurke, der aus dem Verborgenen zuschlägt – höchstes Tempo und tödliche Krits, aber zerbrechlich, wenn er steht.',
@@ -30,7 +32,9 @@ export const CLASSES = [
     allowedMaterials:['stoff','leder'],          damageSchool:'physisch',
     dmgMult:1.0,  healMult:1.0,
     ability:{ id:'kaltblut', name:'Kaltblütigkeit', icon:'🩸', kind:'critBoost', cd:28000, dur:7000, critBonus:1.0,
-              desc:'Versetzt dich 7 Sekunden lang in kalte Mordlust – +100 % Krit-Chance.' } },
+              desc:'Versetzt dich 7 Sekunden lang in kalte Mordlust – +100 % Krit-Chance.' },
+    ability2:{ id:'nebelschritt', name:'Nebelschritt', icon:'💨', kind:'vanish', cd:30000, dur:5000, critBonus:1.0,
+              desc:'Löst sich in einer Rauchwolke auf – der Gegner verliert dich 5 Sekunden lang aus den Augen und kann nicht angreifen. Dein nächster Treffer ist ein garantierter Krit.' } },
   { id:'verteidiger', label:'Verteidiger', icon:'🛡️',
     desc:'Tank. Trägt Stoff, Leder und Platte. Sehr viel Rüstung, wenig Schaden.',
     playstyle:'Robuster Tank, der Treffer wegsteckt und Verbündete schützt. Stirbt selten, tötet aber langsam.',
@@ -39,7 +43,9 @@ export const CLASSES = [
     allowedMaterials:['stoff','leder','platte'], damageSchool:'physisch',
     dmgMult:0.7,  healMult:1.0,
     ability:{ id:'schildwall', name:'Schildwall', icon:'🛡️', kind:'dmgReduce', cd:32000, dur:10000, dmgReduce:0.8,
-              desc:'Errichtet 10 Sekunden lang einen pulsierenden Schildwall – alle Helden erleiden 80 % weniger Schaden.' } },
+              desc:'Errichtet 10 Sekunden lang einen pulsierenden Schildwall – alle Helden erleiden 80 % weniger Schaden.' },
+    ability2:{ id:'donnerknall', name:'Donnerknall', icon:'💥', kind:'stun', cd:26000, stunDur:4000, burstMult:1.2,
+              desc:'Rammt den Schild mit einer Druckwelle in den Boden – fügt Schaden zu und betäubt den Gegner 4 Sekunden lang, sodass er nicht angreifen kann.' } },
   { id:'hexer',       label:'Hexer',       icon:'🔮',
     desc:'Hexenmeister. Trägt nur Stoff. Magischer Schaden mit starkem Lebensraub – heilt sich durch Verschlingen.',
     playstyle:'Magier mit Lebensraub: hält sich selbst durch ausgeteilten Schaden am Leben – schlagkräftig, aber zerbrechlich.',
@@ -49,7 +55,9 @@ export const CLASSES = [
     dmgMult:0.8,  healMult:1.5,
     ability:{ id:'seelenraub', name:'Seelenraub', icon:'💀', kind:'drain', cd:26000,
               dur:4000, tickMs:1000, burstMult:2.0,
-              desc:'Entfesselt 4 Sekunden lang einen Seelenstrahl – 200 % Schaden pro Sekunde und heilt dich um den gesamten verursachten Schaden.' } },
+              desc:'Entfesselt 4 Sekunden lang einen Seelenstrahl – 200 % Schaden pro Sekunde und heilt dich um den gesamten verursachten Schaden.' },
+    ability2:{ id:'teufelswache', name:'Teufelswache', icon:'👹', kind:'summon', cd:40000, petDur:10000, petBonus:0.25,
+              desc:'Beschwört 10 Sekunden lang eine gewaltige Teufelswache an deiner Seite – sie verstärkt deinen gesamten Schaden um 25 %.' } },
 ];
 export const CLASS_BY_ID = Object.fromEntries(CLASSES.map(c => [c.id, c]));
 export const DEFAULT_CLASS_ID = 'schurke';
@@ -84,14 +92,18 @@ export function allowedMaterials(state){ return classOf(state).allowedMaterials;
 export function damageSchool(state){ return classOf(state).damageSchool; }
 // Grund-Spezialfähigkeit einer Klasse (null-sicher).
 export function abilityOf(classId){ const c = CLASS_BY_ID[classId] || CLASS_BY_ID[DEFAULT_CLASS_ID]; return c.ability || null; }
+// Zweite, dauerhaft verfügbare Spezialfähigkeit einer Klasse (null-sicher).
+export function ability2Of(classId){ const c = CLASS_BY_ID[classId] || CLASS_BY_ID[DEFAULT_CLASS_ID]; return c.ability2 || null; }
 
-// Alle nutzbaren aktiven Fähigkeiten eines Spielstands: Grundfähigkeit +
+// Alle nutzbaren aktiven Fähigkeiten eines Spielstands: beide Grundfähigkeiten +
 // die im Talentbaum gewählten Aktiven (max. 2). Jede mit eindeutiger id
 // als Cooldown-Schlüssel.
 export function abilitiesOf(stateLike){
   const classId = stateLike && stateLike.character && stateLike.character.classId;
   const base = abilityOf(classId);
   const list = base ? [base] : [];
+  const base2 = ability2Of(classId);
+  if(base2) list.push(base2);
   for(const a of chosenActiveAbilities(stateLike)) list.push(a);
   return list;
 }

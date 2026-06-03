@@ -164,6 +164,8 @@ function makeSide(stats){
     nextSwingAt: 0,
     abilCd: {}, buffs: freshBuffs(),
     burstTs: 0, healTs: 0, drainTs: 0, burstMagic: 0,
+    // Neue Fähigkeiten: Betäubung, Stealth-Fenster, beschworene Wache.
+    stunUntil: 0, stealthUntil: 0, petEndUntil: 0, petBonus: 0,
   };
 }
 
@@ -270,6 +272,38 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
   } else if(ab.kind === 'lifesteal'){
     side.buffs.lifesteal = { until: now + ab.dur, val: ab.lifestealBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.lifestealBonus*100) + '% Lebensraub!', '#e0466e');
+  } else if(ab.kind === 'healBurst'){
+    // Lichtsäule: heilt den Wirker und verbrennt den Gegner.
+    const heal = Math.round(side.maxHp * ab.healPct);
+    side.hp = Math.min(side.maxHp, side.hp + heal);
+    const dmg = Math.max(1, Math.round(side.atk * ab.burstMult * (side.petEndUntil>now ? (1+side.petBonus) : 1)));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': +' + fmtBig(heal) + ' HP, ' + fmtBig(dmg) + ' Schaden', '#ffe9a8');
+    if(opp.hp <= 0){ opp.hp = 0; fight.over = true; fight.winner = role;
+      logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a'); clearTimeout(_timer); }
+  } else if(ab.kind === 'stun'){
+    // Donnerknall: Schaden + Betäubung des Gegners.
+    const dmg = Math.max(1, Math.round(side.atk * ab.burstMult * (side.petEndUntil>now ? (1+side.petBonus) : 1)));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    opp.stunUntil = now + (ab.stunDur || 4000);
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden – Gegner ' + ((ab.stunDur||4000)/1000) + 's betäubt!', '#7fd0ff');
+    if(opp.hp <= 0){ opp.hp = 0; fight.over = true; fight.winner = role;
+      logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a'); clearTimeout(_timer); }
+  } else if(ab.kind === 'vanish'){
+    // Nebelschritt: Gegner kann nicht angreifen, eigener Krit garantiert.
+    opp.stunUntil = now + ab.dur;
+    side.stealthUntil = now + ab.dur;
+    side.buffs.crit = { until: now + ab.dur, val: ab.critBonus, src: ab.id };
+    side.burstTs = now; side.burstMagic = 0; side.burstAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – verschwindet im Nebel! Gegner ' + (ab.dur/1000) + 's geblendet.', '#b6a0ff');
+  } else if(ab.kind === 'summon'){
+    // Teufelswache: beschworener Dämon verstärkt den Schaden über die Dauer.
+    side.petEndUntil = now + (ab.petDur || 10000);
+    side.petBonus = ab.petBonus || 0.25;
+    side.burstTs = now; side.burstMagic = 0; side.burstAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – eine Teufelswache kämpft mit (+' + Math.round((ab.petBonus||0.25)*100) + '% Schaden)!', '#9b30ff');
   }
 }
 
@@ -313,6 +347,7 @@ function strike(att, def, enr){
   const isCrit = Math.random() < Math.min(1, critChance);
   let dmg = Math.max(1, Math.round(att.atk * enr * rnd(0.15) * (isCrit ? att.critMult : 1)));
   if(now < att.buffs.dmgBoost.until) dmg = Math.max(1, Math.round(dmg * (1 + att.buffs.dmgBoost.val)));
+  if(now < (att.petEndUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 + (att.petBonus||0))));   // Teufelswache
   if(Math.random() < def.dodge) return { dodged: true };
   const armorRed = def.armor * COMBAT.armorReduction + (def.block || 0);
   dmg = Math.max(1, Math.round(dmg - armorRed));
@@ -347,6 +382,8 @@ function tick(fight){
     const att = fight[aKey];
     let guard = 0;
     while(now >= att.nextSwingAt && guard < 2){
+      // Betäubt (Donnerknall/Nebelschritt des Gegners): Schlag aussetzen, Takt weiterlaufen lassen.
+      if(now < (att.stunUntil||0)){ att.nextSwingAt += att.interval; guard++; continue; }
       applyStrike(fight, aKey, dKey, strike(att, fight[dKey], enr), events);
       att.nextSwingAt += att.interval;
       // Nach langer Pause (z. B. gedrosselter Tab) nicht nachfeuern.
@@ -419,6 +456,10 @@ function fxOf(side, now){
     burstTs: side.burstTs || 0, burstMagic: side.burstMagic || 0, burstAb: side.burstAb || '',
     healTs: side.healTs || 0, healAb: side.healAb || '',
     drainTs: side.drainTs || 0, drainAb: side.drainAb || '',
+    // Neue Fähigkeiten: Betäubung / Stealth / Teufelswache (Restzeiten in ms).
+    stun:    Math.max(0, (side.stunUntil||0)    - now),
+    stealth: Math.max(0, (side.stealthUntil||0) - now),
+    pet:     Math.max(0, (side.petEndUntil||0)  - now),
   };
 }
 async function syncDuel(fight, finalWrite){

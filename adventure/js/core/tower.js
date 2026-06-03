@@ -5,7 +5,7 @@
 import { db, ref, get, set, update, remove, push, onValue, onDisconnect } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
-import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf } from '../data/classes.js';
+import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
 import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
@@ -309,6 +309,9 @@ async function syncFight(fight){
     // drift-frei, da Host- und Gast-Uhr nicht identisch sind. Clients zählen lokal runter.
     frontCdRemain: Math.max(0, (fight.frontAbilUntil||0) - now),
     backCdRemain:  Math.max(0, (fight.backAbilUntil ||0) - now),
+    // Cooldown der ZWEITEN Fähigkeit je Slot.
+    frontCd2Remain: Math.max(0, (fight.frontAbil2Until||0) - now),
+    backCd2Remain:  Math.max(0, (fight.backAbil2Until ||0) - now),
     // Aktive Skill-Effekte für die Animationen beider Spieler (B15).
     // Als RESTZEIT (ms) zum Sync-Zeitpunkt – driftfrei trotz abweichender
     // Geräteuhren (gleiches Muster wie die Cooldown-Badges). Jeder Client
@@ -323,6 +326,14 @@ async function syncFight(fight){
       ablazeBackRemain:  Math.max(0, (fight.backCritUntil ||0) - now),
       shieldRemain:      Math.max(0, (fight.groupDmgReduceUntil||0) - now),
       healTs:      fight.lastHealTs || 0,
+      // Neue Fähigkeiten: Cast-Trigger (Einmal-Animation), Teufelswache, Betäubung, Stealth.
+      castFrontTs: fight.frontCastTs || 0, castFrontAb: fight.frontCastAb || '',
+      castBackTs:  fight.backCastTs  || 0, castBackAb:  fight.backCastAb  || '',
+      petFrontRemain: Math.max(0, (fight.frontPetUntil||0) - now),
+      petBackRemain:  Math.max(0, (fight.backPetUntil ||0) - now),
+      bossStunRemain: Math.max(0, (fight.bossStunUntil||0) - now),
+      stealthFrontRemain: Math.max(0, (fight.frontStealthUntil||0) - now),
+      stealthBackRemain:  Math.max(0, (fight.backStealthUntil ||0) - now),
     },
     status:      fight.over ? (fight.won ? 'won' : 'lost') : 'fighting',
   };
@@ -350,6 +361,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontName, frontTier: frontStats.tier,
     frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
     frontAbility: abilityOf(frontStats.classId),
+    frontAbility2: ability2Of(frontStats.classId),
     backMaxHp:  backStats.maxHp,  backHp: backStats.maxHp,
     backAtk:    backStats.atk,    backArmor: backStats.armor,
     backCrit:   backStats.critChance, backCritMult: backStats.critMult,
@@ -362,12 +374,19 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backName, backTier: backStats.tier,
     backKey: keys.backKey || '', backClass: backStats.classId || '',
     backAbility: abilityOf(backStats.classId),
+    backAbility2: ability2Of(backStats.classId),
     turn:0, over:false, won:false,
     enrageMult:1, berserkMult:1, poison:0, shieldTurns:0,
     speed:1, log:{}, logCount:0,
     startedAt: Date.now(), dmgDealt:0,
     // Skill-Status (B14)
-    frontCritUntil:0, backCritUntil:0, groupDmgReduceUntil:0, lastHealTs:0,
+    frontCritUntil:0, backCritUntil:0, frontCritVal:0, backCritVal:0,
+    groupDmgReduceUntil:0, lastHealTs:0,
+    // Neue Fähigkeiten: zweiter Cooldown je Slot, Boss-Betäubung, Teufelswache, Stealth.
+    frontAbil2Until:0, backAbil2Until:0, bossStunUntil:0,
+    frontPetUntil:0, backPetUntil:0, frontPetBonus:0, backPetBonus:0,
+    frontStealthUntil:0, backStealthUntil:0,
+    frontCastTs:0, frontCastAb:'', backCastTs:0, backCastAb:'',
     _lastAbilTs:0,
     onUpdate,
   };
@@ -384,36 +403,80 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
   scheduleExchange(fight);
 }
 
+// Pet-Bonus (Teufelswache) eines Slots zum aktuellen Zeitpunkt.
+function petMultOf(fight, slot, now){
+  const until = slot === 'front' ? fight.frontPetUntil : fight.backPetUntil;
+  const bonus = slot === 'front' ? fight.frontPetBonus : fight.backPetBonus;
+  return now < (until||0) ? (1 + (bonus||0)) : 1;
+}
+
 // Host wendet eine angeforderte Klassen-Fähigkeit auf den Kampf an.
 function applyAbility(fight, slot, abilityId){
   if(fight.over) return;
-  const ab = (slot === 'front' ? fight.frontAbility : fight.backAbility);
-  if(!ab || ab.id !== abilityId) return;
+  // Angeforderte ID gegen BEIDE Fähigkeiten des Slots prüfen.
+  const list = slot === 'front' ? [fight.frontAbility, fight.frontAbility2] : [fight.backAbility, fight.backAbility2];
+  const ab = list.find(a => a && a.id === abilityId);
+  if(!ab) return;
   const now = Date.now();
-  // Cooldown pro Slot merken → wird in syncFight als Restzeit an beide Clients gesendet.
-  if(slot === 'front') fight.frontAbilUntil = now + (ab.cd || 0);
-  else                 fight.backAbilUntil  = now + (ab.cd || 0);
-  if(ab.id === 'heilkreis'){
+  const isSecond = ab === (slot === 'front' ? fight.frontAbility2 : fight.backAbility2);
+  // Cooldown pro Slot UND Fähigkeit merken → in syncFight als Restzeit an beide Clients.
+  if(slot === 'front'){ if(isSecond) fight.frontAbil2Until = now + (ab.cd||0); else fight.frontAbilUntil = now + (ab.cd||0); }
+  else                { if(isSecond) fight.backAbil2Until  = now + (ab.cd||0); else fight.backAbilUntil  = now + (ab.cd||0); }
+  const name = slot === 'front' ? fight.frontName : fight.backName;
+  // Cast-Signal für die Client-Animation (Rauch/Säule/Dämon/Schockwelle).
+  if(slot === 'front'){ fight.frontCastTs = now; fight.frontCastAb = ab.id; }
+  else                { fight.backCastTs  = now; fight.backCastAb  = ab.id; }
+
+  if(ab.kind === 'heal'){
     if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
     if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + Math.round(fight.backMaxHp  * ab.healPct));
     fight.lastHealTs = now;
-    addLog(fight, '➕ Heilkreis: alle Helden +'+Math.round(ab.healPct*100)+'% HP', '#37d67a');
+    addLog(fight, ab.icon+' '+ab.name+': alle Helden +'+Math.round(ab.healPct*100)+'% HP', '#37d67a');
+  } else if(ab.kind === 'healBurst'){
+    // Lichtsäule: heilt beide Helden UND verbrennt den Boss.
+    if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
+    if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + Math.round(fight.backMaxHp  * ab.healPct));
+    fight.lastHealTs = now;
+    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
+    const dmg = Math.max(1, Math.round(atk * (ab.burstMult||3) * petMultOf(fight, slot, now)));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg;
+    addLog(fight, ab.icon+' '+ab.name+': alle +'+Math.round(ab.healPct*100)+'% HP, '+fmtBig(dmg)+' Schaden', '#ffe9a8');
+    if(fight.bossHp <= 0) fight.over = true;
   } else if(ab.kind === 'critBoost'){
-    if(slot === 'front') fight.frontCritUntil = now + ab.dur; else fight.backCritUntil = now + ab.dur;
-    addLog(fight, ab.icon+' '+(slot==='front'?fight.frontName:fight.backName)+' – '+ab.name+'!', '#ff8a3d');
-  } else if(ab.id === 'schildwall'){
+    if(slot === 'front'){ fight.frontCritUntil = now + ab.dur; fight.frontCritVal = ab.critBonus||0; }
+    else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||0; }
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+'!', '#ff8a3d');
+  } else if(ab.kind === 'vanish'){
+    // Nebelschritt: Boss betäubt, eigener Krit garantiert, Stealth-Optik.
+    fight.bossStunUntil = now + ab.dur;
+    if(slot === 'front'){ fight.frontCritUntil = now + ab.dur; fight.frontCritVal = ab.critBonus||1; fight.frontStealthUntil = now + ab.dur; }
+    else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||1; fight.backStealthUntil  = now + ab.dur; }
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Boss '+(ab.dur/1000)+'s geblendet!', '#b6a0ff');
+  } else if(ab.kind === 'stun'){
+    // Donnerknall: Schaden + Boss-Betäubung.
+    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
+    const dmg = Math.max(1, Math.round(atk * (ab.burstMult||1.2) * petMultOf(fight, slot, now)));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg;
+    fight.bossStunUntil = now + (ab.stunDur||4000);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+fmtBig(dmg)+' Schaden, Boss '+((ab.stunDur||4000)/1000)+'s betäubt!', '#7fd0ff');
+    if(fight.bossHp <= 0) fight.over = true;
+  } else if(ab.kind === 'summon'){
+    // Teufelswache: beschworener Dämon verstärkt den Schaden des Slots.
+    if(slot === 'front'){ fight.frontPetUntil = now + (ab.petDur||10000); fight.frontPetBonus = ab.petBonus||0.25; }
+    else               { fight.backPetUntil  = now + (ab.petDur||10000); fight.backPetBonus  = ab.petBonus||0.25; }
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Teufelswache kämpft '+((ab.petDur||10000)/1000)+'s mit (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden)!', '#9b30ff');
+  } else if(ab.kind === 'dmgReduce'){
     fight.groupDmgReduceUntil = now + ab.dur;
     fight.groupDmgReducePct   = ab.dmgReduce || 0;
-    addLog(fight, '🛡️ Schildwall – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff');
+    addLog(fight, ab.icon+' '+ab.name+' – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff');
   } else if(ab.kind === 'drain' && ab.dur){
-    // Kanalisierter Seelenraub (Hexer-Grundfähigkeit): Lebensentzug am Boss pro
-    // Sekunde + Heilung in gleicher Höhe, über die volle Dauer.
+    // Kanalisierter Seelenraub (Hexer-Grundfähigkeit): Lebensentzug über die Dauer.
     startTowerDrain(fight, slot, ab);
     return;
   } else if(ab.kind === 'drain' || ab.kind === 'burst'){
     // burst-Aktive & sofortige Drain-Talente: Sofortschaden am Boss.
     const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
-    const dmg = Math.max(1, Math.round(atk * (ab.burstMult || 2)));
+    const dmg = Math.max(1, Math.round(atk * (ab.burstMult || 2) * petMultOf(fight, slot, now)));
     fight.bossHp = Math.max(0, fight.bossHp - dmg);
     fight.dmgDealt += dmg;
     if(ab.kind === 'drain'){
@@ -478,8 +541,8 @@ function exchange(fight){
 
   // Skill: Krit-Boost-Fähigkeit (z. B. Kaltblütigkeit) (B14)
   const now = Date.now();
-  const fCritBonus = (now < (fight.frontCritUntil||0) && fight.frontAbility) ? (fight.frontAbility.critBonus||0) : 0;
-  const bCritBonus = (now < (fight.backCritUntil ||0) && fight.backAbility)  ? (fight.backAbility.critBonus ||0) : 0;
+  const fCritBonus = now < (fight.frontCritUntil||0) ? (fight.frontCritVal||0) : 0;
+  const bCritBonus = now < (fight.backCritUntil ||0) ? (fight.backCritVal ||0) : 0;
   const effFrontCrit = Math.min(1, fight.frontCrit + fCritBonus);
   const effBackCrit  = Math.min(1, fight.backCrit  + bCritBonus);
 
@@ -492,7 +555,8 @@ function exchange(fight){
       addLog(fight, '💚 ' + fight.frontName + ' heilt ' + fight.backName + ': +' + fmtBig(healAmt) + ' HP', '#37d67a');
       events.push({ s:'front', t:'back', d:healAmt, h:1 });
     } else {
-      const { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
+      let { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
+      fd = Math.max(1, Math.round(fd * petMultOf(fight, 'front', now)));   // Teufelswache
       fight.bossHp = Math.max(0, fight.bossHp - fd);
       fight.dmgDealt += fd;
       addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
@@ -522,7 +586,8 @@ function exchange(fight){
       addLog(fight, '💚 ' + fight.backName + ' heilt ' + fight.frontName + ': +' + fmtBig(healAmt) + ' HP', '#37d67a');
       events.push({ s:'back', t:'front', d:healAmt, h:1 });
     } else {
-      const { dmg: bd, crit: bc } = rollDmg(fight.backAtk, effBackCrit, fight.backCritMult);
+      let { dmg: bd, crit: bc } = rollDmg(fight.backAtk, effBackCrit, fight.backCritMult);
+      bd = Math.max(1, Math.round(bd * petMultOf(fight, 'back', now)));   // Teufelswache
       fight.bossHp = Math.max(0, fight.bossHp - bd);
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
@@ -555,6 +620,16 @@ function exchange(fight){
   // ---- Boss schlägt zurück (nach Delay) ---
   setTimeout(async () => {
     if(fight.over) return;
+
+    // Betäubung (Donnerknall / Nebelschritt): Boss setzt seinen Angriff aus.
+    if(Date.now() < (fight.bossStunUntil||0)){
+      addLog(fight, '😵 Boss ist betäubt und kann nicht angreifen!', '#7fd0ff');
+      fight.events = events;
+      await syncFight(fight);
+      const ivStun = (frosted ? 1.4 : 1.0);
+      _fightTimer = setTimeout(() => exchange(fight), (fight.frontInterval * ivStun) / fight.speed);
+      return;
+    }
 
     // Eispanzer
     if(mechs.includes('eispanzer') && fight.turn % 5 === 0){ fight.shieldTurns = 2; addLog(fight, '🛡️ Eispanzer aktiv!', '#7fd0ff'); }
