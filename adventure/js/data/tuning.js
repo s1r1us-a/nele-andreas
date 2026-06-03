@@ -51,6 +51,16 @@ export const ENDLESS = {
   powFactor: 1.05,
 };
 
+// ---- Turm des Wahnsinns: Endgame-Härtung -----------------------------
+// Turm-Bosse koppeln an die normale Boss-Kurve (bossFor(floor-1)) und werden
+// per stockwerksabhängigem Multiplikator immer härter als der Normal-Boss.
+export const TOWER = {
+  hpMultBase:  2.4,   // Floor 1: HP-Faktor auf den Normal-Boss (~alt 2200 HP)
+  hpMultPer:   0.06,  // +6 % HP-Faktor je Stockwerk
+  atkMultBase: 1.6,   // Floor 1: ATK-Faktor (~alt 28 ATK)
+  atkMultPer:  0.035, // +3,5 % ATK-Faktor je Stockwerk
+};
+
 // ---- Farmen (#17): Wiederholungskämpfe geben weniger -----------------
 export const FARM = {
   goldMult: 0.5,
