@@ -26,10 +26,9 @@ import { startBossFight, updatePotionBtn,
 import { computePlayerStats } from '../core/tower.js';
 import { db, ref, get, userKey } from '../core/firebase.js';
 import { getCoins } from '../core/coins.js';
-import { upgradeItem } from '../core/crafting.js';
+import { upgradeItem, salvage, materialCount } from '../core/crafting.js';
 import { playUpgradeFx } from './forge.js';
-import { upgradeCost, canUpgrade, MATERIAL_BY_KEY } from '../data/materials.js';
-import { materialCount } from '../core/crafting.js';
+import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield } from '../data/materials.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
@@ -151,6 +150,12 @@ export function openItemPreview(item, fromSlotKey, backFn){
     return '<button class="btn ghost" id="previewUpgrade"'+(enough?'':' disabled style="opacity:.5;cursor:not-allowed"')+
       '>⚒️ Aufwerten ('+m.icon+' '+c.mat+' · 🪙 '+fmtBig(c.coins)+')</button>';
   })() : '';
+  // Zerlegen nur für Items im Inventar; gesperrte sind geschützt (wie Verkaufen).
+  const sy = inInventory ? salvageYield(item) : null;
+  const salvageBtn = inInventory
+    ? '<button class="btn ghost" id="previewSalvage"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+
+      '>♻️ Zerlegen ('+MATERIAL_BY_KEY[sy.key].icon+' +'+sy.amount+')</button>'
+    : '';
   const upgTag = (item.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">+'+item.upgradeLevel+'</span>' : '';
   openModal('<h2 style="color:'+r.color+'">'+item.name+upgTag+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+'</div>'+
@@ -161,6 +166,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
     '<div class="preview-actions">'+
       '<button class="btn" id="previewEquip"'+(equipOk?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Anlegen</button>'+
       '<button class="btn ghost" id="previewSell"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+'>💰 Verkaufen (🪙 '+fmtBig(price)+')</button>'+
+      salvageBtn+
       upBtn+
       '<button class="btn ghost" id="previewLock">'+(locked?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
@@ -174,6 +180,17 @@ export function openItemPreview(item, fromSlotKey, backFn){
     const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Coins');
   });
   modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn); });
+  const svEl = modal().querySelector('#previewSalvage');
+  if(svEl && !locked) svEl.addEventListener('click', async ()=>{
+    const m = MATERIAL_BY_KEY[sy.key];
+    const ok = await confirmDialog({ title:'Zerlegen?', emoji:'♻️', danger:true,
+      body: item.name+'<br>zu '+m.icon+' <b>'+sy.amount+' '+m.name+'</b> zerlegen?',
+      confirmText:'Zerlegen', cancelText:'Abbrechen' });
+    if(!ok) return;
+    const res = salvage(item.id);
+    if(res.ok){ const rm = MATERIAL_BY_KEY[res.key]; toast('♻️ '+rm.icon+' +'+res.amount+' '+rm.name); renderAll(); closeModal(); }
+    else toast('Konnte nicht zerlegt werden.');
+  });
   const upEl = modal().querySelector('#previewUpgrade');
   if(upEl) upEl.addEventListener('click', async ()=>{
     upEl.disabled = true;

@@ -1492,6 +1492,11 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .fa-title { font-family:'Cinzel',serif; font-weight:700; color:var(--gold-hi); font-size:14px; margin-bottom:6px; }
 .fa-info { font-size:12px; color:var(--txt-dim); margin-bottom:4px; }
 .fa-info b { color:#3fd6a8; }
+/* Exakte Vorher → Nachher-Zeilen beim Aufwerten */
+.fa-prev { margin:2px 0 10px; display:flex; flex-direction:column; gap:3px; }
+.fa-line { font-size:12px; color:var(--txt-dim); }
+.fa-line b { color:#3fd6a8; }
+.fa-line .fa-cap { color:var(--txt-mute); font-size:11px; }
 .fa-cost { font-size:12px; color:var(--txt-mute); margin-bottom:10px; }
 .forge-action .btn { font-size:13px; }
 

@@ -20,6 +20,19 @@ import { bindTooltip, hideTooltip } from './tooltip.js';
 let selectedId = null;
 
 const baseStatOf = it => (it.base ? it.base.stat : it.stat);
+const baseAffixesOf = it => (it.base ? it.base.affixes : (it.affixes || {}));
+
+// Affix-Wert bei gegebener Aufwertungsstufe (Vorschau; identisch zur Mathe in
+// crafting.js inkl. Caps – read-only, mutiert nichts).
+function affixAtLevel(key, baseV, level){
+  const d = AFFIX_DEFS[key]; if(!d) return baseV;
+  let v = baseV * (1 + UPGRADE_AFFIX_PCT*level);
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.max(1, Math.round(v)); }
+  return v;
+}
+// Reiner Zahlenwert eines Affixes (ohne Label) für „X → Y"-Zeilen.
+function affixValStr(key, v){ const d = AFFIX_DEFS[key]; return d.pct ? '+'+Math.round(v*100)+'%' : '+'+v; }
 
 export function renderForge(){
   const panel = $('#forgePanel');
@@ -141,9 +154,18 @@ function buildActionCard(it){
     const m = MATERIAL_BY_KEY[c.matKey];
     const nextStat = Math.max(1, Math.round(baseStatOf(it) * (1 + UPGRADE_STAT_PCT*(lvl+1))));
     const enough = materialCount(c.matKey) >= c.mat && getCoins() >= c.coins;
+    // Exakte Vorher → Nachher-Werte: Hauptwert + jeder einzelne Affix.
+    const baseAff = baseAffixesOf(it);
+    let prevLines = '<div class="fa-line">'+statLabel+': '+it.stat+' → <b>'+nextStat+'</b></div>';
+    for(const k of Object.keys(it.affixes||{})){
+      const nxt = affixAtLevel(k, baseAff[k], lvl+1);
+      const capped = AFFIX_DEFS[k] && AFFIX_DEFS[k].cap && nxt >= AFFIX_DEFS[k].cap && nxt === it.affixes[k];
+      prevLines += '<div class="fa-line">'+AFFIX_DEFS[k].label+': '+affixValStr(k, it.affixes[k])+
+        ' → <b>'+affixValStr(k, nxt)+'</b>'+(capped?' <span class="fa-cap">(Max)</span>':'')+'</div>';
+    }
     html += '<div class="forge-action">'+
       '<div class="fa-title">⚒️ Aufwerten · +'+lvl+' → +'+(lvl+1)+'</div>'+
-      '<div class="fa-info">'+statLabel+' '+it.stat+' → <b>'+nextStat+'</b> · alle Affixe +'+Math.round(UPGRADE_AFFIX_PCT*100)+'%</div>'+
+      '<div class="fa-prev">'+prevLines+'</div>'+
       '<div class="fa-cost">Kosten: '+m.icon+' '+c.mat+' '+m.name+' ('+fmtBig(materialCount(c.matKey))+') · 🪙 '+fmtBig(c.coins)+'</div>'+
       '<button class="btn" id="forgeUpgrade"'+(enough?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Aufwerten</button>'+
     '</div>';
