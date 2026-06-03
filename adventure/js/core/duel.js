@@ -147,7 +147,7 @@ function rnd(v){ return 1 + (Math.random()*2 - 1)*v; }
 
 function freshBuffs(){
   return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
-           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0} };
+           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0}, reflect:{until:0,val:0} };
 }
 function makeSide(stats){
   const classId = stats.classId;
@@ -166,6 +166,8 @@ function makeSide(stats){
     burstTs: 0, healTs: 0, drainTs: 0, burstMagic: 0,
     // Neue Fähigkeiten: Betäubung, Stealth-Fenster, beschworene Wache.
     stunUntil: 0, stealthUntil: 0, petEndUntil: 0, petBonus: 0,
+    // Talent-Aktive: Absorb-Schild, Todesrettung, Verwundbarkeit, Cast-Trigger.
+    shield: 0, shieldUntil: 0, deathSaveUntil: 0, reviveHp: 0, vulnUntil: 0, vulnVal: 0, castTs: 0, castAb: '',
   };
 }
 
@@ -305,6 +307,43 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
     side.petBonus = ab.petBonus || 0.25;
     side.burstTs = now; side.burstMagic = 0; side.burstAb = ab.id;
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – eine Teufelswache kämpft mit (+' + Math.round((ab.petBonus||0.25)*100) + '% Schaden)!', '#9b30ff');
+  } else if(ab.kind === 'dot'){
+    startDuelDot(fight, role, side, opp, name, ab);
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – ' + Math.round(ab.dotMult*100) + '% Schaden/s für ' + (ab.dur/1000) + 's.', '#9acd32');
+  } else if(ab.kind === 'hot'){
+    startDuelHot(fight, role, side, name, ab);
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – Heilung über ' + (ab.dur/1000) + 's.', '#37d67a');
+  } else if(ab.kind === 'absorb'){
+    side.shield = Math.round(side.maxHp * (ab.absorbPct||0.4));
+    side.shieldUntil = now + (ab.dur||10000);
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – Schild absorbiert ' + fmtBig(side.shield) + ' Schaden.', '#bfe3ff');
+  } else if(ab.kind === 'cleanse'){
+    side.buffs.dmgReduce.until = Math.max(side.buffs.dmgReduce.until, 0);   // (Duell hat keine Boss-Debuffs)
+    const heal = Math.round(side.maxHp * (ab.healPct||0.25));
+    side.hp = Math.min(side.maxHp, side.hp + heal); side.healTs = now; side.healAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': +' + fmtBig(heal) + ' HP', '#bfe3ff');
+  } else if(ab.kind === 'deathsave'){
+    side.deathSaveUntil = now + (ab.dur||10000);
+    side.reviveHp = Math.round(side.maxHp * (ab.revivePct||0.3));
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – überlebt ' + (ab.dur/1000) + 's lang den Tod.', '#ffe9a8');
+  } else if(ab.kind === 'reflect'){
+    side.buffs.reflect = { until: now + ab.dur, val: ab.reflectPct||0.4, src: ab.id };
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – reflektiert ' + Math.round((ab.reflectPct||0.4)*100) + '% Schaden!', '#b6d0ff');
+  } else if(ab.kind === 'vulnerability'){
+    opp.vulnUntil = now + ab.dur; opp.vulnVal = ab.vulnPct||0.3;
+    if(ab.burstMult){ const dmg = Math.max(1, Math.round(side.atk * ab.burstMult)); opp.hp -= dmg; fight.dmgDealt += dmg; side.burstTs = now; side.burstMagic = side.magic?1:0; side.burstAb = ab.id; }
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – Gegner +' + Math.round((ab.vulnPct||0.3)*100) + '% Schaden für ' + (ab.dur/1000) + 's.', '#ff8a3d');
+    if(opp.hp <= 0){ opp.hp = 0; fight.over = true; fight.winner = role; logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a'); clearTimeout(_timer); }
+  } else if(ab.kind === 'avatar'){
+    side.buffs.dmgBoost  = { until: now + ab.dur, val: ab.dmgBonus||0.4, src: ab.id };
+    side.buffs.dmgReduce = { until: now + ab.dur, val: ab.dmgReduce||0.4, src: ab.id };
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round((ab.dmgBonus||0.4)*100) + '% Schaden & −' + Math.round((ab.dmgReduce||0.4)*100) + '% erlitten!', '#ffd24a');
   }
 }
 
@@ -331,6 +370,43 @@ function startDuelDrain(fight, role, side, opp, name, ab){
       fight.events = []; syncDuel(fight, true);
       return;
     }
+    fight.events = []; syncDuel(fight, false);
+    if(++i < ticks) setTimeout(tick, tickMs);
+  };
+  setTimeout(tick, tickMs);
+}
+
+// DoT am Gegner (Gift/Blutung): tickt dotMult·Atk Schaden über die Dauer (keine Heilung).
+function startDuelDot(fight, role, side, opp, name, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round((ab.dur||5000) / tickMs));
+  let i = 0;
+  const tick = () => {
+    if(fight.over || _fight !== fight || side.hp <= 0) return;
+    const now = Date.now();
+    const dmg = Math.max(1, Math.round(side.atk * (ab.dotMult||0.5)));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden', '#9acd32');
+    if(opp.hp <= 0){ opp.hp = 0; fight.over = true; fight.winner = role;
+      logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a');
+      clearTimeout(_timer); fight.events = []; syncDuel(fight, true); return; }
+    fight.events = []; syncDuel(fight, false);
+    if(++i < ticks) setTimeout(tick, tickMs);
+  };
+  setTimeout(tick, tickMs);
+}
+// HoT am Wirker (Verjüngung): tickt hotPct·maxHp Heilung über die Dauer.
+function startDuelHot(fight, role, side, name, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round((ab.dur||8000) / tickMs));
+  let i = 0;
+  const tick = () => {
+    if(fight.over || _fight !== fight || side.hp <= 0) return;
+    const now = Date.now();
+    const heal = Math.round(side.maxHp * (ab.hotPct||0.08));
+    side.hp = Math.min(side.maxHp, side.hp + heal); side.healTs = now; side.healAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': +' + fmtBig(heal) + ' HP', '#37d67a');
     fight.events = []; syncDuel(fight, false);
     if(++i < ticks) setTimeout(tick, tickMs);
   };
@@ -371,6 +447,7 @@ function strike(att, def, enr){
   let dmg = Math.max(1, Math.round(att.atk * enr * rnd(0.15) * (isCrit ? att.critMult : 1)));
   if(now < att.buffs.dmgBoost.until) dmg = Math.max(1, Math.round(dmg * (1 + att.buffs.dmgBoost.val)));
   if(now < (att.petEndUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 + (att.petBonus||0))));   // Teufelswache
+  if(now < (def.vulnUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 + (def.vulnVal||0))));   // Schildwurf: Verwundbarkeit
   if(Math.random() < def.dodge) return { dodged: true };
   const armorRed = def.armor * COMBAT.armorReduction + (def.block || 0);
   dmg = Math.max(1, Math.round(dmg - armorRed));
@@ -448,14 +525,29 @@ function applyStrike(fight, attKey, defKey, res, events){
     logLine(fight, '💨 ' + defName + ' weicht aus!', '#9ec5ff');
     return;
   }
-  def.hp -= res.dmg;
-  fight.dmgDealt += res.dmg;
-  events.push({ s: attKey, t: defKey, d: res.dmg, ...(res.crit ? { c: 1 } : {}), ...(att.usesStab ? { p: 1 } : {}) });
-  logLine(fight, '⚔️ ' + attName + (res.crit ? ' ✨KRIT' : '') + ': -' + fmtBig(res.dmg) + ' HP', res.crit ? '#ffd24a' : '#cfc6dd');
+  const now = Date.now();
+  let dmg = res.dmg;
+  // Reflexion (Vergeltung): Anteil zurück an den Angreifer.
+  if(now < def.buffs.reflect.until && def.buffs.reflect.val > 0){
+    const refl = Math.max(1, Math.round(dmg * def.buffs.reflect.val));
+    att.hp -= refl; fight.dmgDealt += refl;
+    events.push({ s: defKey, t: attKey, d: refl });
+  }
+  // Absorb-Schild (Schutzschild): zuerst den Schild abtragen.
+  if(now < (def.shieldUntil||0) && def.shield > 0){
+    const soak = Math.min(def.shield, dmg); def.shield -= soak; dmg -= soak;
+    if(def.shield <= 0){ def.shield = 0; def.shieldUntil = 0; }
+  }
+  def.hp -= dmg;
+  // Todesrettung (Engelsgeist / Letzter Wall / Seelenstein).
+  if(def.hp <= 0 && now < (def.deathSaveUntil||0)){ def.hp = Math.max(1, def.reviveHp||1); def.deathSaveUntil = 0; }
+  fight.dmgDealt += dmg;
+  events.push({ s: attKey, t: defKey, d: dmg, ...(res.crit ? { c: 1 } : {}), ...(att.usesStab ? { p: 1 } : {}) });
+  logLine(fight, '⚔️ ' + attName + (res.crit ? ' ✨KRIT' : '') + ': -' + fmtBig(dmg) + ' HP', res.crit ? '#ffd24a' : '#cfc6dd');
   let ls = att.lifesteal;
   if(Date.now() < att.buffs.lifesteal.until) ls += att.buffs.lifesteal.val;
   if(ls > 0){
-    const heal = Math.round(res.dmg * ls);
+    const heal = Math.round(dmg * ls);
     if(heal > 0) att.hp = Math.min(att.maxHp, att.hp + heal);
   }
   // Dornen-Affix: flacher Bonusschaden am Verteidiger (analog Solo-Kampf).
@@ -484,6 +576,12 @@ function fxOf(side, now){
     stun:    Math.max(0, (side.stunUntil||0)    - now),
     stealth: Math.max(0, (side.stealthUntil||0) - now),
     pet:     Math.max(0, (side.petEndUntil||0)  - now),
+    // Talent-Aktive: Absorb-Schild / Reflexion / Verwundbarkeit / Todesrettung + Cast-Trigger.
+    absorb:    Math.max(0, (side.shieldUntil||0)   - now),
+    reflect:   Math.max(0, (side.buffs.reflect.until||0) - now),
+    vuln:      Math.max(0, (side.vulnUntil||0)     - now),
+    deathsave: Math.max(0, (side.deathSaveUntil||0)- now),
+    castTs: side.castTs || 0, castAb: side.castAb || '',
   };
 }
 async function syncDuel(fight, finalWrite){

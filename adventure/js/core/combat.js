@@ -627,6 +627,7 @@ function resetAbilityVisuals(){
   removeShieldDome();
   removeShieldDome('shieldDomeOpp');
   removeShieldDome('absorbDome');
+  removeShieldDome('absorbDomeOpp');
   const layer = $('#dmgLayer');
   if(layer) layer.querySelectorAll('.vfx-orbit, .vfx-rune-ring, .vfx-demon').forEach(n => n.remove());
   stopDrainChannel();
@@ -1727,6 +1728,20 @@ function applyDuelFx(fx, me){
   applyStunAura('bossSprite', (theirs.stun||0) > 0);
   applyDemonAura('heroSprite', (mine.pet||0) > 0);
   applyDemonAura('bossSprite', (theirs.pet||0) > 0);
+
+  // Talent-Aktive: Absorb-Schild-Kuppel, Reflexions-Glühen, Verwundbarkeit, Todesrettung.
+  if((mine.absorb||0) > 0){ if(!$('#absorbDome')) spawnShieldDome('heroSprite', 'absorbDome', 1); } else removeShieldDome('absorbDome');
+  if((theirs.absorb||0) > 0){ if(!$('#absorbDomeOpp')) spawnShieldDome('bossSprite', 'absorbDomeOpp', -1); } else removeShieldDome('absorbDomeOpp');
+  setSpriteClass('heroSprite', 'reflect-glow',   (mine.reflect||0) > 0);
+  setSpriteClass('bossSprite', 'reflect-glow',   (theirs.reflect||0) > 0);
+  setSpriteClass('heroSprite', 'vuln-tint',      (mine.vuln||0) > 0);
+  setSpriteClass('bossSprite', 'vuln-tint',      (theirs.vuln||0) > 0);
+  setSpriteClass('heroSprite', 'deathsave-glow', (mine.deathsave||0) > 0);
+  setSpriteClass('bossSprite', 'deathsave-glow', (theirs.deathsave||0) > 0);
+
+  // Einmalige Cast-Signaturen (Buff/DoT/HoT ohne Sofortschaden) per Timestamp.
+  if(mine.castTs && mine.castTs !== seen.myCast){ seen.myCast = mine.castTs; playAbilityVfxById(mine.castAb, 'heroSprite', 'bossSprite', false, ''); }
+  if(theirs.castTs && theirs.castTs !== seen.oppCast){ seen.oppCast = theirs.castTs; playAbilityVfxById(theirs.castAb, 'bossSprite', 'heroSprite', false, ''); }
 }
 
 // Schwindel-Sterne über einem betäubten Sprite (persistent, id-verwaltet).
