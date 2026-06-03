@@ -46,14 +46,18 @@ export function renderForge(){
   matBar.innerHTML = MATERIALS.map(m => {
     const next = nextMaterialKey(m.key);
     const have = materialCount(m.key);
-    const canConv = next && have >= CONVERT_RATE;
-    const convBtn = next
-      ? '<button class="btn ghost forge-conv" data-conv="'+m.key+'"'+(canConv?'':' disabled style="opacity:.4;cursor:not-allowed"')+
-        ' title="'+CONVERT_RATE+' '+m.name+' → 1 '+(MATERIAL_BY_KEY[next].name)+'">'+CONVERT_RATE+'→1 '+MATERIAL_BY_KEY[next].icon+'</button>'
+    // Konvertieren-Button nur zeigen, wenn die Umwandlung wirklich möglich ist
+    // (genug Material). Spart leere/ausgegraute Knöpfe und Platz auf Mobile.
+    const convBtn = (next && have >= CONVERT_RATE)
+      ? '<button class="btn ghost forge-conv" data-conv="'+m.key+'" title="'+CONVERT_RATE+' '+m.name+' → 1 '+MATERIAL_BY_KEY[next].name+'">'+
+          '🔁 '+CONVERT_RATE+' → 1 '+MATERIAL_BY_KEY[next].icon+'</button>'
       : '';
-    return '<div class="forge-mat"><span class="fm-icon">'+m.icon+'</span>'+
-      '<span class="fm-name">'+m.name+'</span>'+
-      '<span class="fm-have">'+fmtBig(have)+'</span>'+convBtn+'</div>';
+    return '<div class="forge-mat">'+
+      '<div class="fm-top">'+
+        '<span class="fm-icon">'+m.icon+'</span>'+
+        '<span class="fm-name">'+m.name+'</span>'+
+        '<span class="fm-have">'+fmtBig(have)+'</span>'+
+      '</div>'+convBtn+'</div>';
   }).join('');
   panel.appendChild(matBar);
   matBar.querySelectorAll('.forge-conv').forEach(btn => btn.addEventListener('click', async ()=>{
