@@ -12,6 +12,7 @@ import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosse
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc } from './avatar.js';
+import { buildDemonSVG } from './demon-art.js';
 import { rollItem, inventoryFull, addLog, recordDrop } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
 import { affixLinesHTML } from '../ui/tooltip.js';
@@ -1096,7 +1097,8 @@ function spawnDemon(spriteId, opts){
   const d = document.createElement('div');
   d.className = 'vfx-demon';
   if(opts.id) d.id = opts.id;
-  const body = document.createElement('span'); body.className = 'vfx-demon-body'; body.textContent = opts.glyph || '👹';
+  const body = document.createElement('span'); body.className = 'vfx-demon-body';
+  body.innerHTML = '<img class="vfx-demon-img" src="'+buildDemonSVG()+'" alt="Teufelswache">';
   const aura = document.createElement('span'); aura.className = 'vfx-demon-aura';
   d.appendChild(aura); d.appendChild(body);
   layer.appendChild(d);

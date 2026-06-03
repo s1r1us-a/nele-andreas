@@ -793,11 +793,13 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   pointer-events:none; z-index:7;
   animation:demonSummon .5s cubic-bezier(.2,.9,.25,1.2) both; }
 .vfx-demon .vfx-demon-body {
-  display:block; font-size:172px; line-height:1;
-  filter:drop-shadow(0 8px 10px rgba(0,0,0,.6)) drop-shadow(0 0 18px #7CFC00) drop-shadow(0 0 30px #4b9b00);
+  display:block; line-height:0;
   animation:demonIdle 2.2s ease-in-out infinite; }
+.vfx-demon .vfx-demon-img {
+  display:block; height:300px; width:auto;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(124,252,0,.55)); }
 .vfx-demon .vfx-demon-aura {
-  position:absolute; left:50%; bottom:6px; width:120px; height:46px; transform:translateX(-50%);
+  position:absolute; left:50%; bottom:6px; width:150px; height:50px; transform:translateX(-50%);
   border-radius:50%; pointer-events:none;
   background:radial-gradient(50% 80% at 50% 60%, rgba(124,252,0,.55) 0%, rgba(75,155,0,.3) 45%, rgba(0,0,0,0) 72%);
   box-shadow:0 0 26px 10px rgba(124,252,0,.4);
