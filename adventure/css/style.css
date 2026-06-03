@@ -796,7 +796,7 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   display:block; line-height:0;
   animation:demonIdle 2.2s ease-in-out infinite; }
 .vfx-demon .vfx-demon-img {
-  display:block; height:300px; width:auto;
+  display:block; height:250px; width:auto;
   filter:drop-shadow(0 8px 10px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(124,252,0,.55)); }
 .vfx-demon .vfx-demon-aura {
   position:absolute; left:50%; bottom:6px; width:150px; height:50px; transform:translateX(-50%);

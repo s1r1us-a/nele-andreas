@@ -410,7 +410,7 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   pointer-events:none; z-index:7; animation:towerDemonSummon .5s cubic-bezier(.2,.9,.25,1.2) both; }
 .vfx-demon .vfx-demon-body { display:block; line-height:0;
   animation:towerDemonIdle 2.2s ease-in-out infinite; }
-.vfx-demon .vfx-demon-img { display:block; height:210px; width:auto;
+.vfx-demon .vfx-demon-img { display:block; height:178px; width:auto;
   filter:drop-shadow(0 8px 10px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(124,252,0,.55)); }
 .vfx-demon .vfx-demon-aura { position:absolute; left:50%; bottom:6px; width:130px; height:44px; transform:translateX(-50%);
   border-radius:50%; pointer-events:none;
@@ -430,5 +430,5 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   .arena-hero img { height:112px; }
   .arena-hero::after { width:54px; }
   .arena-hero.back-hero::after { width:44px; }
-  .vfx-demon .vfx-demon-img { height:150px; }
+  .vfx-demon .vfx-demon-img { height:126px; }
 }
