@@ -103,6 +103,8 @@ export function startBossFight(bossIndex){
     curseTurns:0, zornTurns:0, invulnTurns:0, adds:0, teilungDone:false,
     // Neue Fähigkeiten-Status: Boss-Betäubung, Stealth-Fenster, beschworene Wache.
     bossStunUntil:0, stealthUntil:0, petEndUntil:0, petBonus:0,
+    // Talent-Aktive: Absorb-Schild, Todesrettung, Gegner-Verwundbarkeit.
+    heroShield:0, shieldUntil:0, deathSaveUntil:0, reviveHp:0, bossVulnUntil:0, bossVulnVal:0,
     healDebuff: mechanics.includes('schwaechung') ? 0.5 : 1,
     enrageMult:1,
     // Meter
@@ -191,6 +193,7 @@ function exchange(fight){
     let dmg = Math.max(1, Math.round(fight.heroAtk * rnd(0.15) * (heroCrit ? fight.heroCritMult : 1)));
     if(now < fight.buffs.dmgBoost.until) dmg = Math.max(1, Math.round(dmg * (1 + fight.buffs.dmgBoost.val)));
     if(now < (fight.petEndUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 + (fight.petBonus||0))));   // Teufelswache
+    if(now < (fight.bossVulnUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 + (fight.bossVulnVal||0))));   // Schildwurf: Verwundbarkeit
 
     if(fight.shieldTurns > 0) dmg = Math.max(1, Math.round(dmg*0.4));  // Eispanzer
     fight.bossHp = Math.max(0, fight.bossHp - dmg);
@@ -293,9 +296,11 @@ function exchange(fight){
       bd = Math.round(bd * (1 - fight.versatility));   // Vielseitigkeit senkt erlittenen Schaden
       // Schadensreduktions-Buff (Schildwall / Trotzschlag / Unbeugsam …).
       if(Date.now() < fight.buffs.dmgReduce.until){ bd = Math.max(1, Math.round(bd * (1 - fight.buffs.dmgReduce.val))); }
-      fight.heroHp = Math.max(0, fight.heroHp - bd);
+      if(Date.now() < (fight.bossVulnUntil||0)){ /* Verwundbarkeit betrifft nur Boss-Schaden, nicht Helden */ }
+      // Avatar-Buff (dmgReduce-Anteil) läuft über buffs.dmgReduce → bereits abgedeckt.
+      const dmgToHero = applyIncomingDamage(fight, bd);   // Absorb-Schild & Reflexion
       if(breath) mechFloat('boss', '🔥 Feueratem', '#ff8a3d');
-      attackAnim('boss', bd, bossCrit, ()=> updateHpBars(fight));
+      attackAnim('boss', dmgToHero, bossCrit, ()=> updateHpBars(fight));
       if(hasMech(fight,'lebensentzug')){
         const heal = Math.round(bd*0.4);
         fight.bossHp = Math.min(fight.bossMaxHp, fight.bossHp + heal);
@@ -320,10 +325,39 @@ function exchange(fight){
     }
     if(hasMech(fight,'frost') && fight.turn % 3 === 0){ fight.frostTurns = 2; mechFloat('boss','❄️ Frost','#7fd0ff'); }
 
+    // Todesrettung (Engelsgeist / Letzter Wall / Seelenstein): einmaliger Rettungs-
+    // anker, fängt jeden tödlichen Schaden im Fenster ab.
+    if(fight.heroHp <= 0 && Date.now() < (fight.deathSaveUntil||0)){
+      fight.heroHp = Math.max(1, fight.reviveHp||1);
+      fight.deathSaveUntil = 0;
+      mechFloat('hero', '✨ Gerettet!', '#ffe9a8');
+      addCombatLog(fight, '✨ Eine schützende Macht bewahrt dich vor dem Tod!', '#ffe9a8');
+      screenFlash('#ffe9a8', 200); vfxHeal('heroSprite');
+    }
     updateHpBars(fight);
     if(fight.heroHp <= 0){ return endFight(fight, false); }
     scheduleExchange(fight);
   }, COMBAT.bossReplyMs / combatSpeed);
+}
+
+// Eingehenden Boss-Schaden verarbeiten: Reflexion zurück an den Boss, dann
+// Absorb-Schild abtragen; gibt den tatsächlich an den Helden gehenden Schaden zurück.
+function applyIncomingDamage(f, bd){
+  const now = Date.now();
+  if(now < f.buffs.reflect.until && f.buffs.reflect.val > 0){
+    const refl = Math.max(1, Math.round(bd * f.buffs.reflect.val));
+    f.bossHp = Math.max(0, f.bossHp - refl); f.dmgDealt += refl;
+    mechFloat('boss', '🪞 -'+fmtBig(refl), '#b6d0ff');
+  }
+  let dmg = bd;
+  if(now < (f.shieldUntil||0) && f.heroShield > 0){
+    const soak = Math.min(f.heroShield, dmg);
+    f.heroShield -= soak; dmg -= soak;
+    if(soak > 0) mechFloat('hero', '🛡 -'+fmtBig(soak), '#bfe3ff');
+    if(f.heroShield <= 0){ f.heroShield = 0; f.shieldUntil = 0; }
+  }
+  f.heroHp = Math.max(0, f.heroHp - dmg);
+  return dmg;
 }
 
 export function updateHpBars(f){
@@ -386,6 +420,14 @@ export function abilityEffectShort(a){
     case 'stun':      return pct(a.burstMult)+'% Schaden · Betäubt '+Math.round((a.stunDur||4000)/1000)+'s';
     case 'vanish':    return 'Unsichtbar '+Math.round((a.dur||5000)/1000)+'s, dann Überfall '+pct(a.ambushMult)+'%';
     case 'summon':    return '+'+pct(a.petBonus)+'% Schaden ('+Math.round((a.petDur||10000)/1000)+'s)';
+    case 'dot':       return pct(a.dotMult)+'% Schaden/s ('+Math.round((a.dur||0)/1000)+'s)';
+    case 'hot':       return '+'+pct(a.hotPct)+'% HP/s ('+Math.round((a.dur||0)/1000)+'s)';
+    case 'absorb':    return 'Schild '+pct(a.absorbPct)+'% HP ('+Math.round((a.dur||0)/1000)+'s)';
+    case 'cleanse':   return 'Reinigt · +'+pct(a.healPct)+'% HP';
+    case 'deathsave': return 'Überlebt Tod ('+Math.round((a.dur||0)/1000)+'s)';
+    case 'reflect':   return 'Reflektiert '+pct(a.reflectPct)+'% ('+Math.round((a.dur||0)/1000)+'s)';
+    case 'vulnerability': return 'Gegner +'+pct(a.vulnPct)+'% Schaden ('+Math.round((a.dur||0)/1000)+'s)';
+    case 'avatar':    return '+'+pct(a.dmgBonus)+'% Schaden · −'+pct(a.dmgReduce)+'% erlitten';
   }
   return '';
 }
@@ -505,13 +547,18 @@ export function usePotion(){
 // Buff-Fenster: jedes mit { until, val }. Eine Quelle für PvE + Duell.
 function freshBuffs(){
   return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
-           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0} };
+           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0},
+           reflect:{until:0,val:0} };
 }
 let _abilityTicker = null;
 // Mehrere Fähigkeits-Knöpfe rendern/aktualisieren (eigener Cooldown je Knopf).
 export function updateAbilityBtns(){
   const bar = $('#abilityBar'); if(!bar) return;
   const f = currentFight;
+  // PvE-Bosskampf: Fähigkeitsliste live aus dem aktuellen Talent-Stand ableiten,
+  // damit ein per Respec gelernter/verlernter Aktiv-Skill seinen Knopf sofort
+  // bekommt bzw. verliert. Duell/Turm nutzen ihre eigene (gesyncte) Liste.
+  if(f && !f.isDuel) f.abilities = abilitiesOf(state);
   const abilities = (f && f.abilities) || [];
   if(!abilities.length){ bar.innerHTML = ''; bar.dataset.ids = ''; bar.style.display = 'none'; return; }
   bar.style.display = '';
@@ -555,6 +602,12 @@ function refreshAuras(f){
   setSpriteClass('heroSprite', 'vanished', now < (f.stealthUntil||0));
   // Teufelswache: Dämon bleibt sichtbar, solange das Fenster läuft.
   applyDemonAura('heroSprite', now < (f.petEndUntil||0));
+  // Talent-Aktive: Absorb-Schild-Kuppel, Reflexions-Glühen, Todesrettungs-Schein, Gegner-Verwundbarkeit.
+  if(now < (f.shieldUntil||0) && f.heroShield > 0){ if(!$('#absorbDome')) spawnShieldDome('heroSprite', 'absorbDome', 1); }
+  else removeShieldDome('absorbDome');
+  setSpriteClass('heroSprite', 'reflect-glow', now < f.buffs.reflect.until);
+  setSpriteClass('heroSprite', 'deathsave-glow', now < (f.deathSaveUntil||0));
+  setSpriteClass('bossSprite', 'vuln-tint', now < (f.bossVulnUntil||0));
 }
 function startAbilityTicker(){
   if(_abilityTicker) return;
@@ -568,10 +621,12 @@ function startAbilityTicker(){
 function stopAbilityTicker(){ if(_abilityTicker){ clearInterval(_abilityTicker); _abilityTicker = null; } }
 function resetAbilityVisuals(){
   const auraCls = ['ablaze','aura-crit','aura-fire','aura-blood','aura-shadow','aura-shield',
-                   'aura-steel','aura-arcane','aura-blood-strong','stealth','vanished','freeze','desat'];
+                   'aura-steel','aura-arcane','aura-blood-strong','stealth','vanished','freeze','desat',
+                   'reflect-glow','deathsave-glow','vuln-tint'];
   ['heroSprite','bossSprite'].forEach(id => { const el = $('#'+id); if(el) el.classList.remove(...auraCls); });
   removeShieldDome();
   removeShieldDome('shieldDomeOpp');
+  removeShieldDome('absorbDome');
   const layer = $('#dmgLayer');
   if(layer) layer.querySelectorAll('.vfx-orbit, .vfx-rune-ring, .vfx-demon').forEach(n => n.remove());
   stopDrainChannel();
@@ -587,7 +642,8 @@ function abilityDamage(f, mult){
   if(now < f.buffs.crit.until) crit = Math.min(1, crit + f.buffs.crit.val);
   const isCrit = Math.random() < crit;
   let petMult = (now < (f.petEndUntil||0)) ? (1 + (f.petBonus||0)) : 1;   // Teufelswache verstärkt auch Fähigkeitsschaden
-  return { dmg: Math.max(1, Math.round(f.heroAtk * mult * petMult * (isCrit ? f.heroCritMult : 1))), crit:isCrit };
+  let vulnMult = (now < (f.bossVulnUntil||0)) ? (1 + (f.bossVulnVal||0)) : 1;   // Schildwurf: Gegner verwundbar
+  return { dmg: Math.max(1, Math.round(f.heroAtk * mult * petMult * vulnMult * (isCrit ? f.heroCritMult : 1))), crit:isCrit };
 }
 
 // Wendet den Effekt einer Fähigkeit lokal im PvE-Kampf an (Held → Boss).
@@ -674,8 +730,102 @@ function applyAbilityEffect(f, ab){
     playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     mechFloat('hero', '👹 Teufelswache!', '#9b30ff');
     addCombatLog(f, ab.icon+' '+ab.name+' – eine Teufelswache kämpft '+(ab.petDur/1000)+'s an deiner Seite (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden).', '#9b30ff');
+  } else if(ab.kind === 'dot'){
+    // Vergiftete Klingen / Aderlass: Schaden über Zeit am Gegner (keine Selbstheilung).
+    startDotChannel(f, ab);
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – '+Math.round(ab.dotMult*100)+'% Schaden/s für '+(ab.dur/1000)+'s.', '#9acd32');
+  } else if(ab.kind === 'hot'){
+    // Verjüngung: Heilung über Zeit.
+    startHotChannel(f, ab);
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – Heilung über '+(ab.dur/1000)+'s.', '#37d67a');
+  } else if(ab.kind === 'absorb'){
+    // Schutzschild: Absorb-Schild.
+    f.heroShield = Math.round(f.heroMaxHp * (ab.absorbPct||0.4));
+    f.shieldUntil = now + (ab.dur||10000);
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('hero', '🛡 +'+fmtBig(f.heroShield), '#bfe3ff');
+    addCombatLog(f, ab.icon+' '+ab.name+' – Schild absorbiert '+fmtBig(f.heroShield)+' Schaden.', '#bfe3ff');
+  } else if(ab.kind === 'cleanse'){
+    // Reinigung: entfernt einen Schwäche-Effekt + Heilung.
+    cleanseDebuffs(f);
+    const heal = Math.round(f.heroMaxHp * (ab.healPct||0.25) * healMult * f.healDebuff);
+    f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+    updateHpBars(f);
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('hero', '💧 +'+fmtBig(heal), '#bfe3ff');
+    addCombatLog(f, ab.icon+' '+ab.name+' – Schwäche entfernt, +'+fmtBig(heal)+' HP.', '#bfe3ff');
+  } else if(ab.kind === 'deathsave'){
+    // Engelsgeist / Letzter Wall / Seelenstein: Rettungsanker.
+    f.deathSaveUntil = now + (ab.dur||10000);
+    f.reviveHp = Math.round(f.heroMaxHp * (ab.revivePct||0.3));
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('hero', '✨ Schutz', '#ffe9a8');
+    addCombatLog(f, ab.icon+' '+ab.name+' – überlebt '+(ab.dur/1000)+'s lang den Tod.', '#ffe9a8');
+  } else if(ab.kind === 'reflect'){
+    // Vergeltung: Schadensreflexion.
+    f.buffs.reflect = { until: now + ab.dur, val: ab.reflectPct||0.4, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – reflektiert '+Math.round((ab.reflectPct||0.4)*100)+'% Schaden für '+(ab.dur/1000)+'s.', '#b6d0ff');
+  } else if(ab.kind === 'vulnerability'){
+    // Schildwurf: Gegner verwundbar + optionaler Sofortschaden.
+    f.bossVulnUntil = now + ab.dur; f.bossVulnVal = ab.vulnPct||0.3;
+    if(ab.burstMult){ const { dmg, crit } = abilityDamage(f, ab.burstMult); f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg; mechFloat('boss', (crit?'✸ ':'💥 ')+'-'+fmtBig(dmg), '#ffd24a'); }
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+' – Gegner erleidet +'+Math.round((ab.vulnPct||0.3)*100)+'% Schaden für '+(ab.dur/1000)+'s.', '#ff8a3d');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
+  } else if(ab.kind === 'avatar'){
+    // Avatar des Wächters: Schaden-Buff UND Schadensreduktion gleichzeitig.
+    f.buffs.dmgBoost  = { until: now + ab.dur, val: ab.dmgBonus||0.4, src: ab.id };
+    f.buffs.dmgReduce = { until: now + ab.dur, val: ab.dmgReduce||0.4, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round((ab.dmgBonus||0.4)*100)+'% Schaden & −'+Math.round((ab.dmgReduce||0.4)*100)+'% erlittener Schaden für '+(ab.dur/1000)+'s!', '#ffd24a');
   }
   refreshAuras(f);
+}
+
+// DoT am Boss (Gift/Blutung): tickt dotMult·Atk Schaden über die Dauer (keine Heilung).
+function startDotChannel(f, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round((ab.dur||5000) / tickMs));
+  const glyph = ab.id && ab.id.indexOf('gift') >= 0 ? '☠️' : '🩸';
+  const col   = glyph === '☠️' ? '#9acd32' : '#e0466e';
+  let i = 0;
+  const tick = () => {
+    if(currentFight !== f || f.over) return;
+    const { dmg } = abilityDamage(f, ab.dotMult);
+    f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg;
+    mechFloat('boss', glyph+' -'+fmtBig(dmg), col);
+    spawnParticles('bossSprite', { count:5, glyph, color:col, spread:38, rise:18 });
+    updateHpBars(f); updateMeter(f);
+    if(f.bossHp <= 0){ endFight(f, true); return; }
+    if(++i < ticks) setTimeout(tick, tickMs / combatSpeed);
+  };
+  setTimeout(tick, tickMs / combatSpeed);
+}
+// HoT am Helden (Verjüngung): tickt hotPct·maxHp Heilung über die Dauer.
+function startHotChannel(f, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round((ab.dur||8000) / tickMs));
+  const healMult = classOf(state).healMult || 1;
+  let i = 0;
+  const tick = () => {
+    if(currentFight !== f || f.over) return;
+    const heal = Math.round(f.heroMaxHp * (ab.hotPct||0.08) * healMult * (f.healDebuff||1));
+    f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal);
+    mechFloat('hero', '🍃 +'+fmtBig(heal), '#37d67a');
+    spawnParticles('heroSprite', { count:4, glyph:'✦', color:'#9dffc4', spread:34, rise:24 });
+    updateHpBars(f);
+    if(++i < ticks) setTimeout(tick, tickMs / combatSpeed);
+  };
+  setTimeout(tick, tickMs / combatSpeed);
+}
+// Reinigung: entfernt die aktiven Schwäche-Effekte vom Helden.
+function cleanseDebuffs(f){
+  f.curseTurns = 0; f.frostTurns = 0; f.poison = 0; f.burn = 0;
+  f.healDebuff = 1;
 }
 
 // Nebelschritt-Überfall: nach Ablauf des Unsichtbarkeits-Fensters taucht der Held
@@ -1176,6 +1326,27 @@ const ABILITY_VFX = {
   hexer_a9_explo(hero, boss){ spawnVortex(boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnShockwave(boss, '#b06bff'); spawnParticles(boss, { count:16, glyph:'🌑', color:'#b06bff', spread:90 }); screenFlash('#9b30ff', 220); bigShake(); }, 240); },
   hexer_a9_orgie(hero){ spawnGroundRune(hero, { color:'#c0306b' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
   teufelswache(hero){ spawnGroundRune(hero, { color:'#7CFC00' }); spawnNova(hero, '#7CFC00'); spawnSigilFlash(hero, { glyph:'😈', color:'#9bff5a' }); spawnParticles(hero, { count:14, glyph:'🔥', color:'#9bff5a', spread:60, rise:20 }); applyDemonAura(hero, true); },
+  // ---- NEUE TALENT-AKTIVE ----
+  // Schurke
+  schurke_a5_gift(hero, boss){ spawnSlashArc(boss, { color:'#9acd32', angle:-28 }); spawnParticles(boss, { count:12, glyph:'☠️', color:'#9acd32', spread:54, rise:8 }); flashSpriteClass(boss, 'desat', 500); },
+  schurke_a5_wirbel(hero, boss){ for(let k=0;k<4;k++) setTimeout(()=> spawnSlashArc(boss, { color: k%2?'#ffffff':'#bfe3ff', angle:-40 + k*28 }), k*80); spawnOrbit(hero, { glyph:'🗡️', color:'#bfe3ff', count:4, radius:42, period:600, dur:900 }); spawnParticles(boss, { count:10, glyph:'✦', color:'#bfe3ff', spread:60 }); bigShake(); },
+  schurke_a9_aderlass(hero, boss){ spawnSlashArc(boss, { color:'#e0466e', angle:-30 }); spawnParticles(boss, { count:12, glyph:'🩸', color:'#e0466e', spread:56, rise:6 }); screenVignette('#c0306b', 420); },
+  schurke_a9_meuchel(hero, boss){ spawnSmoke(hero); spawnSlashArc(boss, { color:'#b6a0ff', angle:-32 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:30 }), 90); spawnSigilFlash(boss, { glyph:'🗡️', color:'#cdbcff' }); flashSpriteClass(boss, 'freeze', 380); spawnOrbit(boss, { glyph:'💫', color:'#ffe066', count:3, radius:34, period:900, dur:1500 }); screenFlash('#b6a0ff', 150); bigShake(); },
+  // Verteidiger
+  verteidiger_a5_wurf(hero, boss){ spawnProjectileVolley(hero, boss, { count:1, color:'#bfe3ff', glyph:'🛡️', stagger:0 }); setTimeout(()=>{ spawnShockwave(boss, '#ffffff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); spawnParticles(boss, { count:10, glyph:'✦', color:'#ff8a3d', spread:60 }); flashSpriteClass(boss, 'hit', 280); bigShake(); }, 360); },
+  verteidiger_a5_vergelt(hero){ spawnSigilFlash(hero, { glyph:'🪞', color:'#b6d0ff' }); spawnNova(hero, '#b6d0ff'); spawnGroundRune(hero, { color:'#b6d0ff' }); spawnOrbit(hero, { glyph:'🪞', color:'#b6d0ff', count:3, radius:48, period:1500, dur:1300 }); },
+  verteidiger_a9_avatar(hero){ spawnSigilFlash(hero, { glyph:'🌟', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnNova(hero, '#ffd24a'); screenVignette('#ffe9a8', 480); screenFlash('#bfe3ff', 150); },
+  verteidiger_a9_wall(hero){ spawnSigilFlash(hero, { glyph:'✨', color:'#ffe9a8' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#ffe9a8', count:4, radius:52, period:1500, dur:1400 }); screenVignette('#ffe9a8', 520); },
+  // Heiler
+  heiler_a5_verjueng(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); spawnOrbit(hero, { glyph:'🍃', color:'#9dffc4', count:4, radius:50, period:1600, dur:1400 }); },
+  heiler_a5_schild(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffe9a8' }); spawnParticles(hero, { count:10, glyph:'✦', color:'#ffe9a8', spread:46, rise:20 }); },
+  heiler_a9_engel(hero){ vfxHeal(hero); spawnSigilFlash(hero, { glyph:'😇', color:'#ffe9a8' }); spawnProjectileVolley(hero, hero, { count:8, color:'#ffe9a8', glyph:'✦', stagger:60, fromTop:true }); screenVignette('#ffe9a8', 560); },
+  heiler_a9_rein(hero){ vfxHeal(hero); spawnNova(hero, '#cdeeff'); spawnParticles(hero, { count:12, glyph:'✦', color:'#cdeeff', spread:48, rise:26 }); screenFlash('#cdeeff', 140); },
+  // Hexer
+  hexer_a5_verderb(hero, boss){ spawnBeam(hero, boss, '#9b30ff'); spawnParticles(boss, { count:10, glyph:'🟣', color:'#b06bff', spread:54, rise:8 }); spawnGroundRune(boss, { color:'#9b30ff' }); },
+  hexer_a5_furcht(hero, boss){ spawnSigilFlash(boss, { glyph:'💀', color:'#b06bff' }); spawnVortex(boss, '#9b30ff'); spawnOrbit(boss, { glyph:'💫', color:'#b06bff', count:3, radius:34, period:900, dur:1700 }); screenVignette('#6b4a8f', 560); flashSpriteClass(boss, 'freeze', 380); },
+  hexer_a9_chaos(hero, boss){ spawnProjectileVolley(hero, boss, { count:6, color:'#7CFC00', glyph:'☄️', stagger:110, fromTop:true }); setTimeout(()=>{ spawnImpact(boss, '#7CFC00'); spawnNova(boss, '#9bff5a'); spawnParticles(boss, { count:16, glyph:'🔥', color:'#9bff5a', spread:90 }); screenFlash('#7CFC00', 200); bigShake(); }, 380); },
+  hexer_a9_stein(hero){ spawnSigilFlash(hero, { glyph:'💜', color:'#b06bff' }); spawnGroundRune(hero, { color:'#9b30ff' }); spawnOrbit(hero, { glyph:'💜', color:'#b06bff', count:4, radius:50, period:1500, dur:1500 }); screenVignette('#6b4a8f', 480); },
 };
 
 // Spielt die Signatur einer Fähigkeit; fehlt sie, greift der kind-basierte Fallback.
