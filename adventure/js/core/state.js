@@ -16,6 +16,7 @@ import { defaultTypeKey, typeOf, itemDisplayName, materialOf } from '../data/ite
 import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
+import { blankMaterials } from '../data/materials.js';
 import { db, ref, get, set, remove } from './firebase.js';
 
 export let state = null;        // aktiver Slot (flacher Spielstand)
@@ -48,6 +49,8 @@ export function freshState(){
     lockedIds:[],          // gesperrte Item-Ids (#24)
     extraSlots:0,          // beim Händler gekaufte Zusatz-Inventarplätze (Vielfaches von 5)
     stats: blankStats(),   // Statistiken (#28)
+    materials: blankMaterials(), // Crafting-Materialien (Schmiede)
+    pendingLoot: [],       // bei vollem Inventar gewonnene Items (warten auf Platz)
     settings:{ seenOnboarding:false }, // (#29)
   };
 }
@@ -104,6 +107,15 @@ function migrateSlot(s){
   if(!s.killCounts || typeof s.killCounts !== 'object') s.killCounts = {};
   if(!Array.isArray(s.lockedIds)) s.lockedIds = [];
   if(typeof s.extraSlots !== 'number') s.extraSlots = 0;
+  // Crafting-Materialien (Schmiede) defensiv ergänzen (RTDB verwirft 0-Felder
+  // nicht, aber Altstände haben das Feld gar nicht). Kein Versions-Bump nötig –
+  // migrateSlot läuft bei jedem Laden, sodass bestehende Stände unangetastet
+  // weiterlaufen und das Feld einfach hinzubekommen.
+  if(!s.materials || typeof s.materials !== 'object') s.materials = blankMaterials();
+  else { const b = blankMaterials(); s.materials = Object.assign(b, s.materials); }
+  // Ausstehende Beute (bei vollem Inventar gewonnene Items) defensiv ergänzen.
+  if(!Array.isArray(s.pendingLoot)) s.pendingLoot = [];
+  s.pendingLoot.forEach(fixName);
   if(!s.stats || typeof s.stats !== 'object') s.stats = blankStats();
   else { const b = blankStats(); s.stats = Object.assign(b, s.stats);
          s.stats.drops = Object.assign(b.drops, s.stats.drops||{}); }
@@ -175,7 +187,8 @@ function buildRoster(loaded){
 // Items des AKTIVEN Slots defaulten + nextId ableiten + Sprite neu berechnen.
 function hydrateItems(){
   const exp = (state.expedition && Array.isArray(state.expedition.items)) ? state.expedition.items : [];
-  const all = [...state.inventory, ...Object.values(state.equipped).filter(Boolean), ...exp];
+  const pend = Array.isArray(state.pendingLoot) ? state.pendingLoot : [];
+  const all = [...state.inventory, ...Object.values(state.equipped).filter(Boolean), ...exp, ...pend];
   nextId = all.reduce((m,it)=>Math.max(m, it.id||0), 0) + 1;
   for(const it of all){
     if(!it.affixes) it.affixes = {};
@@ -196,6 +209,7 @@ function stripItem(it){ if(!it) return it; const { sprite, ...rest } = it; retur
 function stripState(s){
   const eq = {}; Object.keys(s.equipped||{}).forEach(k => eq[k] = stripItem(s.equipped[k]));
   const data = { ...s, inventory: (s.inventory||[]).map(stripItem), equipped: eq };
+  if(Array.isArray(s.pendingLoot)) data.pendingLoot = s.pendingLoot.map(stripItem);
   if(s.expedition && Array.isArray(s.expedition.items)){
     data.expedition = { ...s.expedition, items: s.expedition.items.map(stripItem) };
   }

@@ -8,10 +8,11 @@ import { state } from '../core/state.js';
 import { isLocked, freeSlots, ensureItemSprite } from '../core/items.js';
 import { getCoins } from '../core/coins.js';
 import { rarityOf } from '../data/rarities.js';
+import { MATERIALS, MATERIAL_BY_KEY } from '../data/materials.js';
 import { bindTooltip, hideTooltip } from './tooltip.js';
 import {
   watchPartnerPresence, partnerOnline, partnerKey, myKey,
-  openTrade, listenTrade, setMyOffer, setAccept, cancelTrade,
+  openTrade, listenTrade, setMyOffer, setMyMaterials, setAccept, cancelTrade,
   canAccept, feeFor, tradeData, FEE_PER_ITEM,
 } from '../core/trade.js';
 
@@ -157,14 +158,19 @@ export function renderTrade(){
       (!acc.ok && !myOff.accepted ? '<div class="trade-warn">' + acc.reason + '</div>' : '') +
       '<h3 class="trade-inv-title">Dein Inventar – antippen zum Anbieten</h3>' +
       '<div class="trade-inv" id="tradeInv"></div>' +
+      '<h3 class="trade-inv-title">⚒️ Deine Materialien – Menge anbieten</h3>' +
+      '<div class="trade-mats" id="tradeMats"></div>' +
     '</div>';
 
-  // Angebote füllen
+  // Angebote füllen (Items + Material-Chips)
   const myWrap = $('#tradeMyOffer'), theirWrap = $('#tradeTheirOffer');
+  const myMats = myOff.materials || {}, theirMats = theirOff.materials || {};
   (myOff.items || []).forEach(it => addCell(myWrap, it, item => toggleOffer(myIds, item.id)));
   (theirOff.items || []).forEach(it => addCell(theirWrap, it, null));
-  if(!(myOff.items || []).length) myWrap.innerHTML = '<div class="trade-hint">leer</div>';
-  if(!(theirOff.items || []).length) theirWrap.innerHTML = '<div class="trade-hint">leer</div>';
+  renderMatChips(myWrap, myMats);
+  renderMatChips(theirWrap, theirMats);
+  if(!(myOff.items || []).length && !matCount(myMats)) myWrap.innerHTML = '<div class="trade-hint">leer</div>';
+  if(!(theirOff.items || []).length && !matCount(theirMats)) theirWrap.innerHTML = '<div class="trade-hint">leer</div>';
 
   // Inventar (anbietbare Items)
   const invWrap = $('#tradeInv');
@@ -175,6 +181,33 @@ export function renderTrade(){
     addCell(invWrap, it, item => toggleOffer(myIds, item.id), offered ? 'offered' : '');
   });
 
+  // Material-Picker (eigene Kategorie): pro Material eine Zeile mit −/Menge/+.
+  const matsWrap = $('#tradeMats');
+  let anyMat = false;
+  MATERIALS.forEach(m => {
+    const have = (state.materials && state.materials[m.key]) || 0;
+    const offered = myMats[m.key] || 0;
+    if(have <= 0 && offered <= 0) return;   // nichts anzubieten
+    anyMat = true;
+    const max = have;                        // Bestand wird erst beim Abschluss abgezogen
+    const row = document.createElement('div');
+    row.className = 'trade-mat-row';
+    row.innerHTML =
+      '<span class="tmr-icon">' + m.icon + '</span>' +
+      '<span class="tmr-name">' + m.name + '</span>' +
+      '<span class="tmr-have">Bestand: ' + fmtBig(have) + '</span>' +
+      '<div class="tmr-step">' +
+        '<button class="btn ghost tmr-minus"' + (offered<=0?' disabled':'') + '>−</button>' +
+        '<span class="tmr-amt">' + offered + '</span>' +
+        '<button class="btn ghost tmr-plus"' + (offered>=max?' disabled':'') + '>+</button>' +
+      '</div>';
+    const setAmt = n => { const next = { ...myMats }; if(n>0) next[m.key]=n; else delete next[m.key]; setMyMaterials(next); };
+    row.querySelector('.tmr-minus').addEventListener('click', () => setAmt(Math.max(0, offered-1)));
+    row.querySelector('.tmr-plus').addEventListener('click', () => setAmt(Math.min(max, offered+1)));
+    matsWrap.appendChild(row);
+  });
+  if(!anyMat) matsWrap.innerHTML = '<div class="trade-hint">Keine Materialien zum Anbieten.</div>';
+
   $('#tradeAcceptBtn').addEventListener('click', () => {
     if(myOff.accepted){ setAccept(false); return; }
     const c = canAccept();
@@ -182,6 +215,21 @@ export function renderTrade(){
     setAccept(true);
   });
   $('#tradeCancelBtn').addEventListener('click', () => { cancelTrade(); });
+}
+
+// Anzahl angebotener Material-Einheiten (für Leer-Erkennung).
+function matCount(matsObj){ return Object.values(matsObj||{}).reduce((s,n)=> s+(Number(n)||0), 0); }
+
+// Angebotene Materialien als Chips in eine Angebotsspalte hängen.
+function renderMatChips(wrap, matsObj){
+  for(const [k,n] of Object.entries(matsObj||{})){
+    const m = MATERIAL_BY_KEY[k]; if(!m || !n) continue;
+    const chip = document.createElement('div');
+    chip.className = 'trade-mat-chip';
+    chip.title = m.name;
+    chip.textContent = m.icon + ' ' + n;
+    wrap.appendChild(chip);
+  }
 }
 
 function toggleOffer(currentIds, id){
