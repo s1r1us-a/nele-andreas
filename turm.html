@@ -211,6 +211,7 @@ import { SLOTS } from './adventure/js/data/slots.js';
 import { INV_SLOTS, INV_SLOTS_MAX } from './adventure/js/data/tuning.js';
 import { affixLinesHTML } from './adventure/js/ui/tooltip.js';
 import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
+import { buildDemonSVG } from './adventure/js/core/demon-art.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of } from './adventure/js/data/classes.js';
 import { MECH_DEFS } from './adventure/js/data/bosses.js';
 import { fmtBig } from './adventure/js/ui/dom.js';
@@ -1091,7 +1092,8 @@ function applyTowerDemon(slot, active){
     if(!d){
       d = document.createElement('div'); d.className = 'vfx-demon'; d.id = id;
       const aura = document.createElement('span'); aura.className = 'vfx-demon-aura';
-      const body = document.createElement('span'); body.className = 'vfx-demon-body'; body.textContent = '👹';
+      const body = document.createElement('span'); body.className = 'vfx-demon-body';
+      body.innerHTML = '<img class="vfx-demon-img" src="'+buildDemonSVG()+'" alt="Teufelswache">';
       d.appendChild(aura); d.appendChild(body); $('dmgLayer').appendChild(d);
     }
     d.style.left = p.x+'px'; d.style.top = p.y+'px';
