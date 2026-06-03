@@ -7,7 +7,7 @@ import { expeditionReady, expeditionActive, setFindProgress, cancelExpedition, c
 import { startBossFight, closeArena, usePotion, useAbility } from './core/combat.js';
 import { watchCoins } from './core/coins.js';
 import { $, fmtRemain, fmtBig, confirmDialog, toast } from './ui/dom.js';
-import { renderAll, renderAdventure, renderTopStats, resetInvSellMode } from './ui/render.js';
+import { renderAll, renderAdventure, renderTopStats, renderShop, resetInvSellMode } from './ui/render.js';
 import { openBossList, openStats, openCharacterCreator,
          openRosterModal, maybeOnboarding, isCreatorForced, openDuelLobby,
          openOtherProfile } from './ui/modals.js';
@@ -132,7 +132,13 @@ window.addEventListener('beforeunload', flushSave);
   const opBtn = $('#otherProfileBtn');
   if(opBtn){ opBtn.title = otherName + 's Profil ansehen'; opBtn.addEventListener('click', openOtherProfile); }
   // Globalen Coinstand live in die Topbar spiegeln (geteiltes Wallet mit Farm/Slot).
-  watchCoins(c => { const el = $('#miniGold'); if(el) el.textContent = fmtBig(c); });
+  // Beim ersten Snapshot wird der Cache (anfangs 0) erstmals gefüllt – deshalb auch
+  // Händler und Schmiede neu zeichnen, deren Anzeige/Kaufknöpfe getCoins() lesen und
+  // sonst auf dem veralteten Startwert „0" hängen blieben.
+  watchCoins(c => {
+    const el = $('#miniGold'); if(el) el.textContent = fmtBig(c);
+    renderShop(); renderForge();
+  });
   initTradeTab();   // Live-Handel: Presence + Trade-Knoten abonnieren.
   startLoop();
   if(!state.character) openCharacterCreator(true);
