@@ -780,6 +780,34 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   animation:vfxPillar .9s ease-out forwards; }
 @keyframes vfxPillar { 0%{opacity:0; transform:translate(-50%,-78%) scaleY(.3);}
   30%{opacity:1;} 100%{opacity:0; transform:translate(-50%,-78%) scaleY(1.05);} }
+/* Lichtsäule (Heiler-Zweitfähigkeit): heilig-goldene Variante der Säule. */
+.vfx-pillar.vfx-pillar-gold {
+  width:74px; height:240px;
+  background:linear-gradient(180deg, rgba(255,247,200,0) 0%, rgba(255,236,150,.7) 38%, rgba(255,210,74,.85) 100%);
+  box-shadow:0 0 42px 14px rgba(255,224,120,.6), 0 0 80px 26px rgba(255,200,60,.35);
+  filter:brightness(1.15); }
+
+/* === Teufelswache (Hexer-Zweitfähigkeit): großer beschworener Dämon === */
+.vfx-demon {
+  position:absolute; transform:translate(-50%,-100%); transform-origin:50% 100%;
+  pointer-events:none; z-index:7;
+  animation:demonSummon .5s cubic-bezier(.2,.9,.25,1.2) both; }
+.vfx-demon .vfx-demon-body {
+  display:block; font-size:172px; line-height:1;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.6)) drop-shadow(0 0 18px #7CFC00) drop-shadow(0 0 30px #4b9b00);
+  animation:demonIdle 2.2s ease-in-out infinite; }
+.vfx-demon .vfx-demon-aura {
+  position:absolute; left:50%; bottom:6px; width:120px; height:46px; transform:translateX(-50%);
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(50% 80% at 50% 60%, rgba(124,252,0,.55) 0%, rgba(75,155,0,.3) 45%, rgba(0,0,0,0) 72%);
+  box-shadow:0 0 26px 10px rgba(124,252,0,.4);
+  animation:demonAuraPulse 1.6s ease-in-out infinite alternate; }
+@keyframes demonSummon { 0%{opacity:0; transform:translate(-50%,-100%) scale(.2) rotate(-8deg);}
+  60%{opacity:1; transform:translate(-50%,-100%) scale(1.12) rotate(3deg);}
+  100%{opacity:1; transform:translate(-50%,-100%) scale(1) rotate(0);} }
+@keyframes demonIdle { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
+@keyframes demonAuraPulse { from{ opacity:.6; } to{ opacity:1; } }
+
 /* Persistente Buff-Auren am Sprite (Buff-Dauer). */
 .combatant.aura-fire { filter:drop-shadow(0 0 12px #ff5a00) drop-shadow(0 0 22px #ffb000) brightness(1.18) saturate(1.5);
   animation:ablazePulse .5s ease-in-out infinite alternate; }

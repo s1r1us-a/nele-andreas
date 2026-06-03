@@ -361,6 +361,66 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   opacity:0; transition:opacity .25s; pointer-events:none; }
 .tower-toast.show { opacity:1; }
 
+/* === VFX der neuen Zweitfähigkeiten (Turm) ============================= */
+/* Stealth (Nebelschritt): Held wird im Turm verhüllt. */
+.arena-hero.stealth img { opacity:.4; filter:grayscale(.3) brightness(.8) drop-shadow(0 0 10px #6a4bb0); }
+
+/* Lichtsäule (heilig-golden). */
+.vfx-pillar { position:absolute; width:64px; height:200px; transform:translate(-50%,-78%);
+  pointer-events:none; z-index:8; border-radius:30px 30px 18px 18px;
+  background:linear-gradient(180deg, rgba(255,247,200,0) 0%, rgba(255,236,150,.6) 40%, rgba(255,210,74,.8) 100%);
+  box-shadow:0 0 32px 12px rgba(255,224,120,.5);
+  animation:towerPillar .9s ease-out forwards; }
+.vfx-pillar.vfx-pillar-gold { width:72px; box-shadow:0 0 42px 14px rgba(255,224,120,.6), 0 0 70px 22px rgba(255,200,60,.32); }
+@keyframes towerPillar { 0%{opacity:0; transform:translate(-50%,-78%) scaleY(.3);}
+  30%{opacity:1;} 100%{opacity:0; transform:translate(-50%,-78%) scaleY(1.05);} }
+
+/* Rauchwolke (Nebelschritt) und Beschwörungs-Rune (Teufelswache). */
+.vfx-smoke { position:absolute; width:64px; height:64px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:8; border-radius:50%;
+  background:radial-gradient(circle, rgba(120,110,150,.75) 0%, rgba(80,72,110,.4) 55%, rgba(0,0,0,0) 75%);
+  animation:towerSmoke .9s ease-out forwards; }
+@keyframes towerSmoke { 0%{opacity:0; transform:translate(-50%,-50%) scale(.4);}
+  25%{opacity:.9;} 100%{opacity:0; transform:translate(-50%,-140%) scale(1.5);} }
+.vfx-rune-ring { position:absolute; width:120px; height:56px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:4; border-radius:50%;
+  background:radial-gradient(50% 90% at 50% 50%, var(--rune-col,#7CFC00) 0%, rgba(0,0,0,0) 62%);
+  box-shadow:0 0 22px 4px var(--rune-col,#7CFC00);
+  opacity:0; animation:towerRune .95s ease-out forwards; }
+@keyframes towerRune { 0%{opacity:0; transform:translate(-50%,-50%) scale(.5) rotate(0);}
+  20%{opacity:1;} 100%{opacity:0; transform:translate(-50%,-50%) scale(1.1) rotate(120deg);} }
+
+/* Schockwelle (Donnerknall / Lichtsäule-Einschlag). */
+.vfx-shock { position:absolute; width:14px; height:14px; transform:translate(-50%,-50%);
+  pointer-events:none; z-index:7; border-radius:50%; border:3px solid #ffffff;
+  box-shadow:0 0 16px 4px rgba(255,255,255,.6); opacity:.95;
+  animation:towerShock .5s ease-out forwards; }
+@keyframes towerShock { 0%{opacity:.95; width:14px; height:14px;}
+  100%{opacity:0; width:150px; height:150px;} }
+
+/* Schwindel-Sterne über dem betäubten Boss. */
+.vfx-stun-stars { position:absolute; transform:translate(-50%,-50%); pointer-events:none; z-index:9;
+  font-size:26px; text-shadow:0 0 8px #ffe066; animation:towerStun 1s linear infinite; }
+@keyframes towerStun { 0%{transform:translate(-50%,-50%) rotate(0) scale(1);}
+  50%{transform:translate(-50%,-50%) rotate(180deg) scale(1.15);}
+  100%{transform:translate(-50%,-50%) rotate(360deg) scale(1);} }
+
+/* Teufelswache: großer beschworener Dämon (größer als der Held). */
+.vfx-demon { position:absolute; transform:translate(-50%,-100%); transform-origin:50% 100%;
+  pointer-events:none; z-index:7; animation:towerDemonSummon .5s cubic-bezier(.2,.9,.25,1.2) both; }
+.vfx-demon .vfx-demon-body { display:block; font-size:150px; line-height:1;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.6)) drop-shadow(0 0 16px #7CFC00) drop-shadow(0 0 28px #4b9b00);
+  animation:towerDemonIdle 2.2s ease-in-out infinite; }
+.vfx-demon .vfx-demon-aura { position:absolute; left:50%; bottom:6px; width:108px; height:42px; transform:translateX(-50%);
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(50% 80% at 50% 60%, rgba(124,252,0,.55) 0%, rgba(75,155,0,.3) 45%, rgba(0,0,0,0) 72%);
+  box-shadow:0 0 24px 8px rgba(124,252,0,.4); animation:towerDemonAura 1.6s ease-in-out infinite alternate; }
+@keyframes towerDemonSummon { 0%{opacity:0; transform:translate(-50%,-100%) scale(.2) rotate(-8deg);}
+  60%{opacity:1; transform:translate(-50%,-100%) scale(1.12) rotate(3deg);}
+  100%{opacity:1; transform:translate(-50%,-100%) scale(1) rotate(0);} }
+@keyframes towerDemonIdle { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+@keyframes towerDemonAura { from{opacity:.6;} to{opacity:1;} }
+
 @media(max-width:500px){
   .player-list { grid-template-columns:1fr; }
   .arena-stage { grid-template-columns:1fr auto 1fr; min-height:208px; padding:14px 8px 8px; }
@@ -369,4 +429,5 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   .arena-hero img { height:112px; }
   .arena-hero::after { width:54px; }
   .arena-hero.back-hero::after { width:44px; }
+  .vfx-demon .vfx-demon-body { font-size:112px; }
 }
