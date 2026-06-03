@@ -5,7 +5,8 @@
    Koop: tritt der Partner einer Wartelobby bei, gilt der Spielstand des Hosts.
    ===================================================================== */
 import { db, ref, get, set, update, remove, push, onValue, onDisconnect } from './firebase.js';
-import { COMBAT } from '../data/tuning.js';
+import { COMBAT, TOWER } from '../data/tuning.js';
+import { bossFor } from '../data/bosses.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
@@ -23,13 +24,10 @@ const ABIL_PATH   = id => 'tower/abil/'     + id;
 const HEROES_PATH = id => 'tower/heroes/'   + id;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
-// Turm-Bosse sind deutlich zäher & gefährlicher als die regulären Solo-Bosse:
-// Basiswerte ~3× HP / ~2× ATK. Im Koop teilen sich zwei Helden den Schaden,
-// im Solo nimmt der eine Held alles ab – die Bosswerte bleiben dabei identisch.
-const TOWER_BASE_HP  = 2200;
-const TOWER_BASE_ATK = 28;
-const TOWER_HP_SCALE = 1.75;
-const TOWER_ATK_SCALE = 1.55;
+// Turm-Bosse koppeln an die normale Boss-Kurve (bossFor(floor-1)) und werden per
+// stockwerksabhängigem Multiplikator IMMER härter als der gleichnamige Normal-Boss;
+// der Abstand wächst mit dem Stockwerk (echtes Endgame-Ziel). Im Koop teilen sich
+// zwei Helden den Schaden, im Solo nimmt der eine Held alles ab.
 const TOWER_ENRAGE_TURN = 40;
 const FRONT_SHARE = 0.70;
 const BACK_SHARE  = 0.30;
@@ -66,10 +64,15 @@ export function towerBossFor(floor){
   const area  = 6 + ((floor-1) % 2); // Schattenreich (6) / Die Leere (9→ wraps at 9)
   const realArea = area > 9 ? 9 : area;
   const mechColor = mechs.length ? '#c93eff' : '#ff5a3c';
+  // An die normale Boss-Kurve ankoppeln: Turm ist per Konstruktion härter als der
+  // gleichnamige Normal-Boss; der Abstand wächst linear mit dem Stockwerk.
+  const base    = bossFor(floor - 1);             // zone 0-indexiert: Floor 1 → Boss 1
+  const hpMult  = TOWER.hpMultBase  + TOWER.hpMultPer  * (floor - 1);
+  const atkMult = TOWER.atkMultBase + TOWER.atkMultPer * (floor - 1);
   return {
     name:   bossNameFor(floor),
-    maxHp:  Math.round(TOWER_BASE_HP  * Math.pow(TOWER_HP_SCALE,  floor - 1)),
-    atk:    Math.round(TOWER_BASE_ATK * Math.pow(TOWER_ATK_SCALE, floor - 1)),
+    maxHp:  Math.round(base.maxHp * hpMult),
+    atk:    Math.round(base.atk   * atkMult),
     mechanic: mechs,
     sprite: buildBossSVG({ spr, area: realArea, zone: floor + 40, mechColor }),
     bg:     buildZoneBgSVG(floor % 2 === 0 ? 2 : 4), // Höhle / Eis alternierend
