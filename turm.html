@@ -47,37 +47,21 @@
 
   <!-- LOBBY-BEREICH -->
   <div id="lobbySection">
-    <div class="lobby-tabs">
-      <div class="lobby-tab active" id="tabCreate" onclick="switchLobbyTab('create')">🏰 Lobby erstellen</div>
-      <div class="lobby-tab" id="tabJoin"   onclick="switchLobbyTab('join')">🚪 Beitreten</div>
-    </div>
-
-    <div id="panelCreate">
-      <div class="card">
-        <div class="card-title">Neue Lobby erstellen</div>
-        <p style="font-size:13px;color:var(--txt-mute);margin-bottom:14px;">
-          Wähle einen eigenen Code (z. B. „nele") oder lass das Feld leer für einen
-          zufälligen Code. Teile ihn dann mit deinem Partner – der Turm ist nur zu zweit betretbar.
-        </p>
-        <div class="input-row" style="margin-bottom:12px">
-          <input type="text" class="input-code" id="createCodeInput"
-            placeholder="Wunsch-Code (optional)…" maxlength="40" autocomplete="off">
-        </div>
-        <button class="btn btn-primary btn-full" id="createBtn" onclick="onCreateLobby()">🏰 Lobby erstellen</button>
+    <!-- Einstieg ohne Code: Solo betreten + automatische Partner-Einladung -->
+    <div id="entryPanel">
+      <div class="card" id="inviteBanner" style="display:none;border-color:#ffd24a88">
+        <div class="card-title" id="inviteText">…</div>
+        <button class="btn btn-gold btn-full" id="inviteJoinBtn" onclick="onJoinPartner()">🤝 Beitreten</button>
       </div>
-    </div>
 
-    <div id="panelJoin" style="display:none">
       <div class="card">
-        <div class="card-title">Lobby beitreten</div>
+        <div class="card-title">🗼 Turm betreten</div>
         <p style="font-size:13px;color:var(--txt-mute);margin-bottom:14px;">
-          Gib den Lobby-Code deines Partners ein.
+          Spiele den Turm <b>alleine</b> oder warte im Turm auf deine:n Partner:in –
+          wer beitritt, übernimmt deinen Spielstand und dein Stockwerk.
+          <span id="resumeHint"></span>
         </p>
-        <div class="input-row">
-          <input type="text" class="input-code" id="joinCodeInput"
-            placeholder="Lobby-Code…" maxlength="40" autocomplete="off">
-          <button class="btn btn-primary" id="joinBtn" onclick="onJoinLobby()">Beitreten</button>
-        </div>
+        <button class="btn btn-primary btn-full" id="enterTowerBtn" onclick="onEnterTower()">▶️ Turm betreten</button>
       </div>
     </div>
 
@@ -85,14 +69,6 @@
     <div id="lobbyRoom" style="display:none">
       <div class="card">
         <div class="card-title">🏰 Warteraum</div>
-
-        <div id="codeDisplay" style="display:none">
-          <div class="code-box">
-            <div class="code-label">Dein Lobby-Code</div>
-            <div class="code-value" id="codeValue">–</div>
-            <div class="code-copy" onclick="copyCode()">📋 Zum Kopieren klicken</div>
-          </div>
-        </div>
 
         <div style="text-align:center;margin:10px 0 16px">
           <div class="floor-badge" id="floorBadge">Stockwerk 1</div>
@@ -118,6 +94,7 @@
         <div class="status-msg" id="lobbyStatus">Warte auf Partner…</div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px">
+          <button class="btn btn-gold"    id="soloBtn"  style="display:none" onclick="onStartSolo()">🧍 Solo starten</button>
           <button class="btn btn-primary" id="readyBtn" onclick="onReady()" disabled>✅ Bereit!</button>
           <button class="btn btn-gold"    id="startBtn" style="display:none" onclick="onStartFight()">⚔️ Kampf starten!</button>
           <button class="btn btn-danger"  onclick="onLeaveLobby()">🚪 Verlassen</button>
@@ -172,7 +149,7 @@
           <div class="hp-track"><div class="hp-fill front" id="frontHpFill" style="width:100%"></div></div>
           <div class="hp-text" id="frontHpText">–</div>
         </div>
-        <div class="hp-row">
+        <div class="hp-row" id="backHpRow">
           <div class="hp-row-name back" id="backHpName">Hinten</div>
           <div class="hp-track"><div class="hp-fill back" id="backHpFill" style="width:100%"></div></div>
           <div class="hp-text" id="backHpText">–</div>
@@ -200,10 +177,10 @@ import { grantDammerpfadBadges } from './dammerpfad-badges.js';
 import { loadSave, saveState } from './adventure/js/core/state.js';
 import {
   computePlayerStats, towerBossFor,
-  createLobby, joinLobby, listenLobby, listenCombat,
+  createLobby, ensureSoloLobby, joinLobby, listenLobby, listenCombat,
   setReady, leaveLobby, loadGuestSave,
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
-  requestAbility, sanitizeLobbyCode,
+  requestAbility,
   setTowerHeroes, listenHeroes, rollTowerLoot,
 } from './adventure/js/core/tower.js';
 import { rarityOf } from './adventure/js/data/rarities.js';
@@ -218,8 +195,12 @@ import { fmtBig } from './adventure/js/ui/dom.js';
 
 // ---- Globals ----
 let myKey = null, myName = null, myState = null, myClassId = DEFAULT_CLASS_ID;
+let otherKey = null;
 let lobbyId = null, lobbyData = null, isHost = false;
+let soloMode = false;                 // Solo-Run (kein Gast) – Kampf nur mit Front-Held.
 let unsubLobby = null, unsubCombat = null, unsubHeroes = null;
+let unsubPartner = null;              // Listener auf den Run des Partners (Auto-Einladung).
+let partnerLobby = null;
 let fightSpeed = 1, _lastAnimTurn = -1;
 // Animations-Timings (gespiegelt aus dem Singleplayer-Kampf, combat.js). BOSS_REPLY_MS
 // spiegelt COMBAT.bossReplyMs (tuning.js) – wird hier lokal gehalten, da turm.html COMBAT
@@ -260,61 +241,68 @@ function toast(msg, dur=3200){
 }
 function fmtHp(hp, max){ return fmtBig(Math.ceil(hp||0)) + '/' + fmtBig(max||0); }
 
-// ---- Lobby-Tab ----
-window.switchLobbyTab = function(which){
-  $('panelCreate').style.display = which === 'create' ? '' : 'none';
-  $('panelJoin').style.display   = which === 'join'   ? '' : 'none';
-  $('tabCreate').classList.toggle('active', which === 'create');
-  $('tabJoin').classList.toggle('active',   which === 'join');
-};
-
-// ---- Lobby erstellen ----
-window.onCreateLobby = async function(){
-  const btn = $('createBtn');
+// ---- Turm betreten (eigener Run, code-los) ----
+// Eigene Lobby unter dem festen Pfad tower/lobbies/<myKey> sicherstellen und als
+// Host in den Warteraum gehen. Solo startbar; tritt der Partner bei, wird's Coop.
+window.onEnterTower = async function(){
+  const btn = $('enterTowerBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    const wish = sanitizeLobbyCode($('createCodeInput').value);
-    lobbyId = await createLobby(myKey, myName, myClassId, wish);
+    const floor = Math.max(1, (myState && myState.towerFloor) | 0) || 1;
+    lobbyId = await ensureSoloLobby(myKey, myName, myClassId, floor);
     isHost  = true;
     openLobbyRoom();
     startLobbyListener();
-    toast('Lobby erstellt – teile den Code!');
   } catch(e){ toast('Fehler: ' + e.message); }
-  finally{ btn.disabled = false; btn.textContent = '🏰 Lobby erstellen'; }
+  finally{ btn.disabled = false; btn.textContent = '▶️ Turm betreten'; }
 };
 
-// ---- Lobby beitreten ----
-window.onJoinLobby = async function(){
-  const code = $('joinCodeInput').value.trim();
-  if(!code){ toast('Bitte Code eingeben.'); return; }
-  const btn = $('joinBtn');
+// ---- Partner-Run beitreten (Auto-Einladung, code-los) ----
+window.onJoinPartner = async function(){
+  if(!partnerLobby || !otherKey) return;
+  const btn = $('inviteJoinBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    await joinLobby(code, myKey, myName, myClassId);
-    lobbyId = code;
+    await joinLobby(otherKey, myKey, myName, myClassId);
+    lobbyId = otherKey;
     isHost  = false;
+    stopPartnerListener();
     openLobbyRoom();
     startLobbyListener();
-    toast('Lobby beigetreten!');
+    toast('Beigetreten! Es gilt der Spielstand des Hosts.');
   } catch(e){ toast('Fehler: ' + e.message); }
-  finally{ btn.disabled = false; btn.textContent = 'Beitreten'; }
+  finally{ btn.disabled = false; btn.textContent = '🤝 Beitreten'; }
 };
 
 function openLobbyRoom(){
-  qS('.lobby-tabs').style.display = 'none';
-  $('panelCreate').style.display  = 'none';
-  $('panelJoin').style.display    = 'none';
-  $('lobbyRoom').style.display    = '';
-  if(isHost){
-    $('codeDisplay').style.display = '';
-    $('codeValue').textContent     = lobbyId;
-  }
+  $('entryPanel').style.display = 'none';
+  $('lobbyRoom').style.display  = '';
 }
 
-window.copyCode = function(){
-  navigator.clipboard.writeText(lobbyId).catch(()=>{});
-  toast('Code kopiert!');
-};
+// ---- Auto-Einladung: Run des Partners beobachten ----
+// Zeigt im Einstieg ein Banner, sobald der Partner im Turm wartet (status
+// 'waiting', noch kein Gast) – Beitritt nur „zwischen den Stockwerken", nicht
+// mitten im Kampf. Spiegelt den code-losen Einladungs-Stil von Schiffe versenken.
+function startPartnerListener(){
+  stopPartnerListener();
+  unsubPartner = listenLobby(otherKey, lobby => {
+    partnerLobby = lobby;
+    // Nur im Einstieg relevant; nicht überschreiben, wenn wir schon in einer Lobby sind.
+    if(lobbyId){ $('inviteBanner').style.display = 'none'; return; }
+    const joinable = lobby && lobby.host === otherKey && lobby.status === 'waiting' && !lobby.guest;
+    if(joinable){
+      $('inviteText').innerHTML = '🗼 <b>' + (lobby.hostName || otherKey) +
+        '</b> ist im Turm (Stockwerk ' + (lobby.floor || 1) + ') – gemeinsam spielen?';
+      $('inviteBanner').style.display = '';
+    } else {
+      $('inviteBanner').style.display = 'none';
+    }
+  });
+}
+function stopPartnerListener(){
+  if(unsubPartner){ unsubPartner(); unsubPartner = null; }
+  $('inviteBanner').style.display = 'none';
+}
 
 // ---- Lobby-Listener ----
 function startLobbyListener(){
@@ -398,6 +386,9 @@ function onLobbyUpdate(lobby){
   $('readyBtn').className  = 'btn ' + (myReady ? 'btn-ghost' : 'btn-primary');
   $('startBtn').style.display = 'none';  // Auto-Start ersetzt den manuellen Start-Button.
 
+  // Solo-Start nur für den Host und nur solange niemand beigetreten ist.
+  $('soloBtn').style.display = (isHost && !hasGuest && lobby.status === 'waiting') ? '' : 'none';
+
   const bothReady = hostR && guestR && hasGuest;
 
   // Auto-Start-Countdown: bei „beide bereit" 10-Sekunden-Timer setzen,
@@ -422,7 +413,7 @@ function onLobbyUpdate(lobby){
   } else {
     stopCountdown();
     $('lobbyStatus').textContent = !hasGuest
-      ? 'Warte auf Partner…'
+      ? (isHost ? '🧍 Solo starten – oder auf ' + (otherKey || 'Partner') + ' warten…' : 'Warte auf Partner…')
       : (bothReady ? 'Beide bereit!' : 'Warte auf Bereit-Status…');
   }
 
@@ -446,8 +437,8 @@ function onLobbyUpdate(lobby){
     $('resultOverlay').classList.remove('show');
     $('fightSection').style.display = 'none';
     $('lobbySection').style.display = '';
+    $('entryPanel').style.display   = 'none';
     $('lobbyRoom').style.display    = '';
-    qS('.lobby-tabs').style.display = 'none';
     _lastAnimTurn = -1; _lastHealTs = 0;
     stopAbilityUI();
   }
@@ -511,11 +502,48 @@ function maybeAutoStart(){
   });
 }
 
+// ---- Solo-Kampf starten (Host, kein Gast) ----
+window.onStartSolo = async function(){
+  if(!isHost) return;
+  const sb = $('soloBtn'); if(sb){ sb.disabled = true; sb.textContent = '…'; }
+  try {
+    const lobby = lobbyData;
+    const floor = lobby.floor || 1;
+    const hostStats = computePlayerStats(myState);
+
+    soloMode = true;
+    // Persistenz: aktuelles Stockwerk im Spielstand sichern (Resume nach Schließen).
+    myState.towerFloor = floor; saveState();
+
+    _frontStatsCache = hostStats; _backStatsCache = null;
+    _frontNameCache  = myName;    _backNameCache  = '';
+
+    _heroLook = { front: lookOf(myState, hostStats), back: null };
+    setTowerHeroes(lobbyId, _heroLook.front, null);
+    setupArena(floor, hostStats, null, myName, '');
+
+    await update(ref(db, 'tower/lobbies/' + lobbyId), { status: 'in_progress', startAt: null });
+
+    showFightSection();
+    $('speedBtn').style.display = '';
+    setupAbilityUI(myKey, null);
+
+    startTowerFight(lobbyId, floor, hostStats, null, myName, '', onCombatUpdate, { frontKey: myKey, backKey: null });
+  } catch(e){
+    toast('Solo-Start fehlgeschlagen: ' + e.message); console.error(e); soloMode = false;
+  } finally{
+    if(sb){ sb.disabled = false; sb.textContent = '🧍 Solo starten'; }
+  }
+};
+
 // ---- Kampf starten (Host) ----
 window.onStartFight = async function(){
   const btn = $('startBtn'); if(btn){ btn.disabled = true; btn.textContent = '…'; }
   try {
     const lobby = lobbyData;
+    soloMode = false;
+    // Persistenz: aktuelles Stockwerk im Spielstand sichern (Resume nach Schließen).
+    myState.towerFloor = lobby.floor || 1; saveState();
     // Gast-Spielstand laden (mit Timeout, damit ein hängender Firebase-Aufruf
     // den Start nicht blockiert → der catch-Zweig armt einen sichtbaren Retry).
     const guestSave  = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
@@ -611,6 +639,12 @@ function applyHeroSprites(){
   if(_heroLook.back)  $('spriteBack').src  = spriteFor(_heroLook.back,  _heroLook.back.tier);
 }
 
+// Hinteren Helden (Sprite + HP-Leiste) im Solo-Modus ausblenden, im Coop zeigen.
+function applySoloVisibility(solo){
+  $('heroBack').style.display  = solo ? 'none' : '';
+  $('backHpRow').style.display = solo ? 'none' : '';
+}
+
 function setupArena(floor, frontStats, backStats, frontName, backName){
   const boss = towerBossFor(floor);
   $('spriteBoss').src         = boss.sprite;
@@ -618,17 +652,22 @@ function setupArena(floor, frontStats, backStats, frontName, backName){
   $('bossNameLabel').textContent  = boss.name;
   $('bossHpName').textContent     = boss.name;
 
-  $('spriteFront').src         = spriteFor(_heroLook.front, frontStats.tier);
-  $('spriteBack').src          = spriteFor(_heroLook.back,  backStats.tier);
-  $('labelFront').textContent  = '⚔️ ' + frontName;
-  $('labelBack').textContent   = (backStats.classId === 'heiler' ? '✨ ' : '🛡️ ') + backName;
-  $('frontHpName').textContent = frontName;
-  $('backHpName').textContent  = backName;
+  const solo = !backStats;
+  applySoloVisibility(solo);
 
-  // Heiler-HP-Bar in Heilungsfarbe
-  const bkFill = $('backHpFill');
-  if(backStats.classId === 'heiler'){ bkFill.classList.remove('back'); bkFill.classList.add('heal'); }
-  else                              { bkFill.classList.remove('heal'); bkFill.classList.add('back'); }
+  $('spriteFront').src         = spriteFor(_heroLook.front, frontStats.tier);
+  $('labelFront').textContent  = '⚔️ ' + frontName;
+  $('frontHpName').textContent = frontName;
+
+  if(!solo){
+    $('spriteBack').src          = spriteFor(_heroLook.back,  backStats.tier);
+    $('labelBack').textContent   = (backStats.classId === 'heiler' ? '✨ ' : '🛡️ ') + backName;
+    $('backHpName').textContent  = backName;
+    // Heiler-HP-Bar in Heilungsfarbe
+    const bkFill = $('backHpFill');
+    if(backStats.classId === 'heiler'){ bkFill.classList.remove('back'); bkFill.classList.add('heal'); }
+    else                              { bkFill.classList.remove('heal'); bkFill.classList.add('back'); }
+  }
 }
 
 function showFightSection(){
@@ -639,6 +678,9 @@ function showFightSection(){
 // ---- Combat-Update ----
 function onCombatUpdate(data){
   if(!data) return;
+
+  // Solo-Modus: keinen hinteren Helden anzeigen.
+  applySoloVisibility(!!data.solo);
 
   // Sprites (für Guest, der setupArena nicht aufgerufen hat). Bevorzugt das
   // echte Partner-Aussehen aus dem Heroes-Knoten, sonst Fallback über den Tier.
@@ -1180,15 +1222,19 @@ async function onNextFloor(){
   if(unsubCombat){ unsubCombat(); unsubCombat = null; }
   if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
   const nextFloor = await advanceFloor(lobbyId);
+  // Persistenz: erreichtes Stockwerk im Spielstand sichern (Resume nach Schließen).
+  if(myState){ myState.towerFloor = nextFloor; saveState(); }
   _lastAnimTurn = -1; _lastHealTs = 0;
   stopCountdown();
   stopAbilityUI();
   $('resultOverlay').classList.remove('show');
   $('fightSection').style.display  = 'none';
   $('lobbySection').style.display  = '';
+  $('entryPanel').style.display    = 'none';
   $('lobbyRoom').style.display     = '';
-  qS('.lobby-tabs').style.display  = 'none';
-  toast('Weiter zu Stockwerk ' + nextFloor + '! Beide auf Bereit klicken.');
+  toast(soloMode
+    ? 'Weiter zu Stockwerk ' + nextFloor + '! 🧍 Solo starten oder auf Partner warten.'
+    : 'Weiter zu Stockwerk ' + nextFloor + '! Beide auf Bereit klicken.');
 }
 
 // ---- Speed ----
@@ -1220,21 +1266,29 @@ function resetToMain(){
   stopCountdown();
   stopAbilityUI();
   clearTimeout(_startWatchdog); _startWatchdog = null; _startingFight = false;
-  lobbyId = null; lobbyData = null; isHost = false;
+  lobbyId = null; lobbyData = null; isHost = false; soloMode = false;
   _lastAnimTurn = -1; _lastHealTs = 0;
   _heroLook = { front:null, back:null };
   $('fightSection').style.display  = 'none';
   $('lobbySection').style.display  = '';
   $('lobbyRoom').style.display     = 'none';
-  $('panelCreate').style.display   = '';
-  $('panelJoin').style.display     = 'none';
-  qS('.lobby-tabs').style.display  = '';
-  $('tabCreate').classList.add('active');
-  $('tabJoin').classList.remove('active');
+  $('entryPanel').style.display    = '';
   $('resultOverlay').classList.remove('show');
   $('speedBtn').style.display      = 'none';
   $('startBtn').style.display      = 'none';
   fightSpeed = 1;
+  refreshResumeHint();
+  // Auto-Einladung wieder aktivieren, sobald wir zurück im Einstieg sind.
+  if(otherKey) startPartnerListener();
+}
+
+// Zeigt im Einstieg das gespeicherte Stockwerk an (Resume-Hinweis).
+function refreshResumeHint(){
+  const floor = Math.max(1, (myState && myState.towerFloor) | 0) || 1;
+  const el = $('resumeHint');
+  if(el) el.textContent = floor > 1 ? 'Du machst bei Stockwerk ' + floor + ' weiter.' : '';
+  const btn = $('enterTowerBtn');
+  if(btn) btn.textContent = floor > 1 ? '▶️ Weiter (Stockwerk ' + floor + ')' : '▶️ Turm betreten';
 }
 
 // ---- Init ----
@@ -1263,8 +1317,14 @@ function resetToMain(){
     myName = (user && getDisplayName(user.email)) || myKey;
     $('userChip').textContent = myName;
 
+    otherKey = (myKey === 'nele') ? 'andreas' : 'nele';
+
     myState = await loadSave(myKey);
     myClassId = (myState && myState.character && myState.character.classId) || DEFAULT_CLASS_ID;
+
+    // Einstieg: gespeichertes Stockwerk anzeigen + auf Partner-Einladung lauschen.
+    refreshResumeHint();
+    startPartnerListener();
   } catch(e){ console.error('Init-Fehler:', e); }
 })();
 </script>
