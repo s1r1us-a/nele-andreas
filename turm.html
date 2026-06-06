@@ -157,9 +157,8 @@
       </div>
       <div class="dps-meter" id="dpsMeter">Warte auf Kampfdaten…</div>
       <div class="combat-log" id="combatLog"></div>
+      <div class="ability-bar-mp" id="abilityBar" style="display:none"></div>
       <div class="arena-controls">
-        <button class="btn btn-primary" id="abilityBtn" style="display:none" onclick="onUseAbility()">✨ Fähigkeit</button>
-        <button class="btn btn-primary" id="abilityBtn2" style="display:none" onclick="onUseAbility2()">🌟 Fähigkeit 2</button>
         <button class="btn btn-ghost" id="speedBtn" style="display:none" onclick="onToggleSpeed()">⏩ Tempo 1×</button>
         <button class="btn btn-danger" onclick="onLeaveLobby()">🚪 Lobby verlassen</button>
       </div>
@@ -190,7 +189,7 @@ import { INV_SLOTS, INV_SLOTS_MAX } from './adventure/js/data/tuning.js';
 import { affixLinesHTML } from './adventure/js/ui/tooltip.js';
 import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
 import { buildDemonSVG } from './adventure/js/core/demon-art.js';
-import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of } from './adventure/js/data/classes.js';
+import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from './adventure/js/data/classes.js';
 import { MECH_DEFS } from './adventure/js/data/bosses.js';
 import { fmtBig } from './adventure/js/ui/dom.js';
 
@@ -211,18 +210,18 @@ let _frontStatsCache = null, _backStatsCache = null;
 let _frontNameCache = '', _backNameCache = '';
 // Helden-Aussehen beider Slots (vom Host nach tower/heroes geschrieben).
 let _heroLook = { front:null, back:null };
-// Skill-Status (lokaler Spieler)
-let _myAbility = null, _abilCdUntil = 0, _abilTicker = null, _mySlot = null;
-let _myAbility2 = null, _abil2CdUntil = 0;
+// Skill-Status (lokaler Spieler) – dynamische Fähigkeitsleiste aus den eigenen Talenten.
+let _myAbilities = [], _abilTicker = null, _mySlot = null;
+let _cdLocal = {};                  // abilityId → lokale Cooldown-Endzeit (optimistisch beim Klick)
+let _cdRemote = { map:{}, at:0 };   // vom Host gesendete Cooldown-Restzeiten + Empfangszeit
 let _lastHealTs = 0;
 // Neue Fähigkeiten-FX: zuletzt gespielte Cast-Trigger + lokale Endzeiten je Slot.
 let _lastCast = { front:0, back:0 };
 let _petUntil = { front:0, back:0 }, _stealthUntil = { front:0, back:0 }, _bossStunUntil = 0;
+let _absorbUntil = { front:0, back:0 }, _reflectUntil = { front:0, back:0 }, _deathUntil = { front:0, back:0 }, _bossVulnUntil = 0;
 // Skill-FX als absolute End-Zeitstempel (Server-Zeit) → lokal heruntergezählt,
 // damit Heilkreis/Schild flackerfrei und auf beiden Geräten synchron erscheinen.
 let _shieldUntil = 0, _frontAblazeUntil = 0, _backAblazeUntil = 0;
-// Cooldown-Anzeige BEIDER Helden (vom Host gebroadcastet, lokal heruntergezählt).
-let _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
 // Auto-Start-Countdown
 let _countdownTicker = null, _countdownTarget = 0, _startingFight = false, _startWatchdog = null;
 // Server-Zeit-Offset gegen Uhren-Drift zwischen den Geräten:
@@ -729,9 +728,8 @@ function onCombatUpdate(data){
   const dps = Math.round((data.dmgDealt||0) / sec);
   $('dpsMeter').textContent = 'DPS ' + fmtBig(dps) + ' · Schaden ' + fmtBig(data.dmgDealt||0) + ' · Runde ' + (data.turn||0);
 
-  // Fähigkeits-Cooldown beider Helden übernehmen (für BEIDE Spieler sichtbar).
-  updateCdState('front', data.frontClass, data.frontCdRemain, data.frontCd2Remain);
-  updateCdState('back',  data.backClass,  data.backCdRemain,  data.backCd2Remain);
+  // Cooldown-Restzeiten meiner Fähigkeiten vom Host übernehmen (Map {id: ms}).
+  if(_mySlot){ _cdRemote = { map: (_mySlot === 'front' ? data.frontCd : data.backCd) || {}, at: Date.now() }; }
 
   // Pro-Runde Angriffs-Animationen abspielen (Lunge, Treffer, Schadenszahlen –
   // genau wie im Singleplayer). Einmal pro neuer Runde, auf BEIDEN Clients.
@@ -909,98 +907,76 @@ function replayTurn(events, backStab){
   }
 }
 
-// ---- Klassen-Spezialfähigkeit (B14) ----
+// ---- Klassen-Fähigkeiten: dynamische Knopfleiste aus den EIGENEN Talenten ----
+// Die Leiste spiegelt jederzeit den aktuellen Talent-Stand (Grundfähigkeit +
+// Zweitfähigkeit + geskillte Aktive) – lernt/verlernt man Aktive, ändert sich
+// die Leiste beim nächsten Turm-Kampf automatisch.
+function myAbilityList(){
+  const ch = (myState && myState.character) || { classId: myClassId };
+  return abilitiesOf({ character: ch });
+}
 function setupAbilityUI(frontKey, backKey){
   _mySlot = (myKey === frontKey) ? 'front' : (myKey === backKey ? 'back' : null);
-  _myAbility = abilityOf(myClassId);
-  _myAbility2 = ability2Of(myClassId);
-  const btn = $('abilityBtn'), btn2 = $('abilityBtn2');
-  if(!_myAbility || !_mySlot){ btn.style.display = 'none'; if(btn2) btn2.style.display = 'none'; return; }
-  btn.style.display = '';
-  if(btn2) btn2.style.display = _myAbility2 ? '' : 'none';
-  _abilCdUntil = 0; _abil2CdUntil = 0;
-  updateAbilityBtn();
+  _myAbilities = myAbilityList();
+  const bar = $('abilityBar');
+  if(!_mySlot || !_myAbilities.length){ if(bar){ bar.style.display='none'; bar.innerHTML=''; } return; }
+  renderAbilityBar();
   startAbilityTicker();
 }
-function updateAbilityBtn(){
-  const btn = $('abilityBtn');
-  if(btn && _myAbility){
-    const cd = Math.max(0, Math.ceil((_abilCdUntil - Date.now())/1000));
-    if(cd > 0){ btn.disabled = true;  btn.style.opacity = '0.5'; btn.textContent = _myAbility.icon+' '+_myAbility.name+' ('+cd+'s)'; }
-    else      { btn.disabled = false; btn.style.opacity = '1';   btn.textContent = _myAbility.icon+' '+_myAbility.name; }
-  }
-  const btn2 = $('abilityBtn2');
-  if(btn2 && _myAbility2){
-    const cd2 = Math.max(0, Math.ceil((_abil2CdUntil - Date.now())/1000));
-    if(cd2 > 0){ btn2.disabled = true;  btn2.style.opacity = '0.5'; btn2.textContent = _myAbility2.icon+' '+_myAbility2.name+' ('+cd2+'s)'; }
-    else       { btn2.disabled = false; btn2.style.opacity = '1';   btn2.textContent = _myAbility2.icon+' '+_myAbility2.name; }
-  }
+function renderAbilityBar(){
+  const bar = $('abilityBar'); if(!bar) return;
+  bar.style.display = '';
+  bar.innerHTML = _myAbilities.map(a =>
+    '<button class="mp-ability" data-id="'+a.id+'" title="'+((a.desc||'').replace(/"/g,'&quot;'))+'">'+
+      '<span class="mp-ab-head">'+a.icon+' '+a.name+'</span>'+
+      '<span class="mp-ab-cd"></span>'+
+    '</button>').join('');
+  bar.querySelectorAll('.mp-ability').forEach(btn =>
+    btn.addEventListener('click', () => window.onUseAbility(btn.dataset.id)));
+}
+// Cooldown-Restzeit einer Fähigkeit: Maximum aus lokaler (optimistischer) Endzeit
+// und der vom Host gesendeten Restzeit (lokal seit Empfang heruntergezählt).
+function abilCdRemain(id){
+  const now = Date.now();
+  let r = Math.max(0, (_cdLocal[id]||0) - now);
+  const rem = _cdRemote.map && _cdRemote.map[id];
+  if(rem != null) r = Math.max(r, rem - (now - _cdRemote.at));
+  return Math.max(0, r);
+}
+function updateAbilityBar(){
+  const bar = $('abilityBar'); if(!bar) return;
+  _myAbilities.forEach(a => {
+    const btn = bar.querySelector('.mp-ability[data-id="'+a.id+'"]'); if(!btn) return;
+    const cd = Math.ceil(abilCdRemain(a.id)/1000);
+    const cdEl = btn.querySelector('.mp-ab-cd');
+    if(cd > 0){ btn.disabled = true;  btn.style.opacity = '0.5'; if(cdEl) cdEl.textContent = cd+'s'; btn.classList.add('on-cd'); }
+    else      { btn.disabled = false; btn.style.opacity = '1';   if(cdEl) cdEl.textContent = '';    btn.classList.remove('on-cd'); }
+  });
 }
 function startAbilityTicker(){
-  if(!_abilTicker) _abilTicker = setInterval(() => { updateAbilityBtn(); renderCdBadges(); renderFxLocal(); }, 250);
+  if(!_abilTicker) _abilTicker = setInterval(() => { updateAbilityBar(); renderFxLocal(); }, 250);
 }
 function stopAbilityUI(){
   if(_abilTicker){ clearInterval(_abilTicker); _abilTicker = null; }
-  _mySlot = null; _myAbility = null; _myAbility2 = null; _abilCdUntil = 0; _abil2CdUntil = 0;
-  _cdState = { front:{ ab:null, remain:0, at:0 }, back:{ ab:null, remain:0, at:0 } };
-  const btn = $('abilityBtn'); if(btn) btn.style.display = 'none';
-  const btn2 = $('abilityBtn2'); if(btn2) btn2.style.display = 'none';
-  ['cdFront','cdBack'].forEach(id => { const el = $(id); if(el) el.style.display = 'none'; });
+  _mySlot = null; _myAbilities = []; _cdLocal = {}; _cdRemote = { map:{}, at:0 };
+  const bar = $('abilityBar'); if(bar){ bar.style.display = 'none'; bar.innerHTML = ''; }
   _shieldUntil = _frontAblazeUntil = _backAblazeUntil = 0;
   _petUntil = { front:0, back:0 }; _stealthUntil = { front:0, back:0 }; _bossStunUntil = 0;
+  _absorbUntil = { front:0, back:0 }; _reflectUntil = { front:0, back:0 }; _deathUntil = { front:0, back:0 }; _bossVulnUntil = 0;
   _lastCast = { front:0, back:0 };
-  ['heroFront','heroBack'].forEach(id => $(id) && $(id).classList.remove('ablaze','stealth','vanished'));
+  ['heroFront','heroBack'].forEach(id => $(id) && $(id).classList.remove('ablaze','stealth','vanished','shielded','reflect-glow','deathsave-glow'));
+  if($('spriteBoss')) $('spriteBoss').classList.remove('vuln-tint');
   ['sig-demon-front','sig-demon-back','sig-stun-boss'].forEach(id => { const el = $(id); if(el) el.remove(); });
   removeShieldDome();
 }
-
-// Cooldown-Reststand eines Slots aus den Kampfdaten übernehmen (mit Empfangszeit).
-function updateCdState(slot, classId, remain, remain2){
-  const st = _cdState[slot]; if(!st) return;
-  st.ab  = abilityOf(classId);
-  st.ab2 = ability2Of(classId);
-  st.remain  = Math.max(0, remain  || 0);
-  st.remain2 = Math.max(0, remain2 || 0);
-  st.at = Date.now();
-  renderCdBadges();
-}
-// Badges beider Helden live rendern (lokal heruntergezählt seit Empfang).
-function renderCdBadges(){
-  renderCdBadge('front', 'cdFront');
-  renderCdBadge('back',  'cdBack');
-}
-function renderCdBadge(slot, elId){
-  const el = $(elId); if(!el) return;
-  const st = _cdState[slot];
-  if(!st || !st.ab){ el.style.display = 'none'; return; }
-  // Eigener Held: lokalen Cooldown mit einrechnen → sofortiges Feedback beim Klick.
-  const elapsed = Date.now() - st.at;
-  let r1 = Math.max(0, st.remain  - elapsed);
-  let r2 = Math.max(0, (st.remain2||0) - elapsed);
-  if(slot === _mySlot){ r1 = Math.max(r1, _abilCdUntil - Date.now()); r2 = Math.max(r2, _abil2CdUntil - Date.now()); }
-  // Badge zeigt die Fähigkeit mit der höheren Restzeit (sonst die erste als „bereit").
-  let ab = st.ab, remain = r1;
-  if(st.ab2 && r2 > r1){ ab = st.ab2; remain = r2; }
-  const cd = Math.max(0, Math.ceil(remain / 1000));
-  el.style.display = '';
-  if(cd > 0){ el.className = 'hero-cd cooling'; el.textContent = ab.icon + ' ' + cd + 's'; }
-  else      { el.className = 'hero-cd ready';   el.textContent = ab.icon + ' bereit'; }
-}
-window.onUseAbility = function(){
-  if(!_myAbility || !_mySlot || !lobbyId) return;
-  if(Date.now() < _abilCdUntil) return;
-  _abilCdUntil = Date.now() + _myAbility.cd;
-  requestAbility(lobbyId, _mySlot, _myAbility.id);
-  updateAbilityBtn();
-  toast(_myAbility.icon + ' ' + _myAbility.name + ' aktiviert!');
-};
-window.onUseAbility2 = function(){
-  if(!_myAbility2 || !_mySlot || !lobbyId) return;
-  if(Date.now() < _abil2CdUntil) return;
-  _abil2CdUntil = Date.now() + _myAbility2.cd;
-  requestAbility(lobbyId, _mySlot, _myAbility2.id);
-  updateAbilityBtn();
-  toast(_myAbility2.icon + ' ' + _myAbility2.name + ' aktiviert!');
+window.onUseAbility = function(id){
+  if(!_mySlot || !lobbyId) return;
+  const ab = _myAbilities.find(a => a.id === id); if(!ab) return;
+  if(abilCdRemain(id) > 0) return;
+  _cdLocal[id] = Date.now() + (ab.cd||0);
+  requestAbility(lobbyId, _mySlot, id);
+  updateAbilityBar();
+  toast(ab.icon + ' ' + ab.name + ' aktiviert!');
 };
 
 // FX aus den synchronisierten Kampfdaten rendern (beide Spieler sehen dasselbe).
@@ -1020,8 +996,15 @@ function renderFx(fx){
     const stealthR = slot === 'front' ? fx.stealthFrontRemain : fx.stealthBackRemain;
     _petUntil[slot]     = (petR     != null) ? now + petR     : 0;
     _stealthUntil[slot] = (stealthR != null) ? now + stealthR : 0;
+    const absR = slot === 'front' ? fx.absorbFrontRemain : fx.absorbBackRemain;
+    const refR = slot === 'front' ? fx.reflectFrontRemain : fx.reflectBackRemain;
+    const deaR = slot === 'front' ? fx.deathFrontRemain  : fx.deathBackRemain;
+    _absorbUntil[slot]  = (absR != null) ? now + absR : 0;
+    _reflectUntil[slot] = (refR != null) ? now + refR : 0;
+    _deathUntil[slot]   = (deaR != null) ? now + deaR : 0;
   });
   _bossStunUntil = (fx.bossStunRemain != null) ? now + fx.bossStunRemain : 0;
+  _bossVulnUntil = (fx.bossVulnRemain != null) ? now + fx.bossVulnRemain : 0;
   renderFxLocal();
   // Heilkreis: Einmal-Animation per Edge-Trigger – synchron auf beiden Helden.
   if(fx.healTs && fx.healTs > _lastHealTs){
@@ -1042,6 +1025,14 @@ function renderFxLocal(){
   applyTowerDemon('front', now < _petUntil.front);
   applyTowerDemon('back',  now < _petUntil.back);
   applyTowerStun(now < _bossStunUntil);
+  // Talent-Aktive: Absorb-Schild-Glühen, Reflexion, Todesrettung, Boss-Verwundbarkeit.
+  $('heroFront').classList.toggle('shielded', now < _absorbUntil.front);
+  $('heroBack').classList.toggle('shielded',  now < _absorbUntil.back);
+  $('heroFront').classList.toggle('reflect-glow', now < _reflectUntil.front);
+  $('heroBack').classList.toggle('reflect-glow',  now < _reflectUntil.back);
+  $('heroFront').classList.toggle('deathsave-glow', now < _deathUntil.front);
+  $('heroBack').classList.toggle('deathsave-glow',  now < _deathUntil.back);
+  if($('spriteBoss')) $('spriteBoss').classList.toggle('vuln-tint', now < _bossVulnUntil);
 }
 // Heil-Effekt: Lichtkern + Ring + aufsteigende Funken + kurzes grünes Aufleuchten.
 function spawnHealCircle(heroId){
@@ -1120,12 +1111,32 @@ function spawnTowerRune(slot){
   layer.appendChild(r); setTimeout(() => r.remove(), 950);
 }
 // Einmal-Animation beim Wirken einer der neuen Fähigkeiten (per Cast-Trigger).
+// Talent-Aktive: offensive Fähigkeiten schlagen am Boss ein, Selbst-Buffs glühen am Helden.
+const TOWER_BOSS_FX = new Set([
+  'schurke_a5_gift','schurke_a5_wirbel','schurke_a9_aderlass','schurke_a9_meuchel',
+  'hexer_a5_verderb','hexer_a5_ritual','hexer_a5_furcht','hexer_a9_chaos',
+  'heiler_a5_arkan','heiler_a9_stern','verteidiger_a5_wurf'
+]);
+const TOWER_SELF_FX = new Set([
+  'schurke_a5_beute','schurke_a9_versch','verteidiger_a5_vergelt','verteidiger_a5_bastion',
+  'verteidiger_a9_avatar','verteidiger_a9_wall','verteidiger_a9_unbeug',
+  'heiler_a5_verjueng','heiler_a5_schild','heiler_a9_engel','heiler_a9_rein','hexer_a9_orgie'
+]);
 function playTowerAbilityVfx(slot, abId){
   if(abId === 'lichtsaeule'){ spawnTowerPillar(slot); spawnTowerShock('spriteBoss'); }
   else if(abId === 'nebelschritt'){ spawnTowerSmoke(slot); }
   else if(abId === 'nebelschritt_ambush'){ spawnTowerSmoke(slot); spawnTowerShock('spriteBoss'); }
   else if(abId === 'donnerknall'){ spawnTowerShock('spriteBoss'); }
   else if(abId === 'teufelswache'){ spawnTowerRune(slot); applyTowerDemon(slot, true); }
+  else if(TOWER_BOSS_FX.has(abId)){ spawnTowerShock('spriteBoss'); }
+  else if(TOWER_SELF_FX.has(abId)){ spawnTowerSelfGlow(slot); }
+}
+// Kurzes Glühen/Sigil am eigenen Helden (Selbst-Buffs: Schild/Reflexion/Heilung/…).
+function spawnTowerSelfGlow(slot){
+  const a = anchorOf(slotImg(slot)), layer = $('dmgLayer'); if(!layer) return;
+  const r = document.createElement('div'); r.className = 'vfx-rune-ring';
+  r.style.left = a.x+'px'; r.style.top = (a.y+30)+'px'; r.style.setProperty('--rune-col', '#ffe9a8');
+  layer.appendChild(r); setTimeout(() => r.remove(), 950);
 }
 // Persistente Teufelswache am Helden (front/back), live nachpositioniert.
 function applyTowerDemon(slot, active){

@@ -366,6 +366,24 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .arena-hero.stealth img { opacity:.4; filter:grayscale(.3) brightness(.8) drop-shadow(0 0 10px #6a4bb0); }
 /* Nebelschritt: vollständig unsichtbar (in der Rauchwolke verschwunden). */
 .arena-hero.vanished img { opacity:0; transition:opacity .35s ease; }
+/* Talent-Aktive: Absorb-Schild, Reflexion, Todesrettung am Helden; Verwundbarkeit am Boss. */
+.arena-hero.shielded img { filter:drop-shadow(0 0 12px #bfe3ff) drop-shadow(0 0 22px #7fb0e0) brightness(1.08); }
+.arena-hero.reflect-glow img { filter:drop-shadow(0 0 12px #b6d0ff) drop-shadow(0 0 22px #7fa8e0) brightness(1.1); }
+.arena-hero.deathsave-glow img { filter:drop-shadow(0 0 14px #ffe9a8) drop-shadow(0 0 26px #ffd24a) brightness(1.14); }
+.arena-boss-col img.vuln-tint, #spriteBoss.vuln-tint { filter:drop-shadow(0 0 12px #ff5a3c) saturate(1.5) brightness(1.06); }
+
+/* Dynamische Fähigkeitsleiste (alle Aktive des eigenen Slots). */
+.ability-bar-mp { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:10px 0 4px; }
+.ability-bar-mp .mp-ability {
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px; line-height:1.15;
+  padding:7px 12px; border-radius:12px; cursor:pointer;
+  border:1px solid rgba(180,120,255,.5); background:rgba(40,28,64,.7); color:#eee;
+  font-family:'Quicksand',sans-serif; font-weight:700; }
+.ability-bar-mp .mp-ability:hover:not(:disabled) { background:rgba(60,42,92,.85); }
+.ability-bar-mp .mp-ability:disabled { cursor:default; }
+.ability-bar-mp .mp-ability.on-cd { border-color:rgba(255,154,107,.6); }
+.ability-bar-mp .mp-ab-head { font-size:13px; }
+.ability-bar-mp .mp-ab-cd { font-size:11px; color:#ff9a6b; min-height:13px; }
 
 /* Lichtsäule (heilig-golden). */
 .vfx-pillar { position:absolute; width:64px; height:200px; transform:translate(-50%,-78%);

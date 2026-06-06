@@ -979,6 +979,13 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
   transition:opacity .3s, filter .3s; }
 /* Nebelschritt: vollständig unsichtbar (verschwindet in der Rauchwolke). */
 .combatant.vanished { opacity:0 !important; transition:opacity .35s ease; }
+/* Talent-Aktive: Reflexion (Spiegel-Glühen), Todesrettung (heiliger Schein), Verwundbarkeit (rote Tönung). */
+.combatant.reflect-glow { filter:drop-shadow(0 0 12px #b6d0ff) drop-shadow(0 0 22px #7fa8e0) brightness(1.1);
+  animation:ablazePulse .6s ease-in-out infinite alternate; }
+.combatant.deathsave-glow { filter:drop-shadow(0 0 14px #ffe9a8) drop-shadow(0 0 26px #ffd24a) brightness(1.15);
+  animation:critRagePulse .7s ease-in-out infinite alternate; }
+.combatant.vuln-tint { filter:drop-shadow(0 0 12px #ff5a3c) saturate(1.5) brightness(1.06);
+  animation:ablazePulse .5s ease-in-out infinite alternate; }
 .combatant.freeze { animation:none !important; filter:brightness(1.6) saturate(.4) drop-shadow(0 0 12px #fff); }
 
 /* Goldene Avatar-Kuppel (Unbeugsam). */
