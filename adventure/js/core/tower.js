@@ -4,11 +4,11 @@
    Solo: nur der Front-Held; der Boss bleibt gleich stark, trifft aber nur ihn.
    Koop: tritt der Partner einer Wartelobby bei, gilt der Spielstand des Hosts.
    ===================================================================== */
-import { db, ref, get, set, update, remove, push, onValue, onDisconnect } from './firebase.js';
+import { db, ref, get, set, update, remove, push, runTransaction, onValue, onDisconnect } from './firebase.js';
 import { COMBAT, TOWER } from '../data/tuning.js';
 import { bossFor } from '../data/bosses.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
-import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of } from '../data/classes.js';
+import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
 import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
@@ -311,6 +311,13 @@ function addLog(fight, text, color){
   if(idx > 50) delete fight.log[idx - 50];
 }
 
+// Cooldown-Map {id: Endzeit} → {id: Restzeit ms} (nur laufende Cooldowns).
+function cdRemainMap(map, now){
+  const o = {};
+  if(map) for(const id in map){ const r = (map[id]||0) - now; if(r > 0) o[id] = r; }
+  return o;
+}
+
 async function syncFight(fight){
   const now = Date.now();
   const data = {
@@ -346,6 +353,9 @@ async function syncFight(fight){
     // Cooldown der ZWEITEN Fähigkeit je Slot.
     frontCd2Remain: Math.max(0, (fight.frontAbil2Until||0) - now),
     backCd2Remain:  Math.max(0, (fight.backAbil2Until ||0) - now),
+    // Cooldown-Maps {abilityId: Restzeit ms} je Slot – für die dynamische Knopfleiste.
+    frontCd: cdRemainMap(fight.frontCd, now),
+    backCd:  cdRemainMap(fight.backCd,  now),
     // Aktive Skill-Effekte für die Animationen beider Spieler (B15).
     // Als RESTZEIT (ms) zum Sync-Zeitpunkt – driftfrei trotz abweichender
     // Geräteuhren (gleiches Muster wie die Cooldown-Badges). Jeder Client
@@ -368,6 +378,14 @@ async function syncFight(fight){
       bossStunRemain: Math.max(0, (fight.bossStunUntil||0) - now),
       stealthFrontRemain: Math.max(0, (fight.frontStealthUntil||0) - now),
       stealthBackRemain:  Math.max(0, (fight.backStealthUntil ||0) - now),
+      // Talent-Aktive: Absorb-Schild / Reflexion / Todesrettung je Slot + Boss-Verwundbarkeit.
+      absorbFrontRemain: Math.max(0, (fight.fx.front.shieldUntil||0)  - now),
+      absorbBackRemain:  Math.max(0, (fight.fx.back.shieldUntil||0)   - now),
+      reflectFrontRemain:Math.max(0, (fight.fx.front.reflectUntil||0) - now),
+      reflectBackRemain: Math.max(0, (fight.fx.back.reflectUntil||0)  - now),
+      deathFrontRemain:  Math.max(0, (fight.fx.front.deathUntil||0)   - now),
+      deathBackRemain:   Math.max(0, (fight.fx.back.deathUntil||0)    - now),
+      bossVulnRemain:    Math.max(0, (fight.bossVulnUntil||0)         - now),
     },
     status:      fight.over ? (fight.won ? 'won' : 'lost') : 'fighting',
   };
@@ -402,6 +420,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
     frontAbility: abilityOf(frontStats.classId),
     frontAbility2: ability2Of(frontStats.classId),
+    frontAbilities: abilitiesOf({ character: frontStats.character }),
     backMaxHp:  bs.maxHp || 0,  backHp: bs.maxHp || 0,
     backAtk:    bs.atk || 0,     backArmor: bs.armor || 0,
     backCrit:   bs.critChance || 0, backCritMult: bs.critMult || 0,
@@ -415,6 +434,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backKey: keys.backKey || '', backClass: bs.classId || '',
     backAbility:  solo ? null : abilityOf(bs.classId),
     backAbility2: solo ? null : ability2Of(bs.classId),
+    backAbilities: solo ? [] : abilitiesOf({ character: bs.character }),
     turn:0, over:false, won:false,
     enrageMult:1, berserkMult:1, poison:0, shieldTurns:0,
     speed:1, log:{}, logCount:0,
@@ -427,6 +447,10 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontPetUntil:0, backPetUntil:0, frontPetBonus:0, backPetBonus:0,
     frontStealthUntil:0, backStealthUntil:0,
     frontCastTs:0, frontCastAb:'', backCastTs:0, backCastAb:'',
+    // Talent-Aktive: Cooldown-Maps je Slot + per-Slot-Effekt-Container + Boss-Verwundbarkeit.
+    frontCd:{}, backCd:{}, bossVulnUntil:0, bossVulnVal:0,
+    fx:{ front:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0 },
+          back:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0 } },
     _lastAbilTs:0,
     onUpdate,
   };
@@ -448,6 +472,49 @@ function petMultOf(fight, slot, now){
   const until = slot === 'front' ? fight.frontPetUntil : fight.backPetUntil;
   const bonus = slot === 'front' ? fight.frontPetBonus : fight.backPetBonus;
   return now < (until||0) ? (1 + (bonus||0)) : 1;
+}
+// Schadens-Multiplikator eines Slots aus Talent-Buffs (dmgBoost/avatar) + Boss-Verwundbarkeit.
+function slotDmgMult(fight, slot, now){
+  const fx = fight.fx && fight.fx[slot]; let m = 1;
+  if(fx && now < (fx.dmgBoostUntil||0)) m *= (1 + (fx.dmgBoostVal||0));
+  if(now < (fight.bossVulnUntil||0))    m *= (1 + (fight.bossVulnVal||0));
+  return m;
+}
+// Zusätzlicher Lebensraub eines Slots aus Talent-Buffs (Beutejagd/Blutritual).
+function slotLifesteal(fight, slot, now){
+  const fx = fight.fx && fight.fx[slot];
+  return (fx && now < (fx.lifestealUntil||0)) ? (fx.lifestealVal||0) : 0;
+}
+// Eingehenden Boss-Schaden eines Slots verarbeiten: Reflexion, Absorb-Schild,
+// Todesrettung. Gibt den tatsächlich an den Helden gehenden Schaden zurück.
+function towerTakeHit(fight, slot, raw, events){
+  const now = Date.now();
+  const fx = fight.fx[slot];
+  const hpKey = slot === 'front' ? 'frontHp' : 'backHp';
+  const reviveCap = slot === 'front' ? fight.frontMaxHp : fight.backMaxHp;
+  let dmg = raw;
+  // Slot-Schadensreduktion (Verschwinden/Unbeugsam/Avatar).
+  if(now < (fx.dmgReduceUntil||0)) dmg = Math.max(1, Math.round(dmg * (1 - (fx.dmgReduceVal||0))));
+  // Reflexion (Vergeltung): Anteil zurück an den Boss.
+  if(now < (fx.reflectUntil||0) && fx.reflectVal > 0){
+    const refl = Math.max(1, Math.round(dmg * fx.reflectVal));
+    fight.bossHp = Math.max(0, fight.bossHp - refl); fight.dmgDealt += refl;
+    addLog(fight, '🪞 Reflexion: -' + fmtBig(refl), '#b6d0ff');
+    if(fight.bossHp <= 0) fight.over = true;
+  }
+  // Absorb-Schild (Schutzschild).
+  if(now < (fx.shieldUntil||0) && fx.shield > 0){
+    const soak = Math.min(fx.shield, dmg); fx.shield -= soak; dmg -= soak;
+    if(fx.shield <= 0){ fx.shield = 0; fx.shieldUntil = 0; }
+  }
+  fight[hpKey] = Math.max(0, fight[hpKey] - dmg);
+  // Todesrettung (Engelsgeist / Letzter Wall / Seelenstein).
+  if(fight[hpKey] <= 0 && now < (fx.deathUntil||0)){
+    fight[hpKey] = Math.max(1, Math.min(reviveCap, fx.reviveHp||1));
+    fx.deathUntil = 0;
+    addLog(fight, '✨ ' + (slot==='front'?fight.frontName:fight.backName) + ' wird vor dem Tod bewahrt!', '#ffe9a8');
+  }
+  return dmg;
 }
 
 // Nebelschritt-Überfall (Turm-Host): nach dem Unsichtbarkeits-Fenster taucht der
@@ -477,19 +544,25 @@ function scheduleTowerNebelAmbush(fight, slot, ab){
 // Host wendet eine angeforderte Klassen-Fähigkeit auf den Kampf an.
 function applyAbility(fight, slot, abilityId){
   if(fight.over) return;
-  // Angeforderte ID gegen BEIDE Fähigkeiten des Slots prüfen.
-  const list = slot === 'front' ? [fight.frontAbility, fight.frontAbility2] : [fight.backAbility, fight.backAbility2];
-  const ab = list.find(a => a && a.id === abilityId);
+  // Angeforderte ID gegen die GESAMTE Fähigkeitsliste des Slots prüfen
+  // (Grundfähigkeit + Zweitfähigkeit + geskillte Talent-Aktive).
+  const list = slot === 'front' ? fight.frontAbilities : fight.backAbilities;
+  const ab = (list||[]).find(a => a && a.id === abilityId);
   if(!ab) return;
   const now = Date.now();
-  const isSecond = ab === (slot === 'front' ? fight.frontAbility2 : fight.backAbility2);
-  // Cooldown pro Slot UND Fähigkeit merken → in syncFight als Restzeit an beide Clients.
-  if(slot === 'front'){ if(isSecond) fight.frontAbil2Until = now + (ab.cd||0); else fight.frontAbilUntil = now + (ab.cd||0); }
-  else                { if(isSecond) fight.backAbil2Until  = now + (ab.cd||0); else fight.backAbilUntil  = now + (ab.cd||0); }
-  const name = slot === 'front' ? fight.frontName : fight.backName;
+  const cdMap = slot === 'front' ? fight.frontCd : fight.backCd;
+  if(now < (cdMap[abilityId]||0)) return;                 // noch im Cooldown
+  cdMap[abilityId] = now + (ab.cd||0);
+  const name  = slot === 'front' ? fight.frontName  : fight.backName;
+  const atk   = slot === 'front' ? fight.frontAtk   : fight.backAtk;
+  const maxHp = slot === 'front' ? fight.frontMaxHp : fight.backMaxHp;
+  const fxs   = fight.fx[slot];
   // Cast-Signal für die Client-Animation (Rauch/Säule/Dämon/Schockwelle).
   if(slot === 'front'){ fight.frontCastTs = now; fight.frontCastAb = ab.id; }
   else                { fight.backCastTs  = now; fight.backCastAb  = ab.id; }
+  const slotHeal = amt => { if(slot==='front') fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp+amt); else fight.backHp = Math.min(fight.backMaxHp, fight.backHp+amt); };
+  const vulnMult = now < (fight.bossVulnUntil||0) ? (1+(fight.bossVulnVal||0)) : 1;
+  const dealBoss = mult => { const dmg = Math.max(1, Math.round(atk * mult * petMultOf(fight, slot, now) * vulnMult)); fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg; if(fight.bossHp<=0) fight.over = true; return dmg; };
 
   if(ab.kind === 'heal'){
     if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
@@ -497,60 +570,71 @@ function applyAbility(fight, slot, abilityId){
     fight.lastHealTs = now;
     addLog(fight, ab.icon+' '+ab.name+': alle Helden +'+Math.round(ab.healPct*100)+'% HP', '#37d67a');
   } else if(ab.kind === 'healBurst'){
-    // Lichtsäule: heilt beide Helden UND verbrennt den Boss.
     if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
     if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + Math.round(fight.backMaxHp  * ab.healPct));
     fight.lastHealTs = now;
-    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
-    const dmg = Math.max(1, Math.round(atk * (ab.burstMult||3) * petMultOf(fight, slot, now)));
-    fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg;
+    const dmg = dealBoss(ab.burstMult||3);
     addLog(fight, ab.icon+' '+ab.name+': alle +'+Math.round(ab.healPct*100)+'% HP, '+fmtBig(dmg)+' Schaden', '#ffe9a8');
-    if(fight.bossHp <= 0) fight.over = true;
   } else if(ab.kind === 'critBoost'){
     if(slot === 'front'){ fight.frontCritUntil = now + ab.dur; fight.frontCritVal = ab.critBonus||0; }
     else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||0; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+'!', '#ff8a3d');
   } else if(ab.kind === 'vanish'){
-    // Nebelschritt: vollständig unsichtbar – Boss geblendet, der Slot greift NICHT an;
-    // beim Wiederauftauchen ein garantierter Krit-Überfall.
     fight.bossStunUntil = now + ab.dur;
-    if(slot === 'front') fight.frontStealthUntil = now + ab.dur;
-    else                 fight.backStealthUntil  = now + ab.dur;
+    if(slot === 'front') fight.frontStealthUntil = now + ab.dur; else fight.backStealthUntil = now + ab.dur;
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': verschwindet im Nebel, Boss '+(ab.dur/1000)+'s blind!', '#b6a0ff');
     scheduleTowerNebelAmbush(fight, slot, ab);
   } else if(ab.kind === 'stun'){
-    // Donnerknall: Schaden + Boss-Betäubung.
-    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
-    const dmg = Math.max(1, Math.round(atk * (ab.burstMult||1.2) * petMultOf(fight, slot, now)));
-    fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg;
+    const dmg = dealBoss(ab.burstMult||1.2);
     fight.bossStunUntil = now + (ab.stunDur||4000);
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+fmtBig(dmg)+' Schaden, Boss '+((ab.stunDur||4000)/1000)+'s betäubt!', '#7fd0ff');
-    if(fight.bossHp <= 0) fight.over = true;
   } else if(ab.kind === 'summon'){
-    // Teufelswache: beschworener Dämon verstärkt den Schaden des Slots.
     if(slot === 'front'){ fight.frontPetUntil = now + (ab.petDur||10000); fight.frontPetBonus = ab.petBonus||0.25; }
     else               { fight.backPetUntil  = now + (ab.petDur||10000); fight.backPetBonus  = ab.petBonus||0.25; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': Teufelswache kämpft '+((ab.petDur||10000)/1000)+'s mit (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden)!', '#9b30ff');
   } else if(ab.kind === 'dmgReduce'){
-    fight.groupDmgReduceUntil = now + ab.dur;
-    fight.groupDmgReducePct   = ab.dmgReduce || 0;
-    addLog(fight, ab.icon+' '+ab.name+' – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff');
+    // Schildwall heilt die ganze Gruppe; Talent-Reduce (Verschwinden/Unbeugsam) nur den Slot.
+    if(ab.id === 'schildwall'){ fight.groupDmgReduceUntil = now + ab.dur; fight.groupDmgReducePct = ab.dmgReduce||0; addLog(fight, ab.icon+' '+ab.name+' – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff'); }
+    else { fxs.dmgReduceUntil = now + ab.dur; fxs.dmgReduceVal = ab.dmgReduce||0; addLog(fight, ab.icon+' '+name+' – '+ab.name+': −'+Math.round((ab.dmgReduce||0)*100)+'% erlittener Schaden!', '#7fd0ff'); }
+  } else if(ab.kind === 'dmgBoost'){
+    fxs.dmgBoostUntil = now + ab.dur; fxs.dmgBoostVal = ab.dmgBonus||0;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+Math.round((ab.dmgBonus||0)*100)+'% Schaden!', '#ff8a3d');
+  } else if(ab.kind === 'lifesteal'){
+    fxs.lifestealUntil = now + ab.dur; fxs.lifestealVal = ab.lifestealBonus||0;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+Math.round((ab.lifestealBonus||0)*100)+'% Lebensraub!', '#e0466e');
+  } else if(ab.kind === 'avatar'){
+    fxs.dmgBoostUntil = now + ab.dur; fxs.dmgBoostVal = ab.dmgBonus||0.4;
+    fxs.dmgReduceUntil = now + ab.dur; fxs.dmgReduceVal = ab.dmgReduce||0.4;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+Math.round((ab.dmgBonus||0.4)*100)+'% Schaden & −'+Math.round((ab.dmgReduce||0.4)*100)+'% erlitten!', '#ffd24a');
+  } else if(ab.kind === 'reflect'){
+    fxs.reflectUntil = now + ab.dur; fxs.reflectVal = ab.reflectPct||0.4;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': reflektiert '+Math.round((ab.reflectPct||0.4)*100)+'% Schaden!', '#b6d0ff');
+  } else if(ab.kind === 'absorb'){
+    fxs.shield = Math.round(maxHp * (ab.absorbPct||0.4)); fxs.shieldUntil = now + (ab.dur||10000);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Schild absorbiert '+fmtBig(fxs.shield)+' Schaden.', '#bfe3ff');
+  } else if(ab.kind === 'deathsave'){
+    fxs.deathUntil = now + (ab.dur||10000); fxs.reviveHp = Math.round(maxHp * (ab.revivePct||0.3));
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': überlebt '+(ab.dur/1000)+'s lang den Tod.', '#ffe9a8');
+  } else if(ab.kind === 'vulnerability'){
+    fight.bossVulnUntil = now + ab.dur; fight.bossVulnVal = ab.vulnPct||0.3;
+    let dmg = 0; if(ab.burstMult) dmg = dealBoss(ab.burstMult);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Gegner +'+Math.round((ab.vulnPct||0.3)*100)+'% Schaden'+(dmg?(' ('+fmtBig(dmg)+')'):'')+'.', '#ff8a3d');
+  } else if(ab.kind === 'cleanse'){
+    const heal = Math.round(maxHp * (ab.healPct||0.25)); slotHeal(heal); fight.lastHealTs = now;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+fmtBig(heal)+' HP.', '#bfe3ff');
+  } else if(ab.kind === 'dot'){
+    startTowerDot(fight, slot, ab);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+Math.round((ab.dotMult||0.5)*100)+'% Schaden/s für '+(ab.dur/1000)+'s.', '#9acd32');
+  } else if(ab.kind === 'hot'){
+    startTowerHot(fight, slot, ab);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Heilung über '+(ab.dur/1000)+'s.', '#37d67a');
   } else if(ab.kind === 'drain' && ab.dur){
-    // Kanalisierter Seelenraub (Hexer-Grundfähigkeit): Lebensentzug über die Dauer.
     startTowerDrain(fight, slot, ab);
     return;
   } else if(ab.kind === 'drain' || ab.kind === 'burst'){
-    // burst-Aktive & sofortige Drain-Talente: Sofortschaden am Boss.
-    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
-    const dmg = Math.max(1, Math.round(atk * (ab.burstMult || 2) * petMultOf(fight, slot, now)));
-    fight.bossHp = Math.max(0, fight.bossHp - dmg);
-    fight.dmgDealt += dmg;
-    if(ab.kind === 'drain'){
-      if(slot === 'front') fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + dmg);
-      else                 fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + dmg);
-    }
-    addLog(fight, ab.icon+' '+ab.name+': '+dmg+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
-    if(fight.bossHp <= 0) fight.over = true;
+    const dmg = dealBoss(ab.burstMult || 2);
+    if(ab.kind === 'drain') slotHeal(dmg);
+    addLog(fight, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
   }
   syncFight(fight);
 }
@@ -573,6 +657,49 @@ function startTowerDrain(fight, slot, ab){
     else                 fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + dmg);
     addLog(fight, ab.icon+' '+ab.name+': '+dmg+' Schaden (+Heilung)', '#ffd24a');
     if(fight.bossHp <= 0) fight.over = true;
+    syncFight(fight);
+    if(!fight.over && ++i < ticks) setTimeout(tick, tickMs);
+  };
+  setTimeout(tick, tickMs);
+}
+
+// DoT am Boss (Gift/Blutung): tickt dotMult·Atk Schaden über die Dauer (keine Heilung).
+function startTowerDot(fight, slot, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round((ab.dur||5000) / tickMs));
+  syncFight(fight);
+  let i = 0;
+  const tick = () => {
+    if(fight.over || _fight !== fight) return;
+    const now = Date.now();
+    const atk = slot === 'front' ? fight.frontAtk : fight.backAtk;
+    const vulnMult = now < (fight.bossVulnUntil||0) ? (1+(fight.bossVulnVal||0)) : 1;
+    const dmg = Math.max(1, Math.round(atk * (ab.dotMult||0.5) * vulnMult));
+    fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg;
+    // Tick-Animation auf den Clients (Cast-Trigger neu setzen).
+    if(slot === 'front'){ fight.frontCastTs = now; fight.frontCastAb = ab.id; }
+    else                { fight.backCastTs  = now; fight.backCastAb  = ab.id; }
+    addLog(fight, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden', '#9acd32');
+    if(fight.bossHp <= 0) fight.over = true;
+    syncFight(fight);
+    if(!fight.over && ++i < ticks) setTimeout(tick, tickMs);
+  };
+  setTimeout(tick, tickMs);
+}
+// HoT am Slot (Verjüngung): tickt hotPct·maxHp Heilung über die Dauer.
+function startTowerHot(fight, slot, ab){
+  const tickMs = ab.tickMs || 1000;
+  const ticks  = Math.max(1, Math.round((ab.dur||8000) / tickMs));
+  syncFight(fight);
+  let i = 0;
+  const tick = () => {
+    if(fight.over || _fight !== fight) return;
+    const maxHp = slot === 'front' ? fight.frontMaxHp : fight.backMaxHp;
+    const heal = Math.round(maxHp * (ab.hotPct||0.08));
+    if(slot === 'front'){ if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + heal); }
+    else               { if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + heal); }
+    fight.lastHealTs = Date.now();
+    addLog(fight, ab.icon+' '+ab.name+': +'+fmtBig(heal)+' HP', '#37d67a');
     syncFight(fight);
     if(!fight.over && ++i < ticks) setTimeout(tick, tickMs);
   };
@@ -623,7 +750,7 @@ function exchange(fight){
       events.push({ s:'front', t:'back', d:healAmt, h:1 });
     } else {
       let { dmg: fd, crit: fc } = rollDmg(fight.frontAtk, effFrontCrit, fight.frontCritMult);
-      fd = Math.max(1, Math.round(fd * petMultOf(fight, 'front', now)));   // Teufelswache
+      fd = Math.max(1, Math.round(fd * petMultOf(fight, 'front', now) * slotDmgMult(fight, 'front', now)));   // Teufelswache/Buffs/Verwundbarkeit
       fight.bossHp = Math.max(0, fight.bossHp - fd);
       fight.dmgDealt += fd;
       addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
@@ -634,9 +761,10 @@ function exchange(fight){
         fight.frontHp = Math.max(0, fight.frontHp - refl);
         addLog(fight, '🌵 Dornen: -' + refl, '#9acd32');
       }
-      // Lifesteal
-      if(fight.frontLifesteal > 0){
-        const h = Math.round(fd * fight.frontLifesteal);
+      // Lifesteal (Affix + Talent-Buff)
+      const fls = fight.frontLifesteal + slotLifesteal(fight, 'front', now);
+      if(fls > 0){
+        const h = Math.round(fd * fls);
         if(h > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + h);
       }
       // Dornen-Affix: flacher Bonusschaden an den Boss (analog Solo-Kampf).
@@ -656,7 +784,7 @@ function exchange(fight){
       events.push({ s:'back', t:'front', d:healAmt, h:1 });
     } else {
       let { dmg: bd, crit: bc } = rollDmg(fight.backAtk, effBackCrit, fight.backCritMult);
-      bd = Math.max(1, Math.round(bd * petMultOf(fight, 'back', now)));   // Teufelswache
+      bd = Math.max(1, Math.round(bd * petMultOf(fight, 'back', now) * slotDmgMult(fight, 'back', now)));   // Teufelswache/Buffs/Verwundbarkeit
       fight.bossHp = Math.max(0, fight.bossHp - bd);
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
@@ -667,8 +795,9 @@ function exchange(fight){
         fight.backHp = Math.max(0, fight.backHp - refl);
         addLog(fight, '🌵 Dornen: -' + refl, '#9acd32');
       }
-      if(fight.backLifesteal > 0){
-        const h = Math.round(bd * fight.backLifesteal);
+      const bls = fight.backLifesteal + slotLifesteal(fight, 'back', now);
+      if(bls > 0){
+        const h = Math.round(bd * bls);
         if(h > 0) fight.backHp = Math.min(fight.backMaxHp, fight.backHp + h);
       }
       // Dornen-Affix: flacher Bonusschaden an den Boss (analog Solo-Kampf).
@@ -737,7 +866,7 @@ function exchange(fight){
         addLog(fight, '💨 ' + fight.frontName + ' weicht aus!', '#9ec5ff');
         events.push({ s:'boss', t:'front', o:1 });
       } else if(fd > 0){
-        fight.frontHp = Math.max(0, fight.frontHp - fd);
+        fd = towerTakeHit(fight, 'front', fd, events);   // Schild/Reflexion/Todesrettung/Slot-Reduktion
         addLog(fight, '💥 Boss → ' + fight.frontName + ': -' + fmtBig(fd) + ' HP', '#ff6b6b');
         events.push({ s:'boss', t:'front', d:fd });
         // Gift
@@ -769,7 +898,7 @@ function exchange(fight){
         addLog(fight, '💨 ' + fight.backName + ' weicht aus!', '#9ec5ff');
         events.push({ s:'boss', t:'back', o:1 });
       } else if(bd > 0){
-        fight.backHp = Math.max(0, fight.backHp - bd);
+        bd = towerTakeHit(fight, 'back', bd, events);   // Schild/Reflexion/Todesrettung/Slot-Reduktion
         addLog(fight, '💥 Boss → ' + fight.backName + ': -' + fmtBig(bd) + ' HP', '#ff6b6b');
         events.push({ s:'boss', t:'back', d:bd });
       }
@@ -806,13 +935,22 @@ export function stopFight(){
   _fight = null;
 }
 
-export async function advanceFloor(lobbyId){
-  const snap = await get(ref(db, LOBBY_PATH(lobbyId)));
-  if(!snap.exists()) return 1;
-  const lobby = snap.val();
-  const next = (lobby.floor || 1) + 1;
-  await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting' });
+// Setzt die Lobby nach einem Kampf in den Warteraum zurück. advance=true → ein
+// Stockwerk weiter (Sieg), advance=false → gleiches Stockwerk wiederholen (Niederlage).
+// Per Transaktion: Klicken beide Spieler gleichzeitig, wird nur EINMAL weitergeschaltet
+// (zweiter Aufruf bricht ab, weil status bereits 'waiting' ist).
+export async function advanceFloor(lobbyId, advance = true){
+  let resultFloor = 1;
+  await runTransaction(ref(db, LOBBY_PATH(lobbyId)), lobby => {
+    if(!lobby) return lobby;                 // Lobby weg → nichts tun
+    if(lobby.status === 'waiting'){ resultFloor = lobby.floor || 1; return; }  // schon zurückgesetzt → abbrechen
+    resultFloor = Math.max(1, (lobby.floor || 1) + (advance ? 1 : 0));
+    lobby.floor = resultFloor;
+    lobby.hostReady = false; lobby.guestReady = false;
+    lobby.status = 'waiting'; lobby.startAt = null;
+    return lobby;
+  });
   await set(ref(db, COMBAT_PATH(lobbyId)), null);
   await set(ref(db, ABIL_PATH(lobbyId)), null);
-  return next;
+  return resultFloor;
 }
