@@ -4,7 +4,7 @@
    Solo: nur der Front-Held; der Boss bleibt gleich stark, trifft aber nur ihn.
    Koop: tritt der Partner einer Wartelobby bei, gilt der Spielstand des Hosts.
    ===================================================================== */
-import { db, ref, get, set, update, remove, push, onValue, onDisconnect } from './firebase.js';
+import { db, ref, get, set, update, remove, push, runTransaction, onValue, onDisconnect } from './firebase.js';
 import { COMBAT, TOWER } from '../data/tuning.js';
 import { bossFor } from '../data/bosses.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
@@ -935,13 +935,22 @@ export function stopFight(){
   _fight = null;
 }
 
-export async function advanceFloor(lobbyId){
-  const snap = await get(ref(db, LOBBY_PATH(lobbyId)));
-  if(!snap.exists()) return 1;
-  const lobby = snap.val();
-  const next = (lobby.floor || 1) + 1;
-  await update(ref(db, LOBBY_PATH(lobbyId)), { floor: next, hostReady: false, guestReady: false, status: 'waiting' });
+// Setzt die Lobby nach einem Kampf in den Warteraum zurück. advance=true → ein
+// Stockwerk weiter (Sieg), advance=false → gleiches Stockwerk wiederholen (Niederlage).
+// Per Transaktion: Klicken beide Spieler gleichzeitig, wird nur EINMAL weitergeschaltet
+// (zweiter Aufruf bricht ab, weil status bereits 'waiting' ist).
+export async function advanceFloor(lobbyId, advance = true){
+  let resultFloor = 1;
+  await runTransaction(ref(db, LOBBY_PATH(lobbyId)), lobby => {
+    if(!lobby) return lobby;                 // Lobby weg → nichts tun
+    if(lobby.status === 'waiting'){ resultFloor = lobby.floor || 1; return; }  // schon zurückgesetzt → abbrechen
+    resultFloor = Math.max(1, (lobby.floor || 1) + (advance ? 1 : 0));
+    lobby.floor = resultFloor;
+    lobby.hostReady = false; lobby.guestReady = false;
+    lobby.status = 'waiting'; lobby.startAt = null;
+    return lobby;
+  });
   await set(ref(db, COMBAT_PATH(lobbyId)), null);
   await set(ref(db, ABIL_PATH(lobbyId)), null);
-  return next;
+  return resultFloor;
 }

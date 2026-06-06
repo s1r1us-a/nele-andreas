@@ -431,7 +431,9 @@ function onLobbyUpdate(lobby){
       unsubHeroes = listenHeroes(lobbyId, onHeroesUpdate);
     }
   } else if(lobby.status === 'waiting' && $('fightSection').style.display !== 'none'){
-    // Host hat ein neues Stockwerk gestartet → Gast zurück in den Warteraum (B1).
+    // Nach dem Kampf zurück in den Warteraum (B1) – für BEIDE Spieler, egal wer
+    // „Weiter/Wiederholen" geklickt hat. Host-Kampfschleife sicher stoppen.
+    stopFight();
     if(unsubCombat){ unsubCombat(); unsubCombat = null; }
     if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
     $('resultOverlay').classList.remove('show');
@@ -1174,6 +1176,9 @@ function showResult(won, floor){
   let lootHtml = '';
   // Turm-Badges vergeben + INDIVIDUELLEN Loot in den EIGENEN Spielstand legen.
   if(won && myKey){
+    // Erreichten Stand im eigenen Spielstand sichern (Fortsetzen über Sessions),
+    // schon beim Sieg – nicht erst beim Klick auf „Nächstes Stockwerk".
+    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor); saveState(); }
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
     try {
@@ -1212,17 +1217,12 @@ function showResult(won, floor){
     : 'Beide Helden gefallen. Der Turm des Wahnsinns wartet weiter…') + lootHtml;
 
   const btns = $('resultBtns'); btns.innerHTML = '';
-  if(won && isHost){
-    const nb = document.createElement('button');
-    nb.className = 'btn btn-gold'; nb.textContent = '➡️ Nächstes Stockwerk';
-    nb.onclick = () => { $('resultOverlay').classList.remove('show'); onNextFloor(); };
-    btns.appendChild(nb);
-  } else if(won && !isHost){
-    const note = document.createElement('p');
-    note.style.cssText = 'font-size:12px;color:var(--txt-mute)';
-    note.textContent = 'Warte auf den Host…';
-    btns.appendChild(note);
-  }
+  // Beide Spieler können weiter: Sieg → nächstes Stockwerk, Niederlage → wiederholen.
+  const cont = document.createElement('button');
+  cont.className = 'btn btn-gold';
+  cont.textContent = won ? '➡️ Nächstes Stockwerk' : '🔁 Stockwerk wiederholen';
+  cont.onclick = () => { $('resultOverlay').classList.remove('show'); requestFloorReset(won); };
+  btns.appendChild(cont);
   const lb = document.createElement('button');
   lb.className = 'btn btn-danger'; lb.textContent = '🚪 Verlassen';
   lb.onclick = onLeaveLobby;
@@ -1230,25 +1230,21 @@ function showResult(won, floor){
   $('resultOverlay').classList.add('show');
 }
 
-async function onNextFloor(){
-  if(!isHost) return;
-  stopFight();
-  if(unsubCombat){ unsubCombat(); unsubCombat = null; }
-  if(unsubHeroes){ unsubHeroes(); unsubHeroes = null; }
-  const nextFloor = await advanceFloor(lobbyId);
-  // Persistenz: erreichtes Stockwerk im Spielstand sichern (Resume nach Schließen).
-  if(myState){ myState.towerFloor = nextFloor; saveState(); }
-  _lastAnimTurn = -1; _lastHealTs = 0;
-  stopCountdown();
-  stopAbilityUI();
+// Nach dem Kampf weiter (advance=true) oder Stockwerk wiederholen (advance=false).
+// Von BEIDEN Spielern aufrufbar; advanceFloor() schaltet per Transaktion nur einmal.
+// Die UI-Rückkehr in den Warteraum übernimmt für beide der onLobbyUpdate('waiting')-Zweig.
+async function requestFloorReset(advance){
+  if(!lobbyId) return;
   $('resultOverlay').classList.remove('show');
-  $('fightSection').style.display  = 'none';
-  $('lobbySection').style.display  = '';
-  $('entryPanel').style.display    = 'none';
-  $('lobbyRoom').style.display     = '';
-  toast(soloMode
-    ? 'Weiter zu Stockwerk ' + nextFloor + '! 🧍 Solo starten oder auf Partner warten.'
-    : 'Weiter zu Stockwerk ' + nextFloor + '! Beide auf Bereit klicken.');
+  stopFight();   // Host-Kampfschleife sicher stoppen (auf dem Gast harmlos).
+  try {
+    const floor = await advanceFloor(lobbyId, advance);
+    // Persistenz: erreichtes Stockwerk im Spielstand sichern (Resume nach Schließen).
+    if(myState){ myState.towerFloor = floor; saveState(); }
+    const waitMsg = soloMode ? '🧍 Solo starten oder auf Partner warten.' : 'Beide auf Bereit klicken.';
+    toast(advance ? ('Weiter zu Stockwerk ' + floor + '! ' + waitMsg)
+                  : ('Stockwerk ' + floor + ' erneut – ' + waitMsg));
+  } catch(e){ toast('Fehler beim Weiterschalten.'); }
 }
 
 // ---- Speed ----
