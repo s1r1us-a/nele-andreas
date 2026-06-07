@@ -42,12 +42,12 @@ export function collectExpedition(){
   const items = state.expedition.items || [];
   if(freeSlots() < items.length){ flashFullBanner(); return; }
   const exp = expeditionOf(state.expedition.durKey);
-  let xpGain = exp ? Math.round(16 + exp.boost*16) : 16;  // XP reduziert (Teil 3b)
+  let xpGain = exp ? Math.round(120 + exp.boost*120) : 120;  // XP stark erhöht (weniger grind-lastig)
   for(const it of items){
     state.inventory.push(it);
     addLog(it); recordDrop(it); popFind(it);
     state.totalFinds = (state.totalFinds||0) + 1;
-    xpGain += rarityIndex(it.rarity)*3 + 2;
+    xpGain += rarityIndex(it.rarity)*24 + 16;
   }
   gainXp(xpGain);
   const potionChance = Math.min(0.6, POTION_BASE_CHANCE + (exp ? exp.boost*0.1 : 0));

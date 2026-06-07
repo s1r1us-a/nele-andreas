@@ -1494,7 +1494,7 @@ function endFight(fight, win){
 
   if(win){
     state.killCounts[bossIndex] = (state.killCounts[bossIndex]||0) + 1;
-    let xpBase = Math.round(boss.recPower * 0.6 + 30);  // XP reduziert (Teil 3b)
+    let xpBase = Math.round(boss.recPower * 3 + 200);  // XP stark erhöht (weniger grind-lastig)
     if(isFarm){ xpBase = Math.round(xpBase*FARM.xpMult); }
     const xpGain = gainXp(xpBase);
 
@@ -1565,7 +1565,7 @@ function endFight(fight, win){
     saveState();
     checkAdventureBadges();   // Boss-/Zonen-/Sammel-Badges prüfen
   } else {
-    gainXp(Math.round(boss.recPower * 0.6 * 0.15));
+    gainXp(Math.round(boss.recPower * 3 * 0.15));  // Trost-XP bei Niederlage (an erhöhte Kampf-XP angepasst)
     saveState();
     res.className = 'arena-result lose show';
     res.innerHTML = '<div class="big">💀 Niederlage</div>'+
