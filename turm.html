@@ -217,7 +217,7 @@ import {
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
   requestAbility,
   setTowerHeroes, listenHeroes, rollTowerLoot,
-  loadTowerFloor, saveTowerFloor,
+  loadTowerFloor, saveTowerFloor, listenTowerFloor,
 } from './adventure/js/core/tower.js';
 import { rarityOf } from './adventure/js/data/rarities.js';
 import { SLOTS } from './adventure/js/data/slots.js';
@@ -1431,6 +1431,10 @@ function refreshResumeHint(){
     // Erreichtes Stockwerk aus dem eigenen, clobber-festen Knoten laden
     // (Altwert aus dem Spielstand als Migrations-Fallback).
     myFloor = await loadTowerFloor(myKey, (myState && myState.towerFloor) || 1);
+    // Live nachziehen: ändert sich der Stand serverseitig (anderes Gerät/Tab,
+    // spät committeter Schreibvorgang), Anzeige automatisch aktualisieren –
+    // kein manuelles Neuladen nötig.
+    listenTowerFloor(myKey, f => { myFloor = Math.max(myFloor, f); refreshResumeHint(); });
 
     // Einstieg: gespeichertes Stockwerk anzeigen + auf Partner-Einladung lauschen.
     refreshResumeHint();

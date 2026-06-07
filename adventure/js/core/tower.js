@@ -1022,3 +1022,13 @@ export async function saveTowerFloor(userKey, floor){
     return Math.max(1, (val | 0) || target);
   } catch(e){ return target; }
 }
+
+// Live auf das erreichte Stockwerk hören → Anzeige bleibt aktuell, ohne dass
+// die Seite neu geladen werden muss (anderes Gerät/Tab, spät committeter
+// Schreibvorgang). Gibt die Abmelde-Funktion zurück.
+export function listenTowerFloor(userKey, cb){
+  if(!userKey) return () => {};
+  return onValue(ref(db, PROGRESS_PATH(userKey)), snap => {
+    cb(Math.max(1, (snap.val() | 0) || 1));
+  });
+}
