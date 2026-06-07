@@ -22,6 +22,10 @@ const LOBBY_PATH  = id => 'tower/lobbies/' + id;
 const COMBAT_PATH = id => 'tower/combat/'   + id;
 const ABIL_PATH   = id => 'tower/abil/'     + id;
 const HEROES_PATH = id => 'tower/heroes/'   + id;
+// Turm-Fortschritt pro Account in EIGENEM Knoten (nicht im geteilten
+// Spielstand-Blob). Sonst überschreibt das Haupt-Spiel beim Speichern des
+// ganzen Rosters den Stand mit einem veralteten towerFloor (Stockwerk-Verlust).
+const PROGRESS_PATH = userKey => 'tower/progress/' + userKey;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
 // Turm-Bosse koppeln an die normale Boss-Kurve (bossFor(floor-1)) und werden per
@@ -982,4 +986,39 @@ export async function advanceFloor(lobbyId, advance = true){
   await set(ref(db, COMBAT_PATH(lobbyId)), null);
   await set(ref(db, ABIL_PATH(lobbyId)), null);
   return resultFloor;
+}
+
+// ---- Turm-Fortschritt pro Account (eigener Knoten, clobber-fest) --------
+// Liegt bewusst NICHT im geteilten Spielstand-Blob (/adventure/<userKey>),
+// den das Haupt-Spiel als Ganzes zurückschreibt – sonst geht das erreichte
+// Stockwerk verloren. Quelle der Wahrheit ist allein /tower/progress/<userKey>.
+
+// Erreichtes Stockwerk laden. fallback = Altwert aus dem Spielstand
+// (towerFloor), damit bestehender Fortschritt bei der Umstellung erhalten
+// bleibt; er wird beim ersten Laden in den neuen Knoten übernommen.
+export async function loadTowerFloor(userKey, fallback = 1){
+  if(!userKey) return Math.max(1, fallback | 0) || 1;
+  try {
+    const snap = await get(ref(db, PROGRESS_PATH(userKey)));
+    if(snap.exists()){
+      return Math.max(1, (snap.val() | 0) || 1);
+    }
+    // Erstmigration: Altwert aus dem Spielstand übernehmen, falls vorhanden.
+    const seed = Math.max(1, fallback | 0) || 1;
+    if(seed > 1) await set(ref(db, PROGRESS_PATH(userKey)), seed);
+    return seed;
+  } catch(e){ return Math.max(1, fallback | 0) || 1; }
+}
+
+// Erreichtes Stockwerk sichern – monoton vorwärts (max), per Transaktion gegen
+// Races abgesichert. Gibt das gespeicherte Stockwerk zurück.
+export async function saveTowerFloor(userKey, floor){
+  const target = Math.max(1, floor | 0) || 1;
+  if(!userKey) return target;
+  try {
+    const res = await runTransaction(ref(db, PROGRESS_PATH(userKey)),
+      cur => Math.max((cur | 0) || 1, target));
+    const val = res && res.snapshot && res.snapshot.val();
+    return Math.max(1, (val | 0) || target);
+  } catch(e){ return target; }
 }
