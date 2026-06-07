@@ -452,3 +452,98 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   .arena-hero.back-hero::after { width:44px; }
   .vfx-demon .vfx-demon-img { height:126px; }
 }
+
+/* =====================================================================
+   TURM-DESIGN (mystischer Look – Pendant zur Schmiede, im Turm-Thema:
+   violett/Nebel/Runen statt Glut/Funken/Amboss).
+   ===================================================================== */
+
+/* ---- Mystisches Turm-Banner (Analogon zu .forge-banner) ----------- */
+.tower-banner { position:relative; overflow:hidden; border-radius:16px;
+  padding:18px 18px; margin-bottom:18px; isolation:isolate;
+  background:linear-gradient(180deg,#1d1336 0%, #150d28 60%, #0f0a1e 100%);
+  border:1px solid rgba(180,110,255,.4);
+  box-shadow:0 8px 30px -14px #000, inset 0 0 34px -14px rgba(160,90,255,.7); }
+.tower-banner .tb-row { display:flex; align-items:center; gap:14px; position:relative; z-index:2; }
+/* leuchtendes Turm-Icon mit Puls (vgl. fbAnvilGlow) */
+.tower-banner .tb-icon { font-size:40px; line-height:1;
+  filter:drop-shadow(0 0 10px rgba(170,90,255,.75));
+  animation:tbIconGlow 2.6s ease-in-out infinite; }
+@keyframes tbIconGlow { 0%,100%{ filter:drop-shadow(0 0 8px rgba(150,80,255,.5)); }
+  50%{ filter:drop-shadow(0 0 18px rgba(210,130,255,.95)); } }
+.tower-banner .tb-titles { flex:1; min-width:0; }
+.tower-banner .tb-title { font-family:'Cinzel',serif; font-weight:900; font-size:23px; margin:0;
+  background:linear-gradient(180deg,#f3e6ff,#c76dff 55%,#8a2be2);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  text-shadow:0 0 18px rgba(180,90,255,.35); letter-spacing:1px; }
+.tower-banner .tb-sub { font-size:11px; letter-spacing:3px; text-transform:uppercase;
+  color:#a98fd6; margin-top:2px; }
+.tower-banner .tb-floor { font-family:'Press Start 2P',monospace; font-size:11px; color:var(--gold-hi);
+  background:rgba(0,0,0,.4); padding:7px 10px; border-radius:9px;
+  border:1px solid rgba(180,110,255,.45); white-space:nowrap; box-shadow:inset 0 0 12px -6px var(--accent-hi); }
+/* pulsierender Nebel-/Arkan-Glow von unten (vgl. fbFire) */
+.tower-banner .tb-mist { position:absolute; left:0; right:0; bottom:-45%; height:90%; z-index:1; pointer-events:none;
+  background:radial-gradient(60% 100% at 50% 100%, rgba(170,90,255,.5), rgba(120,40,220,.16) 55%, transparent 78%);
+  filter:blur(5px); animation:tbMist 3s ease-in-out infinite; }
+@keyframes tbMist { 0%,100%{ opacity:.6; transform:scaleY(1); } 50%{ opacity:1; transform:scaleY(1.14); } }
+/* aufsteigende Runen-Funken (vgl. .fb-embers span) */
+.tower-banner .tb-runes { position:absolute; inset:0; z-index:1; pointer-events:none; }
+.tower-banner .tb-runes span { position:absolute; bottom:8px; font-size:13px; line-height:1;
+  color:#d9b3ff; text-shadow:0 0 8px rgba(180,100,255,.9); opacity:0;
+  animation:tbRune linear infinite; }
+.tower-banner .tb-runes span:nth-child(1){ left:12%; animation-duration:3.6s; animation-delay:0s; }
+.tower-banner .tb-runes span:nth-child(2){ left:30%; animation-duration:3.0s; animation-delay:.7s; }
+.tower-banner .tb-runes span:nth-child(3){ left:47%; animation-duration:4.0s; animation-delay:1.3s; }
+.tower-banner .tb-runes span:nth-child(4){ left:64%; animation-duration:3.3s; animation-delay:.4s; }
+.tower-banner .tb-runes span:nth-child(5){ left:80%; animation-duration:3.7s; animation-delay:1.0s; }
+.tower-banner .tb-runes span:nth-child(6){ left:91%; animation-duration:3.1s; animation-delay:1.6s; }
+@keyframes tbRune { 0%{ transform:translateY(0) scale(1) rotate(0); opacity:0; }
+  15%{ opacity:.95; } 100%{ transform:translateY(-100px) scale(.4) rotate(40deg); opacity:0; } }
+.tower-banner.compact { padding:12px 14px; margin-bottom:14px; }
+.tower-banner.compact .tb-icon { font-size:30px; }
+.tower-banner.compact .tb-title { font-size:18px; }
+
+/* ---- Turm-Raum: Karten im mystischen Look (Analogon zu .forge-room) - */
+.card.tower-room { position:relative; overflow:hidden;
+  background:
+    radial-gradient(120% 70% at 50% 118%, rgba(160,80,255,.22), transparent 60%),
+    radial-gradient(90% 50% at 50% 122%, rgba(110,60,220,.16), transparent 55%),
+    linear-gradient(180deg,#1c1330 0%, #160f28 55%, #110b20 100%);
+  border:1px solid rgba(180,110,255,.32);
+  box-shadow:0 8px 30px -16px #000, inset 0 0 60px -22px rgba(150,80,255,.45); }
+/* runische, gepunktete Innenkante */
+.card.tower-room::before { content:''; position:absolute; inset:6px; border-radius:12px;
+  pointer-events:none; border:1px dashed rgba(170,110,255,.28);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35); }
+.card.tower-room > * { position:relative; z-index:1; }
+
+/* Stockwerk-Anzeige im Warteraum etwas „arkaner" */
+.floor-badge { letter-spacing:.04em; }
+
+/* Einladungs-Banner (Partner wartet) im neuen Look */
+.card.invite-card { border-color:rgba(255,210,80,.5);
+  background:radial-gradient(120% 80% at 50% -10%, rgba(255,210,80,.12), transparent 60%),
+    linear-gradient(165deg,#241a30,#150f24); }
+
+/* ---- Seitengerechte Modale (ersetzen Standard-Browser-confirm/alert) - */
+.tw-modal-overlay { position:fixed; inset:0; z-index:9000; display:none;
+  align-items:center; justify-content:center; padding:24px;
+  background:rgba(8,5,18,.72); backdrop-filter:blur(5px); }
+.tw-modal-overlay.show { display:flex; animation:twModalFade .18s ease; }
+@keyframes twModalFade { from{ opacity:0; } to{ opacity:1; } }
+.tw-modal { position:relative; overflow:hidden; width:min(420px,100%);
+  border-radius:16px; padding:22px 22px 18px; text-align:center;
+  background:radial-gradient(120% 80% at 50% -10%, rgba(160,90,255,.16), transparent 60%),
+    linear-gradient(170deg,#1e1438,#130d26);
+  border:1px solid rgba(180,110,255,.45);
+  box-shadow:0 18px 50px -18px #000, inset 0 0 40px -18px rgba(160,90,255,.6);
+  animation:twModalPop .22s cubic-bezier(.2,.8,.25,1); }
+@keyframes twModalPop { 0%{ transform:translateY(14px) scale(.96); opacity:0; }
+  100%{ transform:translateY(0) scale(1); opacity:1; } }
+.tw-modal .twm-icon { font-size:34px; line-height:1; margin-bottom:8px;
+  filter:drop-shadow(0 0 10px rgba(170,90,255,.7)); }
+.tw-modal .twm-title { font-family:'Cinzel',serif; font-weight:900; font-size:19px;
+  color:var(--accent-hi); margin-bottom:8px; }
+.tw-modal .twm-text { font-size:14px; color:var(--txt); line-height:1.6; margin-bottom:18px; }
+.tw-modal .twm-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.tw-modal .twm-btns .btn { min-width:120px; }

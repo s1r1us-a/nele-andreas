@@ -43,18 +43,42 @@
 <!-- Toast -->
 <div class="tower-toast" id="towerToast"></div>
 
+<!-- Seitengerechtes Modal (ersetzt Standard-Browser-confirm/alert) -->
+<div class="tw-modal-overlay" id="twModal">
+  <div class="tw-modal" role="dialog" aria-modal="true">
+    <div class="twm-icon" id="twModalIcon">🗼</div>
+    <div class="twm-title" id="twModalTitle">…</div>
+    <div class="twm-text" id="twModalText">…</div>
+    <div class="twm-btns" id="twModalBtns"></div>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- LOBBY-BEREICH -->
   <div id="lobbySection">
     <!-- Einstieg ohne Code: Solo betreten + automatische Partner-Einladung -->
     <div id="entryPanel">
-      <div class="card" id="inviteBanner" style="display:none;border-color:#ffd24a88">
+      <!-- Mystisches Turm-Banner (Pendant zum Schmiede-Banner) -->
+      <div class="tower-banner">
+        <div class="tb-mist" aria-hidden="true"></div>
+        <div class="tb-runes" aria-hidden="true"><span>✦</span><span>ᚱ</span><span>✧</span><span>ᚦ</span><span>✦</span><span>ᛟ</span></div>
+        <div class="tb-row">
+          <span class="tb-icon">🗼</span>
+          <div class="tb-titles">
+            <h2 class="tb-title">Der Turm des Wahnsinns</h2>
+            <div class="tb-sub">Nebel · Runen · Aufstieg</div>
+          </div>
+          <span class="tb-floor" id="entryFloorChip">Stockwerk 1</span>
+        </div>
+      </div>
+
+      <div class="card invite-card" id="inviteBanner" style="display:none">
         <div class="card-title" id="inviteText">…</div>
         <button class="btn btn-gold btn-full" id="inviteJoinBtn" onclick="onJoinPartner()">🤝 Beitreten</button>
       </div>
 
-      <div class="card">
+      <div class="card tower-room">
         <div class="card-title">🗼 Turm betreten</div>
         <p style="font-size:13px;color:var(--txt-mute);margin-bottom:14px;">
           Spiele den Turm <b>alleine</b> oder warte im Turm auf deine:n Partner:in –
@@ -67,7 +91,19 @@
 
     <!-- Warteraum -->
     <div id="lobbyRoom" style="display:none">
-      <div class="card">
+      <div class="tower-banner compact">
+        <div class="tb-mist" aria-hidden="true"></div>
+        <div class="tb-runes" aria-hidden="true"><span>✦</span><span>ᚱ</span><span>✧</span><span>ᚦ</span><span>✦</span><span>ᛟ</span></div>
+        <div class="tb-row">
+          <span class="tb-icon">🏰</span>
+          <div class="tb-titles">
+            <h2 class="tb-title">Warteraum</h2>
+            <div class="tb-sub">Sammle dich vor dem Aufstieg</div>
+          </div>
+          <span class="tb-floor" id="lobbyFloorChip">Stockwerk 1</span>
+        </div>
+      </div>
+      <div class="card tower-room">
         <div class="card-title">🏰 Warteraum</div>
 
         <div style="text-align:center;margin:10px 0 16px">
@@ -173,7 +209,7 @@
 import { initAuth, displayName as getDisplayName, db, ref, update, onValue, get, set }
   from './adventure/js/core/firebase.js';
 import { grantDammerpfadBadges } from './dammerpfad-badges.js';
-import { loadSave, saveState } from './adventure/js/core/state.js';
+import { loadSave, saveState, flushSave } from './adventure/js/core/state.js';
 import {
   computePlayerStats, towerBossFor,
   createLobby, ensureSoloLobby, joinLobby, listenLobby, listenCombat,
@@ -240,6 +276,42 @@ function toast(msg, dur=3200){
   setTimeout(() => el.classList.remove('show'), dur);
 }
 function fmtHp(hp, max){ return fmtBig(Math.ceil(hp||0)) + '/' + fmtBig(max||0); }
+
+// ---- Seitengerechte Modale (ersetzen Standard-Browser-confirm/alert) ----
+function showModal({ icon='🗼', title='', text='', buttons } = {}){
+  return new Promise(resolve => {
+    const ov = $('twModal');
+    $('twModalIcon').textContent  = icon;
+    $('twModalTitle').textContent = title;
+    $('twModalText').textContent  = text;
+    const box = $('twModalBtns'); box.innerHTML = '';
+    const close = val => {
+      ov.classList.remove('show'); ov.onclick = null;
+      document.removeEventListener('keydown', onKey); resolve(val);
+    };
+    (buttons || [{ label:'OK', value:true, cls:'btn-primary' }]).forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'btn ' + (b.cls || 'btn-ghost');
+      btn.textContent = b.label;
+      btn.onclick = () => close(b.value);
+      box.appendChild(btn);
+    });
+    const onKey = e => { if(e.key === 'Escape') close(false); };
+    document.addEventListener('keydown', onKey);
+    ov.onclick = e => { if(e.target === ov) close(false); };  // Klick auf Hintergrund = Abbrechen
+    ov.classList.add('show');
+  });
+}
+function showConfirm(text, { title='Bist du sicher?', icon='⚠️', okLabel='Ja',
+                            cancelLabel='Abbrechen', danger=false } = {}){
+  return showModal({ icon, title, text, buttons:[
+    { label:cancelLabel, value:false, cls:'btn-ghost' },
+    { label:okLabel,     value:true,  cls:danger ? 'btn-danger' : 'btn-primary' },
+  ]});
+}
+function showAlert(text, { title='Hinweis', icon='🗼', okLabel='OK' } = {}){
+  return showModal({ icon, title, text, buttons:[{ label:okLabel, value:true, cls:'btn-primary' }] });
+}
 
 // ---- Turm betreten (eigener Run, code-los) ----
 // Eigene Lobby unter dem festen Pfad tower/lobbies/<myKey> sicherstellen und als
@@ -336,6 +408,7 @@ function onLobbyUpdate(lobby){
 
   // Stockwerk & Boss
   $('floorBadge').textContent = 'Stockwerk ' + floor;
+  const lfc = $('lobbyFloorChip'); if(lfc) lfc.textContent = 'Stockwerk ' + floor;
   const boss = towerBossFor(floor);
   $('bossPreview').textContent = boss.name + ' · ' + fmtBig(boss.maxHp) + ' HP';
   $('mechList').innerHTML = boss.mechanic.map(m => {
@@ -1178,7 +1251,7 @@ function showResult(won, floor){
   if(won && myKey){
     // Erreichten Stand im eigenen Spielstand sichern (Fortsetzen über Sessions),
     // schon beim Sieg – nicht erst beim Klick auf „Nächstes Stockwerk".
-    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor); saveState(); }
+    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor); flushSave(); }
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
     try {
@@ -1221,7 +1294,7 @@ function showResult(won, floor){
   const cont = document.createElement('button');
   cont.className = 'btn btn-gold';
   cont.textContent = won ? '➡️ Nächstes Stockwerk' : '🔁 Stockwerk wiederholen';
-  cont.onclick = () => { $('resultOverlay').classList.remove('show'); requestFloorReset(won); };
+  cont.onclick = () => requestFloorReset(won);
   btns.appendChild(cont);
   const lb = document.createElement('button');
   lb.className = 'btn btn-danger'; lb.textContent = '🚪 Verlassen';
@@ -1234,13 +1307,14 @@ function showResult(won, floor){
 // Von BEIDEN Spielern aufrufbar; advanceFloor() schaltet per Transaktion nur einmal.
 // Die UI-Rückkehr in den Warteraum übernimmt für beide der onLobbyUpdate('waiting')-Zweig.
 async function requestFloorReset(advance){
+  $('resultOverlay').classList.remove('show');   // Overlay immer schließen, auch ohne Lobby.
   if(!lobbyId) return;
-  $('resultOverlay').classList.remove('show');
   stopFight();   // Host-Kampfschleife sicher stoppen (auf dem Gast harmlos).
   try {
     const floor = await advanceFloor(lobbyId, advance);
-    // Persistenz: erreichtes Stockwerk im Spielstand sichern (Resume nach Schließen).
-    if(myState){ myState.towerFloor = floor; saveState(); }
+    // Persistenz: erreichtes Stockwerk SOFORT sichern (kein Debounce-Verlust beim
+    // Verlassen/Navigieren → Firebase hat den Stand verlässlich, Resume klappt).
+    if(myState){ myState.towerFloor = floor; flushSave(); }
     const waitMsg = soloMode ? '🧍 Solo starten oder auf Partner warten.' : 'Beide auf Bereit klicken.';
     toast(advance ? ('Weiter zu Stockwerk ' + floor + '! ' + waitMsg)
                   : ('Stockwerk ' + floor + ' erneut – ' + waitMsg));
@@ -1256,7 +1330,8 @@ window.onToggleSpeed = function(){
 
 // ---- Verlassen ----
 window.onLeaveLobby = async function(){
-  if(!confirm('Lobby wirklich verlassen?')) return;
+  if(!await showConfirm('Lobby wirklich verlassen? Dein erreichtes Stockwerk bleibt gespeichert.',
+      { title:'Lobby verlassen', icon:'🚪', okLabel:'Verlassen', danger:true })) return;
   stopFight();
   if(unsubLobby)  { unsubLobby();  unsubLobby  = null; }
   if(unsubCombat) { unsubCombat(); unsubCombat = null; }
@@ -1299,6 +1374,8 @@ function refreshResumeHint(){
   if(el) el.textContent = floor > 1 ? 'Du machst bei Stockwerk ' + floor + ' weiter.' : '';
   const btn = $('enterTowerBtn');
   if(btn) btn.textContent = floor > 1 ? '▶️ Weiter (Stockwerk ' + floor + ')' : '▶️ Turm betreten';
+  const chip = $('entryFloorChip');
+  if(chip) chip.textContent = 'Stockwerk ' + floor;
 }
 
 // ---- Init ----
@@ -1321,6 +1398,12 @@ function refreshResumeHint(){
     };
     document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') wake(); });
     window.addEventListener('focus', wake);
+    // Verlässt/schließt man den Turm, den erreichten Stand SOFORT nach Firebase
+    // schreiben (kein gedebouncter Verlust) – sonst startet der Turm beim nächsten
+    // Mal wieder bei Stockwerk 1, weil loadSave Firebase bevorzugt.
+    const flushNow = () => { try { if(myState) flushSave(); } catch(e){} };
+    window.addEventListener('pagehide', flushNow);
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') flushNow(); });
     // Eingeloggte E-Mail → displayName
     const { auth } = await import('./adventure/js/core/firebase.js');
     const user = auth.currentUser;

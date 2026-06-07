@@ -44,6 +44,7 @@ export function freshState(){
     version: SAVE_VERSION, zone:0, zoneFinds:0, equipped:eq, inventory:[],
     lastTick:Date.now(), log:[], totalFinds:0, gold:0, bossesBeaten:0,
     xp:0, level:1, potions:0, character:null, expedition:null,
+    towerFloor:1,          // aktuelles Turm-Stockwerk (Fortsetzen über Sessions)
     firstClears:{},        // bossIndex -> true (#16)
     killCounts:{},         // bossIndex -> Anzahl Siege
     lockedIds:[],          // gesperrte Item-Ids (#24)
@@ -107,6 +108,10 @@ function migrateSlot(s){
   if(!s.killCounts || typeof s.killCounts !== 'object') s.killCounts = {};
   if(!Array.isArray(s.lockedIds)) s.lockedIds = [];
   if(typeof s.extraSlots !== 'number') s.extraSlots = 0;
+  // Turm-Stockwerk defensiv ergänzen – ohne diese Migration ist towerFloor kein
+  // bekanntes Save-Feld und geht über Sessions/Seiten verloren (Bug: Turm startet
+  // wieder bei Stockwerk 1, obwohl ein Boss besiegt wurde).
+  if(typeof s.towerFloor !== 'number' || s.towerFloor < 1) s.towerFloor = 1;
   // Crafting-Materialien (Schmiede) defensiv ergänzen (RTDB verwirft 0-Felder
   // nicht, aber Altstände haben das Feld gar nicht). Kein Versions-Bump nötig –
   // migrateSlot läuft bei jedem Laden, sodass bestehende Stände unangetastet
