@@ -217,6 +217,7 @@ import {
   startTowerFight, setFightSpeed, stopFight, advanceFloor,
   requestAbility,
   setTowerHeroes, listenHeroes, rollTowerLoot,
+  loadTowerFloor, saveTowerFloor,
 } from './adventure/js/core/tower.js';
 import { rarityOf } from './adventure/js/data/rarities.js';
 import { SLOTS } from './adventure/js/data/slots.js';
@@ -231,6 +232,10 @@ import { fmtBig } from './adventure/js/ui/dom.js';
 
 // ---- Globals ----
 let myKey = null, myName = null, myState = null, myClassId = DEFAULT_CLASS_ID;
+// Erreichtes Turm-Stockwerk dieses Accounts – Quelle der Wahrheit ist der
+// eigene Firebase-Knoten tower/progress/<myKey> (clobber-fest, s. tower.js),
+// NICHT myState.towerFloor (das überschreibt das Haupt-Spiel).
+let myFloor = 1;
 let otherKey = null;
 let lobbyId = null, lobbyData = null, isHost = false;
 let soloMode = false;                 // Solo-Run (kein Gast) – Kampf nur mit Front-Held.
@@ -320,7 +325,7 @@ window.onEnterTower = async function(){
   const btn = $('enterTowerBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    const floor = Math.max(1, (myState && myState.towerFloor) | 0) || 1;
+    const floor = Math.max(1, myFloor | 0) || 1;
     lobbyId = await ensureSoloLobby(myKey, myName, myClassId, floor);
     isHost  = true;
     openLobbyRoom();
@@ -587,8 +592,8 @@ window.onStartSolo = async function(){
     const hostStats = computePlayerStats(myState);
 
     soloMode = true;
-    // Persistenz: aktuelles Stockwerk im Spielstand sichern (Resume nach Schließen).
-    myState.towerFloor = floor; saveState();
+    // Persistenz: aktuelles Stockwerk im eigenen, clobber-festen Knoten sichern.
+    myFloor = Math.max(myFloor, floor); saveTowerFloor(myKey, floor);
 
     _frontStatsCache = hostStats; _backStatsCache = null;
     _frontNameCache  = myName;    _backNameCache  = '';
@@ -617,8 +622,8 @@ window.onStartFight = async function(){
   try {
     const lobby = lobbyData;
     soloMode = false;
-    // Persistenz: aktuelles Stockwerk im Spielstand sichern (Resume nach Schließen).
-    myState.towerFloor = lobby.floor || 1; saveState();
+    // Persistenz: aktuelles Stockwerk im eigenen, clobber-festen Knoten sichern.
+    myFloor = Math.max(myFloor, lobby.floor || 1); saveTowerFloor(myKey, lobby.floor || 1);
     // Gast-Spielstand laden (mit Timeout, damit ein hängender Firebase-Aufruf
     // den Start nicht blockiert → der catch-Zweig armt einen sichtbaren Retry).
     const guestSave  = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
@@ -1218,7 +1223,13 @@ function applyTowerDemon(slot, active){
   const id = 'sig-demon-'+slot;
   let d = $(id);
   if(active){
-    const p = groundAnchor(slotImg(slot)); if(!p) return;
+    // Den Dämon boss-seitig RECHTS der Heldengruppe verankern, nicht direkt am
+    // Wirker. Im Koop stünde ein Dämon des hinteren (linken) Helden sonst genau
+    // auf dem vorderen Helden. Anker = vordere (rechte) Figur → der Dämon
+    // überlappt keinen Helden. Sind beide Hexer, wird der zweite gestaffelt.
+    const coop = $('heroBack') && $('heroBack').style.display !== 'none';
+    const p = groundAnchor(coop ? 'spriteFront' : slotImg(slot)); if(!p) return;
+    const extra = (coop && slot === 'back') ? 64 : 0;
     if(!d){
       d = document.createElement('div'); d.className = 'vfx-demon'; d.id = id;
       const aura = document.createElement('span'); aura.className = 'vfx-demon-aura';
@@ -1226,7 +1237,7 @@ function applyTowerDemon(slot, active){
       body.innerHTML = '<img class="vfx-demon-img" src="'+buildDemonSVG()+'" alt="Teufelswache">';
       d.appendChild(aura); d.appendChild(body); $('dmgLayer').appendChild(d);
     }
-    d.style.left = p.x+'px'; d.style.top = p.y+'px';
+    d.style.left = (p.x + extra)+'px'; d.style.top = p.y+'px';
   } else if(d){ d.remove(); }
 }
 // Schwindel-Sterne über dem betäubten Boss.
@@ -1249,11 +1260,11 @@ function showResult(won, floor){
   let lootHtml = '';
   // Turm-Badges vergeben + INDIVIDUELLEN Loot in den EIGENEN Spielstand legen.
   if(won && myKey){
-    // Erreichten Stand im eigenen Spielstand sichern (Fortsetzen über Sessions),
-    // schon beim Sieg – nicht erst beim Klick auf „Nächstes Stockwerk".
-    // Nach Sieg auf Stockwerk N ist der Fortsetzungspunkt N+1, auch wenn der
-    // Spieler direkt „Verlassen" wählt (statt „Nächstes Stockwerk").
-    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor + 1); flushSave(); }
+    // Erreichten Stand im eigenen, clobber-festen Knoten sichern (Fortsetzen
+    // über Sessions), schon beim Sieg – nicht erst beim Klick auf „Nächstes
+    // Stockwerk". Nach Sieg auf Stockwerk N ist der Fortsetzungspunkt N+1,
+    // auch wenn der Spieler direkt „Verlassen" wählt.
+    myFloor = Math.max(myFloor, floor + 1); saveTowerFloor(myKey, floor + 1);
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
     try {
@@ -1314,11 +1325,10 @@ async function requestFloorReset(advance){
   stopFight();   // Host-Kampfschleife sicher stoppen (auf dem Gast harmlos).
   try {
     const floor = await advanceFloor(lobbyId, advance);
-    // Persistenz: erreichtes Stockwerk SOFORT sichern (kein Debounce-Verlust beim
-    // Verlassen/Navigieren → Firebase hat den Stand verlässlich, Resume klappt).
-    // Math.max hält den eigenen Höchststand monoton vorwärts (Koop-Gast, der
-    // solo schon weiter ist, wird durch das Host-Stockwerk nicht zurückgesetzt).
-    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor); flushSave(); }
+    // Persistenz: erreichtes Stockwerk SOFORT in den eigenen, clobber-festen
+    // Knoten sichern (saveTowerFloor hält per Transaktion monoton vorwärts →
+    // Koop-Gast wird durch das Host-Stockwerk nicht zurückgesetzt).
+    myFloor = Math.max(myFloor, floor); saveTowerFloor(myKey, floor);
     const waitMsg = soloMode ? '🧍 Solo starten oder auf Partner warten.' : 'Beide auf Bereit klicken.';
     toast(advance ? ('Weiter zu Stockwerk ' + floor + '! ' + waitMsg)
                   : ('Stockwerk ' + floor + ' erneut – ' + waitMsg));
@@ -1373,7 +1383,7 @@ function resetToMain(){
 
 // Zeigt im Einstieg das gespeicherte Stockwerk an (Resume-Hinweis).
 function refreshResumeHint(){
-  const floor = Math.max(1, (myState && myState.towerFloor) | 0) || 1;
+  const floor = Math.max(1, myFloor | 0) || 1;
   const el = $('resumeHint');
   if(el) el.textContent = floor > 1 ? 'Du machst bei Stockwerk ' + floor + ' weiter.' : '';
   const btn = $('enterTowerBtn');
@@ -1402,9 +1412,9 @@ function refreshResumeHint(){
     };
     document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') wake(); });
     window.addEventListener('focus', wake);
-    // Verlässt/schließt man den Turm, den erreichten Stand SOFORT nach Firebase
-    // schreiben (kein gedebouncter Verlust) – sonst startet der Turm beim nächsten
-    // Mal wieder bei Stockwerk 1, weil loadSave Firebase bevorzugt.
+    // Verlässt/schließt man den Turm, den Spielstand (z. B. gewonnenen Loot)
+    // sofort flushen, damit der gedebouncte saveState() nicht verloren geht.
+    // Das Turm-Stockwerk wird separat im eigenen Knoten gesichert (s. o.).
     const flushNow = () => { try { if(myState) flushSave(); } catch(e){} };
     window.addEventListener('pagehide', flushNow);
     document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') flushNow(); });
@@ -1418,6 +1428,9 @@ function refreshResumeHint(){
 
     myState = await loadSave(myKey);
     myClassId = (myState && myState.character && myState.character.classId) || DEFAULT_CLASS_ID;
+    // Erreichtes Stockwerk aus dem eigenen, clobber-festen Knoten laden
+    // (Altwert aus dem Spielstand als Migrations-Fallback).
+    myFloor = await loadTowerFloor(myKey, (myState && myState.towerFloor) || 1);
 
     // Einstieg: gespeichertes Stockwerk anzeigen + auf Partner-Einladung lauschen.
     refreshResumeHint();
