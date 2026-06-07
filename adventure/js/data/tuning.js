@@ -65,8 +65,8 @@ export const TOWER = {
   armorK:          6,      // Rüstungs-Milderung skaliert mit Boss-ATK (Verhältnis statt flach)
   armorMitigCap:   0.85,   // harte Obergrenze: selbst Voll-Tanks fressen ≥15 % der Boss-ATK
   blockArmorEquiv: 8,      // Block-Stat wird mit Faktor 8 in den Rüstungspool gefaltet
-  softRamp:        1.015,  // +1,5 %/Runde ab Runde 1 → stetig steigender Druck statt Klippe
-  hardEnrageTurn:  35,     // Deadline: ab hier zusätzliche Eskalation (kein Patt)
+  softRamp:        1.025,  // +2,5 %/Runde ab Runde 1 → spürbar schneller anwachsender Druck
+  hardEnrageTurn:  32,     // Deadline: ab hier zusätzliche Eskalation (kein Patt)
   hardRamp:        1.10,   // zusätzlicher Faktor/Runde nach der Deadline
 };
 
