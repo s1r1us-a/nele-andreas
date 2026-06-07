@@ -1251,7 +1251,9 @@ function showResult(won, floor){
   if(won && myKey){
     // Erreichten Stand im eigenen Spielstand sichern (Fortsetzen über Sessions),
     // schon beim Sieg – nicht erst beim Klick auf „Nächstes Stockwerk".
-    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor); flushSave(); }
+    // Nach Sieg auf Stockwerk N ist der Fortsetzungspunkt N+1, auch wenn der
+    // Spieler direkt „Verlassen" wählt (statt „Nächstes Stockwerk").
+    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor + 1); flushSave(); }
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
     try {
@@ -1314,7 +1316,9 @@ async function requestFloorReset(advance){
     const floor = await advanceFloor(lobbyId, advance);
     // Persistenz: erreichtes Stockwerk SOFORT sichern (kein Debounce-Verlust beim
     // Verlassen/Navigieren → Firebase hat den Stand verlässlich, Resume klappt).
-    if(myState){ myState.towerFloor = floor; flushSave(); }
+    // Math.max hält den eigenen Höchststand monoton vorwärts (Koop-Gast, der
+    // solo schon weiter ist, wird durch das Host-Stockwerk nicht zurückgesetzt).
+    if(myState){ myState.towerFloor = Math.max(myState.towerFloor || 0, floor); flushSave(); }
     const waitMsg = soloMode ? '🧍 Solo starten oder auf Partner warten.' : 'Beide auf Bereit klicken.';
     toast(advance ? ('Weiter zu Stockwerk ' + floor + '! ' + waitMsg)
                   : ('Stockwerk ' + floor + ' erneut – ' + waitMsg));
