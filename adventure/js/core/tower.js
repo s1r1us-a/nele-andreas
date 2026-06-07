@@ -32,7 +32,6 @@ const PROGRESS_PATH = userKey => 'tower/progress/' + userKey;
 // stockwerksabhängigem Multiplikator IMMER härter als der gleichnamige Normal-Boss;
 // der Abstand wächst mit dem Stockwerk (echtes Endgame-Ziel). Im Koop teilen sich
 // zwei Helden den Schaden, im Solo nimmt der eine Held alles ab.
-const TOWER_ENRAGE_TURN = 40;
 const FRONT_SHARE = 0.70;
 const BACK_SHARE  = 0.30;
 
@@ -303,10 +302,16 @@ function rollDmg(atk, crit, mult){
 
 function takeBossDmg(atk, armor, dodge, versatility, block){
   if(Math.random() < (dodge || 0)) return { dmg:0, dodged:true };
-  const armorRed = (armor || 0) * COMBAT.armorReduction + (block || 0);
-  let dmg = Math.max(1, Math.round(atk * rnd(0.15) - armorRed));
+  // Verhältnisbasierte Milderung mit abnehmendem Ertrag statt flacher Subtraktion:
+  // K wächst mit der Boss-ATK, daher hängt die Milderung am Verhältnis Rüstung:ATK
+  // (skaleninvariant über alle Stockwerke). Ein Voll-Tank nähert sich der Kappe,
+  // kassiert also immer einen echten Anteil – nie mehr „1 Schaden" bis zum Enrage.
+  const defense = (armor || 0) + (block || 0) * TOWER.blockArmorEquiv;
+  const K = atk * TOWER.armorK;
+  const mitig = Math.min(TOWER.armorMitigCap, defense / (defense + K));
+  let dmg = Math.round(atk * rnd(0.15) * (1 - mitig));
   dmg = Math.round(dmg * (1 - (versatility || 0)));
-  return { dmg };
+  return { dmg: Math.max(1, dmg) };
 }
 
 function addLog(fight, text, color){
@@ -869,9 +874,11 @@ function exchange(fight){
     // Boss-ATK
     let bossAtk = fight.bossAtkBase * fight.berserkMult;
     if(mechs.includes('wut') && fight.bossHp < fight.bossMaxHp * 0.3) bossAtk *= 1.5;
-    if(fight.turn > TOWER_ENRAGE_TURN){
-      fight.enrageMult *= 1.07;
-      if(fight.turn === TOWER_ENRAGE_TURN + 1) addLog(fight, '⏱️ ENRAGE! Boss wird tödlicher!', '#ff3b3b');
+    // Sanfte Rampe ab Runde 1 (stetig steigender Druck) + harte Deadline gegen Patt.
+    fight.enrageMult *= TOWER.softRamp;
+    if(fight.turn > TOWER.hardEnrageTurn){
+      fight.enrageMult *= TOWER.hardRamp;
+      if(fight.turn === TOWER.hardEnrageTurn + 1) addLog(fight, '⏱️ ENRAGE! Boss wird tödlicher!', '#ff3b3b');
     }
     bossAtk *= fight.enrageMult;
 

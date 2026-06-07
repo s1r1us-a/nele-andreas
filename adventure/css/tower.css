@@ -121,7 +121,7 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
    steht ganz rechts wie im Singleplayer; das Namens-Label bleibt mittig
    unter dem Sprite (align-items:center). */
 .arena-boss-col { display:flex; flex-direction:column; align-items:center; gap:4px;
-  position:relative; z-index:1; justify-self:end; }
+  position:relative; z-index:1; justify-self:end; transform:translateX(22px); }
 /* Großer Boss rechts, zu den Helden gespiegelt – genau wie im Singleplayer. */
 .arena-boss-col img { width:auto; height:212px; object-fit:contain;
   image-rendering:crisp-edges; transform:scaleX(-1);
