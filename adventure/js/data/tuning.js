@@ -59,6 +59,15 @@ export const TOWER = {
   hpMultPer:   0.06,  // +6 % HP-Faktor je Stockwerk
   atkMultBase: 1.6,   // Floor 1: ATK-Faktor (~alt 28 ATK)
   atkMultPer:  0.035, // +3,5 % ATK-Faktor je Stockwerk
+  // Schadens-Modell (statt flacher Rüstungssubtraktion): verhältnisbasierte
+  // Milderung, damit der Boss von Runde 1 an spürbar trifft statt „1 Schaden"
+  // bis zum Enrage. K skaliert mit der Boss-ATK → skaleninvariant über alle Stockwerke.
+  armorK:          6,      // Rüstungs-Milderung skaliert mit Boss-ATK (Verhältnis statt flach)
+  armorMitigCap:   0.85,   // harte Obergrenze: selbst Voll-Tanks fressen ≥15 % der Boss-ATK
+  blockArmorEquiv: 8,      // Block-Stat wird mit Faktor 8 in den Rüstungspool gefaltet
+  softRamp:        1.015,  // +1,5 %/Runde ab Runde 1 → stetig steigender Druck statt Klippe
+  hardEnrageTurn:  35,     // Deadline: ab hier zusätzliche Eskalation (kein Patt)
+  hardRamp:        1.10,   // zusätzlicher Faktor/Runde nach der Deadline
 };
 
 // ---- Farmen (#17): Wiederholungskämpfe geben weniger -----------------
