@@ -563,6 +563,12 @@ function applyAbility(fight, slot, abilityId){
   const slotHeal = amt => { if(slot==='front') fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp+amt); else fight.backHp = Math.min(fight.backMaxHp, fight.backHp+amt); };
   const vulnMult = now < (fight.bossVulnUntil||0) ? (1+(fight.bossVulnVal||0)) : 1;
   const dealBoss = mult => { const dmg = Math.max(1, Math.round(atk * mult * petMultOf(fight, slot, now) * vulnMult)); fight.bossHp = Math.max(0, fight.bossHp - dmg); fight.dmgDealt += dmg; if(fight.bossHp<=0) fight.over = true; return dmg; };
+  // Heiler projizieren ihre Support-Heilungen (HoT/Schild/Reinigung/Todesrettung)
+  // im Koop auf BEIDE Helden; andere Klassen und der Solo-Modus bleiben self.
+  const isHealer = slot === 'front' ? fight.frontIsHealer : fight.backIsHealer;
+  const healTargets = (isHealer && !fight.solo) ? ['front','back'] : [slot];
+  const hpOf  = t => t === 'front' ? fight.frontHp  : fight.backHp;
+  const maxOf = t => t === 'front' ? fight.frontMaxHp : fight.backMaxHp;
 
   if(ab.kind === 'heal'){
     if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + Math.round(fight.frontMaxHp * ab.healPct));
@@ -610,24 +616,42 @@ function applyAbility(fight, slot, abilityId){
     fxs.reflectUntil = now + ab.dur; fxs.reflectVal = ab.reflectPct||0.4;
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': reflektiert '+Math.round((ab.reflectPct||0.4)*100)+'% Schaden!', '#b6d0ff');
   } else if(ab.kind === 'absorb'){
-    fxs.shield = Math.round(maxHp * (ab.absorbPct||0.4)); fxs.shieldUntil = now + (ab.dur||10000);
-    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Schild absorbiert '+fmtBig(fxs.shield)+' Schaden.', '#bfe3ff');
+    let shieldSum = 0;
+    for(const t of healTargets){
+      if(hpOf(t) <= 0) continue;               // toten Slot nicht beschilden
+      const fxt = fight.fx[t];
+      fxt.shield = Math.round(maxOf(t) * (ab.absorbPct||0.4)); fxt.shieldUntil = now + (ab.dur||10000);
+      shieldSum += fxt.shield;
+    }
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Schild absorbiert '+fmtBig(shieldSum)+' Schaden'+(healTargets.length>1?' (beide Helden)':'')+'.', '#bfe3ff');
   } else if(ab.kind === 'deathsave'){
-    fxs.deathUntil = now + (ab.dur||10000); fxs.reviveHp = Math.round(maxHp * (ab.revivePct||0.3));
-    addLog(fight, ab.icon+' '+name+' – '+ab.name+': überlebt '+(ab.dur/1000)+'s lang den Tod.', '#ffe9a8');
+    for(const t of healTargets){
+      if(hpOf(t) <= 0) continue;               // toten Slot nicht „retten"
+      const fxt = fight.fx[t];
+      fxt.deathUntil = now + (ab.dur||10000); fxt.reviveHp = Math.round(maxOf(t) * (ab.revivePct||0.3));
+    }
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+(healTargets.length>1?'beide Helden überleben ':'überlebt ')+(ab.dur/1000)+'s lang den Tod.', '#ffe9a8');
   } else if(ab.kind === 'vulnerability'){
     fight.bossVulnUntil = now + ab.dur; fight.bossVulnVal = ab.vulnPct||0.3;
     let dmg = 0; if(ab.burstMult) dmg = dealBoss(ab.burstMult);
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': Gegner +'+Math.round((ab.vulnPct||0.3)*100)+'% Schaden'+(dmg?(' ('+fmtBig(dmg)+')'):'')+'.', '#ff8a3d');
   } else if(ab.kind === 'cleanse'){
-    const heal = Math.round(maxHp * (ab.healPct||0.25)); slotHeal(heal); fight.lastHealTs = now;
-    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+fmtBig(heal)+' HP.', '#bfe3ff');
+    let healSum = 0;
+    for(const t of healTargets){
+      if(hpOf(t) <= 0) continue;
+      const heal = Math.round(maxOf(t) * (ab.healPct||0.25));
+      if(t === 'front') fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + heal);
+      else              fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + heal);
+      healSum += heal;
+    }
+    fight.lastHealTs = now;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+fmtBig(healSum)+' HP'+(healTargets.length>1?' (beide Helden)':'')+'.', '#bfe3ff');
   } else if(ab.kind === 'dot'){
     startTowerDot(fight, slot, ab);
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+Math.round((ab.dotMult||0.5)*100)+'% Schaden/s für '+(ab.dur/1000)+'s.', '#9acd32');
   } else if(ab.kind === 'hot'){
-    startTowerHot(fight, slot, ab);
-    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Heilung über '+(ab.dur/1000)+'s.', '#37d67a');
+    startTowerHot(fight, slot, ab, healTargets);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': Heilung über '+(ab.dur/1000)+'s'+(healTargets.length>1?' (beide Helden)':'')+'.', '#37d67a');
   } else if(ab.kind === 'drain' && ab.dur){
     startTowerDrain(fight, slot, ab);
     return;
@@ -686,20 +710,25 @@ function startTowerDot(fight, slot, ab){
   };
   setTimeout(tick, tickMs);
 }
-// HoT am Slot (Verjüngung): tickt hotPct·maxHp Heilung über die Dauer.
-function startTowerHot(fight, slot, ab){
+// HoT (Verjüngung): tickt hotPct·maxHp Heilung über die Dauer. `targets` ist beim
+// Heiler im Koop ['front','back'] (heilt beide), sonst nur der wirkende Slot.
+function startTowerHot(fight, slot, ab, targets){
+  targets = (targets && targets.length) ? targets : [slot];
   const tickMs = ab.tickMs || 1000;
   const ticks  = Math.max(1, Math.round((ab.dur||8000) / tickMs));
   syncFight(fight);
   let i = 0;
   const tick = () => {
     if(fight.over || _fight !== fight) return;
-    const maxHp = slot === 'front' ? fight.frontMaxHp : fight.backMaxHp;
-    const heal = Math.round(maxHp * (ab.hotPct||0.08));
-    if(slot === 'front'){ if(fight.frontHp > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + heal); }
-    else               { if(fight.backHp  > 0) fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + heal); }
+    let healSum = 0;
+    for(const t of targets){
+      const maxHp = t === 'front' ? fight.frontMaxHp : fight.backMaxHp;
+      const heal = Math.round(maxHp * (ab.hotPct||0.08));
+      if(t === 'front'){ if(fight.frontHp > 0){ fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + heal); healSum += heal; } }
+      else             { if(fight.backHp  > 0){ fight.backHp  = Math.min(fight.backMaxHp,  fight.backHp  + heal); healSum += heal; } }
+    }
     fight.lastHealTs = Date.now();
-    addLog(fight, ab.icon+' '+ab.name+': +'+fmtBig(heal)+' HP', '#37d67a');
+    addLog(fight, ab.icon+' '+ab.name+': +'+fmtBig(healSum)+' HP', '#37d67a');
     syncFight(fight);
     if(!fight.over && ++i < ticks) setTimeout(tick, tickMs);
   };
