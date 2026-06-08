@@ -1470,8 +1470,13 @@ html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavi
 .forge-mat .fm-icon { font-size:20px; filter:drop-shadow(0 0 4px rgba(242,205,107,.5)); }
 .forge-mat .fm-name { font-size:12px; color:var(--txt-dim); flex:1; }
 .forge-mat .fm-have { font-family:'Cinzel',serif; font-weight:700; color:var(--gold-hi); font-size:15px; }
-/* Konvertieren-Button: klare eigene Zeile unter der Material-Info (volle Breite) */
-.forge-conv { width:100%; font-size:11px !important; padding:6px 10px !important; white-space:nowrap; }
+/* Konvertieren-Buttons: eigene Zeile unter der Material-Info.
+   Einzel- und „Alles"-Knopf teilen sich die Breite. */
+.forge-conv-row { display:flex; gap:6px; }
+.forge-conv { flex:1; width:100%; font-size:11px !important; padding:6px 10px !important; white-space:nowrap; }
+/* „Alles umwandeln" optisch hervorheben (sanfte Glut). */
+.forge-conv-all { border-color:var(--gold-hi); color:var(--gold-hi);
+  box-shadow:inset 0 0 10px -5px var(--gold-hi); }
 
 .forge-sub { font-family:'Cinzel',serif; color:var(--gold-hi); font-size:14px;
   margin:18px 0 10px; letter-spacing:.5px; }

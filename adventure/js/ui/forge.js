@@ -11,7 +11,7 @@ import { MATERIALS, MATERIAL_BY_KEY, CONVERT_RATE, nextMaterialKey,
          upgradeCost, canUpgrade, rerollCost, canReroll } from '../data/materials.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked } from '../core/items.js';
-import { upgradeItem, rerollAffixes, convertMaterial, materialCount } from '../core/crafting.js';
+import { upgradeItem, rerollAffixes, convertMaterial, materialCount, maxConvertBatches } from '../core/crafting.js';
 import { getCoins } from '../core/coins.js';
 import { $, fmtBig, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip } from './tooltip.js';
@@ -111,12 +111,22 @@ export function renderForge(){
   matBar.innerHTML = MATERIALS.map(m => {
     const next = nextMaterialKey(m.key);
     const have = materialCount(m.key);
-    // Konvertieren-Button nur zeigen, wenn die Umwandlung wirklich möglich ist
+    const batches = next ? maxConvertBatches(m.key) : 0;
+    // Konvertieren-Buttons nur zeigen, wenn die Umwandlung wirklich möglich ist
     // (genug Material). Spart leere/ausgegraute Knöpfe und Platz auf Mobile.
-    const convBtn = (next && have >= CONVERT_RATE)
-      ? '<button class="btn ghost forge-conv" data-conv="'+m.key+'" title="'+CONVERT_RATE+' '+m.name+' → 1 '+MATERIAL_BY_KEY[next].name+'">'+
-          '🔁 '+CONVERT_RATE+' → 1 '+MATERIAL_BY_KEY[next].icon+'</button>'
-      : '';
+    let convBtn = '';
+    if(batches >= 1){
+      const nIcon = MATERIAL_BY_KEY[next].icon;
+      // Einzel-Charge: 10 → 1
+      const single = '<button class="btn ghost forge-conv" data-conv="'+m.key+'" data-times="1" title="'+CONVERT_RATE+' '+m.name+' → 1 '+MATERIAL_BY_KEY[next].name+'">'+
+          '🔁 '+CONVERT_RATE+' → 1 '+nIcon+'</button>';
+      // Alles umwandeln (alle vollen Chargen auf einmal) – erst ab 2 Chargen sinnvoll.
+      const all = batches >= 2
+        ? '<button class="btn ghost forge-conv forge-conv-all" data-conv="'+m.key+'" data-times="'+batches+'" title="Alle '+(CONVERT_RATE*batches)+' '+m.name+' → '+batches+' '+MATERIAL_BY_KEY[next].name+'">'+
+            '⏫ Alles → '+batches+' '+nIcon+'</button>'
+        : '';
+      convBtn = '<div class="forge-conv-row">'+single+all+'</div>';
+    }
     return '<div class="forge-mat">'+
       '<div class="fm-top">'+
         '<span class="fm-icon">'+m.icon+'</span>'+
@@ -127,14 +137,18 @@ export function renderForge(){
   panel.appendChild(matBar);
   matBar.querySelectorAll('.forge-conv').forEach(btn => btn.addEventListener('click', async ()=>{
     const from = btn.dataset.conv; const to = nextMaterialKey(from);
-    const ok = await confirmDialog({ title:'Materialien umwandeln?', emoji:'🔁',
-      body:CONVERT_RATE+' '+MATERIAL_BY_KEY[from].icon+' '+MATERIAL_BY_KEY[from].name+
-        ' → 1 '+MATERIAL_BY_KEY[to].icon+' '+MATERIAL_BY_KEY[to].name+'?',
+    // Gewünschte Chargen aus dem Button; auf den aktuell möglichen Höchstwert begrenzen.
+    const times = Math.min(parseInt(btn.dataset.times, 10) || 1, maxConvertBatches(from));
+    if(times < 1) return;
+    const used = CONVERT_RATE * times;
+    const ok = await confirmDialog({ title:'Materialien umwandeln?', emoji: times > 1 ? '⏫' : '🔁',
+      body: used+' '+MATERIAL_BY_KEY[from].icon+' '+MATERIAL_BY_KEY[from].name+
+        ' → '+times+' '+MATERIAL_BY_KEY[to].icon+' '+MATERIAL_BY_KEY[to].name+'?',
       confirmText:'Umwandeln', cancelText:'Abbrechen' });
     if(!ok) return;
-    const res = convertMaterial(from);
+    const res = convertMaterial(from, times);
     renderForge();
-    if(res.ok) toast('🔁 '+MATERIAL_BY_KEY[to].icon+' +1 '+MATERIAL_BY_KEY[to].name);
+    if(res.ok) toast('🔁 '+MATERIAL_BY_KEY[to].icon+' +'+res.batches+' '+MATERIAL_BY_KEY[to].name);
   }));
 
   // ---- Item-Auswahl: zwei Kategorien (Inventar + Ausgerüstet) -------
