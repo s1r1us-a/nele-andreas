@@ -1,10 +1,10 @@
 /* =====================================================================
    MAIN – Einstiegspunkt: Init, Game-Loop, Tabs, Events, Tastenkürzel.
    ===================================================================== */
-import { state, loadSave, saveState, flushSave } from './core/state.js';
+import { state, loadSave, saveState, flushSave, watchSave, setBusyCheck, flushPendingRemote } from './core/state.js';
 import { initAuth } from './core/firebase.js';
 import { expeditionReady, expeditionActive, setFindProgress, cancelExpedition, collectExpedition } from './core/expedition.js';
-import { startBossFight, closeArena, usePotion, useAbility } from './core/combat.js';
+import { startBossFight, closeArena, usePotion, useAbility, currentFight } from './core/combat.js';
 import { watchCoins } from './core/coins.js';
 import { $, fmtRemain, fmtBig, confirmDialog, toast } from './ui/dom.js';
 import { renderAll, renderAdventure, renderTopStats, renderShop, resetInvSellMode } from './ui/render.js';
@@ -92,6 +92,8 @@ function startLoop(){
       }
       wasReady = nowReady;
     } else { wasReady = false; }
+    // Aufgeschobenes Remote-Update nachziehen, sobald keine Arena/Modal mehr offen ist.
+    flushPendingRemote(renderAll);
   }, 1000);
 
   function frame(){
@@ -125,6 +127,16 @@ window.addEventListener('beforeunload', flushSave);
 
   await loadSave(userKey);               // lädt /adventure/<userKey> (sonst lokaler Cache / frisch)
   renderAll();
+  // Geräte-Sync: Spielstand-Änderungen vom anderen Gerät (Handy/PC) live übernehmen.
+  // Während eines Bosskampfs oder offenen Modals wird ein Update aufgeschoben
+  // (flushPendingRemote im Game-Loop zieht es danach nach).
+  setBusyCheck(() =>
+    $('#arenaOverlay').classList.contains('show') ||
+    $('#overlay').classList.contains('show') ||
+    $('#creatorOverlay').classList.contains('show') ||
+    (currentFight && !currentFight.over)
+  );
+  watchSave(() => { renderAll(); checkAdventureBadges(false); });
   // Bereits verdiente Dämmerpfad-Badges einmalig still nachtragen (kein Modal).
   checkAdventureBadges(false);
   // Profil-Ansicht des anderen Spielers: Button-Beschriftung personalisieren.
