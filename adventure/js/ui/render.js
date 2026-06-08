@@ -37,6 +37,7 @@ import { salvage } from '../core/crafting.js';
 import { salvageYield, MATERIAL_BY_KEY, MATERIALS } from '../data/materials.js';
 import { claimPendingLoot } from '../core/items.js';
 import { renderForge } from './forge.js';
+import { buildRoomBanner, applyRoomTheme, ensureRoomBanner } from './roombanner.js';
 import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, toast, confirmDialog, goldPop } from './dom.js';
 import { bindTooltip, hideTooltip, affixLinesHTML } from './tooltip.js';
@@ -250,6 +251,8 @@ export function renderCharacter(){
 // ---- Charakter-Header (Identität + Aktionen) -----------------------
 export function renderCharHeader(t, tier){
   const box = $('#charHeader'); if(!box) return;
+  ensureRoomBanner(box.closest('.panel'), 'character',
+    { icon:'🛡️', title:'Heldenhalle', sub:'Rang · Macht · Erbe', theme:'character', particles:'sparkle', count:6 });
   const cls = classOf(state);
   const ch = state.character;
   const clsLabel = classLabelOf(state);
@@ -364,6 +367,9 @@ export function renderTalents(){
   });
   const respec = box.querySelector('#respecBtn');
   if(respec) respec.addEventListener('click', respecTalents);
+
+  ensureRoomBanner(box.closest('.panel'), 'talents',
+    { icon:'✨', title:'Pfad der Talente', sub:'Wahl · Wachstum · Macht', theme:'talents', particles:'sparkle', count:6 });
 }
 
 function chooseTalent(stufeIndex, optionId){
@@ -490,6 +496,9 @@ export function sortedInventory(){
 export function renderInventory(){
   const panel = $('#inventoryPanel');
   panel.innerHTML = '';
+  applyRoomTheme(panel, 'inventory');
+  panel.appendChild(buildRoomBanner({ icon:'🎒', title:'Die Schatzkammer', sub:'Sammeln · Sortieren · Wählen',
+    theme:'inventory', particles:'motes', count:7 }));
   const subtabs = document.createElement('div');
   subtabs.className = 'inv-subtabs';
   subtabs.innerHTML =
@@ -687,9 +696,13 @@ function renderConsumables(panel){
 export function renderShop(){
   const panel = $('#shopPanel');
   panel.innerHTML = '';
+  applyRoomTheme(panel, 'shop');
+  panel.appendChild(buildRoomBanner({ icon:'🪙', title:'Der Händler', sub:'Feilschen · Erweitern · Gold',
+    theme:'shop', particles:'sparkle', count:7, chip:{ icon:'🪙', text:fmtBig(getCoins()) } }));
+
   const head = document.createElement('div');
   head.className = 'shop-head';
-  head.innerHTML = '<h2>🪙 Händler</h2><span class="shop-gold">🪙 '+fmtBig(getCoins())+' Coins</span>';
+  head.innerHTML = '<h2>🛒 Angebote</h2>';
   panel.appendChild(head);
 
   const cap = invCapacity();
