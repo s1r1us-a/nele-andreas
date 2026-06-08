@@ -144,6 +144,7 @@
 
     <div class="arena-wrap" id="arenaWrap">
       <div class="arena-bg" id="arenaBg"></div>
+      <div class="arena-motes" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="arena-stage" id="arenaStage">
         <div class="arena-heroes-col">
           <div class="arena-hero" id="heroFront">
@@ -752,7 +753,38 @@ function setupArena(floor, frontStats, backStats, frontName, backName){
 
 function showFightSection(){
   $('lobbySection').style.display = 'none';
-  $('fightSection').style.display = '';
+  const fs = $('fightSection');
+  const wasHidden = fs.style.display === 'none';
+  fs.style.display = '';
+  // Dramatischer Auftritt nur beim echten Wechsel (onLobbyUpdate feuert oft).
+  if(wasHidden) playArenaIntro();
+}
+
+// Boss-Auftritt + Arena-Einblendung beim Kampfstart (rein visuell, additiv).
+function playArenaIntro(){
+  const wrap = $('arenaWrap'), boss = $('spriteBoss');
+  // Alte Ergebnis-Zustände zurücksetzen (Wiederholung nach Niederlage/Sieg).
+  if(wrap) wrap.classList.remove('defeat');
+  if(boss) boss.classList.remove('boss-collapse');
+  const replay = (el, cls, ms) => { if(!el) return;
+    el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), ms); };
+  replay(wrap, 'arena-enter', 900);
+  replay(boss, 'boss-intro', 950);
+  spawnBossIntroBurst();
+}
+
+// Arkaner Energieausbruch hinter dem materialisierenden Boss.
+function spawnBossIntroBurst(){
+  const layer = $('dmgLayer'); if(!layer) return;
+  const a = anchorOf('spriteBoss');
+  const burst = document.createElement('div');
+  burst.className = 'vfx-boss-intro';
+  burst.style.left = a.x + 'px'; burst.style.top = a.y + 'px';
+  burst.innerHTML = '<span class="vbi-ring"></span><span class="vbi-ring r2"></span>' +
+    '<span class="vbi-rune">✦</span><span class="vbi-rune r2">✧</span><span class="vbi-rune r3">✦</span>';
+  layer.appendChild(burst);
+  setTimeout(() => burst.remove(), 1000);
 }
 
 // ---- Combat-Update ----
@@ -1256,7 +1288,11 @@ function applyTowerStun(active){
 
 // ---- Ergebnis ----
 function showResult(won, floor){
-  if($('resultOverlay').classList.contains('show')) return;
+  const overlay = $('resultOverlay');
+  if(overlay.classList.contains('show')) return;
+  // Reste einer vorherigen Sequenz entfernen (Konfetti, Zustands-Klassen).
+  overlay.querySelectorAll('.tower-confetti').forEach(c => c.remove());
+  overlay.classList.remove('win', 'lose');
   let lootHtml = '';
   // Turm-Badges vergeben + INDIVIDUELLEN Loot in den EIGENEN Spielstand legen.
   if(won && myKey){
@@ -1313,7 +1349,33 @@ function showResult(won, floor){
   lb.className = 'btn btn-danger'; lb.textContent = '🚪 Verlassen';
   lb.onclick = onLeaveLobby;
   btns.appendChild(lb);
-  $('resultOverlay').classList.add('show');
+
+  // ---- Sieg-/Niederlage-Inszenierung (additiv) -------------------------
+  if(won){
+    overlay.classList.add('win');
+    const boss = $('spriteBoss'); if(boss) boss.classList.add('boss-collapse');
+    spawnConfetti(overlay);
+  } else {
+    overlay.classList.add('lose');
+    const wrap = $('arenaWrap'); if(wrap) wrap.classList.add('defeat');
+  }
+  overlay.classList.add('show');
+}
+
+// Gold-/Farbregen über dem Sieg-Overlay.
+function spawnConfetti(overlay){
+  const cols = ['#ffd24a','#ffb454','#c76dff','#7fd0ff','#37d67a','#fff0b8'];
+  for(let i = 0; i < 36; i++){
+    const c = document.createElement('span');
+    c.className = 'tower-confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.background = cols[i % cols.length];
+    c.style.animationDelay = (Math.random() * 0.6).toFixed(2) + 's';
+    c.style.animationDuration = (1.6 + Math.random() * 1.2).toFixed(2) + 's';
+    c.style.setProperty('--rot', Math.round(Math.random() * 720 - 360) + 'deg');
+    c.style.setProperty('--drift', Math.round(Math.random() * 80 - 40) + 'px');
+    overlay.appendChild(c);
+  }
 }
 
 // Nach dem Kampf weiter (advance=true) oder Stockwerk wiederholen (advance=false).

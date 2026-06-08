@@ -10,6 +10,7 @@ import { getCoins } from '../core/coins.js';
 import { rarityOf } from '../data/rarities.js';
 import { MATERIALS, MATERIAL_BY_KEY } from '../data/materials.js';
 import { bindTooltip, hideTooltip } from './tooltip.js';
+import { buildRoomBanner, applyRoomTheme } from './roombanner.js';
 import {
   watchPartnerPresence, partnerOnline, partnerKey, myKey,
   openTrade, listenTrade, setMyOffer, setMyMaterials, setAccept, cancelTrade,
@@ -99,6 +100,13 @@ export function renderTrade(){
   if(!panel) return;
   hideTradeBadge();   // Tab ist offen → Hinweis nicht mehr nötig.
   const partner = cap(partnerKey());
+  applyRoomTheme(panel, 'trade');
+  // Themed Banner (mit Coin-Chip) oben in die jeweilige .trade-wrap setzen.
+  const addTradeBanner = () => {
+    const wrap = panel.querySelector('.trade-wrap');
+    if(wrap) wrap.prepend(buildRoomBanner({ icon:'🤝', title:'Handelsposten', sub:'Tausch · Vertrauen · Wert',
+      theme:'trade', particles:'motes', count:6, chip:{ icon:'🪙', text:fmtBig(getCoins()) } }));
+  };
 
   if(!state || !state.character){
     panel.innerHTML = '<div class="trade-empty">Erst einen Charakter im Dämmerpfad erstellen.</div>';
@@ -124,6 +132,7 @@ export function renderTrade(){
             : '<p class="sub">' + partner + ' ist gerade offline – Handel ist nur möglich, wenn beide online sind.</p>') +
         '</div>' +
       '</div>';
+    addTradeBanner();
     const startBtn = $('#tradeStartBtn');
     if(startBtn) startBtn.addEventListener('click', async () => { await openTrade(); renderTrade(); });
     return;
@@ -161,6 +170,8 @@ export function renderTrade(){
       '<h3 class="trade-inv-title">⚒️ Deine Materialien – Menge anbieten</h3>' +
       '<div class="trade-mats" id="tradeMats"></div>' +
     '</div>';
+
+  addTradeBanner();
 
   // Angebote füllen (Items + Material-Chips)
   const myWrap = $('#tradeMyOffer'), theirWrap = $('#tradeTheirOffer');
