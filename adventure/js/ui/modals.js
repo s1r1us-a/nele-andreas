@@ -28,7 +28,7 @@ import { db, ref, get, userKey } from '../core/firebase.js';
 import { getCoins } from '../core/coins.js';
 import { upgradeItem, salvage, materialCount } from '../core/crafting.js';
 import { playUpgradeFx } from './forge.js';
-import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield } from '../data/materials.js';
+import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield, upgradeBadge, MAX_UPGRADE } from '../data/materials.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
@@ -56,7 +56,7 @@ export function openSlotPicker(slotKey){
     const sLbl = cur.statType==='armor' ? 'Rüstung' : 'Schaden';
     html += '<div class="cur-equip">'+
       '<div class="cur-label">Aktuell ausgerüstet</div>'+
-      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+((cur.upgradeLevel||0)>0?' <span style="color:#ffd24a">+'+cur.upgradeLevel+'</span>':'')+'</span>'+
+      '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+((cur.upgradeLevel||0)>0?' <span style="color:#ffd24a">'+upgradeBadge(cur)+'</span>':'')+'</span>'+
       '<div class="cur-kind">'+itemKindIcon(cur)+' '+itemKindLabel(cur)+'</div>'+
       '<div class="cur-stats"><div class="tt-stat '+cur.statType+'">+'+cur.stat+' '+sLbl+'</div>'+affixLinesHTML(cur)+
         '<div class="cur-ilvl">Gegenstandsstufe '+cur.ilvl+'</div></div>'+
@@ -156,7 +156,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
     ? '<button class="btn ghost" id="previewSalvage"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+
       '>♻️ Zerlegen ('+MATERIAL_BY_KEY[sy.key].icon+' +'+sy.amount+')</button>'
     : '';
-  const upgTag = (item.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">+'+item.upgradeLevel+'</span>' : '';
+  const upgTag = (item.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">'+upgradeBadge(item)+'</span>' : '';
   openModal('<h2 style="color:'+r.color+'">'+item.name+upgTag+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+'</div>'+
     kindLine+
@@ -195,7 +195,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
   if(upEl) upEl.addEventListener('click', async ()=>{
     upEl.disabled = true;
     const res = await upgradeItem(item.id);
-    if(res.ok){ playUpgradeFx(res.level); toast('⚒️ Aufgewertet auf +'+res.level+'!'); renderAll(); openItemPreview(item, fromSlotKey, backFn); }
+    if(res.ok){ playUpgradeFx(res.level); toast((res.level>MAX_UPGRADE?'✦ Transzendiert auf ✦'+(res.level-MAX_UPGRADE):'⚒️ Aufgewertet auf +'+res.level)+'!'); renderAll(); openItemPreview(item, fromSlotKey, backFn); }
     else if(res.reason==='mat') toast('Nicht genug Material.');
     else if(res.reason==='coins') toast('🪙 Nicht genug Coins.');
     else toast('Aufwerten nicht möglich.');
@@ -397,7 +397,7 @@ export async function openOtherProfile(){
         const r = rarityOf(it.rarity);
         gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-rarity="'+it.rarity+'" data-op="'+sk+'">'+
           '<img src="'+it.sprite+'" alt="'+(it.name||'')+'">'+
-          ((it.upgradeLevel||0)>0?'<span class="bp-upg op-upg">+'+it.upgradeLevel+'</span>':'')+'</div>';
+          ((it.upgradeLevel||0)>0?'<span class="bp-upg op-upg">'+upgradeBadge(it)+'</span>':'')+'</div>';
       } else {
         gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+
           '<span>'+(SLOT_ICON[sk]||'')+'</span></div>';

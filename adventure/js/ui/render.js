@@ -34,7 +34,7 @@ import { itemValue, isLocked, gearScore, canEquip, autoEquipBest, itemPower,
          sellItem, sellPrice } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { salvage } from '../core/crafting.js';
-import { salvageYield, MATERIAL_BY_KEY, MATERIALS } from '../data/materials.js';
+import { salvageYield, MATERIAL_BY_KEY, MATERIALS, upgradeBadge } from '../data/materials.js';
 import { claimPendingLoot } from '../core/items.js';
 import { renderForge } from './forge.js';
 import { buildRoomBanner, applyRoomTheme, ensureRoomBanner } from './roombanner.js';
@@ -222,7 +222,7 @@ function slotEl(slotKey){
     el.dataset.rarity = it.rarity;
     el.style.setProperty('--rc', r.color);
     el.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">'+
-      ((it.upgradeLevel||0)>0 ? '<span class="slot-upg">+'+it.upgradeLevel+'</span>' : '');
+      ((it.upgradeLevel||0)>0 ? '<span class="slot-upg">'+upgradeBadge(it)+'</span>' : '');
     bindTooltip(el, it);
   } else {
     el.innerHTML = '<span class="empty-ic">'+emptySlotIcon(slotKey)+'</span>';
@@ -585,7 +585,7 @@ function buildInvGrid(wrap){
       cell.innerHTML = '<span class="bp-cat">'+CAT_ICON[it.cat]+'</span>'+
         (locked?'<span class="bp-lock">🔒</span>':'')+
         (blocked?'<span class="bp-noequip" title="Deine Klasse kann das nicht tragen">✋</span>':'')+
-        ((it.upgradeLevel||0)>0?'<span class="bp-upg">+'+it.upgradeLevel+'</span>':'')+
+        ((it.upgradeLevel||0)>0?'<span class="bp-upg">'+upgradeBadge(it)+'</span>':'')+
         (it.proc?'<span class="bp-proc">★</span>':'')+
         '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it, { compare:true });

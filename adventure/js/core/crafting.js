@@ -16,7 +16,7 @@ import { typeOf } from '../data/itemTypes.js';
 import { MATERIAL_BY_KEY, materialForRarity, salvageYield,
          upgradeCost, canUpgrade, rerollCost, canReroll,
          nextMaterialKey, CONVERT_RATE,
-         UPGRADE_STAT_PCT, UPGRADE_AFFIX_PCT } from '../data/materials.js';
+         upgradeStatFactor, upgradeAffixFactor } from '../data/materials.js';
 import { state, saveState } from './state.js';
 import { rollAffixes, ensureItemSprite, isLocked } from './items.js';
 import { getCoins, spendCoins } from './coins.js';
@@ -44,7 +44,7 @@ function snapshotBase(item){
 }
 function scaleAffix(key, baseV, level){
   const d = AFFIX_DEFS[key]; if(!d) return baseV;
-  let v = baseV * (1 + UPGRADE_AFFIX_PCT*level);
+  let v = baseV * upgradeAffixFactor(level);
   if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
   else { v = Math.max(1, Math.round(v)); }
   return v;
@@ -53,7 +53,7 @@ function scaleAffix(key, baseV, level){
 function applyUpgradeBonus(item){
   if(!item.base) snapshotBase(item);
   const lvl = item.upgradeLevel || 0;
-  item.stat = Math.max(1, Math.round(item.base.stat * (1 + UPGRADE_STAT_PCT*lvl)));
+  item.stat = Math.max(1, Math.round(item.base.stat * upgradeStatFactor(lvl)));
   const out = {};
   for(const [k, baseV] of Object.entries(item.base.affixes || {})) out[k] = scaleAffix(k, baseV, lvl);
   item.affixes = out;
