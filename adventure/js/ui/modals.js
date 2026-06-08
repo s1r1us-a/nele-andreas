@@ -79,7 +79,8 @@ export function openSlotPicker(slotKey){
       if(!canEquip(it)) cell.style.opacity = '.45';   // Material nicht tragbar
       cell.innerHTML = '<img src="'+it.sprite+'" alt="'+it.name+'">';
       bindTooltip(cell, it, { compare:true });
-      cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it, slotKey, ()=>openSlotPicker(slotKey)); });
+      // Aus dem Slot-Picker heraus ist der Vergleich der Sinn der Sache → direkt zeigen.
+      cell.addEventListener('click', ()=>{ hideTooltip(); openItemPreview(it, slotKey, ()=>openSlotPicker(slotKey), true); });
       list.appendChild(cell);
     }
   }
@@ -113,22 +114,24 @@ function deltaSpan(delta, pct){
   const up = delta>0;
   return '<span class="diff-delta '+(up?'pos':'neg')+'">'+(up?'▲ +':'▼ −')+fmtVal(Math.abs(delta), pct)+'</span>';
 }
-export function openItemPreview(item, fromSlotKey, backFn){
+export function openItemPreview(item, fromSlotKey, backFn, compare=false){
   hideTooltip();
   const r = rarityOf(item.rarity);
   const target = (fromSlotKey === 'ring2') ? 'ring2'
     : (fromSlotKey && SLOTS[fromSlotKey] ? fromSlotKey : resolveTargetSlot(item));
   const cur = state.equipped[target] || null;
-  const rows = statRows(item, cur);
+  // Vergleich erst auf Wunsch (Button „Vergleichen"). Standard: nur das Item zeigen.
+  const showCompare = compare && !!cur;
+  const rows = statRows(item, showCompare ? cur : null);
   let body = '';
   for(const row of rows){
     body += '<div class="diff-row"><span class="diff-label">'+row.label+'</span>'+
       '<span class="diff-new'+(row.type? ' '+row.type:'')+'">'+fmtVal(row.val, row.pct)+'</span>'+
-      (cur ? deltaSpan(row.delta, row.pct) : '')+'</div>';
+      (showCompare ? deltaSpan(row.delta, row.pct) : '')+'</div>';
   }
   const powDelta = itemPower(item) - itemPower(cur);
   body += '<div class="diff-row power-row"><span class="diff-label">Kampfkraft</span>'+
-    '<span class="diff-new power">'+itemPower(item)+'</span>'+(cur ? deltaSpan(powDelta, false) : '')+'</div>';
+    '<span class="diff-new power">'+itemPower(item)+'</span>'+(showCompare ? deltaSpan(powDelta, false) : '')+'</div>';
   const procLine = item.proc ? '<div class="preview-hint" style="color:'+item.proc.color+'">'+
     '★ '+item.proc.label+'</div>' : '';
   const locked = isLocked(item.id);
@@ -157,14 +160,19 @@ export function openItemPreview(item, fromSlotKey, backFn){
       '>♻️ Zerlegen ('+MATERIAL_BY_KEY[sy.key].icon+' +'+sy.amount+')</button>'
     : '';
   const upgTag = (item.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">'+upgradeBadge(item)+'</span>' : '';
+  // „Vergleichen" nur anbieten, wenn noch nicht verglichen wird UND ein Teil angelegt ist.
+  const compareBtn = (!showCompare && cur)
+    ? '<button class="btn ghost" id="previewCompare">⚖️ Vergleichen</button>'
+    : '';
   openModal('<h2 style="color:'+r.color+'">'+item.name+upgTag+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+'</div>'+
     kindLine+
-    (cur ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
-         : '<div class="preview-hint">Dieser Slot ist noch frei.</div>')+
+    (showCompare ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'
+         : (compare && !cur ? '<div class="preview-hint">Dieser Slot ist noch frei.</div>' : ''))+
     '<div class="preview-stats">'+body+'</div>'+procLine+blockLine+ilvlLine+
     '<div class="preview-actions">'+
       '<button class="btn" id="previewEquip"'+(equipOk?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Anlegen</button>'+
+      compareBtn+
       '<button class="btn ghost" id="previewSell"'+(locked?' disabled style="opacity:.5;cursor:not-allowed"':'')+'>💰 Verkaufen (🪙 '+fmtBig(price)+')</button>'+
       salvageBtn+
       upBtn+
@@ -172,6 +180,8 @@ export function openItemPreview(item, fromSlotKey, backFn){
       '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
     '</div>');
   if(equipOk) modal().querySelector('#previewEquip').addEventListener('click', ()=>{ equip(item, target); renderAll(); closeModal(); });
+  const cmpEl = modal().querySelector('#previewCompare');
+  if(cmpEl) cmpEl.addEventListener('click', ()=> openItemPreview(item, fromSlotKey, backFn, true));
   if(!locked) modal().querySelector('#previewSell').addEventListener('click', async ()=>{
     const ok = await confirmDialog({ title:'Verkaufen?', emoji:'🪙',
       body: item.name+'<br>für 🪙 <b>'+fmtBig(price)+'</b> Coins verkaufen?',
@@ -179,7 +189,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
     if(!ok) return;
     const p = sellItem(item.id); renderAll(); closeModal(); if(p) toast('+'+fmtBig(p)+' Coins');
   });
-  modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn); });
+  modal().querySelector('#previewLock').addEventListener('click', ()=>{ toggleLock(item.id); renderAll(); openItemPreview(item, fromSlotKey, backFn, compare); });
   const svEl = modal().querySelector('#previewSalvage');
   if(svEl && !locked) svEl.addEventListener('click', async ()=>{
     const m = MATERIAL_BY_KEY[sy.key];
@@ -195,7 +205,7 @@ export function openItemPreview(item, fromSlotKey, backFn){
   if(upEl) upEl.addEventListener('click', async ()=>{
     upEl.disabled = true;
     const res = await upgradeItem(item.id);
-    if(res.ok){ playUpgradeFx(res.level); toast((res.level>MAX_UPGRADE?'✦ Transzendiert auf ✦'+(res.level-MAX_UPGRADE):'⚒️ Aufgewertet auf +'+res.level)+'!'); renderAll(); openItemPreview(item, fromSlotKey, backFn); }
+    if(res.ok){ playUpgradeFx(res.level); toast((res.level>MAX_UPGRADE?'✦ Transzendiert auf ✦'+(res.level-MAX_UPGRADE):'⚒️ Aufgewertet auf +'+res.level)+'!'); renderAll(); openItemPreview(item, fromSlotKey, backFn, compare); }
     else if(res.reason==='mat') toast('Nicht genug Material.');
     else if(res.reason==='coins') toast('🪙 Nicht genug Coins.');
     else toast('Aufwerten nicht möglich.');
