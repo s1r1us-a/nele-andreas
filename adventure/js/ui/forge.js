@@ -7,7 +7,8 @@ import { AFFIX_DEFS, fmtAffix } from '../data/affixes.js';
 import { rarityOf } from '../data/rarities.js';
 import { SLOTS, CAT_ICON } from '../data/slots.js';
 import { MATERIALS, MATERIAL_BY_KEY, CONVERT_RATE, nextMaterialKey,
-         MAX_UPGRADE, UPGRADE_STAT_PCT, UPGRADE_AFFIX_PCT,
+         MAX_UPGRADE, MAX_TRANSCEND, canTranscend,
+         upgradeStatFactor, upgradeAffixFactor, upgradeStep, upgradeBadge,
          upgradeCost, canUpgrade, rerollCost, canReroll } from '../data/materials.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked } from '../core/items.js';
@@ -26,7 +27,7 @@ const baseAffixesOf = it => (it.base ? it.base.affixes : (it.affixes || {}));
 // crafting.js inkl. Caps – read-only, mutiert nichts).
 function affixAtLevel(key, baseV, level){
   const d = AFFIX_DEFS[key]; if(!d) return baseV;
-  let v = baseV * (1 + UPGRADE_AFFIX_PCT*level);
+  let v = baseV * upgradeAffixFactor(level);
   if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
   else { v = Math.max(1, Math.round(v)); }
   return v;
@@ -65,7 +66,7 @@ function appendPickSection(panel, title, items, emptyText, worn){
     cell.style.setProperty('--rc', r.color);
     cell.innerHTML = '<span class="bp-cat">'+(worn ? '🎽' : CAT_ICON[it.cat])+'</span>'+
       (isLocked(it.id)?'<span class="bp-lock">🔒</span>':'')+
-      ((it.upgradeLevel||0)>0?'<span class="bp-upg">+'+it.upgradeLevel+'</span>':'')+
+      ((it.upgradeLevel||0)>0?'<span class="bp-upg">'+upgradeBadge(it)+'</span>':'')+
       (it.proc?'<span class="bp-proc">★</span>':'')+
       '<img src="'+it.sprite+'" alt="'+it.name+'">';
     bindTooltip(cell, it, { compare:true });
@@ -238,7 +239,7 @@ function buildActionCard(it){
   const statLabel = it.statType === 'armor' ? 'Rüstung' : 'Schaden';
   const affixHtml = Object.entries(it.affixes||{}).map(([k,v]) => '<div class="forge-affix">'+fmtAffix(k,v)+'</div>').join('') || '<div class="forge-affix muted">keine Affixe</div>';
 
-  let html = '<div class="forge-card-head" style="color:'+r.color+'">'+it.name+(lvl>0?' <b class="forge-lvl">+'+lvl+'</b>':'')+'</div>'+
+  let html = '<div class="forge-card-head" style="color:'+r.color+'">'+it.name+(lvl>0?' <b class="forge-lvl">'+upgradeBadge(it)+'</b>':'')+'</div>'+
     '<div class="sub">'+r.name+' · '+SLOTS[it.slotKey].name+' · Gegenstandsstufe '+it.ilvl+'</div>'+
     '<div class="forge-stats">'+
       '<div class="forge-stat"><span>'+statLabel+'</span><b>'+it.stat+'</b></div>'+
@@ -250,7 +251,8 @@ function buildActionCard(it){
   if(canUpgrade(it)){
     const c = upgradeCost(it);
     const m = MATERIAL_BY_KEY[c.matKey];
-    const nextStat = Math.max(1, Math.round(baseStatOf(it) * (1 + UPGRADE_STAT_PCT*(lvl+1))));
+    const nextStat = Math.max(1, Math.round(baseStatOf(it) * upgradeStatFactor(lvl+1)));
+    const isTrans = lvl >= MAX_UPGRADE;   // Schritt +10 → ✦1 und höher
     const enough = materialCount(c.matKey) >= c.mat && getCoins() >= c.coins;
     // Exakte Vorher → Nachher-Werte: Hauptwert + jeder einzelne Affix.
     const baseAff = baseAffixesOf(it);
@@ -261,15 +263,22 @@ function buildActionCard(it){
       prevLines += '<div class="fa-line">'+AFFIX_DEFS[k].label+': '+affixValStr(k, it.affixes[k])+
         ' → <b>'+affixValStr(k, nxt)+'</b>'+(capped?' <span class="fa-cap">(Max)</span>':'')+'</div>';
     }
+    const faTitle = isTrans
+      ? '✦ Transzendenz · '+upgradeStep(lvl)+' → '+upgradeStep(lvl+1)
+      : '⚒️ Aufwerten · +'+lvl+' → +'+(lvl+1);
+    const btnLabel = isTrans ? 'Transzendieren' : 'Aufwerten';
     html += '<div class="forge-action">'+
-      '<div class="fa-title">⚒️ Aufwerten · +'+lvl+' → +'+(lvl+1)+'</div>'+
+      '<div class="fa-title">'+faTitle+'</div>'+
       '<div class="fa-prev">'+prevLines+'</div>'+
       '<div class="fa-cost">Kosten: '+m.icon+' '+c.mat+' '+m.name+' ('+fmtBig(materialCount(c.matKey))+') · 🪙 '+fmtBig(c.coins)+'</div>'+
-      '<button class="btn" id="forgeUpgrade"'+(enough?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Aufwerten</button>'+
+      '<button class="btn" id="forgeUpgrade"'+(enough?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>'+btnLabel+'</button>'+
     '</div>';
   } else {
+    const info = canTranscend(it)
+      ? 'Höchste Transzendenz (✦'+MAX_TRANSCEND+') erreicht.'
+      : 'Maximalstufe (+'+MAX_UPGRADE+') erreicht. Transzendenz erst ab Seltenheit „Legendär".';
     html += '<div class="forge-action"><div class="fa-title">⚒️ Aufwerten</div>'+
-      '<div class="fa-info">Maximalstufe (+'+MAX_UPGRADE+') erreicht.</div></div>';
+      '<div class="fa-info">'+info+'</div></div>';
   }
 
   // --- Verzaubern ---
@@ -295,7 +304,10 @@ function buildActionCard(it){
     upBtn.disabled = true;
     const res = await upgradeItem(it.id);
     if(res.ok) playUpgradeFx(res.level);
-    renderAfterCraft(res, '⚒️ Aufgewertet auf +'+(res.level||''));
+    const okMsg = res.ok && res.level > MAX_UPGRADE
+      ? '✦ Transzendiert auf ✦'+(res.level-MAX_UPGRADE)
+      : '⚒️ Aufgewertet auf +'+(res.level||'');
+    renderAfterCraft(res, okMsg);
   });
   const rrBtn = wrap.querySelector('#forgeReroll');
   if(rrBtn) rrBtn.addEventListener('click', async ()=>{
@@ -325,7 +337,7 @@ export function playUpgradeFx(level){
     '<div class="ffx-ring"></div><div class="ffx-ring r2"></div>'+
     '<div class="ffx-anvil">⚒️</div>'+             // zuschlagender Amboss/Hammer
     sparks+
-    '<div class="ffx-text">+'+level+'</div>';
+    '<div class="ffx-text">'+(level > MAX_UPGRADE ? '✦'+(level-MAX_UPGRADE) : '+'+level)+'</div>';
   document.body.appendChild(fx);
   // Kurzes Bildschirm-Wackeln (Hammerschlag).
   document.body.classList.add('forge-shake');

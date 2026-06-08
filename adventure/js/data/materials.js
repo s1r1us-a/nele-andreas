@@ -39,6 +39,38 @@ export const MAX_UPGRADE      = 10;
 export const UPGRADE_STAT_PCT = 0.06;   // +6 % Hauptwert je Stufe (additiv auf Basis)
 export const UPGRADE_AFFIX_PCT= 0.04;   // +4 % je Affix je Stufe (additiv auf Basis)
 
+// ---- Transzendenz (Endlos-Aufwertung jenseits +10) ------------------
+// Ab +10 läuft die Aufwertung als „Transzendenz" (✦1, ✦2, …) weiter. Der Bonus
+// ist hier MULTIPLIKATIV/kompoundierend → exponentiell, damit Gear die exponentielle
+// Endlos-Boss-Kurve (HP ×1,6/Zone) überhaupt einholen kann. Nur ab Legendär.
+export const TRANSCEND_STAT_FACTOR  = 1.10; // ×10 % je ✦ auf den Hauptwert
+export const TRANSCEND_AFFIX_FACTOR = 1.07; // ×7 %  je ✦ auf jeden Affix
+export const MAX_TRANSCEND          = 990;  // Sicherheits-Soft-Cap (effektiv „unendlich")
+export const TRANSCEND_MIN_RARITY_INDEX = 4; // ab legendär (rarityIndex 4) transzendierbar
+export const canTranscend = item => rarityIndex(item.rarity) >= TRANSCEND_MIN_RARITY_INDEX;
+export const isTranscended = item => (item.upgradeLevel || 0) > MAX_UPGRADE;
+
+// Gesamt-Faktor (Stufen 0–10 additiv, darüber multiplikativ) – EINE Quelle für
+// crafting.js (applyUpgradeBonus/scaleAffix) und forge.js (Vorschau).
+export function upgradeStatFactor(lvl){
+  const base = 1 + UPGRADE_STAT_PCT * Math.min(lvl, MAX_UPGRADE);
+  return base * Math.pow(TRANSCEND_STAT_FACTOR, Math.max(0, lvl - MAX_UPGRADE));
+}
+export function upgradeAffixFactor(lvl){
+  const base = 1 + UPGRADE_AFFIX_PCT * Math.min(lvl, MAX_UPGRADE);
+  return base * Math.pow(TRANSCEND_AFFIX_FACTOR, Math.max(0, lvl - MAX_UPGRADE));
+}
+
+// ---- Anzeige-Helfer (eine Quelle für alle UI-Badges) ----------------
+// Kompaktes Stufen-Label: bis +10 „+N", darüber „✦N" (Transzendenz-Stufe).
+export function upgradeStep(lvl){ return lvl <= MAX_UPGRADE ? '+'+lvl : '✦'+(lvl-MAX_UPGRADE); }
+// Voll-Badge fürs Item: '' (keins), „+7" oder ab Transzendenz „+10 ✦3".
+export function upgradeBadge(item){
+  const lvl = item.upgradeLevel || 0;
+  if(lvl <= 0) return '';
+  return lvl <= MAX_UPGRADE ? '+'+lvl : '+'+MAX_UPGRADE+' ✦'+(lvl-MAX_UPGRADE);
+}
+
 // Kostenfaktoren je Seltenheit: Schritt auf +n kostet n × { mat, coins }.
 const RARITY_FACTORS = {
   gewoehnlich:   { mat:1, coins:200  },
@@ -51,13 +83,25 @@ const RARITY_FACTORS = {
 function factorOf(rarityKey){ return RARITY_FACTORS[rarityKey] || RARITY_FACTORS.gewoehnlich; }
 
 // Kosten für den Schritt von item.upgradeLevel → +1.
+// Stufen 0–9: seltenheitsabhängige Faktoren (wie bisher). Ab +10 (Transzendenz):
+// Material = Transzendenz-Stufe t (✦1=1, ✦2=2, …) in der zum Item passenden Sorte,
+// Coins = 2000 × t.
 export function upgradeCost(item){
   const lvl = item.upgradeLevel || 0;
+  const matKey = materialForRarity(item.rarity);
+  if(lvl >= MAX_UPGRADE){
+    const t = lvl - MAX_UPGRADE + 1;   // Schritt auf ✦t
+    return { matKey, mat: t, coins: 2000 * t };
+  }
   const f = factorOf(item.rarity);
   const step = lvl + 1;   // Schritt auf +step
-  return { matKey: materialForRarity(item.rarity), mat: f.mat*step, coins: f.coins*step };
+  return { matKey, mat: f.mat*step, coins: f.coins*step };
 }
-export const canUpgrade = item => (item.upgradeLevel || 0) < MAX_UPGRADE;
+// Aufwertbar bis +10 (alle Raritäten) bzw. bis +10+MAX_TRANSCEND (ab Legendär).
+export const canUpgrade = item => {
+  const cap = canTranscend(item) ? MAX_UPGRADE + MAX_TRANSCEND : MAX_UPGRADE;
+  return (item.upgradeLevel || 0) < cap;
+};
 
 // ---- Verzaubern (Reroll) – Pauschale je Seltenheit ------------------
 const REROLL_COSTS = {

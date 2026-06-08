@@ -6,6 +6,7 @@ import { SLOTS } from '../data/slots.js';
 import { typeOf } from '../data/itemTypes.js';
 import { rarityOf } from '../data/rarities.js';
 import { classOf } from '../data/classes.js';
+import { upgradeBadge } from '../data/materials.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked, procText, resolveTargetSlot, canEquip, equipBlockReason, itemKindLabel, itemKindIcon } from '../core/items.js';
 import { $ } from './dom.js';
@@ -48,7 +49,7 @@ export function tooltipHTML(it, opts={}){
     qLine = '<div class="tt-ilvl" style="color:'+col+'">Qualität '+it.quality+'%'+mark+'</div>';
   }
   const lock = isLocked(it.id) ? ' 🔒' : '';
-  const upg = (it.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">+'+it.upgradeLevel+'</span>' : '';
+  const upg = (it.upgradeLevel||0) > 0 ? ' <span style="color:#ffd24a">'+upgradeBadge(it)+'</span>' : '';
   // Archetyp-Fokus aus dem Item-Typ (z.B. „Fokus: Krit-Chance").
   const ty = typeOf(it);
   const focus = (ty && ty.flavorAffix && AFFIX_DEFS[ty.flavorAffix])
