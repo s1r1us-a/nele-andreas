@@ -553,3 +553,87 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .tw-modal .twm-text { font-size:14px; color:var(--txt); line-height:1.6; margin-bottom:18px; }
 .tw-modal .twm-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 .tw-modal .twm-btns .btn { min-width:120px; }
+
+/* =====================================================================
+   AWESOME-AUFWERTUNG: Boss-Auftritt, Sieg/Niederlage, Arena-Atmosphäre.
+   Rein additiv – keine Kampf-Sync-Logik betroffen.
+   ===================================================================== */
+
+/* ---- B4: schwebende Arkan-Stäubchen über dem Arena-Hintergrund -------- */
+.arena-motes { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.arena-motes span { position:absolute; bottom:-12px; width:5px; height:5px; border-radius:50%;
+  background:radial-gradient(circle, rgba(225,190,255,.95), rgba(150,90,230,.5) 60%, transparent);
+  box-shadow:0 0 8px 2px rgba(170,100,255,.5); opacity:0;
+  animation:arenaMote linear infinite; }
+.arena-motes span:nth-child(1){ left:9%;  animation-duration:7.5s; animation-delay:0s; }
+.arena-motes span:nth-child(2){ left:22%; animation-duration:6.2s; animation-delay:1.4s; }
+.arena-motes span:nth-child(3){ left:34%; animation-duration:8.4s; animation-delay:.7s; }
+.arena-motes span:nth-child(4){ left:47%; animation-duration:6.8s; animation-delay:2.1s; }
+.arena-motes span:nth-child(5){ left:59%; animation-duration:7.9s; animation-delay:1.0s; }
+.arena-motes span:nth-child(6){ left:71%; animation-duration:6.5s; animation-delay:2.6s; }
+.arena-motes span:nth-child(7){ left:83%; animation-duration:8.1s; animation-delay:.4s; }
+.arena-motes span:nth-child(8){ left:93%; animation-duration:7.0s; animation-delay:1.8s; }
+@keyframes arenaMote { 0%{ transform:translateY(0) translateX(0); opacity:0; }
+  12%{ opacity:.8; } 50%{ transform:translateY(-150px) translateX(10px); }
+  88%{ opacity:.65; } 100%{ transform:translateY(-290px) translateX(-6px); opacity:0; } }
+
+/* ---- B5: weiche Arena-Einblendung beim Kampfstart -------------------- */
+.arena-wrap.arena-enter { animation:arenaEnter .8s ease both; }
+@keyframes arenaEnter { 0%{ opacity:0; transform:translateY(10px) scale(.99); filter:brightness(.4); }
+  100%{ opacity:1; transform:none; filter:none; } }
+
+/* ---- B1: Boss materialisiert sich (Teleport/Blur-in) ----------------- */
+#spriteBoss.boss-intro { animation:bossIntro .9s cubic-bezier(.2,.8,.25,1); }
+@keyframes bossIntro {
+  0%{ opacity:0; transform:scaleX(-1) scale(.4); filter:blur(9px) brightness(2.2) drop-shadow(0 0 22px #c86dff); }
+  55%{ opacity:1; filter:blur(0) brightness(1.35) drop-shadow(0 0 16px #c86dff); }
+  100%{ opacity:1; transform:scaleX(-1) scale(1); filter:none; } }
+/* arkaner Energieausbruch (Ringe + aufsteigende Runen) hinter dem Boss */
+.vfx-boss-intro { position:absolute; transform:translate(-50%,-50%); pointer-events:none; z-index:6; }
+.vfx-boss-intro .vbi-ring { position:absolute; left:0; top:0; width:60px; height:60px;
+  transform:translate(-50%,-50%); border-radius:50%; border:3px solid #c86dff;
+  box-shadow:0 0 26px 6px rgba(180,90,255,.7); opacity:0;
+  animation:vbiRing .85s cubic-bezier(.2,.7,.2,1) forwards; }
+.vfx-boss-intro .vbi-ring.r2 { border-color:#7fd0ff; animation-duration:.7s; animation-delay:.08s; }
+@keyframes vbiRing { 0%{ transform:translate(-50%,-50%) scale(.2); opacity:0; }
+  15%{ opacity:1; } 100%{ transform:translate(-50%,-50%) scale(3); opacity:0; } }
+.vfx-boss-intro .vbi-rune { position:absolute; left:0; top:0; font-size:18px; color:#e7c8ff;
+  text-shadow:0 0 10px rgba(190,110,255,.9); opacity:0; animation:vbiRune .9s ease-out forwards; }
+.vfx-boss-intro .vbi-rune.r2 { left:20px; animation-delay:.12s; }
+.vfx-boss-intro .vbi-rune.r3 { left:-20px; animation-delay:.22s; }
+@keyframes vbiRune { 0%{ transform:translate(-50%,-50%) scale(.4); opacity:0; }
+  25%{ opacity:1; } 100%{ transform:translate(-50%,-160%) scale(1.1); opacity:0; } }
+
+/* ---- B2: Sieg – Konfetti, glühendes 🏆, Boss-Kollaps ----------------- */
+.result-overlay.win > div { position:relative; z-index:2; }
+.result-overlay.win .result-big {
+  animation:resultPop .6s cubic-bezier(.2,1.4,.4,1) both, resultGlow 1.6s ease-in-out .6s infinite; }
+@keyframes resultPop { 0%{ transform:scale(0) rotate(-15deg); opacity:0; }
+  60%{ transform:scale(1.25) rotate(5deg); } 100%{ transform:scale(1) rotate(0); opacity:1; } }
+@keyframes resultGlow { 0%,100%{ filter:drop-shadow(0 0 10px rgba(255,210,74,.6)); }
+  50%{ filter:drop-shadow(0 0 26px rgba(255,210,74,1)); } }
+.tower-confetti { position:absolute; top:-16px; width:9px; height:14px; border-radius:2px;
+  opacity:.95; pointer-events:none; z-index:1; animation:towerConfetti linear forwards; }
+@keyframes towerConfetti { 0%{ transform:translateY(-20px) translateX(0) rotate(0); opacity:1; }
+  100%{ transform:translateY(380px) translateX(var(--drift,0)) rotate(var(--rot,180deg)); opacity:.15; } }
+#spriteBoss.boss-collapse { animation:bossCollapse 1s ease-in forwards; }
+@keyframes bossCollapse { 0%{ transform:scaleX(-1) scale(1); opacity:1; filter:grayscale(0); }
+  100%{ transform:scaleX(-1) scale(.85) translateY(30px) rotate(8deg); opacity:0; filter:grayscale(1) brightness(.5); } }
+
+/* ---- B3: Niederlage – Vignette, Entsättigung, langsames 💀 ----------- */
+.arena-wrap.defeat { animation:arenaDefeat .9s ease forwards;
+  box-shadow:inset 0 0 120px 24px rgba(0,0,0,.7); }
+@keyframes arenaDefeat { 0%{ filter:none; } 100%{ filter:grayscale(.7) brightness(.6); } }
+.result-overlay.lose .result-big { animation:resultFade 1s ease both; }
+@keyframes resultFade { 0%{ opacity:0; transform:scale(1.4); filter:blur(6px); }
+  100%{ opacity:1; transform:scale(1); filter:blur(0); } }
+
+/* ---- Barrierefreiheit: ruhige Variante ------------------------------- */
+@media(prefers-reduced-motion: reduce){
+  .arena-motes span, .arena-wrap.arena-enter, #spriteBoss.boss-intro,
+  .vfx-boss-intro .vbi-ring, .vfx-boss-intro .vbi-rune,
+  #spriteBoss.boss-collapse, .result-overlay.win .result-big,
+  .result-overlay.lose .result-big { animation:none !important; }
+  .arena-motes span { opacity:0; }
+  .tower-confetti { display:none; }
+}
