@@ -22,10 +22,13 @@ const LOBBY_PATH  = id => 'tower/lobbies/' + id;
 const COMBAT_PATH = id => 'tower/combat/'   + id;
 const ABIL_PATH   = id => 'tower/abil/'     + id;
 const HEROES_PATH = id => 'tower/heroes/'   + id;
-// Turm-Fortschritt pro Account in EIGENEM Knoten (nicht im geteilten
-// Spielstand-Blob). Sonst überschreibt das Haupt-Spiel beim Speichern des
-// ganzen Rosters den Stand mit einem veralteten towerFloor (Stockwerk-Verlust).
-const PROGRESS_PATH = userKey => 'tower/progress/' + userKey;
+// Turm-Fortschritt pro Account UND pro Charakter in EIGENEM Knoten (nicht im
+// geteilten Spielstand-Blob). Sonst überschreibt das Haupt-Spiel beim Speichern
+// des ganzen Rosters den Stand mit einem veralteten towerFloor (Stockwerk-Verlust).
+const PROGRESS_PATH = (userKey, charId) => 'tower/progress/' + userKey + '/' + charId;
+// Alter, globaler Skalar-Knoten (vor der Charakter-Umstellung) – nur noch für die
+// einmalige Migration des bestehenden Fortschritts.
+const LEGACY_PROGRESS_PATH = userKey => 'tower/progress/' + userKey;
 
 // ---- Turm-Boss-Skalierung ------------------------------------------
 // Turm-Bosse koppeln an die normale Boss-Kurve (bossFor(floor-1)) und werden per
@@ -995,35 +998,46 @@ export async function advanceFloor(lobbyId, advance = true){
   return resultFloor;
 }
 
-// ---- Turm-Fortschritt pro Account (eigener Knoten, clobber-fest) --------
+// ---- Turm-Fortschritt pro Account & Charakter (eigener Knoten) ----------
 // Liegt bewusst NICHT im geteilten Spielstand-Blob (/adventure/<userKey>),
 // den das Haupt-Spiel als Ganzes zurückschreibt – sonst geht das erreichte
-// Stockwerk verloren. Quelle der Wahrheit ist allein /tower/progress/<userKey>.
+// Stockwerk verloren. Quelle der Wahrheit ist allein
+// /tower/progress/<userKey>/<charId>, also pro Charakter individuell.
 
-// Erreichtes Stockwerk laden. fallback = Altwert aus dem Spielstand
-// (towerFloor), damit bestehender Fortschritt bei der Umstellung erhalten
-// bleibt; er wird beim ersten Laden in den neuen Knoten übernommen.
-export async function loadTowerFloor(userKey, fallback = 1){
-  if(!userKey) return Math.max(1, fallback | 0) || 1;
+// Erreichtes Stockwerk laden. fallback = Altwert aus dem Spielstand des
+// Charakters (towerFloor), damit dessen Fortschritt bei der Umstellung erhalten
+// bleibt; er wird beim ersten Laden in den neuen Knoten übernommen. Zusätzlich
+// erbt der GERADE AKTIVE Charakter einmalig den alten globalen Wert (Legacy).
+export async function loadTowerFloor(userKey, charId, fallback = 1){
+  const fb = Math.max(1, fallback | 0) || 1;
+  if(!userKey || !charId) return fb;
   try {
-    const snap = await get(ref(db, PROGRESS_PATH(userKey)));
+    const snap = await get(ref(db, PROGRESS_PATH(userKey, charId)));
     if(snap.exists()){
       return Math.max(1, (snap.val() | 0) || 1);
     }
-    // Erstmigration: Altwert aus dem Spielstand übernehmen, falls vorhanden.
-    const seed = Math.max(1, fallback | 0) || 1;
-    if(seed > 1) await set(ref(db, PROGRESS_PATH(userKey)), seed);
+    // Erstmigration: charakter-eigener Altwert (fallback) als Basis …
+    let seed = fb;
+    // … und einmalig den alten, globalen Skalar übernehmen, falls noch vorhanden.
+    // Sobald hier ein Charakter-Kind geschrieben wird, wird der Skalar zu einem
+    // Objekt – spätere Charaktere lesen dort keine Zahl mehr und behalten ihren
+    // eigenen Fallback. So erbt nur der aktive Charakter den Altwert.
+    const legacy = await get(ref(db, LEGACY_PROGRESS_PATH(userKey)));
+    if(legacy.exists() && typeof legacy.val() === 'number'){
+      seed = Math.max(seed, Math.max(1, (legacy.val() | 0) || 1));
+    }
+    if(seed > 1) await set(ref(db, PROGRESS_PATH(userKey, charId)), seed);
     return seed;
-  } catch(e){ return Math.max(1, fallback | 0) || 1; }
+  } catch(e){ return fb; }
 }
 
 // Erreichtes Stockwerk sichern – monoton vorwärts (max), per Transaktion gegen
 // Races abgesichert. Gibt das gespeicherte Stockwerk zurück.
-export async function saveTowerFloor(userKey, floor){
+export async function saveTowerFloor(userKey, charId, floor){
   const target = Math.max(1, floor | 0) || 1;
-  if(!userKey) return target;
+  if(!userKey || !charId) return target;
   try {
-    const res = await runTransaction(ref(db, PROGRESS_PATH(userKey)),
+    const res = await runTransaction(ref(db, PROGRESS_PATH(userKey, charId)),
       cur => Math.max((cur | 0) || 1, target));
     const val = res && res.snapshot && res.snapshot.val();
     return Math.max(1, (val | 0) || target);

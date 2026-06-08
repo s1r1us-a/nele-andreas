@@ -210,7 +210,7 @@
 import { initAuth, displayName as getDisplayName, db, ref, update, onValue, get, set }
   from './adventure/js/core/firebase.js';
 import { grantDammerpfadBadges } from './dammerpfad-badges.js';
-import { loadSave, saveState, flushSave } from './adventure/js/core/state.js';
+import { loadSave, saveState, flushSave, activeCharId } from './adventure/js/core/state.js';
 import {
   computePlayerStats, towerBossFor,
   createLobby, ensureSoloLobby, joinLobby, listenLobby, listenCombat,
@@ -233,9 +233,10 @@ import { fmtBig } from './adventure/js/ui/dom.js';
 
 // ---- Globals ----
 let myKey = null, myName = null, myState = null, myClassId = DEFAULT_CLASS_ID;
-// Erreichtes Turm-Stockwerk dieses Accounts – Quelle der Wahrheit ist der
-// eigene Firebase-Knoten tower/progress/<myKey> (clobber-fest, s. tower.js),
-// NICHT myState.towerFloor (das überschreibt das Haupt-Spiel).
+let myCharId = null;                  // aktiver Charakter (Roster-Slot-Id)
+// Erreichtes Turm-Stockwerk dieses Charakters – Quelle der Wahrheit ist der
+// eigene Firebase-Knoten tower/progress/<myKey>/<myCharId> (clobber-fest, s.
+// tower.js), NICHT myState.towerFloor (das überschreibt das Haupt-Spiel).
 let myFloor = 1;
 let otherKey = null;
 let lobbyId = null, lobbyData = null, isHost = false;
@@ -594,7 +595,7 @@ window.onStartSolo = async function(){
 
     soloMode = true;
     // Persistenz: aktuelles Stockwerk im eigenen, clobber-festen Knoten sichern.
-    myFloor = Math.max(myFloor, floor); saveTowerFloor(myKey, floor);
+    myFloor = Math.max(myFloor, floor); saveTowerFloor(myKey, myCharId, floor);
 
     _frontStatsCache = hostStats; _backStatsCache = null;
     _frontNameCache  = myName;    _backNameCache  = '';
@@ -624,7 +625,7 @@ window.onStartFight = async function(){
     const lobby = lobbyData;
     soloMode = false;
     // Persistenz: aktuelles Stockwerk im eigenen, clobber-festen Knoten sichern.
-    myFloor = Math.max(myFloor, lobby.floor || 1); saveTowerFloor(myKey, lobby.floor || 1);
+    myFloor = Math.max(myFloor, lobby.floor || 1); saveTowerFloor(myKey, myCharId, lobby.floor || 1);
     // Gast-Spielstand laden (mit Timeout, damit ein hängender Firebase-Aufruf
     // den Start nicht blockiert → der catch-Zweig armt einen sichtbaren Retry).
     const guestSave  = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
@@ -1300,7 +1301,7 @@ function showResult(won, floor){
     // über Sessions), schon beim Sieg – nicht erst beim Klick auf „Nächstes
     // Stockwerk". Nach Sieg auf Stockwerk N ist der Fortsetzungspunkt N+1,
     // auch wenn der Spieler direkt „Verlassen" wählt.
-    myFloor = Math.max(myFloor, floor + 1); saveTowerFloor(myKey, floor + 1);
+    myFloor = Math.max(myFloor, floor + 1); saveTowerFloor(myKey, myCharId, floor + 1);
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
     try {
@@ -1390,7 +1391,7 @@ async function requestFloorReset(advance){
     // Persistenz: erreichtes Stockwerk SOFORT in den eigenen, clobber-festen
     // Knoten sichern (saveTowerFloor hält per Transaktion monoton vorwärts →
     // Koop-Gast wird durch das Host-Stockwerk nicht zurückgesetzt).
-    myFloor = Math.max(myFloor, floor); saveTowerFloor(myKey, floor);
+    myFloor = Math.max(myFloor, floor); saveTowerFloor(myKey, myCharId, floor);
     const waitMsg = soloMode ? '🧍 Solo starten oder auf Partner warten.' : 'Beide auf Bereit klicken.';
     toast(advance ? ('Weiter zu Stockwerk ' + floor + '! ' + waitMsg)
                   : ('Stockwerk ' + floor + ' erneut – ' + waitMsg));
@@ -1489,10 +1490,11 @@ function refreshResumeHint(){
     otherKey = (myKey === 'nele') ? 'andreas' : 'nele';
 
     myState = await loadSave(myKey);
+    myCharId = activeCharId();
     myClassId = (myState && myState.character && myState.character.classId) || DEFAULT_CLASS_ID;
     // Erreichtes Stockwerk aus dem eigenen, clobber-festen Knoten laden
-    // (Altwert aus dem Spielstand als Migrations-Fallback).
-    myFloor = await loadTowerFloor(myKey, (myState && myState.towerFloor) || 1);
+    // (pro Charakter; Altwert aus dem Spielstand als Migrations-Fallback).
+    myFloor = await loadTowerFloor(myKey, myCharId, (myState && myState.towerFloor) || 1);
 
     // Einstieg: gespeichertes Stockwerk anzeigen + auf Partner-Einladung lauschen.
     refreshResumeHint();
