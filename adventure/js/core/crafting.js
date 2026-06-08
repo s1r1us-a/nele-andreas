@@ -112,13 +112,22 @@ export async function rerollAffixes(itemId){
   return { ok:true, cost };
 }
 
+// Wie viele Chargen (à CONVERT_RATE) lassen sich aus dem Bestand umwandeln?
+// (0, wenn es kein höheres Material gibt oder zu wenig vorhanden ist.)
+export function maxConvertBatches(fromKey){
+  if(!nextMaterialKey(fromKey)) return 0;
+  return Math.floor(materialCount(fromKey) / CONVERT_RATE);
+}
+
 // ---- Konvertieren (10 niedrigere → 1 höhere Stufe) ------------------
-export function convertMaterial(fromKey){
+// `times` = Anzahl Chargen; wird auf den möglichen Höchstwert begrenzt.
+export function convertMaterial(fromKey, times = 1){
   const toKey = nextMaterialKey(fromKey);
   if(!toKey) return { ok:false, reason:'top' };
-  if(materialCount(fromKey) < CONVERT_RATE) return { ok:false, reason:'mat' };
-  mats()[fromKey] -= CONVERT_RATE;
-  mats()[toKey] = (mats()[toKey]||0) + 1;
+  const batches = Math.min(Math.max(1, Math.floor(times)), maxConvertBatches(fromKey));
+  if(batches < 1) return { ok:false, reason:'mat' };
+  mats()[fromKey] -= CONVERT_RATE * batches;
+  mats()[toKey] = (mats()[toKey]||0) + batches;
   saveState();
-  return { ok:true, fromKey, toKey };
+  return { ok:true, fromKey, toKey, batches };
 }
