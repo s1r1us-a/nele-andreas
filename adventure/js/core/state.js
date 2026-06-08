@@ -17,7 +17,7 @@ import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
 import { blankMaterials } from '../data/materials.js';
-import { db, ref, get, set, remove } from './firebase.js';
+import { db, ref, get, set, remove, onValue } from './firebase.js';
 
 export let state = null;        // aktiver Slot (flacher Spielstand)
 export let nextId = 1;
@@ -28,6 +28,11 @@ let roster = null;              // { version, activeId, slots:{id:state} }
 // Eingeloggter Spieler-Schlüssel ('andreas'/'nele') – beim Laden gesetzt.
 let userKey = null;
 const dbPath = () => 'adventure/' + userKey;
+
+// Pro Seitenladung eindeutige Id – erlaubt dem Live-Listener (watchSave), eigene
+// Schreib-Echos von echten Remote-Updates anderer Geräte zu unterscheiden.
+const CLIENT_ID = 'w_' + Math.random().toString(36).slice(2,10);
+let _writeSeq = 0;
 
 function genId(){ return 'c_' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-3); }
 
@@ -224,7 +229,10 @@ function saveData(){
   roster.slots[roster.activeId] = state;     // aktiven Slot synchronisieren
   const slots = {};
   for(const id of Object.keys(roster.slots)) slots[id] = stripState(roster.slots[id]);
-  return { version: roster.version, activeId: roster.activeId, slots };
+  // _writer/_seq: Metadaten für die Geräte-Synchronisation. buildRoster/migrateSlot
+  // ignorieren unbekannte Top-Level-Felder, daher keine Migration nötig.
+  return { version: roster.version, activeId: roster.activeId, slots,
+           _writer: CLIENT_ID, _seq: ++_writeSeq };
 }
 
 function parseLocal(){
@@ -233,6 +241,18 @@ function parseLocal(){
     if(!raw) return null;
     return JSON.parse(raw);
   } catch(e){ return null; }
+}
+
+// Übernimmt einen geladenen Rohwert in roster/state – gemeinsamer Pfad für
+// loadSave UND den Live-Listener (watchSave). preferLocalActive: den aktiven
+// Charakter DIESES Geräts beibehalten, falls remote ein anderer aktiv ist.
+function applyLoaded(loaded, { preferLocalActive = false } = {}){
+  const prevActive = roster && roster.activeId;
+  roster = buildRoster(loaded);
+  if(preferLocalActive && prevActive && roster.slots[prevActive]) roster.activeId = prevActive;
+  state = roster.slots[roster.activeId];
+  hydrateItems();
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData())); } catch(e){}
 }
 
 // ---- Laden: Firebase zuerst, sonst localStorage, sonst frisch ----------
@@ -246,11 +266,39 @@ export async function loadSave(uk){
     } catch(e){ console.warn('Firebase-Laden fehlgeschlagen, nutze lokalen Cache', e); }
   }
   if(!loaded) loaded = parseLocal();
-  roster = buildRoster(loaded);
-  state = roster.slots[roster.activeId];
-  hydrateItems();
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData())); } catch(e){}
+  applyLoaded(loaded);
   return state;
+}
+
+// ---- Live-Sync über Geräte: Echtzeit-Listener auf adventure/<userKey> ---
+// Analog zu watchCoins. Übernimmt Änderungen, die ein anderes Gerät desselben
+// Accounts schreibt, in den lokalen State. Erst NACH loadSave() aufrufen.
+let _busyCheck = null;
+// Lokale Aktion im Gange (Bosskampf/offenes Modal)? Dann Remote-Update aufschieben,
+// statt mitten in der Interaktion inventory/equipped auszutauschen.
+export function setBusyCheck(fn){ _busyCheck = fn; }
+function isBusy(){ try { return !!(_busyCheck && _busyCheck()); } catch(e){ return false; } }
+
+let _watchStarted = false, _pendingRemote = null;
+export function watchSave(onApplied){
+  if(!userKey || _watchStarted) return;
+  _watchStarted = true;
+  onValue(ref(db, dbPath()), snap => {
+    const loaded = snap.exists() ? snap.val() : null;
+    if(!loaded) return;                       // Reset/Erst-Erstellung: lokalen Stand nicht zerstören
+    if(loaded._writer === CLIENT_ID) return;  // eigenes Schreib-Echo ignorieren
+    if(isBusy()){ _pendingRemote = loaded; return; }  // Arena/Modal offen: aufschieben
+    applyLoaded(loaded, { preferLocalActive: true });
+    if(onApplied) onApplied();
+  });
+}
+
+// Zieht ein aufgeschobenes Remote-Update nach, sobald keine Interaktion mehr läuft.
+export function flushPendingRemote(onApplied){
+  if(!_pendingRemote || isBusy()) return;
+  const loaded = _pendingRemote; _pendingRemote = null;
+  applyLoaded(loaded, { preferLocalActive: true });
+  if(onApplied) onApplied();
 }
 
 // ---- Speichern: sofort lokal, debounced nach Firebase ------------------
