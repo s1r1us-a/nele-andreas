@@ -13,7 +13,7 @@ import { state } from '../core/state.js';
 import { itemPower, isLocked } from '../core/items.js';
 import { upgradeItem, rerollAffixes, convertMaterial, materialCount, maxConvertBatches } from '../core/crafting.js';
 import { getCoins } from '../core/coins.js';
-import { $, fmtBig, toast, confirmDialog } from './dom.js';
+import { $, fmtBig, toast } from './dom.js';
 import { bindTooltip, hideTooltip } from './tooltip.js';
 
 // Aktuell zum Bearbeiten gewähltes Inventar-Item (id) – modulweit.
@@ -112,21 +112,12 @@ export function renderForge(){
     const next = nextMaterialKey(m.key);
     const have = materialCount(m.key);
     const batches = next ? maxConvertBatches(m.key) : 0;
-    // Konvertieren-Buttons nur zeigen, wenn die Umwandlung wirklich möglich ist
-    // (genug Material). Spart leere/ausgegraute Knöpfe und Platz auf Mobile.
-    let convBtn = '';
-    if(batches >= 1){
-      const nIcon = MATERIAL_BY_KEY[next].icon;
-      // Einzel-Charge: 10 → 1
-      const single = '<button class="btn ghost forge-conv" data-conv="'+m.key+'" data-times="1" title="'+CONVERT_RATE+' '+m.name+' → 1 '+MATERIAL_BY_KEY[next].name+'">'+
-          '🔁 '+CONVERT_RATE+' → 1 '+nIcon+'</button>';
-      // Alles umwandeln (alle vollen Chargen auf einmal) – erst ab 2 Chargen sinnvoll.
-      const all = batches >= 2
-        ? '<button class="btn ghost forge-conv forge-conv-all" data-conv="'+m.key+'" data-times="'+batches+'" title="Alle '+(CONVERT_RATE*batches)+' '+m.name+' → '+batches+' '+MATERIAL_BY_KEY[next].name+'">'+
-            '⏫ Alles → '+batches+' '+nIcon+'</button>'
-        : '';
-      convBtn = '<div class="forge-conv-row">'+single+all+'</div>';
-    }
+    // Konvertieren-Button nur zeigen, wenn die Umwandlung wirklich möglich ist
+    // (genug Material). Öffnet ein Modal mit Slider zum Wählen der Menge.
+    const convBtn = (batches >= 1)
+      ? '<button class="btn ghost forge-conv" data-conv="'+m.key+'" title="'+CONVERT_RATE+' '+m.name+' → 1 '+MATERIAL_BY_KEY[next].name+'">'+
+          '🔁 Umwandeln ('+CONVERT_RATE+' → 1 '+MATERIAL_BY_KEY[next].icon+')</button>'
+      : '';
     return '<div class="forge-mat">'+
       '<div class="fm-top">'+
         '<span class="fm-icon">'+m.icon+'</span>'+
@@ -137,15 +128,9 @@ export function renderForge(){
   panel.appendChild(matBar);
   matBar.querySelectorAll('.forge-conv').forEach(btn => btn.addEventListener('click', async ()=>{
     const from = btn.dataset.conv; const to = nextMaterialKey(from);
-    // Gewünschte Chargen aus dem Button; auf den aktuell möglichen Höchstwert begrenzen.
-    const times = Math.min(parseInt(btn.dataset.times, 10) || 1, maxConvertBatches(from));
-    if(times < 1) return;
-    const used = CONVERT_RATE * times;
-    const ok = await confirmDialog({ title:'Materialien umwandeln?', emoji: times > 1 ? '⏫' : '🔁',
-      body: used+' '+MATERIAL_BY_KEY[from].icon+' '+MATERIAL_BY_KEY[from].name+
-        ' → '+times+' '+MATERIAL_BY_KEY[to].icon+' '+MATERIAL_BY_KEY[to].name+'?',
-      confirmText:'Umwandeln', cancelText:'Abbrechen' });
-    if(!ok) return;
+    // Modal mit Slider: Menge (Chargen) wählen, statt vielfach zu klicken.
+    const times = await convertSliderDialog(from, to);
+    if(!times) return;
     const res = convertMaterial(from, times);
     renderForge();
     if(res.ok) toast('🔁 '+MATERIAL_BY_KEY[to].icon+' +'+res.batches+' '+MATERIAL_BY_KEY[to].name);
@@ -176,6 +161,72 @@ export function renderForge(){
     return;
   }
   panel.appendChild(buildActionCard(sel));
+}
+
+// Modal mit Slider: wählt die Anzahl umzuwandelnder Chargen (à CONVERT_RATE).
+// Liefert die gewählte Charge-Anzahl (≥1) oder 0 bei Abbruch. Renutzt die
+// cdlg-Optik der Bestätigungsdialoge, ergänzt um einen Mengen-Slider.
+function convertSliderDialog(fromKey, toKey){
+  const max = maxConvertBatches(fromKey);
+  const fm = MATERIAL_BY_KEY[fromKey], tm = MATERIAL_BY_KEY[toKey];
+  return new Promise(resolve => {
+    let val = max;   // Standard: alles umwandeln
+    const ov = document.createElement('div');
+    ov.className = 'cdlg-overlay';
+    ov.innerHTML =
+      '<div class="cdlg-card" role="dialog" aria-modal="true">'+
+        '<div class="cdlg-emoji">🔁</div>'+
+        '<div class="cdlg-title">Materialien umwandeln</div>'+
+        '<div class="conv-slider">'+
+          '<div class="conv-preview">'+
+            '<span class="conv-from"><span class="cs-amt" data-from>'+(CONVERT_RATE*val)+'</span> '+fm.icon+' '+fm.name+'</span>'+
+            '<span class="conv-arrow">→</span>'+
+            '<span class="conv-to"><span class="cs-amt" data-to>'+val+'</span> '+tm.icon+' '+tm.name+'</span>'+
+          '</div>'+
+          '<input type="range" class="conv-range" min="1" max="'+max+'" value="'+val+'" step="1"'+(max<2?' disabled':'')+'>'+
+          '<div class="conv-row">'+
+            '<button class="btn ghost conv-min" type="button">Min</button>'+
+            '<span class="conv-count"><b data-cnt>'+val+'</b> / '+max+' Chargen</span>'+
+            '<button class="btn ghost conv-max" type="button">Max</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="cdlg-actions">'+
+          '<button class="btn ghost" data-act="cancel">Abbrechen</button>'+
+          '<button class="btn" data-act="ok">Umwandeln</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=> ov.classList.add('show'));
+
+    const range = ov.querySelector('.conv-range');
+    const fromEl = ov.querySelector('[data-from]');
+    const toEl = ov.querySelector('[data-to]');
+    const cntEl = ov.querySelector('[data-cnt]');
+    const sync = () => {
+      val = Math.min(max, Math.max(1, parseInt(range.value, 10) || 1));
+      fromEl.textContent = CONVERT_RATE * val;
+      toEl.textContent = val;
+      cntEl.textContent = val;
+    };
+    range.addEventListener('input', sync);
+    ov.querySelector('.conv-min').addEventListener('click', ()=>{ range.value = 1; sync(); });
+    ov.querySelector('.conv-max').addEventListener('click', ()=>{ range.value = max; sync(); });
+
+    const done = result => {
+      document.removeEventListener('keydown', onKey);
+      ov.classList.remove('show');
+      setTimeout(()=> ov.remove(), 200);
+      resolve(result);
+    };
+    const onKey = e => {
+      if(e.key === 'Escape') done(0);
+      else if(e.key === 'Enter') done(val);
+    };
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', e => { if(e.target === ov) done(0); });
+    ov.querySelector('[data-act="cancel"]').addEventListener('click', ()=> done(0));
+    ov.querySelector('[data-act="ok"]').addEventListener('click', ()=> done(val));
+  });
 }
 
 function buildActionCard(it){
