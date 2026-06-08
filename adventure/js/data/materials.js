@@ -83,18 +83,16 @@ const RARITY_FACTORS = {
 function factorOf(rarityKey){ return RARITY_FACTORS[rarityKey] || RARITY_FACTORS.gewoehnlich; }
 
 // Kosten für den Schritt von item.upgradeLevel → +1.
-// Stufen 0–9: seltenheitsabhängige Faktoren (wie bisher). Ab +10 (Transzendenz):
-// Material = Transzendenz-Stufe t (✦1=1, ✦2=2, …) in der zum Item passenden Sorte,
-// Coins = 2000 × t.
+// Legendär/Mythisch (transzendierbar): EINE durchgehende, lineare Kurve über alle
+// Stufen – Material = Zielstufe (Schritt), Coins = 2000 × Schritt. Dadurch fängt es
+// bei +1 mit 1 an, steigt um 1 je Stufe und läuft ohne Sprung über +10 → ✦1 weiter.
+// Übrige Raritäten (nur bis +10): seltenheitsabhängige Faktoren wie bisher.
 export function upgradeCost(item){
   const lvl = item.upgradeLevel || 0;
+  const step = lvl + 1;                       // Kosten richten sich nach der Zielstufe
   const matKey = materialForRarity(item.rarity);
-  if(lvl >= MAX_UPGRADE){
-    const t = lvl - MAX_UPGRADE + 1;   // Schritt auf ✦t
-    return { matKey, mat: t, coins: 2000 * t };
-  }
+  if(canTranscend(item)) return { matKey, mat: step, coins: 2000 * step };
   const f = factorOf(item.rarity);
-  const step = lvl + 1;   // Schritt auf +step
   return { matKey, mat: f.mat*step, coins: f.coins*step };
 }
 // Aufwertbar bis +10 (alle Raritäten) bzw. bis +10+MAX_TRANSCEND (ab Legendär).
