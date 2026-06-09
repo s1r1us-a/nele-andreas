@@ -49,6 +49,19 @@ export function dropCardHTML(drop){
     '</div>';
 }
 
+// Farbstoff-Belohnungskarte für den Sieg-Bildschirm (analog dropCardHTML): zeigt
+// den gedroppten Farbstoff als eigene Beute-Karte mit Farbtupfer und Namen.
+export function dyeCardHTML(dyeKey){
+  const d = DYE_BY_KEY[dyeKey];
+  if(!d) return '';
+  return '<div class="arena-drop-head">🎨 Farbstoff erhalten:</div>'+
+    '<div class="reward-card arena-drop dye-reward" style="--rc:'+d.color+'">'+
+      '<div class="dye-reward-swatch" style="background:'+d.color+'"></div>'+
+      '<div class="rc-name" style="color:'+d.color+'">'+d.name+'</div>'+
+      '<div class="rc-slot">Farbstoff · in der Färberei einsetzbar</div>'+
+    '</div>';
+}
+
 export function setCombatSpeed(v){ combatSpeed = v; }
 export function getCombatSpeed(){ return combatSpeed; }
 
@@ -1652,9 +1665,7 @@ function endFight(fight, win){
       const dyeKey = rollDyeDrop(state.zone);
       if(dyeKey){
         state.dyes[dyeKey] = (state.dyes[dyeKey] || 0) + 1;
-        const d = DYE_BY_KEY[dyeKey];
-        dyeNote = '<div class="ar-bonus dye-drop">🎨 Farbstoff erhalten: '+
-          '<span class="dye-swatch" style="background:'+d.color+'"></span> <b>'+d.name+'</b></div>';
+        dyeNote = dyeCardHTML(dyeKey);
       }
     }
 

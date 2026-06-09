@@ -28,6 +28,16 @@ function rebuildSprite(it){
   it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
 }
 
+// Vorschau-Sprite (OHNE Zustandsänderung): liefert das Item-Sprite so, wie es in
+// einer Wunschfarbe aussähe – für die Live-Vorschau in der Färberei. dyeKey=null
+// → Originalfarbe. Nutzt exakt dieselbe Art-Logik wie rebuildSprite.
+export function previewItemSprite(it, dyeKey){
+  const t = typeOf(it);
+  const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
+  const color = (dyeKey && DYE_BY_KEY[dyeKey]) ? DYE_BY_KEY[dyeKey].color : null;
+  return buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, color);
+}
+
 // Item einfärben. Liefert { ok, reason }.
 export function dyeItem(itemId, dyeKey){
   const it = findItem(itemId);

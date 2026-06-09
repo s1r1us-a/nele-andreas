@@ -35,6 +35,7 @@ import { itemValue, isLocked, gearScore, canEquip, autoEquipBest, itemPower,
 import { getCoins, spendCoins } from '../core/coins.js';
 import { salvage } from '../core/crafting.js';
 import { salvageYield, MATERIAL_BY_KEY, MATERIALS, upgradeBadge } from '../data/materials.js';
+import { DYES } from '../data/dyes.js';
 import { claimPendingLoot } from '../core/items.js';
 import { renderForge } from './forge.js';
 import { buildRoomBanner, applyRoomTheme, ensureRoomBanner } from './roombanner.js';
@@ -689,6 +690,33 @@ function renderConsumables(panel){
     mh.className = 'inv-hint';
     mh.textContent = 'Noch keine Materialien – zerlege Items im Inventar (♻️ Zerlegen).';
     panel.appendChild(mh);
+  }
+
+  // ---- Farbstoffe (eigene Kategorie für die Färberei) ---------------
+  const dyeStock = state.dyes || {};
+  const ownedDyes = DYES.filter(d => (dyeStock[d.key]||0) > 0);
+  const dyeHead = document.createElement('h3');
+  dyeHead.className = 'consum-cat';
+  dyeHead.textContent = '🎨 Farbstoffe';
+  panel.appendChild(dyeHead);
+  if(ownedDyes.length){
+    const dyeList = document.createElement('div');
+    dyeList.className = 'consum-list';
+    for(const d of ownedDyes){
+      const card = document.createElement('div');
+      card.className = 'consum-card dye-inv-card';
+      card.innerHTML = '<div class="cc-icon"><span class="dye-swatch lg" style="background:'+d.color+'"></span></div>'+
+        '<div class="cc-body"><div class="cc-name">'+d.name+'</div>'+
+        '<div class="cc-desc">Farbstoff zum Einfärben von Rüstung in der Färberei.</div></div>'+
+        '<div class="cc-count">×'+fmtBig(dyeStock[d.key])+'</div>';
+      dyeList.appendChild(card);
+    }
+    panel.appendChild(dyeList);
+  } else {
+    const dh = document.createElement('p');
+    dh.className = 'inv-hint';
+    dh.textContent = 'Noch keine Farbstoffe – besiege Bosse oder schließe Abenteuer ab.';
+    panel.appendChild(dh);
   }
 
   const hint = document.createElement('p');
