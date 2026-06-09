@@ -12,6 +12,7 @@ import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf, itemDispl
 import { allowedMaterials, classOf } from '../data/classes.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
+import { dyeColorOf } from '../data/dyes.js';
 import { awardCoins, spendCoins, getCoins } from './coins.js';
 import { toast } from '../ui/dom.js';
 
@@ -143,7 +144,7 @@ export function ensureItemSprite(it){
   it.variant = t.variant;
   // art aus dem Item-Typ (Nebenhand: schild/waffe/orb), Fallback = Slot-art.
   const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material);
+  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
   return it;
 }
 
@@ -359,7 +360,7 @@ export function equip(item, explicitTarget){
   const prev = state.equipped[target];
   if(prev) state.inventory.push(prev);
   item.slotKey = target;
-  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb, typeOf(item).material);
+  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb, typeOf(item).material, dyeColorOf(item));
   state.equipped[target] = item;
   saveState();
 }

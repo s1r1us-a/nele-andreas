@@ -5,6 +5,7 @@
 import { ITEMS_PER_EXPEDITION, POTION_BASE_CHANCE } from '../data/tuning.js';
 import { rarityIndex } from '../data/rarities.js';
 import { expeditionOf } from '../data/expeditions.js';
+import { rollDyeDrop, DYE_BY_KEY } from '../data/dyes.js';
 import { state, saveState } from './state.js';
 import { rollItem, freeSlots, addLog, recordDrop } from './items.js';
 import { EXPEDITION_MIN_CAP } from './loot.js';
@@ -43,13 +44,23 @@ export function collectExpedition(){
   if(freeSlots() < items.length){ flashFullBanner(); return; }
   const exp = expeditionOf(state.expedition.durKey);
   let xpGain = exp ? Math.round(120 + exp.boost*120) : 120;  // XP stark erhöht (weniger grind-lastig)
+  // Farbstoff-Drops (Färberei): je mitgebrachtem Fund eine Chance auf Farbstoff.
+  const dyesFound = {};
   for(const it of items){
     state.inventory.push(it);
     addLog(it); recordDrop(it); popFind(it);
     state.totalFinds = (state.totalFinds||0) + 1;
     xpGain += rarityIndex(it.rarity)*24 + 16;
+    const dyeKey = rollDyeDrop(state.zone);
+    if(dyeKey){
+      state.dyes[dyeKey] = (state.dyes[dyeKey] || 0) + 1;
+      dyesFound[dyeKey] = (dyesFound[dyeKey] || 0) + 1;
+    }
   }
   gainXp(xpGain);
+  for(const k of Object.keys(dyesFound)){
+    toast('🎨 Farbstoff: '+DYE_BY_KEY[k].name+(dyesFound[k]>1?' ×'+dyesFound[k]:''));
+  }
   const potionChance = Math.min(0.6, POTION_BASE_CHANCE + (exp ? exp.boost*0.1 : 0));
   let potionGained = false;
   if(Math.random() < potionChance){ state.potions = (state.potions||0) + 1; potionGained = true; toast('🧪 Heiltrank gefunden!'); }

@@ -7,6 +7,7 @@ import { typeOf } from '../data/itemTypes.js';
 import { rarityOf } from '../data/rarities.js';
 import { classOf } from '../data/classes.js';
 import { upgradeBadge } from '../data/materials.js';
+import { DYE_BY_KEY } from '../data/dyes.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked, procText, resolveTargetSlot, canEquip, equipBlockReason, itemKindLabel, itemKindIcon } from '../core/items.js';
 import { $ } from './dom.js';
@@ -62,10 +63,14 @@ export function tooltipHTML(it, opts={}){
   if(!canEquip(it)){
     matLine += '<div class="tt-locked">✋ '+equipBlockReason(it)+'</div>';
   }
+  // Färbungs-Hinweis (Färberei): kleine Zeile mit Farb-Punkt + Farbname.
+  const dyeLine = (it.dye && DYE_BY_KEY[it.dye])
+    ? '<div class="tt-dye"><span class="dye-swatch" style="background:'+DYE_BY_KEY[it.dye].color+'"></span> Gefärbt: '+DYE_BY_KEY[it.dye].name+'</div>' : '';
   return '<div class="tt-name" style="color:'+r.color+'">'+it.name+upg+lock+'</div>'+
     '<div class="tt-slot">'+r.name+' · '+slot.name+'</div>'+
     focus+
     matLine+
+    dyeLine+
     '<div class="tt-stat '+sCls+'">+'+it.stat+' '+sLbl+'</div>'+
     affixLinesHTML(it)+
     qLine+
