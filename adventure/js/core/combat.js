@@ -7,11 +7,13 @@ import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities
 import { SLOTS } from '../data/slots.js';
 import { rollAffixes } from '../core/items.js';
 import { materialOf, typeOf } from '../data/itemTypes.js';
+import { ATK_ELEM, weaponAtk } from '../data/attacks.js';
 import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc } from './avatar.js';
+import { buildItemSVG } from './item-art.js';
 import { buildDemonSVG } from './demon-art.js';
 import { rollItem, addLog, recordDrop, giveLoot } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
@@ -448,43 +450,166 @@ function abilityCastFloat(ab){
   setTimeout(()=> el.remove(), 1500);
 }
 
-function heroUsesStab(){
-  const w = state.equipped && state.equipped.waffe;
-  return !!(w && materialOf(w) === 'zauberstab');
+// Angriffs-Beschreibung je Angreifer. `meta.atk` erlaubt das Vorab-Auflösen
+// (Duell-Gegner mit eigener Waffe); Boss ohne Waffe → generischer Hieb.
+// ATK_ELEM/attackProfileOf/spellOf/weaponAtk: siehe data/attacks.js (geteilt mit Turm).
+const atkFromWeapon = weaponAtk;
+function resolveAttack(isHero, meta){
+  if(meta && meta.atk) return meta.atk;
+  if(isHero) return atkFromWeapon(state.equipped && state.equipped.waffe);
+  return { kind:'melee', profile:'overhead', element:'physical' };
 }
-
-function staffProjectileAnim(fromAnchor, toAnchor, layer, speed, orb, onArrive){
+// Hand-Position eines Sprites in Bühnen-Koordinaten (Waffen-Overlay/Projektil-Start).
+function handAnchor(spriteId){
+  const stage = $('#arenaStage'), el = $('#'+spriteId);
+  if(!stage || !el) return null;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const isBoss = spriteId === 'bossSprite';
+  const fx = isBoss ? 0.38 : 0.62, fy = 0.60;   // Hand im viewBox ~ (124,194)/(200,320)
+  return { x: r.left - sr.left + fx*r.width, y: r.top - sr.top + fy*r.height, w:r.width, h:r.height, isBoss };
+}
+// Echter Waffen-Schwung: Waffen-SVG am Hand-Anker, rotiert um den Griff (transform-origin unten-mitte).
+function weaponSwing(spriteId, atk){
+  const layer = $('#dmgLayer'), ha = handAnchor(spriteId);
+  if(!layer || !ha || atk.wv == null) return false;
+  const elem = atk.element === 'ice' ? 'ice' : 'fire';
+  let src; try { src = buildItemSVG('waffe', atk.wv, atk.rarity, elem, atk.orb, atk.material); } catch(e){ return false; }
+  const size = Math.max(46, ha.h*0.62);
+  const wrap = document.createElement('div');
+  wrap.className = 'weapon-swing';
+  wrap.style.left = ha.x+'px'; wrap.style.top = ha.y+'px';
+  wrap.style.width = wrap.style.height = size+'px';
+  wrap.style.marginLeft = (-size/2)+'px'; wrap.style.marginTop = (-size)+'px';
+  const img = document.createElement('img'); img.src = src; img.alt=''; img.draggable=false;
+  wrap.appendChild(img); layer.appendChild(wrap);
+  const dir = ha.isBoss ? -1 : 1, flip = ha.isBoss ? 'scaleX(-1) ' : '';
+  const ANG = { arc:[-120,-95,40,28], overhead:[-78,-58,82,70], thrust:[-12,-8,6,0], flurry:[-46,28,-30,22] }[atk.profile] || [-110,-90,40,25];
+  const off = [0,0.28,0.55,1];
+  const kf = ANG.map((deg,i)=>{
+    let t = `${flip}rotate(${dir*deg}deg)`;
+    if(atk.profile==='thrust'){ const tx = [0,16,26,0][i]*dir; t = `${flip}translateX(${tx}px) rotate(${dir*deg}deg)`; }
+    return { transform:t, offset:off[i] };
+  });
+  const a = wrap.animate(kf, { duration: 300/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
+  a.onfinish = ()=> wrap.remove();
+  setTimeout(()=> { if(wrap.parentNode) wrap.remove(); }, 700/combatSpeed);
+  return true;
+}
+// Element-gefärbte Sichel-/Bogen-Spur, die der Klinge folgt (liest sich als Schwung).
+function swingTrail(spriteId, profile, element){
+  const layer = $('#dmgLayer'), ha = handAnchor(spriteId);
+  if(!layer || !ha) return;
+  const P = ATK_ELEM[element] || ATK_ELEM.physical;
+  const dir = ha.isBoss ? -1 : 1, r = Math.max(40, ha.h*0.7);
+  let d;
+  if(profile==='thrust')        d = `M0 -5 L${dir*r} -2 L${dir*r} 2 L0 5 Z`;
+  else if(profile==='overhead') d = `M${-dir*r*0.2} ${-r} Q${dir*r*0.5} ${-r*0.2} ${dir*r*0.15} ${r*0.45}`;
+  else                          d = `M${-dir*r*0.7} ${-r*0.5} Q${dir*r} ${-r*0.1} ${dir*r*0.2} ${r*0.6}`;
+  const sw = profile==='thrust' ? 6 : 9;
+  const wrap = document.createElement('div');
+  wrap.className = 'swing-trail';
+  wrap.style.left = ha.x+'px'; wrap.style.top = ha.y+'px';
+  wrap.innerHTML = `<svg width="${r*2}" height="${r*2}" viewBox="${-r} ${-r} ${r*2} ${r*2}" style="overflow:visible">`+
+    `<path d="${d}" fill="none" stroke="${P.mid}" stroke-width="${sw}" stroke-linecap="round" opacity="0.85"/>`+
+    `<path d="${d}" fill="none" stroke="${P.core}" stroke-width="${Math.max(2,sw*0.33)}" stroke-linecap="round"/></svg>`;
+  layer.appendChild(wrap);
+  wrap.animate([
+    { opacity:0, transform:`rotate(${-dir*22}deg) scale(0.7)` },
+    { opacity:1, transform:'rotate(0deg) scale(1)', offset:0.4 },
+    { opacity:0, transform:`rotate(${dir*18}deg) scale(1.05)` },
+  ], { duration: 300/combatSpeed, easing:'ease-out' });
+  setTimeout(()=> { if(wrap.parentNode) wrap.remove(); }, 360/combatSpeed);
+}
+// Sofortiger, gezackter Blitz vom Angreifer zum Ziel.
+function lightningBolt(from, to, layer, element, reduce, onArrive){
+  const P = ATK_ELEM[element] || ATK_ELEM.lightning;
+  const dx = to.x-from.x, dy = to.y-from.y, len = Math.hypot(dx,dy) || 1;
+  const nx = -dy/len, ny = dx/len, segs = 7;
+  let pts = `${from.x.toFixed(1)},${from.y.toFixed(1)}`;
+  for(let i=1;i<segs;i++){ const t=i/segs; const j = reduce ? 0 : (Math.random()*2-1)*Math.min(26, len*0.12);
+    pts += ` ${(from.x+dx*t+nx*j).toFixed(1)},${(from.y+dy*t+ny*j).toFixed(1)}`; }
+  pts += ` ${to.x.toFixed(1)},${to.y.toFixed(1)}`;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('class','atk-bolt');
+  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${P.edge}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>`+
+                  `<polyline points="${pts}" fill="none" stroke="${P.mid}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`+
+                  `<polyline points="${pts}" fill="none" stroke="${P.core}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  layer.appendChild(svg);
+  const dur = (reduce ? 140 : 210)/combatSpeed;
+  svg.animate([{opacity:0},{opacity:1,offset:0.15},{opacity:0.55,offset:0.5},{opacity:1,offset:0.72},{opacity:0}],
+    { duration:dur, easing:'steps(5,end)' });
+  setTimeout(()=>{ if(onArrive) onArrive(); }, Math.min(90, dur*0.4));
+  setTimeout(()=> { if(svg.parentNode) svg.remove(); }, dur+40);
+}
+// Fliegendes Projektil mit Schweif (Element-gefärbt) – ersetzt staffProjectileAnim.
+function projectile(from, to, layer, element, reduce, onArrive){
+  const cls = { fire:'proj-fire', ice:'proj-ice', nature:'proj-nature', lightning:'proj-ice' }[element] || 'proj-fire';
   const ball = document.createElement('div');
-  ball.className = 'staff-projectile orb-' + (orb || 'rot');
-  ball.style.left = fromAnchor.x + 'px';
-  ball.style.top  = (fromAnchor.y - 10) + 'px';
+  ball.className = 'staff-projectile ' + cls;
+  ball.style.left = from.x+'px'; ball.style.top = (from.y-8)+'px';
   layer.appendChild(ball);
-  const dx = toAnchor.x - fromAnchor.x;
-  const dy = toAnchor.y - fromAnchor.y;
-  const dur = Math.max(80, 220 / speed);
-  ball.animate(
-    [ { transform:'translate(0,0) scale(1)', opacity:1 },
-      { transform:`translate(${dx}px,${dy}px) scale(0.4)`, opacity:0.6 } ],
-    { duration: dur, easing:'ease-in', fill:'forwards' }
-  );
+  const dx = to.x-from.x, dy = (to.y) - (from.y-8);
+  const dur = Math.max(90, (reduce?160:240)/combatSpeed);
+  ball.animate([ { transform:'translate(0,0) scale(1)', opacity:1 },
+                 { transform:`translate(${dx}px,${dy}px) scale(0.5)`, opacity:0.85 } ],
+    { duration:dur, easing:'ease-in', fill:'forwards' });
+  if(!reduce){
+    for(let i=1;i<=3;i++){ setTimeout(()=>{
+      const t = document.createElement('div'); t.className = 'staff-projectile '+cls+' proj-tail';
+      t.style.left = (from.x+dx*(i/5))+'px'; t.style.top = (from.y-8+dy*(i/5))+'px';
+      layer.appendChild(t);
+      t.animate([{opacity:.5,transform:'scale(.8)'},{opacity:0,transform:'scale(.3)'}], {duration:180, fill:'forwards'});
+      setTimeout(()=> t.remove(), 200);
+    }, dur*(i/5)); }
+  }
   setTimeout(()=>{ ball.remove(); if(onArrive) onArrive(); }, dur);
 }
+// Einschlag am Ziel: element-gefärbter Flash + Partikel.
+function impactBurst(anchor, element, crit, reduce){
+  const layer = $('#dmgLayer'); if(!layer || !anchor) return;
+  const P = ATK_ELEM[element] || ATK_ELEM.physical;
+  const flash = document.createElement('div');
+  flash.className = 'impact-burst';
+  flash.style.left = anchor.x+'px'; flash.style.top = anchor.y+'px';
+  flash.style.setProperty('--ic', P.mid); flash.style.setProperty('--ie', P.core);
+  layer.appendChild(flash);
+  setTimeout(()=> flash.remove(), 420);
+  if(reduce) return;
+  const n = crit ? 9 : 6;
+  for(let i=0;i<n;i++){
+    const ang = (Math.PI*2/n)*i + Math.random()*0.5, dist = 18 + Math.random()*22;
+    const p = document.createElement('div');
+    p.className = 'impact-particle';
+    p.style.left = anchor.x+'px'; p.style.top = anchor.y+'px';
+    p.style.background = i%2 ? P.core : P.mid;
+    layer.appendChild(p);
+    p.animate([ { transform:'translate(-50%,-50%) translate(0,0) scale(1)', opacity:1 },
+                { transform:`translate(-50%,-50%) translate(${(Math.cos(ang)*dist).toFixed(1)}px,${(Math.sin(ang)*dist).toFixed(1)}px) scale(0.2)`, opacity:0 } ],
+      { duration:360+Math.random()*160, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> p.remove(), 540);
+  }
+}
 
-function attackAnim(who, dmg, crit, onHit){
+function attackAnim(who, dmg, crit, onHit, meta){
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isHero = who==='hero';
-  const attacker = isHero ? $('#heroSprite') : $('#bossSprite');
-  const target   = isHero ? $('#bossSprite') : $('#heroSprite');
-  const targetId = isHero ? 'bossSprite' : 'heroSprite';
-  const heroId   = isHero ? 'heroSprite' : 'bossSprite';
-  const stage = $('#arenaStage');
-  const layer = $('#dmgLayer');
-  // Kampf-Animationen (Schwung, Stab-Cast, Projektil) laufen unabhängig von
-  // prefers-reduced-motion – nur das ruckartige Screen-Shake respektiert die Einstellung.
-  const useProjectile = isHero && heroUsesStab();
+  const attackerId = isHero ? 'heroSprite' : 'bossSprite';
+  const targetId   = isHero ? 'bossSprite' : 'heroSprite';
+  const target = $('#'+targetId), attacker = $('#'+attackerId);
+  const stage = $('#arenaStage'), layer = $('#dmgLayer');
+  const atk = resolveAttack(isHero, meta);
+  const isStab = atk.kind === 'stab';
+  // Kampf-Animationen laufen unabhängig von prefers-reduced-motion; nur Shake,
+  // Spur und Partikel respektieren die Einstellung.
+  if(isStab){
+    staffCast(attacker);
+  } else {
+    const swung = weaponSwing(attackerId, atk);
+    lunge(attacker, !isHero);
+    if(swung && !reduce) swingTrail(attackerId, atk.profile, atk.element);
+  }
 
-  if(!useProjectile){ lunge(attacker, !isHero); }
-  else { staffCast(attacker); }
+  const targetAnchor = () => (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
 
   const doHit = () => {
     if(onHit) onHit();
@@ -492,28 +617,24 @@ function attackAnim(who, dmg, crit, onHit){
     setTimeout(()=> target.classList.remove('hit'), FLASH / combatSpeed);
     if(!reduce && (crit || Math.random()<.5)){ stage.classList.add('shake');
       setTimeout(()=> stage.classList.remove('shake'), SHAKE / combatSpeed); }
-    const a = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
+    const a = targetAnchor();
     const jitter = Math.round((Math.random()*2-1)*12);
-    const x = a.x + jitter, y = a.y;
-    if(!useProjectile){
-      const slash = document.createElement('div');
-      slash.className = 'slash'; slash.style.left=(x-45)+'px'; slash.style.top=(y-45)+'px';
-      layer.appendChild(slash);
-      setTimeout(()=> slash.remove(), FLOAT / combatSpeed);
-    }
+    const hit = { x: a.x + jitter, y: a.y };
+    impactBurst(hit, atk.element, crit, reduce);
     const num = document.createElement('div');
     num.className = 'dmg-num' + (crit?' crit':'') + (isHero ? '' : ' incoming');
     num.textContent = '-'+fmtBig(dmg)+(crit?'!':'');
-    num.style.left=(x-10)+'px'; num.style.top=y+'px';
+    num.style.left=(hit.x-10)+'px'; num.style.top=hit.y+'px';
     layer.appendChild(num);
     setTimeout(()=> num.remove(), FLOAT / combatSpeed);
   };
 
-  if(useProjectile){
-    const from = (currentFight && currentFight.anchor[heroId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 };
-    const to   = (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth*3/4, y: stage.clientHeight/2 };
-    const orb  = (state.equipped && state.equipped.waffe && typeOf(state.equipped.waffe).orb) || 'rot';
-    staffProjectileAnim(from, to, layer, combatSpeed, orb, doHit);
+  if(isStab){
+    const fromH = handAnchor(attackerId);
+    const from = fromH ? { x: fromH.x, y: fromH.y } : ((currentFight && currentFight.anchor[attackerId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 });
+    const to   = targetAnchor();
+    if(atk.spell && atk.spell.mode === 'bolt') lightningBolt(from, to, layer, atk.element, reduce, doHit);
+    else projectile(from, to, layer, atk.element, reduce, doHit);
   } else {
     setTimeout(doHit, HIT_DELAY / combatSpeed);
   }
@@ -1583,7 +1704,7 @@ function endFight(fight, win){
 //  Der Host (siehe duel.js) simuliert autoritativ; BEIDE Clients rendern
 //  ausschließlich aus dem Kampf-Snapshot via applyDuelSnapshot().
 // =====================================================================
-// cfg: { lobbyId, role, myName, oppName, oppSrc, myTier, ability, stake, onAction, onClose, onForfeit }
+// cfg: { lobbyId, role, myName, oppName, oppSrc, oppEquipped, myTier, ability, stake, onAction, onClose, onForfeit }
 export function openDuelArena(cfg){
   clearTimeout(combatTimer); combatTimer = null;
   const t = recomputeTotals();
@@ -1601,6 +1722,8 @@ export function openDuelArena(cfg){
     abilities: cfg.abilities || [], abilityCd: {}, buffs: freshBuffs(),
     over: false, anchor: {}, startedAt: Date.now(),
     _animTurn: -1, _lastHealTs: 0, _ended: false, _fxSeen: {},
+    // Gegnerwaffe einmalig auflösen → Gegner schwingt/zaubert passend zu SEINER Waffe.
+    oppAtk: atkFromWeapon((cfg.oppEquipped || {}).waffe),
   };
   currentFight = fight;
   $('#arenaResult').className = 'arena-result';
@@ -1674,7 +1797,9 @@ function replayDuelEvents(events, me){
       const defender = e.t === me ? 'hero' : 'boss';
       if(e.o){ mechFloat(defender, '💨 Ausweichen', '#9ec5ff'); return; }
       if(e.h){ mechFloat(attacker, '💚 +'+fmtBig(e.d||0), '#37d67a'); return; }
-      attackAnim(attacker, e.d||0, !!e.c, ()=>{});
+      // Gegner (boss-Slot) nutzt seine eigene Waffe; eigener Held nutzt state.equipped.
+      const meta = (attacker === 'boss' && currentFight) ? { atk: currentFight.oppAtk } : null;
+      attackAnim(attacker, e.d||0, !!e.c, ()=>{}, meta);
     }, i * 240);
   });
 }
