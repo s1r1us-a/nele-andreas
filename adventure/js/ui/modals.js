@@ -29,6 +29,7 @@ import { getCoins } from '../core/coins.js';
 import { upgradeItem, salvage, materialCount } from '../core/crafting.js';
 import { playUpgradeFx } from './forge.js';
 import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield, upgradeBadge, MAX_UPGRADE } from '../data/materials.js';
+import { DYE_BY_KEY } from '../data/dyes.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
@@ -255,7 +256,7 @@ export function previewExpedition(durKey){
 }
 
 // ---- Belohnungs-Modal (nach dem Abholen) ---------------------------
-export function showRewardModal(items, potionGained){
+export function showRewardModal(items, potionGained, dyesFound){
   let cards = '';
   for(const it of items){
     const r = rarityOf(it.rarity);
@@ -274,7 +275,20 @@ export function showRewardModal(items, potionGained){
       '<div class="rc-name" style="color:#37d67a">Heiltrank</div>'+
       '<div class="tt-stat" style="color:#37d67a">+50% HP im Kampf</div></div>';
   }
-  const sub = 'Du hast '+items.length+' Gegenstände'+(potionGained?' + einen Heiltrank':'')+' erhalten!';
+  // Gewonnene Farben als eigene Belohnungskarten (analog zur Boss-Sieg-Karte).
+  const dyeKeys = dyesFound ? Object.keys(dyesFound) : [];
+  let dyeCount = 0;
+  for(const k of dyeKeys){
+    const d = DYE_BY_KEY[k]; if(!d) continue;
+    const qty = dyesFound[k] || 0; if(qty <= 0) continue;
+    dyeCount += qty;
+    cards += '<div class="reward-card dye-reward" style="--rc:'+d.color+'">'+
+      '<div class="dye-reward-swatch" style="background:'+d.color+'"></div>'+
+      '<div class="rc-name" style="color:'+d.color+'">'+d.name+(qty>1?' ×'+qty:'')+'</div>'+
+      '<div class="tt-stat" style="color:'+d.color+'">Farbstoff · in der Färberei einsetzbar</div></div>';
+  }
+  const sub = 'Du hast '+items.length+' Gegenstände'+(potionGained?' + einen Heiltrank':'')+
+    (dyeCount>0?' + '+dyeCount+' Farbe'+(dyeCount>1?'n':''):'')+' erhalten!';
   const topColor = items.length
     ? rarityOf(items.reduce((a,b)=> rarityIndex(b.rarity) > rarityIndex(a.rarity) ? b : a).rarity).color
     : null;
