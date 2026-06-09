@@ -935,7 +935,7 @@ function enterDuelArena(lobby){
     const opp = resolveActiveSlot(loaded);
     const oppStats = computePlayerStats(opp);
     const oppSrc = buildHeroSVG(opp.character, oppStats.tier,
-      { equipped: opp.equipped || {}, hideHelmet: !!(opp.settings && opp.settings.hideHelmet) });
+      { equipped: opp.equipped || {}, hideHelmet: !!(opp.settings && opp.settings.hideHelmet), hideWeapon: true });
     closeModal();
     openDuelArena({
       lobbyId: _dId, role, stake: lobby.stake || 0,

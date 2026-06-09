@@ -12,8 +12,7 @@ import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
-import { heroSrc } from './avatar.js';
-import { buildItemSVG } from './item-art.js';
+import { heroSrc, buildWeaponLayerSVG } from './avatar.js';
 import { buildDemonSVG } from './demon-art.js';
 import { rollItem, addLog, recordDrop, giveLoot } from './items.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
@@ -79,7 +78,8 @@ export function startBossFight(bossIndex){
   const boss = bossFor(bossIndex);
   const stage = $('#arenaStage');
   stage.style.setProperty('--arena-bg', "url('"+zoneBg(bossIndex)+"')");
-  $('#heroSprite').src = heroSrc(heroTier(t.power));
+  // Held waffenlos rendern – die Waffe kommt als separat animierte Ebene darüber.
+  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true });
   $('#bossSprite').src = boss.sprite;
   $('#heroBarName').textContent = 'Held';
   $('#bossBarName').textContent = (isFarm ? '↻ ' : '') + boss.name;
@@ -117,6 +117,9 @@ export function startBossFight(bossIndex){
     buffs: freshBuffs(),           // temporäre Buff-Fenster (Krit/Schaden/etc.)
   };
   currentFight = fight;
+  // Waffen-Ebene des Helden (echte ausgerüstete Waffe); PvE-Boss = Monster → keine.
+  fight.heroWeaponEl = setWeaponLayer('hero', weaponAtk(state.equipped && state.equipped.waffe));
+  setWeaponLayer('boss', null); fight.bossWeaponEl = null;
   updateHpBars(fight);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
@@ -469,57 +472,63 @@ function handAnchor(spriteId){
   const fx = isBoss ? 0.38 : 0.62, fy = 0.60;   // Hand im viewBox ~ (124,194)/(200,320)
   return { x: r.left - sr.left + fx*r.width, y: r.top - sr.top + fy*r.height, w:r.width, h:r.height, isBoss };
 }
-// Echter Waffen-Schwung: Waffen-SVG am Hand-Anker, rotiert um den Griff (transform-origin unten-mitte).
-function weaponSwing(spriteId, atk){
-  const layer = $('#dmgLayer'), ha = handAnchor(spriteId);
-  if(!layer || !ha || atk.wv == null) return false;
-  const elem = atk.element === 'ice' ? 'ice' : 'fire';
-  let src; try { src = buildItemSVG('waffe', atk.wv, atk.rarity, elem, atk.orb, atk.material); } catch(e){ return false; }
-  const size = Math.max(46, ha.h*0.62);
-  const wrap = document.createElement('div');
-  wrap.className = 'weapon-swing';
-  wrap.style.left = ha.x+'px'; wrap.style.top = ha.y+'px';
-  wrap.style.width = wrap.style.height = size+'px';
-  wrap.style.marginLeft = (-size/2)+'px'; wrap.style.marginTop = (-size)+'px';
-  const img = document.createElement('img'); img.src = src; img.alt=''; img.draggable=false;
-  wrap.appendChild(img); layer.appendChild(wrap);
-  const dir = ha.isBoss ? -1 : 1, flip = ha.isBoss ? 'scaleX(-1) ' : '';
-  const ANG = { arc:[-120,-95,40,28], overhead:[-78,-58,82,70], thrust:[-12,-8,6,0], flurry:[-46,28,-30,22] }[atk.profile] || [-110,-90,40,25];
-  const off = [0,0.28,0.55,1];
-  const kf = ANG.map((deg,i)=>{
-    let t = `${flip}rotate(${dir*deg}deg)`;
-    if(atk.profile==='thrust'){ const tx = [0,16,26,0][i]*dir; t = `${flip}translateX(${tx}px) rotate(${dir*deg}deg)`; }
-    return { transform:t, offset:off[i] };
-  });
-  const a = wrap.animate(kf, { duration: 300/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
-  a.onfinish = ()=> wrap.remove();
-  setTimeout(()=> { if(wrap.parentNode) wrap.remove(); }, 700/combatSpeed);
-  return true;
+// ---- Persistente Waffen-Ebene (echte Waffe, schwingt sauber) --------
+// Eine eigene, deckungsgleiche <img>-Ebene über dem Sprite (gleiche viewBox/Box).
+// which: 'hero' (Slot hero-c) | 'boss' (Slot boss-c, gespiegelt). atk=null → entfernen.
+function setWeaponLayer(which, atk){
+  const stage = $('#arenaStage'); if(!stage) return null;
+  const id = which==='hero' ? 'heroWeapon' : 'bossWeapon';
+  let el = document.getElementById(id);
+  const src = (atk && atk.wv != null) ? buildWeaponLayerSVG(atk) : '';
+  if(!src){ if(el) el.remove(); return null; }
+  if(!el){
+    el = document.createElement('img'); el.id = id; el.alt=''; el.draggable=false;
+    el.className = 'combatant weapon-layer ' + (which==='hero' ? 'hero-c' : 'boss-c');
+    stage.appendChild(el);
+  }
+  el.src = src;
+  // Ruhe-Neigung wie die getragene Waffe; Boss-Slot zusätzlich gespiegelt.
+  const flip = which==='hero' ? '' : 'scaleX(-1) ';
+  const restDeg = (atk.kind === 'stab') ? 4 : 14;
+  el.dataset.flip = flip; el.dataset.kind = atk.kind || 'melee'; el.dataset.profile = atk.profile || 'arc';
+  el.dataset.rest = `${flip}rotate(${restDeg}deg)`;
+  el.style.transform = el.dataset.rest;
+  return el;
 }
-// Element-gefärbte Sichel-/Bogen-Spur, die der Klinge folgt (liest sich als Schwung).
-function swingTrail(spriteId, profile, element){
-  const layer = $('#dmgLayer'), ha = handAnchor(spriteId);
-  if(!layer || !ha) return;
-  const P = ATK_ELEM[element] || ATK_ELEM.physical;
-  const dir = ha.isBoss ? -1 : 1, r = Math.max(40, ha.h*0.7);
-  let d;
-  if(profile==='thrust')        d = `M0 -5 L${dir*r} -2 L${dir*r} 2 L0 5 Z`;
-  else if(profile==='overhead') d = `M${-dir*r*0.2} ${-r} Q${dir*r*0.5} ${-r*0.2} ${dir*r*0.15} ${r*0.45}`;
-  else                          d = `M${-dir*r*0.7} ${-r*0.5} Q${dir*r} ${-r*0.1} ${dir*r*0.2} ${r*0.6}`;
-  const sw = profile==='thrust' ? 6 : 9;
-  const wrap = document.createElement('div');
-  wrap.className = 'swing-trail';
-  wrap.style.left = ha.x+'px'; wrap.style.top = ha.y+'px';
-  wrap.innerHTML = `<svg width="${r*2}" height="${r*2}" viewBox="${-r} ${-r} ${r*2} ${r*2}" style="overflow:visible">`+
-    `<path d="${d}" fill="none" stroke="${P.mid}" stroke-width="${sw}" stroke-linecap="round" opacity="0.85"/>`+
-    `<path d="${d}" fill="none" stroke="${P.core}" stroke-width="${Math.max(2,sw*0.33)}" stroke-linecap="round"/></svg>`;
-  layer.appendChild(wrap);
-  wrap.animate([
-    { opacity:0, transform:`rotate(${-dir*22}deg) scale(0.7)` },
-    { opacity:1, transform:'rotate(0deg) scale(1)', offset:0.4 },
-    { opacity:0, transform:`rotate(${dir*18}deg) scale(1.05)` },
-  ], { duration: 300/combatSpeed, easing:'ease-out' });
-  setTimeout(()=> { if(wrap.parentNode) wrap.remove(); }, 360/combatSpeed);
+function removeWeaponLayers(){
+  ['heroWeapon','bossWeapon'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+}
+// Keyframes für den Schwung der Waffen-Ebene je Profil (Rotation um den Griff).
+function swingKeyframes(profile, kind, flip){
+  const tf = (deg, tx) => `${flip}translateX(${tx||0}px) rotate(${deg}deg)`;
+  if(kind === 'stab'){
+    return { rest:`${flip}rotate(4deg)`, dur:360,
+      kf:[ {transform:tf(4,0),offset:0},{transform:tf(-12,8),offset:0.4},{transform:tf(-6,4),offset:0.72},{transform:tf(4,0),offset:1} ] };
+  }
+  const P = ({
+    arc:      { dur:360, a:[ [14,0,0],[-72,0,0.25],[58,0,0.55],[14,0,1] ] },
+    overhead: { dur:380, a:[ [14,0,0],[-40,0,0.28],[96,0,0.58],[14,0,1] ] },
+    thrust:   { dur:300, a:[ [8,0,0],[6,-8,0.3],[2,34,0.55],[8,0,1] ] },
+    flurry:   { dur:300, a:[ [14,0,0],[-16,0,0.22],[42,0,0.45],[2,0,0.66],[40,0,0.84],[14,0,1] ] },
+  })[profile] || { dur:360, a:[ [14,0,0],[-70,0,0.25],[56,0,0.55],[14,0,1] ] };
+  return { rest:`${flip}rotate(14deg)`, dur:P.dur, kf:P.a.map(([deg,tx,off])=>({ transform:tf(deg,tx), offset:off })) };
+}
+// Die persistente Waffen-Ebene schwingen lassen + 1–2 blasse Nachzieh-Klone (Bewegungsunschärfe).
+function playSwing(layerEl, reduce){
+  if(!layerEl) return;
+  const flip = layerEl.dataset.flip || '';
+  const { rest, dur, kf } = swingKeyframes(layerEl.dataset.profile, layerEl.dataset.kind, flip);
+  layerEl.style.transform = rest;
+  layerEl.animate(kf, { duration: dur/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
+  if(reduce) return;
+  const stage = layerEl.parentNode; if(!stage) return;
+  for(let i=1;i<=2;i++){
+    const g = layerEl.cloneNode(false); g.classList.add('weapon-ghost'); g.removeAttribute('id');
+    stage.appendChild(g);
+    g.animate(kf, { duration: dur/combatSpeed, delay: (i*34)/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
+    g.animate([{opacity:0.3},{opacity:0}], { duration:(dur+i*34)/combatSpeed, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + i*34 + 90)/combatSpeed);
+  }
 }
 // Sofortiger, gezackter Blitz vom Angreifer zum Ziel.
 function lightningBolt(from, to, layer, element, reduce, onArrive){
@@ -600,15 +609,13 @@ function attackAnim(who, dmg, crit, onHit, meta){
   const stage = $('#arenaStage'), layer = $('#dmgLayer');
   const atk = resolveAttack(isHero, meta);
   const isStab = atk.kind === 'stab';
-  // Kampf-Animationen laufen unabhängig von prefers-reduced-motion; nur Shake,
-  // Spur und Partikel respektieren die Einstellung.
-  if(isStab){
-    staffCast(attacker);
-  } else {
-    const swung = weaponSwing(attackerId, atk);
-    lunge(attacker, !isHero);
-    if(swung && !reduce) swingTrail(attackerId, atk.profile, atk.element);
-  }
+  // Echte Waffe schwingt: persistente Waffen-Ebene des Angreifers animieren
+  // (Held bzw. Duell-Gegner). PvE-Boss = Monster ohne Ebene → Körper-Ausfall.
+  const layerEl = isHero ? (currentFight && currentFight.heroWeaponEl)
+                         : (currentFight && currentFight.bossWeaponEl);
+  if(layerEl) playSwing(layerEl, reduce);
+  else if(isStab) staffCast(attacker);
+  else lunge(attacker, !isHero);
 
   const targetAnchor = () => (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
 
@@ -1566,6 +1573,7 @@ function stopDrainBeam(){
 function hardCloseArena(f){
   if(f) f.over = true;
   clearTimeout(_forfeitTimer); _forfeitTimer = null;
+  removeWeaponLayers();
   arenaOverlay().classList.remove('show');
   clearTimeout(combatTimer); combatTimer = null;
   resetAbilityVisuals();
@@ -1711,8 +1719,8 @@ export function openDuelArena(cfg){
   const t = recomputeTotals();
   const stage = $('#arenaStage');
   stage.style.setProperty('--arena-bg', "url('"+zoneBg(state.zone)+"')");
-  $('#heroSprite').src = heroSrc(heroTier(t.power));
-  $('#bossSprite').src = cfg.oppSrc;
+  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true });
+  $('#bossSprite').src = cfg.oppSrc;   // wird in modals.js bereits waffenlos gebaut
   $('#heroBarName').textContent = cfg.myName || 'Du';
   $('#bossBarName').textContent = '🆚 ' + (cfg.oppName || 'Gegner');
 
@@ -1727,6 +1735,9 @@ export function openDuelArena(cfg){
     oppAtk: atkFromWeapon((cfg.oppEquipped || {}).waffe),
   };
   currentFight = fight;
+  // Beide Kämpfer schwingen ihre echte Waffe: eigene Ebene + Gegner-Ebene (oppAtk).
+  fight.heroWeaponEl = setWeaponLayer('hero', weaponAtk(state.equipped && state.equipped.waffe));
+  fight.bossWeaponEl = setWeaponLayer('boss', fight.oppAtk);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
   $('#arena').classList.remove('fight-over');   // Kampf-UI wieder einblenden

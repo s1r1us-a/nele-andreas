@@ -43,7 +43,10 @@ export function spellOf(item){
 // auch netzwerk-serialisierbar (Duell-/Turm-Events).
 export function weaponAtk(w){
   if(!w) return { kind:'melee', profile:'arc', element:'physical' };
-  if(materialOf(w) === 'zauberstab'){ const sp = spellOf(w); return { kind:'stab', spell:sp, element:sp.element }; }
+  if(materialOf(w) === 'zauberstab'){ const sp = spellOf(w); const ty = typeOf(w);
+    // wv/rarity/orb/material zusätzlich, damit auch der Stab als Waffen-Ebene
+    // (buildWeaponLayerSVG) gerendert werden kann.
+    return { kind:'stab', spell:sp, element:sp.element, wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material }; }
   const ty = typeOf(w);
   return { kind:'melee', profile:attackProfileOf(ty.variant), element:(elementOf(w.id)==='ice'?'ice':'fire'),
            wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material };
