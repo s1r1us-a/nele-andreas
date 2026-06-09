@@ -24,9 +24,20 @@ const ORB_PAL = {
   blau:  { hi:'#cfe6ff', mid:'#3aa0ff', lo:'#0a3a73', glow:'#58a6ff' },
   gruen: { hi:'#d6ffe0', mid:'#37d67a', lo:'#0c5a2c', glow:'#4dff86' },
 };
-// Rüstungs-Material je Variante (analog item-art.js ARMOR_MAT).
-const ARMOR_MAT = ['#c8d0dc','#aab2be','#4a3526','#3f8f5a','#7a5ca8','#4a465c'];
-const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % 6 + 6) % 6];
+// Rüstungs-Material je Variante – IDENTISCH zu item-art.js ARMOR_MAT (12 Farben),
+// damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen. (Vorher
+// nur 6 Farben via %6 → Icon/Avatar wichen voneinander ab und Materialien wie
+// Bronze/Obsidian/Mithril sahen identisch aus.)
+const ARMOR_MAT = ['#c8d0dc','#aab2be','#4a3526','#3f8f5a','#7a5ca8','#4a465c','#b87333','#e8e0d0','#2f9e63','#b23a3a','#2a4a8a','#d8b24a'];
+const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
+// Textur-Typ eines Rüstungsteils aus dem Item-Typ ableiten: Spezial-Keys
+// (Ketten/Schuppen) erhalten ein eigenes Muster, sonst nach Materialklasse.
+function textureOf(it){
+  const t = typeOf(it), k = (t && t.key) || '', m = (t && t.material) || 'platte';
+  if(k === 'ketten') return 'ketten';
+  if(k === 'schuppen' || k === 'drachenschuppe') return 'schuppen';
+  return (m === 'stoff' || m === 'leder' || m === 'platte') ? m : 'platte';
+}
 
 // Farbe komponentenweise mit Faktor f skalieren (Highlights f>1, Schatten f<1).
 function shade(hex, f){
@@ -208,7 +219,69 @@ export function buildHeroSVG(character, tier, gear){
       `<stop offset="0" stop-color="${shade(trim,1.1)}"/><stop offset="1" stop-color="${shade(trim,0.8)}"/></linearGradient>`+
     `<radialGradient id="au${uid}" cx="50%" cy="50%" r="50%">`+
       `<stop offset="0" stop-color="${shade(trim,1.2)}" stop-opacity="0.45"/><stop offset="1" stop-color="${trim}" stop-opacity="0"/></radialGradient>`+
+    // Bodenschatten (erdet die Figur): dunkel in der Mitte, weich auslaufend.
+    `<radialGradient id="gs${uid}" cx="50%" cy="50%" r="50%">`+
+      `<stop offset="0" stop-color="#000" stop-opacity="0.34"/><stop offset="0.7" stop-color="#000" stop-opacity="0.14"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`+
     `</defs>`;
+
+  // ---- Materialabhängige Verläufe & Muster (lazy, je Build dedupliziert) ----
+  // Avatare werden als <img>-Data-URI gerendert → nur STATISCHE SVG-Technik
+  // (Verläufe/Muster), keine Animation/teure Filter. IDs tragen die uid des
+  // Builds, damit mehrere Avatare gleichzeitig kollisionsfrei rendern.
+  let extraDefs = '';
+  const gradReg = new Map();
+  // Gerichteter 3-Stop-Verlauf: Glanz oben-links → Mittelton → Schatten unten-rechts
+  // (eine gemeinsame Lichtrichtung über alle Rüstungsteile hinweg).
+  const grad = color => {
+    if(gradReg.has(color)) return gradReg.get(color);
+    const id = 'mg'+gradReg.size+uid;
+    extraDefs += `<linearGradient id="${id}" x1="0" y1="0" x2="0.35" y2="1">`+
+      `<stop offset="0" stop-color="${shade(color,1.22)}"/>`+
+      `<stop offset="0.5" stop-color="${color}"/>`+
+      `<stop offset="1" stop-color="${shade(color,0.6)}"/></linearGradient>`;
+    const url = `url(#${id})`; gradReg.set(color, url); return url;
+  };
+  const patReg = new Map();
+  // Material-Mikrotextur als Kachel-Muster (Nieten/Ring/Schuppe/Stich/Webung).
+  // Wird als zweite Lage über die mit grad() gefüllte Silhouette gelegt.
+  const texturePat = (type, color) => {
+    const key = type+color;
+    if(patReg.has(key)) return patReg.get(key);
+    const id = 'mp'+patReg.size+uid;
+    const dk = shade(color,0.55), lt = shade(color,1.25);
+    let tile;
+    if(type === 'platte'){            // Nieten-Reihen
+      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="12" height="12">`+
+        `<circle cx="3" cy="3" r="1.1" fill="${lt}" opacity="0.45"/><circle cx="3" cy="3" r="1.1" fill="none" stroke="${dk}" stroke-width="0.5" opacity="0.5"/>`+
+        `<circle cx="9" cy="9" r="1.1" fill="${lt}" opacity="0.45"/><circle cx="9" cy="9" r="1.1" fill="none" stroke="${dk}" stroke-width="0.5" opacity="0.5"/></pattern>`;
+    } else if(type === 'ketten'){     // ineinandergreifendes Ringgeflecht
+      const ring = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="2.4" fill="none" stroke="${dk}" stroke-width="0.9" opacity="0.5"/>`;
+      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="8" height="8">`+
+        ring(4,4)+ring(0,0)+ring(8,0)+ring(0,8)+ring(8,8)+`</pattern>`;
+    } else if(type === 'schuppen'){   // versetzte Halbschuppen
+      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="10" height="8">`+
+        `<path d="M0 8 Q5 -1 10 8" fill="none" stroke="${dk}" stroke-width="1" opacity="0.45"/>`+
+        `<path d="M-5 4 Q0 -5 5 4 M5 4 Q10 -5 15 4" fill="none" stroke="${dk}" stroke-width="1" opacity="0.45"/></pattern>`;
+    } else if(type === 'leder'){      // Steppstich-Naht
+      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="13" height="13">`+
+        `<line x1="2" y1="6.5" x2="6" y2="6.5" stroke="${dk}" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/></pattern>`;
+    } else {                          // stoff – feine vertikale Webfalten
+      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="6" height="6">`+
+        `<line x1="1.5" y1="0" x2="1.5" y2="6" stroke="${dk}" stroke-width="0.7" opacity="0.28"/>`+
+        `<line x1="4.5" y1="0" x2="4.5" y2="6" stroke="${lt}" stroke-width="0.6" opacity="0.22"/></pattern>`;
+    }
+    extraDefs += tile;
+    const url = `url(#${id})`; patReg.set(key, url); return url;
+  };
+  // Rüstungssilhouette mit gerichtetem Verlauf + (optional) Materialtextur.
+  const armorShape = (d, color, it, sw) => {
+    let out = `<path d="${d}" fill="${grad(color)}" stroke="${shade(color,0.5)}" stroke-width="${sw||2}" stroke-linejoin="round"/>`;
+    if(it) out += `<path d="${d}" fill="${texturePat(textureOf(it), color)}"/>`;
+    return out;
+  };
+  // Bodenschatten-Ellipse, je Geschlecht auf Fußhöhe platziert.
+  const groundY = gender==='w' ? 312 : gender==='m' ? 282 : 304;
+  const groundShadow = `<ellipse cx="100" cy="${groundY}" rx="46" ry="10" fill="url(#gs${uid})"/>`;
 
   // ---- Frisur (Front geteilter Pony als gemeinsame Basis) -----------
   const capFringe =
@@ -353,15 +426,15 @@ export function buildHeroSVG(character, tier, gear){
   // Umhang (sonst Tier-Cape)
   const um = eq.umhang;
   const cloak = um
-    ? `<path d="M74 130 L126 130 L146 264 C120 278 80 278 54 264 Z" fill="${matOf(um)}" stroke="${shade(matOf(um),0.5)}" stroke-width="2" stroke-linejoin="round"/>`+
+    ? `<path d="M74 130 L126 130 L146 264 C120 278 80 278 54 264 Z" fill="${grad(matOf(um))}" stroke="${shade(matOf(um),0.5)}" stroke-width="2" stroke-linejoin="round"/>`+
       `<path d="M100 130 L100 268" stroke="${shade(matOf(um),0.7)}" stroke-width="2" opacity="0.5"/>`
     : tierCape;
 
   // Beinschienen (Mann/Divers; beim Kleid verdeckt)
   const bn = eq.beine; let beine = '';
   if(bn){ const c=matOf(bn), cs=shade(c,0.5);
-    if(gender==='m') beine = mirror(`<path d="M103 192 L123 192 L120 266 L106 266 Z" fill="${c}" stroke="${cs}" stroke-width="1.5"/><rect x="106" y="208" width="14" height="3" fill="${cs}" opacity="0.5"/>`);
-    else if(gender==='d') beine = mirror(`<path d="M102 238 L120 238 L116 290 L106 290 Z" fill="${c}" stroke="${cs}" stroke-width="1.5"/>`);
+    if(gender==='m') beine = mirror(`<path d="M103 192 L123 192 L120 266 L106 266 Z" fill="${grad(c)}" stroke="${cs}" stroke-width="1.5"/><rect x="106" y="208" width="14" height="3" fill="${cs}" opacity="0.5"/>`);
+    else if(gender==='d') beine = mirror(`<path d="M102 238 L120 238 L116 290 L106 290 Z" fill="${grad(c)}" stroke="${cs}" stroke-width="1.5"/>`);
   }
 
   // Brust (Material bestimmt die Form: Stoff=Robe, Leder=Lederweste,
@@ -375,7 +448,7 @@ export function buildHeroSVG(character, tier, gear){
     if(mat === 'stoff'){
       // Robe: V-Ausschnitt oben, breit ausgestellter Saum (~y200), Drapierfalten.
       const flareR = female ? 130 : 134;
-      const half = `<path d="M100 138 L118 128 Q126 132 ${flareR-8} 160 L${flareR} 200 Q112 207 100 206 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`;
+      const half = armorShape(`M100 138 L118 128 Q126 132 ${flareR-8} 160 L${flareR} 200 Q112 207 100 206 Z`, c, br);
       brust = mirror(half)+
               `<path d="M82 128 L100 140 L118 128" fill="none" stroke="${cm}" stroke-width="2" opacity="0.8"/>`+
               `<path d="M100 142 L100 204" stroke="${cs}" stroke-width="1.5" opacity="0.5"/>`+
@@ -384,21 +457,21 @@ export function buildHeroSVG(character, tier, gear){
     } else if(mat === 'leder'){
       // Lederweste/Tunika: anliegend, mittige Kreuzschnürung + unterer Saum.
       if(female)
-        brust = `<path d="M100 126 L119 132 C123 150 119 174 112 184 C107 188 93 188 88 184 C81 174 77 150 81 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`;
+        brust = armorShape(`M100 126 L119 132 C123 150 119 174 112 184 C107 188 93 188 88 184 C81 174 77 150 81 132 Z`, c, br);
       else
-        brust = `<path d="M100 126 L123 132 C127 150 125 176 121 188 L79 188 C75 176 73 150 77 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`;
+        brust = armorShape(`M100 126 L123 132 C127 150 125 176 121 188 L79 188 C75 176 73 150 77 132 Z`, c, br);
       brust += `<path d="M100 132 L100 ${female?184:188}" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
                mirror(`<path d="M100 140 L108 148 M100 152 L108 160 M100 164 L108 172" stroke="${cm}" stroke-width="1.5" opacity="0.7" stroke-linecap="round"/>`)+
                `<ellipse cx="90" cy="150" rx="6" ry="9" fill="${ch}" opacity="0.35"/>`+
                `<path d="M82 ${female?180:184} Q100 ${female?188:192} 118 ${female?180:184}" fill="none" stroke="${cs}" stroke-width="1.5" opacity="0.5"/>`;
     } else {
-      // Platte: Brustpanzer (bisheriges Aussehen).
+      // Platte: Brustpanzer (Verlauf + Nieten-/Schuppen-Textur je Material).
       if(female)
-        brust = `<path d="M100 126 L120 132 C124 150 120 172 113 182 C108 186 92 186 87 182 C80 172 76 150 80 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+        brust = armorShape(`M100 126 L120 132 C124 150 120 172 113 182 C108 186 92 186 87 182 C80 172 76 150 80 132 Z`, c, br)+
                 `<path d="M100 130 L100 182" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
                 `<ellipse cx="92" cy="148" rx="6" ry="9" fill="${ch}" opacity="0.4"/>`;
       else
-        brust = `<path d="M100 126 L124 132 C128 150 126 174 122 186 L78 186 C74 174 72 150 76 132 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+        brust = armorShape(`M100 126 L124 132 C128 150 126 174 122 186 L78 186 C74 174 72 150 76 132 Z`, c, br)+
                 `<path d="M100 130 L100 186" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
                 `<ellipse cx="90" cy="150" rx="7" ry="10" fill="${ch}" opacity="0.4"/>`;
     }
@@ -407,15 +480,15 @@ export function buildHeroSVG(character, tier, gear){
   // Stiefel
   const fu = eq.fuesse; let fuesse = '';
   if(fu){ const c=matOf(fu), cs=shade(c,0.5);
-    if(gender==='w') fuesse = mirror(`<ellipse cx="114" cy="305" rx="11" ry="6" fill="${c}" stroke="${cs}" stroke-width="1.2"/>`);
-    else if(gender==='m') fuesse = `<rect x="102" y="261" width="22" height="17" rx="5" fill="${c}" stroke="${cs}" stroke-width="1.2"/><rect x="76" y="261" width="22" height="17" rx="5" fill="${c}" stroke="${cs}" stroke-width="1.2"/>`;
-    else fuesse = `<rect x="104" y="285" width="18" height="15" rx="4" fill="${c}" stroke="${cs}" stroke-width="1.2"/><rect x="78" y="285" width="18" height="15" rx="4" fill="${c}" stroke="${cs}" stroke-width="1.2"/>`;
+    if(gender==='w') fuesse = mirror(`<ellipse cx="114" cy="305" rx="11" ry="6" fill="${grad(c)}" stroke="${cs}" stroke-width="1.2"/>`);
+    else if(gender==='m') fuesse = `<rect x="102" y="261" width="22" height="17" rx="5" fill="${grad(c)}" stroke="${cs}" stroke-width="1.2"/><rect x="76" y="261" width="22" height="17" rx="5" fill="${grad(c)}" stroke="${cs}" stroke-width="1.2"/>`;
+    else fuesse = `<rect x="104" y="285" width="18" height="15" rx="4" fill="${grad(c)}" stroke="${cs}" stroke-width="1.2"/><rect x="78" y="285" width="18" height="15" rx="4" fill="${grad(c)}" stroke="${cs}" stroke-width="1.2"/>`;
   }
 
   // Handschuhe
   const ha = eq.haende;
   const gloves = ha
-    ? mirror(`<circle cx="124" cy="194" r="9" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1.2"/><rect x="116" y="186" width="16" height="7" rx="2" fill="${matOf(ha)}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1"/>`)
+    ? mirror(`<circle cx="124" cy="194" r="9" fill="${grad(matOf(ha))}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1.2"/><rect x="116" y="186" width="16" height="7" rx="2" fill="${grad(matOf(ha))}" stroke="${shade(matOf(ha),0.5)}" stroke-width="1"/>`)
     : '';
 
   // Nebenhand am linken Arm – Form richtet sich nach der Item-Art:
@@ -452,7 +525,7 @@ export function buildHeroSVG(character, tier, gear){
   // Schulterplatten (sonst Tier-Pauldrons)
   const shp_ = eq.schultern;
   const pauldronG = shp_
-    ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${matOf(shp_)}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
+    ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${grad(matOf(shp_))}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
     : tierPauldrons;
 
   // Kopfbedeckung (verdeckt Haare; nur wenn angelegt UND nicht ausgeblendet).
@@ -465,7 +538,7 @@ export function buildHeroSVG(character, tier, gear){
     if(mat === 'stoff'){
       // Kapuze: weicher Spitzbogen über dem Kopf (Spitze ~y32), fällt seitlich
       // an den Wangen vorbei bis auf die Schultern (y132). Gesicht bleibt frei.
-      helm = `<path d="M100 32 Q132 34 138 78 Q142 110 128 132 L118 132 Q124 108 120 92 Q116 70 100 66 Q84 70 80 92 Q76 108 82 132 L72 132 Q58 110 62 78 Q68 34 100 32 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+      helm = armorShape(`M100 32 Q132 34 138 78 Q142 110 128 132 L118 132 Q124 108 120 92 Q116 70 100 66 Q84 70 80 92 Q76 108 82 132 L72 132 Q58 110 62 78 Q68 34 100 32 Z`, c, kp)+
              // Innensaum, der das Gesicht umrandet (dunkler → Tiefe)
              `<path d="M100 66 Q120 70 120 92 Q120 108 116 124 M100 66 Q80 70 80 92 Q80 108 84 124" fill="none" stroke="${cm}" stroke-width="2.5" opacity="0.8" stroke-linecap="round"/>`+
              // Faltenlinien je Seite + Spitzen-Glanz
@@ -474,7 +547,7 @@ export function buildHeroSVG(character, tier, gear){
     } else if(mat === 'leder'){
       // Assassinen-Kapuze (Schurke): spitze Kapuze tief über Ober-/Hinterkopf,
       // verschattete Augenpartie + Stoffmaske über Nase/Mund → Gesicht verdeckt.
-      helm = `<path d="M100 28 Q137 32 141 80 Q144 112 129 134 L116 132 Q124 106 121 90 Q117 66 100 62 Q83 66 79 90 Q76 106 84 132 L71 134 Q56 112 59 80 Q63 32 100 28 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+      helm = armorShape(`M100 28 Q137 32 141 80 Q144 112 129 134 L116 132 Q124 106 121 90 Q117 66 100 62 Q83 66 79 90 Q76 106 84 132 L71 134 Q56 112 59 80 Q63 32 100 28 Z`, c, kp)+
              // Innensaum, der das Schattengesicht umrandet (Tiefe)
              `<path d="M100 62 Q121 66 121 90 Q121 106 117 124 M100 62 Q79 66 79 90 Q79 106 83 124" fill="none" stroke="${cm}" stroke-width="2.5" opacity="0.7" stroke-linecap="round"/>`+
              // Glanznaht + seitliche Falte
@@ -491,7 +564,7 @@ export function buildHeroSVG(character, tier, gear){
     } else {
       // Platte: Barbute/Großhelm – gerundete Glocke, mittiger Kamm, Wangenstücke,
       // vertikaler Visierschlitz + Atemschlitz (Gesicht verdeckt).
-      helm = `<path d="M66 82 Q62 40 100 38 Q138 40 134 82 L134 100 Q120 110 100 110 Q80 110 66 100 Z" fill="${c}" stroke="${cs}" stroke-width="2" stroke-linejoin="round"/>`+
+      helm = armorShape(`M66 82 Q62 40 100 38 Q138 40 134 82 L134 100 Q120 110 100 110 Q80 110 66 100 Z`, c, kp)+
              `<path d="M100 38 Q104 60 100 100 Q96 60 100 38 Z" fill="${ch}" opacity="0.45"/>`+
              `<path d="M74 84 Q72 102 84 108 L84 86 Z" fill="${cs}" opacity="0.5"/>`+
              mirror(`<path d="M126 84 Q128 102 116 108 L116 86 Z" fill="${cs}" opacity="0.5"/>`)+
@@ -504,8 +577,11 @@ export function buildHeroSVG(character, tier, gear){
 
   const weaponG = heldWeapon(eq.waffe, uid);
 
+  // Zweiter <defs>-Block für die lazy erzeugten Material-Verläufe/-Muster
+  // (gefüllt während des Aufbaus oben). Bodenschatten ganz unten im Z-Stapel.
+  const xtra = extraDefs ? `<defs>${extraDefs}</defs>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
-    defs + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
+    defs + xtra + groundShadow + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
     pauldronG + head + face + beard + hairFront + helm + weaponG +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);

@@ -81,15 +81,16 @@ export function bossDifficulty(power, recPower){
 // Top-Seltenheit der angelegten Items → CSS-Klasse für den pulsierenden Figur-Glow.
 function heroRarityClass(){
   const eq = state.equipped || {};
-  let leg = false;
+  let leg = false, epic = false;
   for(const k in eq){ const it = eq[k]; if(!it) continue;
     if(it.rarity === 'mythisch') return 'rare-myth';
-    if(it.rarity === 'legendaer') leg = true; }
-  return leg ? 'rare-leg' : '';
+    if(it.rarity === 'legendaer') leg = true;
+    else if(it.rarity === 'episch') epic = true; }
+  return leg ? 'rare-leg' : (epic ? 'rare-epic' : '');
 }
 function applyHeroRarity(sel){
   const el = $(sel); if(!el) return;
-  el.classList.remove('rare-leg','rare-myth');
+  el.classList.remove('rare-epic','rare-leg','rare-myth');
   const c = heroRarityClass(); if(c) el.classList.add(c);
 }
 
