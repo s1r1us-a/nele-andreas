@@ -361,8 +361,14 @@ a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
 #tooltip .tt-cmp-zero { color:var(--txt-mute); }
 
 /* ---- Modal (Picker + Offline) --------------------------------- */
-/* Hintergrund nicht scrollbar, solange ein Overlay/Modal offen ist. */
-html.modal-open, body.modal-open { overflow:hidden !important; overscroll-behavior:none; }
+/* Hintergrund nicht scrollbar, solange ein Overlay/Modal offen ist.
+   Statt nur overflow:hidden (das die Scroll-Position kollabieren lässt und die
+   Seite nach oben springen lässt) wird der Body per position:fixed an seiner
+   aktuellen Scroll-Position „eingefroren". JS setzt dazu top:-scrollY und stellt
+   die Position beim Schließen wieder her (siehe refreshScrollLock in dom.js). */
+html.modal-open { overflow:hidden !important; overscroll-behavior:none; }
+body.modal-open { position:fixed; left:0; right:0; width:100%;
+  overflow:hidden !important; overscroll-behavior:none; }
 .overlay { position:fixed; inset:0; background:rgba(5,4,9,.78); z-index:80;
   display:none; align-items:flex-start; justify-content:center; overflow-y:auto;
   padding:max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
