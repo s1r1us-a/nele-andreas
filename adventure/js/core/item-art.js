@@ -7,33 +7,16 @@
    - Seltenheit als dezenter Glow/Edelstein (Hauptanzeige = Slot-Rahmen).
    ===================================================================== */
 import { rarityOf, rarityIndex } from '../data/rarities.js';
+import { shade, mirror64 as mir, METAL, GEM, ARMOR_MAT, GOLD, WOOD,
+         ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad } from './svg-fx.js';
 
-function shade(hex, f){
-  const n = parseInt(hex.slice(1),16);
-  const r = Math.max(0,Math.min(255,Math.round(((n>>16)&255)*f)));
-  const g = Math.max(0,Math.min(255,Math.round(((n>>8)&255)*f)));
-  const b = Math.max(0,Math.min(255,Math.round((n&255)*f)));
-  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-}
-const mir = f => f + '<g transform="translate(64,0) scale(-1,1)">'+f+'</g>';
+// ELEM/elementOf liegen jetzt in svg-fx.js; hier re-exportieren, damit die
+// bestehenden Importpfade (attacks.js, state.js, items.js, avatar.js) gültig bleiben.
+export { ELEM, elementOf };
 
-const METAL     = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c','#b87333','#2b2b34','#3fd0c8','#7a1f2b','#9fb0c8','#d8c06a'];
-const GEM       = ['#d23040','#3c6edc','#34be78','#aa5cdc','#ecc446','#8a86a8','#2fd6c0','#e08a2a','#e87aa8','#0e7a4a','#c0e0ff','#b06bff'];
-const ARMOR_MAT = ['#c8d0dc','#aab2be','#4a3526','#3f8f5a','#7a5ca8','#4a465c','#b87333','#e8e0d0','#2f9e63','#b23a3a','#2a4a8a','#d8b24a'];
-const GOLD = '#d8b24a', WOOD = '#7a4f2a';
-
-// Element-Hervorhebung für hochstufige Waffen/Schilde (Episch+). Feuer=rot, Eis=blau.
-export const ELEM = {
-  fire: { glow:'#ff6a2a', core:'#ffe08a', edge:'#ff3a1a' },
-  ice:  { glow:'#5cc8ff', core:'#dff4ff', edge:'#2aa0ff' },
-};
-// Pro Item festes Element aus der ID (kein Speicherfeld nötig, stabil über Reloads).
-export const elementOf = id => (((id|0) % 2)+2)%2 ? 'fire' : 'ice';
 // Effektstufe nach Seltenheit (gilt jetzt für ALLE Item-Arten):
 // 0=kein Effekt (Gewöhnlich/Ungewöhnlich), 1=Selten, 2=Episch, 3=Legendär, 4=Mythisch.
 const effLvl = rarityKey => { const ri = rarityIndex(rarityKey); return ri>=5?4:ri>=4?3:ri>=3?2:ri>=2?1:0; };
-// Bewegungsreduktion respektieren (Animationen → statisch). Einmal beim Laden ausgewertet.
-const REDUCED_MOTION = (typeof matchMedia === 'function') && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let SEQ = 0;
 const _cache = new Map();
@@ -60,10 +43,8 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
 
   const rc = (rarityOf(rarityKey) || {}).color || '#9d9d9d';
   const uid = '_'+(SEQ++).toString(36);
-  const lg = (id,c,vert=true) =>
-    `<linearGradient id="${id}${uid}" x1="0" y1="0" x2="${vert?0:1}" y2="${vert?1:0}">`+
-    `<stop offset="0" stop-color="${shade(c,1.25)}"/><stop offset="0.55" stop-color="${c}"/>`+
-    `<stop offset="1" stop-color="${shade(c,0.62)}"/></linearGradient>`;
+  // Gerichteter 3-Stop-Verlauf (gemeinsame Lichtrichtung mit dem Avatar).
+  const lg = (id,c) => dirGrad(id+uid, c);
   const U = id => `url(#${id}${uid})`;
 
   const rgOp = (0.30 + eff*0.14).toFixed(2);   // farbige Seltenheits-Aura, stärker je Stufe
@@ -85,16 +66,7 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
       `<feDropShadow dx="0" dy="0" stdDeviation="${gstd}" flood-color="${rc}" flood-opacity="${gop}"/></filter>`;
   }
   const glow = `<rect x="0" y="0" width="64" height="64" fill="url(#${elemFx?'eg':'rg'}${uid})"/>`;
-  const gem  = (cx,cy,r,c) =>
-    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${shade(c,1.2)}"/>`+
-    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" opacity="0.65"/>`+
-    `<circle cx="${cx-r*0.3}" cy="${cy-r*0.3}" r="${r*0.3}" fill="#fff" opacity="0.8"/>`;
-  // Mehrzackiger Stern (für Schmuck-Medaillons & Funkel-Glints).
-  const star = (cx,cy,ro,ri,pts,fill,op) => {
-    let d=''; for(let i=0;i<pts*2;i++){ const r=(i%2)?ri:ro; const a=(Math.PI/pts)*i - Math.PI/2;
-      d += (i?'L':'M')+(cx+Math.cos(a)*r).toFixed(1)+' '+(cy+Math.sin(a)*r).toFixed(1)+' '; }
-    return `<path d="${d}Z" fill="${fill}"${op!=null?` opacity="${op}"`:''}/>`;
-  };
+  // gem() & star() kommen aus svg-fx.js (geteilt mit dem Avatar-Renderer).
 
   // ---- Seltenheits-Effekt-Helfer (ab Selten, alle Arten) ----
   // Akzentfarbe: Legendär = Gold, Mythisch = irisierendes Gold, sonst Seltenheitsfarbe.

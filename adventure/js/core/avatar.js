@@ -6,7 +6,8 @@
 import { ASSETS } from '../data/tuning.js';
 import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-options.js';
 import { rarityIndex } from '../data/rarities.js';
-import { ELEM, elementOf } from './item-art.js';
+import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
+         GOLD, WOOD, makeGradReg } from './svg-fx.js';
 import { typeOf } from '../data/itemTypes.js';
 import { state } from './state.js';
 
@@ -15,20 +16,15 @@ const armorLvl = rk => { const r = rarityIndex(rk); return r>=5?3:r>=4?2:r>=3?1:
 
 const TIER_OUTFIT = ['#6b5a8a','#3f6f9e','#9e6b2e','#b5882a'];
 const TIER_TRIM   = ['#9a86c2','#7fb0e0','#e0a85a','#f2cd6b'];
-// Waffen-Metalle je Variante (analog item-art.js) für die getragene Waffe.
-const WEAPON_METAL = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c'];
-const WOOD = '#7a4f2a', GOLD = '#d8b24a';
+// WEAPON_METAL/WOOD/GOLD kommen aus svg-fx.js (geteilt mit item-art.js).
 // Kugel-Paletten für Zauberstäbe (orb: rot/blau/gruen) – hell/mittel/dunkel/Glow.
 const ORB_PAL = {
   rot:   { hi:'#ffd0d0', mid:'#ff3b3b', lo:'#7a0d0d', glow:'#ff5a3c' },
   blau:  { hi:'#cfe6ff', mid:'#3aa0ff', lo:'#0a3a73', glow:'#58a6ff' },
   gruen: { hi:'#d6ffe0', mid:'#37d67a', lo:'#0c5a2c', glow:'#4dff86' },
 };
-// Rüstungs-Material je Variante – IDENTISCH zu item-art.js ARMOR_MAT (12 Farben),
-// damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen. (Vorher
-// nur 6 Farben via %6 → Icon/Avatar wichen voneinander ab und Materialien wie
-// Bronze/Obsidian/Mithril sahen identisch aus.)
-const ARMOR_MAT = ['#c8d0dc','#aab2be','#4a3526','#3f8f5a','#7a5ca8','#4a465c','#b87333','#e8e0d0','#2f9e63','#b23a3a','#2a4a8a','#d8b24a'];
+// ARMOR_MAT (12 Farben) kommt aus svg-fx.js – IDENTISCH zwischen Avatar & Icon,
+// damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen.
 const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
 // Textur-Typ eines Rüstungsteils aus dem Item-Typ ableiten: Spezial-Keys
 // (Ketten/Schuppen) erhalten ein eigenes Muster, sonst nach Materialklasse.
@@ -39,16 +35,7 @@ function textureOf(it){
   return (m === 'stoff' || m === 'leder' || m === 'platte') ? m : 'platte';
 }
 
-// Farbe komponentenweise mit Faktor f skalieren (Highlights f>1, Schatten f<1).
-function shade(hex, f){
-  const n = parseInt(hex.slice(1),16);
-  const r = Math.max(0,Math.min(255,Math.round(((n>>16)&255)*f)));
-  const g = Math.max(0,Math.min(255,Math.round(((n>>8)&255)*f)));
-  const b = Math.max(0,Math.min(255,Math.round((n&255)*f)));
-  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-}
-// Rechte Hälfte an der Achse x=100 spiegeln → garantiert symmetrisch.
-const mirror = frag => frag + '<g transform="translate(200,0) scale(-1,1)">'+frag+'</g>';
+// shade() & mirror() (mirror200) kommen aus svg-fx.js (geteilt mit item-art.js).
 
 // Eindeutige Gradient-IDs pro Build (mehrere Avatare rendern gleichzeitig).
 let GRAD_SEQ = 0;
@@ -229,54 +216,12 @@ export function buildHeroSVG(character, tier, gear){
     `</defs>`;
 
   // ---- Materialabhängige Verläufe & Muster (lazy, je Build dedupliziert) ----
-  // Avatare werden als <img>-Data-URI gerendert → nur STATISCHE SVG-Technik
-  // (Verläufe/Muster), keine Animation/teure Filter. IDs tragen die uid des
+  // Verläufe/Texturen kommen aus der geteilten Registry (svg-fx.js), damit
+  // Avatar und Inventar-Icon identisch getönt sind. IDs tragen die uid des
   // Builds, damit mehrere Avatare gleichzeitig kollisionsfrei rendern.
-  let extraDefs = '';
-  const gradReg = new Map();
-  // Gerichteter 3-Stop-Verlauf: Glanz oben-links → Mittelton → Schatten unten-rechts
-  // (eine gemeinsame Lichtrichtung über alle Rüstungsteile hinweg).
-  const grad = color => {
-    if(gradReg.has(color)) return gradReg.get(color);
-    const id = 'mg'+gradReg.size+uid;
-    extraDefs += `<linearGradient id="${id}" x1="0" y1="0" x2="0.35" y2="1">`+
-      `<stop offset="0" stop-color="${shade(color,1.22)}"/>`+
-      `<stop offset="0.5" stop-color="${color}"/>`+
-      `<stop offset="1" stop-color="${shade(color,0.6)}"/></linearGradient>`;
-    const url = `url(#${id})`; gradReg.set(color, url); return url;
-  };
-  const patReg = new Map();
-  // Material-Mikrotextur als Kachel-Muster (Nieten/Ring/Schuppe/Stich/Webung).
-  // Wird als zweite Lage über die mit grad() gefüllte Silhouette gelegt.
-  const texturePat = (type, color) => {
-    const key = type+color;
-    if(patReg.has(key)) return patReg.get(key);
-    const id = 'mp'+patReg.size+uid;
-    const dk = shade(color,0.55), lt = shade(color,1.25);
-    let tile;
-    if(type === 'platte'){            // Nieten-Reihen
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="12" height="12">`+
-        `<circle cx="3" cy="3" r="1.1" fill="${lt}" opacity="0.45"/><circle cx="3" cy="3" r="1.1" fill="none" stroke="${dk}" stroke-width="0.5" opacity="0.5"/>`+
-        `<circle cx="9" cy="9" r="1.1" fill="${lt}" opacity="0.45"/><circle cx="9" cy="9" r="1.1" fill="none" stroke="${dk}" stroke-width="0.5" opacity="0.5"/></pattern>`;
-    } else if(type === 'ketten'){     // ineinandergreifendes Ringgeflecht
-      const ring = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="2.4" fill="none" stroke="${dk}" stroke-width="0.9" opacity="0.5"/>`;
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="8" height="8">`+
-        ring(4,4)+ring(0,0)+ring(8,0)+ring(0,8)+ring(8,8)+`</pattern>`;
-    } else if(type === 'schuppen'){   // versetzte Halbschuppen
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="10" height="8">`+
-        `<path d="M0 8 Q5 -1 10 8" fill="none" stroke="${dk}" stroke-width="1" opacity="0.45"/>`+
-        `<path d="M-5 4 Q0 -5 5 4 M5 4 Q10 -5 15 4" fill="none" stroke="${dk}" stroke-width="1" opacity="0.45"/></pattern>`;
-    } else if(type === 'leder'){      // Steppstich-Naht
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="13" height="13">`+
-        `<line x1="2" y1="6.5" x2="6" y2="6.5" stroke="${dk}" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/></pattern>`;
-    } else {                          // stoff – feine vertikale Webfalten
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="6" height="6">`+
-        `<line x1="1.5" y1="0" x2="1.5" y2="6" stroke="${dk}" stroke-width="0.7" opacity="0.28"/>`+
-        `<line x1="4.5" y1="0" x2="4.5" y2="6" stroke="${lt}" stroke-width="0.6" opacity="0.22"/></pattern>`;
-    }
-    extraDefs += tile;
-    const url = `url(#${id})`; patReg.set(key, url); return url;
-  };
+  const greg = makeGradReg(uid);
+  const grad = greg.grad;          // gerichteter 3-Stop-Verlauf (Lichtrichtung)
+  const texturePat = greg.texture; // Material-Mikrotextur (Nieten/Ring/Schuppe/…)
   // Rüstungssilhouette mit gerichtetem Verlauf + (optional) Materialtextur.
   const armorShape = (d, color, it, sw) => {
     let out = `<path d="${d}" fill="${grad(color)}" stroke="${shade(color,0.5)}" stroke-width="${sw||2}" stroke-linejoin="round"/>`;
@@ -585,6 +530,7 @@ export function buildHeroSVG(character, tier, gear){
 
   // Zweiter <defs>-Block für die lazy erzeugten Material-Verläufe/-Muster
   // (gefüllt während des Aufbaus oben). Bodenschatten ganz unten im Z-Stapel.
+  const extraDefs = greg.defs();
   const xtra = extraDefs ? `<defs>${extraDefs}</defs>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
     defs + xtra + groundShadow + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
