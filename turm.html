@@ -196,7 +196,6 @@
       <div class="combat-log" id="combatLog"></div>
       <div class="ability-bar-mp" id="abilityBar" style="display:none"></div>
       <div class="arena-controls">
-        <button class="btn btn-ghost" id="speedBtn" style="display:none" onclick="onToggleSpeed()">⏩ Tempo 1×</button>
         <button class="btn btn-danger" onclick="onLeaveLobby()">🚪 Lobby verlassen</button>
       </div>
     </div>
@@ -214,8 +213,8 @@ import { loadSave, saveState, flushSave, activeCharId } from './adventure/js/cor
 import {
   computePlayerStats, towerBossFor,
   createLobby, ensureSoloLobby, joinLobby, listenLobby, listenCombat,
-  setReady, leaveLobby, loadGuestSave,
-  startTowerFight, setFightSpeed, stopFight, advanceFloor,
+  setReady, leaveLobby, loadGuestSave, resolveActiveSlot,
+  startTowerFight, stopFight, advanceFloor,
   requestAbility,
   setTowerHeroes, listenHeroes, rollTowerLoot,
   loadTowerFloor, saveTowerFloor,
@@ -607,7 +606,6 @@ window.onStartSolo = async function(){
     await update(ref(db, 'tower/lobbies/' + lobbyId), { status: 'in_progress', startAt: null });
 
     showFightSection();
-    $('speedBtn').style.display = '';
     setupAbilityUI(myKey, null);
 
     startTowerFight(lobbyId, floor, hostStats, null, myName, '', onCombatUpdate, { frontKey: myKey, backKey: null });
@@ -628,7 +626,7 @@ window.onStartFight = async function(){
     myFloor = Math.max(myFloor, lobby.floor || 1); saveTowerFloor(myKey, myCharId, lobby.floor || 1);
     // Gast-Spielstand laden (mit Timeout, damit ein hängender Firebase-Aufruf
     // den Start nicht blockiert → der catch-Zweig armt einen sichtbaren Retry).
-    const guestSave  = await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout');
+    const guestSave  = resolveActiveSlot(await withTimeout(loadGuestSave(lobby.guest), 6000, 'Gast-Spielstand-Timeout'));
     const hostStats  = computePlayerStats(myState);
     const guestStats = computePlayerStats(guestSave);
 
@@ -663,7 +661,6 @@ window.onStartFight = async function(){
     await update(ref(db, 'tower/lobbies/' + lobbyId), { status: 'in_progress', startAt: null });
 
     showFightSection();
-    $('speedBtn').style.display = '';
     setupAbilityUI(frontKey, backKey);
 
     startTowerFight(lobbyId, lobby.floor || 1,
@@ -1398,13 +1395,6 @@ async function requestFloorReset(advance){
   } catch(e){ toast('Fehler beim Weiterschalten.'); }
 }
 
-// ---- Speed ----
-window.onToggleSpeed = function(){
-  fightSpeed = fightSpeed === 1 ? 2 : fightSpeed === 2 ? 4 : 1;
-  setFightSpeed(fightSpeed);
-  $('speedBtn').textContent = '⏩ Tempo ' + fightSpeed + '×';
-};
-
 // ---- Verlassen ----
 window.onLeaveLobby = async function(){
   if(!await showConfirm('Lobby wirklich verlassen? Dein erreichtes Stockwerk bleibt gespeichert.',
@@ -1436,7 +1426,6 @@ function resetToMain(){
   $('lobbyRoom').style.display     = 'none';
   $('entryPanel').style.display    = '';
   $('resultOverlay').classList.remove('show');
-  $('speedBtn').style.display      = 'none';
   $('startBtn').style.display      = 'none';
   fightSpeed = 1;
   refreshResumeHint();

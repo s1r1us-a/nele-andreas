@@ -14,7 +14,7 @@
 import { db, ref, get, set, update, remove, push, onValue, onDisconnect, userKey } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
 import { abilityOf, abilitiesOf, CLASS_BY_ID } from '../data/classes.js';
-import { computePlayerStats, loadGuestSave } from './tower.js';
+import { computePlayerStats, loadGuestSave, resolveActiveSlot } from './tower.js';
 import { fmtBig } from '../ui/dom.js';
 
 const LOBBY = id => 'duel/lobbies/' + id;
@@ -118,15 +118,6 @@ export async function requestDuelForfeit(lobbyId, role){
   try { await set(ref(db, ABIL(lobbyId)), { role, kind: 'forfeit', ts: Date.now() }); } catch(e){}
 }
 
-// Spielstände liegen als Roster { version, activeId, slots } vor – den aktiven
-// (flachen) Slot herausziehen, damit computePlayerStats/buildHeroSVG ihn lesen.
-export function resolveActiveSlot(loaded){
-  if(loaded && loaded.slots && loaded.activeId && loaded.slots[loaded.activeId]) return loaded.slots[loaded.activeId];
-  if(loaded && loaded.equipped) return loaded;  // bereits flach
-  if(loaded && loaded.slots){ const k = Object.keys(loaded.slots)[0]; if(k) return loaded.slots[k]; }
-  return loaded || {};
-}
-
 // Aussehens-/Stat-Bündel eines Spielstands (für Sprite + Stats des Gegners).
 export function lookOf(save, stats){
   return {
@@ -136,7 +127,7 @@ export function lookOf(save, stats){
     tier: stats.tier,
   };
 }
-export { loadGuestSave };
+export { loadGuestSave, resolveActiveSlot };
 
 // =====================================================================
 //  HOST-ENGINE (läuft nur beim Host)
