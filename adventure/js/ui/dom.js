@@ -77,7 +77,7 @@ export function confirmDialog({ title, body='', emoji='⚠️',
    im Hintergrund nicht scrollen. Zentral per MutationObserver, damit jedes
    Overlay (Modal, Charakter-Editor, Arena, Bestätigungs-Dialog) erfasst wird.
    --------------------------------------------------------------------- */
-const OVERLAY_SELECTOR = '.overlay.show, .arena-overlay.show, .cdlg-overlay.show, .adv-intro-overlay:not(.fade-out)';
+const OVERLAY_SELECTOR = '.overlay.show, .arena-overlay.show, .cdlg-overlay.show, .dye-modal-overlay.show, .adv-intro-overlay:not(.fade-out)';
 // Scroll-Position, die beim Sperren festgehalten wird. Der Body wird per
 // position:fixed + top:-scrollY eingefroren (siehe CSS), damit die Seite beim
 // Öffnen eines Modals NICHT nach oben springt; beim Entsperren wird genau
