@@ -11,7 +11,7 @@ export const VARIANTS = 6;                // Sprite-Varianten je Slot (= Item-Ty
 export const INV_SLOTS = 15;             // Basis-Inventar (Ausgangsgröße; per Händler erweiterbar)
 export const INV_SLOTS_MAX = 50;         // harte Obergrenze inkl. gekaufter Erweiterungen
 export const INV_EXPAND_STEP = 5;        // Inventarplätze pro Kauf beim Händler
-export const INV_EXPAND_BASE_COST = 50000; // Kosten der 1. Erweiterung; jede weitere +50000
+export const INV_EXPAND_BASE_COST = 25000; // Kosten der 1. Erweiterung; jede weitere +25000
 export const HEAL_PCT = 0.5;             // Heiltrank stellt 50 % der maximalen HP wieder her
 export const POTION_BASE_CHANCE = 0.20;  // Basis-Chance auf einen Heiltrank je Expedition
 export const ITEMS_PER_EXPEDITION = 2;   // Basis/Fallback; Anzahl je Dauer in expeditions.js (4…9)
