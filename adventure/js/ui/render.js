@@ -63,6 +63,8 @@ export function renderTopStats(){
   const cur = xpInLevel(state.xp || 0, lvl);
   $('#miniLevel').textContent = lvl;
   $('#xpFill').style.width = Math.max(0, Math.min(100, cur/need*100)) + '%';
+  const xpTextEl = $('#xpText');
+  if(xpTextEl) xpTextEl.textContent = cur + ' / ' + need + ' XP';
   $('#levelChip').title = 'Level '+lvl+' · '+cur+' / '+need+' XP';
 }
 

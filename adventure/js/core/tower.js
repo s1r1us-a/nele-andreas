@@ -289,6 +289,16 @@ export async function loadGuestSave(guestKey){
   return snap.val();
 }
 
+// Spielstände liegen als Roster { version, activeId, slots } vor – den aktiven
+// (flachen) Slot herausziehen, damit computePlayerStats/buildHeroSVG ihn lesen.
+// Idempotent: ein bereits flacher Slot wird unverändert zurückgegeben.
+export function resolveActiveSlot(loaded){
+  if(loaded && loaded.slots && loaded.activeId && loaded.slots[loaded.activeId]) return loaded.slots[loaded.activeId];
+  if(loaded && loaded.equipped) return loaded;  // bereits flach
+  if(loaded && loaded.slots){ const k = Object.keys(loaded.slots)[0]; if(k) return loaded.slots[k]; }
+  return loaded || {};
+}
+
 // ---- Kampf-Engine (läuft nur beim Host) ----------------------------
 let _fightTimer = null;
 let _fight = null;
