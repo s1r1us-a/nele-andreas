@@ -16,10 +16,9 @@ import { buildHeroSVG } from '../core/avatar.js';
 import { $, fmtBig, toast, confirmDialog } from './dom.js';
 import { bindTooltip, hideTooltip } from './tooltip.js';
 
-// Aktuell zum Färben gewähltes Item (id) – modulweit.
-let selectedId = null;
 // Vorschau-Farbe (Farbstoff-Key): nur für die Live-Vorschau gewählt, NOCH NICHT
 // angewendet → verbraucht keinen Farbstoff. Erst die Bestätigung färbt wirklich.
+// Lebt, solange das Färbe-Modal offen ist.
 let previewDye = null;
 
 // Kompletten Helden so rendern, als trüge er `it` in der Wunschfarbe `dyeKey`.
@@ -59,7 +58,7 @@ function appendPickSection(panel, title, items, emptyText, worn){
   for(const it of items){
     const r = rarityOf(it.rarity);
     const cell = document.createElement('div');
-    cell.className = 'bp-slot filled' + (it.id===selectedId ? ' forge-selected' : '');
+    cell.className = 'bp-slot filled';
     cell.dataset.rarity = it.rarity;
     cell.style.setProperty('--rc', r.color);
     cell.innerHTML = '<span class="bp-cat">'+(worn ? '🎽' : CAT_ICON[it.cat])+'</span>'+
@@ -68,7 +67,7 @@ function appendPickSection(panel, title, items, emptyText, worn){
       (it.dye?'<span class="bp-dye" style="background:'+DYE_BY_KEY[it.dye].color+'"></span>':'')+
       '<img src="'+it.sprite+'" alt="'+it.name+'">';
     bindTooltip(cell, it);
-    cell.addEventListener('click', ()=>{ hideTooltip(); selectedId = it.id; previewDye = null; renderDyes(); });
+    cell.addEventListener('click', ()=>{ hideTooltip(); previewDye = null; openDyeModal(it.id); });
     grid.appendChild(cell);
   }
   panel.appendChild(grid);
@@ -79,9 +78,6 @@ export function renderDyes(){
   if(!panel) return;
   panel.classList.add('dye-room');
   panel.innerHTML = '';
-
-  // Gewähltes Item ggf. zurücksetzen (verkauft/zerlegt/getauscht/abgelegt).
-  if(selectedId != null && !findDyeable(selectedId)){ selectedId = null; previewDye = null; }
 
   // ---- Banner ------------------------------------------------------
   const banner = document.createElement('div');
@@ -128,22 +124,60 @@ export function renderDyes(){
   appendPickSection(panel, '🎒 Im Inventar', invItems, 'Keine Rüstung im Inventar.');
   appendPickSection(panel, '🎽 Ausgerüstet', eqItems, 'Keine Rüstung ausgerüstet.', true);
 
-  // ---- Aktionskarte für das gewählte Item --------------------------
-  const sel = findDyeable(selectedId);
-  if(!sel){
-    const hint = document.createElement('p');
-    hint.className = 'inv-hint';
-    hint.textContent = 'Wähle ein Rüstungsteil, um es einzufärben.';
-    panel.appendChild(hint);
-    return;
-  }
-  panel.appendChild(buildDyeCard(sel));
+  // Aktionskarte (Vorschau + Palette + Aktionen) öffnet sich beim Antippen eines
+  // Teils als Vollbild-Modal – kein Scrollen im Panel mehr nötig.
+  const hint = document.createElement('p');
+  hint.className = 'inv-hint';
+  hint.textContent = 'Tippe ein Rüstungsteil an, um es im Vollbild einzufärben.';
+  panel.appendChild(hint);
 }
 
-function buildDyeCard(it){
+// ---- Vollbild-Färbe-Modal -------------------------------------------
+// Beim Antippen eines Teils öffnet sich die komplette Aktionskarte (Vorschau,
+// Palette, Aktionen) als Vollbild-Overlay – so ist alles ohne Scrollen sichtbar.
+let _dyeOverlay = null;       // aktuell offenes Overlay-Element (oder null)
+let _dyeKeyHandler = null;    // Escape-Listener zum sauberen Entfernen
+
+function closeDyeModal(){
+  if(!_dyeOverlay) return;
+  if(_dyeKeyHandler){ document.removeEventListener('keydown', _dyeKeyHandler); _dyeKeyHandler = null; }
+  const ov = _dyeOverlay; _dyeOverlay = null;
+  ov.classList.remove('show');
+  setTimeout(()=> ov.remove(), 220);
+  previewDye = null;
+}
+
+function openDyeModal(itemId){
+  if(!findDyeable(itemId)) return;
+  closeDyeModal();   // evtl. offenes Modal zuerst schließen
+  const ov = document.createElement('div');
+  ov.className = 'dye-modal-overlay';
+  ov.innerHTML =
+    '<div class="dye-modal" role="dialog" aria-modal="true">'+
+      '<div class="dye-modal-head">'+
+        '<span class="dye-modal-title">🎨 Färben</span>'+
+        '<button class="dye-modal-close" aria-label="Schließen">✕</button>'+
+      '</div>'+
+      '<div class="dye-modal-body"></div>'+
+    '</div>';
+  document.body.appendChild(ov);
+  _dyeOverlay = ov;
+  requestAnimationFrame(()=> ov.classList.add('show'));
+
+  _dyeKeyHandler = e => { if(e.key === 'Escape') closeDyeModal(); };
+  document.addEventListener('keydown', _dyeKeyHandler);
+  ov.addEventListener('click', e => { if(e.target === ov) closeDyeModal(); });
+  ov.querySelector('.dye-modal-close').addEventListener('click', closeDyeModal);
+
+  renderDyeModalBody(ov.querySelector('.dye-modal-body'), itemId);
+}
+
+// Inhalt des Färbe-Modals (Vorschau + Palette + Aktionen) in `container` zeichnen.
+// Re-rendert sich beim Farbwechsel/Entfernen selbst – nicht das ganze Panel.
+function renderDyeModalBody(container, itemId){
+  const it = findDyeable(itemId);
+  if(!it){ closeDyeModal(); return; }   // Teil verschwunden → Modal schließen
   const r = rarityOf(it.rarity);
-  const wrap = document.createElement('div');
-  wrap.className = 'forge-card dye-card';
 
   // Vorschau-Farbe validieren: kein Bestand mehr oder = aktuelle Farbe → verwerfen.
   if(previewDye && (previewDye === it.dye || dyeCount(previewDye) < 1)) previewDye = null;
@@ -205,30 +239,30 @@ function buildDyeCard(it){
   }
   html += '</div>';
 
-  wrap.innerHTML = html;
+  container.innerHTML = html;
 
-  // Farb-Chip: NUR Vorschau setzen (kein Verbrauch) und Karte neu zeichnen.
-  wrap.querySelectorAll('.dye-chip').forEach(btn => btn.addEventListener('click', ()=>{
+  // Farb-Chip: NUR Vorschau setzen (kein Verbrauch) und Modal-Body neu zeichnen.
+  container.querySelectorAll('.dye-chip').forEach(btn => btn.addEventListener('click', ()=>{
     const key = btn.dataset.dye;
     previewDye = (key === it.dye) ? null : key;   // bereits aktive Farbe → keine Vorschau
-    renderDyes();
+    renderDyeModalBody(container, itemId);
   }));
 
   // Einfärben: Bestätigungsmodal mit Vorher/Nachher-Avatar, dann erst anwenden.
-  const apply = wrap.querySelector('#dyeApply');
+  const apply = container.querySelector('#dyeApply');
   if(apply && previewDye) apply.addEventListener('click', ()=> confirmAndDye(it, previewDye));
 
-  const rm = wrap.querySelector('#dyeRemove');
+  const rm = container.querySelector('#dyeRemove');
   if(rm) rm.addEventListener('click', ()=>{
     const res = undyeItem(it.id);
     if(res.ok){
       previewDye = null;
       import('./render.js').then(({ renderAll }) => renderAll());
       renderDyes();
+      renderDyeModalBody(container, itemId);   // Teil ist nun ungefärbt → Modal aktualisieren
       toast('🧽 Färbung entfernt.');
     }
   });
-  return wrap;
 }
 
 // Bestätigungsmodal vor dem Verbrauch eines Farbstoffs: zeigt den kompletten
@@ -261,6 +295,7 @@ async function confirmAndDye(it, key){
   if(res.ok){
     previewDye = null;
     import('./render.js').then(({ renderAll }) => renderAll());
+    closeDyeModal();
     renderDyes();
     toast('🎨 Gefärbt: '+d.name);
   } else if(res.reason==='same') toast('Schon in dieser Farbe gefärbt.');
