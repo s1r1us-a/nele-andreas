@@ -2008,3 +2008,55 @@ body.forge-shake { animation:forgeShake .42s ease; }
   margin:18px 0 10px; letter-spacing:.5px; }
 .consum-card.mat-card .cc-icon { filter:drop-shadow(0 0 6px rgba(242,205,107,.5)); }
 .consum-card.mat-card .cc-count { color:var(--gold-hi); }
+
+/* =====================================================================
+   FÄRBEREI (Färbstoff-Tab). Reicht teils die .forge-*-Optik nach
+   (forge-sub/forge-pick/forge-card/forge-note werden mitgenutzt).
+   ===================================================================== */
+/* Farb-Punkt (überall wiederverwendet: Drop-Karte, Tooltip, Inventar-Badge). */
+.dye-swatch { display:inline-block; width:12px; height:12px; border-radius:50%;
+  border:1px solid rgba(0,0,0,.45); box-shadow:0 0 4px rgba(0,0,0,.4), inset 0 1px 1px rgba(255,255,255,.4);
+  vertical-align:middle; }
+.dye-swatch.lg { width:22px; height:22px; border-radius:6px; }
+
+/* Banner */
+.dye-banner { position:relative; overflow:hidden; border-radius:14px; padding:16px 18px;
+  margin-bottom:12px; border:1px solid #5a4a78;
+  background:linear-gradient(135deg,#2a2140,#1a1530); }
+.dye-banner .db-row { display:flex; align-items:center; gap:14px; }
+.dye-banner .db-icon { font-size:38px; filter:drop-shadow(0 0 10px rgba(180,120,255,.6)); }
+.dye-banner .db-title { font-family:'Cinzel',serif; font-weight:700; font-size:24px; margin:0;
+  color:#e9defb; text-shadow:0 0 12px rgba(160,110,230,.5); }
+.dye-banner .db-sub { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#a98fd0; }
+
+/* Farbstoff-Bestandsleiste */
+.dye-stock { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:8px; margin:10px 0 6px; }
+.dye-stock-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px;
+  border:1px solid #4a4060; background:linear-gradient(160deg,#221b33,#15111f); }
+.dye-stock-item.empty { opacity:.4; }
+.dye-stock-item .ds-name { font-size:12px; color:var(--txt-dim); flex:1; }
+.dye-stock-item .ds-have { font-family:'Cinzel',serif; font-weight:700; color:#d9c3ff; font-size:15px; }
+
+/* Inventar-Badge: kleiner Farb-Punkt auf gefärbten Items */
+.bp-slot .bp-dye { position:absolute; left:3px; bottom:3px; width:10px; height:10px; border-radius:50%;
+  border:1px solid rgba(0,0,0,.5); box-shadow:0 0 4px rgba(0,0,0,.5); z-index:2; }
+
+/* Aktionskarte */
+.dye-card .dye-card-top { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+.dye-card .dye-preview { width:64px; height:64px; flex:0 0 auto;
+  background:rgba(0,0,0,.25); border-radius:10px; }
+.dye-card .dye-current { font-size:13px; color:var(--txt-dim); margin-top:4px; }
+.dye-pick-title { font-family:'Cinzel',serif; color:#d9c3ff; font-size:14px; margin:12px 0 8px; }
+.dye-palette { display:flex; flex-wrap:wrap; gap:10px; }
+.dye-chip { position:relative; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:6px; border-radius:10px; border:1px solid #4a4060; background:#1a1528; cursor:pointer;
+  transition:transform .12s, border-color .12s; }
+.dye-chip:hover { transform:translateY(-2px); border-color:#9a7fd0; }
+.dye-chip.active { border-color:#e9defb; box-shadow:0 0 10px rgba(160,110,230,.6); }
+.dye-chip .dc-have { font-size:11px; color:var(--txt-mute); font-family:'Cinzel',serif; }
+.dye-actions { margin-top:14px; }
+
+/* Tooltip-Zeile + Sieg-Karten-Hinweis */
+.tt-dye { font-size:12px; color:#cbb6ef; margin:2px 0; }
+.ar-bonus.dye-drop .dye-swatch { margin:0 3px; }

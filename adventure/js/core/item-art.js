@@ -1,6 +1,7 @@
 /* =====================================================================
    ITEM-ART – prozedurale SVG-Icons (ersetzt icon_*.png).
-   buildItemSVG(art, variant, rarityKey, element, orb, material) → Data-URI, viewBox 0 0 64 64.
+   buildItemSVG(art, variant, rarityKey, element, orb, material, dyeColor) → Data-URI, viewBox 0 0 64 64.
+   - dyeColor (optional): Hex-Override für Rüstungsfarbe (Färberei) statt ARMOR_MAT[variant].
    - waffe/schild/amulett/ring: variant = Form.
    - Rüstungs-Slots (kopf…umhang): variant = Farbe; material (stoff/leder/platte)
      bestimmt bei kopf/brust zusätzlich die Form (Kapuze/Kappe/Helm bzw. Robe/Weste/Panzer).
@@ -29,7 +30,7 @@ const ORB = {
   blau:  { lo:'#b9a6ff', mid:'#6a3ed0', dk:'#2a1466', halo1:'#6a3ed0', halo2:'#3a1f8c', ring:'#b08bff' },
 };
 
-export function buildItemSVG(art, variant, rarityKey, element, orb, material){
+export function buildItemSVG(art, variant, rarityKey, element, orb, material, dyeColor){
   variant = Math.max(0, variant|0);
   const el = (element==='ice') ? 'ice' : 'fire';
   const eff = effLvl(rarityKey);                                // Seltenheits-Effekt für ALLE Arten
@@ -39,7 +40,7 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
   // Materialklasse (nur Kopf/Brust verzweigen darauf). Fallback: Platte.
   const matKey = (material==='stoff'||material==='leder'||material==='platte') ? material : 'platte';
   const matArt = (art==='kopf' || art==='brust');
-  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+((variant===6||art==='orb')?'_'+orbKey:'')+(matArt?'_'+matKey:'');
+  const key = art+'_'+variant+'_'+(rarityKey||'')+'_'+(eff>0?el:'')+((variant===6||art==='orb')?'_'+orbKey:'')+(matArt?'_'+matKey:'')+(dyeColor?'_'+dyeColor:'');
   if(_cache.has(key)) return _cache.get(key);
 
   const rc = (rarityOf(rarityKey) || {}).color || '#9d9d9d';
@@ -281,8 +282,8 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
       body = band+`<rect x="22" y="9" width="20" height="16" rx="3" fill="${shade(g,0.9)}" stroke="${GOLD}" stroke-width="2"/>`+facetGem(32,17,4,g);
     }
 
-  } else { // ---- Rüstung: variant = Material ----
-    const c = ARMOR_MAT[variant % ARMOR_MAT.length];
+  } else { // ---- Rüstung: variant = Material (Farbstoff überschreibt die Farbe) ----
+    const c = dyeColor || ARMOR_MAT[variant % ARMOR_MAT.length];
     defs += lg('a',c);
     const st = shade(c,0.5);
     const A = U('a');

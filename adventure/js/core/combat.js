@@ -10,6 +10,7 @@ import { materialOf, typeOf } from '../data/itemTypes.js';
 import { ATK_ELEM, weaponAtk } from '../data/attacks.js';
 import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
+import { rollDyeDrop, DYE_BY_KEY } from '../data/dyes.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc, buildWeaponLayerSVG } from './avatar.js';
@@ -1645,6 +1646,18 @@ function endFight(fight, win){
         'Mach Platz im Inventar, dann rückt er automatisch nach.</div>');
     }
 
+    // Farbstoff-Drop (Färberei): gelegentlich fällt zusätzlich ein Farbstoff.
+    let dyeNote = '';
+    {
+      const dyeKey = rollDyeDrop(state.zone);
+      if(dyeKey){
+        state.dyes[dyeKey] = (state.dyes[dyeKey] || 0) + 1;
+        const d = DYE_BY_KEY[dyeKey];
+        dyeNote = '<div class="ar-bonus dye-drop">🎨 Farbstoff erhalten: '+
+          '<span class="dye-swatch" style="background:'+d.color+'"></span> <b>'+d.name+'</b></div>';
+      }
+    }
+
     // Belohnungs-Bausteine für die aufgeräumte Sieg-Karte sammeln.
     let coinAmount = 0;     // Coins für den Coin-Chip (0 = kein Chip)
     let coinNote = '';      // kleiner Zusatz im Coin-Chip (z. B. Farm-Hinweis)
@@ -1691,7 +1704,7 @@ function endFight(fight, win){
       chips+
       (statusNote ? '<div class="ar-status '+statusKind+'">'+statusNote+'</div>' : '')+
       (bonusNote ? '<div class="ar-bonus">'+bonusNote+'</div>' : '')+
-      dropBlock;
+      dropBlock + dyeNote;
     saveState();
     checkAdventureBadges();   // Boss-/Zonen-/Sammel-Badges prüfen
   } else {

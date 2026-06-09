@@ -17,6 +17,7 @@ import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
 import { blankMaterials } from '../data/materials.js';
+import { blankDyes, dyeColorOf } from '../data/dyes.js';
 import { db, ref, get, set, remove, onValue } from './firebase.js';
 
 export let state = null;        // aktiver Slot (flacher Spielstand)
@@ -56,6 +57,7 @@ export function freshState(){
     extraSlots:0,          // beim Händler gekaufte Zusatz-Inventarplätze (Vielfaches von 5)
     stats: blankStats(),   // Statistiken (#28)
     materials: blankMaterials(), // Crafting-Materialien (Schmiede)
+    dyes: blankDyes(),     // Farbstoff-Bestand (Färberei)
     pendingLoot: [],       // bei vollem Inventar gewonnene Items (warten auf Platz)
     settings:{ seenOnboarding:false }, // (#29)
   };
@@ -123,6 +125,10 @@ function migrateSlot(s){
   // weiterlaufen und das Feld einfach hinzubekommen.
   if(!s.materials || typeof s.materials !== 'object') s.materials = blankMaterials();
   else { const b = blankMaterials(); s.materials = Object.assign(b, s.materials); }
+  // Farbstoff-Bestand (Färberei) defensiv ergänzen – gleiches Muster wie Materials,
+  // kein Versions-Bump nötig (migrateSlot läuft bei jedem Laden).
+  if(!s.dyes || typeof s.dyes !== 'object') s.dyes = blankDyes();
+  else { const b = blankDyes(); s.dyes = Object.assign(b, s.dyes); }
   // Ausstehende Beute (bei vollem Inventar gewonnene Items) defensiv ergänzen.
   if(!Array.isArray(s.pendingLoot)) s.pendingLoot = [];
   s.pendingLoot.forEach(fixName);
@@ -210,7 +216,7 @@ function hydrateItems(){
     // (Vorher fälschlich nur die Slot-art → Nebenhand-Waffen/Kugeln wurden beim
     //  Laden als Schild neu gerendert.)
     const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material);
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
   }
 }
 

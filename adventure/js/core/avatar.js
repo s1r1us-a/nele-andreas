@@ -13,6 +13,7 @@ import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
 // Animationen nur, wenn der Nutzer keine Bewegungsreduktion wünscht.
 const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
+import { dyeColorOf } from '../data/dyes.js';
 import { state } from './state.js';
 
 // Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
@@ -29,7 +30,9 @@ const ORB_PAL = {
 };
 // ARMOR_MAT (12 Farben) kommt aus svg-fx.js – IDENTISCH zwischen Avatar & Icon,
 // damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen.
-const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
+// Farbstoff (item.dye) überschreibt die Material-Standardfarbe → getragenes Teil
+// am Avatar färbt sich exakt wie das Inventar-Icon.
+const matOf = it => dyeColorOf(it) || ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
 // Textur-Typ eines Rüstungsteils aus dem Item-Typ ableiten: Spezial-Keys
 // (Ketten/Schuppen) erhalten ein eigenes Muster, sonst nach Materialklasse.
 function textureOf(it){
