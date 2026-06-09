@@ -2065,9 +2065,37 @@ body.forge-shake { animation:forgeShake .42s ease; }
   transition:transform .12s, border-color .12s; }
 .dye-chip:hover { transform:translateY(-2px); border-color:#5f8fd0; }
 .dye-chip.active { border-color:#dce8ff; box-shadow:0 0 10px rgba(90,150,255,.6); }
+.dye-chip.preview { border-color:#7fd0a0; box-shadow:0 0 12px rgba(90,220,150,.7); transform:translateY(-2px); }
 .dye-chip .dc-have { font-size:11px; color:var(--txt-mute); font-family:'Cinzel',serif; }
-.dye-actions { margin-top:14px; }
+.dye-actions { margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; }
+
+/* Komplette Charakter-Vorschau (Vorher/Nachher) in der Aktionskarte */
+.dye-compare { display:flex; align-items:center; justify-content:center; gap:12px;
+  flex-wrap:wrap; padding:12px; border-radius:12px; margin-bottom:6px;
+  border:1px solid #2c3f63; background:linear-gradient(160deg,#0e1626,#0a0f1c); }
+.dye-fig { margin:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.dye-fig .dye-char, .dye-confirm-avatars img { width:120px; height:192px;
+  background:rgba(0,0,0,.22); border-radius:10px; }
+.dye-fig figcaption { font-size:12px; color:var(--txt-dim); letter-spacing:1px; }
+.dye-fig.after figcaption { font-weight:700; }
+.dye-arrow { font-size:26px; color:#7fd0a0; }
+.dye-compare-hint { font-size:13px; color:var(--txt-dim); max-width:200px; text-align:center; }
+
+/* Bestätigungsmodal-Inhalt (innerhalb confirmDialog body) */
+.dye-confirm { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.dye-confirm-avatars { display:flex; align-items:center; justify-content:center; gap:12px; }
+.dye-confirm-info { font-size:14px; color:#dce8ff; }
+.dye-confirm-cost { font-size:13px; color:var(--txt-dim); }
 
 /* Tooltip-Zeile + Sieg-Karten-Hinweis */
 .tt-dye { font-size:12px; color:#bcd4ff; margin:2px 0; }
 .ar-bonus.dye-drop .dye-swatch { margin:0 3px; }
+
+/* Farbstoff-Belohnungskarte im Sieg-Bildschirm */
+.reward-card.dye-reward .dye-reward-swatch { width:48px; height:48px; border-radius:10px;
+  margin:0 auto 6px; border:2px solid rgba(255,255,255,.25); box-shadow:0 0 12px rgba(0,0,0,.4); }
+
+/* Farbstoff-Karte im Inventar (Verbrauch-Tab) */
+.consum-card.dye-inv-card .cc-icon { display:flex; align-items:center; justify-content:center; }
+.consum-card.dye-inv-card .dye-swatch.lg { width:28px; height:28px;
+  border:1px solid rgba(255,255,255,.25); }
