@@ -1523,16 +1523,23 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 }
 
 @media (max-width:640px){
-  .doll { grid-template-columns:1fr; grid-template-areas:"center" "left" "right" "bottom"; }
-  .doll .col { flex-direction:row; flex-wrap:wrap; justify-content:center; }
+  /* Wie am PC: Item-Slots flankieren den Charakter links/rechts (gleiche Reihenfolge),
+     Waffe/Nebenhand darunter – nur kompakter skaliert, damit alles aufs Handy passt. */
+  .doll {
+    grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-areas:"left center right" "bottom bottom bottom";
+    column-gap:8px; row-gap:14px; align-items:center;
+  }
+  .doll .col { flex-direction:column; gap:14px; }
+  .slot { width:64px; height:64px; }
+  .slot img { width:48px; height:48px; }
   /* Charakter-Box bleibt auch mobil groß & prominent. */
-  .hero-frame { width:min(80vw, 360px); }
+  .hero-frame { width:100%; max-width:230px; height:auto; aspect-ratio:5/8; margin:0 auto; }
   .stats-mini { width:100%; margin:8px 0 0; justify-content:center; gap:8px; }
   .stat-chip { font-size:12px; padding:5px 9px; }
   .topbar { flex-wrap:wrap; }
   .wrap { padding:0 10px 50px; }
   .panel { padding:16px; }
-  .hero-frame { width:min(230px,70vw); height:calc(min(230px,70vw) * 300 / 230); }
   .backpack { grid-template-columns:repeat(4,1fr); gap:10px; }
   .arena-stage { height:min(300px,42vh); }
   .exp-grid { grid-template-columns:repeat(2,1fr); }
@@ -1543,9 +1550,12 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   .topbar h1 { font-size:16px; }
   .tab { padding:9px 14px; font-size:14px; }
   .panel { padding:12px; }
-  .slot { width:64px; height:64px; }
-  .slot img { width:48px; height:48px; }
-  .slot .slot-name { font-size:9px; }
+  /* Slots weiter verkleinern, damit Charakter + beide Spalten nebeneinander passen */
+  .doll { column-gap:6px; }
+  .doll .col { gap:12px; }
+  .slot { width:54px; height:54px; }
+  .slot img { width:40px; height:40px; }
+  .slot .slot-name { font-size:8px; bottom:-14px; }
   .inv-grid { grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); }
   .backpack { grid-template-columns:repeat(3,1fr); }
   .combatant.hero-c { height:120px; }
