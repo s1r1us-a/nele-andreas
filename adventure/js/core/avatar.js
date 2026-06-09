@@ -7,7 +7,7 @@ import { ASSETS } from '../data/tuning.js';
 import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-options.js';
 import { rarityIndex } from '../data/rarities.js';
 import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
-         GOLD, WOOD, makeGradReg } from './svg-fx.js';
+         GOLD, WOOD, makeGradReg, materialFilter, softShadowFilter, rimLightFilter } from './svg-fx.js';
 import { typeOf } from '../data/itemTypes.js';
 import { state } from './state.js';
 
@@ -222,11 +222,14 @@ export function buildHeroSVG(character, tier, gear){
   const greg = makeGradReg(uid);
   const grad = greg.grad;          // gerichteter 3-Stop-Verlauf (Lichtrichtung)
   const texturePat = greg.texture; // Material-Mikrotextur (Nieten/Ring/Schuppe/…)
-  // Rüstungssilhouette mit gerichtetem Verlauf + (optional) Materialtextur.
+  // Rüstungssilhouette mit gerichtetem Verlauf + (optional) Materialtextur +
+  // materialabhängigem Licht-Filter (Metallglanz/Lederschimmer; Tuch bleibt matt).
   const armorShape = (d, color, it, sw) => {
+    const mat = it ? (typeOf(it).material || 'platte') : 'platte';
+    const furl = greg.filter('mat-'+mat, id => materialFilter(id, mat));
     let out = `<path d="${d}" fill="${grad(color)}" stroke="${shade(color,0.5)}" stroke-width="${sw||2}" stroke-linejoin="round"/>`;
     if(it) out += `<path d="${d}" fill="${texturePat(textureOf(it), color)}"/>`;
-    return out;
+    return furl ? `<g filter="${furl}">${out}</g>` : out;
   };
   // Bodenschatten-Ellipse, je Geschlecht auf Fußhöhe platziert.
   const groundY = gender==='w' ? 312 : gender==='m' ? 282 : 304;
@@ -530,11 +533,22 @@ export function buildHeroSVG(character, tier, gear){
 
   // Zweiter <defs>-Block für die lazy erzeugten Material-Verläufe/-Muster
   // (gefüllt während des Aufbaus oben). Bodenschatten ganz unten im Z-Stapel.
+  // ---- Licht & Tiefe: Kontaktschatten + Rim-Light --------------------
+  // Aufliegende Teile (Pauldrons, Helm) werfen einen weichen Schatten → Tiefe.
+  const csUrl = (pauldronG || helm)
+    ? greg.filter('cs', id => softShadowFilter(id, { dy:2.2, blur:2, op:0.34 })) : '';
+  const wrapCS = g => (g && csUrl) ? `<g filter="${csUrl}">${g}</g>` : g;
+  const pauldronCS = wrapCS(pauldronG);
+  const helmCS = wrapCS(helm);
+  // Rim-Light an der Körperkante ab Tier ≥ 2 (Held hebt sich vom Hintergrund ab).
+  const rimUrl = t>=2 ? greg.filter('rim', id => rimLightFilter(id)) : '';
+  const bodyLit = rimUrl ? `<g filter="${rimUrl}">${body}</g>` : body;
+
   const extraDefs = greg.defs();
   const xtra = extraDefs ? `<defs>${extraDefs}</defs>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
-    defs + xtra + groundShadow + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
-    pauldronG + head + face + beard + hairFront + helm + weaponG +
+    defs + xtra + groundShadow + aura + cloak + hairBack + bodyLit + beine + brust + fuesse + arms + gloves + schild +
+    pauldronCS + head + face + beard + hairFront + helmCS + weaponG +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }

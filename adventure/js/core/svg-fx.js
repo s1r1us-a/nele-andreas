@@ -98,12 +98,13 @@ export function texturePatTile(id, type, color){
     `<line x1="4.5" y1="0" x2="4.5" y2="6" stroke="${lt}" stroke-width="0.6" opacity="0.22"/></pattern>`;
 }
 
-// Build-lokale Registry für gerichtete Verläufe + Material-Texturen.
+// Build-lokale Registry für gerichtete Verläufe + Material-Texturen + Filter.
 // Dedupliziert pro Build (uid-gebundene IDs); akkumuliert die <defs>-Fragmente.
 // Verwendung: const reg = makeGradReg(uid); reg.grad(color); reg.texture(type,color);
+//             reg.filter(key, id => '<filter …/>')  → liefert url(#…) oder ''
 //             … später: defs.push(reg.defs())
 export function makeGradReg(uid){
-  const gReg = new Map(), pReg = new Map();
+  const gReg = new Map(), pReg = new Map(), fReg = new Map();
   let defs = '';
   const grad = color => {
     if(gReg.has(color)) return gReg.get(color);
@@ -118,7 +119,68 @@ export function makeGradReg(uid){
     defs += texturePatTile(id, type, color);
     const url = `url(#${id})`; pReg.set(key, url); return url;
   };
-  return { grad, texture, defs: () => defs };
+  // builder(id) → Filter-<def>-String (oder '' = kein Filter). Liefert url(#…) bzw. ''.
+  const filter = (key, builder) => {
+    if(fReg.has(key)) return fReg.get(key);
+    const id = 'mf'+fReg.size+uid;
+    const def = builder(id);
+    if(!def){ fReg.set(key,''); return ''; }
+    defs += def;
+    const url = `url(#${id})`; fReg.set(key, url); return url;
+  };
+  return { grad, texture, filter, defs: () => defs };
+}
+
+/* ---- SVG-Lichtmodell (Phase: Licht & Tiefe) -----------------------
+   Filter rendern auch in <img>-Data-URI-SVG. Bewusst sparsam: enge
+   Filter-Region, kleines stdDeviation. Fällt ein Filter aus, bleibt der
+   darunterliegende Verlauf sichtbar (Filter ist additiv über SourceGraphic).
+*/
+
+// Spekularer Glanz (gerichtetes Glanzlicht) – Metall scharf, Leder weich.
+// kind: 'metal' (scharf) | 'soft' (breiter Sheen, Leder).
+export function specularFilter(id, kind){
+  const p = kind==='soft'
+    ? { blur:1.4, surf:2.2, k:0.55, exp:6 }    // Leder: breiter, weicher Sheen
+    : { blur:1.1, surf:3,   k:0.85, exp:22 };  // Metall/Platte: scharfes Glanzlicht
+  return `<filter id="${id}" x="-20%" y="-20%" width="140%" height="140%">`+
+    `<feGaussianBlur in="SourceAlpha" stdDeviation="${p.blur}" result="b"/>`+
+    `<feSpecularLighting in="b" surfaceScale="${p.surf}" specularConstant="${p.k}" `+
+      `specularExponent="${p.exp}" lighting-color="#ffffff" result="s">`+
+      `<feDistantLight azimuth="${LIGHT.az}" elevation="${LIGHT.el}"/></feSpecularLighting>`+
+    `<feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>`+
+    `<feComposite in="SourceGraphic" in2="sc" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>`+
+    `</filter>`;
+}
+
+// Weicher Kontaktschatten (erdet aufliegende Teile wie Pauldrons/Helm).
+export function softShadowFilter(id, opts){
+  const o = opts || {}, dy = o.dy!=null?o.dy:2, blur = o.blur!=null?o.blur:2, op = o.op!=null?o.op:0.35;
+  return `<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%">`+
+    `<feDropShadow dx="0" dy="${dy}" stdDeviation="${blur}" flood-color="#000000" flood-opacity="${op}"/>`+
+    `</filter>`;
+}
+
+// Rim-/Backlight: zweite spekulare Lage von der Gegenseite (niedrige Elevation)
+// → heller Konturglanz an der Silhouettenkante (kühler „cooler" Look).
+export function rimLightFilter(id, color){
+  const c = color || '#cfe6ff';
+  return `<filter id="${id}" x="-25%" y="-25%" width="150%" height="150%">`+
+    `<feGaussianBlur in="SourceAlpha" stdDeviation="1" result="b"/>`+
+    `<feSpecularLighting in="b" surfaceScale="4" specularConstant="1.05" `+
+      `specularExponent="14" lighting-color="${c}" result="s">`+
+      `<feDistantLight azimuth="${(LIGHT.az+180)%360}" elevation="22"/></feSpecularLighting>`+
+    `<feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>`+
+    `<feComposite in="SourceGraphic" in2="sc" operator="arithmetic" k1="0" k2="1" k3="0.85" k4="0"/>`+
+    `</filter>`;
+}
+
+// Material → Licht-Filter-Klasse. Tuch (stoff) bleibt matt (kein Filter, der
+// Verlauf trägt die Tönung). Platte/Ketten/Schuppen → Metallglanz, Leder → soft.
+export function materialFilter(id, material){
+  if(material==='stoff') return '';
+  if(material==='leder') return specularFilter(id, 'soft');
+  return specularFilter(id, 'metal');   // platte/ketten/schuppen/zauberstab/default
 }
 
 // ---- Schmuck-Primitive ---------------------------------------------

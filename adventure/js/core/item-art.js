@@ -8,7 +8,7 @@
    ===================================================================== */
 import { rarityOf, rarityIndex } from '../data/rarities.js';
 import { shade, mirror64 as mir, METAL, GEM, ARMOR_MAT, GOLD, WOOD,
-         ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad } from './svg-fx.js';
+         ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad, materialFilter } from './svg-fx.js';
 
 // ELEM/elementOf liegen jetzt in svg-fx.js; hier re-exportieren, damit die
 // bestehenden Importpfade (attacks.js, state.js, items.js, avatar.js) gültig bleiben.
@@ -343,6 +343,19 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
              `<rect x="20" y="10" width="24" height="6" rx="3" fill="${GOLD}"/>`; // Kragen-Spange
     }
     body += gem(32, art==='kopf'?30:(art==='umhang'?13:48), 2.6, rc);
+  }
+
+  // ---- Licht & Tiefe: materialabhängiger Glanz-Filter unter dem Basis-Körper.
+  // Metall (Waffe/Schild/Plattenrüstung) → scharfes Glanzlicht; Leder → weicher
+  // Sheen; Tuch/Gold/Glas → kein Filter (eigene Optik). Liegt UNTER dem Bloom.
+  let lightMat = null;
+  if(art==='waffe')      lightMat = variant===6 ? null : 'platte';   // Klinge (kein Zauberstab)
+  else if(art==='schild')lightMat = 'platte';
+  else if(matArt)        lightMat = matKey;                          // kopf/brust: echtes Material
+  else if(art==='schultern'||art==='haende'||art==='beine'||art==='fuesse') lightMat = 'platte';
+  if(lightMat){
+    const fdef = materialFilter('mlf'+uid, lightMat);
+    if(fdef){ defs += fdef; body = `<g filter="url(#mlf${uid})">${body}</g>`; }
   }
 
   // Element-Hervorhebung (nur Waffe/Schild, Episch+): Flammen/Frost / größerer Schild.
