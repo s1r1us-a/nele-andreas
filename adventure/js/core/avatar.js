@@ -6,7 +6,12 @@
 import { ASSETS } from '../data/tuning.js';
 import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-options.js';
 import { rarityIndex } from '../data/rarities.js';
-import { ELEM, elementOf } from './item-art.js';
+import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
+         GOLD, WOOD, makeGradReg, materialFilter, softShadowFilter, rimLightFilter,
+         engraving, REDUCED_MOTION } from './svg-fx.js';
+
+// Animationen nur, wenn der Nutzer keine Bewegungsreduktion wünscht.
+const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
 import { state } from './state.js';
 
@@ -15,20 +20,15 @@ const armorLvl = rk => { const r = rarityIndex(rk); return r>=5?3:r>=4?2:r>=3?1:
 
 const TIER_OUTFIT = ['#6b5a8a','#3f6f9e','#9e6b2e','#b5882a'];
 const TIER_TRIM   = ['#9a86c2','#7fb0e0','#e0a85a','#f2cd6b'];
-// Waffen-Metalle je Variante (analog item-art.js) für die getragene Waffe.
-const WEAPON_METAL = ['#aab2be','#c8d0dc','#c48e4e','#deb85c','#606678','#4a465c'];
-const WOOD = '#7a4f2a', GOLD = '#d8b24a';
+// WEAPON_METAL/WOOD/GOLD kommen aus svg-fx.js (geteilt mit item-art.js).
 // Kugel-Paletten für Zauberstäbe (orb: rot/blau/gruen) – hell/mittel/dunkel/Glow.
 const ORB_PAL = {
   rot:   { hi:'#ffd0d0', mid:'#ff3b3b', lo:'#7a0d0d', glow:'#ff5a3c' },
   blau:  { hi:'#cfe6ff', mid:'#3aa0ff', lo:'#0a3a73', glow:'#58a6ff' },
   gruen: { hi:'#d6ffe0', mid:'#37d67a', lo:'#0c5a2c', glow:'#4dff86' },
 };
-// Rüstungs-Material je Variante – IDENTISCH zu item-art.js ARMOR_MAT (12 Farben),
-// damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen. (Vorher
-// nur 6 Farben via %6 → Icon/Avatar wichen voneinander ab und Materialien wie
-// Bronze/Obsidian/Mithril sahen identisch aus.)
-const ARMOR_MAT = ['#c8d0dc','#aab2be','#4a3526','#3f8f5a','#7a5ca8','#4a465c','#b87333','#e8e0d0','#2f9e63','#b23a3a','#2a4a8a','#d8b24a'];
+// ARMOR_MAT (12 Farben) kommt aus svg-fx.js – IDENTISCH zwischen Avatar & Icon,
+// damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen.
 const matOf = it => ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
 // Textur-Typ eines Rüstungsteils aus dem Item-Typ ableiten: Spezial-Keys
 // (Ketten/Schuppen) erhalten ein eigenes Muster, sonst nach Materialklasse.
@@ -39,16 +39,7 @@ function textureOf(it){
   return (m === 'stoff' || m === 'leder' || m === 'platte') ? m : 'platte';
 }
 
-// Farbe komponentenweise mit Faktor f skalieren (Highlights f>1, Schatten f<1).
-function shade(hex, f){
-  const n = parseInt(hex.slice(1),16);
-  const r = Math.max(0,Math.min(255,Math.round(((n>>16)&255)*f)));
-  const g = Math.max(0,Math.min(255,Math.round(((n>>8)&255)*f)));
-  const b = Math.max(0,Math.min(255,Math.round((n&255)*f)));
-  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-}
-// Rechte Hälfte an der Achse x=100 spiegeln → garantiert symmetrisch.
-const mirror = frag => frag + '<g transform="translate(200,0) scale(-1,1)">'+frag+'</g>';
+// shade() & mirror() (mirror200) kommen aus svg-fx.js (geteilt mit item-art.js).
 
 // Eindeutige Gradient-IDs pro Build (mehrere Avatare rendern gleichzeitig).
 let GRAD_SEQ = 0;
@@ -86,7 +77,11 @@ function heldWeapon(item, uid, opt){
     const pole = `<rect x="${hx-2.5}" y="${oy}" width="5" height="${204-oy}" rx="2.5" fill="${WOOD}"/>`+
                  `<rect x="${hx-2.5}" y="${oy+4}" width="2" height="${198-oy}" fill="${shade(WOOD,1.3)}" opacity="0.5"/>`+
                  `<rect x="${hx-5}" y="${oy+6}" width="10" height="5" rx="2" fill="${GOLD}"/>`;  // Fassung
-    let glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30"/>`+
+    // Äußerer Glow pulsiert (Radius + Opazität atmen) – Stab-Kugel „lebt".
+    const orbPulse = ANIM
+      ? `<animate attributeName="r" values="18;21;18" dur="2.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.30;0.12;0.30" dur="2.8s" repeatCount="indefinite"/>`
+      : '';
+    let glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30">${orbPulse}</circle>`+
                `<circle cx="${hx}" cy="${oy}" r="12" fill="${P.glow}" opacity="0.35"/>`;
     // Legendär/Mythisch: zusätzlicher, weicher Außen-Glow um die Kugel.
     if(lvl>0) glow = `<circle cx="${hx}" cy="${oy}" r="${22+lvl*4}" fill="${P.glow}" opacity="${(0.15+lvl*0.06).toFixed(2)}"/>`+glow;
@@ -164,8 +159,11 @@ function heldWeapon(item, uid, opt){
   let halo = '';
   if(lvl>0){
     const gw = (12+lvl*5)*SCALE, gh = (48+lvl*7)*SCALE;
+    const o2 = (0.16+lvl*0.07);
+    // Innerer Element-Glow pulsiert dezent in der Opazität (Waffe „brennt"/„friert").
+    const haloPulse = ANIM ? `<animate attributeName="opacity" values="${o2.toFixed(2)};${(o2*0.55).toFixed(2)};${o2.toFixed(2)}" dur="2.4s" repeatCount="indefinite"/>` : '';
     halo = `<ellipse cx="${hx}" cy="156" rx="${(gw+7).toFixed(1)}" ry="${(gh+10).toFixed(1)}" fill="${E.glow}" opacity="${(0.09+lvl*0.04).toFixed(2)}"/>`+
-           `<ellipse cx="${hx}" cy="156" rx="${gw.toFixed(1)}" ry="${gh.toFixed(1)}" fill="${E.glow}" opacity="${(0.16+lvl*0.07).toFixed(2)}"/>`;
+           `<ellipse cx="${hx}" cy="156" rx="${gw.toFixed(1)}" ry="${gh.toFixed(1)}" fill="${E.glow}" opacity="${o2.toFixed(2)}">${haloPulse}</ellipse>`;
     if(lvl>=2) halo += `<ellipse cx="${hx}" cy="150" rx="8" ry="${(gh*0.66).toFixed(1)}" fill="${E.core}" opacity="0.40"/>`;
   }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
@@ -179,11 +177,17 @@ function offhandOrb(item){
   const cx = 74, cy = 174;
   const lvl = armorLvl(item.rarity);
   const r = (11 * ([1, 1.12, 1.26, 1.4][lvl] || 1)).toFixed(1);
-  const glow = `<circle cx="${cx}" cy="${cy}" r="${(+r+7).toFixed(1)}" fill="${P.glow}" opacity="${(0.18+lvl*0.06).toFixed(2)}"/>`+
+  // Pulsierender Glow (Opazität atmet) – nur bei aktiver Bewegung.
+  const pulse = ANIM ? `<animate attributeName="opacity" values="${(0.18+lvl*0.06).toFixed(2)};${(0.34+lvl*0.06).toFixed(2)};${(0.18+lvl*0.06).toFixed(2)}" dur="2.6s" repeatCount="indefinite"/>` : '';
+  const glow = `<circle cx="${cx}" cy="${cy}" r="${(+r+7).toFixed(1)}" fill="${P.glow}" opacity="${(0.18+lvl*0.06).toFixed(2)}">${pulse}</circle>`+
                `<circle cx="${cx}" cy="${cy}" r="${(+r+3).toFixed(1)}" fill="${P.glow}" opacity="0.34"/>`;
   const sphere = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${P.mid}" stroke="${P.lo}" stroke-width="1.4"/>`+
                  `<circle cx="${(cx-r*0.32).toFixed(1)}" cy="${(cy-r*0.32).toFixed(1)}" r="${(r*0.3).toFixed(1)}" fill="${P.hi}" opacity="0.75"/>`;
-  return glow + sphere;
+  // Sanftes Schweben der ganzen Kugel (vertikal) um die Hand herum.
+  const inner = glow + sphere;
+  return ANIM
+    ? `<g>${inner}<animateTransform attributeName="transform" type="translate" values="0 0;0 -2.6;0 0" dur="3.4s" repeatCount="indefinite"/></g>`
+    : inner;
 }
 
 export function buildHeroSVG(character, tier, gear){
@@ -229,59 +233,20 @@ export function buildHeroSVG(character, tier, gear){
     `</defs>`;
 
   // ---- Materialabhängige Verläufe & Muster (lazy, je Build dedupliziert) ----
-  // Avatare werden als <img>-Data-URI gerendert → nur STATISCHE SVG-Technik
-  // (Verläufe/Muster), keine Animation/teure Filter. IDs tragen die uid des
+  // Verläufe/Texturen kommen aus der geteilten Registry (svg-fx.js), damit
+  // Avatar und Inventar-Icon identisch getönt sind. IDs tragen die uid des
   // Builds, damit mehrere Avatare gleichzeitig kollisionsfrei rendern.
-  let extraDefs = '';
-  const gradReg = new Map();
-  // Gerichteter 3-Stop-Verlauf: Glanz oben-links → Mittelton → Schatten unten-rechts
-  // (eine gemeinsame Lichtrichtung über alle Rüstungsteile hinweg).
-  const grad = color => {
-    if(gradReg.has(color)) return gradReg.get(color);
-    const id = 'mg'+gradReg.size+uid;
-    extraDefs += `<linearGradient id="${id}" x1="0" y1="0" x2="0.35" y2="1">`+
-      `<stop offset="0" stop-color="${shade(color,1.22)}"/>`+
-      `<stop offset="0.5" stop-color="${color}"/>`+
-      `<stop offset="1" stop-color="${shade(color,0.6)}"/></linearGradient>`;
-    const url = `url(#${id})`; gradReg.set(color, url); return url;
-  };
-  const patReg = new Map();
-  // Material-Mikrotextur als Kachel-Muster (Nieten/Ring/Schuppe/Stich/Webung).
-  // Wird als zweite Lage über die mit grad() gefüllte Silhouette gelegt.
-  const texturePat = (type, color) => {
-    const key = type+color;
-    if(patReg.has(key)) return patReg.get(key);
-    const id = 'mp'+patReg.size+uid;
-    const dk = shade(color,0.55), lt = shade(color,1.25);
-    let tile;
-    if(type === 'platte'){            // Nieten-Reihen
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="12" height="12">`+
-        `<circle cx="3" cy="3" r="1.1" fill="${lt}" opacity="0.45"/><circle cx="3" cy="3" r="1.1" fill="none" stroke="${dk}" stroke-width="0.5" opacity="0.5"/>`+
-        `<circle cx="9" cy="9" r="1.1" fill="${lt}" opacity="0.45"/><circle cx="9" cy="9" r="1.1" fill="none" stroke="${dk}" stroke-width="0.5" opacity="0.5"/></pattern>`;
-    } else if(type === 'ketten'){     // ineinandergreifendes Ringgeflecht
-      const ring = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="2.4" fill="none" stroke="${dk}" stroke-width="0.9" opacity="0.5"/>`;
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="8" height="8">`+
-        ring(4,4)+ring(0,0)+ring(8,0)+ring(0,8)+ring(8,8)+`</pattern>`;
-    } else if(type === 'schuppen'){   // versetzte Halbschuppen
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="10" height="8">`+
-        `<path d="M0 8 Q5 -1 10 8" fill="none" stroke="${dk}" stroke-width="1" opacity="0.45"/>`+
-        `<path d="M-5 4 Q0 -5 5 4 M5 4 Q10 -5 15 4" fill="none" stroke="${dk}" stroke-width="1" opacity="0.45"/></pattern>`;
-    } else if(type === 'leder'){      // Steppstich-Naht
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="13" height="13">`+
-        `<line x1="2" y1="6.5" x2="6" y2="6.5" stroke="${dk}" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/></pattern>`;
-    } else {                          // stoff – feine vertikale Webfalten
-      tile = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="6" height="6">`+
-        `<line x1="1.5" y1="0" x2="1.5" y2="6" stroke="${dk}" stroke-width="0.7" opacity="0.28"/>`+
-        `<line x1="4.5" y1="0" x2="4.5" y2="6" stroke="${lt}" stroke-width="0.6" opacity="0.22"/></pattern>`;
-    }
-    extraDefs += tile;
-    const url = `url(#${id})`; patReg.set(key, url); return url;
-  };
-  // Rüstungssilhouette mit gerichtetem Verlauf + (optional) Materialtextur.
+  const greg = makeGradReg(uid);
+  const grad = greg.grad;          // gerichteter 3-Stop-Verlauf (Lichtrichtung)
+  const texturePat = greg.texture; // Material-Mikrotextur (Nieten/Ring/Schuppe/…)
+  // Rüstungssilhouette mit gerichtetem Verlauf + (optional) Materialtextur +
+  // materialabhängigem Licht-Filter (Metallglanz/Lederschimmer; Tuch bleibt matt).
   const armorShape = (d, color, it, sw) => {
+    const mat = it ? (typeOf(it).material || 'platte') : 'platte';
+    const furl = greg.filter('mat-'+mat, id => materialFilter(id, mat));
     let out = `<path d="${d}" fill="${grad(color)}" stroke="${shade(color,0.5)}" stroke-width="${sw||2}" stroke-linejoin="round"/>`;
     if(it) out += `<path d="${d}" fill="${texturePat(textureOf(it), color)}"/>`;
-    return out;
+    return furl ? `<g filter="${furl}">${out}</g>` : out;
   };
   // Bodenschatten-Ellipse, je Geschlecht auf Fußhöhe platziert.
   const groundY = gender==='w' ? 312 : gender==='m' ? 282 : 304;
@@ -479,6 +444,9 @@ export function buildHeroSVG(character, tier, gear){
                 `<path d="M100 130 L100 186" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
                 `<ellipse cx="90" cy="150" rx="7" ry="10" fill="${ch}" opacity="0.4"/>`;
     }
+    // Seltenheits-Filigran (Episch+) auf der Brust – wächst mit der Stufe.
+    const blvl = armorLvl(br.rarity);
+    if(blvl>0) brust += engraving(100, 156, 30, 52, blvl, GOLD);
   }
 
   // Stiefel
@@ -585,21 +553,59 @@ export function buildHeroSVG(character, tier, gear){
 
   // Zweiter <defs>-Block für die lazy erzeugten Material-Verläufe/-Muster
   // (gefüllt während des Aufbaus oben). Bodenschatten ganz unten im Z-Stapel.
+  // ---- Licht & Tiefe: Kontaktschatten + Rim-Light --------------------
+  // Aufliegende Teile (Pauldrons, Helm) werfen einen weichen Schatten → Tiefe.
+  const csUrl = (pauldronG || helm)
+    ? greg.filter('cs', id => softShadowFilter(id, { dy:2.2, blur:2, op:0.34 })) : '';
+  const wrapCS = g => (g && csUrl) ? `<g filter="${csUrl}">${g}</g>` : g;
+  const pauldronCS = wrapCS(pauldronG);
+  const helmCS = wrapCS(helm);
+  // Rim-Light an der Körperkante ab Tier ≥ 2 (Held hebt sich vom Hintergrund ab).
+  const rimUrl = t>=2 ? greg.filter('rim', id => rimLightFilter(id)) : '';
+  const bodyLit = rimUrl ? `<g filter="${rimUrl}">${body}</g>` : body;
+
+  // ---- Animation: Waffen-Sway + Idle-Atmen ---------------------------
+  // Waffe wiegt dezent um den Handpunkt (124,194). reduced-motion → statisch.
+  const weaponSway = (ANIM && weaponG)
+    ? `<g>${weaponG}<animateTransform attributeName="transform" type="rotate" values="-1.5 124 194;1.5 124 194;-1.5 124 194" dur="4.4s" repeatCount="indefinite"/></g>`
+    : weaponG;
+
+  const extraDefs = greg.defs();
   const xtra = extraDefs ? `<defs>${extraDefs}</defs>` : '';
+  // Idle-Atmen: die ganze Figur (ohne Bodenschatten) wippt minimal vertikal.
+  // CSS-@keyframes IM SVG laufen auch im <img>; @media reduced-motion als Fallback,
+  // primär verhindert ANIM den Einbau ganz. Keyframe-/Gruppen-ID mit uid (kollisionsfrei).
+  const styleBlock = ANIM
+    ? `<style>@keyframes hb${uid}{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.3px)}}`+
+      `#hero${uid}{animation:hb${uid} 3.8s ease-in-out infinite}`+
+      `@media(prefers-reduced-motion:reduce){#hero${uid}{animation:none}}</style>`
+    : '';
+  const figure = aura + cloak + hairBack + bodyLit + beine + brust + fuesse + arms + gloves + schild +
+    pauldronCS + head + face + beard + hairFront + helmCS + weaponSway;
+  const heroGroup = ANIM ? `<g id="hero${uid}">${figure}</g>` : figure;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
-    defs + xtra + groundShadow + aura + cloak + hairBack + body + beine + brust + fuesse + arms + gloves + schild +
-    pauldronG + head + face + beard + hairFront + helm + weaponG +
+    defs + xtra + styleBlock + groundShadow + heroGroup +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
+// Memo-Cache: identischer Helden-Zustand → identischer Data-URI-String. Das ist
+// für die Animation essenziell: dieselbe URI an img.src zu setzen ist ein No-Op
+// (Animation läuft ununterbrochen weiter, statt bei jedem renderAll() neu zu
+// starten) – und erspart das teure Neu-Bauen des SVG samt Filtern.
+const _heroCache = new Map();
 export function heroSrc(tier, opts){
-  if(state && state.character)
-    return buildHeroSVG(state.character, tier, {
-      equipped: state.equipped || {},
-      hideHelmet: !!(state.settings && state.settings.hideHelmet),
-      hideWeapon: !!(opts && opts.hideWeapon),
-    });
+  if(state && state.character){
+    const hideHelmet = !!(state.settings && state.settings.hideHelmet);
+    const hideWeapon = !!(opts && opts.hideWeapon);
+    const key = JSON.stringify([state.character, tier, hideHelmet, hideWeapon, state.equipped || {}]);
+    const hit = _heroCache.get(key);
+    if(hit) return hit;
+    const uri = buildHeroSVG(state.character, tier, { equipped: state.equipped || {}, hideHelmet, hideWeapon });
+    if(_heroCache.size > 16) _heroCache.clear();   // selten genutzte Varianten verwerfen
+    _heroCache.set(key, uri);
+    return uri;
+  }
   return ASSETS + 'char_tier' + tier + '.png';
 }
 
