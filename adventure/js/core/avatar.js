@@ -8,7 +8,10 @@ import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-opt
 import { rarityIndex } from '../data/rarities.js';
 import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
          GOLD, WOOD, makeGradReg, materialFilter, softShadowFilter, rimLightFilter,
-         engraving } from './svg-fx.js';
+         engraving, REDUCED_MOTION } from './svg-fx.js';
+
+// Animationen nur, wenn der Nutzer keine Bewegungsreduktion wünscht.
+const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
 import { state } from './state.js';
 
@@ -74,7 +77,11 @@ function heldWeapon(item, uid, opt){
     const pole = `<rect x="${hx-2.5}" y="${oy}" width="5" height="${204-oy}" rx="2.5" fill="${WOOD}"/>`+
                  `<rect x="${hx-2.5}" y="${oy+4}" width="2" height="${198-oy}" fill="${shade(WOOD,1.3)}" opacity="0.5"/>`+
                  `<rect x="${hx-5}" y="${oy+6}" width="10" height="5" rx="2" fill="${GOLD}"/>`;  // Fassung
-    let glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30"/>`+
+    // Äußerer Glow pulsiert (Radius + Opazität atmen) – Stab-Kugel „lebt".
+    const orbPulse = ANIM
+      ? `<animate attributeName="r" values="18;21;18" dur="2.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.30;0.12;0.30" dur="2.8s" repeatCount="indefinite"/>`
+      : '';
+    let glow = `<circle cx="${hx}" cy="${oy}" r="18" fill="${P.glow}" opacity="0.30">${orbPulse}</circle>`+
                `<circle cx="${hx}" cy="${oy}" r="12" fill="${P.glow}" opacity="0.35"/>`;
     // Legendär/Mythisch: zusätzlicher, weicher Außen-Glow um die Kugel.
     if(lvl>0) glow = `<circle cx="${hx}" cy="${oy}" r="${22+lvl*4}" fill="${P.glow}" opacity="${(0.15+lvl*0.06).toFixed(2)}"/>`+glow;
@@ -152,8 +159,11 @@ function heldWeapon(item, uid, opt){
   let halo = '';
   if(lvl>0){
     const gw = (12+lvl*5)*SCALE, gh = (48+lvl*7)*SCALE;
+    const o2 = (0.16+lvl*0.07);
+    // Innerer Element-Glow pulsiert dezent in der Opazität (Waffe „brennt"/„friert").
+    const haloPulse = ANIM ? `<animate attributeName="opacity" values="${o2.toFixed(2)};${(o2*0.55).toFixed(2)};${o2.toFixed(2)}" dur="2.4s" repeatCount="indefinite"/>` : '';
     halo = `<ellipse cx="${hx}" cy="156" rx="${(gw+7).toFixed(1)}" ry="${(gh+10).toFixed(1)}" fill="${E.glow}" opacity="${(0.09+lvl*0.04).toFixed(2)}"/>`+
-           `<ellipse cx="${hx}" cy="156" rx="${gw.toFixed(1)}" ry="${gh.toFixed(1)}" fill="${E.glow}" opacity="${(0.16+lvl*0.07).toFixed(2)}"/>`;
+           `<ellipse cx="${hx}" cy="156" rx="${gw.toFixed(1)}" ry="${gh.toFixed(1)}" fill="${E.glow}" opacity="${o2.toFixed(2)}">${haloPulse}</ellipse>`;
     if(lvl>=2) halo += `<ellipse cx="${hx}" cy="150" rx="8" ry="${(gh*0.66).toFixed(1)}" fill="${E.core}" opacity="0.40"/>`;
   }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
@@ -167,11 +177,17 @@ function offhandOrb(item){
   const cx = 74, cy = 174;
   const lvl = armorLvl(item.rarity);
   const r = (11 * ([1, 1.12, 1.26, 1.4][lvl] || 1)).toFixed(1);
-  const glow = `<circle cx="${cx}" cy="${cy}" r="${(+r+7).toFixed(1)}" fill="${P.glow}" opacity="${(0.18+lvl*0.06).toFixed(2)}"/>`+
+  // Pulsierender Glow (Opazität atmet) – nur bei aktiver Bewegung.
+  const pulse = ANIM ? `<animate attributeName="opacity" values="${(0.18+lvl*0.06).toFixed(2)};${(0.34+lvl*0.06).toFixed(2)};${(0.18+lvl*0.06).toFixed(2)}" dur="2.6s" repeatCount="indefinite"/>` : '';
+  const glow = `<circle cx="${cx}" cy="${cy}" r="${(+r+7).toFixed(1)}" fill="${P.glow}" opacity="${(0.18+lvl*0.06).toFixed(2)}">${pulse}</circle>`+
                `<circle cx="${cx}" cy="${cy}" r="${(+r+3).toFixed(1)}" fill="${P.glow}" opacity="0.34"/>`;
   const sphere = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${P.mid}" stroke="${P.lo}" stroke-width="1.4"/>`+
                  `<circle cx="${(cx-r*0.32).toFixed(1)}" cy="${(cy-r*0.32).toFixed(1)}" r="${(r*0.3).toFixed(1)}" fill="${P.hi}" opacity="0.75"/>`;
-  return glow + sphere;
+  // Sanftes Schweben der ganzen Kugel (vertikal) um die Hand herum.
+  const inner = glow + sphere;
+  return ANIM
+    ? `<g>${inner}<animateTransform attributeName="transform" type="translate" values="0 0;0 -2.6;0 0" dur="3.4s" repeatCount="indefinite"/></g>`
+    : inner;
 }
 
 export function buildHeroSVG(character, tier, gear){
@@ -548,22 +564,48 @@ export function buildHeroSVG(character, tier, gear){
   const rimUrl = t>=2 ? greg.filter('rim', id => rimLightFilter(id)) : '';
   const bodyLit = rimUrl ? `<g filter="${rimUrl}">${body}</g>` : body;
 
+  // ---- Animation: Waffen-Sway + Idle-Atmen ---------------------------
+  // Waffe wiegt dezent um den Handpunkt (124,194). reduced-motion → statisch.
+  const weaponSway = (ANIM && weaponG)
+    ? `<g>${weaponG}<animateTransform attributeName="transform" type="rotate" values="-1.5 124 194;1.5 124 194;-1.5 124 194" dur="4.4s" repeatCount="indefinite"/></g>`
+    : weaponG;
+
   const extraDefs = greg.defs();
   const xtra = extraDefs ? `<defs>${extraDefs}</defs>` : '';
+  // Idle-Atmen: die ganze Figur (ohne Bodenschatten) wippt minimal vertikal.
+  // CSS-@keyframes IM SVG laufen auch im <img>; @media reduced-motion als Fallback,
+  // primär verhindert ANIM den Einbau ganz. Keyframe-/Gruppen-ID mit uid (kollisionsfrei).
+  const styleBlock = ANIM
+    ? `<style>@keyframes hb${uid}{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.3px)}}`+
+      `#hero${uid}{animation:hb${uid} 3.8s ease-in-out infinite}`+
+      `@media(prefers-reduced-motion:reduce){#hero${uid}{animation:none}}</style>`
+    : '';
+  const figure = aura + cloak + hairBack + bodyLit + beine + brust + fuesse + arms + gloves + schild +
+    pauldronCS + head + face + beard + hairFront + helmCS + weaponSway;
+  const heroGroup = ANIM ? `<g id="hero${uid}">${figure}</g>` : figure;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
-    defs + xtra + groundShadow + aura + cloak + hairBack + bodyLit + beine + brust + fuesse + arms + gloves + schild +
-    pauldronCS + head + face + beard + hairFront + helmCS + weaponG +
+    defs + xtra + styleBlock + groundShadow + heroGroup +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
+// Memo-Cache: identischer Helden-Zustand → identischer Data-URI-String. Das ist
+// für die Animation essenziell: dieselbe URI an img.src zu setzen ist ein No-Op
+// (Animation läuft ununterbrochen weiter, statt bei jedem renderAll() neu zu
+// starten) – und erspart das teure Neu-Bauen des SVG samt Filtern.
+const _heroCache = new Map();
 export function heroSrc(tier, opts){
-  if(state && state.character)
-    return buildHeroSVG(state.character, tier, {
-      equipped: state.equipped || {},
-      hideHelmet: !!(state.settings && state.settings.hideHelmet),
-      hideWeapon: !!(opts && opts.hideWeapon),
-    });
+  if(state && state.character){
+    const hideHelmet = !!(state.settings && state.settings.hideHelmet);
+    const hideWeapon = !!(opts && opts.hideWeapon);
+    const key = JSON.stringify([state.character, tier, hideHelmet, hideWeapon, state.equipped || {}]);
+    const hit = _heroCache.get(key);
+    if(hit) return hit;
+    const uri = buildHeroSVG(state.character, tier, { equipped: state.equipped || {}, hideHelmet, hideWeapon });
+    if(_heroCache.size > 16) _heroCache.clear();   // selten genutzte Varianten verwerfen
+    _heroCache.set(key, uri);
+    return uri;
+  }
   return ASSETS + 'char_tier' + tier + '.png';
 }
 

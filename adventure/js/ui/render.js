@@ -54,6 +54,13 @@ export function renderAll(){
 
 const freeSlots = () => Math.max(0, invCapacity() - state.inventory.length);
 
+// Avatar-img-src nur setzen, wenn er sich tatsächlich geändert hat – sonst würde
+// die im SVG eingebettete Idle-Animation bei jedem renderAll() neu starten/ruckeln.
+function setHeroSrc(el, uri){
+  if(!el || el.__heroSrc === uri) return;
+  el.__heroSrc = uri; el.src = uri;
+}
+
 // ---- Top-Leiste -----------------------------------------------------
 export function renderTopStats(){
   // Header zeigt nur noch Level + Coins; Rüstung/Schaden/Kampfkraft stehen
@@ -100,7 +107,7 @@ export function renderAdventure(){
   scene.style.backgroundImage = "url('"+zoneBg(state.zone)+"')";
   $('#zoneLabel').textContent = 'Zone '+(state.zone+1)+' · '+zoneName(state.zone);
   const zf = $('#zoneFlavor'); if(zf) zf.textContent = zoneFlavor(state.zone);
-  $('#sceneHero').src = heroSrc(heroTier(t.power));
+  setHeroSrc($('#sceneHero'), heroSrc(heroTier(t.power)));
   applyHeroRarity('#sceneHero');
   $('#findBar').style.width = Math.round(findProgress*100)+'%';
 
@@ -237,7 +244,7 @@ function slotEl(slotKey){
 export function renderCharacter(){
   const t = recomputeTotals();
   const tier = heroTier(t.power);
-  $('#dollHero').src = heroSrc(tier);
+  setHeroSrc($('#dollHero'), heroSrc(tier));
   applyHeroRarity('#dollHero');
   $('#tierBadge').textContent = TIER_NAME[tier] + ' · ' + t.power + ' Kampfkraft';
   $('#tierBadge').title = STAT_HELP.kampfkraft;
