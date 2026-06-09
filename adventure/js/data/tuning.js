@@ -35,6 +35,10 @@ export const COMBAT = {
   armorReduction: 0.3,        // flache Schadensreduktion je Rüstungspunkt
   bossCritChance: 0.12,
   bossReplyMs: 360,           // Pause bis der Boss zurückschlägt
+  // Lebensraub-Heilung pro Treffer hart auf diesen Anteil der maxHP deckeln
+  // (verhindert Runaway-Healing: Heilung skalierte vorher linear & ungedeckelt
+  // mit dem Schaden, Talent-Buffs umgingen den 0,40-Stat-Cap).
+  lifestealHealCapPct: 0.06,
   // Soft-Enrage (#7): Ab dieser Runde eskaliert JEDER Boss → erzwingt Mindest-DPS.
   enrageTurn: 45,
   enrageRamp: 1.07,           // Boss-Angriff ×1,07 pro Runde nach dem Enrage

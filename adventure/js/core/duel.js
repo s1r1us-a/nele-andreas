@@ -538,7 +538,8 @@ function applyStrike(fight, attKey, defKey, res, events){
   let ls = att.lifesteal;
   if(Date.now() < att.buffs.lifesteal.until) ls += att.buffs.lifesteal.val;
   if(ls > 0){
-    const heal = Math.round(dmg * ls);
+    // Heilung pro Treffer hart deckeln (Anteil der maxHP) – gegen Runaway-Healing.
+    const heal = Math.min(Math.round(att.maxHp * COMBAT.lifestealHealCapPct), Math.round(dmg * ls));
     if(heal > 0) att.hp = Math.min(att.maxHp, att.hp + heal);
   }
   // Dornen-Affix: flacher Bonusschaden am Verteidiger (analog Solo-Kampf).

@@ -205,7 +205,8 @@ function exchange(fight){
     let ls = fight.lifesteal;
     if(now < fight.buffs.lifesteal.until) ls += fight.buffs.lifesteal.val;
     if(ls > 0){
-      const heal = Math.round(dmg * ls * fight.healDebuff);
+      // Heilung pro Treffer hart deckeln (Anteil der maxHP) – gegen Runaway-Healing.
+      const heal = Math.min(Math.round(fight.heroMaxHp * COMBAT.lifestealHealCapPct), Math.round(dmg * ls * fight.healDebuff));
       if(heal>0){ fight.heroHp = Math.min(fight.heroMaxHp, fight.heroHp + heal); }
     }
     // Procs (#22)
