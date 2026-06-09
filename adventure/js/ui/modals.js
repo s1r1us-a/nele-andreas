@@ -940,7 +940,7 @@ function enterDuelArena(lobby){
     openDuelArena({
       lobbyId: _dId, role, stake: lobby.stake || 0,
       myName: dMyName(), oppName: _dHost ? lobby.guestName : lobby.hostName,
-      oppSrc, abilities: abilitiesOf(state),
+      oppSrc, oppEquipped: opp.equipped || {}, abilities: abilitiesOf(state),
       onAction: (kind) => requestDuelAction(_dId, role, kind),
       onForfeit: () => requestDuelForfeit(_dId, role),
       onClose: () => cleanupDuel(true),

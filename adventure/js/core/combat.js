@@ -477,18 +477,21 @@ function spellOf(item){
   else element = orb==='blau' ? 'ice' : (orb==='gruen' ? 'nature' : 'fire');
   return { mode, element };
 }
-// Angriffs-Beschreibung (Art, Profil/Spell, Waffen-Overlay-Parameter) je Angreifer.
-// `meta.atk` erlaubt das Vorab-Auflösen (Duell-Gegner mit eigener Waffe).
+// Angriffs-Beschreibung aus einer Waffe (Nahkampf-Profil oder Zauber-Spell +
+// Overlay-Parameter). Von Held UND Duell-Gegner wiederverwendet.
+export function atkFromWeapon(w){
+  if(!w) return { kind:'melee', profile:'arc', element:'physical' };
+  if(materialOf(w) === 'zauberstab'){ const sp = spellOf(w); return { kind:'stab', spell:sp, element:sp.element }; }
+  const ty = typeOf(w);
+  return { kind:'melee', profile:attackProfileOf(ty.variant), element:(elementOf(w.id)==='ice'?'ice':'fire'),
+           wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material };
+}
+// Angriffs-Beschreibung je Angreifer. `meta.atk` erlaubt das Vorab-Auflösen
+// (Duell-Gegner mit eigener Waffe); Boss ohne Waffe → generischer Hieb.
 function resolveAttack(isHero, meta){
   if(meta && meta.atk) return meta.atk;
-  if(isHero){
-    const w = state.equipped && state.equipped.waffe;
-    if(w && materialOf(w) === 'zauberstab'){ const sp = spellOf(w); return { kind:'stab', spell:sp, element:sp.element }; }
-    if(w){ const ty = typeOf(w); return { kind:'melee', profile:attackProfileOf(ty.variant), element:(elementOf(w.id)==='ice'?'ice':'fire'),
-            wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material }; }
-    return { kind:'melee', profile:'arc', element:'physical' };
-  }
-  return { kind:'melee', profile:'overhead', element:'physical' };   // Boss: generischer Hieb
+  if(isHero) return atkFromWeapon(state.equipped && state.equipped.waffe);
+  return { kind:'melee', profile:'overhead', element:'physical' };
 }
 // Hand-Position eines Sprites in Bühnen-Koordinaten (Waffen-Overlay/Projektil-Start).
 function handAnchor(spriteId){
@@ -1735,7 +1738,7 @@ function endFight(fight, win){
 //  Der Host (siehe duel.js) simuliert autoritativ; BEIDE Clients rendern
 //  ausschließlich aus dem Kampf-Snapshot via applyDuelSnapshot().
 // =====================================================================
-// cfg: { lobbyId, role, myName, oppName, oppSrc, myTier, ability, stake, onAction, onClose, onForfeit }
+// cfg: { lobbyId, role, myName, oppName, oppSrc, oppEquipped, myTier, ability, stake, onAction, onClose, onForfeit }
 export function openDuelArena(cfg){
   clearTimeout(combatTimer); combatTimer = null;
   const t = recomputeTotals();
@@ -1753,6 +1756,8 @@ export function openDuelArena(cfg){
     abilities: cfg.abilities || [], abilityCd: {}, buffs: freshBuffs(),
     over: false, anchor: {}, startedAt: Date.now(),
     _animTurn: -1, _lastHealTs: 0, _ended: false, _fxSeen: {},
+    // Gegnerwaffe einmalig auflösen → Gegner schwingt/zaubert passend zu SEINER Waffe.
+    oppAtk: atkFromWeapon((cfg.oppEquipped || {}).waffe),
   };
   currentFight = fight;
   $('#arenaResult').className = 'arena-result';
@@ -1826,7 +1831,9 @@ function replayDuelEvents(events, me){
       const defender = e.t === me ? 'hero' : 'boss';
       if(e.o){ mechFloat(defender, '💨 Ausweichen', '#9ec5ff'); return; }
       if(e.h){ mechFloat(attacker, '💚 +'+fmtBig(e.d||0), '#37d67a'); return; }
-      attackAnim(attacker, e.d||0, !!e.c, ()=>{});
+      // Gegner (boss-Slot) nutzt seine eigene Waffe; eigener Held nutzt state.equipped.
+      const meta = (attacker === 'boss' && currentFight) ? { atk: currentFight.oppAtk } : null;
+      attackAnim(attacker, e.d||0, !!e.c, ()=>{}, meta);
     }, i * 240);
   });
 }
