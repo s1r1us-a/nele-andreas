@@ -225,7 +225,6 @@ import { giveLoot } from './adventure/js/core/items.js';
 import { INV_SLOTS, INV_SLOTS_MAX } from './adventure/js/data/tuning.js';
 import { affixLinesHTML } from './adventure/js/ui/tooltip.js';
 import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
-import { buildItemSVG } from './adventure/js/core/item-art.js';
 import { ATK_ELEM } from './adventure/js/data/attacks.js';
 import { buildDemonSVG } from './adventure/js/core/demon-art.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from './adventure/js/data/classes.js';
@@ -938,50 +937,6 @@ function handAnchorMP(imgId, isBoss){
   return { x:r.left - sr.left + fx*r.width, y:r.top - sr.top + fy*r.height, w:r.width, h:r.height };
 }
 // Echter Waffen-Schwung: Waffen-SVG am Hand-Anker, rotiert um den Griff.
-function weaponSwingMP(imgId, atk, isBoss){
-  const layer = $('dmgLayer'), ha = handAnchorMP(imgId, isBoss);
-  if(!layer || !ha || !atk || atk.wv == null) return false;
-  const elem = atk.element === 'ice' ? 'ice' : 'fire';
-  let src; try { src = buildItemSVG('waffe', atk.wv, atk.rarity, elem, atk.orb, atk.material); } catch(e){ return false; }
-  const size = Math.max(40, ha.h*0.6);
-  const wrap = document.createElement('div'); wrap.className = 'weapon-swing';
-  wrap.style.left = ha.x+'px'; wrap.style.top = ha.y+'px';
-  wrap.style.width = wrap.style.height = size+'px';
-  wrap.style.marginLeft = (-size/2)+'px'; wrap.style.marginTop = (-size)+'px';
-  const img = document.createElement('img'); img.src = src; img.alt=''; img.draggable=false;
-  wrap.appendChild(img); layer.appendChild(wrap);
-  const dir = isBoss ? -1 : 1, flip = isBoss ? 'scaleX(-1) ' : '';
-  const ANG = { arc:[-120,-95,40,28], overhead:[-78,-58,82,70], thrust:[-12,-8,6,0], flurry:[-46,28,-30,22] }[atk.profile] || [-110,-90,40,25];
-  const off = [0,0.28,0.55,1];
-  const kf = ANG.map((deg,i)=>{ let t = `${flip}rotate(${dir*deg}deg)`;
-    if(atk.profile==='thrust'){ const tx=[0,16,26,0][i]*dir; t = `${flip}translateX(${tx}px) rotate(${dir*deg}deg)`; }
-    return { transform:t, offset:off[i] }; });
-  const a = wrap.animate(kf, { duration:300/fightSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
-  a.onfinish = ()=> wrap.remove(); setTimeout(()=>{ if(wrap.parentNode) wrap.remove(); }, 700/fightSpeed);
-  return true;
-}
-// Element-gefärbte Schwung-Spur.
-function swingTrailMP(imgId, profile, element, isBoss){
-  const layer = $('dmgLayer'), ha = handAnchorMP(imgId, isBoss);
-  if(!layer || !ha) return;
-  const P = ATK_ELEM[element] || ATK_ELEM.physical;
-  const dir = isBoss ? -1 : 1, r = Math.max(36, ha.h*0.7);
-  let d;
-  if(profile==='thrust')        d = `M0 -5 L${dir*r} -2 L${dir*r} 2 L0 5 Z`;
-  else if(profile==='overhead') d = `M${-dir*r*0.2} ${-r} Q${dir*r*0.5} ${-r*0.2} ${dir*r*0.15} ${r*0.45}`;
-  else                          d = `M${-dir*r*0.7} ${-r*0.5} Q${dir*r} ${-r*0.1} ${dir*r*0.2} ${r*0.6}`;
-  const sw = profile==='thrust' ? 6 : 9;
-  const wrap = document.createElement('div'); wrap.className = 'swing-trail';
-  wrap.style.left = ha.x+'px'; wrap.style.top = ha.y+'px';
-  wrap.innerHTML = `<svg width="${r*2}" height="${r*2}" viewBox="${-r} ${-r} ${r*2} ${r*2}" style="overflow:visible">`+
-    `<path d="${d}" fill="none" stroke="${P.mid}" stroke-width="${sw}" stroke-linecap="round" opacity="0.85"/>`+
-    `<path d="${d}" fill="none" stroke="${P.core}" stroke-width="${Math.max(2,sw*0.33)}" stroke-linecap="round"/></svg>`;
-  layer.appendChild(wrap);
-  wrap.animate([ { opacity:0, transform:`rotate(${-dir*22}deg) scale(0.7)` },
-    { opacity:1, transform:'rotate(0deg) scale(1)', offset:0.4 },
-    { opacity:0, transform:`rotate(${dir*18}deg) scale(1.05)` } ], { duration:300/fightSpeed, easing:'ease-out' });
-  setTimeout(()=>{ if(wrap.parentNode) wrap.remove(); }, 360/fightSpeed);
-}
 // Sofortiger, gezackter Blitz.
 function lightningBoltMP(from, to, element, reduce, onArrive){
   const layer = $('dmgLayer'); const P = ATK_ELEM[element] || ATK_ELEM.lightning;
@@ -1095,11 +1050,8 @@ function attackAnimMP(ev){
     else if(sp.mode === 'bolt') lightningBoltMP(from, to, element, reduce, doHit);
     else projectileMP(from, to, element, reduce, doHit);
   } else {
-    if(!reduce){
-      const swung = weaponSwingMP(src.img, atk, srcIsBoss);
-      lungeMP(src.wrap, src.dir, src.baseY);
-      if(swung) swingTrailMP(src.img, atk.profile, element, srcIsBoss);
-    }
+    // Sauberer Ganzfigur-Ausfall (Waffe steckt im Sprite) – keine Doppelwaffe/Spur.
+    if(!reduce) lungeMP(src.wrap, src.dir, src.baseY);
     setTimeout(doHit, reduce ? 0 : HIT_DELAY / fightSpeed);
   }
 }

@@ -241,10 +241,6 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .staff-projectile.proj-nature { background:radial-gradient(circle at 35% 35%, #eaffe6, #48d66a 52%, #0c5a2c);
   box-shadow:0 0 9px 4px #2fd06a, 0 0 3px 1px #eaffe6; }
 .staff-projectile.proj-tail { width:10px; height:10px; opacity:.5; }
-.weapon-swing { position:absolute; pointer-events:none; z-index:9; transform-origin:50% 100%; will-change:transform; }
-.weapon-swing img { width:100%; height:100%; display:block; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
-.swing-trail { position:absolute; pointer-events:none; z-index:8; transform:translate(-50%,-50%); will-change:opacity,transform; }
-.swing-trail svg { filter:drop-shadow(0 0 4px currentColor); }
 .atk-bolt { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:9;
   filter:drop-shadow(0 0 5px rgba(180,120,255,.7)); }
 .impact-burst { position:absolute; width:54px; height:54px; pointer-events:none; z-index:8; transform:translate(-50%,-50%);
@@ -254,7 +250,7 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 @keyframes impactFlash { 0%{ opacity:0; transform:translate(-50%,-50%) scale(.3); }
   25%{ opacity:.95; transform:translate(-50%,-50%) scale(1); } 100%{ opacity:0; transform:translate(-50%,-50%) scale(1.5); } }
 @media (prefers-reduced-motion: reduce){
-  .swing-trail, .impact-particle { display:none; }
+  .impact-particle { display:none; }
   .impact-burst { animation-duration:.25s; }
 }
 
