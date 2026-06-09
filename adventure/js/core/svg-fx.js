@@ -203,3 +203,42 @@ export const sparkle = (cx,cy,s,delay) => {
     `<animate attributeName="opacity" values="0.15;1;0.15" dur="1.9s" begin="${delay||0}s" repeatCount="indefinite"/>`;
   return `<g opacity="0.9">`+star(cx,cy,s,s*0.32,4,'#fff')+tw+`</g>`;
 };
+
+// ---- Reichere Materialien ------------------------------------------
+// Facettierter Brillant: oktogonale Kontur + radiale Kronfacetten (abwechselnd
+// hell/dunkel für Tiefe) + helle Tafel + Glanzpunkt nach Lichtrichtung.
+// Gleiche Signatur wie gem() → direkt austauschbar an prominenten Steinen.
+export const facetGem = (cx,cy,r,c) => {
+  const n = 8, edge = shade(c,0.45), tr = r*0.46;
+  const ring = rad => { let s=''; for(let i=0;i<n;i++){ const a=(Math.PI*2/n)*i - Math.PI/2;
+    s += (i?'L':'M')+(cx+Math.cos(a)*rad).toFixed(1)+' '+(cy+Math.sin(a)*rad).toFixed(1)+' '; } return s+'Z'; };
+  const pt = (rad,i) => [cx+Math.cos((Math.PI*2/n)*i - Math.PI/2)*rad, cy+Math.sin((Math.PI*2/n)*i - Math.PI/2)*rad];
+  let facets='';
+  for(let i=0;i<n;i++){ const p1=pt(r,i), p2=pt(r,(i+1)%n);
+    const f = (i%2) ? shade(c,1.18) : shade(c,0.72);
+    facets += `<path d="M${cx.toFixed(1)} ${cy.toFixed(1)} L${p1[0].toFixed(1)} ${p1[1].toFixed(1)} L${p2[0].toFixed(1)} ${p2[1].toFixed(1)} Z" fill="${f}"/>`;
+  }
+  return `<path d="${ring(r)}" fill="${c}" stroke="${edge}" stroke-width="0.6"/>`+
+    facets+
+    `<path d="${ring(tr)}" fill="${shade(c,1.35)}" opacity="0.9"/>`+
+    `<circle cx="${(cx-r*0.26).toFixed(1)}" cy="${(cy-r*0.26).toFixed(1)}" r="${(r*0.18).toFixed(1)}" fill="#fff" opacity="0.85"/>`;
+};
+
+// Seltenheits-Filigran (zentriertes Goldornament), das mit lvl (1..4) wächst:
+// 1 = Mittellinie + Endvoluten, 2 = + seitliche Schnörkel, 3 = + Ranken-Knoten,
+// 4 = + zwei eingelegte Mini-Edelsteine. Box: Zentrum (cx,cy), Breite w, Höhe h.
+export const engraving = (cx,cy,w,h,lvl,color) => {
+  if(!lvl) return '';
+  const g = color || GOLD, top = cy-h/2, bot = cy+h/2;
+  let out = `<path d="M${cx} ${top.toFixed(1)} L${cx} ${bot.toFixed(1)}" stroke="${g}" stroke-width="${(w*0.03).toFixed(2)}" opacity="0.72" fill="none"/>`+
+    `<path d="M${cx} ${top.toFixed(1)} q ${(w*0.18).toFixed(1)} ${(h*0.05).toFixed(1)} ${(w*0.1).toFixed(1)} ${(h*0.15).toFixed(1)} `+
+    `M${cx} ${top.toFixed(1)} q ${(-w*0.18).toFixed(1)} ${(h*0.05).toFixed(1)} ${(-w*0.1).toFixed(1)} ${(h*0.15).toFixed(1)}" `+
+    `stroke="${g}" stroke-width="${(w*0.025).toFixed(2)}" fill="none" opacity="0.7"/>`;
+  if(lvl>=2){
+    out += `<path d="M${cx} ${cy} q ${(w*0.24).toFixed(1)} ${(-h*0.08).toFixed(1)} ${(w*0.32).toFixed(1)} ${(h*0.02).toFixed(1)} q ${(-w*0.06).toFixed(1)} ${(h*0.07).toFixed(1)} ${(-w*0.15).toFixed(1)} ${(h*0.04).toFixed(1)}" stroke="${g}" stroke-width="${(w*0.025).toFixed(2)}" fill="none" opacity="0.66"/>`+
+           `<path d="M${cx} ${cy} q ${(-w*0.24).toFixed(1)} ${(-h*0.08).toFixed(1)} ${(-w*0.32).toFixed(1)} ${(h*0.02).toFixed(1)} q ${(w*0.06).toFixed(1)} ${(h*0.07).toFixed(1)} ${(w*0.15).toFixed(1)} ${(h*0.04).toFixed(1)}" stroke="${g}" stroke-width="${(w*0.025).toFixed(2)}" fill="none" opacity="0.66"/>`;
+  }
+  if(lvl>=3){ for(let i=1;i<4;i++){ const yy=top+h*i/4; out += `<circle cx="${cx}" cy="${yy.toFixed(1)}" r="${(w*0.04).toFixed(1)}" fill="${g}" opacity="0.6"/>`; } }
+  if(lvl>=4){ out += facetGem(cx, top+h*0.24, w*0.08, '#c0e0ff') + facetGem(cx, bot-h*0.24, w*0.08, '#c0e0ff'); }
+  return out;
+};

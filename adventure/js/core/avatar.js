@@ -7,7 +7,8 @@ import { ASSETS } from '../data/tuning.js';
 import { DEFAULT_CHARACTER, SKIN_TONE, EYE_DEFAULT } from '../data/character-options.js';
 import { rarityIndex } from '../data/rarities.js';
 import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
-         GOLD, WOOD, makeGradReg, materialFilter, softShadowFilter, rimLightFilter } from './svg-fx.js';
+         GOLD, WOOD, makeGradReg, materialFilter, softShadowFilter, rimLightFilter,
+         engraving } from './svg-fx.js';
 import { typeOf } from '../data/itemTypes.js';
 import { state } from './state.js';
 
@@ -427,6 +428,9 @@ export function buildHeroSVG(character, tier, gear){
                 `<path d="M100 130 L100 186" stroke="${cs}" stroke-width="1.5" opacity="0.6"/>`+
                 `<ellipse cx="90" cy="150" rx="7" ry="10" fill="${ch}" opacity="0.4"/>`;
     }
+    // Seltenheits-Filigran (Episch+) auf der Brust – wächst mit der Stufe.
+    const blvl = armorLvl(br.rarity);
+    if(blvl>0) brust += engraving(100, 156, 30, 52, blvl, GOLD);
   }
 
   // Stiefel

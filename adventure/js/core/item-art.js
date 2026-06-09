@@ -8,7 +8,8 @@
    ===================================================================== */
 import { rarityOf, rarityIndex } from '../data/rarities.js';
 import { shade, mirror64 as mir, METAL, GEM, ARMOR_MAT, GOLD, WOOD,
-         ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad, materialFilter } from './svg-fx.js';
+         ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad, materialFilter,
+         facetGem, engraving } from './svg-fx.js';
 
 // ELEM/elementOf liegen jetzt in svg-fx.js; hier re-exportieren, damit die
 // bestehenden Importpfade (attacks.js, state.js, items.js, avatar.js) gültig bleiben.
@@ -223,7 +224,7 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
       body = `<path d="M12 10 L52 10 L52 30 Q52 50 32 60 Q12 50 12 30 Z" fill="${U('m')}" stroke="${rim}" stroke-width="3"/>`+
              `<path d="M32 14 L46 14 L46 30 Q46 44 32 52 Z" fill="${shade(m,1.1)}" opacity="0.4"/>`;
     }
-    body += gem(32,32,4.5, elemFx ? E.glow : rc);   // bei Episch+ Element-Boss
+    body += facetGem(32,32,4.5, elemFx ? E.glow : rc);   // Schildbuckel-Stein (facettiert)
     if(elemFx){                                      // leuchtender Element-Rand
       const rs = ring || `<path d="M9 7 L55 7 L55 30 Q55 53 32 63 Q9 53 9 30 Z" fill="none"`;
       body += rs+` stroke="${E.glow}" stroke-width="3" opacity="0.85"/>`;
@@ -258,13 +259,13 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
     defs += lg('g',g);
     const chain = `<path d="M16 12 Q32 30 48 12" stroke="${GOLD}" stroke-width="3" fill="none"/>`;
     if(variant<=5){            // klassisches Rund-Amulett
-      body = chain+`<circle cx="32" cy="40" r="13" fill="none" stroke="${GOLD}" stroke-width="4"/>`+gem(32,40,8,g);
+      body = chain+`<circle cx="32" cy="40" r="13" fill="none" stroke="${GOLD}" stroke-width="4"/>`+facetGem(32,40,8,g);
       if(variant%2) body += `<circle cx="32" cy="40" r="13" fill="none" stroke="${shade(GOLD,1.2)}" stroke-width="1" opacity="0.7"/>`;
     } else if(variant<=8){     // Tropfen-Anhänger
-      body = chain+`<path d="M32 27 Q45 38 32 56 Q19 38 32 27 Z" fill="none" stroke="${GOLD}" stroke-width="4"/>`+gem(32,42,7,g);
+      body = chain+`<path d="M32 27 Q45 38 32 56 Q19 38 32 27 Z" fill="none" stroke="${GOLD}" stroke-width="4"/>`+facetGem(32,42,7,g);
     } else {                   // Medaillon mit Stern
       body = chain+`<circle cx="32" cy="40" r="14" fill="none" stroke="${GOLD}" stroke-width="3"/>`+
-             star(32,40,9,4,5,shade(g,1.1),0.9)+gem(32,40,5,g);
+             star(32,40,9,4,5,shade(g,1.1),0.9)+facetGem(32,40,5,g);
     }
 
   } else if(art==='ring'){
@@ -273,11 +274,11 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
     const band = `<ellipse cx="32" cy="40" rx="15" ry="17" fill="none" stroke="${GOLD}" stroke-width="6"/>`+
                  `<ellipse cx="32" cy="40" rx="15" ry="17" fill="none" stroke="${shade(GOLD,0.7)}" stroke-width="2" opacity="0.5"/>`;
     if(variant<=5){            // klassischer Ring, ein Stein oben
-      body = band+gem(32,18,9,g);
+      body = band+facetGem(32,18,9,g);
     } else if(variant<=8){     // Doppelstein-Ring
-      body = band+gem(25,17,6,g)+gem(39,17,6,shade(g,1.15));
+      body = band+facetGem(25,17,6,g)+facetGem(39,17,6,shade(g,1.15));
     } else {                   // Siegelring (flacher Schild)
-      body = band+`<rect x="22" y="9" width="20" height="16" rx="3" fill="${shade(g,0.9)}" stroke="${GOLD}" stroke-width="2"/>`+gem(32,17,4,g);
+      body = band+`<rect x="22" y="9" width="20" height="16" rx="3" fill="${shade(g,0.9)}" stroke="${GOLD}" stroke-width="2"/>`+facetGem(32,17,4,g);
     }
 
   } else { // ---- Rüstung: variant = Material ----
@@ -356,6 +357,11 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material){
   if(lightMat){
     const fdef = materialFilter('mlf'+uid, lightMat);
     if(fdef){ defs += fdef; body = `<g filter="url(#mlf${uid})">${body}</g>`; }
+  }
+  // Seltenheits-Filigran (Episch+) auf den großen Flächen Brust/Umhang – wächst
+  // mit der Stufe (Mythisch: eingelegte Mini-Edelsteine). Liegt crisp über dem Metall.
+  if((art==='brust' || art==='umhang') && eff>=2){
+    body += engraving(32, 36, 22, 38, eff-1, GOLD);
   }
 
   // Element-Hervorhebung (nur Waffe/Schild, Episch+): Flammen/Frost / größerer Schild.
