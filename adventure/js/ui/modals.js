@@ -170,7 +170,7 @@ export function openItemPreview(item, fromSlotKey, backFn, compare=false){
   const compareBtn = (!showCompare && cur)
     ? '<button class="btn ghost" id="previewCompare">⚖️ Vergleichen</button>'
     : '';
-  openModal('<h2 style="color:'+r.color+'">'+item.name+upgTag+(locked?' 🔒':'')+'</h2>'+
+  openModal('<h2>'+item.name+upgTag+(locked?' 🔒':'')+'</h2>'+
     '<div class="sub">'+r.name+' · '+SLOTS[item.slotKey].name+'</div>'+
     kindLine+
     (showCompare ? '<div class="preview-hint">Vergleich mit aktuell ausgerüstetem Teil:</div>'

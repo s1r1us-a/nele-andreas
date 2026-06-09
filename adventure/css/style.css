@@ -389,13 +389,30 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 .overlay.show .modal { animation:modalPop .22s cubic-bezier(.22,1,.36,1); }
 /* dezenter Schatten am unteren Rand → deutet scrollbaren Inhalt an */
 .modal { box-shadow:inset 0 -22px 16px -16px rgba(0,0,0,.55); }
-/* Item-Modale: Rahmen + Schein in der Seltenheitsfarbe (--mrc) */
+/* Item-Modale: Rahmen, Schein UND Innenfläche in der Seltenheitsfarbe (--mrc) */
 .modal.rarity-frame {
   border-color: var(--mrc, var(--gold-dim));
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--mrc) 36%, var(--panel-2)),
+      color-mix(in srgb, var(--mrc) 20%, var(--panel)));
   box-shadow:
     0 0 0 1px var(--mrc) inset,
-    0 0 26px -4px var(--mrc),
+    0 0 30px -4px var(--mrc),
     inset 0 -22px 16px -16px rgba(0,0,0,.55);
+}
+/* Farbiger Kopfbalken hinter Titel + Untertitel (bleedet über das Modal-Padding) */
+.modal.rarity-frame h2 {
+  color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.5);
+  margin:-22px -22px 0; padding:16px 22px 8px;
+  border-radius:12px 12px 0 0;
+  background: color-mix(in srgb, var(--mrc) 60%, var(--panel-2));
+}
+.modal.rarity-frame .sub {
+  color:var(--txt);
+  margin:0 -22px 16px; padding:0 22px 12px;
+  background: color-mix(in srgb, var(--mrc) 60%, var(--panel-2));
+  border-bottom:1px solid color-mix(in srgb, var(--mrc) 70%, transparent);
 }
 
 /* ---- Button-Varianten (klare Hierarchie) --------------------- */
