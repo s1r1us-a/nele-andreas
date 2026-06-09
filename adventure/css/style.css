@@ -389,6 +389,14 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 .overlay.show .modal { animation:modalPop .22s cubic-bezier(.22,1,.36,1); }
 /* dezenter Schatten am unteren Rand → deutet scrollbaren Inhalt an */
 .modal { box-shadow:inset 0 -22px 16px -16px rgba(0,0,0,.55); }
+/* Item-Modale: Rahmen + Schein in der Seltenheitsfarbe (--mrc) */
+.modal.rarity-frame {
+  border-color: var(--mrc, var(--gold-dim));
+  box-shadow:
+    0 0 0 1px var(--mrc) inset,
+    0 0 26px -4px var(--mrc),
+    inset 0 -22px 16px -16px rgba(0,0,0,.55);
+}
 
 /* ---- Button-Varianten (klare Hierarchie) --------------------- */
 .btn.danger { background:linear-gradient(180deg,#ef6b62,#b5322b); color:#fff;

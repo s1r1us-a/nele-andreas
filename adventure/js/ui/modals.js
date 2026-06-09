@@ -40,7 +40,13 @@ import { renderAll, bossDifficulty } from './render.js';
 const overlay = () => $('#overlay');
 const modal = () => $('#modal');
 export function closeModal(){ overlay().classList.remove('show'); }
-function openModal(html){ modal().innerHTML = html; overlay().classList.add('show'); }
+function openModal(html, accent){
+  const m = modal();
+  m.innerHTML = html;
+  if(accent){ m.classList.add('rarity-frame'); m.style.setProperty('--mrc', accent); }
+  else { m.classList.remove('rarity-frame'); m.style.removeProperty('--mrc'); }
+  overlay().classList.add('show');
+}
 
 // ---- Slot-Picker ----------------------------------------------------
 export function openSlotPicker(slotKey){
@@ -65,7 +71,7 @@ export function openSlotPicker(slotKey){
   html += candidates.length ? '<div class="picker-list" id="pickerList"></div>'
     : '<p style="text-align:center; color:var(--txt-dim);">Keine passenden Gegenstände im Inventar.</p>';
   html += '<div class="close-row"><button class="btn ghost" id="closeModalBtn">Schließen</button></div>';
-  openModal(html);
+  openModal(html, cur ? rarityOf(cur.rarity).color : null);
   if(cur) modal().querySelector('#unequipBtn').addEventListener('click', ()=>{ unequip(slotKey); renderAll(); closeModal(); });
   modal().querySelector('#closeModalBtn').addEventListener('click', closeModal);
   if(candidates.length){
@@ -178,7 +184,7 @@ export function openItemPreview(item, fromSlotKey, backFn, compare=false){
       upBtn+
       '<button class="btn ghost" id="previewLock">'+(locked?'🔓 Entsperren':'🔒 Sperren')+'</button>'+
       '<button class="btn ghost" id="previewCancel">Abbrechen</button>'+
-    '</div>');
+    '</div>', r.color);
   if(equipOk) modal().querySelector('#previewEquip').addEventListener('click', ()=>{ equip(item, target); renderAll(); closeModal(); });
   const cmpEl = modal().querySelector('#previewCompare');
   if(cmpEl) cmpEl.addEventListener('click', ()=> openItemPreview(item, fromSlotKey, backFn, true));
@@ -269,9 +275,12 @@ export function showRewardModal(items, potionGained){
       '<div class="tt-stat" style="color:#37d67a">+50% HP im Kampf</div></div>';
   }
   const sub = 'Du hast '+items.length+' Gegenstände'+(potionGained?' + einen Heiltrank':'')+' erhalten!';
+  const topColor = items.length
+    ? rarityOf(items.reduce((a,b)=> rarityIndex(b.rarity) > rarityIndex(a.rarity) ? b : a).rarity).color
+    : null;
   openModal('<h2>🎁 Belohnung</h2><div class="sub">'+sub+'</div>'+
     '<div class="reward-grid">'+cards+'</div>'+
-    '<div class="close-row"><button class="btn" id="rewardOkBtn">Super!</button></div>');
+    '<div class="close-row"><button class="btn" id="rewardOkBtn">Super!</button></div>', topColor);
   modal().querySelector('#rewardOkBtn').addEventListener('click', closeModal);
 }
 
