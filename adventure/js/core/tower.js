@@ -10,6 +10,7 @@ import { bossFor } from '../data/bosses.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
+import { weaponAtk } from '../data/attacks.js';
 import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
 import { powerOfBundle, rollItem } from './items.js';
@@ -149,6 +150,8 @@ export function computePlayerStats(s){
     classId: cls.id, healMult: cls.healMult,
     tier: heroTier(b.power), level: s.level || 1,
     character: s.character, usesStab,
+    // Angriffs-Beschreibung (Profil/Spell/Overlay-Parameter) für die Kampf-FX.
+    wpn: weaponAtk(s.equipped && s.equipped.waffe),
   };
 }
 
@@ -438,6 +441,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontHealMult: frontStats.healMult,
     frontIsHealer: frontStats.classId === 'heiler',
     frontUsesStab: frontStats.usesStab || false,
+    frontWpn: frontStats.wpn || null,
     frontName, frontTier: frontStats.tier,
     frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
     frontAbility: abilityOf(frontStats.classId),
@@ -452,6 +456,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backIsHealer: bs.classId === 'heiler',
     backHealMult: bs.healMult,
     backUsesStab: bs.usesStab || false,
+    backWpn: bs.wpn || null,
     backName: backName || '', backTier: bs.tier || 0,
     backKey: keys.backKey || '', backClass: bs.classId || '',
     backAbility:  solo ? null : abilityOf(bs.classId),
@@ -805,7 +810,7 @@ function exchange(fight){
       fight.bossHp = Math.max(0, fight.bossHp - fd);
       fight.dmgDealt += fd;
       addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}) });
+      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}) });
       // Dornen reflektiert
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(fd * 0.15));
@@ -840,7 +845,7 @@ function exchange(fight){
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
       addLog(fight, icon + ' ' + fight.backName + (bc?' ✨KRIT':'') + ': -' + fmtBig(bd) + ' HP', bc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}) });
+      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}) });
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(bd * 0.15));
         fight.backHp = Math.max(0, fight.backHp - refl);
