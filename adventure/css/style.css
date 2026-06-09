@@ -604,7 +604,8 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   box-shadow:0 0 14px -1px var(--rc), inset 0 0 4px var(--rc); }
 .slot[data-rarity="mythisch"], .bp-slot.filled[data-rarity="mythisch"], .inv-item[data-rarity="mythisch"]{
   box-shadow:0 0 18px 0 var(--rc), inset 0 0 6px var(--rc); }
-/* Getragene Figur: pulsierende Aura, wenn Legendär/Mythisch ausgerüstet. */
+/* Getragene Figur: pulsierende Aura, wenn Episch/Legendär/Mythisch ausgerüstet. */
+#dollHero.rare-epic, #sceneHero.rare-epic { animation:rarePulseEpic 2.3s ease-in-out infinite; }
 #dollHero.rare-leg, #sceneHero.rare-leg { animation:rarePulseLeg 2.0s ease-in-out infinite; }
 #dollHero.rare-myth, #sceneHero.rare-myth { animation:rarePulseMyth 1.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce){
@@ -612,7 +613,8 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   .slot[data-rarity="episch"] img, .bp-slot.filled[data-rarity="episch"] img, .inv-item[data-rarity="episch"] img,
   .slot[data-rarity="legendaer"] img, .bp-slot.filled[data-rarity="legendaer"] img, .inv-item[data-rarity="legendaer"] img,
   .slot[data-rarity="mythisch"] img, .bp-slot.filled[data-rarity="mythisch"] img, .inv-item[data-rarity="mythisch"] img,
-  #dollHero.rare-leg, #sceneHero.rare-leg, #dollHero.rare-myth, #sceneHero.rare-myth { animation:none; }
+  #dollHero.rare-epic, #sceneHero.rare-epic, #dollHero.rare-leg, #sceneHero.rare-leg, #dollHero.rare-myth, #sceneHero.rare-myth { animation:none; }
+  #dollHero.rare-epic, #sceneHero.rare-epic { filter:drop-shadow(0 0 6px rgba(176,107,255,.7)); }
   .slot[data-rarity="legendaer"] img, .bp-slot.filled[data-rarity="legendaer"] img, .inv-item[data-rarity="legendaer"] img { filter:drop-shadow(0 0 6px rgba(255,128,0,.85)); }
   .slot[data-rarity="mythisch"] img, .bp-slot.filled[data-rarity="mythisch"] img, .inv-item[data-rarity="mythisch"] img { filter:drop-shadow(0 0 8px rgba(255,224,150,.95)); }
 }
