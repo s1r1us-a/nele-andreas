@@ -246,8 +246,8 @@ a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
 
 /* ---- Charakter / Paperdoll ------------------------------------ */
 .doll {
-  display:grid; gap:14px; align-items:center; justify-items:center;
-  grid-template-columns:96px 1fr 96px; grid-template-rows:auto auto;
+  display:grid; gap:18px; align-items:center; justify-items:center;
+  grid-template-columns:96px minmax(320px,1fr) 96px; grid-template-rows:auto auto;
   grid-template-areas:"left center right" "bottom bottom bottom";
   margin-top:6px;
 }
@@ -256,8 +256,9 @@ a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
 .doll .center { grid-area:center; }
 .doll .bottom { grid-area:bottom; display:flex; gap:14px; justify-content:center; }
 .hero-frame {
-  position:relative; width:230px; height:300px; border-radius:16px;
-  box-sizing:border-box; padding:34px 10px 8px;   /* Platz oben fürs Tier-Badge */
+  position:relative; width:clamp(300px, 34vw, 420px); height:auto; aspect-ratio:5/8;
+  border-radius:16px;
+  box-sizing:border-box; padding:44px 14px 12px;   /* Platz oben fürs Tier-Badge */
   border:2px solid transparent; border-image:var(--frame-gold) 1;
   background:radial-gradient(circle at 50% 35%, var(--stone-hi), var(--bg-0) 75%);
   display:flex; align-items:flex-end; justify-content:center; overflow:hidden;
@@ -729,15 +730,12 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   box-shadow:0 0 9px 4px #2fd06a, 0 0 3px 1px #eaffe6; }
 .staff-projectile.proj-tail { width:10px; height:10px; opacity:.5; }
 
-/* Echter Waffen-Schwung: Waffen-SVG rotiert um den Griff (unten-mitte). */
-.weapon-swing { position:absolute; pointer-events:none; z-index:13;
-  transform-origin:50% 100%; will-change:transform; }
-.weapon-swing img { width:100%; height:100%; display:block;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
-/* Element-gefärbte Schwung-Spur. */
-.swing-trail { position:absolute; pointer-events:none; z-index:12;
-  transform:translate(-50%,-50%); will-change:opacity,transform; }
-.swing-trail svg { filter:drop-shadow(0 0 4px currentColor); }
+/* Echte Waffen-Ebene: deckungsgleich über dem Kämpfer-Sprite, rotiert um den
+   Griff (Handpunkt 124/200 ≈ 62%, 194/320 ≈ 60.6%). Erbt Position/Größe von
+   .combatant.hero-c bzw. .boss-c. */
+.combatant.weapon-layer { z-index:7; transform-origin:62% 60.6%;
+  will-change:transform; filter:drop-shadow(0 3px 3px rgba(0,0,0,.45)); pointer-events:none; }
+.combatant.weapon-ghost { z-index:6; opacity:.3; }
 /* Sofort-Blitz (deckt die Bühne ab; Punkte in Bühnen-Pixeln). */
 .atk-bolt { position:absolute; inset:0; width:100%; height:100%;
   pointer-events:none; overflow:visible; z-index:13;
@@ -755,7 +753,7 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   100% { opacity:0; transform:translate(-50%,-50%) scale(1.5); }
 }
 @media (prefers-reduced-motion: reduce){
-  .swing-trail, .impact-particle { display:none; }
+  .weapon-ghost, .impact-particle { display:none; }
   .impact-burst { animation-duration:.25s; }
 }
 /* ---- Klassen-Spezialfähigkeiten (Animationen) ---- */
@@ -1527,6 +1525,8 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 @media (max-width:640px){
   .doll { grid-template-columns:1fr; grid-template-areas:"center" "left" "right" "bottom"; }
   .doll .col { flex-direction:row; flex-wrap:wrap; justify-content:center; }
+  /* Charakter-Box bleibt auch mobil groß & prominent. */
+  .hero-frame { width:min(80vw, 360px); }
   .stats-mini { width:100%; margin:8px 0 0; justify-content:center; gap:8px; }
   .stat-chip { font-size:12px; padding:5px 9px; }
   .topbar { flex-wrap:wrap; }

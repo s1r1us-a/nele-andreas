@@ -820,7 +820,7 @@ function exchange(fight){
       // Lifesteal (Affix + Talent-Buff)
       const fls = fight.frontLifesteal + slotLifesteal(fight, 'front', now);
       if(fls > 0){
-        const h = Math.round(fd * fls);
+        const h = Math.min(Math.round(fight.frontMaxHp * COMBAT.lifestealHealCapPct), Math.round(fd * fls));
         if(h > 0) fight.frontHp = Math.min(fight.frontMaxHp, fight.frontHp + h);
       }
       // Dornen-Affix: flacher Bonusschaden an den Boss (analog Solo-Kampf).
@@ -853,7 +853,7 @@ function exchange(fight){
       }
       const bls = fight.backLifesteal + slotLifesteal(fight, 'back', now);
       if(bls > 0){
-        const h = Math.round(bd * bls);
+        const h = Math.min(Math.round(fight.backMaxHp * COMBAT.lifestealHealCapPct), Math.round(bd * bls));
         if(h > 0) fight.backHp = Math.min(fight.backMaxHp, fight.backHp + h);
       }
       // Dornen-Affix: flacher Bonusschaden an den Boss (analog Solo-Kampf).

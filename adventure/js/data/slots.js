@@ -19,8 +19,8 @@ export const SLOTS = {
 export const FITS = slotKey => (slotKey === 'ring1' || slotKey === 'ring2') ? ['ring1','ring2'] : [slotKey];
 
 // Anordnung im Charakterfenster
-export const LEFT_SLOTS   = ['kopf','schultern','brust','haende','beine','fuesse'];
-export const RIGHT_SLOTS  = ['amulett','umhang','ring1','ring2'];
+export const LEFT_SLOTS   = ['kopf','amulett','schultern','umhang','brust'];
+export const RIGHT_SLOTS  = ['haende','beine','fuesse','ring1','ring2'];
 // Waffe (Haupthand) und Schild (Nebenhand) stehen nebeneinander unten.
 export const BOTTOM_SLOTS = ['waffe','schild'];
 

@@ -61,7 +61,8 @@ function heldWeapon(item, uid, opt){
   opt = opt || {};
   const v = ((item.variant|0)%13+13)%13;        // 0..12 (analog item-art.js)
   const lvl = armorLvl(item.rarity);            // Episch+ → Element-Glow
-  const el = elementOf(item.id), E = ELEM[el];
+  // opt.element erlaubt das Übersteuern (Waffen-Ebene ohne echtes Item-id).
+  const el = (opt.element==='ice'||opt.element==='fire') ? opt.element : elementOf(item.id), E = ELEM[el];
   const m = WEAPON_METAL[v % WEAPON_METAL.length], md = shade(m,0.55), mh = shade(m,1.25);
   const hx = opt.hx != null ? opt.hx : 124;
   // Größe nach Seltenheit: Legendär (lvl2) & Mythisch (lvl3) sind deutlich
@@ -69,11 +70,15 @@ function heldWeapon(item, uid, opt){
   // opt.scale verkleinert Zweitwaffen (Nebenhand) gegenüber der Hauptwaffe.
   const SCALE = ([1, 1, 1.16, 1.32][lvl] || 1) * (opt.scale || 1);
   const grow = inner => SCALE!==1 ? `<g transform="translate(${hx} 194) scale(${SCALE}) translate(${-hx} -194)">${inner}</g>` : inner;
-  const ty = typeOf(item);
+  const ty = opt.ty || typeOf(item);
   // Waffe natürlicher halten: leicht von der Körpermitte weg kippen (Drehpunkt =
   // Handkreis hx,194). Zauberstab bleibt aufrechter, damit die Kugel oben bleibt.
   const tilt = (ty && ty.material === 'zauberstab') ? 6 : (opt.tilt != null ? opt.tilt : 15);
-  const tiltWrap = inner => `<g transform="rotate(${tilt} ${hx} 194)">${inner}</g>`;
+  // opt.noTilt: aufrecht zeichnen (für die separat animierte Waffen-Ebene, die ihre
+  // Ruhe-/Schwung-Drehung extern per CSS um den Griff bekommt).
+  const tiltWrap = inner => opt.noTilt ? inner : `<g transform="rotate(${tilt} ${hx} 194)">${inner}</g>`;
+  // opt.noHand: Hand-Rechteck weglassen (die Hand bleibt am Körper-Sprite).
+  const handRect = opt.noHand ? '' : `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
   // Zauberstab: langer Stab mit leuchtender Kugel oben (Farbe je nach Stab-Typ).
   if(ty && ty.material === 'zauberstab'){
     const P = ORB_PAL[ty.orb] || ORB_PAL.rot;
@@ -87,8 +92,7 @@ function heldWeapon(item, uid, opt){
     if(lvl>0) glow = `<circle cx="${hx}" cy="${oy}" r="${22+lvl*4}" fill="${P.glow}" opacity="${(0.15+lvl*0.06).toFixed(2)}"/>`+glow;
     const orb  = `<circle cx="${hx}" cy="${oy}" r="9" fill="${P.mid}" stroke="${P.lo}" stroke-width="1"/>`+
                  `<circle cx="${hx-3}" cy="${oy-3}" r="3.4" fill="${P.hi}" opacity="0.9"/>`;
-    const hand = `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
-    return tiltWrap(grow(glow + pole + orb) + hand);
+    return tiltWrap(grow(glow + pole + orb) + handRect);
   }
   const grip = `<rect x="${hx-2}" y="186" width="4" height="16" rx="1.5" fill="${WOOD}"/>`+
                `<circle cx="${hx}" cy="204" r="3.2" fill="${GOLD}"/>`;
@@ -165,7 +169,7 @@ function heldWeapon(item, uid, opt){
     if(lvl>=2) halo += `<ellipse cx="${hx}" cy="150" rx="8" ry="${(gh*0.66).toFixed(1)}" fill="${E.core}" opacity="0.40"/>`;
   }
   // Haut-„Finger" über den Griff → wirkt gegriffen.
-  return tiltWrap(halo + grow(w) + `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`);
+  return tiltWrap(halo + grow(w) + handRect);
 }
 
 // Nebenhand-Kugel (Heiler/Hexer) an der linken Hand – schwebende Magie-Sphäre.
@@ -575,7 +579,9 @@ export function buildHeroSVG(character, tier, gear){
     }
   }
 
-  const weaponG = heldWeapon(eq.waffe, uid);
+  // hideWeapon: Waffe im Sprite weglassen – sie wird in der Arena als separat
+  // animierte Waffen-Ebene (buildWeaponLayerSVG) deckungsgleich darübergelegt.
+  const weaponG = (gear && gear.hideWeapon) ? '' : heldWeapon(eq.waffe, uid);
 
   // Zweiter <defs>-Block für die lazy erzeugten Material-Verläufe/-Muster
   // (gefüllt während des Aufbaus oben). Bodenschatten ganz unten im Z-Stapel.
@@ -587,11 +593,27 @@ export function buildHeroSVG(character, tier, gear){
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
-export function heroSrc(tier){
+export function heroSrc(tier, opts){
   if(state && state.character)
     return buildHeroSVG(state.character, tier, {
       equipped: state.equipped || {},
       hideHelmet: !!(state.settings && state.settings.hideHelmet),
+      hideWeapon: !!(opts && opts.hideWeapon),
     });
   return ASSETS + 'char_tier' + tier + '.png';
+}
+
+// Eigenständige Waffen-Ebene (gleiche viewBox 0 0 200 320 wie der Held) für die
+// Kampf-Arena: nur die Waffe am Handpunkt, aufrecht (ohne Tilt/Hand) – die Ruhe-
+// neigung und der Schwung kommen extern per CSS-Rotation um den Griff (62%,60.6%).
+// `atk` = Deskriptor aus data/attacks.js: { wv, rarity, element, orb, material }.
+export function buildWeaponLayerSVG(atk){
+  if(!atk || atk.wv == null) return '';
+  const element = atk.element === 'ice' ? 'ice' : 'fire';
+  const synth = { variant: atk.wv|0, rarity: atk.rarity, id: element==='ice' ? 0 : 1 };
+  const ty = { material: atk.material, orb: atk.orb, variant: atk.wv|0 };
+  const w = heldWeapon(synth, '_wl', { noTilt:true, noHand:true, ty, element });
+  if(!w) return '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+ w +`</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
