@@ -78,10 +78,27 @@ export function confirmDialog({ title, body='', emoji='⚠️',
    Overlay (Modal, Charakter-Editor, Arena, Bestätigungs-Dialog) erfasst wird.
    --------------------------------------------------------------------- */
 const OVERLAY_SELECTOR = '.overlay.show, .arena-overlay.show, .cdlg-overlay.show, .adv-intro-overlay:not(.fade-out)';
+// Scroll-Position, die beim Sperren festgehalten wird. Der Body wird per
+// position:fixed + top:-scrollY eingefroren (siehe CSS), damit die Seite beim
+// Öffnen eines Modals NICHT nach oben springt; beim Entsperren wird genau
+// hierher zurückgescrollt.
+let _lockedScrollY = 0;
+let _scrollLocked = false;
 function refreshScrollLock(){
   const anyOpen = !!document.querySelector(OVERLAY_SELECTOR);
-  document.documentElement.classList.toggle('modal-open', anyOpen);
-  document.body.classList.toggle('modal-open', anyOpen);
+  if(anyOpen === _scrollLocked) return;   // kein Zustandswechsel → nichts tun
+  if(anyOpen){
+    _lockedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = (-_lockedScrollY) + 'px';
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  } else {
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, _lockedScrollY);
+  }
+  _scrollLocked = anyOpen;
 }
 (function initScrollLock(){
   if(!document.body) { document.addEventListener('DOMContentLoaded', initScrollLock); return; }
