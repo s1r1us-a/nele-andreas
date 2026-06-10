@@ -11,6 +11,7 @@ import { rollItem, freeSlots, addLog, recordDrop } from './items.js';
 import { EXPEDITION_MIN_CAP } from './loot.js';
 import { gainXp } from './character.js';
 import { awardCoins } from './coins.js';
+import { awardSetTokens } from './sets.js';
 import { toast } from '../ui/dom.js';
 import { popFind } from '../ui/tooltip.js';
 import { renderAll, flashFullBanner } from '../ui/render.js';
@@ -67,10 +68,12 @@ export function collectExpedition(){
     const coins = exp.ms >= 480*60*1000 ? 3 : exp.ms >= 180*60*1000 ? 2 : 1;
     awardCoins(coins).catch(()=>{}); state.stats.goldEarned += coins;
   }
+  // Tribut-Siegel (logisch gestaffelt nach Dauer) – am Cap (250) bleibt tokenGain 0.
+  const tokenGain = awardSetTokens(exp ? (exp.tokens||0) : 0);
   state.zoneFinds = (state.zoneFinds||0) + items.length;
   state.stats.expeditionsDone++;
   const collected = items.slice();
   state.expedition = null;
   saveState(); renderAll();
-  showRewardModal(collected, potionGained, dyesFound);
+  showRewardModal(collected, potionGained, dyesFound, tokenGain);
 }

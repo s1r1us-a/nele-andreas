@@ -109,7 +109,8 @@ const REROLL_COSTS = {
   mythisch:  { mat:6, coins:30000 },
 };
 // Reroll erst ab „selten" sinnvoll (gewöhnlich/ungewöhnlich: 0–1 Affixe).
-export const canReroll = item => !!REROLL_COSTS[item.rarity];
+// Set-Teile haben FESTE Affixe → nicht verzauberbar (kein Neuwürfeln).
+export const canReroll = item => !!REROLL_COSTS[item.rarity] && !item.setId;
 export function rerollCost(item){
   const c = REROLL_COSTS[item.rarity];
   if(!c) return null;

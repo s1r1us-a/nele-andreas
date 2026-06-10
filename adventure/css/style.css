@@ -2172,6 +2172,9 @@ body.forge-shake { animation:forgeShake .42s ease; }
 .setshop-banner .ss-tokens { margin-left:auto; font-weight:800; font-size:16px; color:var(--a2);
   background:rgba(0,0,0,.3); border:1px solid color-mix(in srgb, var(--a) 50%, var(--line));
   padding:6px 12px; border-radius:999px; box-shadow:0 0 14px color-mix(in srgb,var(--gl) 60%, transparent); }
+/* Tribut-Cap erreicht: deutlich markieren. */
+.setshop-banner .ss-tokens.ss-tokens-max { color:#ffd86a; border-color:#ffd86a;
+  box-shadow:0 0 16px rgba(255,216,106,.6); }
 /* aufsteigende Funken */
 .setshop-banner .ss-embers { position:absolute; inset:0; z-index:1; pointer-events:none; }
 .setshop-banner .ss-embers span { position:absolute; bottom:-6px; width:4px; height:4px; border-radius:50%;

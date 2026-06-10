@@ -189,7 +189,7 @@ function renderExpeditionBox(){
         card.className = 'exp-card';
         card.innerHTML = '<span class="ec-icon">'+e.icon+'</span>'+
           '<span class="ec-label">'+e.label+'</span>'+
-          '<span class="ec-hint">'+e.items+' Items · bessere Chancen</span>';
+          '<span class="ec-hint">'+e.items+' Items · ⚜️ '+(e.tokens||0)+' Tribut</span>';
         card.addEventListener('click', ()=> previewExpedition(e.key));
         grid.appendChild(card);
       }
