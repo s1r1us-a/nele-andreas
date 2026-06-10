@@ -44,9 +44,10 @@ export function affixValue(key, ilvl, rarity){
   return v;
 }
 // Deterministischer Affix-Wert für SET-Teile (kein Math.random). Identische
-// Mathematik wie affixValue, aber mit festem Roll-Faktor (1.0 = Erwartungswert),
-// damit Set-Affixe FEST sind. ilvl-Skalierung bleibt erhalten.
-export function affixValueFixed(key, ilvl, rarity, roll=1.0){
+// Mathematik wie affixValue, aber mit festem Roll-Faktor – damit Set-Affixe FEST
+// sind. roll=1.20 = "starkes Legendär" (Legendär-Spanne [0.90–1.28], Ø 1.09).
+// ilvl-Skalierung bleibt erhalten.
+export function affixValueFixed(key, ilvl, rarity, roll=1.20){
   const d = AFFIX_DEFS[key];
   let v = (d.base + ilvl*d.perIlvl) * rarity.mult * roll;
   if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
