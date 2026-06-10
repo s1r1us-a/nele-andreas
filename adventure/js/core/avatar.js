@@ -241,8 +241,13 @@ export function buildHeroSVG(character, tier, gear){
       `<stop offset="0" stop-color="${hch}"/><stop offset="0.5" stop-color="${hc}"/><stop offset="1" stop-color="${hcd}"/></linearGradient>`+
     `<linearGradient id="bd${uid}" x1="0" y1="0" x2="0" y2="1">`+
       `<stop offset="0" stop-color="${bch}"/><stop offset="0.55" stop-color="${bc}"/><stop offset="1" stop-color="${bcd}"/></linearGradient>`+
+    // Set-Träger: KEIN Aufhellen oben → Kleider/Röcke treffen den dunklen Set-Ton
+    // der Hosen (sonst wirken die Röcke heller als der Rest). Ohne Set: wie bisher.
     `<linearGradient id="ou${uid}" x1="0" y1="0" x2="0" y2="1">`+
-      `<stop offset="0" stop-color="${shade(outfit,1.16)}"/><stop offset="0.55" stop-color="${outfit}"/><stop offset="1" stop-color="${outfitSh}"/></linearGradient>`+
+      (bodyTint
+        ? `<stop offset="0" stop-color="${outfitSh}"/><stop offset="0.6" stop-color="${shade(outfit,0.6)}"/><stop offset="1" stop-color="${shade(outfit,0.5)}"/>`
+        : `<stop offset="0" stop-color="${shade(outfit,1.16)}"/><stop offset="0.55" stop-color="${outfit}"/><stop offset="1" stop-color="${outfitSh}"/>`)+
+      `</linearGradient>`+
     `<linearGradient id="tr${uid}" x1="0" y1="0" x2="0" y2="1">`+
       `<stop offset="0" stop-color="${shade(trim,1.1)}"/><stop offset="1" stop-color="${shade(trim,0.8)}"/></linearGradient>`+
     `<radialGradient id="au${uid}" cx="50%" cy="50%" r="50%">`+

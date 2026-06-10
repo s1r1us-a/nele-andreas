@@ -95,11 +95,13 @@ export function setShoulder(themeKey, cx, cy, s){
   // weicher Set-Glow hinter der Schulter (ohne Filter → überall lauffähig)
   const glow = `<ellipse cx="3" cy="-8" rx="22" ry="17" fill="${P.glow}" opacity="0.14"/>`;
   // mehrlagiger Pauldron-Sockel (Verlauf per shade-Schichten)
+  // Kantiger, facettierter Pauldron (scharfe Ecken/Miter, spitze Außenkante).
   const cap =
-    `<path d="M-18 8 Q-22 -12 4 -15 Q25 -15 27 6 Q23 18 2 18 Q-13 17 -18 8 Z" fill="${dk}" stroke="${P.edge}" stroke-width="1.5"/>`+
-    `<path d="M-13 3 Q-16 -10 4 -12 Q20 -12 22 3 Q18 11 2 12 Q-9 11 -13 3 Z" fill="${P.plate}"/>`+
-    `<path d="M-9 -3 Q2 -9 14 -4" fill="none" stroke="${hi}" stroke-width="1.8" opacity="0.75"/>`+
-    `<path d="M-11 6 Q3 12 19 6" fill="none" stroke="${P.accent}" stroke-width="1.4" opacity="0.9"/>`;
+    `<path d="M-16 9 L-18 -6 L-6 -15 L10 -16 L25 -9 L29 3 L21 16 L4 19 L-10 16 Z" fill="${dk}" stroke="${P.edge}" stroke-width="1.6" stroke-linejoin="miter"/>`+
+    `<path d="M-14 8 L-15 -4 L-4 -12 L10 -13 L22 -7 L25 2 L18 13 L4 16 L-9 13 Z" fill="${P.plate}"/>`+
+    `<path d="M-4 -12 L10 -13 L22 -7 L11 -2 L-2 -4 Z" fill="${hi}" opacity="0.55"/>`+
+    `<path d="M-2 -4 L4 16 M11 -2 L18 13" fill="none" stroke="${shade(P.plate,0.5)}" stroke-width="0.9" opacity="0.6"/>`+
+    `<path d="M-9 13 L-2 -4 L11 -2 L25 2" fill="none" stroke="${P.accent}" stroke-width="1.3" opacity="0.9"/>`;
 
   // Theme-spezifischer, weit aufgefächerter Aufbau.
   let behind = '', front = '';
@@ -337,11 +339,16 @@ export function setMacroFX(themeKey, lvl, gender){
   const P = setPalette(themeKey);
   const _u = (_seq++).toString(36);
   const footY = gender==='w' ? 312 : gender==='m' ? 282 : 304;
-  let s = `<defs>${setBloomFilter('mb'+_u, 3)}</defs>`;
-  // Aura (ab 2 Teilen): pulsierender, set-farbener Schein hinter der Figur
-  const ao = (0.05+lvl*0.02).toFixed(2), ah = (0.12+lvl*0.03).toFixed(2);
-  s += `<ellipse cx="100" cy="180" rx="${70+lvl*6}" ry="${118+lvl*8}" fill="${P.glow}" opacity="${ao}">`+
-       (REDUCED_MOTION?'':`<animate attributeName="opacity" values="${ao};${ah};${ao}" dur="3.4s" repeatCount="indefinite"/>`)+`</ellipse>`;
+  // Aura (ab 2 Teilen): weicher, nach außen transparent auslaufender Schein
+  // (Radialverlauf statt harter Ellipse → KEIN „Ei"-Umriss). Pulsiert dezent.
+  const ac = (0.14+lvl*0.025).toFixed(3);
+  let s = `<defs>${setBloomFilter('mb'+_u, 3)}`+
+    `<radialGradient id="ag${_u}" cx="50%" cy="50%" r="50%">`+
+      `<stop offset="0" stop-color="${P.glow}" stop-opacity="${ac}"/>`+
+      `<stop offset="0.5" stop-color="${P.glow}" stop-opacity="${(ac*0.35).toFixed(3)}"/>`+
+      `<stop offset="1" stop-color="${P.glow}" stop-opacity="0"/></radialGradient></defs>`;
+  s += `<ellipse cx="100" cy="176" rx="${64+lvl*5}" ry="${108+lvl*7}" fill="url(#ag${_u})">`+
+       (REDUCED_MOTION?'':`<animate attributeName="opacity" values="0.7;1;0.7" dur="3.6s" repeatCount="indefinite"/>`)+`</ellipse>`;
   // Bodenkreis (ab 4 Teilen): rotierender Runenring auf Fußhöhe
   if(lvl >= 2){
     const rx = 52+lvl*4, ry = 14+lvl*1.5;
