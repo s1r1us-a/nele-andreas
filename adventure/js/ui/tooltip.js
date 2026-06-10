@@ -75,20 +75,38 @@ export function tooltipHTML(it, opts={}){
     affixLinesHTML(it)+
     qLine+
     '<div class="tt-ilvl">Gegenstandsstufe '+it.ilvl+'</div>'+
-    (opts.compare ? compareHTML(it) : '');
+    (opts.compare ? compareHTML(it) : '')+
+    (opts.note ? '<div class="tt-note">'+opts.note+'</div>' : '');
+}
+
+// Tooltip an Position setzen (Maus oder Tap).
+function placeTooltip(it, opts, clientX, clientY){
+  const t = el();
+  t.innerHTML = tooltipHTML(it, opts);
+  t.style.display = 'block';
+  const x = Math.min((clientX|0)+14, window.innerWidth-250);
+  const y = Math.min((clientY|0)+14, window.innerHeight-160);
+  t.style.left = x+'px'; t.style.top = y+'px';
 }
 
 export function bindTooltip(node, it, opts={}){
-  node.addEventListener('mousemove', e => {
-    const t = el();
-    t.innerHTML = tooltipHTML(it, opts);
-    t.style.display = 'block';
-    const x = Math.min(e.clientX+14, window.innerWidth-250);
-    const y = Math.min(e.clientY+14, window.innerHeight-160);
-    t.style.left = x+'px'; t.style.top = y+'px';
-  });
+  node.addEventListener('mousemove', e => placeTooltip(it, opts, e.clientX, e.clientY));
   node.addEventListener('mouseleave', hideTooltip);
+  // Tap-/Klick-Modus (Touch & Maus): Tippen zeigt den Tooltip, Tippen außerhalb
+  // blendet ihn wieder aus. Buttons (z. B. „Kaufen") werden nicht abgefangen.
+  if(opts.tap){
+    node.dataset.ttTap = '1';
+    node.addEventListener('click', e => {
+      if(e.target.closest('button, a')) return;
+      placeTooltip(it, opts, e.clientX, e.clientY);
+    });
+  }
 }
+// Tap außerhalb eines Tap-Tooltips blendet ihn wieder aus (Touch-Bedienung).
+document.addEventListener('pointerdown', e => {
+  const t = el();
+  if(t && t.style.display === 'block' && !e.target.closest('[data-tt-tap]')) hideTooltip();
+});
 window.addEventListener('scroll', hideTooltip, true);
 
 // Fund-Pop bei Drop

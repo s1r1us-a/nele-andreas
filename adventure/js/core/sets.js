@@ -130,6 +130,30 @@ export function createSetPiece(setId, slotKey, ilvl){
   return it;
 }
 
+// Vorschau-Item eines Set-Teils OHNE Kauf/State-Mutation (für den Tooltip im
+// Set-Händler). Liefert die deterministischen Werte (Primärwert, Seltenheit,
+// Slot, Gegenstandsstufe, Qualität) – identisch zur späteren Kauf-Pipeline.
+// Die zufälligen Affixe würfeln erst beim Kauf (createSetPiece → rollAffixes),
+// daher hier bewusst leer; der Tooltip weist im Hinweis darauf hin.
+export function previewSetPiece(setId, slotKey, ilvl){
+  const set = SETS[setId]; if(!set) return null;
+  const slot = SLOTS[slotKey]; if(!slot) return null;
+  ilvl = Math.max(1, ilvl|0);
+  const rarity = rarityOf('legendaer');
+  const statType = slot.statType;
+  const stat = Math.max(1, Math.round(BASE_STAT[statType] * rarity.mult * (1 + ilvl*ILVL_K) * set.statMult));
+  return {
+    id: 'setpreview_'+setId+'_'+slotKey,   // synthetische Id → verbraucht keine nextItemId
+    slotKey, cat:slot.cat, statType,
+    rarity:'legendaer', ilvl, stat,
+    variant: SET_SLOTS.indexOf(slotKey), itemType:'set_'+set.themeKey,
+    quality:100, affixes:{}, proc:null,
+    setId, setSlot:slotKey,
+    name: setPieceName(set, slotKey),
+    preview:true,
+  };
+}
+
 // Besitzt der Spielstand bereits dieses Set-Teil (Inventar/ausgerüstet/Beute)?
 export function ownsSetPiece(s, setId, slotKey){
   s = s || state;

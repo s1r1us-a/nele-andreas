@@ -8,8 +8,10 @@ import { state } from '../core/state.js';
 import { classOf, classLabelOf } from '../data/classes.js';
 import { SLOTS, SLOT_ICON } from '../data/slots.js';
 import { SET_SLOTS, SET_TOKEN, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
-import { getSetTokens, buySetPiece, ownsSetPiece, activeSetInfo } from '../core/sets.js';
+import { getSetTokens, buySetPiece, ownsSetPiece, activeSetInfo, previewSetPiece, setPieceIlvl } from '../core/sets.js';
 import { buildItemSVG, elementOf } from '../core/item-art.js';
+import { AFFIX_DEFS } from '../data/affixes.js';
+import { bindTooltip } from './tooltip.js';
 import { $, fmtBig, toast } from './dom.js';
 
 // Vorschau-Sprite eines Set-Teils (ohne ein echtes Item anzulegen).
@@ -107,6 +109,16 @@ export function renderSetShop(){
       '<div class="ss-cost">'+(owned?'<span class="ss-have">erworben</span>':SET_TOKEN.icon+' '+cost+' '+SET_TOKEN.name)+'</div>'+
       btn;
     grid.appendChild(cell);
+
+    // Stats wie bei normalen Items anzeigen (Hover + Tap/Klick): Vorschau-Item
+    // mit den deterministischen Werten; die Affixe würfeln erst beim Kauf.
+    const preview = previewSetPiece(set.id, slotKey, setPieceIlvl(state));
+    if(preview){
+      const focus = AFFIX_DEFS[set.flavorAffix];
+      const note = (focus ? '🎯 Fokus: '+focus.label+' · ' : '')+'⚜️ Affixe würfeln beim Kauf';
+      cell.classList.add('ss-has-tip');
+      bindTooltip(cell, preview, { tap:true, note });
+    }
   }
   panel.appendChild(grid);
 
