@@ -11,6 +11,7 @@ import { rarityOf, rarityIndex } from '../data/rarities.js';
 import { shade, mirror64 as mir, METAL, GEM, ARMOR_MAT, GOLD, WOOD,
          ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad, materialFilter,
          facetGem, engraving } from './svg-fx.js';
+import { buildSetIcon } from './set-art.js';
 
 // ELEM/elementOf liegen jetzt in svg-fx.js; hier re-exportieren, damit die
 // bestehenden Importpfade (attacks.js, state.js, items.js, avatar.js) gültig bleiben.
@@ -30,8 +31,16 @@ const ORB = {
   blau:  { lo:'#b9a6ff', mid:'#6a3ed0', dk:'#2a1466', halo1:'#6a3ed0', halo2:'#3a1f8c', ring:'#b08bff' },
 };
 
-export function buildItemSVG(art, variant, rarityKey, element, orb, material, dyeColor){
+export function buildItemSVG(art, variant, rarityKey, element, orb, material, dyeColor, setTheme){
   variant = Math.max(0, variant|0);
+  // Set-Items (additiv): komplett eigenes, abgehobenes Icon je Slot-art.
+  if(setTheme){
+    const sk = 'set_'+art+'_'+setTheme+'_'+(rarityKey||'');
+    if(_cache.has(sk)) return _cache.get(sk);
+    const suri = buildSetIcon(art, setTheme, rarityKey);
+    _cache.set(sk, suri);
+    return suri;
+  }
   const el = (element==='ice') ? 'ice' : 'fire';
   const eff = effLvl(rarityKey);                                // Seltenheits-Effekt für ALLE Arten
   const elemFx = (art==='waffe' || art==='schild') && eff>0;    // Flammen/Frost nur Waffe/Schild

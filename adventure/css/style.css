@@ -2144,3 +2144,91 @@ body.forge-shake { animation:forgeShake .42s ease; }
    Buttons gemeinsam auf den Schirm passen (Seitenverhältnis 120:192 erhalten). */
 .dye-modal .dye-fig .dye-char { width:auto; height:min(192px, 34vh);
   aspect-ratio:120 / 192; object-fit:contain; }
+
+/* =====================================================================
+   SET-HÄNDLER (Tab „⚜️ Sets") + Klassen-Set-Optik. Additiv – überschreibt
+   keine bestehenden Regeln.
+   ===================================================================== */
+.setshop-room { display:flex; flex-direction:column; gap:14px; }
+
+/* Banner – Theme-Farben je Klasse (CSS-Variablen --a/--a2/--gl). */
+.setshop-banner { position:relative; overflow:hidden; border-radius:16px;
+  padding:18px 18px 16px; border:1px solid var(--line);
+  background:
+    radial-gradient(120% 140% at 18% 0%, color-mix(in srgb, var(--gl) 32%, transparent), transparent 60%),
+    linear-gradient(160deg, var(--panel-2), var(--bg-1));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 30px rgba(0,0,0,.45); }
+.setshop-banner.theme-molten      { --a:#ff7a2a; --a2:#ffd36a; --gl:#ff4a14; }
+.setshop-banner.theme-bloodshadow { --a:#e01f3a; --a2:#ff6a52; --gl:#ff1f2f; }
+.setshop-banner.theme-void        { --a:#a24bff; --a2:#d9b0ff; --gl:#7a2fff; }
+.setshop-banner.theme-holy        { --a:#e7b13a; --a2:#fff4cf; --gl:#ffe89a; }
+.setshop-banner .ss-row { position:relative; z-index:2; display:flex; align-items:center; gap:14px; }
+.setshop-banner .ss-crest { font-size:34px; filter:drop-shadow(0 0 10px var(--gl)); }
+.setshop-banner .ss-title { margin:0; font-family:'Cinzel',serif; font-weight:900; letter-spacing:.5px;
+  color:#fff; text-shadow:0 0 16px var(--gl); }
+.setshop-banner .ss-sub { color:var(--a2); font-size:12.5px; letter-spacing:1.5px; text-transform:uppercase; }
+.setshop-banner .ss-tokens { margin-left:auto; font-weight:800; font-size:16px; color:var(--a2);
+  background:rgba(0,0,0,.3); border:1px solid color-mix(in srgb, var(--a) 50%, var(--line));
+  padding:6px 12px; border-radius:999px; box-shadow:0 0 14px color-mix(in srgb,var(--gl) 60%, transparent); }
+/* aufsteigende Funken */
+.setshop-banner .ss-embers { position:absolute; inset:0; z-index:1; pointer-events:none; }
+.setshop-banner .ss-embers span { position:absolute; bottom:-6px; width:4px; height:4px; border-radius:50%;
+  background:var(--a); box-shadow:0 0 8px var(--gl); opacity:.0; animation:ssEmber 3.4s linear infinite; }
+.setshop-banner .ss-embers span:nth-child(1){ left:12%; animation-delay:.0s; }
+.setshop-banner .ss-embers span:nth-child(2){ left:32%; animation-delay:.7s; }
+.setshop-banner .ss-embers span:nth-child(3){ left:54%; animation-delay:1.3s; }
+.setshop-banner .ss-embers span:nth-child(4){ left:72%; animation-delay:.4s; }
+.setshop-banner .ss-embers span:nth-child(5){ left:88%; animation-delay:1.7s; }
+@keyframes ssEmber { 0%{ opacity:0; transform:translateY(0) scale(1); }
+  15%{ opacity:.9; } 100%{ opacity:0; transform:translateY(-90px) scale(.4); } }
+@media (prefers-reduced-motion: reduce){ .setshop-banner .ss-embers span { animation:none; } }
+
+/* Boni-Übersicht */
+.setshop-bonus { border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+  background:linear-gradient(180deg, var(--panel-2), var(--panel)); box-shadow:var(--shadow-panel, 0 8px 24px rgba(0,0,0,.4)); }
+.setshop-bonus .ssb-head { font-family:'Cinzel',serif; font-weight:800; font-size:18px; }
+.setshop-bonus .ssb-count { font-family:'Quicksand',sans-serif; font-size:12px; color:var(--txt-dim); font-weight:700; }
+.setshop-bonus .ssb-lore { color:var(--txt-dim); font-style:italic; font-size:12.5px; margin:4px 0 10px; }
+.setshop-bonus .ssb-list { display:flex; flex-direction:column; gap:6px; }
+.setshop-bonus .ssb-tier { padding:7px 10px; border-radius:9px; border:1px solid transparent;
+  background:rgba(255,255,255,.03); color:var(--txt-dim); font-size:13px; opacity:.7; }
+.setshop-bonus .ssb-tier.active { opacity:1; color:var(--txt);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--r-legendaer) 18%, transparent), transparent);
+  border-color:color-mix(in srgb, var(--r-legendaer) 45%, var(--line)); }
+.setshop-bonus .ssb-need { color:var(--gold); font-weight:800; }
+.setshop-bonus .ssb-on { float:right; color:#37d67a; font-weight:800; font-size:12px; }
+
+/* Teile-Grid */
+.setshop-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(132px,1fr)); gap:12px; }
+.ss-item { display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;
+  padding:12px 10px; border-radius:13px; border:1px solid var(--line);
+  background:linear-gradient(180deg, var(--panel-2), var(--panel));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 6px 18px rgba(0,0,0,.35); transition:transform .12s, box-shadow .2s; }
+.ss-item:hover { transform:translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 26px rgba(0,0,0,.5); }
+.ss-item.owned { border-color:color-mix(in srgb, var(--r-legendaer) 55%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--r-legendaer) 30%, transparent), 0 0 18px rgba(255,128,0,.25); }
+.ss-item .ss-icon { position:relative; width:72px; height:72px; }
+.ss-item .ss-icon img { width:100%; height:100%; object-fit:contain;
+  filter:drop-shadow(0 0 8px rgba(255,180,80,.5)); }
+.ss-item .ss-slot-ic { position:absolute; right:-2px; bottom:-2px; font-size:15px;
+  filter:drop-shadow(0 1px 2px #000); }
+.ss-item .ss-name { font-family:'Cinzel',serif; font-weight:700; font-size:13.5px; color:var(--txt); }
+.ss-item .ss-cost { font-size:12px; color:var(--txt-dim); min-height:16px; }
+.ss-item .ss-have { color:#37d67a; font-weight:700; }
+.ss-item .btn { width:100%; padding:7px 8px; font-size:12.5px; }
+
+/* Sieg-Beleg-Chip für Tribut-Siegel */
+.ar-chip.token { background:linear-gradient(180deg, rgba(255,180,80,.18), rgba(255,128,0,.10));
+  border:1px solid color-mix(in srgb, var(--r-legendaer) 50%, var(--line)); color:#ffd591;
+  box-shadow:0 0 12px rgba(255,140,0,.3); }
+
+/* =====================================================================
+   THEME-VEREDELUNG (additiv): klarere Seltenheits-Hierarchie & Glanz.
+   ===================================================================== */
+/* Legendär/Mythisch-Items bekommen einen lebendigeren, atmenden Glow. */
+.bp-slot[data-rarity="legendaer"], .slot[data-rarity="legendaer"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--r-legendaer) 35%, transparent),
+              0 0 14px color-mix(in srgb, var(--r-legendaer) 45%, transparent); }
+.bp-slot[data-rarity="mythisch"], .slot[data-rarity="mythisch"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--r-mythisch) 45%, transparent),
+              0 0 18px color-mix(in srgb, var(--r-mythisch) 55%, transparent); }

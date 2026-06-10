@@ -16,6 +16,7 @@ import { defaultTypeKey, typeOf, itemDisplayName, materialOf } from '../data/ite
 import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
+import { setOf } from '../data/sets.js';
 import { blankMaterials } from '../data/materials.js';
 import { blankDyes, dyeColorOf } from '../data/dyes.js';
 import { db, ref, get, set, remove, onValue } from './firebase.js';
@@ -55,6 +56,7 @@ export function freshState(){
     killCounts:{},         // bossIndex -> Anzahl Siege
     lockedIds:[],          // gesperrte Item-Ids (#24)
     extraSlots:0,          // beim Händler gekaufte Zusatz-Inventarplätze (Vielfaches von 5)
+    setTokens:0,           // Tribut-Siegel (Sonderwährung für Klassen-Sets)
     stats: blankStats(),   // Statistiken (#28)
     materials: blankMaterials(), // Crafting-Materialien (Schmiede)
     dyes: blankDyes(),     // Farbstoff-Bestand (Färberei)
@@ -87,7 +89,8 @@ function unwearableForClass(item, cls){
     const isStaff = materialOf(item) === 'zauberstab';
     return cls.damageSchool === 'magisch' ? !isStaff : isStaff;
   }
-  const mat = materialOf(item);
+  const set = setOf(item);
+  const mat = set ? set.material : materialOf(item);
   if(!mat) return false;
   return !(cls.allowedMaterials || []).includes(mat);
 }
@@ -107,7 +110,9 @@ function migrateSlot(s){
   if(!Array.isArray(s.inventory)) s.inventory = [];
   // Item-Namen neu berechnen → korrigiert deutsche Adjektiv-Deklination auch
   // in bestehenden Spielständen (Namen werden gespeichert, nicht live gebaut).
-  const fixName = it => { if(it && it.slotKey) it.name = itemDisplayName(it.rarity, typeOf(it)); };
+  // Set-Items behalten ihren festen Set-Namen (typeOf liefert dafür nur den
+  // Fallback → würde sonst zu „Sagenhaftes Helm" o. ä. verfälscht).
+  const fixName = it => { if(it && it.slotKey && !setOf(it)) it.name = itemDisplayName(it.rarity, typeOf(it)); };
   s.inventory.forEach(fixName);
   Object.values(s.equipped).forEach(fixName);
   if(!Array.isArray(s.log)) s.log = [];
@@ -115,6 +120,7 @@ function migrateSlot(s){
   if(!s.killCounts || typeof s.killCounts !== 'object') s.killCounts = {};
   if(!Array.isArray(s.lockedIds)) s.lockedIds = [];
   if(typeof s.extraSlots !== 'number') s.extraSlots = 0;
+  if(typeof s.setTokens !== 'number') s.setTokens = 0;   // Tribut-Siegel (Klassen-Sets)
   // Turm-Stockwerk defensiv ergänzen – ohne diese Migration ist towerFloor kein
   // bekanntes Save-Feld und geht über Sessions/Seiten verloren (Bug: Turm startet
   // wieder bei Stockwerk 1, obwohl ein Boss besiegt wurde).

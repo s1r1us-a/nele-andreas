@@ -7,6 +7,7 @@ import { classOf, damageSchool } from '../data/classes.js';
 import { applyTalents } from '../data/talents.js';
 import { state } from './state.js';
 import { powerOfBundle } from './items.js';
+import { applySetBonuses } from './sets.js';
 import { toast } from '../ui/dom.js';
 import { awardAccountXp } from './account-xp.js';
 
@@ -72,6 +73,9 @@ export function recomputeTotals(){
   b.armor += lb.armor; b.damage += lb.dmg; b.maxHp += lb.hp;
   // Talentbaum-Effekte (no-op solange Talente leer sind).
   applyTalents(state, b);
+  // Klassen-Set-Boni (additiv, isoliert in core/sets.js) – nutzt vorhandene
+  // Stat-Keys, fließt darum automatisch in Kampf + Fähigkeiten.
+  applySetBonuses(state, b);
   b.power = powerOfBundle(b);
   return b;
 }

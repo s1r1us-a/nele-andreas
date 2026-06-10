@@ -16,6 +16,8 @@ import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc, buildWeaponLayerSVG } from './avatar.js';
 import { buildDemonSVG } from './demon-art.js';
 import { rollItem, addLog, recordDrop, giveLoot } from './items.js';
+import { awardSetTokens } from './sets.js';
+import { SET_TOKEN, setTokensForKill } from '../data/sets.js';
 import { $, toast, fmtBig } from '../ui/dom.js';
 import { affixLinesHTML } from '../ui/tooltip.js';
 import { renderAll } from '../ui/render.js';
@@ -1641,6 +1643,8 @@ function endFight(fight, win){
     let xpBase = Math.round(boss.recPower * 3 + 200);  // XP stark erhöht (weniger grind-lastig)
     if(isFarm){ xpBase = Math.round(xpBase*FARM.xpMult); }
     const xpGain = gainXp(xpBase);
+    // Tribut-Siegel (Sonderwährung für Klassen-Sets) – additiv, von Bossen.
+    const tokenGain = awardSetTokens(setTokensForKill(bossIndex, isFarm));
 
     // Garantierter Erstkill-Drop (#15): Seltenheit steigt mit Boss-Index.
     // Beim Abfarmen eine Stufe niedriger – der hohe (epische+) Drop bleibt dem
@@ -1707,6 +1711,7 @@ function endFight(fight, win){
         '<span class="ar-chip xp">⭐ +'+fmtBig(xpGain)+' XP</span>'+
         (coinAmount>0 ? '<span class="ar-chip coin">🪙 +'+fmtBig(coinAmount)+
           (coinNote?' <small>'+coinNote+'</small>':'')+'</span>' : '')+
+        (tokenGain>0 ? '<span class="ar-chip token">'+SET_TOKEN.icon+' +'+fmtBig(tokenGain)+' Tribut</span>' : '')+
       '</div>';
 
     res.className = 'arena-result win show';

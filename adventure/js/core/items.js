@@ -10,6 +10,7 @@ import { AFFIX_DEFS, AFFIX_KEYS, affixPool, weightedAffixPool, AFFIX_COUNT } fro
 import { pickItemType, ITEM_TYPES, materialOf, MATERIAL_LABEL, typeOf, itemDisplayName,
          defaultTypeKey } from '../data/itemTypes.js';
 import { allowedMaterials, classOf } from '../data/classes.js';
+import { setOf, setThemeOf } from '../data/sets.js';
 import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 import { dyeColorOf } from '../data/dyes.js';
@@ -138,6 +139,15 @@ export function rollItem(zone, lootBoost=0, opts={}){
 export function ensureItemSprite(it){
   if(!it) return it;
   if(!it.affixes) it.affixes = {};
+  // Set-Items (additiv): eigenes Set-Icon, Material/Variante bleiben erhalten
+  // (typeOf liefert für Set-Items bewusst den Fallback → hier nicht überschreiben).
+  const setTheme = setThemeOf(it);
+  if(setTheme){
+    const set = setOf(it);
+    const art = (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
+    it.sprite = buildItemSVG(art, it.variant|0, it.rarity, elementOf(it.id), null, set.material, null, setTheme);
+    return it;
+  }
   if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
   const t = typeOf(it);
   // Variante folgt dem Typ → Typ-Updates wirken rückwirkend auf alte Stände.
@@ -291,7 +301,8 @@ export function canEquip(item){
     const isStaff = materialOf(item) === 'zauberstab';
     return cls.damageSchool === 'magisch' ? isStaff : !isStaff;
   }
-  const mat = materialOf(item);
+  const set = setOf(item);
+  const mat = set ? set.material : materialOf(item);
   if(!mat) return true;
   return allowedMaterials(state).includes(mat);
 }
@@ -309,7 +320,8 @@ export function equipBlockReason(item){
       ? cls.label+' kann nur Zauberstäbe als Waffe tragen.'
       : cls.label+' kann keine Zauberstäbe tragen – nur physische Waffen.';
   }
-  return cls.label+' kann '+(MATERIAL_LABEL[materialOf(item)]||'dieses Material')+' nicht tragen.';
+  const _setMat = setOf(item) ? setOf(item).material : materialOf(item);
+  return cls.label+' kann '+(MATERIAL_LABEL[_setMat]||'dieses Material')+' nicht tragen.';
 }
 // Kurzlabel für Material/Typ eines Items (Anzeige im Item-Modal).
 //  • Waffe   → Typname + „Zauberstab" bzw. „Physische Waffe"
@@ -317,6 +329,8 @@ export function equipBlockReason(item){
 //  • Rüstung → Material (Stoff/Leder/Platte)
 //  • Schmuck → „Schmuck (für alle)"
 export function itemKindLabel(item){
+  const set = setOf(item);
+  if(set) return set.name + ' · Set (' + (MATERIAL_LABEL[set.material] || set.material) + ')';
   const t = typeOf(item);
   if(item.slotKey === 'schild'){
     const art = t.art || 'schild';
@@ -334,6 +348,7 @@ export function itemKindLabel(item){
 }
 // Passendes Emoji-Icon zur Item-Kategorie (Anzeige im Item-Modal).
 export function itemKindIcon(item){
+  if(setOf(item)) return '⚜️';
   if(item.slotKey === 'schild'){
     const art = typeOf(item).art || 'schild';
     if(art === 'orb')   return '🔮';
@@ -360,7 +375,10 @@ export function equip(item, explicitTarget){
   const prev = state.equipped[target];
   if(prev) state.inventory.push(prev);
   item.slotKey = target;
-  item.sprite = buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb, typeOf(item).material, dyeColorOf(item));
+  const _st = setThemeOf(item);
+  item.sprite = _st
+    ? buildItemSVG(SLOTS[target].art, item.variant|0, item.rarity, elementOf(item.id), null, setOf(item).material, null, _st)
+    : buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb, typeOf(item).material, dyeColorOf(item));
   state.equipped[target] = item;
   saveState();
 }
@@ -378,7 +396,7 @@ export function unequip(slotKey){
 // für den Schurken, wenn Leder verfügbar ist). Schmuck/Waffen haben Rang 0 und
 // werden nicht eingeschränkt.
 const MAT_RANK = { stoff:1, leder:2, platte:3 };
-const matRank = it => MAT_RANK[materialOf(it)] || 0;
+const matRank = it => MAT_RANK[(setOf(it) ? setOf(it).material : materialOf(it))] || 0;
 
 // Auto-Equip: legt Slot für Slot das stärkste tragbare Item aus dem Inventar an
 // (nach itemPower), bevorzugt aber das schwerste verfügbare Material. Ringe werden
