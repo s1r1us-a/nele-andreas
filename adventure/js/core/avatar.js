@@ -15,7 +15,7 @@ const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
 import { dyeColorOf } from '../data/dyes.js';
 import { setOf, setThemeOf } from '../data/sets.js';
-import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette } from './set-art.js';
+import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette, setMacroFX } from './set-art.js';
 import { buildSpecialHeld, buildSpecialShield, buildSpecialOffhandOrb } from './weapon-art.js';
 import { state } from './state.js';
 
@@ -417,6 +417,16 @@ export function buildHeroSVG(character, tier, gear){
   // Sichtbare Kopfbedeckung → Haare ausblenden (kein „Durchglitchen" durch den Helm).
   const helmVisible = !!(eq.kopf && !hideHelmet);
 
+  // Set-Makro-Effekte (Aura/Bodenkreis/Rückenteil) – skaliert mit der Anzahl
+  // getragener Teile des dominanten Sets (2/4/6/7 → Stufe 1/2/3/4).
+  const _setCounts = {};
+  for(const it of Object.values(eq)) if(it && it.setId) _setCounts[it.setId] = (_setCounts[it.setId]||0)+1;
+  let _domSet = null, _domN = 0;
+  for(const id in _setCounts) if(_setCounts[id] > _domN){ _domN = _setCounts[id]; _domSet = id; }
+  const macroTheme = _domSet ? setThemeOf(Object.values(eq).find(it => it && it.setId===_domSet)) : null;
+  const setLvl = _domN>=7 ? 4 : _domN>=6 ? 3 : _domN>=4 ? 2 : _domN>=2 ? 1 : 0;
+  const macroFX = (macroTheme && setLvl>0) ? setMacroFX(macroTheme, setLvl, gender) : '';
+
   // Umhang (sonst Tier-Cape)
   const um = eq.umhang;
   const cloak = um
@@ -630,7 +640,7 @@ export function buildHeroSVG(character, tier, gear){
     pauldronCS + head + face + beard + (helmVisible ? '' : hairFront) + helmCS + schild + weaponSway;
   const heroGroup = ANIM ? `<g id="hero${uid}">${figure}</g>` : figure;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
-    defs + xtra + styleBlock + groundShadow + heroGroup +
+    defs + xtra + styleBlock + groundShadow + macroFX + heroGroup +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }

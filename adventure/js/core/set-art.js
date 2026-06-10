@@ -63,6 +63,21 @@ export function setGlowFilter(id, color, strength){
   return `<filter id="${id}" x="-60%" y="-60%" width="220%" height="220%">`+
     `<feDropShadow dx="0" dy="0" stdDeviation="${s}" flood-color="${color}" flood-opacity="0.85"/></filter>`;
 }
+// Echtes Neon-„Bloom": die Quelle wird unscharf verdoppelt und über sich selbst
+// gelegt → weiches, sattes Leuchten (statt flacher Farbe). Für emissive Lagen.
+export function setBloomFilter(id, strength){
+  const s = strength || 2.6;
+  return `<filter id="${id}" x="-80%" y="-80%" width="260%" height="260%">`+
+    `<feGaussianBlur in="SourceGraphic" stdDeviation="${s}" result="b"/>`+
+    `<feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+}
+// Kleine Runen-/Glyphenmarken auf einer Ellipsenbahn (für den Bodenkreis).
+function runeMarks(rx, ry, color){
+  let m = ''; const n = 10;
+  for(let i=0;i<n;i++){ const a = (Math.PI*2/n)*i, x = Math.cos(a)*rx, y = Math.sin(a)*ry;
+    m += `<circle cx="${f(x)}" cy="${f(y)}" r="${i%2?1.2:1.9}" fill="${color}" opacity="0.8"/>`; }
+  return m;
+}
 
 /* ---------------------------------------------------------------------
    PART-BUILDER (koordinaten-parametrisch → in 64er-Icon UND 200er-Avatar
@@ -75,6 +90,7 @@ export function setGlowFilter(id, color, strength){
 // glühende Akzent-Kerne/Flammen obendrauf (Theme-spezifisch).
 export function setShoulder(themeKey, cx, cy, s){
   const P = setPalette(themeKey);
+  const _u = (_seq++).toString(36);
   const hi = shade(P.plate,1.3), dk = shade(P.plate,0.62);
   // weicher Set-Glow hinter der Schulter (ohne Filter → überall lauffähig)
   const glow = `<ellipse cx="3" cy="-8" rx="22" ry="17" fill="${P.glow}" opacity="0.14"/>`;
@@ -100,8 +116,11 @@ export function setShoulder(themeKey, cx, cy, s){
       `<path d="M-18 -28 Q3 -44 24 -28" fill="none" stroke="${P.accent2}" stroke-width="2" opacity="0.9"/>`+
       star(3,-30,4,1.5,4,'#fff',0.9);
   } else if(themeKey === 'azure'){
-    // 🔥 Brennende Schultern – blau-weiße Höllenflamme (echte Flacker-Animation)
-    behind = `<ellipse cx="3" cy="-12" rx="22" ry="18" fill="${P.glow}" opacity="0.20"/>`;
+    // 🔥 Brennende Schultern – Stahl-Klingenflügel rahmen blau-weiße Höllenflamme
+    behind = bladeSpike(3,-6,-150,30,8,P.metal,P.edge,7)+bladeSpike(3,-6,-120,38,9,P.metal,P.edge,8)+
+             bladeSpike(3,-6,-60,38,9,P.metal,P.edge,-8)+bladeSpike(3,-6,-30,30,8,P.metal,P.edge,-7)+
+             bladeSpike(3,-6,-120,38,3,P.accent,null,8)+bladeSpike(3,-6,-60,38,3,P.accent,null,-8)+
+             `<ellipse cx="3" cy="-12" rx="22" ry="18" fill="${P.glow}" opacity="0.22"/>`;
     const flame = (x,h,d) => {
       const tall  = flameTongue(x,-12,h,P.glow,P.accent2);
       const small = flameTongue(x,-12,h*0.58,P.glow,P.accent2);
@@ -114,8 +133,10 @@ export function setShoulder(themeKey, cx, cy, s){
       `<circle cx="4" cy="-22" r="1.3" fill="${P.accent2}"><animate attributeName="cy" values="-16;-40" dur="1.7s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="1.7s" repeatCount="indefinite"/></circle>`+
       `<circle cx="-6" cy="-18" r="1" fill="${P.emissive}"><animate attributeName="cy" values="-14;-34" dur="2.1s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="2.1s" begin="0.5s" repeatCount="indefinite"/></circle>`;
   } else if(themeKey === 'astral'){
-    // 🪐 Schwebende, umkreisende Orbs über der Schulter + Funkeln
-    behind = `<ellipse cx="3" cy="-14" rx="22" ry="18" fill="${P.glow}" opacity="0.18"/>`;
+    // 🪐 Schwebende Kristallscherben + umkreisende Orbs über der Schulter
+    const shard = (x,y,sz,rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0 ${-sz} L${f(sz*0.5)} 0 L0 ${sz} L${f(-sz*0.5)} 0 Z" fill="${P.metal}" stroke="${P.accent}" stroke-width="0.8"/><path d="M0 ${-sz} L0 ${sz}" stroke="${P.accent2}" stroke-width="0.6" opacity="0.7"/></g>`;
+    behind = shard(-15,-9,9,-22)+shard(19,-12,10,20)+shard(3,-23,8,4)+shard(-6,-19,6,-40)+
+             `<ellipse cx="3" cy="-14" rx="22" ry="18" fill="${P.glow}" opacity="0.20"/>`;
     const orb = (x,y,r,d,b) => {
       const g = `<circle cx="${x}" cy="${y}" r="${r+3}" fill="${P.glow}" opacity="0.4"/>`+
                 `<circle cx="${x}" cy="${y}" r="${r}" fill="${P.accent2}"/>`+
@@ -130,8 +151,10 @@ export function setShoulder(themeKey, cx, cy, s){
       front += tw(-2,-16,0)+tw(11,-31,0.7)+tw(-12,-26,1.2);
     }
   } else if(themeKey === 'storm'){
-    // ⚡ Knisternde Blitzbögen auf der Schulter (zucken/flackern)
-    behind = `<ellipse cx="3" cy="-11" rx="21" ry="17" fill="${P.glow}" opacity="0.16"/>`;
+    // ⚡ Nach hinten gepfeilte Sturmhörner + knisternde Blitzbögen
+    behind = bladeSpike(3,-6,-145,32,7,P.metal,P.edge,9)+bladeSpike(3,-6,-35,32,7,P.metal,P.edge,-9)+
+             bladeSpike(3,-6,-112,26,5,P.metal,P.edge,7)+bladeSpike(3,-6,-68,26,5,P.metal,P.edge,-7)+
+             `<ellipse cx="3" cy="-11" rx="21" ry="17" fill="${P.glow}" opacity="0.18"/>`;
     const bolt = (d,dur,b) => REDUCED_MOTION
       ? `<path d="${d}" stroke="${P.accent2}" stroke-width="1.6" fill="none"/>`
       : `<g><path d="${d}" stroke="${P.accent}" stroke-width="3.4" fill="none" opacity="0.5"/>`+
@@ -143,8 +166,11 @@ export function setShoulder(themeKey, cx, cy, s){
     front += `<circle cx="3" cy="-12" r="2.4" fill="${P.accent2}" opacity="0.9"/>`;
     if(!REDUCED_MOTION) front += `<circle cx="3" cy="-12" r="4" fill="none" stroke="${P.accent}" stroke-width="1"><animate attributeName="r" values="2;7" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0" dur="1.4s" repeatCount="indefinite"/></circle>`;
   } else if(themeKey === 'verdant'){
-    // 🍃 Schwebende Blätter/Blütenblätter + pulsierendes Erblühen
-    behind = `<ellipse cx="3" cy="-10" rx="21" ry="17" fill="${P.glow}" opacity="0.14">`+(REDUCED_MOTION?'':`<animate attributeName="opacity" values="0.10;0.24;0.10" dur="3.2s" repeatCount="indefinite"/>`)+`</ellipse>`;
+    // 🍃 Ast-Geweih mit Knospen + schwebende Blätter + pulsierendes Erblühen
+    behind = bladeSpike(3,-6,-150,26,4,P.metal,P.edge,12)+bladeSpike(3,-6,-30,26,4,P.metal,P.edge,-12)+
+             bladeSpike(3,-6,-122,20,3.4,P.metal,P.edge,10)+bladeSpike(3,-6,-58,20,3.4,P.metal,P.edge,-10)+
+             `<circle cx="-13" cy="-23" r="2" fill="${P.accent2}"/><circle cx="17" cy="-25" r="2" fill="${P.accent2}"/>`+
+             `<ellipse cx="3" cy="-10" rx="21" ry="17" fill="${P.glow}" opacity="0.16">`+(REDUCED_MOTION?'':`<animate attributeName="opacity" values="0.10;0.24;0.10" dur="3.2s" repeatCount="indefinite"/>`)+`</ellipse>`;
     front = `<path d="M-10 4 Q-2 -10 12 -8" fill="none" stroke="${P.accent}" stroke-width="1.4" opacity="0.8"/>`+
             `<path d="M-3 -2 q-4 -5 0 -9 q4 4 0 9 Z" fill="${P.accent}"/>`+
             `<path d="M7 -3 q4 -5 0 -10 q-4 5 0 10 Z" fill="${shade(P.accent,1.15)}"/>`+
@@ -184,7 +210,12 @@ export function setShoulder(themeKey, cx, cy, s){
                star(4,-16,5.5,2,4,P.accent2,0.85);
     }
   }
-  return `<g transform="translate(${f(cx)} ${f(cy)}) scale(${s})">${glow}${behind}${cap}${front}</g>`;
+  // Lauflicht-Trim: fließende Energie-Linie entlang der Pauldron-Oberkante.
+  const trim = REDUCED_MOTION ? '' :
+    `<path d="M-13 3 Q-16 -10 4 -12 Q20 -12 22 3" fill="none" stroke="${P.emissive}" stroke-width="1.5" opacity="0.9" stroke-dasharray="6 11" stroke-linecap="round"><animate attributeName="stroke-dashoffset" values="34;0" dur="2.2s" repeatCount="indefinite"/></path>`;
+  const bid = 'shb'+_u;
+  return `<g transform="translate(${f(cx)} ${f(cy)}) scale(${s})"><defs>${setBloomFilter(bid,2.2)}</defs>`+
+         `${glow}${behind}${cap}${trim}<g filter="url(#${bid})">${front}</g></g>`;
 }
 
 // Helm-Aufsatz (Hörner / Kapuzenspitze / Halo) über dem Kopf, zentriert (cx,cy).
@@ -262,6 +293,66 @@ export function setChestEmblem(themeKey, cx, cy, s){
         `<circle cx="0" cy="0" r="9" fill="none" stroke="${P.accent}" stroke-width="1" opacity="0.6"/>`;
   }
   return `<g transform="translate(${f(cx)} ${f(cy)}) scale(${s})">${g}</g>`;
+}
+
+// Themen-spezifisches Rückenteil hinter der Figur (200×320-Koords).
+function backPiece(themeKey, P){
+  const anim = !REDUCED_MOTION;
+  if(themeKey === 'azure'){
+    const wing = d => `<path d="M100 150 Q${100+d*54} 120 ${100+d*46} 68 Q${100+d*30} 108 ${100+d*15} 132 Z" fill="${P.glow}" opacity="0.5"/>`+
+      `<path d="M100 150 Q${100+d*44} 122 ${100+d*38} 82 Q${100+d*25} 110 ${100+d*13} 132 Z" fill="${P.accent2}" opacity="0.45"/>`;
+    const g = wing(-1)+wing(1);
+    return anim ? `<g>${g}<animate attributeName="opacity" values="0.85;1;0.7;1;0.85" dur="0.9s" repeatCount="indefinite"/></g>` : g;
+  }
+  if(themeKey === 'astral'){
+    const ring = `<ellipse cx="0" cy="0" rx="58" ry="20" fill="none" stroke="${P.accent}" stroke-width="2" opacity="0.55"/>`+
+                 `<ellipse cx="0" cy="0" rx="42" ry="13" fill="none" stroke="${P.accent2}" stroke-width="1.2" opacity="0.5"/>`;
+    const stars = [0,72,144,216,288].map(a=>`<circle cx="${f(Math.cos(a*Math.PI/180)*50)}" cy="${f(Math.sin(a*Math.PI/180)*17)}" r="1.6" fill="#fff"/>`).join('');
+    const disc = `<g transform="rotate(-18)">${ring}${anim?`<g>${stars}<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="9s" repeatCount="indefinite"/></g>`:stars}</g>`;
+    return `<g transform="translate(100 140)"><circle cx="0" cy="0" r="16" fill="${P.glow}" opacity="0.4"/>${disc}</g>`;
+  }
+  if(themeKey === 'storm'){
+    const cloud = `<g fill="${shade(P.metal,1.2)}" opacity="0.88"><ellipse cx="78" cy="120" rx="20" ry="12"/><ellipse cx="100" cy="113" rx="26" ry="15"/><ellipse cx="124" cy="120" rx="20" ry="12"/></g>`;
+    const bolt = (d,b)=>anim?`<path d="${d}" stroke="${P.accent2}" stroke-width="2" fill="none"><animate attributeName="opacity" values="0;0;1;0;0;0" dur="1.6s" begin="${b}s" repeatCount="indefinite"/></path>`:`<path d="${d}" stroke="${P.accent2}" stroke-width="2" fill="none" opacity="0.7"/>`;
+    return `<g><ellipse cx="100" cy="118" rx="40" ry="20" fill="${P.glow}" opacity="0.18"/>${cloud}${bolt('M92 128 L86 140 L94 140 L88 156',0)+bolt('M112 128 L106 138 L113 138 L107 152',0.7)}</g>`;
+  }
+  if(themeKey === 'verdant'){
+    const branch = d => `<path d="M100 156 Q${100+d*40} 150 ${100+d*52} 100 Q${100+d*54} 78 ${100+d*44} 70" fill="none" stroke="${shade(P.metal,1.1)}" stroke-width="3" opacity="0.9"/>`+
+      `<circle cx="${100+d*52}" cy="98" r="3" fill="${P.accent}"/><circle cx="${100+d*48}" cy="76" r="3.4" fill="${P.accent2}"/><circle cx="${100+d*44}" cy="70" r="2.6" fill="${P.emissive}"/>`;
+    return `<g><ellipse cx="100" cy="120" rx="46" ry="40" fill="${P.glow}" opacity="0.14"/>${branch(-1)+branch(1)}</g>`;
+  }
+  // Standard (alte Sets): weiche Lichtschwingen
+  const ray = d => `<path d="M100 150 L${100+d*52} 96 L${100+d*40} 150 Z" fill="${P.glow}" opacity="0.4"/>`+
+    `<path d="M100 152 L${100+d*40} 110 L${100+d*30} 150 Z" fill="${P.accent2}" opacity="0.35"/>`;
+  return ray(-1)+ray(1);
+}
+
+/* ---------------------------------------------------------------------
+   SET-MAKRO-EFFEKTE (Avatar) – Aura + rotierender Bodenkreis + Rückenteil,
+   skaliert mit der Set-Vollständigkeit (lvl 1..4 ≈ 2/4/6/7 Teile). Wird hinter
+   die Figur gelegt. Reiner Schau-Effekt; kein Einfluss auf Stats/Logik.
+   --------------------------------------------------------------------- */
+export function setMacroFX(themeKey, lvl, gender){
+  if(!themeKey || lvl <= 0) return '';
+  const P = setPalette(themeKey);
+  const _u = (_seq++).toString(36);
+  const footY = gender==='w' ? 312 : gender==='m' ? 282 : 304;
+  let s = `<defs>${setBloomFilter('mb'+_u, 3)}</defs>`;
+  // Aura (ab 2 Teilen): pulsierender, set-farbener Schein hinter der Figur
+  const ao = (0.05+lvl*0.02).toFixed(2), ah = (0.12+lvl*0.03).toFixed(2);
+  s += `<ellipse cx="100" cy="180" rx="${70+lvl*6}" ry="${118+lvl*8}" fill="${P.glow}" opacity="${ao}">`+
+       (REDUCED_MOTION?'':`<animate attributeName="opacity" values="${ao};${ah};${ao}" dur="3.4s" repeatCount="indefinite"/>`)+`</ellipse>`;
+  // Bodenkreis (ab 4 Teilen): rotierender Runenring auf Fußhöhe
+  if(lvl >= 2){
+    const rx = 52+lvl*4, ry = 14+lvl*1.5;
+    const ring = `<ellipse cx="0" cy="0" rx="${rx}" ry="${f(ry)}" fill="none" stroke="${P.accent}" stroke-width="2" opacity="0.7"/>`+
+                 `<ellipse cx="0" cy="0" rx="${rx-9}" ry="${f(ry-3)}" fill="none" stroke="${P.accent2}" stroke-width="1" opacity="0.5"/>`+runeMarks(rx,ry,P.accent2);
+    s += `<g transform="translate(100 ${footY})" filter="url(#mb${_u})">`+
+         (REDUCED_MOTION?ring:`<g>${ring}<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="12s" repeatCount="indefinite"/></g>`)+`</g>`;
+  }
+  // Rückenteil (ab 6 Teilen): themen-spezifisch hinter der Figur, mit Bloom
+  if(lvl >= 3) s += `<g filter="url(#mb${_u})">${backPiece(themeKey, P)}</g>`;
+  return s;
 }
 
 /* ---------------------------------------------------------------------
