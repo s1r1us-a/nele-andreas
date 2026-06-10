@@ -9,6 +9,8 @@ import { classOf, classLabelOf } from '../data/classes.js';
 import { SLOTS, SLOT_ICON } from '../data/slots.js';
 import { SET_SLOTS, SET_TOKEN, SET_TOKEN_CAP, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
 import { getSetTokens, buySetPiece, ownsSetPiece, activeSetInfo, previewSetPiece, setPieceIlvl } from '../core/sets.js';
+import { shopWeaponsForClass } from '../data/shopweapons.js';
+import { buyShopWeapon, ownsShopWeapon, previewShopWeapon } from '../core/shopweapons.js';
 import { buildItemSVG, elementOf } from '../core/item-art.js';
 import { AFFIX_DEFS } from '../data/affixes.js';
 import { bindTooltip } from './tooltip.js';
@@ -136,4 +138,64 @@ export function renderSetShop(){
       b.disabled = false;
     }
   }));
+
+  // ---- Spezial-Waffen-Bereich --------------------------------------
+  // Klassengebundene Legendär-Waffen (Einmalkauf gegen Tribut-Siegel).
+  const weapons = shopWeaponsForClass(classOf(state).id);
+  if(weapons.length){
+    const wHead = document.createElement('h3');
+    wHead.className = 'setshop-weapons-head';
+    wHead.innerHTML = '⚔️ Waffen';
+    panel.appendChild(wHead);
+
+    const wNote = document.createElement('p');
+    wNote.className = 'forge-note';
+    wNote.innerHTML = 'Legendäre Klassen-Waffen – einmalig gegen <b>Tribut-Siegel</b> erhältlich, '+
+      'danach <b>unbegrenzt</b> in der Schmiede aufwertbar.';
+    panel.appendChild(wNote);
+
+    const wGrid = document.createElement('div');
+    wGrid.className = 'setshop-grid';
+    const wIlvl = setPieceIlvl(state);
+    for(const def of weapons){
+      const owned = ownsShopWeapon(state, def.key);
+      const afford = tokens >= def.cost;
+      const cell = document.createElement('div');
+      cell.className = 'ss-item'+(owned?' owned':'');
+      const sprite = buildItemSVG(def.art, def.variant|0, 'legendaer',
+        (def.element==='ice'?'ice':'fire'), def.orb, def.material, null, null, def.special);
+      let btn;
+      if(owned) btn = '<button class="btn ghost" disabled>✓ Im Besitz</button>';
+      else btn = '<button class="btn ss-buy-weapon" data-wkey="'+def.key+'"'+
+                 (afford?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>'+
+                 SET_TOKEN.icon+' '+def.cost+' kaufen</button>';
+      cell.innerHTML =
+        '<div class="ss-icon"><img src="'+sprite+'" alt="'+def.name+'">'+
+          '<span class="ss-slot-ic">'+(def.slotKey==='schild'?'🤚':'⚔️')+'</span></div>'+
+        '<div class="ss-name">'+def.name+'</div>'+
+        '<div class="ss-cost">'+(owned?'<span class="ss-have">erworben</span>':SET_TOKEN.icon+' '+def.cost+' '+SET_TOKEN.name)+'</div>'+
+        btn;
+      wGrid.appendChild(cell);
+
+      const preview = previewShopWeapon(def, wIlvl);
+      if(preview){ cell.classList.add('ss-has-tip'); bindTooltip(cell, preview, { tap:true, note:'⚔️ Feste Affixe' }); }
+    }
+    panel.appendChild(wGrid);
+
+    wGrid.querySelectorAll('.ss-buy-weapon').forEach(b => b.addEventListener('click', async ()=>{
+      b.disabled = true;
+      const res = buyShopWeapon(b.dataset.wkey);
+      if(res.ok){
+        toast('⚔️ '+res.item.name+' erworben! Im Inventar bereit zum Anlegen.');
+        const { renderAll } = await import('./render.js');
+        renderAll();
+      } else {
+        if(res.reason === 'tokens') toast('⚜️ Nicht genug Tribut-Siegel.');
+        else if(res.reason === 'owned') toast('Du besitzt diese Waffe bereits.');
+        else if(res.reason === 'class') toast('Diese Waffe gehört einer anderen Klasse.');
+        else toast('Kauf nicht möglich.');
+        b.disabled = false;
+      }
+    }));
+  }
 }

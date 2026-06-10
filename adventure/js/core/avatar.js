@@ -15,7 +15,8 @@ const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
 import { dyeColorOf } from '../data/dyes.js';
 import { setOf, setThemeOf } from '../data/sets.js';
-import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor } from './set-art.js';
+import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette } from './set-art.js';
+import { buildSpecialHeld, buildSpecialShield } from './weapon-art.js';
 import { state } from './state.js';
 
 // Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
@@ -69,6 +70,9 @@ function heldWeapon(item, uid, opt){
   const SCALE = ([1, 1, 1.16, 1.32][lvl] || 1) * (opt.scale || 1);
   const grow = inner => SCALE!==1 ? `<g transform="translate(${hx} 194) scale(${SCALE}) translate(${-hx} -194)">${inner}</g>` : inner;
   const ty = opt.ty || typeOf(item);
+  // Spezial-Waffe (Tribut-Shop): komplett eigene, am Handpunkt verankerte Optik.
+  const sp = ty && ty.special;
+  if(sp) return buildSpecialHeld(sp, uid, Object.assign({}, opt, { element: ty.element, orb: ty.orb }));
   // Waffe natürlicher halten: leicht von der Körpermitte weg kippen (Drehpunkt =
   // Handkreis hx,194). Zauberstab bleibt aufrechter, damit die Kugel oben bleibt.
   const tilt = (ty && ty.material === 'zauberstab') ? 6 : (opt.tilt != null ? opt.tilt : 15);
@@ -213,8 +217,16 @@ export function buildHeroSVG(character, tier, gear){
   const bcd = shade(bc, 0.68);             // Bart-Lowlight
   const bch = shade(bc, 1.18);             // Bart-Glanz
   const t = Math.max(0, Math.min(3, tier|0));
-  const outfit = TIER_OUTFIT[t] || TIER_OUTFIT[0];
-  const trim   = TIER_TRIM[t]   || TIER_TRIM[0];
+  // Set-Tönung des Grundkörpers: Trägt der Held ein Set-Teil (bevorzugt an den
+  // Schultern), übernimmt das Grund-Outfit (Robe/Ärmel/Saum/Stiefel) die
+  // Set-Basisfarbe – so wirkt die ganze Figur einheitlich (kein goldenes
+  // Tier-Outfit, das unter den Set-Teilen durchscheint). Ohne Set: Tier-Farben.
+  const _eq = (gear && gear.equipped) || {};
+  const setTint = setThemeOf(_eq.schultern) || setThemeOf(_eq.brust) || setThemeOf(_eq.kopf)
+               || setThemeOf(_eq.beine) || setThemeOf(_eq.umhang) || setThemeOf(_eq.haende)
+               || setThemeOf(_eq.fuesse);
+  const outfit = setTint ? setBaseColor(setTint) : (TIER_OUTFIT[t] || TIER_OUTFIT[0]);
+  const trim   = setTint ? shade(outfit, 1.32)   : (TIER_TRIM[t]   || TIER_TRIM[0]);
   const outfitSh = shade(outfit,0.66);
   const boot = shade(outfit, 0.5);
   const uid = '_'+(GRAD_SEQ++).toString(36);
@@ -250,7 +262,10 @@ export function buildHeroSVG(character, tier, gear){
   // materialabhängigem Licht-Filter (Metallglanz/Lederschimmer; Tuch bleibt matt).
   const armorShape = (d, color, it, sw) => {
     const mat = it ? (typeOf(it).material || 'platte') : 'platte';
-    const furl = greg.filter('mat-'+mat, id => materialFilter(id, mat));
+    // Set-Teile (Helm/Hände/Beine/Füße/Platte-Brust): KEIN Metall-Glanzfilter –
+    // sonst überstrahlt der Specular die Set-Basisfarbe silbern und passt nicht
+    // zu den Set-Schultern. Der gerichtete Verlauf trägt die Tönung in Set-Farbe.
+    const furl = (it && setOf(it)) ? '' : greg.filter('mat-'+mat, id => materialFilter(id, mat));
     let out = `<path d="${d}" fill="${grad(color)}" stroke="${shade(color,0.5)}" stroke-width="${sw||2}" stroke-linejoin="round"/>`;
     if(it) out += `<path d="${d}" fill="${texturePat(textureOf(it), color)}"/>`;
     return furl ? `<g filter="${furl}">${out}</g>` : out;
@@ -398,6 +413,8 @@ export function buildHeroSVG(character, tier, gear){
   // ---- Angelegte Ausrüstung (nur additiv, materialgetönt) -----------
   const eq = (gear && gear.equipped) || {};
   const hideHelmet = !!(gear && gear.hideHelmet);
+  // Sichtbare Kopfbedeckung → Haare ausblenden (kein „Durchglitchen" durch den Helm).
+  const helmVisible = !!(eq.kopf && !hideHelmet);
 
   // Umhang (sonst Tier-Cape)
   const um = eq.umhang;
@@ -453,9 +470,11 @@ export function buildHeroSVG(character, tier, gear){
     }
     // Seltenheits-Filigran (Episch+) auf der Brust – wächst mit der Stufe.
     const blvl = armorLvl(br.rarity);
-    if(blvl>0) brust += engraving(100, 156, 30, 52, blvl, GOLD);
-    // Set-Brust-Emblem (Totenkopf / Klinge / Leeren-Juwel / Sonnenmedaillon).
+    // Set-Brustteile: Filigran in der Set-Akzentfarbe (statt Gold) → passt zu den
+    // übrigen Set-Teilen. Nicht-Set-Brustteile behalten das goldene Filigran.
     const _bt = setThemeOf(br);
+    if(blvl>0) brust += engraving(100, 156, 30, 52, blvl, _bt ? setPalette(_bt).accent : GOLD);
+    // Set-Brust-Emblem (Totenkopf / Klinge / Leeren-Juwel / Sonnenmedaillon).
     if(_bt) brust += setChestEmblem(_bt, 100, 150, 2.4);
   }
 
@@ -483,9 +502,12 @@ export function buildHeroSVG(character, tier, gear){
     if(art === 'waffe'){
       // Zweitwaffe gespiegelt in die linke Hand (hx=76), leicht nach links
       // gekippt und etwas kleiner als die Hauptwaffe.
-      schild = heldWeapon(sc, uid, { hx:76, tilt:-14, scale:0.82 });
+      schild = heldWeapon(sc, uid, { hx:76, tilt:-16, scale:0.9 });
     } else if(art === 'orb'){
       schild = offhandOrb(sc);
+    } else if(typeOf(sc).special){
+      // Spezial-Schild (Tribut-Shop): eigene Optik an der linken Hand.
+      schild = buildSpecialShield(typeOf(sc).special, sc, uid);
     } else {
       const v=(((sc.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
       const lvl = armorLvl(sc.rarity), el = elementOf(sc.id), E = ELEM[el];
@@ -600,8 +622,10 @@ export function buildHeroSVG(character, tier, gear){
       `#hero${uid}{animation:hb${uid} 3.8s ease-in-out infinite}`+
       `@media(prefers-reduced-motion:reduce){#hero${uid}{animation:none}}</style>`
     : '';
-  const figure = aura + cloak + hairBack + bodyLit + beine + brust + fuesse + arms + gloves + schild +
-    pauldronCS + head + face + beard + hairFront + helmCS + weaponSway;
+  // Waffe & Nebenhand (Schild/Zweitklinge) ganz im Vordergrund – werden von
+  // Rüstung/Schultern/Helm NICHT verdeckt (zuletzt im Z-Stapel gezeichnet).
+  const figure = aura + cloak + (helmVisible ? '' : hairBack) + bodyLit + beine + brust + fuesse + arms + gloves +
+    pauldronCS + head + face + beard + (helmVisible ? '' : hairFront) + helmCS + schild + weaponSway;
   const heroGroup = ANIM ? `<g id="hero${uid}">${figure}</g>` : figure;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
     defs + xtra + styleBlock + groundShadow + heroGroup +

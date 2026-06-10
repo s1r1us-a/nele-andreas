@@ -8,6 +8,7 @@
    ===================================================================== */
 import { SLOTS } from './slots.js';
 import { rarityOf } from './rarities.js';
+import { SHOP_WEAPONS } from './shopweapons.js';
 
 // ---- Item-Name: korrekte deutsche Adjektiv-Deklination ----------------
 // Starke Deklination (Nominativ, ohne Artikel): m -er, f -e, n -es, pl -e.
@@ -347,6 +348,14 @@ export const ITEM_TYPES = {
   umhang:    armorTypes('Umhang', 'm'),
 };
 
+// 🛒 Spezial-Waffen (Tribut-Shop) additiv in die passende Slot-Liste hängen.
+// Die Liste richtet sich nach der Slot-art (Nebenhand-Klinge/-Schild → 'schild'),
+// NICHT nach w.art. `shop:true` → von pickItemType (Zufalls-Drop) ausgeschlossen.
+for(const w of SHOP_WEAPONS){
+  const list = ITEM_TYPES[(SLOTS[w.slotKey] || {}).art];
+  if(list) list.push(w);
+}
+
 // art-Schlüssel zu einem Slot ermitteln (Ringe → 'ring').
 function artOf(slotKey){
   const slot = SLOTS[slotKey];
@@ -366,10 +375,11 @@ export function pickItemType(slotKey){
   const list = ITEM_TYPES[artOf(slotKey)];
   if(!list || !list.length) return fallbackType(slotKey);
   let total = 0;
-  for(const t of list) total += (t.weight > 0 ? t.weight : 6);
+  for(const t of list){ if(t.shop) continue; total += (t.weight > 0 ? t.weight : 6); }
   let r = Math.random() * total;
-  for(const t of list){ r -= (t.weight > 0 ? t.weight : 6); if(r < 0) return t; }
-  return list[list.length-1];
+  for(const t of list){ if(t.shop) continue; r -= (t.weight > 0 ? t.weight : 6); if(r < 0) return t; }
+  for(let i=list.length-1;i>=0;i--) if(!list[i].shop) return list[i];
+  return fallbackType(slotKey);
 }
 
 // Typ-Objekt zu einem Item (null-sicher mit Fallback).
