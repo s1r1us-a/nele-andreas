@@ -282,6 +282,15 @@ a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
   background:rgba(0,0,0,.5); padding:3px 12px; border-radius:20px;
   border:1px solid var(--gold-dim); white-space:nowrap; }
 
+/* Besucher-Profil: dieselbe Paper-Doll wie die eigene Charakterseite, nur in
+   den schmaleren Dialog skaliert – Charakter mittig, Items ringsherum. Die
+   schmaleren Spalten verhindern, dass das Gitter aus dem Modal läuft; die
+   Mobil-Anpassungen erbt es über die zusätzliche .doll-Klasse. */
+.op-doll { grid-template-columns:auto minmax(120px,1fr) auto;
+  column-gap:16px; row-gap:18px; margin:4px auto 8px; }
+.op-doll .hero-frame { width:100%; max-width:220px; min-width:0;
+  padding:38px 12px 12px; margin:0 auto; }
+
 .slot {
   position:relative; width:84px; height:84px; border-radius:12px; cursor:pointer;
   background:
@@ -302,9 +311,6 @@ a.adv-locked:hover { transform:none !important; box-shadow:none !important; }
   font-weight:700; font-size:11px; color:#08141f; line-height:1; z-index:3;
   background:linear-gradient(180deg,#d8f6ff,#5fb6e0); padding:2px 5px; border-radius:7px;
   box-shadow:0 0 8px rgba(70,212,255,.8), 0 1px 0 var(--gold-dim); }
-/* +N im Besucher-Profil (op-cell ist position:relative über .inv-item) */
-.op-cell { position:relative; }
-.op-cell .op-upg { top:2px; right:3px; }
 .slot .empty-ic { font-size:26px; opacity:.25; }
 .slot[data-rarity]{ border-color:var(--rc,var(--line));
   box-shadow:0 0 14px -1px var(--rc,transparent), inset 0 0 12px -4px var(--rc,transparent),
@@ -1239,18 +1245,13 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 .duel-btn:hover { transform:translateY(-2px); box-shadow:0 7px 22px rgba(192,57,43,.55); }
 
 /* Read-only Profil-Ansicht des anderen Spielers */
-.op-head { display:flex; gap:16px; align-items:center; background:#0d0a13;
-  border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:6px; }
-.op-avatar { width:84px; height:134px; flex:none; object-fit:contain;
-  filter:drop-shadow(0 4px 10px #000); }
-.op-meta { text-align:left; }
+.op-id { text-align:center; background:#0d0a13; border:1px solid var(--line);
+  border-radius:12px; padding:12px 14px; margin-bottom:6px; }
 .op-name { font-family:'Cinzel',serif; font-weight:700; font-size:19px; color:var(--gold-hi); }
 .op-cls { color:var(--txt-dim); font-size:14px; margin:2px 0 6px; }
 .op-lvl { font-size:13px; color:var(--txt); }
 .op-sub { margin:16px 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.5px;
-  color:var(--txt-mute); }
-.op-gear .op-empty { display:flex; align-items:center; justify-content:center; opacity:.35;
-  font-size:24px; border-style:dashed; }
+  color:var(--txt-mute); text-align:center; }
 .op-cell { cursor:help; }
 .op-pager { display:flex; align-items:center; justify-content:center; gap:14px;
   margin:2px 0 4px; }
