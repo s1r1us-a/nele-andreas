@@ -29,6 +29,7 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
   border-bottom:1px solid var(--border); }
 .topbar-title { font-family:'Cinzel',serif; font-weight:700; font-size:17px;
   color:var(--accent-hi); letter-spacing:.05em; }
+.topbar-left { display:flex; gap:12px; align-items:center; }
 .topbar-right { display:flex; gap:10px; align-items:center; }
 .user-chip { font-size:12px; background:var(--bg3); border:1px solid var(--border);
   padding:4px 10px; border-radius:20px; }
