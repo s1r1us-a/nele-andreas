@@ -570,22 +570,22 @@ export function buildHeroSVG(character, tier, gear){
              mirror(`<path d="M130 60 Q134 90 124 126" fill="none" stroke="${cs}" stroke-width="1.5" opacity="0.45"/>`)+
              `<path d="M100 34 Q116 38 120 60" fill="none" stroke="${ch}" stroke-width="2" opacity="0.4" stroke-linecap="round"/>`;
     } else if(mat === 'leder'){
-      // Assassinen-Kapuze (Schurke): spitze Kapuze tief über Ober-/Hinterkopf,
-      // verschattete Augenpartie + Stoffmaske über Nase/Mund → Gesicht verdeckt.
-      helm = armorShape(`M100 28 Q137 32 141 80 Q144 112 129 134 L116 132 Q124 106 121 90 Q117 66 100 62 Q83 66 79 90 Q76 106 84 132 L71 134 Q56 112 59 80 Q63 32 100 28 Z`, c, kp)+
+      // Assassinen-Kapuze (Schurke): EIN halbtransparenter Gesichts-Schleier in
+      // Helmfarbe füllt das GANZE Gesicht und liegt HINTER der Kapuze → die
+      // Kapuzen-Öffnung deckt die Schleier-Kanten ab (keine sichtbaren Kanten).
+      // Das Gesicht schimmert getönt durch; kalte Augen-Glints leuchten darüber.
+      const veil = `M100 55 Q128 58 128 92 Q128 127 100 135 Q72 127 72 92 Q72 58 100 55 Z`;
+      helm = `<path d="${veil}" fill="${c}" opacity="0.55"/>`+
+             `<path d="${veil}" fill="${cs}" opacity="0.22"/>`+
+             armorShape(`M100 28 Q137 32 141 80 Q144 112 129 134 L116 132 Q124 106 121 90 Q117 66 100 62 Q83 66 79 90 Q76 106 84 132 L71 134 Q56 112 59 80 Q63 32 100 28 Z`, c, kp)+
              // Innensaum, der das Schattengesicht umrandet (Tiefe)
              `<path d="M100 62 Q121 66 121 90 Q121 106 117 124 M100 62 Q79 66 79 90 Q79 106 83 124" fill="none" stroke="${cm}" stroke-width="2.5" opacity="0.7" stroke-linecap="round"/>`+
              // Glanznaht + seitliche Falte
              `<path d="M100 30 Q126 36 132 78" fill="none" stroke="${ch}" stroke-width="2" opacity="0.4" stroke-linecap="round"/>`+
              mirror(`<path d="M132 64 Q136 96 126 128" fill="none" stroke="${cs}" stroke-width="1.5" opacity="0.45"/>`)+
-             // Augen-Schatten über der oberen Gesichtshälfte
-             `<path d="M78 70 Q100 64 122 70 Q124 84 116 92 L84 92 Q76 84 78 70 Z" fill="#120b0f" opacity="0.52"/>`+
-             // kalte Augen-Glints im Schatten
-             `<ellipse cx="87" cy="81" rx="2.6" ry="1.6" fill="#cfe8ff" opacity="0.9"/>`+
-             `<ellipse cx="113" cy="81" rx="2.6" ry="1.6" fill="#cfe8ff" opacity="0.9"/>`+
-             // Stoffmaske über Nase/Mund (bis unters Kinn)
-             `<path d="M80 90 Q100 95 120 90 Q122 104 112 112 Q100 118 88 112 Q78 104 80 90 Z" fill="${cm}" stroke="${cs}" stroke-width="1.6" stroke-linejoin="round"/>`+
-             `<path d="M85 95 Q100 99 115 95" fill="none" stroke="${shade(c,0.45)}" stroke-width="1.5" opacity="0.7"/>`;
+             // kalte Augen-Glints leuchten durch den Schleier
+             `<ellipse cx="87" cy="81" rx="2.6" ry="1.6" fill="#cfe8ff" opacity="0.85"/>`+
+             `<ellipse cx="113" cy="81" rx="2.6" ry="1.6" fill="#cfe8ff" opacity="0.85"/>`;
     } else {
       // Platte: Barbute/Großhelm – gerundete Glocke, mittiger Kamm, Wangenstücke,
       // vertikaler Visierschlitz + Atemschlitz (Gesicht verdeckt).
