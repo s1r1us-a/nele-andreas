@@ -4,7 +4,7 @@
    gewählten Farbe, Entfernen ist kostenlos. Eng an forge.js angelehnt
    (Item-Auswahl, Aktionskarte, Lazy-Rerender).
    ===================================================================== */
-import { DYES, DYE_BY_KEY, isDyeable } from '../data/dyes.js';
+import { DYES, DYE_BY_KEY, isDyeable, dyeTextColor } from '../data/dyes.js';
 import { rarityOf } from '../data/rarities.js';
 import { SLOTS, CAT_ICON } from '../data/slots.js';
 import { upgradeBadge } from '../data/materials.js';
@@ -85,7 +85,7 @@ export function renderDyes(){
   banner.innerHTML =
     '<div class="db-row">'+
       '<span class="db-icon">🎨</span>'+
-      '<div class="db-titles"><h2 class="db-title">Die Färberei</h2>'+
+      '<div class="db-titles"><h2 class="db-title">Tinkturen-Werkstatt</h2>'+
         '<div class="db-sub">Farbe · Stil · Charakter</div></div>'+
     '</div>';
   panel.appendChild(banner);
@@ -194,7 +194,7 @@ function renderDyeModalBody(container, itemId){
         '<div class="forge-card-head" style="color:'+r.color+'">'+it.name+'</div>'+
         '<div class="sub">'+r.name+' · '+SLOTS[it.slotKey].name+'</div>'+
         '<div class="dye-current">🎨 Aktuell: <b>'+curName+'</b>'+
-          (pd ? ' → <b style="color:'+pd.color+'">'+pd.name+'</b>' : '')+'</div>'+
+          (pd ? ' → <b style="color:'+dyeTextColor(pd.color)+'">'+pd.name+'</b>' : '')+'</div>'+
       '</div>'+
     '</div>';
 
@@ -209,7 +209,7 @@ function renderDyeModalBody(container, itemId){
       (pd
         ? '<span class="dye-arrow">→</span>'+
           '<figure class="dye-fig after"><img class="dye-char" src="'+heroPreviewSrc(it, previewDye, tier)+'" alt="Nachher">'+
-            '<figcaption style="color:'+pd.color+'">Vorschau</figcaption></figure>'
+            '<figcaption style="color:'+dyeTextColor(pd.color)+'">Vorschau</figcaption></figure>'
         : '<span class="dye-compare-hint">Wähle unten eine Farbe – die Vorschau zeigt deinen Helden danach.</span>')+
     '</div>';
 
@@ -280,7 +280,7 @@ async function confirmAndDye(it, key){
       '<div class="dye-confirm-avatars">'+
         '<figure class="dye-fig"><img src="'+before+'" alt="Vorher"><figcaption>Vorher</figcaption></figure>'+
         '<span class="dye-arrow">→</span>'+
-        '<figure class="dye-fig after"><img src="'+after+'" alt="Nachher"><figcaption style="color:'+d.color+'">Nachher</figcaption></figure>'+
+        '<figure class="dye-fig after"><img src="'+after+'" alt="Nachher"><figcaption style="color:'+dyeTextColor(d.color)+'">Nachher</figcaption></figure>'+
       '</div>'+
       '<div class="dye-confirm-info">'+
         '<span class="dye-swatch lg" style="background:'+d.color+'"></span> '+

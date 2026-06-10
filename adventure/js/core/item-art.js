@@ -79,14 +79,6 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material, dy
       `<animate attributeName="opacity" values="0.15;1;0.15" dur="1.9s" begin="${delay}s" repeatCount="indefinite"/>`;
     return `<g opacity="0.9">`+star(cx,cy,s,s*0.32,4,'#fff')+tw+`</g>`;
   };
-  // Strahlenkranz vom Zentrum; ab Legendär langsam rotierend.
-  const rays = (n,len,rotateDur) => {
-    let r=''; for(let i=0;i<n;i++){ const a=(360/n)*i;
-      r += `<rect x="31.3" y="${(32-len).toFixed(1)}" width="1.4" height="${(len*0.55).toFixed(1)}" rx="0.7" fill="${accentCol}" opacity="0.45" transform="rotate(${a} 32 32)"/>`; }
-    const an = (rotateDur && !REDUCED_MOTION)
-      ? `<animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="${rotateDur}s" repeatCount="indefinite"/>` : '';
-    return `<g>${r}${an}</g>`;
-  };
   // Diagonaler Licht-Sweep (Shimmer), der über das Item wandert.
   const shimmer = () => {
     defs += `<linearGradient id="sh${uid}" x1="0" y1="0" x2="1" y2="0">`+
@@ -387,7 +379,10 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material, dy
   if(eff>0){
     body = `<g filter="url(#glow${uid})">${body}</g>`;        // echtes Leuchten (Bloom)
     fx += sparkle(15,15,3,0) + sparkle(49,47,2.6,0.7);        // Selten: Funkeln
-    if(eff>=2) fx += sparkle(49,15,2.4,1.2) + rays(12,12, eff>=3 ? 16 : 0);  // Episch: + Strahlen
+    if(eff>=2){                                              // Episch: zwei weitere Glints
+      fx += sparkle(49,15,2.4,1.2) + sparkle(15,49,2.2,1.7);
+      if(eff>=3) fx += sparkle(32,9,2.0,0.5);                // Legendär: zusätzlicher Top-Glint
+    }
     if(eff>=3) fx += shimmer();                               // Legendär: + Licht-Sweep
     if(eff>=4) fx += mythicCrown();                           // Mythisch: + Pulse & Partikel
   }

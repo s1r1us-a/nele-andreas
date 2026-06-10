@@ -44,6 +44,19 @@ export function dyeColorOf(item){
   return (item && item.dye && DYE_BY_KEY[item.dye]) ? DYE_BY_KEY[item.dye].color : null;
 }
 
+// Lesbare Textfarbe eines Farbstoffs auf dunklem Karten-/Tooltip-Hintergrund:
+// Farbton bleibt erhalten, sehr dunkle Farben (z. B. Onyxschwarz) werden Richtung
+// Weiß aufgehellt, bis sie ausreichend Kontrast haben. Helle Farben unverändert.
+export function dyeTextColor(hex){
+  const n = parseInt(hex.slice(1),16);
+  const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  const lum = (0.299*r + 0.587*g + 0.114*b)/255;   // wahrgenommene Helligkeit
+  if(lum >= 0.5) return hex;
+  const t = (0.5 - lum) * 1.6;                      // je dunkler, desto mehr Weiß
+  const up = x => Math.round(x + (255-x)*t);
+  return '#'+((1<<24)+(up(r)<<16)+(up(g)<<8)+up(b)).toString(16).slice(1);
+}
+
 // Zufalls-Drop: liefert mit zonenabhängiger Wahrscheinlichkeit einen Farbstoff-Key
 // (sonst null). Chance steigt leicht mit der Zone, gedeckelt.
 const DYE_DROP_BASE = 0.18;   // Grund-Chance je Boss-Kill

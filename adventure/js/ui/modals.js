@@ -29,7 +29,7 @@ import { getCoins } from '../core/coins.js';
 import { upgradeItem, salvage, materialCount } from '../core/crafting.js';
 import { playUpgradeFx } from './forge.js';
 import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield, upgradeBadge, MAX_UPGRADE } from '../data/materials.js';
-import { DYE_BY_KEY } from '../data/dyes.js';
+import { DYE_BY_KEY, dyeTextColor } from '../data/dyes.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
          requestDuelForfeit, startDuelHost, stopDuelHost, serverNow, otherKey,
@@ -284,8 +284,8 @@ export function showRewardModal(items, potionGained, dyesFound){
     dyeCount += qty;
     cards += '<div class="reward-card dye-reward" style="--rc:'+d.color+'">'+
       '<div class="dye-reward-swatch" style="background:'+d.color+'"></div>'+
-      '<div class="rc-name" style="color:'+d.color+'">'+d.name+(qty>1?' ×'+qty:'')+'</div>'+
-      '<div class="tt-stat" style="color:'+d.color+'">Farbstoff · in der Färberei einsetzbar</div></div>';
+      '<div class="rc-name" style="color:'+dyeTextColor(d.color)+'">'+d.name+(qty>1?' ×'+qty:'')+'</div>'+
+      '<div class="tt-stat" style="color:'+dyeTextColor(d.color)+'">Farbstoff · in der Tinkturen-Werkstatt einsetzbar</div></div>';
   }
   const sub = 'Du hast '+items.length+' Gegenstände'+(potionGained?' + einen Heiltrank':'')+
     (dyeCount>0?' + '+dyeCount+' Farbe'+(dyeCount>1?'n':''):'')+' erhalten!';
