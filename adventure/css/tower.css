@@ -366,14 +366,26 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .arena-controls { display:flex; gap:10px; justify-content:center; padding:10px 14px; flex-wrap:wrap; }
 
 /* ---- Result-Overlay ---- */
-.result-overlay { position:absolute; inset:0; z-index:20; display:none;
-  align-items:center; justify-content:center; flex-direction:column; gap:14px;
-  background:rgba(10,6,24,.82); backdrop-filter:blur(4px);
-  font-family:'Cinzel',serif; text-align:center; padding:20px; border-radius:12px; }
+/* Vollflächiges, scrollbares Overlay (deckt den ganzen Kampf ab, wie der Solo-
+   Boss-Modus) – so wird die Belohnung nie mehr abgeschnitten. `margin:auto` auf
+   dem Inneren zentriert bei wenig Inhalt und erlaubt sauberes Scrollen bei viel
+   Inhalt (kein oberes Abschneiden wie bei justify-content:center). */
+.result-overlay { position:fixed; inset:0; z-index:1000; display:none;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  background:rgba(10,6,24,.92); backdrop-filter:blur(5px);
+  font-family:'Cinzel',serif; text-align:center; padding:24px 16px; }
 .result-overlay.show { display:flex; }
+.result-inner { margin:auto; display:flex; flex-direction:column;
+  align-items:center; gap:14px; width:100%; max-width:560px; }
 .result-big { font-size:42px; }
 .result-sub { font-size:14px; color:var(--txt-mute); font-family:'Quicksand',sans-serif; line-height:1.6; }
 .result-btns { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+/* Belohnungs-Chips (z. B. Tribut-Siegel) – im Stil des Solo-Boss-Belohnungsfensters. */
+.result-chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+.result-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
+  border-radius:999px; font-family:'Quicksand',sans-serif; font-weight:800; font-size:14px; }
+.result-chip.token { background:rgba(199,109,255,.16);
+  border:1px solid rgba(199,109,255,.45); color:#e7c9ff; }
 
 /* ---- Status-Message ---- */
 .status-msg { text-align:center; font-size:13px; color:var(--txt-mute);

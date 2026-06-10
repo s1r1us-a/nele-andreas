@@ -549,5 +549,24 @@
 <!-- Live-Präsenz (eigener Status + Partner-Status) – nötig fürs Live-Handeln. -->
 <script type="module" src="presence.js"></script>
 <script type="module" src="adventure/js/main.js"></script>
+<!-- Bestätigung beim Verlassen des Spiels (Zurück-Link → index.html). -->
+<script type="module">
+import { confirmDialog } from './adventure/js/ui/dom.js';
+const back = document.querySelector('.topbar a.back');
+if(back){
+  back.addEventListener('click', async e => {
+    e.preventDefault();
+    const ok = await confirmDialog({
+      title: 'Spiel verlassen?',
+      emoji: '🚪',
+      body: 'Möchtest du den Dämmerpfad wirklich verlassen und zur Startseite zurückkehren?',
+      confirmText: 'Verlassen',
+      cancelText: 'Bleiben',
+      danger: true,
+    });
+    if(ok) window.location.href = back.getAttribute('href');
+  });
+}
+</script>
 </body>
 </html>
