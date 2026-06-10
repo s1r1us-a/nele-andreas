@@ -13,6 +13,7 @@ import { CLASSES, CLASS_BY_ID, classOf, abilitiesOf, genderedLabel } from '../da
 import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances, EXPEDITION_MIN_CAP } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
+import { SET_TOKEN } from '../data/sets.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters, createCharacter,
          switchCharacter, deleteCharacter, canAddCharacter, activeCharId } from '../core/state.js';
@@ -244,9 +245,12 @@ export function previewExpedition(durKey){
     ? '<div class="exp-warn">🎒 Zu wenig Platz im Inventar – du brauchst <b>'+count+' freie Plätze</b> '+
       '(aktuell '+Math.max(0,free)+'). Verkaufe erst etwas im Inventar.</div>'
     : '';
+  const tokenLine = (exp.tokens||0) > 0
+    ? '<div class="sub">'+SET_TOKEN.icon+' Bringt <b>'+exp.tokens+' Tribut-Siegel</b> mit.</div>'
+    : '';
   openModal('<h2>'+exp.icon+' '+exp.label+'</h2>'+
     '<div class="sub">Dein Held bringt genau <b>'+count+' Gegenstände</b> mit. Chancen je Seltenheit:</div>'+
-    '<div class="chance-list">'+rows+'</div>'+ warn +
+    '<div class="chance-list">'+rows+'</div>'+ tokenLine + warn +
     '<div class="preview-actions">'+
       '<button class="btn" id="startExpBtn"'+(tooFull?' disabled':'')+'>⚔️ Los geht’s</button>'+
       '<button class="btn ghost" id="cancelExpBtn">Abbrechen</button>'+
@@ -257,7 +261,8 @@ export function previewExpedition(durKey){
 }
 
 // ---- Belohnungs-Modal (nach dem Abholen) ---------------------------
-export function showRewardModal(items, potionGained, dyesFound){
+export function showRewardModal(items, potionGained, dyesFound, tokenGain){
+  tokenGain = tokenGain || 0;
   let cards = '';
   for(const it of items){
     const r = rarityOf(it.rarity);
@@ -276,6 +281,13 @@ export function showRewardModal(items, potionGained, dyesFound){
       '<div class="rc-name" style="color:#37d67a">Heiltrank</div>'+
       '<div class="tt-stat" style="color:#37d67a">+50% HP im Kampf</div></div>';
   }
+  // Tribut-Siegel (Sonderwährung für Klassen-Sets) – nur wenn welche dazukamen.
+  if(tokenGain > 0){
+    cards += '<div class="reward-card" style="--rc:#d9b0ff">'+
+      '<div class="rc-emoji">'+SET_TOKEN.icon+'</div>'+
+      '<div class="rc-name" style="color:#d9b0ff">'+SET_TOKEN.name+' ×'+tokenGain+'</div>'+
+      '<div class="tt-stat" style="color:#d9b0ff">Sonderwährung für Klassen-Sets</div></div>';
+  }
   // Gewonnene Farben als eigene Belohnungskarten (analog zur Boss-Sieg-Karte).
   const dyeKeys = dyesFound ? Object.keys(dyesFound) : [];
   let dyeCount = 0;
@@ -289,7 +301,8 @@ export function showRewardModal(items, potionGained, dyesFound){
       '<div class="tt-stat" style="color:'+dyeTextColor(d.color)+'">Farbstoff · in der Tinkturen-Werkstatt einsetzbar</div></div>';
   }
   const sub = 'Du hast '+items.length+' Gegenstände'+(potionGained?' + einen Heiltrank':'')+
-    (dyeCount>0?' + '+dyeCount+' Farbe'+(dyeCount>1?'n':''):'')+' erhalten!';
+    (dyeCount>0?' + '+dyeCount+' Farbe'+(dyeCount>1?'n':''):'')+
+    (tokenGain>0?' + '+tokenGain+' Tribut-Siegel':'')+' erhalten!';
   const topColor = items.length
     ? rarityOf(items.reduce((a,b)=> rarityIndex(b.rarity) > rarityIndex(a.rarity) ? b : a).rarity).color
     : null;

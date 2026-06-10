@@ -293,8 +293,11 @@ function buildActionCard(it){
       '<button class="btn ghost" id="forgeReroll"'+(enough?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Verzaubern</button>'+
     '</div>';
   } else {
+    const info = it.setId
+      ? '🔒 Set-Teile haben feste Affixe und können nicht verzaubert werden.'
+      : 'Erst ab Seltenheit „Selten" möglich (genug Affixe).';
     html += '<div class="forge-action"><div class="fa-title">✨ Verzaubern</div>'+
-      '<div class="fa-info">Erst ab Seltenheit „Selten" möglich (genug Affixe).</div></div>';
+      '<div class="fa-info">'+info+'</div></div>';
   }
 
   wrap.innerHTML = html;

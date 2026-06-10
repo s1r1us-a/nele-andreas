@@ -7,7 +7,7 @@
 import { state } from '../core/state.js';
 import { classOf, classLabelOf } from '../data/classes.js';
 import { SLOTS, SLOT_ICON } from '../data/slots.js';
-import { SET_SLOTS, SET_TOKEN, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
+import { SET_SLOTS, SET_TOKEN, SET_TOKEN_CAP, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
 import { getSetTokens, buySetPiece, ownsSetPiece, activeSetInfo, previewSetPiece, setPieceIlvl } from '../core/sets.js';
 import { buildItemSVG, elementOf } from '../core/item-art.js';
 import { AFFIX_DEFS } from '../data/affixes.js';
@@ -51,7 +51,7 @@ export function renderSetShop(){
       '<span class="ss-crest">⚜️</span>'+
       '<div class="ss-titles"><h2 class="ss-title">Set-Händler</h2>'+
         '<div class="ss-sub">Tribut · Macht · Klassen-Sets</div></div>'+
-      '<span class="ss-tokens">'+SET_TOKEN.icon+' '+fmtBig(tokens)+'</span>'+
+      '<span class="ss-tokens'+(tokens>=SET_TOKEN_CAP?' ss-tokens-max':'')+'" title="Maximal '+SET_TOKEN_CAP+' Tribut-Siegel">'+SET_TOKEN.icon+' '+fmtBig(tokens)+' / '+SET_TOKEN_CAP+'</span>'+
     '</div>';
   panel.appendChild(banner);
 
@@ -111,11 +111,11 @@ export function renderSetShop(){
     grid.appendChild(cell);
 
     // Stats wie bei normalen Items anzeigen (Hover + Tap/Klick): Vorschau-Item
-    // mit den deterministischen Werten; die Affixe würfeln erst beim Kauf.
+    // mit den deterministischen Werten – inkl. der festen Affixe, die man beim Kauf erhält.
     const preview = previewSetPiece(set.id, slotKey, setPieceIlvl(state));
     if(preview){
       const focus = AFFIX_DEFS[set.flavorAffix];
-      const note = (focus ? '🎯 Fokus: '+focus.label+' · ' : '')+'⚜️ Affixe würfeln beim Kauf';
+      const note = (focus ? '🎯 Fokus: '+focus.label+' · ' : '')+'⚜️ Feste Affixe';
       cell.classList.add('ss-has-tip');
       bindTooltip(cell, preview, { tap:true, note });
     }

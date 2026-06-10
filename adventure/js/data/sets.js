@@ -21,6 +21,10 @@ export const SET_SLOTS = ['kopf','schultern','brust','haende','beine','fuesse','
 // Sonderwährung für die Set-Beschaffung.
 export const SET_TOKEN = { key:'tribut', name:'Tribut-Siegel', icon:'⚜️' };
 
+// Maximal hortbare Tribut-Siegel (Cap). Über dieses Maximum hinaus wird nichts
+// mehr gutgeschrieben (siehe core/sets.js awardSetTokens). Im Set-Tab sichtbar.
+export const SET_TOKEN_CAP = 250;
+
 // Kosten je Slot (in Tribut-Siegeln). Große Teile kosten mehr.
 export const SET_PIECE_COST = {
   kopf:150, schultern:200, brust:240, haende:120, beine:160, fuesse:120, umhang:120,
@@ -54,6 +58,16 @@ export const SETS = {
     themeKey:'molten', material:'platte', statMult:1.7,
     accent:'#ff7a2a', accent2:'#ffd36a', glow:'#ff4a14',
     affixBias:{ armor:5, block:3, maxHp:2, versatility:2 }, flavorAffix:'armor',
+    // Feste Affixe je Set-Teil (3 pro Slot – wie Legendär). Direkt gesetzt → kein Pool-Filter.
+    fixedAffixes:{
+      kopf:     ['armor','maxHp','versatility'],
+      schultern:['armor','block','thorns'],
+      brust:    ['armor','maxHp','block'],
+      haende:   ['armor','block','versatility'],
+      beine:    ['armor','maxHp','dodge'],
+      fuesse:   ['armor','dodge','versatility'],
+      umhang:   ['armor','maxHp','thorns'],
+    },
     lore:'Geschmiedet im Herzen eines erloschenen Vulkans – die Glut erlischt nie.',
     bonuses:[
       { need:2, name:'Glutpanzer',           desc:'+10 % Rüstung, +400 Leben',          pct:{ armor:0.10 }, flat:{ maxHp:400 } },
@@ -69,12 +83,22 @@ export const SETS = {
     id:'blutschatten', classId:'schurke', name:'Blutschatten',
     themeKey:'bloodshadow', material:'leder', statMult:1.08,
     accent:'#e01f3a', accent2:'#ff5a4a', glow:'#ff1f2f',
-    affixBias:{ critPhys:4, attackSpeed:3, dodge:2, versatility:1 }, flavorAffix:'critPhys',
+    affixBias:{ critDamage:4, attackSpeed:3, dodge:2, versatility:1 }, flavorAffix:'critDamage',
+    // Fokus auf Krit-SCHADEN statt Krit-Chance. critPhys nur als kleiner Rest (Handschuhe).
+    fixedAffixes:{
+      kopf:     ['critDamage','attackSpeed','dodge'],
+      schultern:['critDamage','dodge','versatility'],
+      brust:    ['critDamage','attackSpeed','maxHp'],
+      haende:   ['critDamage','attackSpeed','critPhys'],
+      beine:    ['critDamage','dodge','attackSpeed'],
+      fuesse:   ['critDamage','attackSpeed','dodge'],
+      umhang:   ['critDamage','dodge','versatility'],
+    },
     lore:'Getränkt im Blut von tausend lautlosen Klingen.',
     bonuses:[
-      { need:2, name:'Schattenklingen', desc:'+8 % Phys. Krit, +6 % Angriffstempo', flat:{ critPhys:0.08, attackSpeed:0.06 } },
-      { need:4, name:'Blutrausch',      desc:'+25 % Krit-Schaden, +5 % Ausweichen',  flat:{ critDamage:0.25, dodge:0.05 } },
-      { need:6, name:'Lautloser Tod',   desc:'+12 % Angriffstempo, +10 % Phys. Krit', flat:{ attackSpeed:0.12, critPhys:0.10 } },
+      { need:2, name:'Schattenklingen', desc:'+20 % Krit-Schaden, +6 % Angriffstempo', flat:{ critDamage:0.20, attackSpeed:0.06 } },
+      { need:4, name:'Blutrausch',      desc:'+25 % Krit-Schaden, +5 % Ausweichen',     flat:{ critDamage:0.25, dodge:0.05 } },
+      { need:6, name:'Lautloser Tod',   desc:'+12 % Angriffstempo, +5 % Phys. Krit',    flat:{ attackSpeed:0.12, critPhys:0.05 } },
       { need:7, name:'Avatar der Schatten', desc:'+40 % Krit-Schaden, +8 % Ausweichen', flat:{ critDamage:0.40, dodge:0.08 } },
     ],
   },
@@ -86,6 +110,15 @@ export const SETS = {
     themeKey:'void', material:'stoff', statMult:0.78,
     accent:'#a24bff', accent2:'#d9b0ff', glow:'#7a2fff',
     affixBias:{ critMagic:4, maxHp:2, versatility:2 }, flavorAffix:'critMagic',
+    fixedAffixes:{
+      kopf:     ['critMagic','maxHp','versatility'],
+      schultern:['critMagic','lifesteal','versatility'],
+      brust:    ['critMagic','maxHp','lifesteal'],
+      haende:   ['critMagic','critDamage','lifesteal'],
+      beine:    ['critMagic','maxHp','versatility'],
+      fuesse:   ['critMagic','lifesteal','versatility'],
+      umhang:   ['critMagic','critDamage','maxHp'],
+    },
     lore:'Gewebt aus dem Stoff zwischen den Welten – die Leere flüstert darin.',
     bonuses:[
       { need:2, name:'Leerenberührung', desc:'+8 % Mag. Krit, +250 Leben',           flat:{ critMagic:0.08, maxHp:250 } },
@@ -102,6 +135,15 @@ export const SETS = {
     themeKey:'holy', material:'stoff', statMult:0.80,
     accent:'#ffd86a', accent2:'#fff4cf', glow:'#ffe89a',
     affixBias:{ maxHp:4, versatility:3, critMagic:2 }, flavorAffix:'maxHp',
+    fixedAffixes:{
+      kopf:     ['maxHp','versatility','critMagic'],
+      schultern:['maxHp','versatility','armor'],
+      brust:    ['maxHp','versatility','critMagic'],
+      haende:   ['maxHp','critMagic','versatility'],
+      beine:    ['maxHp','versatility','armor'],
+      fuesse:   ['maxHp','dodge','versatility'],
+      umhang:   ['maxHp','versatility','critMagic'],
+    },
     lore:'Im ersten Licht der Morgenröte gewebt – Dunkelheit weicht ihrem Schein.',
     bonuses:[
       { need:2, name:'Segen des Lichts', desc:'+12 % max. Leben, +4 % Vielseitigkeit', pct:{ maxHp:0.12 }, flat:{ versatility:0.04 } },

@@ -43,6 +43,24 @@ export function affixValue(key, ilvl, rarity){
   else { v = Math.max(1, Math.round(v)); }
   return v;
 }
+// Deterministischer Affix-Wert für SET-Teile (kein Math.random). Identische
+// Mathematik wie affixValue, aber mit festem Roll-Faktor (1.0 = Erwartungswert),
+// damit Set-Affixe FEST sind. ilvl-Skalierung bleibt erhalten.
+export function affixValueFixed(key, ilvl, rarity, roll=1.0){
+  const d = AFFIX_DEFS[key];
+  let v = (d.base + ilvl*d.perIlvl) * rarity.mult * roll;
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.max(1, Math.round(v)); }
+  return v;
+}
+// Festes Affix-Bündel aus einer Affix-Key-Liste (z. B. die festen Set-Affixe
+// eines Slots) – ohne Zufall, ohne Pool-Filter.
+export function fixedSetAffixes(keys, ilvl, rarity){
+  const out = {};
+  for(const k of (keys||[])) if(AFFIX_DEFS[k]) out[k] = affixValueFixed(k, ilvl, rarity);
+  return out;
+}
+
 // Alle Vorkommen eines Keys aus dem (gewichteten) Pool entfernen.
 function removeAll(arr, key){ for(let i=arr.length-1;i>=0;i--) if(arr[i]===key) arr.splice(i,1); }
 

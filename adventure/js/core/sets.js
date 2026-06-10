@@ -7,8 +7,8 @@
    - applySetBonuses(state, b): addiert die aktiven Set-Boni ins Totals-Bündel
      (flache + prozentuale Boni), respektiert die vorhandenen Stat-Caps.
    - Tribut-Siegel-Währung (getSetTokens/awardSetTokens/spendSetTokens).
-   - createSetPiece(): erzeugt ein Legendär-Set-Teil (nutzt vorhandene Item-
-     Pipeline: rollAffixes + buildItemSVG) → unbegrenzt in der Schmiede aufwertbar.
+   - createSetPiece(): erzeugt ein Legendär-Set-Teil (feste Affixe via
+     fixedSetAffixes + buildItemSVG) → unbegrenzt in der Schmiede aufwertbar.
    - buySetPiece(): Kauf beim Set-Händler gegen Tribut-Siegel.
    ===================================================================== */
 import { BASE_STAT, ILVL_K } from '../data/tuning.js';
@@ -16,9 +16,9 @@ import { AFFIX_DEFS } from '../data/affixes.js';
 import { rarityOf } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
 import { classOf } from '../data/classes.js';
-import { SETS, SET_SLOTS, setOf, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
+import { SETS, SET_SLOTS, SET_TOKEN_CAP, setOf, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
 import { state, nextItemId, saveState } from './state.js';
-import { rollAffixes, ensureItemSprite, giveLoot, itemPower } from './items.js';
+import { fixedSetAffixes, ensureItemSprite, giveLoot, itemPower } from './items.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 
 // ---- Tribut-Siegel (Sonderwährung) ----------------------------------
@@ -26,9 +26,11 @@ export function getSetTokens(){ return (state && state.setTokens) || 0; }
 export function awardSetTokens(n){
   n = Math.max(0, Math.round(n||0));
   if(!n) return 0;
-  state.setTokens = getSetTokens() + n;
-  if(state.stats) state.stats.setTokensEarned = (state.stats.setTokensEarned||0) + n;
-  return n;
+  const before = getSetTokens();
+  state.setTokens = Math.min(SET_TOKEN_CAP, before + n);   // Cap: nie über SET_TOKEN_CAP
+  const added = state.setTokens - before;                   // tatsächlich gutgeschriebene Menge
+  if(added && state.stats) state.stats.setTokensEarned = (state.stats.setTokensEarned||0) + added;
+  return added;
 }
 export function spendSetTokens(n){
   n = Math.max(0, Math.round(n||0));
@@ -99,7 +101,7 @@ export function setPieceIlvl(s){
   return Math.max(40, (s.zone|0) * 6 + 24);
 }
 
-// Itype-Stellvertreter (für rollAffixes + Sprite-Material). NICHT im ITEM_TYPES-
+// Itype-Stellvertreter (für Sprite/Material/Variant). NICHT im ITEM_TYPES-
 // Katalog → typeOf() liefert für Set-Items bewusst den Fallback; die Set-spezifische
 // Behandlung (Material/Sprite/Tragbarkeit) läuft isoliert über item.setId.
 function setItype(set, slotKey){
@@ -121,7 +123,7 @@ export function createSetPiece(setId, slotKey, ilvl){
     id, slotKey, cat:slot.cat, statType,
     rarity:'legendaer', ilvl, stat, variant:itype.variant, itemType:itype.key,
     quality:100,
-    affixes: rollAffixes(slotKey, ilvl, rarity, itype),
+    affixes: fixedSetAffixes(set.fixedAffixes && set.fixedAffixes[slotKey], ilvl, rarity),
     proc: null,
     setId, setSlot:slotKey,
     name: setPieceName(set, slotKey),
@@ -133,8 +135,8 @@ export function createSetPiece(setId, slotKey, ilvl){
 // Vorschau-Item eines Set-Teils OHNE Kauf/State-Mutation (für den Tooltip im
 // Set-Händler). Liefert die deterministischen Werte (Primärwert, Seltenheit,
 // Slot, Gegenstandsstufe, Qualität) – identisch zur späteren Kauf-Pipeline.
-// Die zufälligen Affixe würfeln erst beim Kauf (createSetPiece → rollAffixes),
-// daher hier bewusst leer; der Tooltip weist im Hinweis darauf hin.
+// Die Affixe sind FEST (createSetPiece → fixedSetAffixes), daher zeigt die
+// Vorschau exakt die Affixe, die man beim Kauf erhält.
 export function previewSetPiece(setId, slotKey, ilvl){
   const set = SETS[setId]; if(!set) return null;
   const slot = SLOTS[slotKey]; if(!slot) return null;
@@ -147,7 +149,7 @@ export function previewSetPiece(setId, slotKey, ilvl){
     slotKey, cat:slot.cat, statType,
     rarity:'legendaer', ilvl, stat,
     variant: SET_SLOTS.indexOf(slotKey), itemType:'set_'+set.themeKey,
-    quality:100, affixes:{}, proc:null,
+    quality:100, affixes: fixedSetAffixes(set.fixedAffixes && set.fixedAffixes[slotKey], ilvl, rarity), proc:null,
     setId, setSlot:slotKey,
     name: setPieceName(set, slotKey),
     preview:true,
