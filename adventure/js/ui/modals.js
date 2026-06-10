@@ -30,7 +30,7 @@ import { db, ref, get, userKey } from '../core/firebase.js';
 import { getCoins } from '../core/coins.js';
 import { upgradeItem, salvage, materialCount } from '../core/crafting.js';
 import { playUpgradeFx } from './forge.js';
-import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield, upgradeBadge, MAX_UPGRADE } from '../data/materials.js';
+import { upgradeCost, canUpgrade, MATERIAL_BY_KEY, salvageYield, upgradeBadge, MAX_UPGRADE, effectiveIlvl } from '../data/materials.js';
 import { DYE_BY_KEY, dyeTextColor } from '../data/dyes.js';
 import { createDuel, joinDuel, listenDuel, listenDuelCombat, setDuelReady,
          setDuelHeroes, setStartAt, setDuelStatus, leaveDuel, requestDuelAction,
@@ -68,7 +68,7 @@ export function openSlotPicker(slotKey){
       '<span class="rarity-name" data-r="'+cur.rarity+'" style="font-weight:700">'+cur.name+((cur.upgradeLevel||0)>0?' <span style="color:#ffd24a">'+upgradeBadge(cur)+'</span>':'')+'</span>'+
       '<div class="cur-kind">'+itemKindIcon(cur)+' '+itemKindLabel(cur)+'</div>'+
       '<div class="cur-stats"><div class="tt-stat '+cur.statType+'">+'+cur.stat+' '+sLbl+'</div>'+affixLinesHTML(cur)+
-        '<div class="cur-ilvl">Gegenstandsstufe '+cur.ilvl+'</div></div>'+
+        '<div class="cur-ilvl">Gegenstandsstufe '+effectiveIlvl(cur)+'</div></div>'+
       '<button class="btn ghost" id="unequipBtn" style="margin-top:10px;">Ablegen</button></div>';
   }
   html += candidates.length ? '<div class="picker-list" id="pickerList"></div>'
@@ -153,7 +153,7 @@ export function openItemPreview(item, fromSlotKey, backFn, compare=false){
     ' <b style="color:'+kindColor+'">'+itemKindLabel(item)+'</b>'+
     (equipOk ? '' : ' <span style="color:#ff6b6b">— nicht tragbar</span>')+'</div>';
   // Gegenstandsstufe immer unten in Grau zeigen (wie im Tooltip / Fremdprofil).
-  const ilvlLine = '<div class="preview-ilvl">Gegenstandsstufe '+item.ilvl+'</div>';
+  const ilvlLine = '<div class="preview-ilvl">Gegenstandsstufe '+effectiveIlvl(item)+'</div>';
   // Aufwerten nur für Items im Inventar (MVP) und solange nicht maximal.
   const inInventory = state.inventory.some(i => i.id === item.id);
   const upBtn = (inInventory && canUpgrade(item)) ? (()=>{
@@ -273,7 +273,7 @@ export function showRewardModal(items, potionGained, dyesFound, tokenGain){
       '<div class="rc-kind">'+itemKindIcon(it)+' '+itemKindLabel(it)+'</div>'+
       '<div class="tt-stat '+it.statType+'">+'+it.stat+' '+sLbl+'</div>'+
       affixLinesHTML(it)+
-      '<div class="rc-ilvl">Gegenstandsstufe '+it.ilvl+'</div></div>';
+      '<div class="rc-ilvl">Gegenstandsstufe '+effectiveIlvl(it)+'</div></div>';
   }
   if(potionGained){
     cards += '<div class="reward-card" style="--rc:#37d67a">'+

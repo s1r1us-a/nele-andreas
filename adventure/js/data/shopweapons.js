@@ -48,17 +48,29 @@ export const SHOP_WEAPONS = [
   // 🔮 HEXER – Infernostab (Feuerstab, gebogene Klingen, oranger Glut-Glow).
   //    Werte am „Leerenfürst"-Set orientiert (critMagic/critDamage/lifesteal).
   { key:'infernostab', classId:'hexer', slotKey:'waffe',
-    name:'Infernostab', g:'m', cost:250, element:'fire',
+    name:'Infernostab', g:'m', cost:125, element:'fire',
     art:'waffe', special:'inferno', variant:6, material:'zauberstab', orb:'rot', statType:'damage', cat:'waffen', shop:true,
     statMult:1.00, affixBias:{ critMagic:5, critDamage:3, lifesteal:2 }, flavorAffix:'critMagic',
     fixedAffixes:['critMagic','critDamage','lifesteal'] },
+  // 🔮 HEXER – Nebenhand „Infernoherz" (dunkle Glutkugel, passend zum Infernostab).
+  { key:'infernoorb', classId:'hexer', slotKey:'schild',
+    name:'Infernoherz', g:'n', cost:125, element:'fire',
+    art:'orb', special:'infernoorb', variant:0, material:'kugel', orb:'rot', statType:'damage', cat:'waffen', affixGroup:'kugel', shop:true,
+    statMult:0.62, affixBias:{ critMagic:4, lifesteal:3, critDamage:2 }, flavorAffix:'critMagic',
+    fixedAffixes:['critMagic','lifesteal','critDamage'] },
 
   // ✨ HEILER – Engelsstab (goldene Flügel, blau-weißer Schimmer).
   //    Werte am „Morgenröte"-Set orientiert (maxHp/versatility/critMagic).
   { key:'engelsstab', classId:'heiler', slotKey:'waffe',
-    name:'Engelsstab', g:'m', cost:250, element:'ice',
+    name:'Engelsstab', g:'m', cost:125, element:'ice',
     art:'waffe', special:'engel', variant:6, material:'zauberstab', orb:'blau', statType:'damage', cat:'waffen', shop:true,
     statMult:0.95, affixBias:{ maxHp:4, versatility:3, critMagic:2 }, flavorAffix:'maxHp',
+    fixedAffixes:['maxHp','versatility','critMagic'] },
+  // ✨ HEILER – Nebenhand „Seraphsphäre" (strahlende Lichtkugel, passend zum Engelsstab).
+  { key:'engelsorb', classId:'heiler', slotKey:'schild',
+    name:'Seraphsphäre', g:'f', cost:125, element:'ice',
+    art:'orb', special:'engelsorb', variant:0, material:'kugel', orb:'blau', statType:'damage', cat:'waffen', affixGroup:'kugel', shop:true,
+    statMult:0.60, affixBias:{ maxHp:4, versatility:3, critMagic:2 }, flavorAffix:'maxHp',
     fixedAffixes:['maxHp','versatility','critMagic'] },
 ];
 

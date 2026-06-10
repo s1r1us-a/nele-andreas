@@ -16,7 +16,7 @@ import { typeOf } from '../data/itemTypes.js';
 import { dyeColorOf } from '../data/dyes.js';
 import { setOf, setThemeOf } from '../data/sets.js';
 import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette } from './set-art.js';
-import { buildSpecialHeld, buildSpecialShield } from './weapon-art.js';
+import { buildSpecialHeld, buildSpecialShield, buildSpecialOffhandOrb } from './weapon-art.js';
 import { state } from './state.js';
 
 // Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
@@ -217,16 +217,17 @@ export function buildHeroSVG(character, tier, gear){
   const bcd = shade(bc, 0.68);             // Bart-Lowlight
   const bch = shade(bc, 1.18);             // Bart-Glanz
   const t = Math.max(0, Math.min(3, tier|0));
-  // Set-Tönung des Grundkörpers: Trägt der Held ein Set-Teil (bevorzugt an den
-  // Schultern), übernimmt das Grund-Outfit (Robe/Ärmel/Saum/Stiefel) die
-  // Set-Basisfarbe – so wirkt die ganze Figur einheitlich (kein goldenes
-  // Tier-Outfit, das unter den Set-Teilen durchscheint). Ohne Set: Tier-Farben.
+  // Grundkörper-Tönung: das Grund-Outfit (Robe/Ärmel/Saum/Stiefel) übernimmt
+  // IMMER die Farbe des angelegten Brustteils – inkl. Färbung (Färberei) und
+  // Set-Basisfarbe (matOf deckt Set/Dye/Material ab). So scheint nie das goldene
+  // Tier-Outfit unter der Ausrüstung durch; die Figur wirkt einheitlich.
+  // Ohne Brustteil: ersatzweise an ein anderes getragenes Set-Teil; sonst Tier-Farbe.
   const _eq = (gear && gear.equipped) || {};
-  const setTint = setThemeOf(_eq.schultern) || setThemeOf(_eq.brust) || setThemeOf(_eq.kopf)
-               || setThemeOf(_eq.beine) || setThemeOf(_eq.umhang) || setThemeOf(_eq.haende)
-               || setThemeOf(_eq.fuesse);
-  const outfit = setTint ? setBaseColor(setTint) : (TIER_OUTFIT[t] || TIER_OUTFIT[0]);
-  const trim   = setTint ? shade(outfit, 1.32)   : (TIER_TRIM[t]   || TIER_TRIM[0]);
+  const setTint = setThemeOf(_eq.schultern) || setThemeOf(_eq.kopf) || setThemeOf(_eq.beine)
+               || setThemeOf(_eq.umhang) || setThemeOf(_eq.haende) || setThemeOf(_eq.fuesse);
+  const bodyTint = (_eq.brust ? matOf(_eq.brust) : null) || (setTint ? setBaseColor(setTint) : null);
+  const outfit = bodyTint || (TIER_OUTFIT[t] || TIER_OUTFIT[0]);
+  const trim   = bodyTint ? shade(outfit, 1.32) : (TIER_TRIM[t] || TIER_TRIM[0]);
   const outfitSh = shade(outfit,0.66);
   const boot = shade(outfit, 0.5);
   const uid = '_'+(GRAD_SEQ++).toString(36);
@@ -504,7 +505,8 @@ export function buildHeroSVG(character, tier, gear){
       // gekippt und etwas kleiner als die Hauptwaffe.
       schild = heldWeapon(sc, uid, { hx:76, tilt:-16, scale:0.9 });
     } else if(art === 'orb'){
-      schild = offhandOrb(sc);
+      // Spezial-Kugel (Tribut-Shop) → eigene Optik, sonst generische Magie-Sphäre.
+      schild = typeOf(sc).special ? buildSpecialOffhandOrb(typeOf(sc).special, sc, uid) : offhandOrb(sc);
     } else if(typeOf(sc).special){
       // Spezial-Schild (Tribut-Shop): eigene Optik an der linken Hand.
       schild = buildSpecialShield(typeOf(sc).special, sc, uid);
