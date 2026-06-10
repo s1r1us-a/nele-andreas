@@ -2095,7 +2095,7 @@ body.forge-shake { animation:forgeShake .42s ease; }
 .reward-card.dye-reward .dye-reward-swatch { width:48px; height:48px; border-radius:10px;
   margin:0 auto 6px; border:2px solid rgba(255,255,255,.25); box-shadow:0 0 12px rgba(0,0,0,.4); }
 
-/* Farbstoff-Karte im Inventar (Verbrauch-Tab) */
+/* Farbstoff-Karte im Inventar (Farben-Tab) */
 .consum-card.dye-inv-card .cc-icon { display:flex; align-items:center; justify-content:center; }
 .consum-card.dye-inv-card .dye-swatch.lg { width:28px; height:28px;
   border:1px solid rgba(255,255,255,.25); }

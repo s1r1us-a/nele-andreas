@@ -514,13 +514,15 @@ export function renderInventory(){
   subtabs.className = 'inv-subtabs';
   subtabs.innerHTML =
     '<div class="inv-subtab'+(invTab==='gear'?' active':'')+'" data-tab="gear">🎒 Ausrüstung</div>'+
-    '<div class="inv-subtab'+(invTab==='consum'?' active':'')+'" data-tab="consum">🧪 Verbrauch</div>';
+    '<div class="inv-subtab'+(invTab==='consum'?' active':'')+'" data-tab="consum">🧪 Verbrauch</div>'+
+    '<div class="inv-subtab'+(invTab==='dyes'?' active':'')+'" data-tab="dyes">🎨 Farben</div>';
   subtabs.querySelectorAll('.inv-subtab').forEach(el => el.addEventListener('click', ()=>{
     invTab = el.dataset.tab; hideTooltip(); renderInventory();
   }));
   panel.appendChild(subtabs);
 
   if(invTab === 'consum'){ renderConsumables(panel); return; }
+  if(invTab === 'dyes'){ renderDyesInventory(panel); return; }
 
   const total = state.inventory.length;
   const cap = invCapacity();
@@ -692,13 +694,25 @@ function renderConsumables(panel){
     panel.appendChild(mh);
   }
 
-  // ---- Farbstoffe (eigene Kategorie für die Färberei) ---------------
+  const hint = document.createElement('p');
+  hint.className = 'inv-hint';
+  hint.textContent = n > 0
+    ? 'Heiltränke setzt du während eines Bosskampfes über den Heiltrank-Knopf ein.'
+    : 'Tipp: Heiltränke findest du auf Abenteuern, Materialien durch Zerlegen.';
+  panel.appendChild(hint);
+}
+
+// ---- Farben (eigene Inventar-Kategorie) -----------------------------
+// Zeigt alle gewonnenen Farbstoffe als eigene Kategorie neben „Verbrauch".
+// Eingesetzt werden sie weiterhin in der Färberei zum Einfärben von Rüstung.
+function renderDyesInventory(panel){
+  const head = document.createElement('div');
+  head.className = 'inv-head';
+  head.innerHTML = '<h2>🎨 Farben</h2>';
+  panel.appendChild(head);
+
   const dyeStock = state.dyes || {};
   const ownedDyes = DYES.filter(d => (dyeStock[d.key]||0) > 0);
-  const dyeHead = document.createElement('h3');
-  dyeHead.className = 'consum-cat';
-  dyeHead.textContent = '🎨 Farbstoffe';
-  panel.appendChild(dyeHead);
   if(ownedDyes.length){
     const dyeList = document.createElement('div');
     dyeList.className = 'consum-list';
@@ -715,15 +729,13 @@ function renderConsumables(panel){
   } else {
     const dh = document.createElement('p');
     dh.className = 'inv-hint';
-    dh.textContent = 'Noch keine Farbstoffe – besiege Bosse oder schließe Abenteuer ab.';
+    dh.textContent = 'Noch keine Farben – besiege Bosse oder schließe Abenteuer ab.';
     panel.appendChild(dh);
   }
 
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
-  hint.textContent = n > 0
-    ? 'Heiltränke setzt du während eines Bosskampfes über den Heiltrank-Knopf ein.'
-    : 'Tipp: Heiltränke findest du auf Abenteuern, Materialien durch Zerlegen.';
+  hint.textContent = 'Farben setzt du in der Färberei ein, um deine Rüstung einzufärben.';
   panel.appendChild(hint);
 }
 
