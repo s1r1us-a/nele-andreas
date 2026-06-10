@@ -214,6 +214,9 @@ function hydrateItems(){
   nextId = all.reduce((m,it)=>Math.max(m, it.id||0), 0) + 1;
   for(const it of all){
     if(!it.affixes) it.affixes = {};
+    // Set-Teile sind nie färbbar → eine evtl. vor der Sperre gesetzte Färbung
+    // entfernen (Look gehört fest zum Set, kein „Gefärbt"-Hinweis mehr).
+    if(it.setId && it.dye) it.dye = null;
     if(!it.itemType) it.itemType = defaultTypeKey(it.slotKey);
     const t = typeOf(it);
     // Variante folgt dem Typ → Typ-Updates wirken rückwirkend auf alte Stände.
