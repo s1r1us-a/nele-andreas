@@ -12,6 +12,7 @@ import { shade, mirror64 as mir, METAL, GEM, ARMOR_MAT, GOLD, WOOD,
          ELEM, elementOf, REDUCED_MOTION, gem, star, dirGrad, materialFilter,
          facetGem, engraving } from './svg-fx.js';
 import { buildSetIcon } from './set-art.js';
+import { buildSpecialWeaponIcon } from './weapon-art.js';
 
 // ELEM/elementOf liegen jetzt in svg-fx.js; hier re-exportieren, damit die
 // bestehenden Importpfade (attacks.js, state.js, items.js, avatar.js) gültig bleiben.
@@ -31,7 +32,7 @@ const ORB = {
   blau:  { lo:'#b9a6ff', mid:'#6a3ed0', dk:'#2a1466', halo1:'#6a3ed0', halo2:'#3a1f8c', ring:'#b08bff' },
 };
 
-export function buildItemSVG(art, variant, rarityKey, element, orb, material, dyeColor, setTheme){
+export function buildItemSVG(art, variant, rarityKey, element, orb, material, dyeColor, setTheme, special){
   variant = Math.max(0, variant|0);
   // Set-Items (additiv): komplett eigenes, abgehobenes Icon je Slot-art.
   if(setTheme){
@@ -40,6 +41,13 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material, dy
     const suri = buildSetIcon(art, setTheme, rarityKey);
     _cache.set(sk, suri);
     return suri;
+  }
+  // Spezial-Waffen (Tribut-Shop, additiv): eigene Optik je `special`-Schlüssel.
+  if(special){
+    const wk = 'special_'+special+'_'+(rarityKey||'');
+    if(_cache.has(wk)) return _cache.get(wk);
+    const wuri = buildSpecialWeaponIcon(special, art, rarityKey, (element==='ice'?'ice':'fire'), orb);
+    if(wuri){ _cache.set(wk, wuri); return wuri; }
   }
   const el = (element==='ice') ? 'ice' : 'fire';
   const eff = effLvl(rarityKey);                                // Seltenheits-Effekt für ALLE Arten

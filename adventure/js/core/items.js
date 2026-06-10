@@ -147,7 +147,7 @@ export function rollItem(zone, lootBoost=0, opts={}){
     quality: Math.round(quality*100),
     affixes: rollAffixes(slotKey, ilvl, rarity, itype),
     proc: buildProc(rarity.key, ilvl),
-    sprite: buildItemSVG(art, variant, rarity.key, elementOf(id), itype.orb, itype.material),
+    sprite: buildItemSVG(art, variant, rarity.key, itype.element || elementOf(id), itype.orb, itype.material, null, null, itype.special),
     name: itemDisplayName(rarity.key, itype),
   };
 }
@@ -173,7 +173,7 @@ export function ensureItemSprite(it){
   it.variant = t.variant;
   // art aus dem Item-Typ (Nebenhand: schild/waffe/orb), Fallback = Slot-art.
   const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
+  it.sprite = buildItemSVG(art, it.variant, it.rarity, t.element || elementOf(it.id), t.orb, t.material, dyeColorOf(it), null, t.special);
   return it;
 }
 
@@ -397,7 +397,7 @@ export function equip(item, explicitTarget){
   const _st = setThemeOf(item);
   item.sprite = _st
     ? buildItemSVG(SLOTS[target].art, item.variant|0, item.rarity, elementOf(item.id), null, setOf(item).material, null, _st)
-    : buildItemSVG(SLOTS[target].art, item.variant, item.rarity, elementOf(item.id), typeOf(item).orb, typeOf(item).material, dyeColorOf(item));
+    : buildItemSVG(SLOTS[target].art, item.variant, item.rarity, typeOf(item).element || elementOf(item.id), typeOf(item).orb, typeOf(item).material, dyeColorOf(item), null, typeOf(item).special);
   state.equipped[target] = item;
   saveState();
 }
