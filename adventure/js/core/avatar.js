@@ -16,7 +16,7 @@ import { typeOf } from '../data/itemTypes.js';
 import { dyeColorOf } from '../data/dyes.js';
 import { setOf, setThemeOf } from '../data/sets.js';
 import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette } from './set-art.js';
-import { buildSpecialHeld, buildSpecialShield } from './weapon-art.js';
+import { buildSpecialHeld, buildSpecialShield, buildSpecialOffhandOrb } from './weapon-art.js';
 import { state } from './state.js';
 
 // Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
@@ -505,7 +505,8 @@ export function buildHeroSVG(character, tier, gear){
       // gekippt und etwas kleiner als die Hauptwaffe.
       schild = heldWeapon(sc, uid, { hx:76, tilt:-16, scale:0.9 });
     } else if(art === 'orb'){
-      schild = offhandOrb(sc);
+      // Spezial-Kugel (Tribut-Shop) → eigene Optik, sonst generische Magie-Sphäre.
+      schild = typeOf(sc).special ? buildSpecialOffhandOrb(typeOf(sc).special, sc, uid) : offhandOrb(sc);
     } else if(typeOf(sc).special){
       // Spezial-Schild (Tribut-Shop): eigene Optik an der linken Hand.
       schild = buildSpecialShield(typeOf(sc).special, sc, uid);

@@ -171,7 +171,7 @@ export function renderSetShop(){
                  SET_TOKEN.icon+' '+def.cost+' kaufen</button>';
       cell.innerHTML =
         '<div class="ss-icon"><img src="'+sprite+'" alt="'+def.name+'">'+
-          '<span class="ss-slot-ic">'+(def.slotKey==='schild'?'🤚':'⚔️')+'</span></div>'+
+          '<span class="ss-slot-ic">'+(def.art==='orb'?'🔮':def.slotKey==='schild'?'🤚':'⚔️')+'</span></div>'+
         '<div class="ss-name">'+def.name+'</div>'+
         '<div class="ss-cost">'+(owned?'<span class="ss-have">erworben</span>':SET_TOKEN.icon+' '+def.cost+' '+SET_TOKEN.name)+'</div>'+
         btn;

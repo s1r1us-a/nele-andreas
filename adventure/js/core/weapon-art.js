@@ -17,6 +17,7 @@ import { shade, star, dirGrad, ELEM, GOLD, WOOD, REDUCED_MOTION } from './svg-fx
 
 let SEQ = 0;
 const f = n => Math.round(n*10)/10;
+const ANIM = !REDUCED_MOTION;   // Animationen nur ohne Bewegungsreduktion
 
 // Farbpaletten je Spezialwaffe.
 const PAL = {
@@ -159,7 +160,44 @@ function icon_engel(uid, reg){
   return iconWrap(uid, reg, b);
 }
 
-const ICONS = { zwillinge:icon_zwillinge, frost:icon_frost, stachel:icon_stachel, inferno:icon_inferno, engel:icon_engel };
+// Nebenhand „Infernoherz" (Hexer): dunkle Glutkugel in verkohlter Klauenfassung.
+function icon_infernoorb(uid, reg){
+  const P = PAL.inferno;
+  let b = `<ellipse cx="32" cy="34" rx="20" ry="20" fill="${P.smoke}" opacity="0.55"/>`;
+  // verkohlte Klauen-Fassung
+  b += `<path d="M14 30 Q9 45 17 53 M50 30 Q55 45 47 53 M32 50 L32 60" stroke="${P.metal}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  // Glutsphäre (dunkle Fassung → tiefes Ember → heißer Kern)
+  b += `<circle cx="32" cy="34" r="16" fill="${P.dk}"/>`+
+       `<circle cx="32" cy="34" r="13" fill="${P.edge}" opacity="0.78"/>`+
+       `<circle cx="32" cy="34" r="9" fill="${P.glow}"/>`+
+       `<circle cx="32" cy="34" r="4.4" fill="${P.core}"/>`+
+       `<circle cx="29" cy="31" r="1.5" fill="#ffb070" opacity="0.7"/>`;
+  // Glutrisse + Flammenzungen
+  b += `<path d="M32 22 l-2 8 M44 34 l-7 1 M30 46 l1 -7" stroke="${P.core}" stroke-width="1" opacity="0.7" fill="none"/>`;
+  b += `<path d="M32 18 Q29 12 32 6 Q35 12 32 18 Z M23 23 Q21 18 23 13 Q26 18 23 23 Z M41 23 Q43 18 41 13 Q38 18 41 23 Z" fill="${P.glow}" opacity="0.82"/>`;
+  return iconWrap(uid, reg, b);
+}
+
+// Nebenhand „Seraphsphäre" (Heiler): strahlende Lichtkugel mit goldenen Flügeln.
+function icon_engelsorb(uid, reg){
+  const P = PAL.engel;
+  let b = `<ellipse cx="32" cy="33" rx="21" ry="21" fill="${P.glow}" opacity="0.30"/>`;
+  const wing = d => `<path d="${d}" fill="${reg.grad(P.gold)}" stroke="${P.goldDk}" stroke-width="0.8"/>`;
+  b += wing('M22 31 Q9 22 2 29 Q11 30 7 36 Q15 31 22 35 Z')+
+       wing('M42 31 Q55 22 62 29 Q53 30 57 36 Q49 31 42 35 Z');
+  // Lichtsphäre + Goldring
+  b += `<circle cx="32" cy="33" r="14" fill="${P.glow}" opacity="0.5"/>`+
+       `<circle cx="32" cy="33" r="11" fill="${P.orb}"/>`+
+       `<circle cx="32" cy="33" r="6" fill="#eaf4ff"/>`+
+       `<circle cx="32" cy="33" r="14" fill="none" stroke="${P.gold}" stroke-width="1.7"/>`+
+       `<circle cx="28.5" cy="29.5" r="2.4" fill="#fff"/>`;
+  // innerer Lichtstern + Halo oben
+  b += star(32,33,5,2,5,'#ffffff',0.5)+`<path d="M32 13 L30 18 L34 18 Z" fill="${P.gold}"/>`;
+  return iconWrap(uid, reg, b);
+}
+
+const ICONS = { zwillinge:icon_zwillinge, frost:icon_frost, stachel:icon_stachel, inferno:icon_inferno, engel:icon_engel,
+                infernoorb:icon_infernoorb, engelsorb:icon_engelsorb };
 
 // Öffentliche Icon-Funktion (für item-art.js). art/element/orb derzeit nicht
 // nötig – die Optik ist je `special` festgelegt; Parameter für künftige Nutzung.
@@ -322,4 +360,56 @@ export function buildSpecialShield(special, item, uid){
          `<path d="M${rx} ${(ry-5).toFixed(0)} L${rx+5} ${ry} L${rx} ${(ry+5).toFixed(0)} L${rx-5} ${ry} Z" fill="${P.hi}" opacity="0.5"/>`;
   }
   return g;
+}
+
+/* ---- Getragene Spezial-Nebenhand-KUGELN (Heiler/Hexer) -----------------
+   Schweben an der linken Hand (cx,cy). Eigene, abgehobene Optik passend zum
+   jeweiligen Spezial-Stab. Sanftes Schweben/Pulsieren wie offhandOrb. */
+function held_infernoorb(cx, cy, uid){
+  const P = PAL.inferno;
+  const pulse = ANIM ? `<animate attributeName="opacity" values="0.5;0.74;0.5" dur="2.6s" repeatCount="indefinite"/>` : '';
+  let g = `<ellipse cx="${cx}" cy="${cy}" rx="22" ry="22" fill="${P.smoke}" opacity="0.55"/>`+
+          `<circle cx="${cx}" cy="${cy}" r="18" fill="${P.glow}" opacity="0.16">${pulse}</circle>`;
+  // verkohlte Klauen-Fassung
+  g += `<path d="M${cx-13} ${cy+3} Q${cx-17} ${cy+16} ${cx-8} ${cy+21} M${cx+13} ${cy+3} Q${cx+17} ${cy+16} ${cx+8} ${cy+21}" stroke="${P.metal}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  // Glutsphäre
+  g += `<circle cx="${cx}" cy="${cy}" r="14" fill="${P.dk}"/>`+
+       `<circle cx="${cx}" cy="${cy}" r="11" fill="${P.edge}" opacity="0.78"/>`+
+       `<circle cx="${cx}" cy="${cy}" r="7.5" fill="${P.glow}"/>`+
+       `<circle cx="${cx}" cy="${cy}" r="3.8" fill="${P.core}"/>`+
+       `<circle cx="${cx-2.5}" cy="${cy-2.5}" r="1.4" fill="#ffb070" opacity="0.7"/>`;
+  // Glutrisse + Flammenzunge oben
+  g += `<path d="M${cx} ${cy-10} l-2 7 M${cx+10} ${cy} l-6 1 M${cx-3} ${cy+10} l1 -6" stroke="${P.core}" stroke-width="1.1" opacity="0.7" fill="none"/>`+
+       `<path d="M${cx} ${cy-15} Q${cx-3} ${cy-22} ${cx} ${cy-28} Q${cx+3} ${cy-22} ${cx} ${cy-15} Z" fill="${P.glow}" opacity="0.8"/>`;
+  return ANIM
+    ? `<g>${g}<animateTransform attributeName="transform" type="translate" values="0 0;0 -2.6;0 0" dur="3.4s" repeatCount="indefinite"/></g>`
+    : g;
+}
+
+function held_engelsorb(cx, cy, uid){
+  const P = PAL.engel;
+  const pulse = ANIM ? `<animate attributeName="opacity" values="0.22;0.42;0.22" dur="2.8s" repeatCount="indefinite"/>` : '';
+  let g = `<circle cx="${cx}" cy="${cy}" r="21" fill="${P.glow}" opacity="0.22">${pulse}</circle>`+
+          `<circle cx="${cx}" cy="${cy}" r="13" fill="#ffffff" opacity="0.16"/>`;
+  // goldene Flügel
+  const wing = d => `<path d="${d}" fill="${P.gold}" stroke="${P.goldDk}" stroke-width="1"/>`;
+  g += wing(`M${cx-9} ${cy-2} Q${cx-26} ${cy-13} ${cx-41} ${cy-5} Q${cx-28} ${cy-2} ${cx-33} ${cy+7} Q${cx-22} ${cy-1} ${cx-9} ${cy+4} Z`)+
+       wing(`M${cx+9} ${cy-2} Q${cx+26} ${cy-13} ${cx+41} ${cy-5} Q${cx+28} ${cy-2} ${cx+33} ${cy+7} Q${cx+22} ${cy-1} ${cx+9} ${cy+4} Z`);
+  g += `<path d="M${cx-35} ${cy-7} q8 2 14 6 M${cx+35} ${cy-7} q-8 2 -14 6" stroke="${P.goldHi}" stroke-width="1" fill="none" opacity="0.7"/>`;
+  // Lichtsphäre + Goldring
+  g += `<circle cx="${cx}" cy="${cy}" r="13" fill="${P.orb}"/>`+
+       `<circle cx="${cx}" cy="${cy}" r="13" fill="none" stroke="${P.gold}" stroke-width="1.8"/>`+
+       `<circle cx="${cx}" cy="${cy}" r="6.5" fill="#eaf4ff"/>`+
+       `<circle cx="${cx-4}" cy="${cy-4}" r="2.6" fill="#fff" opacity="0.85"/>`+
+       star(cx, cy-20, 4.5, 1.8, 5, '#ffffff', 0.8);
+  return ANIM
+    ? `<g>${g}<animateTransform attributeName="transform" type="translate" values="0 0;0 -2.6;0 0" dur="3.6s" repeatCount="indefinite"/></g>`
+    : g;
+}
+
+// Dispatcher für getragene Spezial-Nebenhand-Kugeln (linke Hand bei 74,174).
+export function buildSpecialOffhandOrb(special, item, uid){
+  if(special === 'infernoorb') return held_infernoorb(74, 174, uid);
+  if(special === 'engelsorb')  return held_engelsorb(74, 174, uid);
+  return '';
 }
