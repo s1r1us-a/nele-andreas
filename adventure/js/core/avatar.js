@@ -262,7 +262,10 @@ export function buildHeroSVG(character, tier, gear){
   // materialabhängigem Licht-Filter (Metallglanz/Lederschimmer; Tuch bleibt matt).
   const armorShape = (d, color, it, sw) => {
     const mat = it ? (typeOf(it).material || 'platte') : 'platte';
-    const furl = greg.filter('mat-'+mat, id => materialFilter(id, mat));
+    // Set-Teile (Helm/Hände/Beine/Füße/Platte-Brust): KEIN Metall-Glanzfilter –
+    // sonst überstrahlt der Specular die Set-Basisfarbe silbern und passt nicht
+    // zu den Set-Schultern. Der gerichtete Verlauf trägt die Tönung in Set-Farbe.
+    const furl = (it && setOf(it)) ? '' : greg.filter('mat-'+mat, id => materialFilter(id, mat));
     let out = `<path d="${d}" fill="${grad(color)}" stroke="${shade(color,0.5)}" stroke-width="${sw||2}" stroke-linejoin="round"/>`;
     if(it) out += `<path d="${d}" fill="${texturePat(textureOf(it), color)}"/>`;
     return furl ? `<g filter="${furl}">${out}</g>` : out;
@@ -619,8 +622,10 @@ export function buildHeroSVG(character, tier, gear){
       `#hero${uid}{animation:hb${uid} 3.8s ease-in-out infinite}`+
       `@media(prefers-reduced-motion:reduce){#hero${uid}{animation:none}}</style>`
     : '';
-  const figure = aura + cloak + (helmVisible ? '' : hairBack) + bodyLit + beine + brust + fuesse + arms + gloves + schild +
-    pauldronCS + head + face + beard + (helmVisible ? '' : hairFront) + helmCS + weaponSway;
+  // Waffe & Nebenhand (Schild/Zweitklinge) ganz im Vordergrund – werden von
+  // Rüstung/Schultern/Helm NICHT verdeckt (zuletzt im Z-Stapel gezeichnet).
+  const figure = aura + cloak + (helmVisible ? '' : hairBack) + bodyLit + beine + brust + fuesse + arms + gloves +
+    pauldronCS + head + face + beard + (helmVisible ? '' : hairFront) + helmCS + schild + weaponSway;
   const heroGroup = ANIM ? `<g id="hero${uid}">${figure}</g>` : figure;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
     defs + xtra + styleBlock + groundShadow + heroGroup +

@@ -52,21 +52,22 @@ function iconWrap(uid, reg, body){
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
-// grün-türkise Sichelklinge + goldenes Medaillon.
+// Illidan-artige Kriegsklinge: stark gebogene Sichel oben + Haken unten,
+// mittig am goldenen Hub – grün-türkis.
 function icon_zwillinge(uid, reg){
   const P = PAL.zwillinge, G = reg.grad(P.base);
-  let b = `<ellipse cx="32" cy="28" rx="15" ry="22" fill="${P.glow||P.base}" opacity="0.12"/>`;
-  // gebogene Klinge (Spitze oben), leicht sichelförmig
-  b += `<path d="M30 50 Q19 33 25 12 Q29 4 36 9 Q43 30 38 50 Z" fill="${G}" stroke="${P.edge}" stroke-width="1"/>`;
-  // Barben/Zacken an der Außenkante
-  b += `<path d="M25 17 L19 16 L25 20 Z M24 26 L18 26 L25 30 Z M25 36 L20 38 L26 39 Z" fill="${P.dk}"/>`;
+  let b = `<ellipse cx="32" cy="30" rx="17" ry="26" fill="${P.base}" opacity="0.12"/>`;
+  // große obere Sichelklinge (kräftige Kurve)
+  b += `<path d="M31 50 C20 40 9 28 14 12 C16 4 26 2 31 11 C28 16 26 22 27 30 C29 40 33 44 37 50 Z" fill="${G}" stroke="${P.edge}" stroke-width="1"/>`;
+  // Zacken an der Außenkante
+  b += `<path d="M14 28 l-6 -1 l5 5 Z M15 18 l-6 1 l5 4 Z M15 38 l-5 3 l5 2 Z" fill="${P.dk}"/>`;
   // innerer Glanz
-  b += `<path d="M31 47 Q24 32 29 14" stroke="${P.hi}" stroke-width="1.3" fill="none" opacity="0.7"/>`;
-  // goldenes Rundmedaillon am Ansatz
-  b += `<circle cx="32" cy="50" r="7.5" fill="${GOLD}" stroke="${shade(GOLD,0.65)}" stroke-width="1.2"/>`+
-       star(32,50,4.6,1.8,5,'#fff4cf',0.95)+`<circle cx="32" cy="50" r="1.8" fill="#3a2a6a"/>`;
-  // Griff
-  b += `<rect x="30" y="56" width="4" height="6" rx="1.5" fill="${WOOD}"/>`;
+  b += `<path d="M30 47 C20 37 11 27 16 13" stroke="${P.hi}" stroke-width="1.3" fill="none" opacity="0.75"/>`;
+  // unterer Haken (Rückklinge)
+  b += `<path d="M34 54 C31 61 25 63 25 63 C29 59 32 57 35 51 Z" fill="${G}" stroke="${P.edge}" stroke-width="0.9"/>`;
+  // zentrales goldenes Medaillon (Griffpunkt)
+  b += `<circle cx="32" cy="51" r="7" fill="${GOLD}" stroke="${shade(GOLD,0.62)}" stroke-width="1.2"/>`+
+       star(32,51,4.4,1.8,5,'#fff4cf',0.95)+`<circle cx="32" cy="51" r="1.8" fill="#3a2a6a"/>`;
   return iconWrap(uid, reg, b);
 }
 
@@ -173,10 +174,12 @@ export function buildSpecialWeaponIcon(special, art, rarityKey, element, orb){
    GETRAGEN (Avatar 200×320) – an den Handpunkt (hx,194) verankert.
    Spiegelt die Wrap-Logik aus avatar.js heldWeapon (tilt/scale/hand).
    ===================================================================== */
-function heldWrap(inner, uid, opt, defaultTilt){
+function heldWrap(inner, uid, opt, defaultTilt, baseScale){
   opt = opt || {};
   const hx = opt.hx != null ? opt.hx : 124;
-  const SCALE = (opt.scale || 1) * 1.16;   // Legendär-Größe wie reguläre Legendäre
+  // Deutlich größere Spezialwaffen (heroisch). baseScale je Waffe; opt.scale
+  // verkleinert nur leicht die Nebenhand.
+  const SCALE = (opt.scale || 1) * (baseScale || 1.4);
   const grow = s => `<g transform="translate(${hx} 194) scale(${SCALE}) translate(${-hx} -194)">${s}</g>`;
   const tilt = opt.tilt != null ? opt.tilt : defaultTilt;
   const handRect = opt.noHand ? '' : `<rect x="${hx-6}" y="189" width="12" height="10" rx="4" fill="url(#sk${uid})"/>`;
@@ -184,19 +187,27 @@ function heldWrap(inner, uid, opt, defaultTilt){
   return tiltWrap(grow(inner) + handRect);
 }
 
+// Illidan-Kriegsklinge: stark gebogene Sichel-Glefe, MITTIG am goldenen Hub
+// gegriffen – große Klinge nach oben, kleinerer Haken nach unten (Hand sitzt im
+// Zentrum bei (hx,194)). Wird in der Nebenhand gespiegelt (echtes Paar).
 function held_zwillinge(hx, uid){
   const P = PAL.zwillinge;
-  let g = `<ellipse cx="${hx}" cy="150" rx="14" ry="40" fill="${P.base}" opacity="0.12"/>`;
-  // Griff
-  g += `<rect x="${hx-2}" y="184" width="4" height="16" rx="1.5" fill="${WOOD}"/>`;
-  // gebogene Klinge (Spitze oben)
-  g += `<path d="M${hx-4} 182 Q${hx-15} 150 ${hx-7} 118 Q${hx} 108 ${hx+6} 118 Q${hx+11} 150 ${hx+4} 182 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.3"/>`;
-  // Barben + Glanz
-  g += `<path d="M${hx-7} 130 l-7 -2 l6 5 Z M${hx-8} 146 l-7 0 l6 5 Z M${hx-7} 162 l-6 3 l6 1 Z" fill="${P.dk}"/>`+
-       `<path d="M${hx-2} 178 Q${hx-10} 150 ${hx-4} 122" stroke="${P.hi}" stroke-width="1.4" fill="none" opacity="0.7"/>`;
-  // goldenes Medaillon am Ansatz
-  g += `<circle cx="${hx}" cy="183" r="8" fill="${GOLD}" stroke="${shade(GOLD,0.65)}" stroke-width="1.3"/>`+
-       star(hx,183,4.8,1.9,5,'#fff4cf',0.95)+`<circle cx="${hx}" cy="183" r="2" fill="#3a2a6a"/>`;
+  let g = `<ellipse cx="${hx}" cy="160" rx="22" ry="58" fill="${P.base}" opacity="0.16"/>`;
+  // große obere Sichelklinge (kräftige Auswärts-Kurve, hakt zur Spitze ein)
+  g += `<path d="M${hx-3} 190 C${hx-16} 162 ${hx-30} 138 ${hx-26} 104 `+
+       `C${hx-24} 92 ${hx-13} 86 ${hx-6} 94 C${hx-12} 100 ${hx-15} 110 ${hx-14} 122 `+
+       `C${hx-11} 152 ${hx-2} 172 ${hx+4} 190 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.5"/>`;
+  // Zacken/Barben an der Außenkante der Oberklinge
+  g += `<path d="M${hx-27} 150 l-9 -2 l8 6 Z M${hx-28} 128 l-9 1 l8 5 Z M${hx-24} 168 l-8 3 l8 3 Z" fill="${P.dk}"/>`;
+  // innerer Schneiden-Glanz
+  g += `<path d="M${hx-2} 186 C${hx-14} 160 ${hx-26} 138 ${hx-22} 108" stroke="${P.hi}" stroke-width="1.7" fill="none" opacity="0.75"/>`;
+  // kleinerer unterer Haken (Rückklinge)
+  g += `<path d="M${hx+3} 200 C${hx-2} 222 ${hx-13} 232 ${hx-13} 244 `+
+       `C${hx-6} 238 ${hx} 228 ${hx+6} 210 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.3"/>`;
+  // zentraler goldener Hub = Griffpunkt (Hand liegt mittig darüber)
+  g += `<circle cx="${hx}" cy="194" r="10" fill="${GOLD}" stroke="${shade(GOLD,0.6)}" stroke-width="1.6"/>`+
+       `<circle cx="${hx}" cy="194" r="10" fill="none" stroke="${shade(GOLD,1.25)}" stroke-width="1" opacity="0.7"/>`+
+       star(hx,194,5.8,2.3,5,'#fff4cf',0.95)+`<circle cx="${hx}" cy="194" r="2.4" fill="#3a2a6a"/>`;
   return g;
 }
 
@@ -263,10 +274,10 @@ function held_engel(hx, uid){
 }
 
 const HELD = {
-  zwillinge: { build: held_zwillinge, tilt: 15 },
-  frost:     { build: held_frost,     tilt: 15 },
-  inferno:   { build: held_inferno,   tilt: 6  },
-  engel:     { build: held_engel,     tilt: 6  },
+  zwillinge: { build: held_zwillinge, tilt: 12, scale: 1.55 },
+  frost:     { build: held_frost,     tilt: 14, scale: 1.55 },
+  inferno:   { build: held_inferno,   tilt: 6,  scale: 1.4  },
+  engel:     { build: held_engel,     tilt: 6,  scale: 1.4  },
 };
 
 // Getragene Spezialwaffe (Haupthand oder Schurken-Nebenhand-Klinge).
@@ -275,32 +286,38 @@ export function buildSpecialHeld(special, uid, opt){
   if(!h) return '';
   opt = opt || {};
   const hx = opt.hx != null ? opt.hx : 124;
-  return heldWrap(h.build(hx, uid), uid, opt, h.tilt);
+  let inner = h.build(hx, uid);
+  // Zwillingsklingen in der Nebenhand (linke Hand, hx<100) spiegeln → echtes
+  // Illidan-Paar (Klingen weisen nach außen).
+  if(special === 'zwillinge' && hx < 100)
+    inner = `<g transform="translate(${2*hx} 0) scale(-1 1)">${inner}</g>`;
+  return heldWrap(inner, uid, opt, h.tilt, h.scale);
 }
 
-// Getragener Spezial-Nebenhand-Schild (lila Stachelschild) – an der linken Hand.
+// Getragener Spezial-Nebenhand-Schild (lila Stachel-BOLLWERK) – an der linken
+// Hand, bewusst sehr groß (deckt Schulter bis Oberschenkel) & im Vordergrund.
 export function buildSpecialShield(special, item, uid){
   if(special !== 'stachel') return '';
   const P = PAL.stachel;
-  const cx = 72, cy = 178, w = 38, h = 60;
-  const L = cx - w/2, T = cy - h/2;
-  let g = `<ellipse cx="${cx}" cy="${cy}" rx="${w*0.8}" ry="${h*0.6}" fill="${P.stud}" opacity="0.12"/>`;
-  // seitliche Stacheln
-  for(const y of [T+12, cy, T+h-12]){
-    g += `<path d="M${L} ${y-6} L${L-11} ${y} L${L} ${y+6} Z" fill="${P.dk}" stroke="${P.edge}" stroke-width="1"/>`+
-         `<path d="M${L+w} ${y-6} L${L+w+11} ${y} L${L+w} ${y+6} Z" fill="${P.dk}" stroke="${P.edge}" stroke-width="1"/>`;
+  const cx = 70, cy = 192, w = 72, h = 134;
+  const L = cx - w/2, T = cy - h/2, R = L + w, Bm = T + h;
+  let g = `<ellipse cx="${cx}" cy="${cy}" rx="${(w*0.85).toFixed(0)}" ry="${(h*0.58).toFixed(0)}" fill="${P.stud}" opacity="0.16"/>`;
+  // kräftige seitliche Stacheln (4 je Seite)
+  for(const y of [T+18, T+h*0.39, T+h*0.61, Bm-18]){
+    g += `<path d="M${L} ${(y-9).toFixed(0)} L${L-18} ${y.toFixed(0)} L${L} ${(y+9).toFixed(0)} Z" fill="${P.dk}" stroke="${P.edge}" stroke-width="1.4"/>`+
+         `<path d="M${R} ${(y-9).toFixed(0)} L${R+18} ${y.toFixed(0)} L${R} ${(y+9).toFixed(0)} Z" fill="${P.dk}" stroke="${P.edge}" stroke-width="1.4"/>`;
   }
-  // Korpus
-  g += `<rect x="${L}" y="${T}" width="${w}" height="${h}" rx="8" fill="${P.base}" stroke="${P.edge}" stroke-width="2.4"/>`+
-       `<rect x="${L+4}" y="${T+4}" width="${w-8}" height="${h-8}" rx="6" fill="none" stroke="${P.hi}" stroke-width="1" opacity="0.4"/>`;
-  // Nieten
-  for(const x of [cx-11, cx, cx+11]){
-    g += `<circle cx="${x}" cy="${T+8}" r="2.2" fill="${P.rivet}"/><circle cx="${x}" cy="${T+h-8}" r="2.2" fill="${P.rivet}"/>`;
+  // Korpus (groß, gewölbt)
+  g += `<rect x="${L}" y="${T}" width="${w}" height="${h}" rx="14" fill="${P.base}" stroke="${P.edge}" stroke-width="3.4"/>`+
+       `<rect x="${L+7}" y="${T+7}" width="${w-14}" height="${h-14}" rx="10" fill="none" stroke="${P.hi}" stroke-width="1.6" opacity="0.4"/>`;
+  // Nieten oben & unten (4)
+  for(const x of [cx-21, cx-7, cx+7, cx+21]){
+    g += `<circle cx="${x}" cy="${T+12}" r="2.8" fill="${P.rivet}"/><circle cx="${x}" cy="${Bm-12}" r="2.8" fill="${P.rivet}"/>`;
   }
-  // erhabene Rauten (3×3)
-  for(const ry of [cy-16, cy, cy+16]) for(const rx of [cx-10, cx, cx+10]){
-    g += `<path d="M${rx} ${ry-6} L${rx+6} ${ry} L${rx} ${ry+6} L${rx-6} ${ry} Z" fill="${P.stud}" stroke="${P.edge}" stroke-width="1"/>`+
-         `<path d="M${rx} ${ry-3} L${rx+3} ${ry} L${rx} ${ry+3} L${rx-3} ${ry} Z" fill="${P.hi}" opacity="0.5"/>`;
+  // erhabene Rauten (3×3 Raster)
+  for(const ry of [cy-34, cy, cy+34]) for(const rx of [cx-19, cx, cx+19]){
+    g += `<path d="M${rx} ${ry-11} L${rx+11} ${ry} L${rx} ${ry+11} L${rx-11} ${ry} Z" fill="${P.stud}" stroke="${P.edge}" stroke-width="1.3"/>`+
+         `<path d="M${rx} ${(ry-5).toFixed(0)} L${rx+5} ${ry} L${rx} ${(ry+5).toFixed(0)} L${rx-5} ${ry} Z" fill="${P.hi}" opacity="0.5"/>`;
   }
   return g;
 }
