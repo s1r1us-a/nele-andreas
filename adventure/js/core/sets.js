@@ -52,14 +52,18 @@ export function equippedSetCounts(s){
 }
 
 // Set-Übersicht für die UI: das zur Klasse passende Set + aktive Boni-Stufen.
-export function activeSetInfo(s){
+// Boni-Übersicht für EIN konkretes Set (für die Shop-Anzeige pro Set).
+export function setInfo(s, set){
   s = s || state;
-  const cls = classOf(s);
-  const set = setForClass(cls.id);
-  if(!set) return null;
   const count = (equippedSetCounts(s))[set.id] || 0;
   const bonuses = set.bonuses.map(bn => ({ ...bn, active: count >= bn.need }));
   return { set, count, bonuses };
+}
+// Rückwärtskompatibel: Info zum ersten Set der Klasse.
+export function activeSetInfo(s){
+  s = s || state;
+  const set = setForClass(classOf(s).id);
+  return set ? setInfo(s, set) : null;
 }
 
 // Set-Boni ins (bereits summierte) Totals-Bündel mischen. Boni gelten NUR für
@@ -168,9 +172,10 @@ export function ownsSetPiece(s, setId, slotKey){
 // ---- Kauf beim Set-Händler ------------------------------------------
 // Kauft das Set-Teil der EIGENEN Klasse für den Slot gegen Tribut-Siegel.
 // Rückgabe: { ok, item } | { ok:false, reason:'noset'|'owned'|'tokens'|'badslot' }.
-export function buySetPiece(slotKey){
-  const set = setForClass(classOf(state).id);
+export function buySetPiece(setId, slotKey){
+  const set = SETS[setId];
   if(!set) return { ok:false, reason:'noset' };
+  if(set.classId !== classOf(state).id) return { ok:false, reason:'class' };
   if(!SET_SLOTS.includes(slotKey)) return { ok:false, reason:'badslot' };
   if(ownsSetPiece(state, set.id, slotKey)) return { ok:false, reason:'owned' };
   const cost = setPieceCost(slotKey);

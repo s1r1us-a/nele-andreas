@@ -155,11 +155,115 @@ export const SETS = {
       { need:7, name:'Avatar des Lichts',desc:'+25 % max. Leben, +10 % Vielseitigkeit', pct:{ maxHp:0.25 }, flat:{ versatility:0.10 } },
     ],
   },
+
+  // ═══ ZWEIT-SETS (deutlich abgehoben, animierte Signatur-Effekte) ═══
+
+  // 🔵 VERTEIDIGER – „Azurwächter": Obsidian-Platte mit blau-weißer Höllenflamme,
+  //    brennende Schultern (Feuer-Animation). Ausweich-/Dornen-Tank.
+  azurwaechter: {
+    id:'azurwaechter', classId:'verteidiger', name:'Azurwächter',
+    themeKey:'azure', material:'platte', statMult:1.7,
+    accent:'#3aa6ff', accent2:'#cfe8ff', glow:'#1e74ff',
+    affixBias:{ dodge:4, block:3, armor:3, thorns:2 }, flavorAffix:'dodge',
+    fixedAffixes:{
+      kopf:     ['armor','dodge','versatility'],
+      schultern:['armor','block','thorns'],
+      brust:    ['armor','dodge','block'],
+      haende:   ['block','thorns','dodge'],
+      beine:    ['armor','dodge','maxHp'],
+      fuesse:   ['dodge','versatility','armor'],
+      umhang:   ['armor','thorns','maxHp'],
+    },
+    lore:'In azurblauer Höllenglut gehärtet – kühl wie Eis, sengend wie eine Sonne.',
+    bonuses:[
+      { need:2, name:'Azurpanzer',            desc:'+10 % Rüstung, +6 % Ausweichen',        pct:{ armor:0.10 }, flat:{ dodge:0.06 } },
+      { need:4, name:'Brennende Wacht',        desc:'+50 Dornen, +18 Block',                 flat:{ thorns:50, block:18 } },
+      { need:6, name:'Frostglut-Kern',         desc:'+12 % max. Leben, +6 % Vielseitigkeit', pct:{ maxHp:0.12 }, flat:{ versatility:0.06 } },
+      { need:7, name:'Avatar der Azurflamme',  desc:'+22 % Rüstung, +8 % Ausweichen',        pct:{ armor:0.22 }, flat:{ dodge:0.08 } },
+    ],
+  },
+
+  // 🟣 HEXER – „Astralfürst": kosmische Sternenrobe, schwebende Orbs über den
+  //    Schultern (umkreisen + funkeln). Kontroll-Magier (Krit/Vielseitigkeit).
+  astralfuerst: {
+    id:'astralfuerst', classId:'hexer', name:'Astralfürst',
+    themeKey:'astral', material:'stoff', statMult:0.78,
+    accent:'#8a6cff', accent2:'#cfe0ff', glow:'#6a40ff',
+    affixBias:{ critMagic:4, versatility:3, critDamage:2, maxHp:2 }, flavorAffix:'versatility',
+    fixedAffixes:{
+      kopf:     ['critMagic','versatility','maxHp'],
+      schultern:['critMagic','versatility','critDamage'],
+      brust:    ['critMagic','maxHp','versatility'],
+      haende:   ['critMagic','critDamage','versatility'],
+      beine:    ['critMagic','maxHp','versatility'],
+      fuesse:   ['versatility','critMagic','dodge'],
+      umhang:   ['critMagic','critDamage','versatility'],
+    },
+    lore:'Gewoben aus Sternenstaub – wer hineinblickt, sieht das Ende aller Dinge.',
+    bonuses:[
+      { need:2, name:'Sternenberührung', desc:'+8 % Mag. Krit, +6 % Vielseitigkeit',  flat:{ critMagic:0.08, versatility:0.06 } },
+      { need:4, name:'Astralflut',       desc:'+12 % Krit-Schaden, +300 Leben',        flat:{ critDamage:0.12, maxHp:300 } },
+      { need:6, name:'Kosmische Macht',  desc:'+10 % Mag. Krit, +8 % Vielseitigkeit',  flat:{ critMagic:0.10, versatility:0.08 } },
+      { need:7, name:'Avatar der Sterne',desc:'+30 % Krit-Schaden, +10 % Mag. Krit',   flat:{ critDamage:0.30, critMagic:0.10 } },
+    ],
+  },
+
+  // ⚡ SCHURKE – „Sturmschnitter": Gewitter-Leder, knisternde Blitzbögen auf den
+  //    Schultern. Highspeed-Tempo-Assassine (Angriffstempo statt Krit-Schaden).
+  sturmschnitter: {
+    id:'sturmschnitter', classId:'schurke', name:'Sturmschnitter',
+    themeKey:'storm', material:'leder', statMult:1.08,
+    accent:'#4fe6ff', accent2:'#e6ffff', glow:'#16b0ff',
+    affixBias:{ attackSpeed:4, critPhys:3, dodge:2, versatility:1 }, flavorAffix:'attackSpeed',
+    fixedAffixes:{
+      kopf:     ['attackSpeed','critPhys','dodge'],
+      schultern:['attackSpeed','dodge','versatility'],
+      brust:    ['attackSpeed','critPhys','maxHp'],
+      haende:   ['attackSpeed','critPhys','critDamage'],
+      beine:    ['attackSpeed','dodge','critPhys'],
+      fuesse:   ['attackSpeed','dodge','versatility'],
+      umhang:   ['attackSpeed','critPhys','dodge'],
+    },
+    lore:'Schnell wie der Blitz, lautlos wie der Donner, der ihm folgt.',
+    bonuses:[
+      { need:2, name:'Sturmklingen',     desc:'+10 % Angriffstempo, +5 % Phys. Krit',  flat:{ attackSpeed:0.10, critPhys:0.05 } },
+      { need:4, name:'Gewitterhatz',     desc:'+8 % Ausweichen, +15 % Krit-Schaden',    flat:{ dodge:0.08, critDamage:0.15 } },
+      { need:6, name:'Blitzschlag',      desc:'+12 % Angriffstempo, +5 % Phys. Krit',   flat:{ attackSpeed:0.12, critPhys:0.05 } },
+      { need:7, name:'Avatar des Sturms',desc:'+16 % Angriffstempo, +10 % Ausweichen',  flat:{ attackSpeed:0.16, dodge:0.10 } },
+    ],
+  },
+
+  // 🟢 HEILER – „Hain des Lebens": Naturrobe in Grün/Gold, schwebende Blätter +
+  //    pulsierendes Erblühen auf den Schultern. Lebensspendender Heiler.
+  hainleben: {
+    id:'hainleben', classId:'heiler', name:'Hain des Lebens',
+    themeKey:'verdant', material:'stoff', statMult:0.80,
+    accent:'#5fe07a', accent2:'#ffe98c', glow:'#46e070',
+    affixBias:{ maxHp:4, versatility:3, lifesteal:2, critMagic:1 }, flavorAffix:'versatility',
+    fixedAffixes:{
+      kopf:     ['maxHp','versatility','critMagic'],
+      schultern:['maxHp','versatility','lifesteal'],
+      brust:    ['maxHp','versatility','lifesteal'],
+      haende:   ['versatility','critMagic','maxHp'],
+      beine:    ['maxHp','versatility','dodge'],
+      fuesse:   ['maxHp','dodge','versatility'],
+      umhang:   ['maxHp','lifesteal','versatility'],
+    },
+    lore:'Wo seine Wurzeln greifen, weicht der Tod dem ewigen Frühling.',
+    bonuses:[
+      { need:2, name:'Lebensranke',      desc:'+12 % max. Leben, +5 % Vielseitigkeit', pct:{ maxHp:0.12 }, flat:{ versatility:0.05 } },
+      { need:4, name:'Blütezeit',        desc:'+10 % Lebensraub, +6 % Mag. Krit',      flat:{ lifesteal:0.10, critMagic:0.06 } },
+      { need:6, name:'Hain der Ewigkeit', desc:'+15 % max. Leben, +8 % Vielseitigkeit', pct:{ maxHp:0.15 }, flat:{ versatility:0.08 } },
+      { need:7, name:'Avatar des Lebens', desc:'+25 % max. Leben, +12 % Lebensraub',    pct:{ maxHp:0.25 }, flat:{ lifesteal:0.12 } },
+    ],
+  },
 };
 
 export const SET_LIST = Object.values(SETS);
 export const setById = id => SETS[id] || null;
 export const setForClass = classId => SET_LIST.find(s => s.classId === classId) || null;
+// Alle Sets einer Klasse (eine Klasse hat jetzt mehrere Sets zur Auswahl).
+export const setsForClass = classId => SET_LIST.filter(s => s.classId === classId);
 
 // Set-Def eines Items (null-sicher) – nur über das additive Feld item.setId.
 export const setOf = item => (item && item.setId ? (SETS[item.setId] || null) : null);

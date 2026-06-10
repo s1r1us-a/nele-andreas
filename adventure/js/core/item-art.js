@@ -36,9 +36,9 @@ export function buildItemSVG(art, variant, rarityKey, element, orb, material, dy
   variant = Math.max(0, variant|0);
   // Set-Items (additiv): komplett eigenes, abgehobenes Icon je Slot-art.
   if(setTheme){
-    const sk = 'set_'+art+'_'+setTheme+'_'+(rarityKey||'');
+    const sk = 'set_'+art+'_'+setTheme+'_'+(rarityKey||'')+'_'+(material||'');
     if(_cache.has(sk)) return _cache.get(sk);
-    const suri = buildSetIcon(art, setTheme, rarityKey);
+    const suri = buildSetIcon(art, setTheme, rarityKey, material);
     _cache.set(sk, suri);
     return suri;
   }

@@ -586,7 +586,7 @@ export function buildHeroSVG(character, tier, gear){
     // Set-Aufsatz (Hörner / Halo / Geweih + glühende Augen) über dem Helm.
     const _kt = setThemeOf(kp);
     if(_kt){
-      const pos = _kt==='holy' ? [100,24,2.2] : _kt==='molten' ? [100,40,2.0] : [100,80,1.7];
+      const pos = _kt==='holy' ? [100,24,2.2] : (_kt==='molten' || _kt==='azure') ? [100,40,2.0] : [100,80,1.7];
       helm += setHelmCrest(_kt, pos[0], pos[1], pos[2]);
     }
   }
