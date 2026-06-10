@@ -38,6 +38,7 @@ import { salvageYield, MATERIAL_BY_KEY, MATERIALS, upgradeBadge } from '../data/
 import { DYES } from '../data/dyes.js';
 import { claimPendingLoot } from '../core/items.js';
 import { renderForge } from './forge.js';
+import { renderSetShop } from './setshop.js';
 import { buildRoomBanner, applyRoomTheme, ensureRoomBanner } from './roombanner.js';
 import { expeditionReady, expeditionActive, findProgress } from '../core/expedition.js';
 import { $, timeAgo, fmtRemain, fmtBig, toast, confirmDialog, goldPop } from './dom.js';
@@ -50,7 +51,7 @@ export function renderAll(){
   // sobald Platz frei ist – bevor irgendetwas gerendert wird.
   claimPendingLoot();
   hideTooltip(); renderTopStats(); renderAdventure();
-  renderCharacter(); renderInventory(); renderShop(); renderForge();
+  renderCharacter(); renderInventory(); renderShop(); renderForge(); renderSetShop();
 }
 
 const freeSlots = () => Math.max(0, invCapacity() - state.inventory.length);

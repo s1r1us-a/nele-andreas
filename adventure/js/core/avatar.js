@@ -14,6 +14,8 @@ import { ELEM, elementOf, shade, mirror200 as mirror, ARMOR_MAT, WEAPON_METAL,
 const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
 import { dyeColorOf } from '../data/dyes.js';
+import { setOf, setThemeOf } from '../data/sets.js';
+import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor } from './set-art.js';
 import { state } from './state.js';
 
 // Element-Effektstufe nach Seltenheit: 0=<Episch, 1=Episch, 2=Legendär, 3=Mythisch.
@@ -32,7 +34,9 @@ const ORB_PAL = {
 // damit Inventar-Icon und getragenes Teil farblich exakt übereinstimmen.
 // Farbstoff (item.dye) überschreibt die Material-Standardfarbe → getragenes Teil
 // am Avatar färbt sich exakt wie das Inventar-Icon.
-const matOf = it => dyeColorOf(it) || ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
+// Set-Items überschreiben die Farbe mit ihrer Theme-Basisfarbe (Glut/Blut/Leere/Licht),
+// damit das getragene Teil sofort als Set erkennbar ist.
+const matOf = it => (setThemeOf(it) ? setBaseColor(setThemeOf(it)) : null) || dyeColorOf(it) || ARMOR_MAT[(((it && it.variant)|0) % ARMOR_MAT.length + ARMOR_MAT.length) % ARMOR_MAT.length];
 // Textur-Typ eines Rüstungsteils aus dem Item-Typ ableiten: Spezial-Keys
 // (Ketten/Schuppen) erhalten ein eigenes Muster, sonst nach Materialklasse.
 function textureOf(it){
@@ -450,6 +454,9 @@ export function buildHeroSVG(character, tier, gear){
     // Seltenheits-Filigran (Episch+) auf der Brust – wächst mit der Stufe.
     const blvl = armorLvl(br.rarity);
     if(blvl>0) brust += engraving(100, 156, 30, 52, blvl, GOLD);
+    // Set-Brust-Emblem (Totenkopf / Klinge / Leeren-Juwel / Sonnenmedaillon).
+    const _bt = setThemeOf(br);
+    if(_bt) brust += setChestEmblem(_bt, 100, 150, 2.4);
   }
 
   // Stiefel
@@ -497,11 +504,15 @@ export function buildHeroSVG(character, tier, gear){
     }
   }
 
-  // Schulterplatten (sonst Tier-Pauldrons)
+  // Schulterplatten (sonst Tier-Pauldrons). Set-Schultern = großes, abgehobenes
+  // Signatur-Ornament (Flammen-Flügel / Klingen / Geweih / Federn) je Theme.
   const shp_ = eq.schultern;
-  const pauldronG = shp_
-    ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${grad(matOf(shp_))}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
-    : tierPauldrons;
+  const _st = shp_ && setThemeOf(shp_);
+  const pauldronG = _st
+    ? mirror(setShoulder(_st, 126, 130, 1.6))
+    : (shp_
+      ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${grad(matOf(shp_))}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
+      : tierPauldrons);
 
   // Kopfbedeckung (verdeckt Haare; nur wenn angelegt UND nicht ausgeblendet).
   // Material bestimmt die Form: Stoff=Kapuze (Gesicht frei), Leder=Lederkappe
@@ -509,7 +520,7 @@ export function buildHeroSVG(character, tier, gear){
   const kp = eq.kopf; let helm = '';
   if(kp && !hideHelmet){
     const c=matOf(kp), cs=shade(c,0.5), ch=shade(c,1.2), cm=shade(c,0.78);
-    const mat = typeOf(kp).material || 'platte';
+    const mat = (setOf(kp) ? setOf(kp).material : typeOf(kp).material) || 'platte';
     if(mat === 'stoff'){
       // Kapuze: weicher Spitzbogen über dem Kopf (Spitze ~y32), fällt seitlich
       // an den Wangen vorbei bis auf die Schultern (y132). Gesicht bleibt frei.
@@ -547,6 +558,12 @@ export function buildHeroSVG(character, tier, gear){
              `<rect x="86" y="100" width="28" height="4" rx="2" fill="#120b0f" opacity="0.75"/>`+
              `<ellipse cx="86" cy="58" rx="11" ry="6" fill="${ch}" opacity="0.45"/>`+
              `<path d="M72 78 Q100 70 128 78" fill="none" stroke="${cs}" stroke-width="2" opacity="0.6"/>`;
+    }
+    // Set-Aufsatz (Hörner / Halo / Geweih + glühende Augen) über dem Helm.
+    const _kt = setThemeOf(kp);
+    if(_kt){
+      const pos = _kt==='holy' ? [100,24,2.2] : _kt==='molten' ? [100,40,2.0] : [100,80,1.7];
+      helm += setHelmCrest(_kt, pos[0], pos[1], pos[2]);
     }
   }
 

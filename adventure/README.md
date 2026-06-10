@@ -69,6 +69,32 @@ Aktive Item-Progression statt reinem RNG-Loot:
   über das Handelsfenster in einer eigenen Kategorie **handelbar**.
 - Alle Crafting-Zahlen liegen zentral in `data/materials.js`.
 
+## Klassen-Sets (Tier-Sets, WoW-Stil)
+
+Pro Klasse ein einzigartiges 7-teiliges Set mit gestaffelten **Set-Boni**
+(2/4/6/7 Teile) und komplett abgehobener Optik. **Rein additiv** – die
+bestehende Kampf-/Item-/Schmiede-Logik bleibt unverändert.
+
+- **Definitionen:** `data/sets.js` (Klassenbindung, Material, `themeKey`,
+  Affix-Fokus, Boni, Kosten, Tribut-Belohnung). Reine Daten.
+- **Logik:** `core/sets.js` – `applySetBonuses()` (additiv, prozentual +
+  flach, respektiert vorhandene Caps), Tribut-Siegel-Währung,
+  `createSetPiece()`/`buySetPiece()`. Einziger Eingriff in Bestand: **eine
+  Zeile** in `core/character.js` (`applySetBonuses(state, b)` in
+  `recomputeTotals`, nach `applyTalents`).
+- **Optik:** `core/set-art.js` (geteilt von Icon & Avatar) rendert je Theme
+  Schultern/Helm-Aufsatz/Brust-Emblem: `molten` (Verteidiger – Glut/Hörner/
+  Flammen-Flügel), `bloodshadow` (Schurke – rote Klingen/Kapuze), `void`
+  (Hexer – Geweih/glühende Augen), `holy` (Heiler – Halo/Federn). Andockung in
+  `core/item-art.js` (`buildItemSVG(..., setTheme)`) und `core/avatar.js`.
+- **Beschaffung:** Set-Händler-Tab „⚜️ Sets" (`ui/setshop.js`). Bosssiege geben
+  **Tribut-Siegel** (`combat.js`), dafür kauft man die 7 Set-Teile. Set-Teile
+  sind **Legendär** → nutzen die vorhandene **Transzendenz** und sind damit
+  unbegrenzt aufwertbar (keine Schmiede-Änderung nötig).
+- **Previews:** `node --import ./adventure/tools/firebase-stub-loader.mjs
+  adventure/tools/gen-set-previews.mjs` erzeugt Schaubild-SVGs unter
+  `assets/set-previews/` (Avatar + alle Set-Teile, gleiche Builder wie im Spiel).
+
 ## Ausstehende Beute (kein Item-Verlust bei vollem Inventar)
 
 Boss- und Turm-Siege legen Beute über `giveLoot()` ab: ist das Inventar voll,
