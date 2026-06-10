@@ -502,7 +502,7 @@ export function buildHeroSVG(character, tier, gear){
     if(art === 'waffe'){
       // Zweitwaffe gespiegelt in die linke Hand (hx=76), leicht nach links
       // gekippt und etwas kleiner als die Hauptwaffe.
-      schild = heldWeapon(sc, uid, { hx:76, tilt:-14, scale:0.82 });
+      schild = heldWeapon(sc, uid, { hx:76, tilt:-16, scale:0.9 });
     } else if(art === 'orb'){
       schild = offhandOrb(sc);
     } else if(typeOf(sc).special){

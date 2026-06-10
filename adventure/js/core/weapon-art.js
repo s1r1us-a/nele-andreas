@@ -23,7 +23,7 @@ const PAL = {
   zwillinge: { base:'#2fd6a0', dk:'#0d7350', hi:'#a6f2d4', edge:'#08543a' },
   frost:     { base:'#bfe6ff', dk:'#4a86c0', hi:'#ffffff', edge:'#2f6aa0', glow:'#5cc8ff', rune:'#7fe0ff' },
   stachel:   { base:'#6b5e8c', dk:'#332c4c', hi:'#b3a6d6', edge:'#201b32', stud:'#8d7fbd', rivet:'#cfc4ea' },
-  inferno:   { wood:'#2c1e18', metal:'#7a4a36', dk:'#3a261d', hi:'#d4a888', glow:'#ff6a2a', core:'#ffd25a', edge:'#ff3a14' },
+  inferno:   { wood:'#140d09', metal:'#33200f', dk:'#180f08', hi:'#6e4a32', glow:'#b8300c', core:'#ff5a16', edge:'#4a1003', smoke:'#0d0907' },
   engel:     { gold:'#e8c45a', goldDk:'#a8842c', goldHi:'#fff2c4', shaft:'#6f8ccf', shaftHi:'#d3e3ff', orb:'#cfe6ff', glow:'#a9d4ff' },
 };
 
@@ -56,18 +56,16 @@ function iconWrap(uid, reg, body){
 // mittig am goldenen Hub – grün-türkis.
 function icon_zwillinge(uid, reg){
   const P = PAL.zwillinge, G = reg.grad(P.base);
-  let b = `<ellipse cx="32" cy="30" rx="17" ry="26" fill="${P.base}" opacity="0.12"/>`;
-  // große obere Sichelklinge (kräftige Kurve)
-  b += `<path d="M31 50 C20 40 9 28 14 12 C16 4 26 2 31 11 C28 16 26 22 27 30 C29 40 33 44 37 50 Z" fill="${G}" stroke="${P.edge}" stroke-width="1"/>`;
+  let b = `<ellipse cx="26" cy="33" rx="20" ry="27" fill="${P.base}" opacity="0.12"/>`;
+  // durchgehende Sichelklinge (C-Form), Griff-Hub in der Bogenmitte
+  b += `<path d="M37 8 C22 16 11 31 16 48 C19 58 27 62 35 60 C29 52 26 41 28 30 C30 21 32 15 37 8 Z" fill="${G}" stroke="${P.edge}" stroke-width="1"/>`;
   // Zacken an der Außenkante
-  b += `<path d="M14 28 l-6 -1 l5 5 Z M15 18 l-6 1 l5 4 Z M15 38 l-5 3 l5 2 Z" fill="${P.dk}"/>`;
-  // innerer Glanz
-  b += `<path d="M30 47 C20 37 11 27 16 13" stroke="${P.hi}" stroke-width="1.3" fill="none" opacity="0.75"/>`;
-  // unterer Haken (Rückklinge)
-  b += `<path d="M34 54 C31 61 25 63 25 63 C29 59 32 57 35 51 Z" fill="${G}" stroke="${P.edge}" stroke-width="0.9"/>`;
-  // zentrales goldenes Medaillon (Griffpunkt)
-  b += `<circle cx="32" cy="51" r="7" fill="${GOLD}" stroke="${shade(GOLD,0.62)}" stroke-width="1.2"/>`+
-       star(32,51,4.4,1.8,5,'#fff4cf',0.95)+`<circle cx="32" cy="51" r="1.8" fill="#3a2a6a"/>`;
+  b += `<path d="M13 26 l-6 -1 l5 5 Z M14 38 l-6 1 l5 4 Z M14 16 l-5 -2 l5 5 Z" fill="${P.dk}"/>`;
+  // innerer Schneiden-Glanz
+  b += `<path d="M35 11 C30 22 27 33 29 44 C30 52 33 57 35 59" stroke="${P.hi}" stroke-width="1.2" fill="none" opacity="0.72"/>`;
+  // zentraler goldener Hub (Griffpunkt, mittig)
+  b += `<circle cx="28" cy="33" r="6.6" fill="${GOLD}" stroke="${shade(GOLD,0.62)}" stroke-width="1.2"/>`+
+       star(28,33,4.3,1.7,5,'#fff4cf',0.95)+`<circle cx="28" cy="33" r="1.7" fill="#3a2a6a"/>`;
   return iconWrap(uid, reg, b);
 }
 
@@ -116,7 +114,8 @@ function icon_stachel(uid, reg){
 // Feuerstab: dunkler Schaft, gebogene Klingen, Glutkern.
 function icon_inferno(uid, reg){
   const P = PAL.inferno;
-  let b = `<ellipse cx="32" cy="16" rx="16" ry="15" fill="${P.glow}" opacity="0.22"/>`;
+  let b = `<ellipse cx="32" cy="16" rx="18" ry="17" fill="${P.smoke}" opacity="0.55"/>`+
+          `<ellipse cx="32" cy="16" rx="13" ry="12" fill="${P.glow}" opacity="0.18"/>`;
   // Schaft
   b += `<rect x="30" y="20" width="4" height="40" rx="1.5" fill="${reg.grad(P.wood)}"/>`+
        `<rect x="29" y="30" width="6" height="3" rx="1" fill="${P.metal}"/><rect x="29" y="44" width="6" height="3" rx="1" fill="${P.metal}"/>`;
@@ -124,13 +123,14 @@ function icon_inferno(uid, reg){
   b += `<path d="M32 18 Q16 14 12 26 Q24 20 31 24 Z" fill="${P.metal}" stroke="${P.dk}" stroke-width="1"/>`+
        `<path d="M32 18 Q48 14 52 26 Q40 20 33 24 Z" fill="${P.metal}" stroke="${P.dk}" stroke-width="1"/>`+
        `<path d="M32 8 L28 16 L36 16 Z" fill="${P.metal}" stroke="${P.dk}" stroke-width="1"/>`;
-  // Glutkern (Ring + Kern)
-  b += `<circle cx="32" cy="17" r="8" fill="${P.edge}" opacity="0.5"/>`+
-       `<circle cx="32" cy="17" r="6" fill="${P.glow}"/>`+
-       `<circle cx="32" cy="17" r="3.2" fill="${P.core}"/>`+
-       `<circle cx="30" cy="15" r="1.4" fill="#fff" opacity="0.8"/>`;
-  // Flammenzungen
-  b += `<path d="M32 9 Q30 5 32 2 Q34 5 32 9 Z" fill="${P.core}" opacity="0.9"/>`;
+  // verglimmender Glutkern (dunkle Fassung → tiefes Ember, kleiner heißer Kern)
+  b += `<circle cx="32" cy="17" r="8.5" fill="${P.dk}"/>`+
+       `<circle cx="32" cy="17" r="6.4" fill="${P.edge}" opacity="0.8"/>`+
+       `<circle cx="32" cy="17" r="4.2" fill="${P.glow}"/>`+
+       `<circle cx="32" cy="17" r="2.1" fill="${P.core}"/>`+
+       `<circle cx="30.6" cy="15.6" r="1" fill="#ffb070" opacity="0.65"/>`;
+  // dunkle Flammenzunge (gedämpft)
+  b += `<path d="M32 9 Q30 5 32 2 Q34 5 32 9 Z" fill="${P.glow}" opacity="0.85"/>`;
   // Knauf
   b += `<circle cx="32" cy="60" r="3.2" fill="${P.metal}"/>`;
   return iconWrap(uid, reg, b);
@@ -192,18 +192,17 @@ function heldWrap(inner, uid, opt, defaultTilt, baseScale){
 // Zentrum bei (hx,194)). Wird in der Nebenhand gespiegelt (echtes Paar).
 function held_zwillinge(hx, uid){
   const P = PAL.zwillinge;
-  let g = `<ellipse cx="${hx}" cy="160" rx="22" ry="58" fill="${P.base}" opacity="0.16"/>`;
-  // große obere Sichelklinge (kräftige Auswärts-Kurve, hakt zur Spitze ein)
-  g += `<path d="M${hx-3} 190 C${hx-16} 162 ${hx-30} 138 ${hx-26} 104 `+
-       `C${hx-24} 92 ${hx-13} 86 ${hx-6} 94 C${hx-12} 100 ${hx-15} 110 ${hx-14} 122 `+
-       `C${hx-11} 152 ${hx-2} 172 ${hx+4} 190 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.5"/>`;
-  // Zacken/Barben an der Außenkante der Oberklinge
-  g += `<path d="M${hx-27} 150 l-9 -2 l8 6 Z M${hx-28} 128 l-9 1 l8 5 Z M${hx-24} 168 l-8 3 l8 3 Z" fill="${P.dk}"/>`;
-  // innerer Schneiden-Glanz
-  g += `<path d="M${hx-2} 186 C${hx-14} 160 ${hx-26} 138 ${hx-22} 108" stroke="${P.hi}" stroke-width="1.7" fill="none" opacity="0.75"/>`;
-  // kleinerer unterer Haken (Rückklinge)
-  g += `<path d="M${hx+3} 200 C${hx-2} 222 ${hx-13} 232 ${hx-13} 244 `+
-       `C${hx-6} 238 ${hx} 228 ${hx+6} 210 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.3"/>`;
+  // EINE durchgehende Sichel (C-Form), nach AUSSEN gebogen (komplett auf der
+  // Außenseite der Hand → Gesicht bleibt frei). Goldener Hub in der Bogenmitte
+  // (mittig gegriffen, wie Illidan). Nebenhand wird gespiegelt (buildSpecialHeld).
+  let g = `<ellipse cx="${hx+14}" cy="186" rx="26" ry="62" fill="${P.base}" opacity="0.14"/>`;
+  g += `<path d="M${hx-2} 128 C${hx+17} 148 ${hx+31} 184 ${hx+20} 221 `+
+       `C${hx+14} 237 ${hx+5} 245 ${hx-5} 243 C${hx+3} 226 ${hx+6} 210 ${hx+4} 194 `+
+       `C${hx+3} 170 ${hx+2} 149 ${hx-2} 128 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.5"/>`;
+  // Zacken an der Außenkante (Bogen-Außenseite)
+  g += `<path d="M${hx+31} 182 l9 -1 l-8 6 Z M${hx+29} 159 l9 -3 l-7 7 Z M${hx+24} 206 l8 2 l-8 3 Z" fill="${P.dk}"/>`;
+  // innerer Schneiden-Glanz entlang der Hohlkante
+  g += `<path d="M${hx-1} 132 C${hx+13} 151 ${hx+25} 184 ${hx+15} 218" stroke="${P.hi}" stroke-width="1.7" fill="none" opacity="0.7"/>`;
   // zentraler goldener Hub = Griffpunkt (Hand liegt mittig darüber)
   g += `<circle cx="${hx}" cy="194" r="10" fill="${GOLD}" stroke="${shade(GOLD,0.6)}" stroke-width="1.6"/>`+
        `<circle cx="${hx}" cy="194" r="10" fill="none" stroke="${shade(GOLD,1.25)}" stroke-width="1" opacity="0.7"/>`+
@@ -232,8 +231,9 @@ function held_frost(hx, uid){
 function held_inferno(hx, uid){
   const P = PAL.inferno;
   const oy = 116;
-  let g = `<ellipse cx="${hx}" cy="${oy}" rx="20" ry="20" fill="${P.glow}" opacity="0.22"/>`+
-          `<ellipse cx="${hx}" cy="${oy}" rx="13" ry="13" fill="${P.glow}" opacity="0.30"/>`;
+  let g = `<ellipse cx="${hx}" cy="${oy}" rx="24" ry="26" fill="${P.smoke}" opacity="0.6"/>`+
+          `<ellipse cx="${hx}" cy="${oy}" rx="18" ry="18" fill="${P.glow}" opacity="0.15"/>`+
+          `<ellipse cx="${hx}" cy="${oy}" rx="11" ry="11" fill="${P.glow}" opacity="0.22"/>`;
   // Schaft
   g += `<rect x="${hx-2.5}" y="${oy+6}" width="5" height="${204-(oy+6)}" rx="2.5" fill="${P.wood}"/>`+
        `<rect x="${hx-4}" y="160" width="8" height="3" rx="1" fill="${P.metal}"/>`+
@@ -242,11 +242,12 @@ function held_inferno(hx, uid){
   g += `<path d="M${hx} ${oy} Q${hx-22} ${oy-6} ${hx-28} ${oy+12} Q${hx-12} ${oy} ${hx-2} ${oy+6} Z" fill="${P.metal}" stroke="${P.dk}" stroke-width="1.2"/>`+
        `<path d="M${hx} ${oy} Q${hx+22} ${oy-6} ${hx+28} ${oy+12} Q${hx+12} ${oy} ${hx+2} ${oy+6} Z" fill="${P.metal}" stroke="${P.dk}" stroke-width="1.2"/>`+
        `<path d="M${hx} ${oy-16} L${hx-5} ${oy-4} L${hx+5} ${oy-4} Z" fill="${P.metal}" stroke="${P.dk}" stroke-width="1.2"/>`;
-  // Glutkern
-  g += `<circle cx="${hx}" cy="${oy}" r="9" fill="${P.edge}" opacity="0.55"/>`+
-       `<circle cx="${hx}" cy="${oy}" r="6.5" fill="${P.glow}"/>`+
-       `<circle cx="${hx}" cy="${oy}" r="3.4" fill="${P.core}"/>`+
-       `<circle cx="${hx-2}" cy="${oy-2}" r="1.5" fill="#fff" opacity="0.85"/>`;
+  // verglimmender Glutkern: dunkle Fassung, tiefes Ember, kleiner heißer Kern
+  g += `<circle cx="${hx}" cy="${oy}" r="10" fill="${P.dk}"/>`+
+       `<circle cx="${hx}" cy="${oy}" r="7.4" fill="${P.edge}" opacity="0.82"/>`+
+       `<circle cx="${hx}" cy="${oy}" r="5" fill="${P.glow}"/>`+
+       `<circle cx="${hx}" cy="${oy}" r="2.6" fill="${P.core}"/>`+
+       `<circle cx="${hx-1.6}" cy="${oy-1.6}" r="1.1" fill="#ffb070" opacity="0.6"/>`;
   return g;
 }
 
@@ -273,11 +274,12 @@ function held_engel(hx, uid){
   return g;
 }
 
+// tilt: stärker nach außen gekippt → Klingen/Köpfe weg vom Gesicht.
 const HELD = {
-  zwillinge: { build: held_zwillinge, tilt: 12, scale: 1.55 },
-  frost:     { build: held_frost,     tilt: 14, scale: 1.55 },
-  inferno:   { build: held_inferno,   tilt: 6,  scale: 1.4  },
-  engel:     { build: held_engel,     tilt: 6,  scale: 1.4  },
+  zwillinge: { build: held_zwillinge, tilt: 16, scale: 1.3 },
+  frost:     { build: held_frost,     tilt: 22, scale: 1.5 },
+  inferno:   { build: held_inferno,   tilt: 18, scale: 1.4 },
+  engel:     { build: held_engel,     tilt: 18, scale: 1.4 },
 };
 
 // Getragene Spezialwaffe (Haupthand oder Schurken-Nebenhand-Klinge).
