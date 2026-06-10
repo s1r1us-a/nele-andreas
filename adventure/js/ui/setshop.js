@@ -7,8 +7,8 @@
 import { state } from '../core/state.js';
 import { classOf, classLabelOf } from '../data/classes.js';
 import { SLOTS, SLOT_ICON } from '../data/slots.js';
-import { SET_SLOTS, SET_TOKEN, SET_TOKEN_CAP, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
-import { getSetTokens, buySetPiece, ownsSetPiece, activeSetInfo, previewSetPiece, setPieceIlvl } from '../core/sets.js';
+import { SET_SLOTS, SET_TOKEN, SET_TOKEN_CAP, setsForClass, setPieceCost, setPieceName } from '../data/sets.js';
+import { getSetTokens, buySetPiece, ownsSetPiece, setInfo, previewSetPiece, setPieceIlvl } from '../core/sets.js';
 import { shopWeaponsForClass } from '../data/shopweapons.js';
 import { buyShopWeapon, ownsShopWeapon, previewShopWeapon } from '../core/shopweapons.js';
 import { buildItemSVG, elementOf } from '../core/item-art.js';
@@ -27,53 +27,15 @@ function isEquipped(setId, slotKey){
   return Object.values(state.equipped||{}).some(it => it && it.setId===setId && it.setSlot===slotKey);
 }
 
-export function renderSetShop(){
-  const panel = $('#setShopPanel');
-  if(!panel) return;
-  panel.classList.add('setshop-room');
-  panel.innerHTML = '';
+// Ein kompletter Set-Abschnitt: Überschrift + Boni-Karte + 7-Teile-Grid + Kauf.
+function renderSetSection(panel, set, tokens){
+  const head = document.createElement('h3');
+  head.className = 'setshop-set-head';
+  head.style.color = set.accent;
+  head.innerHTML = '⚜️ '+set.name;
+  panel.appendChild(head);
 
-  if(!state || !state.character){
-    const hint = document.createElement('p');
-    hint.className = 'inv-hint';
-    hint.textContent = 'Erstelle zuerst einen Charakter, um dein Klassen-Set freizuschalten.';
-    panel.appendChild(hint);
-    return;
-  }
-
-  const set = setForClass(classOf(state).id);
-  const tokens = getSetTokens();
-
-  // ---- Banner -------------------------------------------------------
-  const banner = document.createElement('div');
-  banner.className = 'setshop-banner theme-'+(set ? set.themeKey : 'molten');
-  banner.innerHTML =
-    '<div class="ss-embers" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'+
-    '<div class="ss-row">'+
-      '<span class="ss-crest">⚜️</span>'+
-      '<div class="ss-titles"><h2 class="ss-title">Set-Händler</h2>'+
-        '<div class="ss-sub">Tribut · Macht · Klassen-Sets</div></div>'+
-      '<span class="ss-tokens'+(tokens>=SET_TOKEN_CAP?' ss-tokens-max':'')+'" title="Maximal '+SET_TOKEN_CAP+' Tribut-Siegel">'+SET_TOKEN.icon+' '+fmtBig(tokens)+' / '+SET_TOKEN_CAP+'</span>'+
-    '</div>';
-  panel.appendChild(banner);
-
-  if(!set){
-    const hint = document.createElement('p');
-    hint.className = 'inv-hint';
-    hint.textContent = 'Wähle zuerst eine Klasse, um dein Klassen-Set freizuschalten.';
-    panel.appendChild(hint);
-    return;
-  }
-
-  const note = document.createElement('p');
-  note.className = 'forge-note';
-  note.innerHTML = '⚜️ Sammle <b>Tribut-Siegel</b> durch Bosssiege und kaufe hier die 7 Teile des <b>'+set.name+
-    '</b>-Sets deiner Klasse ('+classLabelOf(state)+'). Set-Teile sind <b>Legendär</b> – in der Schmiede '+
-    '<b>unbegrenzt</b> aufwertbar.';
-  panel.appendChild(note);
-
-  // ---- Set-Boni-Übersicht ------------------------------------------
-  const info = activeSetInfo(state);
+  const info = setInfo(state, set);
   const bonusCard = document.createElement('div');
   bonusCard.className = 'setshop-bonus';
   bonusCard.innerHTML =
@@ -89,7 +51,6 @@ export function renderSetShop(){
     '</div>';
   panel.appendChild(bonusCard);
 
-  // ---- Set-Teile-Grid ----------------------------------------------
   const grid = document.createElement('div');
   grid.className = 'setshop-grid';
   for(const slotKey of SET_SLOTS){
@@ -102,7 +63,7 @@ export function renderSetShop(){
     let btn;
     if(equipped)   btn = '<button class="btn ghost" disabled>🎽 Angelegt</button>';
     else if(owned) btn = '<button class="btn ghost" disabled>✓ Im Besitz</button>';
-    else btn = '<button class="btn ss-buy" data-slot="'+slotKey+'"'+(afford?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>'+
+    else btn = '<button class="btn ss-buy" data-set="'+set.id+'" data-slot="'+slotKey+'"'+(afford?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>'+
                SET_TOKEN.icon+' '+cost+' kaufen</button>';
     cell.innerHTML =
       '<div class="ss-icon"><img src="'+previewSprite(set, slotKey)+'" alt="'+setPieceName(set, slotKey)+'">'+
@@ -112,21 +73,19 @@ export function renderSetShop(){
       btn;
     grid.appendChild(cell);
 
-    // Stats wie bei normalen Items anzeigen (Hover + Tap/Klick): Vorschau-Item
-    // mit den deterministischen Werten – inkl. der festen Affixe, die man beim Kauf erhält.
     const preview = previewSetPiece(set.id, slotKey, setPieceIlvl(state));
     if(preview){
       const focus = AFFIX_DEFS[set.flavorAffix];
-      const note = (focus ? '🎯 Fokus: '+focus.label+' · ' : '')+'⚜️ Feste Affixe';
+      const tnote = (focus ? '🎯 Fokus: '+focus.label+' · ' : '')+'⚜️ Feste Affixe';
       cell.classList.add('ss-has-tip');
-      bindTooltip(cell, preview, { tap:true, note });
+      bindTooltip(cell, preview, { tap:true, note:tnote });
     }
   }
   panel.appendChild(grid);
 
   grid.querySelectorAll('.ss-buy').forEach(b => b.addEventListener('click', async ()=>{
     b.disabled = true;
-    const res = buySetPiece(b.dataset.slot);
+    const res = buySetPiece(b.dataset.set, b.dataset.slot);
     if(res.ok){
       toast('⚜️ '+res.item.name+' erworben! Im Inventar bereit zum Anlegen.');
       const { renderAll } = await import('./render.js');
@@ -134,10 +93,60 @@ export function renderSetShop(){
     } else {
       if(res.reason === 'tokens') toast('⚜️ Nicht genug Tribut-Siegel.');
       else if(res.reason === 'owned') toast('Du besitzt dieses Teil bereits.');
+      else if(res.reason === 'class') toast('Dieses Set gehört einer anderen Klasse.');
       else toast('Kauf nicht möglich.');
       b.disabled = false;
     }
   }));
+}
+
+export function renderSetShop(){
+  const panel = $('#setShopPanel');
+  if(!panel) return;
+  panel.classList.add('setshop-room');
+  panel.innerHTML = '';
+
+  if(!state || !state.character){
+    const hint = document.createElement('p');
+    hint.className = 'inv-hint';
+    hint.textContent = 'Erstelle zuerst einen Charakter, um dein Klassen-Set freizuschalten.';
+    panel.appendChild(hint);
+    return;
+  }
+
+  const sets = setsForClass(classOf(state).id);
+  const tokens = getSetTokens();
+
+  // ---- Banner -------------------------------------------------------
+  const banner = document.createElement('div');
+  banner.className = 'setshop-banner theme-'+(sets[0] ? sets[0].themeKey : 'molten');
+  banner.innerHTML =
+    '<div class="ss-embers" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'+
+    '<div class="ss-row">'+
+      '<span class="ss-crest">⚜️</span>'+
+      '<div class="ss-titles"><h2 class="ss-title">Set-Händler</h2>'+
+        '<div class="ss-sub">Tribut · Macht · Klassen-Sets</div></div>'+
+      '<span class="ss-tokens'+(tokens>=SET_TOKEN_CAP?' ss-tokens-max':'')+'" title="Maximal '+SET_TOKEN_CAP+' Tribut-Siegel">'+SET_TOKEN.icon+' '+fmtBig(tokens)+' / '+SET_TOKEN_CAP+'</span>'+
+    '</div>';
+  panel.appendChild(banner);
+
+  if(!sets.length){
+    const hint = document.createElement('p');
+    hint.className = 'inv-hint';
+    hint.textContent = 'Wähle zuerst eine Klasse, um deine Klassen-Sets freizuschalten.';
+    panel.appendChild(hint);
+    return;
+  }
+
+  const note = document.createElement('p');
+  note.className = 'forge-note';
+  note.innerHTML = '⚜️ Sammle <b>Tribut-Siegel</b> durch Bosssiege und wähle eines der <b>'+sets.length+
+    '</b> Klassen-Sets deiner Klasse ('+classLabelOf(state)+'). Set-Teile sind <b>Legendär</b> – in der Schmiede '+
+    '<b>unbegrenzt</b> aufwertbar.';
+  panel.appendChild(note);
+
+  // Ein Set-Abschnitt (Überschrift + Boni + 7-Teile-Grid) je Klassen-Set.
+  for(const set of sets) renderSetSection(panel, set, tokens);
 
   // ---- Spezial-Waffen-Bereich --------------------------------------
   // Klassengebundene Legendär-Waffen (Einmalkauf gegen Tribut-Siegel).

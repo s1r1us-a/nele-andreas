@@ -15,7 +15,7 @@ const ANIM = !REDUCED_MOTION;
 import { typeOf } from '../data/itemTypes.js';
 import { dyeColorOf } from '../data/dyes.js';
 import { setOf, setThemeOf } from '../data/sets.js';
-import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette } from './set-art.js';
+import { setShoulder, setHelmCrest, setChestEmblem, setBaseColor, setPalette, setMacroFX } from './set-art.js';
 import { buildSpecialHeld, buildSpecialShield, buildSpecialOffhandOrb } from './weapon-art.js';
 import { state } from './state.js';
 
@@ -241,8 +241,13 @@ export function buildHeroSVG(character, tier, gear){
       `<stop offset="0" stop-color="${hch}"/><stop offset="0.5" stop-color="${hc}"/><stop offset="1" stop-color="${hcd}"/></linearGradient>`+
     `<linearGradient id="bd${uid}" x1="0" y1="0" x2="0" y2="1">`+
       `<stop offset="0" stop-color="${bch}"/><stop offset="0.55" stop-color="${bc}"/><stop offset="1" stop-color="${bcd}"/></linearGradient>`+
+    // Set-Träger: KEIN Aufhellen oben → Kleider/Röcke treffen den dunklen Set-Ton
+    // der Hosen (sonst wirken die Röcke heller als der Rest). Ohne Set: wie bisher.
     `<linearGradient id="ou${uid}" x1="0" y1="0" x2="0" y2="1">`+
-      `<stop offset="0" stop-color="${shade(outfit,1.16)}"/><stop offset="0.55" stop-color="${outfit}"/><stop offset="1" stop-color="${outfitSh}"/></linearGradient>`+
+      (bodyTint
+        ? `<stop offset="0" stop-color="${outfitSh}"/><stop offset="0.6" stop-color="${shade(outfit,0.6)}"/><stop offset="1" stop-color="${shade(outfit,0.5)}"/>`
+        : `<stop offset="0" stop-color="${shade(outfit,1.16)}"/><stop offset="0.55" stop-color="${outfit}"/><stop offset="1" stop-color="${outfitSh}"/>`)+
+      `</linearGradient>`+
     `<linearGradient id="tr${uid}" x1="0" y1="0" x2="0" y2="1">`+
       `<stop offset="0" stop-color="${shade(trim,1.1)}"/><stop offset="1" stop-color="${shade(trim,0.8)}"/></linearGradient>`+
     `<radialGradient id="au${uid}" cx="50%" cy="50%" r="50%">`+
@@ -417,6 +422,16 @@ export function buildHeroSVG(character, tier, gear){
   // Sichtbare Kopfbedeckung → Haare ausblenden (kein „Durchglitchen" durch den Helm).
   const helmVisible = !!(eq.kopf && !hideHelmet);
 
+  // Set-Makro-Effekte (Aura/Bodenkreis/Rückenteil) – skaliert mit der Anzahl
+  // getragener Teile des dominanten Sets (2/4/6/7 → Stufe 1/2/3/4).
+  const _setCounts = {};
+  for(const it of Object.values(eq)) if(it && it.setId) _setCounts[it.setId] = (_setCounts[it.setId]||0)+1;
+  let _domSet = null, _domN = 0;
+  for(const id in _setCounts) if(_setCounts[id] > _domN){ _domN = _setCounts[id]; _domSet = id; }
+  const macroTheme = _domSet ? setThemeOf(Object.values(eq).find(it => it && it.setId===_domSet)) : null;
+  const setLvl = _domN>=7 ? 4 : _domN>=6 ? 3 : _domN>=4 ? 2 : _domN>=2 ? 1 : 0;
+  const macroFX = (macroTheme && setLvl>0) ? setMacroFX(macroTheme, setLvl, gender) : '';
+
   // Umhang (sonst Tier-Cape)
   const um = eq.umhang;
   const cloak = um
@@ -586,7 +601,7 @@ export function buildHeroSVG(character, tier, gear){
     // Set-Aufsatz (Hörner / Halo / Geweih + glühende Augen) über dem Helm.
     const _kt = setThemeOf(kp);
     if(_kt){
-      const pos = _kt==='holy' ? [100,24,2.2] : _kt==='molten' ? [100,40,2.0] : [100,80,1.7];
+      const pos = _kt==='holy' ? [100,24,2.2] : (_kt==='molten' || _kt==='azure') ? [100,40,2.0] : [100,80,1.7];
       helm += setHelmCrest(_kt, pos[0], pos[1], pos[2]);
     }
   }
@@ -630,7 +645,7 @@ export function buildHeroSVG(character, tier, gear){
     pauldronCS + head + face + beard + (helmVisible ? '' : hairFront) + helmCS + schild + weaponSway;
   const heroGroup = ANIM ? `<g id="hero${uid}">${figure}</g>` : figure;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+
-    defs + xtra + styleBlock + groundShadow + heroGroup +
+    defs + xtra + styleBlock + groundShadow + macroFX + heroGroup +
     `</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }

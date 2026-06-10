@@ -2203,8 +2203,8 @@ body.forge-shake { animation:forgeShake .42s ease; }
 .setshop-bonus .ssb-need { color:var(--gold); font-weight:800; }
 .setshop-bonus .ssb-on { float:right; color:#37d67a; font-weight:800; font-size:12px; }
 
-/* Waffen-Bereich (Spezial-Waffen) */
-.setshop-weapons-head { font-family:'Cinzel',serif; font-weight:800; font-size:18px;
+/* Abschnitts-Überschriften (Set-Abschnitt & Waffen-Bereich) */
+.setshop-weapons-head, .setshop-set-head { font-family:'Cinzel',serif; font-weight:800; font-size:18px;
   margin:20px 0 6px; color:var(--gold); }
 
 /* Teile-Grid */
