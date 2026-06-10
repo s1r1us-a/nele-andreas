@@ -10,7 +10,7 @@
      void        (Hexer)       – Leeren-Robe, Geweih-Dornen, glühende Augen
      holy        (Heiler)      – Lichtrobe, Heiligenschein, Federschultern
    ===================================================================== */
-import { mirror64, dirGrad, star, facetGem, REDUCED_MOTION } from './svg-fx.js';
+import { shade, mirror64, dirGrad, star, facetGem, REDUCED_MOTION } from './svg-fx.js';
 
 const f = n => (Math.round(n*10)/10);
 
@@ -61,45 +61,64 @@ export function setGlowFilter(id, color, strength){
    cx,cy = Ankerpunkt, s = Skalierung (1 ≈ Icon-Maßstab).
    --------------------------------------------------------------------- */
 
-// Eine Schulter-Verzierung (zeigt nach oben-außen, +x = außen).
+// Eine Schulter-Verzierung (zeigt nach oben-außen, +x = außen). Bewusst
+// ausladend & mehrlagig: weicher Glow → Spike-Fächer → Pauldron-Sockel →
+// glühende Akzent-Kerne/Flammen obendrauf (Theme-spezifisch).
 export function setShoulder(themeKey, cx, cy, s){
   const P = setPalette(themeKey);
-  const cap = `<path d="M${-13} ${5} Q${-15} ${-9} ${1} ${-11} Q${16} ${-11} ${17} ${3} Q${15} ${12} ${0} ${12} Q${-10} ${11} ${-13} ${5} Z" `+
-              `fill="${P.plate}" stroke="${P.edge}" stroke-width="1.3"/>`+
-              `<path d="M${-9} ${-5} Q${0} ${-9} ${11} ${-4}" fill="none" stroke="${P.accent}" stroke-width="1.2" opacity="0.8"/>`;
-  let spikes = '';
-  if(themeKey === 'molten'){
-    spikes = bladeSpike(-4,-6,-108,22,7,P.metal,P.edge,3)+
-             bladeSpike(3,-8,-78,30,8,P.plate,P.edge,5)+
-             bladeSpike(11,-5,-52,24,7,P.metal,P.edge,5)+
-             // glühende Kanten
-             bladeSpike(3,-8,-78,30,3.2,P.accent,null,5)+
-             bladeSpike(11,-5,-52,24,2.6,P.accent,null,5)+
-             flameTongue(3,-34,9,P.glow,P.accent2)+flameTongue(12,-26,7,P.glow,P.accent2)+flameTongue(-5,-25,6,P.glow,P.accent2);
-  } else if(themeKey === 'bloodshadow'){
-    spikes = bladeSpike(-3,-6,-112,26,5,P.plate,P.edge,2)+
-             bladeSpike(4,-8,-82,34,6,P.metal,P.edge,4)+
-             bladeSpike(12,-5,-58,28,5,P.plate,P.edge,4)+
-             bladeSpike(4,-8,-82,34,2.2,P.accent,null,4)+
-             bladeSpike(12,-5,-58,28,2,P.accent,null,4)+
-             bladeSpike(-3,-6,-112,26,1.8,P.accent,null,2);
-  } else if(themeKey === 'void'){
-    // Geweih-Dornen (gegabelt) + Rune
-    spikes = bladeSpike(-2,-6,-100,24,4.5,P.plate,P.edge,5)+
-             bladeSpike(-6,-18,-128,12,3,P.plate,P.edge,3)+
-             bladeSpike(5,-7,-74,30,5,P.metal,P.edge,7)+
-             bladeSpike(10,-20,-58,12,3,P.plate,P.edge,4)+
-             bladeSpike(5,-7,-74,30,2,P.accent,null,7)+
-             `<circle cx="3" cy="-12" r="2.4" fill="${P.glow}"/><circle cx="3" cy="-12" r="1.2" fill="#fff"/>`;
-  } else { // holy – Federflügel + Halo-Bogen
-    spikes = bladeSpike(-4,-4,-120,20,8,P.base,P.edge,6)+
-             bladeSpike(2,-6,-95,26,9,'#ffffff',P.edge,8)+
-             bladeSpike(9,-4,-68,22,8,P.base,P.edge,8)+
-             // Federkiele
-             `<path d="M2 -6 Q1 -16 0 -30" stroke="${P.accent}" stroke-width="1" fill="none" opacity="0.7"/>`+
-             `<path d="M-12 -22 Q0 -30 12 -22" fill="none" stroke="${P.accent2}" stroke-width="1.6" opacity="0.85"/>`;
+  const hi = shade(P.plate,1.3), dk = shade(P.plate,0.62);
+  // weicher Set-Glow hinter der Schulter (ohne Filter → überall lauffähig)
+  const glow = `<ellipse cx="3" cy="-8" rx="22" ry="17" fill="${P.glow}" opacity="0.14"/>`;
+  // mehrlagiger Pauldron-Sockel (Verlauf per shade-Schichten)
+  const cap =
+    `<path d="M-18 8 Q-22 -12 4 -15 Q25 -15 27 6 Q23 18 2 18 Q-13 17 -18 8 Z" fill="${dk}" stroke="${P.edge}" stroke-width="1.5"/>`+
+    `<path d="M-13 3 Q-16 -10 4 -12 Q20 -12 22 3 Q18 11 2 12 Q-9 11 -13 3 Z" fill="${P.plate}"/>`+
+    `<path d="M-9 -3 Q2 -9 14 -4" fill="none" stroke="${hi}" stroke-width="1.8" opacity="0.75"/>`+
+    `<path d="M-11 6 Q3 12 19 6" fill="none" stroke="${P.accent}" stroke-width="1.4" opacity="0.9"/>`;
+
+  // Theme-spezifischer, weit aufgefächerter Aufbau.
+  let behind = '', front = '';
+  if(themeKey === 'holy'){
+    // breit aufgefächerte Federflügel (weich) statt Metallspikes
+    behind =
+      bladeSpike(0,-6,-152,34,15,P.base,P.edge,9)+
+      bladeSpike(2,-7,-126,40,17,'#ffffff',P.edge,10)+
+      bladeSpike(3,-8,-96,44,18,P.base,P.edge,9)+
+      bladeSpike(6,-7,-62,40,17,'#ffffff',P.edge,10)+
+      bladeSpike(9,-6,-32,34,15,P.base,P.edge,9);
+    front =
+      `<path d="M3 -8 Q2 -26 1 -46" stroke="${P.accent}" stroke-width="1.3" fill="none" opacity="0.7"/>`+
+      `<path d="M-18 -28 Q3 -44 24 -28" fill="none" stroke="${P.accent2}" stroke-width="2" opacity="0.9"/>`+
+      star(3,-30,4,1.5,4,'#fff',0.9);
+  } else {
+    // breiter Spike-Fächer (5 Hauptklingen) – weit ausladend
+    const fan = [ {a:-152,l:36,w:7.5},{a:-124,l:43,w:9},{a:-94,l:47,w:11},{a:-60,l:43,w:9.5},{a:-30,l:36,w:8} ];
+    let spikes='', cores='';
+    for(const k of fan){
+      spikes += bladeSpike(3,-8,k.a,k.l,k.w, P.metal, P.edge, 4);
+      cores  += bladeSpike(3,-8,k.a,k.l,k.w*0.34, P.accent, null, 4);
+    }
+    // kleine Sekundärspikes in den Lücken
+    spikes += bladeSpike(-1,-6,-108,20,4.5,P.plate,P.edge,3)+bladeSpike(8,-6,-46,18,4.5,P.plate,P.edge,3);
+    behind = spikes;
+    front = cores;
+    if(themeKey === 'molten'){
+      front += flameTongue(3,-54,13,P.glow,P.accent2)+flameTongue(-16,-42,9,P.glow,P.accent2)+
+               flameTongue(20,-42,9,P.glow,P.accent2)+flameTongue(-30,-26,7,P.glow,P.accent2)+flameTongue(33,-26,7,P.glow,P.accent2)+
+               `<path d="M-9 1 L-3 -7 M3 3 L8 -6 M12 0 L17 -8" stroke="${P.emissive}" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/>`;
+    } else if(themeKey === 'bloodshadow'){
+      front += bladeSpike(3,-8,-168,42,6,P.plate,P.edge,3)+bladeSpike(3,-8,-168,42,2,P.accent,null,3)+
+               bladeSpike(3,-8,-12,38,6,P.plate,P.edge,-3)+bladeSpike(3,-8,-12,38,2,P.accent,null,-3)+
+               `<path d="M-13 5 Q3 11 18 5" fill="none" stroke="${P.glow}" stroke-width="1.1" opacity="0.6"/>`;
+    } else if(themeKey === 'void'){
+      // Gabelungen an den äußeren Geweihspitzen + schwebende Rune
+      front += bladeSpike(-11,-34,-150,16,3.4,P.metal,P.edge,3)+bladeSpike(16,-30,-44,16,3.4,P.metal,P.edge,3)+
+               bladeSpike(-2,-40,-118,13,3,P.metal,P.edge,3)+bladeSpike(9,-40,-66,13,3,P.metal,P.edge,3)+
+               `<circle cx="4" cy="-16" r="3.4" fill="${P.glow}"/><circle cx="4" cy="-16" r="1.6" fill="#fff"/>`+
+               star(4,-16,5.5,2,4,P.accent2,0.85);
+    }
   }
-  return `<g transform="translate(${f(cx)} ${f(cy)}) scale(${s})">${cap}${spikes}</g>`;
+  return `<g transform="translate(${f(cx)} ${f(cy)}) scale(${s})">${glow}${behind}${cap}${front}</g>`;
 }
 
 // Helm-Aufsatz (Hörner / Kapuzenspitze / Halo) über dem Kopf, zentriert (cx,cy).
@@ -160,7 +179,7 @@ export function buildSetIcon(art, themeKey, rarityKey){
   let body = '';
 
   if(art === 'schultern'){
-    body = mirror64(setShoulder(themeKey, 22, 36, 1.05));
+    body = mirror64(setShoulder(themeKey, 19, 48, 0.78));
   } else if(art === 'kopf'){
     // Themen-Helm/Kapuze + Aufsatz
     if(themeKey === 'molten'){

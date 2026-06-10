@@ -509,7 +509,7 @@ export function buildHeroSVG(character, tier, gear){
   const shp_ = eq.schultern;
   const _st = shp_ && setThemeOf(shp_);
   const pauldronG = _st
-    ? mirror(setShoulder(_st, 126, 130, 1.6))
+    ? mirror(setShoulder(_st, 140, 124, 1.6))
     : (shp_
       ? mirror(`<ellipse cx="120" cy="133" rx="16" ry="11" fill="${grad(matOf(shp_))}" stroke="${shade(matOf(shp_),0.5)}" stroke-width="1.5"/><ellipse cx="120" cy="131" rx="9" ry="5" fill="${shade(matOf(shp_),1.2)}" opacity="0.5"/>`)
       : tierPauldrons);
