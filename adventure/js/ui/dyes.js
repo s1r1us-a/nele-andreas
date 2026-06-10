@@ -93,7 +93,8 @@ export function renderDyes(){
   const note = document.createElement('p');
   note.className = 'forge-note';
   note.innerHTML = '🎨 Bosse und Abenteuer droppen <b>Farbstoffe</b>. Färbe damit deine '+
-    '<b>Rüstungsteile</b> ein – jede Färbung verbraucht einen Farbstoff, Entfernen ist gratis.';
+    '<b>Rüstungsteile</b> ein – jede Färbung verbraucht einen Farbstoff, Entfernen ist gratis. '+
+    '<b>Set-Teile</b> lassen sich nicht einfärben.';
   panel.appendChild(note);
 
   // ---- Farbstoff-Bestand -------------------------------------------

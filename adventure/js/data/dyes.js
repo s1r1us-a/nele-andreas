@@ -36,8 +36,11 @@ export function blankDyes(){
 }
 
 // Nur Rüstung ist färbbar (diese Slots beziehen ihre Farbe aus ARMOR_MAT).
+// Set-Teile sind GRUNDSÄTZLICH ausgenommen: ihr Look gehört fest zum Set (eigenes
+// Theme, das Sprite ignoriert ohnehin den Farbstoff) → sie lassen sich nie
+// einfärben. Erkennbar an item.setId (von createSetPiece gesetzt).
 export const DYEABLE_SLOTS = ['kopf','schultern','brust','haende','beine','fuesse','umhang'];
-export function isDyeable(item){ return !!item && DYEABLE_SLOTS.includes(item.slotKey); }
+export function isDyeable(item){ return !!item && !item.setId && DYEABLE_SLOTS.includes(item.slotKey); }
 
 // Override-Hex eines Items aus seinem gespeicherten Farbstoff-Key (oder null).
 export function dyeColorOf(item){
