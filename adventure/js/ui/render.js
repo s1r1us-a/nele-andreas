@@ -721,7 +721,7 @@ function renderDyesInventory(panel){
       card.className = 'consum-card dye-inv-card';
       card.innerHTML = '<div class="cc-icon"><span class="dye-swatch lg" style="background:'+d.color+'"></span></div>'+
         '<div class="cc-body"><div class="cc-name">'+d.name+'</div>'+
-        '<div class="cc-desc">Farbstoff zum Einfärben von Rüstung in der Färberei.</div></div>'+
+        '<div class="cc-desc">Farbstoff zum Einfärben von Rüstung in der Tinkturen-Werkstatt.</div></div>'+
         '<div class="cc-count">×'+fmtBig(dyeStock[d.key])+'</div>';
       dyeList.appendChild(card);
     }
@@ -735,7 +735,7 @@ function renderDyesInventory(panel){
 
   const hint = document.createElement('p');
   hint.className = 'inv-hint';
-  hint.textContent = 'Farben setzt du in der Färberei ein, um deine Rüstung einzufärben.';
+  hint.textContent = 'Farben setzt du in der Tinkturen-Werkstatt ein, um deine Rüstung einzufärben.';
   panel.appendChild(hint);
 }
 

@@ -10,7 +10,7 @@ import { materialOf, typeOf } from '../data/itemTypes.js';
 import { ATK_ELEM, weaponAtk } from '../data/attacks.js';
 import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
-import { rollDyeDrop, DYE_BY_KEY } from '../data/dyes.js';
+import { rollDyeDrop, DYE_BY_KEY, dyeTextColor } from '../data/dyes.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
 import { heroSrc, buildWeaponLayerSVG } from './avatar.js';
@@ -57,8 +57,8 @@ export function dyeCardHTML(dyeKey){
   return '<div class="arena-drop-head">🎨 Farbstoff erhalten:</div>'+
     '<div class="reward-card arena-drop dye-reward" style="--rc:'+d.color+'">'+
       '<div class="dye-reward-swatch" style="background:'+d.color+'"></div>'+
-      '<div class="rc-name" style="color:'+d.color+'">'+d.name+'</div>'+
-      '<div class="rc-slot">Farbstoff · in der Färberei einsetzbar</div>'+
+      '<div class="rc-name" style="color:'+dyeTextColor(d.color)+'">'+d.name+'</div>'+
+      '<div class="rc-slot">Farbstoff · in der Tinkturen-Werkstatt einsetzbar</div>'+
     '</div>';
 }
 
