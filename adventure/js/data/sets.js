@@ -23,7 +23,7 @@ export const SET_TOKEN = { key:'tribut', name:'Tribut-Siegel', icon:'⚜️' };
 
 // Kosten je Slot (in Tribut-Siegeln). Große Teile kosten mehr.
 export const SET_PIECE_COST = {
-  kopf:50, schultern:70, brust:80, haende:40, beine:60, fuesse:40, umhang:40,
+  kopf:150, schultern:200, brust:240, haende:120, beine:160, fuesse:120, umhang:120,
 };
 export const setPieceCost = slotKey => SET_PIECE_COST[slotKey] || 50;
 export const setFullCost = () => SET_SLOTS.reduce((s,k)=> s+setPieceCost(k), 0);
