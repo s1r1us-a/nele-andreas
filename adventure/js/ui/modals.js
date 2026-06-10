@@ -4,7 +4,8 @@
    Onboarding (#29).
    ===================================================================== */
 import { RARITIES, rarityOf, rarityIndex } from '../data/rarities.js';
-import { SLOTS, FITS, SLOT_KEYS, SLOT_ICON } from '../data/slots.js';
+import { SLOTS, FITS, SLOT_KEYS, SLOT_ICON,
+         LEFT_SLOTS, RIGHT_SLOTS, BOTTOM_SLOTS } from '../data/slots.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { GENDERS, HAIR_STYLES, HAIR_COLORS, BEARD_STYLES, SKIN_TONES, EYE_COLORS,
          DEFAULT_CHARACTER } from '../data/character-options.js';
@@ -15,7 +16,7 @@ import { expeditionOf } from '../data/expeditions.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters, createCharacter,
          switchCharacter, deleteCharacter, canAddCharacter, activeCharId } from '../core/state.js';
-import { recomputeTotals, heroTier } from '../core/character.js';
+import { recomputeTotals, heroTier, TIER_NAME } from '../core/character.js';
 import { buildHeroSVG } from '../core/avatar.js';
 import { equip, unequip, sellItem, sellPrice, itemPower, resolveTargetSlot,
          isLocked, toggleLock, canEquip, equipBlockReason, invCapacity,
@@ -421,21 +422,37 @@ export async function openOtherProfile(){
     const charName = (slot.character && slot.character.name) || clsLabel;
     const avatar = buildHeroSVG(slot.character, st.tier, { equipped: slot.equipped || {} });
 
-    // Ausrüstung (read-only) – belegte Slots als Item-Zellen, leere dezent.
-    let gear = '';
-    for(const sk of SLOT_KEYS){
+    // Ausrüstung (read-only) als Paper-Doll – identische Anordnung wie die
+    // eigene Charakterseite: Charakter mittig, Items links/rechts, Waffe &
+    // Nebenhand unten. Leere Slots dezent mit Slot-Icon.
+    const OFFHAND_EMPTY = { heiler:'🔮', hexer:'🔮', schurke:'🗡️', verteidiger:'🛡️' };
+    const opEmptyIcon = sk => sk === 'schild'
+      ? (OFFHAND_EMPTY[st.classId] || SLOT_ICON.schild)
+      : (SLOT_ICON[sk] || '');
+    const opSlot = sk => {
       const it = (slot.equipped || {})[sk];
+      const nm = SLOTS[sk] ? SLOTS[sk].name : '';
       if(it){
         ensureItemSprite(it);   // Gast-Items haben kein Sprite (stripItem beim Speichern)
         const r = rarityOf(it.rarity);
-        gear += '<div class="inv-item op-cell" style="--rc:'+r.color+'" data-rarity="'+it.rarity+'" data-op="'+sk+'">'+
+        return '<div class="slot op-cell" style="--rc:'+r.color+'" data-rarity="'+it.rarity+'" data-op="'+sk+'">'+
           '<img src="'+it.sprite+'" alt="'+(it.name||'')+'">'+
-          ((it.upgradeLevel||0)>0?'<span class="bp-upg op-upg">'+upgradeBadge(it)+'</span>':'')+'</div>';
-      } else {
-        gear += '<div class="inv-item op-empty" title="'+(SLOTS[sk]?SLOTS[sk].name:'')+'">'+
-          '<span>'+(SLOT_ICON[sk]||'')+'</span></div>';
+          ((it.upgradeLevel||0)>0?'<span class="slot-upg">'+upgradeBadge(it)+'</span>':'')+
+          '<span class="slot-name">'+nm+'</span></div>';
       }
-    }
+      return '<div class="slot op-empty">'+
+        '<span class="empty-ic">'+opEmptyIcon(sk)+'</span>'+
+        '<span class="slot-name">'+nm+'</span></div>';
+    };
+    const doll = '<div class="op-doll doll">'+
+        '<div class="col left">'+LEFT_SLOTS.map(opSlot).join('')+'</div>'+
+        '<div class="center"><div class="hero-frame">'+
+          '<span class="tier-badge">'+TIER_NAME[st.tier||0]+'</span>'+
+          '<img src="'+avatar+'" alt="">'+
+        '</div></div>'+
+        '<div class="col right">'+RIGHT_SLOTS.map(opSlot).join('')+'</div>'+
+        '<div class="bottom">'+BOTTOM_SLOTS.map(opSlot).join('')+'</div>'+
+      '</div>';
 
     let sec = '';
     if(st.lifesteal>0)   sec += row('Lebensraub', pct(st.lifesteal), 'hp');
@@ -459,16 +476,13 @@ export async function openOtherProfile(){
 
     openModal('<h2>👁️ '+oName+'s Held</h2>'+
       pager+
-      '<div class="op-head">'+
-        '<img class="op-avatar" src="'+avatar+'" alt="">'+
-        '<div class="op-meta">'+
-          '<div class="op-name">'+charName+'</div>'+
-          '<div class="op-cls">'+(cls?cls.icon+' '+clsLabel:'')+'</div>'+
-          '<div class="op-lvl">⭐ Level <b>'+(st.level||1)+'</b> · ⚔️ Kampfkraft <b>'+fmtBig(st.power)+'</b></div>'+
-        '</div>'+
+      '<div class="op-id">'+
+        '<div class="op-name">'+charName+'</div>'+
+        '<div class="op-cls">'+(cls?cls.icon+' '+clsLabel:'')+'</div>'+
+        '<div class="op-lvl">⭐ Level <b>'+(st.level||1)+'</b> · ⚔️ Kampfkraft <b>'+fmtBig(st.power)+'</b></div>'+
       '</div>'+
       '<h3 class="op-sub">Ausrüstung</h3>'+
-      '<div class="picker-list op-gear">'+gear+'</div>'+
+      doll+
       '<h3 class="op-sub">Werte</h3>'+
       '<div class="preview-stats">'+
         row('⚔️ Kampfkraft', fmtBig(st.power), 'power')+
