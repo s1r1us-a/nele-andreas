@@ -85,14 +85,15 @@ export const SETS = {
     accent:'#e01f3a', accent2:'#ff5a4a', glow:'#ff1f2f',
     affixBias:{ critDamage:4, attackSpeed:3, dodge:2, versatility:1 }, flavorAffix:'critDamage',
     // Fokus auf Krit-SCHADEN statt Krit-Chance. critPhys nur als kleiner Rest (Handschuhe).
+    // Vielseitigkeit auf 3 Slots (kopf/schultern/umhang) → hebt Grundschlag + Überleben.
     fixedAffixes:{
-      kopf:     ['critDamage','attackSpeed','dodge'],
-      schultern:['critDamage','dodge','versatility'],
+      kopf:     ['critDamage','attackSpeed','versatility'],
+      schultern:['critDamage','versatility','dodge'],
       brust:    ['critDamage','attackSpeed','maxHp'],
       haende:   ['critDamage','attackSpeed','critPhys'],
       beine:    ['critDamage','dodge','attackSpeed'],
       fuesse:   ['critDamage','attackSpeed','dodge'],
-      umhang:   ['critDamage','dodge','versatility'],
+      umhang:   ['critDamage','versatility','dodge'],
     },
     lore:'Getränkt im Blut von tausend lautlosen Klingen.',
     bonuses:[
@@ -110,13 +111,14 @@ export const SETS = {
     themeKey:'void', material:'stoff', statMult:0.78,
     accent:'#a24bff', accent2:'#d9b0ff', glow:'#7a2fff',
     affixBias:{ critMagic:4, maxHp:2, versatility:2 }, flavorAffix:'critMagic',
+    // Vielseitigkeit auf 3 Slots (kopf/schultern/beine).
     fixedAffixes:{
       kopf:     ['critMagic','maxHp','versatility'],
       schultern:['critMagic','lifesteal','versatility'],
       brust:    ['critMagic','maxHp','lifesteal'],
       haende:   ['critMagic','critDamage','lifesteal'],
       beine:    ['critMagic','maxHp','versatility'],
-      fuesse:   ['critMagic','lifesteal','versatility'],
+      fuesse:   ['critMagic','lifesteal','critDamage'],
       umhang:   ['critMagic','critDamage','maxHp'],
     },
     lore:'Gewebt aus dem Stoff zwischen den Welten – die Leere flüstert darin.',
@@ -135,14 +137,15 @@ export const SETS = {
     themeKey:'holy', material:'stoff', statMult:0.80,
     accent:'#ffd86a', accent2:'#fff4cf', glow:'#ffe89a',
     affixBias:{ maxHp:4, versatility:3, critMagic:2 }, flavorAffix:'maxHp',
+    // Vielseitigkeit auf 4 Slots (kopf/brust/haende/beine) – vorher überladen (7).
     fixedAffixes:{
       kopf:     ['maxHp','versatility','critMagic'],
-      schultern:['maxHp','versatility','armor'],
+      schultern:['maxHp','critMagic','armor'],
       brust:    ['maxHp','versatility','critMagic'],
       haende:   ['maxHp','critMagic','versatility'],
       beine:    ['maxHp','versatility','armor'],
-      fuesse:   ['maxHp','dodge','versatility'],
-      umhang:   ['maxHp','versatility','critMagic'],
+      fuesse:   ['maxHp','dodge','critMagic'],
+      umhang:   ['maxHp','critMagic','lifesteal'],
     },
     lore:'Im ersten Licht der Morgenröte gewebt – Dunkelheit weicht ihrem Schein.',
     bonuses:[
