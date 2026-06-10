@@ -15,6 +15,7 @@ import { state, nextItemId, saveState } from './state.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 import { dyeColorOf } from '../data/dyes.js';
 import { awardCoins, spendCoins, getCoins } from './coins.js';
+import { effectiveIlvl } from '../data/materials.js';
 import { toast } from '../ui/dom.js';
 
 // ---- Power-Gewichtung (eine Quelle für itemPower & recomputeTotals) ----
@@ -467,5 +468,5 @@ export function recordDrop(item){
 export function gearScore(){
   const eq = Object.values(state.equipped).filter(Boolean);
   if(!eq.length) return 0;
-  return Math.round(eq.reduce((s,it)=> s + (it.ilvl||0), 0) / eq.length);
+  return Math.round(eq.reduce((s,it)=> s + effectiveIlvl(it), 0) / eq.length);
 }

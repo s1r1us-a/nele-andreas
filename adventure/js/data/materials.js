@@ -10,6 +10,7 @@
    Alle Balance-Zahlen liegen hier an einem Ort.
    ===================================================================== */
 import { rarityIndex } from './rarities.js';
+import { ILVL_K } from './tuning.js';
 
 // Reihenfolge = Tier-Reihenfolge (für Konvertierung „nächsthöheres").
 export const MATERIALS = [
@@ -59,6 +60,20 @@ export function upgradeStatFactor(lvl){
 export function upgradeAffixFactor(lvl){
   const base = 1 + UPGRADE_AFFIX_PCT * Math.min(lvl, MAX_UPGRADE);
   return base * Math.pow(TRANSCEND_AFFIX_FACTOR, Math.max(0, lvl - MAX_UPGRADE));
+}
+
+// Effektive Gegenstandsstufe: die aufgewertete Stufe, die ANGEZEIGT wird. Sie
+// steigt logisch mit dem Hauptwert mit – abgeleitet aus genau dem Faktor, der
+// beim Aufwerten auf den Wert wirkt (Stat ∝ 1 + ilvl·ILVL_K). So entspricht die
+// Stufe stets der tatsächlichen Stärke. Die gespeicherte item.ilvl (Basis für die
+// Affix-Würfe/Verzaubern) bleibt unverändert – reine Anzeigegröße.
+export function effectiveIlvl(item){
+  if(!item) return 0;
+  const ilvl = Math.max(1, item.ilvl|0);
+  const lvl = item.upgradeLevel || 0;
+  if(lvl <= 0) return ilvl;
+  const eff = ((1 + ilvl*ILVL_K) * upgradeStatFactor(lvl) - 1) / ILVL_K;
+  return Math.max(ilvl, Math.round(eff));
 }
 
 // ---- Anzeige-Helfer (eine Quelle für alle UI-Badges) ----------------

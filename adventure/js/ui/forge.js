@@ -9,7 +9,7 @@ import { SLOTS, CAT_ICON } from '../data/slots.js';
 import { MATERIALS, MATERIAL_BY_KEY, CONVERT_RATE, nextMaterialKey,
          MAX_UPGRADE, MAX_TRANSCEND, canTranscend,
          upgradeStatFactor, upgradeAffixFactor, upgradeStep, upgradeBadge,
-         upgradeCost, canUpgrade, rerollCost, canReroll } from '../data/materials.js';
+         upgradeCost, canUpgrade, rerollCost, canReroll, effectiveIlvl } from '../data/materials.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked } from '../core/items.js';
 import { upgradeItem, rerollAffixes, convertMaterial, materialCount, maxConvertBatches } from '../core/crafting.js';
@@ -240,7 +240,7 @@ function buildActionCard(it){
   const affixHtml = Object.entries(it.affixes||{}).map(([k,v]) => '<div class="forge-affix">'+fmtAffix(k,v)+'</div>').join('') || '<div class="forge-affix muted">keine Affixe</div>';
 
   let html = '<div class="forge-card-head" style="color:'+r.color+'">'+it.name+(lvl>0?' <b class="forge-lvl">'+upgradeBadge(it)+'</b>':'')+'</div>'+
-    '<div class="sub">'+r.name+' · '+SLOTS[it.slotKey].name+' · Gegenstandsstufe '+it.ilvl+'</div>'+
+    '<div class="sub">'+r.name+' · '+SLOTS[it.slotKey].name+' · Gegenstandsstufe '+effectiveIlvl(it)+'</div>'+
     '<div class="forge-stats">'+
       '<div class="forge-stat"><span>'+statLabel+'</span><b>'+it.stat+'</b></div>'+
       affixHtml+

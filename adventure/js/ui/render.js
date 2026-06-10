@@ -34,7 +34,7 @@ import { itemValue, isLocked, gearScore, canEquip, autoEquipBest, itemPower,
          sellItem, sellPrice } from '../core/items.js';
 import { getCoins, spendCoins } from '../core/coins.js';
 import { salvage } from '../core/crafting.js';
-import { salvageYield, MATERIAL_BY_KEY, MATERIALS, upgradeBadge } from '../data/materials.js';
+import { salvageYield, MATERIAL_BY_KEY, MATERIALS, upgradeBadge, effectiveIlvl } from '../data/materials.js';
 import { DYES } from '../data/dyes.js';
 import { claimPendingLoot } from '../core/items.js';
 import { renderForge } from './forge.js';
@@ -494,7 +494,7 @@ function filteredSortedInventory(){
   });
   const cmp = {
     value: (a,b)=> CAT_ORDER[a.cat]-CAT_ORDER[b.cat] || itemValue(b)-itemValue(a),
-    ilvl:  (a,b)=> b.ilvl-a.ilvl,
+    ilvl:  (a,b)=> effectiveIlvl(b)-effectiveIlvl(a),
     rarity:(a,b)=> rarityIndex(b.rarity)-rarityIndex(a.rarity) || itemValue(b)-itemValue(a),
     power: (a,b)=> itemPower(b)-itemPower(a),
     slot:  (a,b)=> a.slotKey.localeCompare(b.slotKey),

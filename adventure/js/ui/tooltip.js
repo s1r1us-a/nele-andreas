@@ -6,7 +6,7 @@ import { SLOTS } from '../data/slots.js';
 import { typeOf } from '../data/itemTypes.js';
 import { rarityOf } from '../data/rarities.js';
 import { classOf } from '../data/classes.js';
-import { upgradeBadge } from '../data/materials.js';
+import { upgradeBadge, effectiveIlvl } from '../data/materials.js';
 import { DYE_BY_KEY } from '../data/dyes.js';
 import { state } from '../core/state.js';
 import { itemPower, isLocked, procText, resolveTargetSlot, canEquip, equipBlockReason, itemKindLabel, itemKindIcon } from '../core/items.js';
@@ -74,7 +74,7 @@ export function tooltipHTML(it, opts={}){
     '<div class="tt-stat '+sCls+'">+'+it.stat+' '+sLbl+'</div>'+
     affixLinesHTML(it)+
     qLine+
-    '<div class="tt-ilvl">Gegenstandsstufe '+it.ilvl+'</div>'+
+    '<div class="tt-ilvl">Gegenstandsstufe '+effectiveIlvl(it)+'</div>'+
     (opts.compare ? compareHTML(it) : '')+
     (opts.note ? '<div class="tt-note">'+opts.note+'</div>' : '');
 }
