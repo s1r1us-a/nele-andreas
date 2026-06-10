@@ -165,13 +165,6 @@
         </div>
         <div id="dmgLayer" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5"></div>
       </div>
-
-      <div class="result-overlay" id="resultOverlay">
-        <div class="result-big" id="resultEmoji">–</div>
-        <div style="font-family:'Cinzel',serif;font-weight:900;font-size:22px" id="resultTitle">–</div>
-        <div class="result-sub" id="resultSub">–</div>
-        <div class="result-btns" id="resultBtns"></div>
-      </div>
     </div>
 
     <div class="card" style="padding:0">
@@ -204,6 +197,18 @@
 
 </div><!-- /container -->
 
+<!-- Sieg-/Niederlage-Overlay: bewusst AUSSERHALB von .arena-wrap, damit dessen
+     Animations-Filter (Niederlage) das vollflächige position:fixed nicht auf den
+     Arena-Ausschnitt einschränkt und das Belohnungsfenster nie abgeschnitten wird. -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-inner">
+    <div class="result-big" id="resultEmoji">–</div>
+    <div style="font-family:'Cinzel',serif;font-weight:900;font-size:22px" id="resultTitle">–</div>
+    <div class="result-sub" id="resultSub">–</div>
+    <div class="result-btns" id="resultBtns"></div>
+  </div>
+</div>
+
 <script type="module" src="dp-badge-notify.js"></script>
 <script type="module">
 import { initAuth, displayName as getDisplayName, db, ref, update, onValue, get, set }
@@ -222,6 +227,8 @@ import {
 import { rarityOf } from './adventure/js/data/rarities.js';
 import { SLOTS } from './adventure/js/data/slots.js';
 import { giveLoot } from './adventure/js/core/items.js';
+import { awardSetTokens } from './adventure/js/core/sets.js';
+import { SET_TOKEN, setTokensForKill } from './adventure/js/data/sets.js';
 import { INV_SLOTS, INV_SLOTS_MAX } from './adventure/js/data/tuning.js';
 import { affixLinesHTML } from './adventure/js/ui/tooltip.js';
 import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
@@ -1346,6 +1353,7 @@ function showResult(won, floor){
   overlay.querySelectorAll('.tower-confetti').forEach(c => c.remove());
   overlay.classList.remove('win', 'lose');
   let lootHtml = '';
+  let tokenHtml = '';
   // Turm-Badges vergeben + INDIVIDUELLEN Loot in den EIGENEN Spielstand legen.
   if(won && myKey){
     // Erreichten Stand im eigenen, clobber-festen Knoten sichern (Fortsetzen
@@ -1355,6 +1363,17 @@ function showResult(won, floor){
     myFloor = Math.max(myFloor, floor + 1); saveTowerFloor(myKey, myCharId, floor + 1);
     grantDammerpfadBadges({ towerBest: floor }, { db, ref, get, set,
       userKey: myKey, notify: window.dpBadgeNotify || null }).catch(()=>{});
+    // Tribut-Siegel (Sonderwährung für Klassen-Sets) – wie Boss-Siege, skaliert
+    // mit dem Stockwerk. Jeder Client vergibt an den eigenen Spielstand (myState
+    // === globaler state, daher persistiert saveState() die Tribut-Siegel mit).
+    try {
+      const tokenGain = awardSetTokens(setTokensForKill(floor));
+      if(tokenGain > 0){
+        if(myState) saveState();
+        tokenHtml = '<div class="result-chips"><span class="result-chip token">'+
+          SET_TOKEN.icon+' +'+fmtBig(tokenGain)+' '+SET_TOKEN.name+'</span></div>';
+      }
+    } catch(e){ console.warn('Tribut-Vergabe fehlgeschlagen', e); }
     try {
       const drop = rollTowerLoot(floor);   // Seltenheit/Itemlevel skaliert mit Stockwerk
       // Beute geht NIE verloren: passt sie nicht, wartet sie in der ausstehenden
@@ -1388,7 +1407,7 @@ function showResult(won, floor){
   $('resultTitle').textContent = won ? 'Sieg!' : 'Niederlage';
   $('resultSub').innerHTML     = (won
     ? 'Stockwerk ' + floor + ' gemeistert! Auf zum nächsten Abschnitt des Turms.'
-    : 'Beide Helden gefallen. Der Turm des Wahnsinns wartet weiter…') + lootHtml;
+    : 'Beide Helden gefallen. Der Turm des Wahnsinns wartet weiter…') + tokenHtml + lootHtml;
 
   const btns = $('resultBtns'); btns.innerHTML = '';
   // Beide Spieler können weiter: Sieg → nächstes Stockwerk, Niederlage → wiederholen.
