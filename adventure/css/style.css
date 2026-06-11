@@ -1211,6 +1211,29 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 .combatant.vuln-tint { filter:drop-shadow(0 0 12px #ff5a3c) saturate(1.5) brightness(1.06);
   animation:ablazePulse .5s ease-in-out infinite alternate; }
 .combatant.freeze { animation:none !important; filter:brightness(1.6) saturate(.4) drop-shadow(0 0 12px #fff); }
+/* Klingenrausch (haste): schneller Tempo-Schimmer. */
+.combatant.aura-haste { filter:drop-shadow(0 0 12px #9be7ff) drop-shadow(0 0 22px #4aa0ff) brightness(1.16) saturate(1.3);
+  animation:critRagePulse .32s ease-in-out infinite alternate; }
+
+/* Nachzieh-Schemen (Klingenrausch): verblassende Geist-Kopie des Sprites. */
+.vfx-afterimage { pointer-events:none; z-index:8; opacity:.55; mix-blend-mode:screen;
+  filter:brightness(1.4) hue-rotate(8deg) drop-shadow(0 0 8px var(--ai-col,#9be7ff));
+  animation:afterImageFade .55s ease-out forwards; }
+@keyframes afterImageFade { 0%{ opacity:.55; } 100%{ opacity:0; transform:translateX(-12px); } }
+/* Tempo-Linien (Klingenrausch). */
+.vfx-speedline { position:absolute; width:64px; height:3px; pointer-events:none; z-index:10;
+  background:linear-gradient(90deg, transparent, var(--sl-col,#bfe3ff)); transform:translate(-50%,-50%);
+  filter:drop-shadow(0 0 6px var(--sl-col,#bfe3ff)); opacity:0; animation:speedLine .5s ease-out forwards; }
+@keyframes speedLine { 0%{ opacity:0; transform:translate(-10%,-50%) scaleX(.4); }
+  30%{ opacity:1; } 100%{ opacity:0; transform:translate(-180%,-50%) scaleX(1.3); } }
+/* Hinrichtungs-Mal (Meuchelstoß/Seelenfresser). */
+.vfx-execmark { position:absolute; pointer-events:none; z-index:12; transform:translate(-50%,-50%);
+  font-size:46px; color:var(--exec-col,#c0306b); opacity:0;
+  text-shadow:0 0 14px var(--exec-col,#c0306b), 0 0 26px #fff; animation:execMark .62s ease-out forwards; }
+@keyframes execMark { 0%{ opacity:0; transform:translate(-50%,-50%) scale(.3) rotate(-12deg); }
+  40%{ opacity:1; transform:translate(-50%,-50%) scale(1.15) rotate(0deg); }
+  70%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1.4); } }
 
 /* Goldene Avatar-Kuppel (Unbeugsam). */
 .magic-barrier.dome-gold { border-color:rgba(255,210,80,.85);
@@ -1237,7 +1260,9 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   .vfx-rune-ring, .vfx-rune-ring::before, .vfx-rune-ring::after,
   .vfx-orbit-g, .vfx-orbit-i, .vfx-proj, .vfx-arc, .vfx-nova, .vfx-crater, .vfx-crater::before,
   .vfx-sigil, .vfx-vortex, .vfx-smoke, .arena-vignette, .vfx-chain,
-  .combatant.aura-steel, .combatant.aura-arcane, .combatant.aura-blood-strong { animation:none; }
+  .vfx-afterimage, .vfx-speedline, .vfx-execmark,
+  .combatant.aura-steel, .combatant.aura-arcane, .combatant.aura-blood-strong,
+  .combatant.aura-haste { animation:none; }
   .vfx-rune-ring, .vfx-rune-ring.persist, .vfx-sigil, .vfx-arc, .vfx-nova, .vfx-crater { opacity:1; }
   .vfx-chain { opacity:0; }
 }

@@ -65,6 +65,8 @@ export function descOfActive(a){
                         ? Math.round(a.burstMult*100)+' % Schaden/s für '+s+' s – heilt dich um den verursachten Schaden'
                         : 'Sofort '+Math.round(a.burstMult*100)+' % Schaden – heilt dich um den Schaden';
     case 'critBoost': return '+'+Math.round(a.critBonus*100)+' % Krit für '+s+' s';
+    case 'haste':     return '+'+Math.round(a.hasteBonus*100)+' % Angriffstempo für '+s+' s';
+    case 'execute':   return Math.round(a.burstMult*100)+' % Schaden – unter '+Math.round(a.threshold*100)+' % Gegner-Leben '+Math.round(a.burstMult*a.execMult*100)+' %'+(a.heals?' (+Heilung)':'');
     case 'dmgBoost':  return '+'+Math.round(a.dmgBonus*100)+' % Schaden für '+s+' s';
     case 'dmgReduce': return '−'+Math.round(a.dmgReduce*100)+' % erlittener Schaden für '+s+' s';
     case 'lifesteal': return '+'+Math.round(a.lifestealBonus*100)+' % Lebensraub für '+s+' s';
@@ -112,8 +114,8 @@ export const TALENT_TREES = {
       node('schurke_s4_kunst',  '⚔️', 'Schwertkunst',    {add:{attackSpeed:0.09}}),
       node('schurke_s4_finst',  '🌑', 'Finsternis',      {mult:{damage:0.15}}) ],
     [ activeNode('schurke_a5_gift',    '☠️', 'Tödliche Toxine','dot',     {cd:18000, dur:8000, tickMs:1000, dotMult:0.55}),
-      activeNode('schurke_a5_beute',   '🍀', 'Beutejagd',    'critBoost', {cd:22000, dur:8000, critBonus:0.35}),
-      activeNode('schurke_a5_wirbel',  '🌀', 'Klingensturm', 'dot',       {cd:20000, dur:2400, tickMs:600, dotMult:0.9}) ],
+      activeNode('schurke_a5_beute',   '⚡', 'Klingenrausch','haste',     {cd:24000, dur:8000, hasteBonus:0.6}),
+      activeNode('schurke_a5_wirbel',  '🌪️', 'Klingensturm', 'echo',      {cd:20000, burstMult:1.4, echoMult:1.1, echoDelay:450}) ],
     [ node('schurke_s6_meist',  '☠️', 'Meistergift',     {add:{critPhys:0.09}}),
       node('schurke_s6_frei',   '🍷', 'Freibeuter',      {add:{lifesteal:0.07}}),
       node('schurke_s6_hart',   '🐂', 'Abgehärtet',      {mult:{maxHp:0.18}}) ],
@@ -124,7 +126,7 @@ export const TALENT_TREES = {
       node('schurke_s8_raeub',  '🍷', 'Räuberblut',      {add:{lifesteal:0.08}}),
       node('schurke_s8_meuch',  '🌑', 'Meucheltechnik',  {mult:{damage:0.18}}) ],
     [ activeNode('schurke_a9_aderlass','🩸', 'Aderlass',      'vulnerability',{cd:22000, dur:9000, vulnPct:0.30, burstMult:1.6}),
-      activeNode('schurke_a9_meuchel', '🥷', 'Meuchelstoß',  'stun',      {cd:24000, stunDur:3000, burstMult:3.5}),
+      activeNode('schurke_a9_meuchel', '🥷', 'Meuchelstoß',  'execute',   {cd:22000, burstMult:2.2, execMult:2.6, threshold:0.3}),
       activeNode('schurke_a9_versch', '💨', 'Schattentanz',  'dmgBoost',  {cd:24000, dur:9000, dmgBonus:0.55}) ],
     [ node('schurke_s10_meuch',  '☠️', 'Großmeuchler',    {mult:{damage:0.18}, add:{critPhys:0.12, critDamage:0.30}}),
       node('schurke_s10_frei',   '🪙', 'Freibeuterkönig', {mult:{damage:0.15}, add:{attackSpeed:0.12, lifesteal:0.10}}),
@@ -159,7 +161,7 @@ export const TALENT_TREES = {
       node('verteidiger_s8_koloss','🐂', 'Koloss',      {mult:{maxHp:0.28}}) ],
     [ activeNode('verteidiger_a9_avatar','🌟', 'Avatar des Wächters','avatar',{cd:32000, dur:8000, dmgBonus:0.40, dmgReduce:0.40}),
       activeNode('verteidiger_a9_wall',  '✨', 'Letzter Wall','deathsave', {cd:40000, dur:8000, revivePct:0.30}),
-      activeNode('verteidiger_a9_unbeug','🛡️', 'Unbeugsam',  'dmgReduce',{cd:30000, dur:9000, dmgReduce:0.70}) ],
+      activeNode('verteidiger_a9_unbeug','🌿', 'Zweiter Wind','hot',      {cd:28000, dur:9000, tickMs:1000, hotPct:0.10}) ],
     [ node('verteidiger_s10_wall',   '🧱','Festungswall',    {mult:{armor:0.25}, add:{block:20}}),
       node('verteidiger_s10_dorn',   '🌵','Dornengott',      {mult:{armor:0.15, damage:0.12}, add:{thorns:24}}),
       node('verteidiger_s10_unersch','👑','Unerschütterlich',{mult:{maxHp:0.30, armor:0.20}, add:{dodge:0.06}}) ],
@@ -181,7 +183,7 @@ export const TALENT_TREES = {
       node('heiler_s4_harm',  '💎', 'Harmonie',     {add:{versatility:0.08}}) ],
     [ activeNode('heiler_a5_verjueng','🍃', 'Verjüngung',   'hot',     {cd:20000, dur:8000, tickMs:1000, hotPct:0.08}),
       activeNode('heiler_a5_arkan', '☄️', 'Arkanschlag',   'echo',    {cd:20000, burstMult:1.6, echoMult:1.0, echoDelay:500}),
-      activeNode('heiler_a5_schild','🛡️', 'Schutzschild',  'absorb',  {cd:24000, dur:10000, absorbPct:0.40}) ],
+      activeNode('heiler_a5_schild','🪞', 'Spiegelschild', 'reflect', {cd:22000, dur:8000, reflectPct:0.40}) ],
     [ node('heiler_s6_unsterb','💚', 'Unsterblichkeit',{mult:{maxHp:0.20}}),
       node('heiler_s6_erleu',  '💫', 'Erleuchtung', {add:{critMagic:0.10}}),
       node('heiler_s6_qleben', '💎', 'Gleichmut',   {add:{versatility:0.10}}) ],
@@ -191,7 +193,7 @@ export const TALENT_TREES = {
     [ node('heiler_s8_ewig',  '💚', 'Ewiges Leben', {mult:{maxHp:0.25}}),
       node('heiler_s8_meist', '🔮', 'Arkanmeister', {add:{critMagic:0.06, critDamage:0.30}}),
       node('heiler_s8_brunn', '💎', 'Bewahrung',    {add:{versatility:0.12}}) ],
-    [ activeNode('heiler_a9_engel', '😇', 'Engelsgeist',     'hot',      {cd:26000, dur:6000, tickMs:1000, hotPct:0.18}),
+    [ activeNode('heiler_a9_engel', '😇', 'Engelsgeist',     'absorb',   {cd:26000, dur:8000, absorbPct:0.50}),
       activeNode('heiler_a9_stern', '🌠', 'Sternenregen',    'dot',      {cd:24000, dur:6000, tickMs:1000, dotMult:0.85}),
       activeNode('heiler_a9_rein',  '💧', 'Reinigung',       'cleanse',  {cd:18000, healPct:0.25}) ],
     [ node('heiler_s10_hohe',  '👑', 'Hohepriester',   {mult:{maxHp:0.30}, add:{lifesteal:0.12}}),
@@ -213,8 +215,8 @@ export const TALENT_TREES = {
     [ node('hexer_s4_gewalt', '🌑', 'Finstere Gewalt',{mult:{damage:0.15}}),
       node('hexer_s4_pakt',   '🩸', 'Blutpakt',     {add:{lifesteal:0.08}}),
       node('hexer_s4_feuer',  '💀', 'Seelenfeuer',  {add:{critMagic:0.05, critDamage:0.25}}) ],
-    [ activeNode('hexer_a5_verderb','🟣', 'Verderbnis',     'drain',    {cd:22000, dur:6000, tickMs:1000, burstMult:0.70}),
-      activeNode('hexer_a5_ritual', '🩸', 'Aderlass-Ritual','drain',    {cd:20000, dur:4000, tickMs:1000, burstMult:0.65}),
+    [ activeNode('hexer_a5_verderb','🟣', 'Verderbnis',     'echo',     {cd:20000, burstMult:1.4, echoMult:0.9, echoDelay:600}),
+      activeNode('hexer_a5_ritual', '🩸', 'Aderlass-Ritual','lifesteal',{cd:24000, dur:8000, lifestealBonus:0.30}),
       activeNode('hexer_a5_furcht', '💀', 'Schattenblitz',  'burst',    {cd:20000, burstMult:2.6}) ],
     [ node('hexer_s6_dunkel','🔮', 'Dunkle Magie', {mult:{damage:0.18}}),
       node('hexer_s6_vamp',  '🩸', 'Vampirismus',  {add:{lifesteal:0.09}}),
@@ -226,8 +228,8 @@ export const TALENT_TREES = {
       node('hexer_s8_blutm', '🩸', 'Blutmagie',    {add:{lifesteal:0.10}}),
       node('hexer_s8_hexm',  '💫', 'Hexenmeister', {add:{critMagic:0.06, critDamage:0.25}}) ],
     [ activeNode('hexer_a9_chaos',  '☄️', 'Chaosregen',      'dot',      {cd:24000, dur:7000, tickMs:1000, dotMult:0.80}),
-      activeNode('hexer_a9_stein',  '💜', 'Seelenfresser',   'drain',    {cd:26000, dur:6000, tickMs:1000, burstMult:0.95}),
-      activeNode('hexer_a9_orgie',  '🩸', 'Blutritual',      'lifesteal',{cd:26000, dur:8000, lifestealBonus:0.30}) ],
+      activeNode('hexer_a9_stein',  '💜', 'Seelenfresser',   'execute',  {cd:24000, burstMult:2.0, execMult:2.5, threshold:0.3, heals:true}),
+      activeNode('hexer_a9_orgie',  '🛡️', 'Blutritual',      'absorb',   {cd:24000, dur:10000, absorbPct:0.45}) ],
     [ node('hexer_s10_herr',  '💀', 'Seelenherr',   {mult:{damage:0.25}, add:{critMagic:0.12}}),
       node('hexer_s10_koenig','🩸', 'Blutkönig',    {mult:{damage:0.15}, add:{lifesteal:0.28}}),
       node('hexer_s10_daemon','👑', 'Dämonenfürst', {mult:{damage:0.18, maxHp:0.15}, add:{critDamage:0.40}}) ],

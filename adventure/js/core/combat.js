@@ -180,6 +180,8 @@ function scheduleExchange(fight){
   if(fight.frostTurns > 0){ interval *= 1.4; fight.frostTurns--; }   // Frost verlangsamt
   if(fight.curseTurns > 0){ interval *= 1.3; }                       // Fluch verlangsamt
   if(fight.zornTurns  > 0){ interval *= 0.7; fight.zornTurns--; }    // Proc „Zorn" beschleunigt
+  // Klingenrausch (haste): kürzeres Schlagintervall, solange das Fenster läuft.
+  if(Date.now() < fight.buffs.haste.until) interval /= (1 + fight.buffs.haste.val);
   combatTimer = setTimeout(()=> exchange(fight), interval / combatSpeed);
 }
 
@@ -693,7 +695,7 @@ export function usePotion(){
 function freshBuffs(){
   return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
            dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0},
-           reflect:{until:0,val:0} };
+           reflect:{until:0,val:0}, haste:{until:0,val:0} };
 }
 let _abilityTicker = null;
 // Mehrere Fähigkeits-Knöpfe rendern/aktualisieren (eigener Cooldown je Knopf).
@@ -742,6 +744,7 @@ function refreshAuras(f){
   applyBuffAura('heroSprite', 'crit',      f.buffs.crit,      now);
   applyBuffAura('heroSprite', 'dmgBoost',  f.buffs.dmgBoost,  now);
   applyBuffAura('heroSprite', 'lifesteal', f.buffs.lifesteal, now);
+  applyBuffAura('heroSprite', 'haste',     f.buffs.haste,     now);
   applyDefenseAura('heroSprite', f.buffs.dmgReduce, now);
   // Nebelschritt: solange das Fenster läuft, ist der Held vollständig unsichtbar.
   setSpriteClass('heroSprite', 'vanished', now < (f.stealthUntil||0));
@@ -836,7 +839,8 @@ function applyAbilityEffect(f, ab){
       if(currentFight !== f || f.over) return;
       const e = abilityDamage(f, ab.echoMult || ab.burstMult);
       f.bossHp = Math.max(0, f.bossHp - e.dmg); f.dmgDealt += e.dmg;
-      if(ABILITY_VFX.heiler_a5_arkan_echo) ABILITY_VFX.heiler_a5_arkan_echo('heroSprite', 'bossSprite');
+      const echoVfx = ABILITY_VFX[ab.id+'_echo'] || ABILITY_VFX.heiler_a5_arkan_echo;
+      if(echoVfx) echoVfx('heroSprite', 'bossSprite');
       mechFloat('boss', (e.crit?'✸ ':'💥 ')+'-'+fmtBig(e.dmg), '#cdeeff');
       addCombatLog(f, '✨ Echo: '+(e.crit?'KRIT ':'')+fmtBig(e.dmg)+' Schaden', '#cdeeff');
       updateHpBars(f); updateMeter(f);
@@ -846,6 +850,23 @@ function applyAbilityEffect(f, ab){
     f.buffs.crit = { until: now+ab.dur, val: ab.critBonus, src: ab.id };
     playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.critBonus*100)+'% Krit für '+(ab.dur/1000)+'s!', '#ffd24a');
+  } else if(ab.kind === 'haste'){
+    // Klingenrausch (Schurke): temporärer Angriffstempo-Schub.
+    f.buffs.haste = { until: now+ab.dur, val: ab.hasteBonus, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.hasteBonus*100)+'% Angriffstempo für '+(ab.dur/1000)+'s!', '#9be7ff');
+  } else if(ab.kind === 'execute'){
+    // Hinrichtung (Meuchelstoß/Seelenfresser): Treffer, der unter der HP-Schwelle massiv verstärkt wird.
+    const low = f.bossHp <= f.bossMaxHp * (ab.threshold||0.3);
+    const { dmg, crit } = abilityDamage(f, ab.burstMult * (low ? (ab.execMult||2.5) : 1));
+    f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg;
+    if(ab.heals){ const heal = Math.round(dmg * healMult * (f.healDebuff||1)); f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal); mechFloat('hero', '🩸 +'+fmtBig(heal), '#b06bff'); }
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    if(low){ screenVignette('#c0306b', 460); bigShake(); }
+    mechFloat('boss', (low?'☠ ':(crit?'✸ ':'💥 '))+'-'+fmtBig(dmg), low?'#ff3030':'#ffd24a');
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': '+(low?'HINRICHTUNG ':'')+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden'+(ab.heals?' (+Heilung)':''), low?'#ff3030':'#ffd24a');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
   } else if(ab.kind === 'dmgBoost'){
     f.buffs.dmgBoost = { until: now+ab.dur, val: ab.dmgBonus, src: ab.id };
     playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
@@ -959,7 +980,6 @@ function startDotChannel(f, ab){
   if(ab.id && ab.id.indexOf('gift') >= 0){ glyph = '☠️'; col = '#9acd32'; }
   else if(ab.id === 'heiler_a9_stern'){   glyph = '⭐'; col = '#9be7ff'; }
   else if(ab.id === 'hexer_a9_chaos'){     glyph = '☄️'; col = '#9bff5a'; }
-  else if(ab.id === 'schurke_a5_wirbel'){  glyph = '🗡️'; col = '#bfe3ff'; }
   let i = 0;
   const tick = () => {
     if(currentFight !== f || f.over) return;
@@ -1181,6 +1201,47 @@ function spawnExposeCrack(bossId){
   spawnSigilFlash(bossId, { glyph:'🩸', color:'#ff3030' });
   spawnGroundRune(bossId, { color:'#ff3030' });
   flashSpriteClass(bossId, 'vuln-tint', 800);
+}
+// Nachzieh-Schemen (Klingenrausch): geklonte, verblassende Geist-Sprites mit Versatz.
+function spawnAfterImages(spriteId, color){
+  if(reducedMotion()) return;
+  const el = $('#'+spriteId), stage = $('#arenaStage'), layer = $('#dmgLayer');
+  if(!el || !stage || !layer) return;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  for(let i=1;i<=3;i++){
+    const g = el.cloneNode(true); g.removeAttribute('id');
+    g.className = 'vfx-afterimage';
+    g.style.position = 'absolute';
+    g.style.left = (r.left - sr.left - i*16)+'px'; g.style.top = (r.top - sr.top)+'px';
+    g.style.width = r.width+'px'; g.style.height = r.height+'px';
+    g.style.setProperty('--ai-col', color || '#9be7ff');
+    g.style.animationDelay = (i*60)+'ms';
+    layer.appendChild(g);
+    setTimeout(()=> g.remove(), 620);
+  }
+}
+// Tempo-Linien (Klingenrausch): horizontale Streifen, die seitlich wegschießen.
+function spawnSpeedLines(spriteId, color){
+  if(reducedMotion()) return;
+  const a = anchorOf(spriteId), layer = $('#dmgLayer'); if(!layer) return;
+  for(let i=0;i<6;i++){
+    const l = document.createElement('div'); l.className = 'vfx-speedline';
+    const jy = Math.round((Math.random()*2-1)*36);
+    l.style.left = a.x+'px'; l.style.top = (a.y+jy)+'px';
+    l.style.setProperty('--sl-col', color || '#bfe3ff');
+    l.style.animationDelay = (i*45)+'ms';
+    layer.appendChild(l);
+    setTimeout(()=> l.remove(), 520);
+  }
+}
+// Hinrichtungs-Mal (Meuchelstoß/Seelenfresser): pulsierendes Todes-Symbol über dem Ziel.
+function spawnExecuteMark(spriteId, color){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer'); if(!layer) return;
+  const m = document.createElement('div'); m.className = 'vfx-execmark'; m.textContent = '☠';
+  m.style.left = a.x+'px'; m.style.top = a.y+'px';
+  m.style.setProperty('--exec-col', color || '#c0306b');
+  layer.appendChild(m);
+  setTimeout(()=> m.remove(), 640);
 }
 // Zickzack-Blitz zwischen zwei Sprites (Arkan-Echo).
 function spawnChainLightning(fromId, toId, color){
@@ -1414,15 +1475,17 @@ const DEFAULT_SIG = {
   crit:      { aura:'aura-crit' },
   dmgBoost:  { aura:'aura-fire' },
   lifesteal: { aura:'aura-blood' },
+  haste:     { aura:'aura-haste' },
 };
 const BUFF_SIG = {
   // critBoost
   kaltblut:         { aura:'aura-steel',  orbit:{ glyph:'🗡️', color:'#bfe3ff', count:3, radius:52 } },
-  schurke_a5_beute: { aura:'aura-crit',   orbit:{ glyph:'🍀', color:'#ffd24a', count:3, radius:50 } },
+  // haste (Klingenrausch): wirbelnde Klingen + Tempo-Schimmer
+  schurke_a5_beute: { aura:'aura-haste',  orbit:{ glyph:'🗡️', color:'#9be7ff', count:4, radius:46 } },
   // dmgBoost
   schurke_a9_versch: { aura:'aura-shadow', orbit:{ glyph:'🌑', color:'#b06bff', count:4, radius:52 }, rune:'#9b30ff' },
-  // lifesteal
-  hexer_a9_orgie:     { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 }, rune:'#c0306b' },
+  // lifesteal (Aderlass-Ritual): Blutaura
+  hexer_a5_ritual:    { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 }, rune:'#c0306b' },
 };
 
 // Toggelt Aura-Klasse + persistente Deko (Orbit/Rune) eines Buffs an einem Sprite.
@@ -1501,14 +1564,15 @@ const ABILITY_VFX = {
   // ---- SCHURKE (Talent-Aktive) ----
   // Tödliche Toxine (Gift-DoT)
   schurke_a5_gift(hero, boss){ spawnSlashArc(boss, { color:'#9acd32', angle:-28 }); spawnParticles(boss, { count:12, glyph:'☠️', color:'#9acd32', spread:54, rise:8 }); flashSpriteClass(boss, 'desat', 500); },
-  // Beutejagd (Tempo-Krit-Buff)
-  schurke_a5_beute(hero){ spawnGroundRune(hero, { color:'#ffd24a' }); flashSpriteClass(hero, 'aura-crit', 700); spawnOrbit(hero, { glyph:'🍀', color:'#ffd24a', count:3, radius:50, period:1200, dur:1300 }); spawnParticles(hero, { count:9, glyph:'🪙', color:'#ffd24a', spread:46, rise:28 }); },
-  // Klingensturm (rotierender Mehrfachtreffer)
-  schurke_a5_wirbel(hero, boss){ spawnBladestormRing(hero, boss, 2400); spawnParticles(boss, { count:8, glyph:'✦', color:'#bfe3ff', spread:60 }); },
+  // Klingenrausch (Angriffstempo-Schub): Nachzieh-Schemen + Tempo-Linien + Klingen-Orbit
+  schurke_a5_beute(hero){ spawnAfterImages(hero, '#9be7ff'); spawnSpeedLines(hero, '#bfe3ff'); spawnGroundRune(hero, { color:'#9be7ff' }); flashSpriteClass(hero, 'aura-haste', 800); spawnOrbit(hero, { glyph:'🗡️', color:'#bfe3ff', count:4, radius:46, period:500, dur:1300 }); spawnParticles(hero, { count:12, glyph:'➤', color:'#9be7ff', spread:54, rise:8 }); },
+  // Klingensturm (Wirbel-Doppeltreffer: Schlag + Echo)
+  schurke_a5_wirbel(hero, boss){ spawnBladestormRing(hero, boss, 1000); spawnSlashArc(boss, { color:'#bfe3ff', angle:-36 }); spawnParticles(boss, { count:8, glyph:'✦', color:'#bfe3ff', spread:60 }); },
+  schurke_a5_wirbel_echo(hero, boss){ spawnSlashArc(boss, { color:'#ffffff', angle:40 }); spawnShockwave(boss, '#bfe3ff'); spawnParticles(boss, { count:9, glyph:'🗡️', color:'#bfe3ff', spread:56 }); bigShake(); },
   // Aderlass (Wunde aufreißen – Verwundbarkeit)
   schurke_a9_aderlass(hero, boss){ spawnSlashArc(boss, { color:'#e0466e', angle:-30 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ff3030', angle:28 }), 90); spawnExposeCrack(boss); spawnParticles(boss, { count:12, glyph:'🩸', color:'#e0466e', spread:56, rise:6 }); screenVignette('#c0306b', 420); },
-  // Meuchelstoß (Schaden + Betäubung)
-  schurke_a9_meuchel(hero, boss){ spawnSmoke(hero); spawnSlashArc(boss, { color:'#b6a0ff', angle:-32 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:30 }), 90); spawnSigilFlash(boss, { glyph:'🗡️', color:'#cdbcff' }); flashSpriteClass(boss, 'freeze', 380); spawnOrbit(boss, { glyph:'💫', color:'#ffe066', count:3, radius:34, period:900, dur:1500 }); screenFlash('#b6a0ff', 150); bigShake(); },
+  // Meuchelstoß (Hinrichtung): Schatten-Sichel + Hinrichtungs-Mal
+  schurke_a9_meuchel(hero, boss){ spawnSmoke(hero); spawnExecuteMark(boss, '#c0306b'); spawnSlashArc(boss, { color:'#b6a0ff', angle:-34 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ff3030', angle:34 }), 80); spawnSigilFlash(boss, { glyph:'🗡️', color:'#ff6a6a' }); flashSpriteClass(boss, 'hit', 320); spawnParticles(boss, { count:12, glyph:'☠', color:'#c0306b', spread:58 }); screenFlash('#b6a0ff', 150); bigShake(); },
   // Schattentanz (Schaden-Buff)
   schurke_a9_versch(hero){ spawnSmoke(hero); spawnGroundRune(hero, { color:'#9b30ff' }); flashSpriteClass(hero, 'aura-shadow', 700); spawnOrbit(hero, { glyph:'🌑', color:'#b06bff', count:4, radius:52, period:900, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✦', color:'#b06bff', spread:48, rise:24 }); },
   // ---- VERTEIDIGER (Grundfähigkeiten) ----
@@ -1525,8 +1589,8 @@ const ABILITY_VFX = {
   verteidiger_a9_avatar(hero){ spawnSigilFlash(hero, { glyph:'🌟', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnNova(hero, '#ffd24a'); spawnOrbit(hero, { glyph:'⚜️', color:'#ffe9a8', count:4, radius:54, period:1500, dur:1500 }); screenVignette('#ffe9a8', 480); screenFlash('#bfe3ff', 150); },
   // Letzter Wall (Wiederbelebung)
   verteidiger_a9_wall(hero){ spawnSigilFlash(hero, { glyph:'✨', color:'#ffe9a8' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#ffe9a8', count:4, radius:52, period:1500, dur:1400 }); spawnProjectileVolley(hero, hero, { count:6, color:'#ffe9a8', glyph:'✦', stagger:70, fromTop:true }); screenVignette('#ffe9a8', 520); },
-  // Unbeugsam (Schadensreduktion)
-  verteidiger_a9_unbeug(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); screenFlash('#bfe3ff', 150); },
+  // Zweiter Wind (Regeneration): erdgolden-runische Heilsäule + aufsteigende Schild-Motes
+  verteidiger_a9_unbeug(hero){ vfxHeal(hero); spawnSigilFlash(hero, { glyph:'🌿', color:'#9be07a' }); spawnGroundRune(hero, { color:'#bfe07a' }); spawnOrbit(hero, { glyph:'🛡', color:'#bfe07a', count:4, radius:50, period:1500, dur:1400 }); spawnParticles(hero, { count:14, glyph:'✦', color:'#cdf09a', spread:50, rise:64 }); screenVignette('#bfe07a', 420); },
   // ---- HEILER (Grundfähigkeiten) ----
   heilkreis(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); },
   lichtsaeule(hero, boss){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar vfx-pillar-gold'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 950); } spawnGroundRune(hero, { color:'#ffe9a8' }); spawnProjectileVolley(hero, boss, { count:5, color:'#ffe9a8', glyph:'⭐', stagger:90, fromTop:true }); setTimeout(()=>{ spawnNova(boss, '#ffe9a8'); spawnParticles(boss, { count:14, glyph:'✦', color:'#ffe9a8', spread:80 }); screenFlash('#fff3c8', 200); bigShake(); }, 320); screenVignette('#ffe9a8', 600); },
@@ -1537,10 +1601,10 @@ const ABILITY_VFX = {
   heiler_a5_arkan(hero, boss){ spawnMeteor(boss, '#9be7ff'); spawnParticles(boss, { count:12, glyph:'✦', color:'#9be7ff', spread:70 }); screenFlash('#9be7ff', 180); },
   // Arkanschlag (Echo – zweiter Treffer)
   heiler_a5_arkan_echo(hero, boss){ spawnChainLightning(hero, boss, '#cdeeff'); setTimeout(()=>{ spawnNova(boss, '#cdeeff'); spawnShockwave(boss, '#ffffff'); spawnParticles(boss, { count:12, glyph:'✨', color:'#cdeeff', spread:64 }); bigShake(); }, 120); },
-  // Schutzschild (Absorb)
-  heiler_a5_schild(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffe9a8' }); spawnParticles(hero, { count:10, glyph:'✦', color:'#ffe9a8', spread:46, rise:20 }); },
-  // Engelsgeist (starker Heilstrom)
-  heiler_a9_engel(hero){ vfxHeal(hero); spawnSigilFlash(hero, { glyph:'😇', color:'#ffe9a8' }); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; pil.style.filter = 'hue-rotate(-12deg) brightness(1.15)'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 900); } spawnOrbit(hero, { glyph:'✨', color:'#ffe9a8', count:4, radius:54, period:1400, dur:1500 }); spawnParticles(hero, { count:14, glyph:'✦', color:'#ffe9a8', spread:54, rise:70 }); screenVignette('#ffe9a8', 560); },
+  // Spiegelschild (Reflexion): heilig-goldene Spiegelscherben + Bann-Rune
+  heiler_a5_schild(hero){ spawnSigilFlash(hero, { glyph:'🪞', color:'#ffe9a8' }); spawnNova(hero, '#ffe9a8'); spawnGroundRune(hero, { color:'#ffe9a8' }); spawnOrbit(hero, { glyph:'🪞', color:'#ffe9a8', count:4, radius:50, period:1400, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✦', color:'#fff3c8', spread:46, rise:20 }); },
+  // Engelsgeist (Engels-Aegis): Schutzkuppel + Federn + Heiligenschein
+  heiler_a9_engel(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnSigilFlash(hero, { glyph:'😇', color:'#ffe9a8' }); spawnNova(hero, '#fff3c8'); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; pil.style.filter = 'hue-rotate(-12deg) brightness(1.15)'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 900); } spawnOrbit(hero, { glyph:'🪶', color:'#ffe9a8', count:5, radius:54, period:1600, dur:1600 }); spawnParticles(hero, { count:14, glyph:'🪶', color:'#fff3c8', spread:54, rise:60 }); screenVignette('#ffe9a8', 520); },
   // Sternenregen (Meteorschauer-DoT)
   heiler_a9_stern(hero, boss){ spawnGroundRune(boss, { color:'#9be7ff' }); spawnMeteorShower(boss, '#9be7ff', 7, 130); setTimeout(()=>{ screenFlash('#9be7ff', 200); bigShake(); }, 700); },
   // Reinigung (Schwäche entfernen + Heilung)
@@ -1548,14 +1612,19 @@ const ABILITY_VFX = {
   // ---- HEXER (Grundfähigkeiten) ----
   teufelswache(hero){ spawnGroundRune(hero, { color:'#7CFC00' }); spawnNova(hero, '#7CFC00'); spawnSigilFlash(hero, { glyph:'😈', color:'#9bff5a' }); spawnParticles(hero, { count:14, glyph:'🔥', color:'#9bff5a', spread:60, rise:20 }); applyDemonAura(hero, true); },
   // ---- HEXER (Talent-Aktive) ----
-  // Verderbnis (Seelenstrahl-Kanal – Strahl kommt aus startDrainChannel)
-  hexer_a5_verderb(hero, boss){ spawnParticles(boss, { count:10, glyph:'🟣', color:'#b06bff', spread:54, rise:8 }); spawnGroundRune(boss, { color:'#9b30ff' }); },
+  // Verderbnis (Schattenflamme-Echo: Detonation + verzögerte Zweitdetonation)
+  hexer_a5_verderb(hero, boss){ spawnVortex(boss, '#9b30ff'); spawnNova(boss, '#b06bff'); spawnParticles(boss, { count:12, glyph:'🟣', color:'#b06bff', spread:60, rise:8 }); spawnGroundRune(boss, { color:'#9b30ff' }); screenFlash('#9b30ff', 150); },
+  hexer_a5_verderb_echo(hero, boss){ spawnSigilFlash(boss, { glyph:'💀', color:'#b06bff' }); spawnShockwave(boss, '#b06bff'); spawnParticles(boss, { count:10, glyph:'🌑', color:'#b06bff', spread:64 }); bigShake(); },
+  // Aderlass-Ritual (Lebensraub-Buff): Blutkreis + Blutaura
+  hexer_a5_ritual(hero){ spawnGroundRune(hero, { color:'#c0306b' }); flashSpriteClass(hero, 'aura-blood-strong', 700); spawnOrbit(hero, { glyph:'🩸', color:'#ff5a7a', count:4, radius:54, period:1500, dur:1400 }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
   // Schattenblitz (Schatten-Nuke)
   hexer_a5_furcht(hero, boss){ spawnVortex(boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnSigilFlash(boss, { glyph:'💀', color:'#b06bff' }); spawnParticles(boss, { count:14, glyph:'🌑', color:'#b06bff', spread:80 }); screenFlash('#9b30ff', 200); bigShake(); }, 200); },
   // Chaosregen (Teufelsregen-DoT)
   hexer_a9_chaos(hero, boss){ spawnGroundRune(boss, { color:'#7CFC00' }); spawnMeteorShower(boss, '#7CFC00', 6, 140); setTimeout(()=>{ spawnImpact(boss, '#7CFC00'); spawnNova(boss, '#9bff5a'); screenFlash('#7CFC00', 180); bigShake(); }, 720); },
-  // Blutritual (Lebensraub-Buff)
-  hexer_a9_orgie(hero){ spawnGroundRune(hero, { color:'#c0306b' }); flashSpriteClass(hero, 'aura-blood-strong', 700); spawnOrbit(hero, { glyph:'🩸', color:'#ff5a7a', count:4, radius:54, period:1500, dur:1400 }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
+  // Seelenfresser (Hinrichtung): Seelen-Strang reißt eine glühende Seele heraus
+  hexer_a9_stein(hero, boss){ spawnExecuteMark(boss, '#9b30ff'); spawnBeam(boss, hero, '#b06bff'); spawnVortex(boss, '#9b30ff'); spawnSigilFlash(boss, { glyph:'💜', color:'#c08bff' }); spawnParticles(boss, { count:14, glyph:'👻', color:'#c08bff', spread:60, rise:30 }); spawnParticles(hero, { count:8, glyph:'💜', color:'#c08bff', spread:40, rise:24 }); screenFlash('#9b30ff', 170); bigShake(); },
+  // Blutritual (Dunkler Pakt – Blutschild)
+  hexer_a9_orgie(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnGroundRune(hero, { color:'#c0306b' }); spawnSigilFlash(hero, { glyph:'🩸', color:'#ff5a7a' }); spawnOrbit(hero, { glyph:'🩸', color:'#ff5a7a', count:4, radius:54, period:1500, dur:1400 }); spawnParticles(hero, { count:12, glyph:'🛡', color:'#ff5a7a', spread:48, rise:24 }); },
 };
 
 // Spielt die Signatur einer Fähigkeit; fehlt sie, greift der kind-basierte Fallback.
@@ -1583,7 +1652,6 @@ function startDrainChannel(f, ab){
   const tickMs = ab.tickMs || 1000;
   const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
   startDrainBeam('bossSprite', 'heroSprite', ab.dur, ab);
-  if(ab.id === 'hexer_a9_stein') spawnSigilFlash('bossSprite', { glyph:'💀', color:'#b06bff' });
   let i = 0;
   const healMult = classOf(state).healMult || 1;
   const tick = () => {
@@ -1621,13 +1689,9 @@ function startDrainBeam(fromId, toId, dur, ab){
   const ang = Math.atan2(dy, dx) * 180/Math.PI;
   const real = dur / combatSpeed;
   const b = document.createElement('div');
-  // Seelenraub (Grundfähigkeit) = Referenz-Strahl. Talent-Kanäle sind verwandte
-  // Varianten: Aderlass-Ritual dünner, Seelenfresser dicker & dunkler.
-  const id = ab && ab.id;
-  let beamCol = '#c0306b';
-  b.className = 'vfx-beam drain-beam' +
-    (id === 'hexer_a5_ritual' ? ' drain-small' : id === 'hexer_a9_stein' ? ' drain-big' : '');
-  if(id === 'hexer_a9_stein') beamCol = '#7a1fb0';
+  // Seelenraub (Hexer-Grundfähigkeit) ist der einzige kanalisierte Drain-Strahl.
+  const beamCol = '#c0306b';
+  b.className = 'vfx-beam drain-beam';
   b.id = 'drainBeam';
   b.style.left = a.x+'px'; b.style.top = a.y+'px';
   b.style.width = len+'px'; b.style.transform = 'rotate('+ang+'deg)';
@@ -1921,6 +1985,8 @@ function applyDuelFx(fx, me){
   applyBuffAura('heroSprite', 'crit',      { until: now + (mine.crit||0),    src: mine.critSrc  }, now);
   applyBuffAura('heroSprite', 'dmgBoost',  { until: now + (mine.fire||0),    src: mine.fireSrc  }, now);
   applyBuffAura('heroSprite', 'lifesteal', { until: now + (mine.blood||0),   src: mine.bloodSrc }, now);
+  applyBuffAura('heroSprite', 'haste',     { until: now + (mine.haste||0),   src: mine.hasteSrc }, now);
+  applyBuffAura('bossSprite', 'haste',     { until: now + (theirs.haste||0), src: theirs.hasteSrc }, now);
   applyBuffAura('bossSprite', 'crit',      { until: now + (theirs.crit||0),  src: theirs.critSrc  }, now);
   applyBuffAura('bossSprite', 'dmgBoost',  { until: now + (theirs.fire||0),  src: theirs.fireSrc  }, now);
   applyBuffAura('bossSprite', 'lifesteal', { until: now + (theirs.blood||0), src: theirs.bloodSrc }, now);
