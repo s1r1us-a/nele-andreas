@@ -253,6 +253,19 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
       logLine(fight, '🏆 ' + wname + ' gewinnt das Duell!', '#ffd24a');
       clearTimeout(_timer);
     }
+  } else if(ab.kind === 'echo'){
+    // Arkanschlag: im Duell als ein kombinierter Treffer (Sofort + Echo); die
+    // Clients spielen die Doppel-Detonation per ABILITY_VFX[ab.id].
+    const dmg = Math.max(1, Math.round(side.atk * ((ab.burstMult||1.6) + (ab.echoMult||ab.burstMult||1))));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + fmtBig(dmg) + ' Schaden', '#9be7ff');
+    if(opp.hp <= 0){
+      opp.hp = 0; fight.over = true; fight.winner = role;
+      const wname = role === 'host' ? fight.hostName : fight.guestName;
+      logLine(fight, '🏆 ' + wname + ' gewinnt das Duell!', '#ffd24a');
+      clearTimeout(_timer);
+    }
   } else if(ab.kind === 'critBoost'){
     side.buffs.crit = { until: now + ab.dur, val: ab.critBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.critBonus*100) + '% Krit!', '#ffd24a');

@@ -686,6 +686,16 @@ function applyAbility(fight, slot, abilityId){
     const dmg = dealBoss(ab.burstMult || 2);
     if(ab.kind === 'drain') slotHeal(dmg);
     addLog(fight, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
+  } else if(ab.kind === 'echo'){
+    // Arkanschlag: Soforttreffer + verzögertes Echo.
+    const dmg = dealBoss(ab.burstMult || 1.6);
+    addLog(fight, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden', '#9be7ff');
+    setTimeout(()=>{
+      if(fight.over || _fight !== fight) return;
+      const e = dealBoss(ab.echoMult || ab.burstMult || 1);
+      addLog(fight, '✨ Echo: '+fmtBig(e)+' Schaden', '#cdeeff');
+      syncFight(fight);
+    }, ab.echoDelay || 500);
   }
   syncFight(fight);
 }

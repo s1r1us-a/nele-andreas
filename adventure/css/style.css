@@ -1219,12 +1219,27 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
       rgba(255,170,40,.05) 78%, rgba(255,170,40,0) 100%);
   box-shadow:0 0 36px 12px rgba(255,180,40,.55), inset 0 0 30px 12px rgba(255,220,150,.4); }
 
+/* Zickzack-Blitz (Arkanschlag-Echo): geknickter, flackernder Lichtstrahl. */
+.vfx-chain { position:absolute; height:12px; transform-origin:0 50%; pointer-events:none; z-index:10;
+  background:linear-gradient(90deg, transparent, var(--chain-col,#cdeeff) 12%, #ffffff 50%, var(--chain-col,#cdeeff) 88%, transparent);
+  clip-path:polygon(0 45%, 14% 10%, 28% 70%, 42% 18%, 56% 78%, 70% 22%, 84% 66%, 100% 40%,
+    100% 60%, 84% 86%, 70% 42%, 56% 98%, 42% 38%, 28% 90%, 14% 30%, 0 65%);
+  filter:drop-shadow(0 0 8px var(--chain-col,#cdeeff)) drop-shadow(0 0 14px #ffffff);
+  opacity:0; animation:chainFlicker .36s steps(4,end) forwards; }
+@keyframes chainFlicker {
+  0% { opacity:0; }
+  15% { opacity:1; }
+  40% { opacity:.55; }
+  70% { opacity:1; }
+  100% { opacity:0; } }
+
 @media(prefers-reduced-motion: reduce){
   .vfx-rune-ring, .vfx-rune-ring::before, .vfx-rune-ring::after,
   .vfx-orbit-g, .vfx-orbit-i, .vfx-proj, .vfx-arc, .vfx-nova, .vfx-crater, .vfx-crater::before,
-  .vfx-sigil, .vfx-vortex, .vfx-smoke, .arena-vignette,
+  .vfx-sigil, .vfx-vortex, .vfx-smoke, .arena-vignette, .vfx-chain,
   .combatant.aura-steel, .combatant.aura-arcane, .combatant.aura-blood-strong { animation:none; }
   .vfx-rune-ring, .vfx-rune-ring.persist, .vfx-sigil, .vfx-arc, .vfx-nova, .vfx-crater { opacity:1; }
+  .vfx-chain { opacity:0; }
 }
 
 /* Fähigkeits-Leiste (mehrere Kampf-Knöpfe). */
