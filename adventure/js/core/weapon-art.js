@@ -53,22 +53,66 @@ function iconWrap(uid, reg, body){
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
-// Illidan-artige Kriegsklinge: stark gebogene Sichel oben + Haken unten,
-// mittig am goldenen Hub – grün-türkis.
-function icon_zwillinge(uid, reg){
-  const P = PAL.zwillinge, G = reg.grad(P.base);
-  let b = `<ellipse cx="26" cy="33" rx="20" ry="27" fill="${P.base}" opacity="0.12"/>`;
-  // durchgehende Sichelklinge (C-Form), Griff-Hub in der Bogenmitte
-  b += `<path d="M37 8 C22 16 11 31 16 48 C19 58 27 62 35 60 C29 52 26 41 28 30 C30 21 32 15 37 8 Z" fill="${G}" stroke="${P.edge}" stroke-width="1"/>`;
-  // Zacken an der Außenkante
-  b += `<path d="M13 26 l-6 -1 l5 5 Z M14 38 l-6 1 l5 4 Z M14 16 l-5 -2 l5 5 Z" fill="${P.dk}"/>`;
-  // innerer Schneiden-Glanz
-  b += `<path d="M35 11 C30 22 27 33 29 44 C30 52 33 57 35 59" stroke="${P.hi}" stroke-width="1.2" fill="none" opacity="0.72"/>`;
-  // zentraler goldener Hub (Griffpunkt, mittig)
-  b += `<circle cx="28" cy="33" r="6.6" fill="${GOLD}" stroke="${shade(GOLD,0.62)}" stroke-width="1.2"/>`+
-       star(28,33,4.3,1.7,5,'#fff4cf',0.95)+`<circle cx="28" cy="33" r="1.7" fill="#3a2a6a"/>`;
-  return iconWrap(uid, reg, b);
+function twinBladeDefs(prefix){
+  return `<filter id="${prefix}-fel-glow" x="-50%" y="-50%" width="200%" height="200%">`+
+    `<feGaussianBlur stdDeviation="18" result="blur1"/><feGaussianBlur stdDeviation="35" result="blur2"/>`+
+    `<feMerge><feMergeNode in="blur2"/><feMergeNode in="blur1"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`+
+    `<filter id="${prefix}-gem-glow" x="-30%" y="-30%" width="160%" height="160%">`+
+    `<feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`+
+    `<linearGradient id="${prefix}-blade-base" x1="100%" y1="50%" x2="0%" y2="50%">`+
+    `<stop offset="0%" stop-color="#0a4d00"/><stop offset="70%" stop-color="#1cfc03"/><stop offset="100%" stop-color="#a3ff00"/></linearGradient>`+
+    `<linearGradient id="${prefix}-blade-core" x1="100%" y1="50%" x2="0%" y2="50%">`+
+    `<stop offset="0%" stop-color="#1cfc03" opacity="0"/><stop offset="80%" stop-color="#bfff80"/><stop offset="100%" stop-color="#ffffff"/></linearGradient>`+
+    `<linearGradient id="${prefix}-gold-trim" x1="0%" y1="0%" x2="100%" y2="100%">`+
+    `<stop offset="0%" stop-color="#ffea99"/><stop offset="40%" stop-color="#d4af37"/><stop offset="100%" stop-color="#665211"/></linearGradient>`+
+    `<linearGradient id="${prefix}-dark-metal" x1="0%" y1="0%" x2="100%" y2="100%">`+
+    `<stop offset="0%" stop-color="#3a3a3a"/><stop offset="50%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#050505"/></linearGradient>`+
+    `<linearGradient id="${prefix}-silver-spike" x1="0%" y1="0%" x2="100%" y2="100%">`+
+    `<stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#a0a0a0"/><stop offset="100%" stop-color="#333333"/></linearGradient>`;
 }
+
+function twinBladeBody(prefix){
+  return `<g id="${prefix}-top-section">`+
+    `<path d="M 370,600 L 350,540 L 290,500 L 330,470 C 260,380 220,230 110,80 C 290,160 460,330 490,470 L 440,490 L 460,520 C 450,550 410,580 370,600 Z" fill="#1cfc03" filter="url(#${prefix}-fel-glow)" opacity="0.7"/>`+
+    `<path d="M 370,600 L 350,540 L 290,500 L 330,470 C 260,380 220,230 110,80 C 290,160 460,330 490,470 L 440,490 L 460,520 C 450,550 410,580 370,600 Z" fill="url(#${prefix}-blade-base)"/>`+
+    `<path d="M 360,580 L 340,530 L 305,500 L 335,480 C 275,400 240,260 145,120 C 295,190 435,340 465,460 L 425,480 L 440,505 C 435,530 405,555 370,570 Z" fill="url(#${prefix}-blade-core)"/>`+
+    `<path d="M 390,620 C 490,510 470,360 210,210 C 290,300 310,390 280,480 L 310,505 L 290,545 L 350,600 Z" fill="url(#${prefix}-dark-metal)" stroke="url(#${prefix}-gold-trim)" stroke-width="4" stroke-linejoin="round"/>`+
+    `<path d="M 370,610 C 440,530 430,420 250,300 C 310,370 320,440 295,505 L 340,580 Z" fill="#1f1f1f" stroke="url(#${prefix}-gold-trim)" stroke-width="2"/></g>`+
+    `<g id="${prefix}-bottom-section">`+
+    `<path d="M 370,800 L 350,860 L 290,900 L 330,930 C 260,1020 220,1170 110,1320 C 290,1240 460,1070 490,930 L 440,910 L 460,880 C 450,850 410,820 370,800 Z" fill="#1cfc03" filter="url(#${prefix}-fel-glow)" opacity="0.7"/>`+
+    `<path d="M 370,800 L 350,860 L 290,900 L 330,930 C 260,1020 220,1170 110,1320 C 290,1240 460,1070 490,930 L 440,910 L 460,880 C 450,850 410,820 370,800 Z" fill="url(#${prefix}-blade-base)"/>`+
+    `<path d="M 360,820 L 340,870 L 305,900 L 335,920 C 275,1000 240,1140 145,1280 C 295,1210 435,1060 465,940 L 425,920 L 440,895 C 435,870 405,845 370,830 Z" fill="url(#${prefix}-blade-core)"/>`+
+    `<path d="M 390,780 C 490,890 470,1040 210,1190 C 290,1100 310,1010 280,920 L 310,895 L 290,855 L 350,800 Z" fill="url(#${prefix}-dark-metal)" stroke="url(#${prefix}-gold-trim)" stroke-width="4" stroke-linejoin="round"/>`+
+    `<path d="M 370,790 C 440,870 430,980 250,1100 C 310,1030 320,960 295,895 L 340,820 Z" fill="#1f1f1f" stroke="url(#${prefix}-gold-trim)" stroke-width="2"/></g>`+
+    `<g id="${prefix}-center-guard">`+
+    `<polygon points="260,700 310,580 430,580 490,650 540,700 490,750 430,820 310,820" fill="url(#${prefix}-dark-metal)" stroke="url(#${prefix}-gold-trim)" stroke-width="5" stroke-linejoin="round"/>`+
+    `<polygon points="340,700 370,620 440,620 470,700 440,780 370,780" fill="#141414" stroke="url(#${prefix}-gold-trim)" stroke-width="3" stroke-linejoin="round"/>`+
+    `<polygon points="390,660 410,680 310,610 330,670" fill="url(#${prefix}-silver-spike)" stroke="#000" stroke-width="2"/>`+
+    `<polygon points="390,740 410,720 310,790 330,730" fill="url(#${prefix}-silver-spike)" stroke="#000" stroke-width="2"/>`+
+    `<polygon points="420,700 430,680 520,700 430,720" fill="url(#${prefix}-silver-spike)" stroke="#000" stroke-width="2"/>`+
+    `<path d="M 330,600 Q 380,640 450,600" fill="none" stroke="url(#${prefix}-gold-trim)" stroke-width="2"/>`+
+    `<path d="M 330,800 Q 380,760 450,800" fill="none" stroke="url(#${prefix}-gold-trim)" stroke-width="2"/>`+
+    `<polygon points="410,650 425,685 465,685 435,710 445,745 410,725 375,745 385,710 355,685 395,685" fill="#050505" stroke="url(#${prefix}-gold-trim)" stroke-width="2" stroke-linejoin="round"/>`+
+    `<circle cx="410" cy="705" r="16" fill="#a3ff00" filter="url(#${prefix}-gem-glow)"/>`+
+    `<circle cx="410" cy="705" r="6" fill="#ffffff"/></g>`;
+}
+
+function twinBladeContent(prefix, offhand){
+  const body = twinBladeBody(prefix);
+  return `<defs>${twinBladeDefs(prefix)}</defs>`+(offhand ? `<g transform="translate(800, 0) scale(-1, 1)">${body}</g>` : body);
+}
+
+function twinBladeSVG(prefix, offhand){
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1400">${twinBladeContent(prefix, offhand)}</svg>`;
+}
+
+function twinBladeIcon(prefix, offhand){
+  return 'data:image/svg+xml,' + encodeURIComponent(twinBladeSVG(prefix, offhand));
+}
+
+function icon_zwillinge(uid, reg){ return twinBladeIcon('tw-mh'+uid, false); }
+function icon_zwillinge_mainhand(uid, reg){ return twinBladeIcon('tw-mh'+uid, false); }
+function icon_zwillinge_offhand(uid, reg){ return twinBladeIcon('tw-oh'+uid, true); }
 
 // eisblaue, breite Runenklinge.
 function icon_frost(uid, reg){
@@ -196,7 +240,8 @@ function icon_engelsorb(uid, reg){
   return iconWrap(uid, reg, b);
 }
 
-const ICONS = { zwillinge:icon_zwillinge, frost:icon_frost, stachel:icon_stachel, inferno:icon_inferno, engel:icon_engel,
+const ICONS = { zwillinge:icon_zwillinge, zwillinge_mainhand:icon_zwillinge_mainhand, zwillinge_offhand:icon_zwillinge_offhand,
+                frost:icon_frost, stachel:icon_stachel, inferno:icon_inferno, engel:icon_engel,
                 infernoorb:icon_infernoorb, engelsorb:icon_engelsorb };
 
 // Öffentliche Icon-Funktion (für item-art.js). art/element/orb derzeit nicht
@@ -225,28 +270,20 @@ function heldWrap(inner, uid, opt, defaultTilt, baseScale){
   return tiltWrap(grow(inner) + handRect);
 }
 
-// Illidan-Kriegsklinge: stark gebogene Sichel-Glefe, MITTIG am goldenen Hub
-// gegriffen – große Klinge nach oben, kleinerer Haken nach unten (Hand sitzt im
-// Zentrum bei (hx,194)). Wird in der Nebenhand gespiegelt (echtes Paar).
-function held_zwillinge(hx, uid){
-  const P = PAL.zwillinge;
-  // EINE durchgehende Sichel (C-Form), nach AUSSEN gebogen (komplett auf der
-  // Außenseite der Hand → Gesicht bleibt frei). Goldener Hub in der Bogenmitte
-  // (mittig gegriffen, wie Illidan). Nebenhand wird gespiegelt (buildSpecialHeld).
-  let g = `<ellipse cx="${hx+14}" cy="186" rx="26" ry="62" fill="${P.base}" opacity="0.14"/>`;
-  g += `<path d="M${hx-2} 128 C${hx+17} 148 ${hx+31} 184 ${hx+20} 221 `+
-       `C${hx+14} 237 ${hx+5} 245 ${hx-5} 243 C${hx+3} 226 ${hx+6} 210 ${hx+4} 194 `+
-       `C${hx+3} 170 ${hx+2} 149 ${hx-2} 128 Z" fill="${P.base}" stroke="${P.edge}" stroke-width="1.5"/>`;
-  // Zacken an der Außenkante (Bogen-Außenseite)
-  g += `<path d="M${hx+31} 182 l9 -1 l-8 6 Z M${hx+29} 159 l9 -3 l-7 7 Z M${hx+24} 206 l8 2 l-8 3 Z" fill="${P.dk}"/>`;
-  // innerer Schneiden-Glanz entlang der Hohlkante
-  g += `<path d="M${hx-1} 132 C${hx+13} 151 ${hx+25} 184 ${hx+15} 218" stroke="${P.hi}" stroke-width="1.7" fill="none" opacity="0.7"/>`;
-  // zentraler goldener Hub = Griffpunkt (Hand liegt mittig darüber)
-  g += `<circle cx="${hx}" cy="194" r="10" fill="${GOLD}" stroke="${shade(GOLD,0.6)}" stroke-width="1.6"/>`+
-       `<circle cx="${hx}" cy="194" r="10" fill="none" stroke="${shade(GOLD,1.25)}" stroke-width="1" opacity="0.7"/>`+
-       star(hx,194,5.8,2.3,5,'#fff4cf',0.95)+`<circle cx="${hx}" cy="194" r="2.4" fill="#3a2a6a"/>`;
-  return g;
+function heldTwinBlade(hx, uid, offhand){
+  const prefix = (offhand ? 'tw-oh-held' : 'tw-mh-held') + uid;
+  const gripX = offhand ? 390 : 410;
+  const gripY = 705;
+  return `<g transform="translate(${hx} 194) scale(0.138) translate(${-gripX} ${-gripY})">`+
+    twinBladeContent(prefix, offhand)+
+    `</g>`;
 }
+
+// Neue Zwillingsklingen: das SVG-Medaillon sitzt exakt auf dem Handpunkt
+// (hx,194), damit der Avatar die Warglaive mittig im Griff hält.
+function held_zwillinge(hx, uid){ return heldTwinBlade(hx, uid, hx < 100); }
+function held_zwillinge_mainhand(hx, uid){ return heldTwinBlade(hx, uid, false); }
+function held_zwillinge_offhand(hx, uid){ return heldTwinBlade(hx, uid, true); }
 
 function held_frost(hx, uid){
   const P = PAL.frost, E = ELEM.ice;
@@ -314,7 +351,9 @@ function held_engel(hx, uid){
 
 // tilt: stärker nach außen gekippt → Klingen/Köpfe weg vom Gesicht.
 const HELD = {
-  zwillinge: { build: held_zwillinge, tilt: 16, scale: 1.3 },
+  zwillinge: { build: held_zwillinge, tilt: 27, scale: 1.0 },
+  zwillinge_mainhand: { build: held_zwillinge_mainhand, tilt: 27, scale: 1.0 },
+  zwillinge_offhand: { build: held_zwillinge_offhand, tilt: -27, scale: 1.12 },
   frost:     { build: held_frost,     tilt: 22, scale: 1.5 },
   inferno:   { build: held_inferno,   tilt: 18, scale: 1.4 },
   engel:     { build: held_engel,     tilt: 18, scale: 1.4 },
@@ -326,12 +365,12 @@ export function buildSpecialHeld(special, uid, opt){
   if(!h) return '';
   opt = opt || {};
   const hx = opt.hx != null ? opt.hx : 124;
+  const heldOpt = Object.assign({}, opt);
+  if(special === 'zwillinge_mainhand' || special === 'zwillinge_offhand' || special === 'zwillinge'){
+    heldOpt.tilt = special === 'zwillinge' && hx < 100 ? -27 : h.tilt;
+  }
   let inner = h.build(hx, uid);
-  // Zwillingsklingen in der Nebenhand (linke Hand, hx<100) spiegeln → echtes
-  // Illidan-Paar (Klingen weisen nach außen).
-  if(special === 'zwillinge' && hx < 100)
-    inner = `<g transform="translate(${2*hx} 0) scale(-1 1)">${inner}</g>`;
-  return heldWrap(inner, uid, opt, h.tilt, h.scale);
+  return heldWrap(inner, uid, heldOpt, h.tilt, h.scale);
 }
 
 // Getragener Spezial-Nebenhand-Schild (lila Stachel-BOLLWERK) – an der linken

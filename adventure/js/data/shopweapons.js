@@ -23,12 +23,12 @@ export const SHOP_WEAPONS = [
   //    Werte am „Blutschatten"-Set orientiert (critDamage/attackSpeed/critPhys).
   { key:'zwillingsklinge_haupt', classId:'schurke', slotKey:'waffe',
     name:'Zwillingsklinge', g:'f', cost:125,
-    art:'waffe', special:'zwillinge', variant:7, statType:'damage', cat:'waffen', shop:true,
+    art:'waffe', special:'zwillinge_mainhand', variant:7, statType:'damage', cat:'waffen', shop:true,
     statMult:1.00, affixBias:{ critDamage:4, attackSpeed:3, critPhys:2 }, flavorAffix:'critDamage',
     fixedAffixes:['critDamage','attackSpeed','critPhys'] },
   { key:'zwillingsklinge_neben', classId:'schurke', slotKey:'schild',
     name:'Zwillingsklinge (Nebenhand)', g:'f', cost:125,
-    art:'waffe', special:'zwillinge', variant:7, statType:'damage', cat:'waffen', affixGroup:'waffe', shop:true,
+    art:'waffe', special:'zwillinge_offhand', variant:7, statType:'damage', cat:'waffen', affixGroup:'waffe', shop:true,
     statMult:0.66, affixBias:{ attackSpeed:5, critDamage:3, critPhys:2 }, flavorAffix:'attackSpeed',
     fixedAffixes:['attackSpeed','critDamage','critPhys'] },
 
