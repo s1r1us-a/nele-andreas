@@ -622,6 +622,7 @@ async function syncDuel(fight, finalWrite){
     hostClass: fight.hostClass, guestClass: fight.guestClass,
     hostStab: fight.hostStab, guestStab: fight.guestStab,
     hostTier: fight.host.tier, guestTier: fight.guest.tier,
+    hostInterval: fight.host.interval, guestInterval: fight.guest.interval,
     hostHp: Math.ceil(Math.max(0, fight.host.hp)), hostMaxHp: fight.host.maxHp,
     guestHp: Math.ceil(Math.max(0, fight.guest.hp)), guestMaxHp: fight.guest.maxHp,
     hostCd: cdMapOf(fight.host, now), guestCd: cdMapOf(fight.guest, now),

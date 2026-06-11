@@ -2,7 +2,7 @@
    BOSS-KAMPF-ENGINE. Phase 1 (#7,#12,#13,#16,#17) + Phase 2 (#20,#22)
    + Phase 3 (#26 Kampflog/DPS-Meter).
    ===================================================================== */
-import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM } from '../data/tuning.js';
+import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM, animSpeedForInterval } from '../data/tuning.js';
 import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
 import { rollAffixes } from '../core/items.js';
@@ -393,7 +393,8 @@ export function updateHpBars(f){
 
 // ---- Animationen ----------------------------------------------------
 const HIT_DELAY=150, FLASH=240, SHAKE=240, FLOAT=1000;
-function lunge(el, isBoss){
+function lunge(el, isBoss, spd){
+  const s = spd || combatSpeed;
   const base = isBoss ? 'scaleX(-1) ' : '';
   // Deutlicher Schwung: Vorwärts-Stoß kombiniert mit einer Drehung der Figur.
   el.animate(
@@ -401,17 +402,18 @@ function lunge(el, isBoss){
       { transform: base+'translateX(58px) rotate(-18deg)', offset:0.35 },
       { transform: base+'translateX(64px) rotate(12deg)', offset:0.55 },
       { transform: base+'translateX(0) rotate(0deg)' } ],
-    { duration: 220 / combatSpeed, easing:'ease-out' }
+    { duration: 220 / s, easing:'ease-out' }
   );
 }
 // Stab-Cast: Held lehnt sich deutlich nach vorne und hält den Stab dem Boss entgegen.
-function staffCast(el){
+function staffCast(el, spd){
+  const s = spd || combatSpeed;
   el.animate(
     [ { transform:'translateX(0) rotate(0deg)' },
       { transform:'translateX(40px) rotate(-9deg)', offset:0.35 },
       { transform:'translateX(34px) rotate(-7deg)', offset:0.7 },
       { transform:'translateX(0) rotate(0deg)' } ],
-    { duration: 340 / combatSpeed, easing:'ease-out' }
+    { duration: 340 / s, easing:'ease-out' }
   );
 }
 function mechFloat(who, text, color){
@@ -532,24 +534,26 @@ function swingKeyframes(profile, kind, flip){
   return { rest:`${flip}rotate(14deg)`, dur:P.dur, kf:P.a.map(([deg,tx,off])=>({ transform:tf(deg,tx), offset:off })) };
 }
 // Die persistente Waffen-Ebene schwingen lassen + 1–2 blasse Nachzieh-Klone (Bewegungsunschärfe).
-function playSwing(layerEl, reduce){
+function playSwing(layerEl, reduce, spd){
   if(!layerEl) return;
+  const s = spd || combatSpeed;
   const flip = layerEl.dataset.flip || '';
   const { rest, dur, kf } = swingKeyframes(layerEl.dataset.profile, layerEl.dataset.kind, flip);
   layerEl.style.transform = rest;
-  layerEl.animate(kf, { duration: dur/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
+  layerEl.animate(kf, { duration: dur/s, easing:'cubic-bezier(.4,.05,.5,1)' });
   if(reduce) return;
   const stage = layerEl.parentNode; if(!stage) return;
   for(let i=1;i<=2;i++){
     const g = layerEl.cloneNode(false); g.classList.add('weapon-ghost'); g.removeAttribute('id');
     stage.appendChild(g);
-    g.animate(kf, { duration: dur/combatSpeed, delay: (i*34)/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
-    g.animate([{opacity:0.3},{opacity:0}], { duration:(dur+i*34)/combatSpeed, easing:'ease-out', fill:'forwards' });
-    setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + i*34 + 90)/combatSpeed);
+    g.animate(kf, { duration: dur/s, delay: (i*34)/s, easing:'cubic-bezier(.4,.05,.5,1)' });
+    g.animate([{opacity:0.3},{opacity:0}], { duration:(dur+i*34)/s, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + i*34 + 90)/s);
   }
 }
 // Sofortiger, gezackter Blitz vom Angreifer zum Ziel.
-function lightningBolt(from, to, layer, element, reduce, onArrive){
+function lightningBolt(from, to, layer, element, reduce, onArrive, spd){
+  const s = spd || combatSpeed;
   const P = ATK_ELEM[element] || ATK_ELEM.lightning;
   const dx = to.x-from.x, dy = to.y-from.y, len = Math.hypot(dx,dy) || 1;
   const nx = -dy/len, ny = dx/len, segs = 7;
@@ -563,21 +567,22 @@ function lightningBolt(from, to, layer, element, reduce, onArrive){
                   `<polyline points="${pts}" fill="none" stroke="${P.mid}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`+
                   `<polyline points="${pts}" fill="none" stroke="${P.core}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`;
   layer.appendChild(svg);
-  const dur = (reduce ? 140 : 210)/combatSpeed;
+  const dur = (reduce ? 140 : 210)/s;
   svg.animate([{opacity:0},{opacity:1,offset:0.15},{opacity:0.55,offset:0.5},{opacity:1,offset:0.72},{opacity:0}],
     { duration:dur, easing:'steps(5,end)' });
   setTimeout(()=>{ if(onArrive) onArrive(); }, Math.min(90, dur*0.4));
   setTimeout(()=> { if(svg.parentNode) svg.remove(); }, dur+40);
 }
 // Fliegendes Projektil mit Schweif (Element-gefärbt) – ersetzt staffProjectileAnim.
-function projectile(from, to, layer, element, reduce, onArrive){
+function projectile(from, to, layer, element, reduce, onArrive, spd){
+  const s = spd || combatSpeed;
   const cls = { fire:'proj-fire', ice:'proj-ice', nature:'proj-nature', lightning:'proj-ice' }[element] || 'proj-fire';
   const ball = document.createElement('div');
   ball.className = 'staff-projectile ' + cls;
   ball.style.left = from.x+'px'; ball.style.top = (from.y-8)+'px';
   layer.appendChild(ball);
   const dx = to.x-from.x, dy = (to.y) - (from.y-8);
-  const dur = Math.max(90, (reduce?160:240)/combatSpeed);
+  const dur = Math.max(90, (reduce?160:240)/s);
   ball.animate([ { transform:'translate(0,0) scale(1)', opacity:1 },
                  { transform:`translate(${dx}px,${dy}px) scale(0.5)`, opacity:0.85 } ],
     { duration:dur, easing:'ease-in', fill:'forwards' });
@@ -627,13 +632,19 @@ function attackAnim(who, dmg, crit, onHit, meta){
   const stage = $('#arenaStage'), layer = $('#dmgLayer');
   const atk = resolveAttack(isHero, meta);
   const isStab = atk.kind === 'stab';
+  // Animationstempo des Angreifers: skaliert die Schwung-/Treffer-Dauern, damit sie
+  // bei hohem Angriffstempo ins kürzere Schlagintervall passen (multiplikativ zum
+  // 1×/2×-Regler). Boss hat kein Tempo-Stat → Faktor 1. Im Duell stammen die Intervalle
+  // aus dem Snapshot (host/guestInterval); Solo nutzt currentFight.heroInterval.
+  const af = animSpeedForInterval(attackerInterval(isHero));
+  const spd = combatSpeed * af;
   // Echte Waffe schwingt: persistente Waffen-Ebene des Angreifers animieren
   // (Held bzw. Duell-Gegner). PvE-Boss = Monster ohne Ebene → Körper-Ausfall.
   const layerEl = isHero ? (currentFight && currentFight.heroWeaponEl)
                          : (currentFight && currentFight.bossWeaponEl);
-  if(layerEl) playSwing(layerEl, reduce);
-  else if(isStab) staffCast(attacker);
-  else lunge(attacker, !isHero);
+  if(layerEl) playSwing(layerEl, reduce, spd);
+  else if(isStab) staffCast(attacker, spd);
+  else lunge(attacker, !isHero, spd);
 
   const targetAnchor = () => (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
 
@@ -659,11 +670,22 @@ function attackAnim(who, dmg, crit, onHit, meta){
     const fromH = handAnchor(attackerId);
     const from = fromH ? { x: fromH.x, y: fromH.y } : ((currentFight && currentFight.anchor[attackerId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 });
     const to   = targetAnchor();
-    if(atk.spell && atk.spell.mode === 'bolt') lightningBolt(from, to, layer, atk.element, reduce, doHit);
-    else projectile(from, to, layer, atk.element, reduce, doHit);
+    if(atk.spell && atk.spell.mode === 'bolt') lightningBolt(from, to, layer, atk.element, reduce, doHit, spd);
+    else projectile(from, to, layer, atk.element, reduce, doHit, spd);
   } else {
-    setTimeout(doHit, HIT_DELAY / combatSpeed);
+    setTimeout(doHit, HIT_DELAY / spd);
   }
+}
+// Schlagintervall (ms) des Angreifers für das Animationstempo. Boss (PvE) hat kein
+// Tempo-Stat → undefined ⇒ Faktor 1. Im Duell stammen die Intervalle aus dem Snapshot.
+function attackerInterval(isHero){
+  const f = currentFight; if(!f) return undefined;
+  if(f.isDuel){
+    const mine = f.role === 'host' ? f.hostInterval : f.guestInterval;
+    const opp  = f.role === 'host' ? f.guestInterval : f.hostInterval;
+    return isHero ? mine : opp;
+  }
+  return isHero ? f.heroInterval : undefined;
 }
 
 // ---- Heiltrank im Kampf --------------------------------------------
@@ -1924,6 +1946,8 @@ export function applyDuelSnapshot(snap){
 
   f.heroMaxHp = snap[me+'MaxHp'] || 1; f.heroHp = snap[me+'Hp'] || 0;
   f.bossMaxHp = snap[opp+'MaxHp'] || 1; f.bossHp = snap[opp+'Hp'] || 0;
+  // Schlagintervalle beider Seiten → Animationstempo (attackerInterval/animSpeedForInterval).
+  f.hostInterval = snap.hostInterval; f.guestInterval = snap.guestInterval;
   updateHpBars(f);
 
   const sec = Math.max(0.5, (Date.now() - (snap.startedAt || Date.now()))/1000);

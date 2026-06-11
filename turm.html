@@ -927,14 +927,15 @@ function anchorOf(imgId){
 }
 // Vorstürmen Richtung Gegner – animiert den WRAPPER (nicht das <img>), damit die
 // .ablaze-Filter-Animation auf dem Bild nicht überschrieben wird. baseY bleibt erhalten.
-function lungeMP(wrap, dir, baseY){
+function lungeMP(wrap, dir, baseY, spd){
   if(!wrap) return;
+  const s = spd || fightSpeed;
   const b = baseY ? `translateY(${baseY}px) ` : '';
   wrap.animate(
     [ { transform: b + 'translateX(0)' },
       { transform: b + `translateX(${dir*48}px)`, offset:0.4 },
       { transform: b + 'translateX(0)' } ],
-    { duration: 180 / fightSpeed, easing:'ease-out' }
+    { duration: 180 / s, easing:'ease-out' }
   );
 }
 // Hand-Position eines Sprites (für Waffen-Overlay/Projektil-Start) in Stage-Koordinaten.
@@ -947,7 +948,8 @@ function handAnchorMP(imgId, isBoss){
 }
 // Echter Waffen-Schwung: Waffen-SVG am Hand-Anker, rotiert um den Griff.
 // Sofortiger, gezackter Blitz.
-function lightningBoltMP(from, to, element, reduce, onArrive){
+function lightningBoltMP(from, to, element, reduce, onArrive, spd){
+  const s = spd || fightSpeed;
   const layer = $('dmgLayer'); const P = ATK_ELEM[element] || ATK_ELEM.lightning;
   const dx = to.x-from.x, dy = to.y-from.y, len = Math.hypot(dx,dy) || 1, nx = -dy/len, ny = dx/len, segs = 7;
   let pts = `${from.x.toFixed(1)},${from.y.toFixed(1)}`;
@@ -959,18 +961,19 @@ function lightningBoltMP(from, to, element, reduce, onArrive){
                   `<polyline points="${pts}" fill="none" stroke="${P.mid}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`+
                   `<polyline points="${pts}" fill="none" stroke="${P.core}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`;
   layer.appendChild(svg);
-  const dur = (reduce ? 140 : 210)/fightSpeed;
+  const dur = (reduce ? 140 : 210)/s;
   svg.animate([{opacity:0},{opacity:1,offset:0.15},{opacity:0.55,offset:0.5},{opacity:1,offset:0.72},{opacity:0}], { duration:dur, easing:'steps(5,end)' });
   setTimeout(()=>{ if(onArrive) onArrive(); }, Math.min(90, dur*0.4));
   setTimeout(()=>{ if(svg.parentNode) svg.remove(); }, dur+40);
 }
 // Fliegendes Projektil mit Schweif.
-function projectileMP(from, to, element, reduce, onArrive){
+function projectileMP(from, to, element, reduce, onArrive, spd){
+  const s = spd || fightSpeed;
   const layer = $('dmgLayer');
   const cls = { fire:'proj-fire', ice:'proj-ice', nature:'proj-nature', lightning:'proj-ice' }[element] || 'proj-fire';
   const ball = document.createElement('div'); ball.className = 'staff-projectile ' + cls;
   ball.style.left = from.x+'px'; ball.style.top = (from.y-8)+'px'; layer.appendChild(ball);
-  const dx = to.x-from.x, dy = to.y - (from.y-8), dur = Math.max(90, (reduce?160:240)/fightSpeed);
+  const dx = to.x-from.x, dy = to.y - (from.y-8), dur = Math.max(90, (reduce?160:240)/s);
   ball.animate([ { transform:'translate(0,0) scale(1)', opacity:1 },
                  { transform:`translate(${dx}px,${dy}px) scale(0.5)`, opacity:0.85 } ], { duration:dur, easing:'ease-in', fill:'forwards' });
   if(!reduce){ for(let i=1;i<=3;i++){ setTimeout(()=>{
@@ -1014,6 +1017,8 @@ function mechFloatMP(imgId, text, color){
 function attackAnimMP(ev){
   if(!ev || !ev.s || !ev.t) return;
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Animationstempo aus dem Event (Helden tragen ev.a bei hohem Angriffstempo; Boss = 1).
+  const spd = fightSpeed * (ev.a || 1);
   const src = slotEls(ev.s), tgt = slotEls(ev.t);
   // Heilung: grüner Float (der Heilkreis/-Effekt selbst kommt aus renderFx).
   if(ev.h){ mechFloatMP(tgt.img, '➕ +' + fmtBig(ev.d || 0), '#37d67a'); return; }
@@ -1050,18 +1055,18 @@ function attackAnimMP(ev){
   };
 
   if(isStab){
-    if(!reduce) lungeMP(src.wrap, src.dir, src.baseY);
+    if(!reduce) lungeMP(src.wrap, src.dir, src.baseY, spd);
     const fromH = handAnchorMP(src.img, srcIsBoss);
     const from = fromH ? { x:fromH.x, y:fromH.y } : anchorOf(src.img);
     const to   = anchorOf(tgt.img);
     const sp   = atk.spell || { mode:'projectile', element };
     if(reduce) setTimeout(doHit, 0);
-    else if(sp.mode === 'bolt') lightningBoltMP(from, to, element, reduce, doHit);
-    else projectileMP(from, to, element, reduce, doHit);
+    else if(sp.mode === 'bolt') lightningBoltMP(from, to, element, reduce, doHit, spd);
+    else projectileMP(from, to, element, reduce, doHit, spd);
   } else {
     // Sauberer Ganzfigur-Ausfall (Waffe steckt im Sprite) – keine Doppelwaffe/Spur.
-    if(!reduce) lungeMP(src.wrap, src.dir, src.baseY);
-    setTimeout(doHit, reduce ? 0 : HIT_DELAY / fightSpeed);
+    if(!reduce) lungeMP(src.wrap, src.dir, src.baseY, spd);
+    setTimeout(doHit, reduce ? 0 : HIT_DELAY / spd);
   }
 }
 // Alle Angriffe einer Runde abspielen: Helden zuerst, Boss-Antwort nach kurzer Verzögerung.

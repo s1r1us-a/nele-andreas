@@ -5,7 +5,7 @@
    Koop: tritt der Partner einer Wartelobby bei, gilt der Spielstand des Hosts.
    ===================================================================== */
 import { db, ref, get, set, update, remove, push, runTransaction, onValue, onDisconnect } from './firebase.js';
-import { COMBAT, TOWER } from '../data/tuning.js';
+import { COMBAT, TOWER, animSpeedForInterval } from '../data/tuning.js';
 import { bossFor } from '../data/bosses.js';
 import { AFFIX_KEYS } from '../data/affixes.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from '../data/classes.js';
@@ -436,6 +436,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontAtk:   frontStats.atk,  frontArmor: frontStats.armor,
     frontCrit:  frontStats.critChance, frontCritMult: frontStats.critMult,
     frontInterval: frontStats.interval, frontDodge: frontStats.dodge,
+    frontAnimSpeed: animSpeedForInterval(frontStats.interval),   // Animationstempo (an Clients gesendet)
     frontVers:  frontStats.versatility, frontLifesteal: frontStats.lifesteal,
     frontBlock: frontStats.block || 0, frontThorns: frontStats.thorns || 0,
     frontHealMult: frontStats.healMult,
@@ -451,6 +452,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backAtk:    bs.atk || 0,     backArmor: bs.armor || 0,
     backCrit:   bs.critChance || 0, backCritMult: bs.critMult || 0,
     backInterval:  bs.interval || frontStats.interval, backDodge: bs.dodge || 0,
+    backAnimSpeed: animSpeedForInterval(bs.interval || frontStats.interval),
     backVers:   bs.versatility || 0, backLifesteal: bs.lifesteal || 0,
     backBlock:  bs.block || 0, backThorns: bs.thorns || 0,
     backIsHealer: bs.classId === 'heiler',
@@ -835,7 +837,7 @@ function exchange(fight){
       fight.bossHp = Math.max(0, fight.bossHp - fd);
       fight.dmgDealt += fd;
       addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}) });
+      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}), ...(fight.frontAnimSpeed>1?{a:fight.frontAnimSpeed}:{}) });
       // Dornen reflektiert
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(fd * 0.15));
@@ -870,7 +872,7 @@ function exchange(fight){
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
       addLog(fight, icon + ' ' + fight.backName + (bc?' ✨KRIT':'') + ': -' + fmtBig(bd) + ' HP', bc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}) });
+      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}), ...(fight.backAnimSpeed>1?{a:fight.backAnimSpeed}:{}) });
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(bd * 0.15));
         fight.backHp = Math.max(0, fight.backHp - refl);
