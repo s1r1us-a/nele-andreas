@@ -5,15 +5,16 @@
 import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM, animSpeedForInterval } from '../data/tuning.js';
 import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
+import { AFFIX_DEFS } from '../data/affixes.js';
 import { rollAffixes } from '../core/items.js';
 import { materialOf, typeOf } from '../data/itemTypes.js';
-import { ATK_ELEM, weaponAtk } from '../data/attacks.js';
+import { ATK_ELEM, weaponAtk, offhandAtk } from '../data/attacks.js';
 import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { rollDyeDrop, DYE_BY_KEY, dyeTextColor } from '../data/dyes.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
-import { heroSrc, buildWeaponLayerSVG } from './avatar.js';
+import { heroSrc, buildWeaponLayerSVG, buildOffhandLayerSVG } from './avatar.js';
 import { buildDemonSVG } from './demon-art.js';
 import { rollItem, addLog, recordDrop, giveLoot } from './items.js';
 import { awardSetTokens } from './sets.js';
@@ -94,8 +95,8 @@ export function startBossFight(bossIndex){
   const boss = bossFor(bossIndex);
   const stage = $('#arenaStage');
   stage.style.setProperty('--arena-bg', "url('"+zoneBg(bossIndex)+"')");
-  // Held waffenlos rendern – die Waffe kommt als separat animierte Ebene darüber.
-  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true });
+  // Held ohne Hand-Ausrüstung rendern – Mainhand/Offhand kommen als separate Ebenen darüber.
+  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true, hideOffhand:true });
   $('#bossSprite').src = boss.sprite;
   $('#heroBarName').textContent = 'Held';
   $('#bossBarName').textContent = (isFarm ? '↻ ' : '') + boss.name;
@@ -133,9 +134,11 @@ export function startBossFight(bossIndex){
     buffs: freshBuffs(),           // temporäre Buff-Fenster (Krit/Schaden/etc.)
   };
   currentFight = fight;
-  // Waffen-Ebene des Helden (echte ausgerüstete Waffe); PvE-Boss = Monster → keine.
+  // Hand-Ebenen des Helden (echte Ausrüstung); PvE-Boss = Monster → keine.
   fight.heroWeaponEl = setWeaponLayer('hero', weaponAtk(state.equipped && state.equipped.waffe));
+  fight.heroOffhandEl = setOffhandLayer('hero', offhandAtk(state.equipped && state.equipped.schild));
   setWeaponLayer('boss', null); fight.bossWeaponEl = null;
+  setOffhandLayer('boss', null); fight.bossOffhandEl = null;
   updateHpBars(fight);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
@@ -317,7 +320,7 @@ function exchange(fight){
     } else {
       const armorRed = ignoreArmor ? 0 : (fight.heroArmor*COMBAT.armorReduction + fight.heroBlock);
       let bd = Math.max(1, Math.round((atk * rnd(0.15) * mult) - armorRed));
-      bd = Math.round(bd * (1 - fight.versatility));   // Vielseitigkeit senkt erlittenen Schaden
+      bd = Math.round(bd * (1 - Math.min(AFFIX_DEFS.versatility.defensiveCap || 0.85, fight.versatility || 0)));   // Vielseitigkeit senkt erlittenen Schaden
       // Schadensreduktions-Buff (Schildwall / Trotzschlag / Unbeugsam …).
       if(Date.now() < fight.buffs.dmgReduce.until){ bd = Math.max(1, Math.round(bd * (1 - fight.buffs.dmgReduce.val))); }
       if(Date.now() < (fight.bossVulnUntil||0)){ /* Verwundbarkeit betrifft nur Boss-Schaden, nicht Helden */ }
@@ -492,6 +495,14 @@ function handAnchor(spriteId){
   const fx = isBoss ? 0.38 : 0.62, fy = 0.60;   // Hand im viewBox ~ (124,194)/(200,320)
   return { x: r.left - sr.left + fx*r.width, y: r.top - sr.top + fy*r.height, w:r.width, h:r.height, isBoss };
 }
+function staffTipAnchor(spriteId){
+  const stage = $('#arenaStage'), el = $('#'+spriteId);
+  if(!stage || !el) return null;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const isBoss = spriteId === 'bossSprite';
+  const fx = isBoss ? 0.38 : 0.62, fy = 0.36;
+  return { x: r.left - sr.left + fx*r.width, y: r.top - sr.top + fy*r.height, w:r.width, h:r.height, isBoss };
+}
 // ---- Persistente Waffen-Ebene (echte Waffe, schwingt sauber) --------
 // Eine eigene, deckungsgleiche <img>-Ebene über dem Sprite (gleiche viewBox/Box).
 // which: 'hero' (Slot hero-c) | 'boss' (Slot boss-c, gespiegelt). atk=null → entfernen.
@@ -515,8 +526,28 @@ function setWeaponLayer(which, atk){
   el.style.transform = el.dataset.rest;
   return el;
 }
+function setOffhandLayer(which, atk){
+  const stage = $('#arenaStage'); if(!stage) return null;
+  const id = which==='hero' ? 'heroOffhand' : 'bossOffhand';
+  let el = document.getElementById(id);
+  const src = atk ? buildOffhandLayerSVG(atk) : '';
+  if(!src){ if(el) el.remove(); return null; }
+  if(!el){
+    el = document.createElement('img'); el.id = id; el.alt=''; el.draggable=false;
+    el.className = 'combatant weapon-layer offhand-layer ' + (which==='hero' ? 'hero-c' : 'boss-c');
+    el.style.transformOrigin = '38% 60.6%';
+    stage.appendChild(el);
+  }
+  el.src = src;
+  const flip = which==='hero' ? '' : 'scaleX(-1) ';
+  const restDeg = atk.kind === 'orb' ? 0 : (atk.kind === 'shield' ? -4 : -12);
+  el.dataset.flip = flip; el.dataset.kind = atk.kind || 'shield'; el.dataset.profile = atk.profile || 'arc';
+  el.dataset.rest = `${flip}rotate(${restDeg}deg)`;
+  el.style.transform = el.dataset.rest;
+  return el;
+}
 function removeWeaponLayers(){
-  ['heroWeapon','bossWeapon'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+  ['heroWeapon','bossWeapon','heroOffhand','bossOffhand'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
 }
 // Keyframes für den Schwung der Waffen-Ebene je Profil (Rotation um den Griff).
 function swingKeyframes(profile, kind, flip){
@@ -550,6 +581,36 @@ function playSwing(layerEl, reduce, spd){
     g.animate([{opacity:0.3},{opacity:0}], { duration:(dur+i*34)/s, easing:'ease-out', fill:'forwards' });
     setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + i*34 + 90)/s);
   }
+}
+function offhandKeyframes(kind, profile, flip){
+  const tf = (deg, tx, ty, sc) => `${flip}translate(${tx||0}px,${ty||0}px) rotate(${deg}deg) scale(${sc||1})`;
+  if(kind === 'orb'){
+    return { rest:`${flip}rotate(0deg)`, dur:340,
+      kf:[ {transform:tf(0,0,0,1),offset:0},{transform:tf(-5,8,-6,1.12),offset:0.45},{transform:tf(0,0,0,1),offset:1} ] };
+  }
+  if(kind === 'shield'){
+    return { rest:`${flip}rotate(-4deg)`, dur:320,
+      kf:[ {transform:tf(-4,0,0,1),offset:0},{transform:tf(-10,10,-1,1.04),offset:0.42},{transform:tf(-4,0,0,1),offset:1} ] };
+  }
+  const P = profile === 'flurry'
+    ? [ [-12,0,0,0], [24,0,0,0.32], [-28,0,0,0.62], [-12,0,0,1] ]
+    : [ [-12,0,0,0], [34,0,0,0.38], [-18,0,0,0.72], [-12,0,0,1] ];
+  return { rest:`${flip}rotate(-12deg)`, dur:320, kf:P.map(([deg,tx,ty,off])=>({ transform:tf(deg,tx,ty,1), offset:off })) };
+}
+function playOffhand(layerEl, reduce, spd){
+  if(!layerEl) return;
+  const s = spd || combatSpeed;
+  const flip = layerEl.dataset.flip || '';
+  const { rest, dur, kf } = offhandKeyframes(layerEl.dataset.kind, layerEl.dataset.profile, flip);
+  layerEl.style.transform = rest;
+  layerEl.animate(kf, { duration: dur/s, easing:'cubic-bezier(.4,.05,.5,1)' });
+  if(reduce || layerEl.dataset.kind !== 'melee') return;
+  const stage = layerEl.parentNode; if(!stage) return;
+  const g = layerEl.cloneNode(false); g.classList.add('weapon-ghost'); g.removeAttribute('id');
+  stage.appendChild(g);
+  g.animate(kf, { duration: dur/s, delay: 34/s, easing:'cubic-bezier(.4,.05,.5,1)' });
+  g.animate([{opacity:0.22},{opacity:0}], { duration:(dur+34)/s, easing:'ease-out', fill:'forwards' });
+  setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + 120)/s);
 }
 // Sofortiger, gezackter Blitz vom Angreifer zum Ziel.
 function lightningBolt(from, to, layer, element, reduce, onArrive, spd){
@@ -644,9 +705,12 @@ function attackAnim(who, dmg, crit, onHit, meta){
   // (Held bzw. Duell-Gegner). PvE-Boss = Monster ohne Ebene → Körper-Ausfall.
   const layerEl = isHero ? (currentFight && currentFight.heroWeaponEl)
                          : (currentFight && currentFight.bossWeaponEl);
+  const offhandEl = isHero ? (currentFight && currentFight.heroOffhandEl)
+                           : (currentFight && currentFight.bossOffhandEl);
   if(layerEl) playSwing(layerEl, reduce, spd);
   else if(isStab) staffCast(attacker, spd);
   else lunge(attacker, !isHero, spd);
+  if(offhandEl) playOffhand(offhandEl, reduce, spd);
 
   const targetAnchor = () => (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
 
@@ -675,7 +739,7 @@ function attackAnim(who, dmg, crit, onHit, meta){
   };
 
   if(isStab){
-    const fromH = handAnchor(attackerId);
+    const fromH = staffTipAnchor(attackerId) || handAnchor(attackerId);
     const from = fromH ? { x: fromH.x, y: fromH.y } : ((currentFight && currentFight.anchor[attackerId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 });
     const to   = targetAnchor();
     if(atk.spell && atk.spell.mode === 'bolt') lightningBolt(from, to, layer, atk.element, reduce, doHit, spd);
@@ -1905,7 +1969,7 @@ export function openDuelArena(cfg){
   const t = recomputeTotals();
   const stage = $('#arenaStage');
   stage.style.setProperty('--arena-bg', "url('"+zoneBg(state.zone)+"')");
-  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true });
+  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true, hideOffhand:true });
   $('#bossSprite').src = cfg.oppSrc;   // wird in modals.js bereits waffenlos gebaut
   $('#heroBarName').textContent = cfg.myName || 'Du';
   $('#bossBarName').textContent = '🆚 ' + (cfg.oppName || 'Gegner');
@@ -1919,11 +1983,14 @@ export function openDuelArena(cfg){
     _animTurn: -1, _lastHealTs: 0, _ended: false, _fxSeen: {},
     // Gegnerwaffe einmalig auflösen → Gegner schwingt/zaubert passend zu SEINER Waffe.
     oppAtk: atkFromWeapon((cfg.oppEquipped || {}).waffe),
+    oppOffhandAtk: offhandAtk((cfg.oppEquipped || {}).schild),
   };
   currentFight = fight;
-  // Beide Kämpfer schwingen ihre echte Waffe: eigene Ebene + Gegner-Ebene (oppAtk).
+  // Beide Kämpfer schwingen ihre echte Hand-Ausrüstung.
   fight.heroWeaponEl = setWeaponLayer('hero', weaponAtk(state.equipped && state.equipped.waffe));
+  fight.heroOffhandEl = setOffhandLayer('hero', offhandAtk(state.equipped && state.equipped.schild));
   fight.bossWeaponEl = setWeaponLayer('boss', fight.oppAtk);
+  fight.bossOffhandEl = setOffhandLayer('boss', fight.oppOffhandAtk);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
   $('#arena').classList.remove('fight-over');   // Kampf-UI wieder einblenden

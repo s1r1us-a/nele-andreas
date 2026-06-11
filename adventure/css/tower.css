@@ -242,6 +242,8 @@ html, body { height:100%; background:var(--bg); color:var(--txt);
 .staff-projectile.proj-nature { background:radial-gradient(circle at 35% 35%, #eaffe6, #48d66a 52%, #0c5a2c);
   box-shadow:0 0 9px 4px #2fd06a, 0 0 3px 1px #eaffe6; }
 .staff-projectile.proj-tail { width:10px; height:10px; opacity:.5; }
+.tower-gear-layer { position:absolute; object-fit:contain; pointer-events:none; z-index:7;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.45)); will-change:transform,opacity; }
 .atk-bolt { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:9;
   filter:drop-shadow(0 0 5px rgba(180,120,255,.7)); }
 .impact-burst { position:absolute; width:54px; height:54px; pointer-events:none; z-index:8; transform:translate(-50%,-50%);
