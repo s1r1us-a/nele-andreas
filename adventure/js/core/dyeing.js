@@ -25,7 +25,7 @@ function findItem(itemId){
 function rebuildSprite(it){
   const t = typeOf(it);
   const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-  it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
+  it.sprite = buildItemSVG(art, it.variant, it.rarity, t.element || elementOf(it.id), t.orb, t.material, dyeColorOf(it), null, t.special);
 }
 
 // Vorschau-Sprite (OHNE Zustandsänderung): liefert das Item-Sprite so, wie es in
@@ -35,7 +35,7 @@ export function previewItemSprite(it, dyeKey){
   const t = typeOf(it);
   const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
   const color = (dyeKey && DYE_BY_KEY[dyeKey]) ? DYE_BY_KEY[dyeKey].color : null;
-  return buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, color);
+  return buildItemSVG(art, it.variant, it.rarity, t.element || elementOf(it.id), t.orb, t.material, color, null, t.special);
 }
 
 // Item einfärben. Liefert { ok, reason }.

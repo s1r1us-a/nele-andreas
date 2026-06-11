@@ -225,7 +225,7 @@ function hydrateItems(){
     // (Vorher fälschlich nur die Slot-art → Nebenhand-Waffen/Kugeln wurden beim
     //  Laden als Schild neu gerendert.)
     const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, t.element || elementOf(it.id), t.orb, t.material, dyeColorOf(it), null, t.special);
   }
 }
 
