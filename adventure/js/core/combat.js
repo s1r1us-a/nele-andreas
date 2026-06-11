@@ -598,15 +598,17 @@ function projectile(from, to, layer, element, reduce, onArrive, spd){
   setTimeout(()=>{ ball.remove(); if(onArrive) onArrive(); }, dur);
 }
 // Einschlag am Ziel: element-gefärbter Flash + Partikel.
-function impactBurst(anchor, element, crit, reduce){
+function impactBurst(anchor, element, crit, reduce, spd){
   const layer = $('#dmgLayer'); if(!layer || !anchor) return;
+  const s = spd || combatSpeed;
   const P = ATK_ELEM[element] || ATK_ELEM.physical;
   const flash = document.createElement('div');
   flash.className = 'impact-burst';
   flash.style.left = anchor.x+'px'; flash.style.top = anchor.y+'px';
   flash.style.setProperty('--ic', P.mid); flash.style.setProperty('--ie', P.core);
+  flash.style.animationDuration = (400 / s) + 'ms';   // CSS .impact-burst (.4s) ans Tempo koppeln
   layer.appendChild(flash);
-  setTimeout(()=> flash.remove(), 420);
+  setTimeout(()=> flash.remove(), 420 / s);
   if(reduce) return;
   const n = crit ? 9 : 6;
   for(let i=0;i<n;i++){
@@ -618,8 +620,8 @@ function impactBurst(anchor, element, crit, reduce){
     layer.appendChild(p);
     p.animate([ { transform:'translate(-50%,-50%) translate(0,0) scale(1)', opacity:1 },
                 { transform:`translate(-50%,-50%) translate(${(Math.cos(ang)*dist).toFixed(1)}px,${(Math.sin(ang)*dist).toFixed(1)}px) scale(0.2)`, opacity:0 } ],
-      { duration:360+Math.random()*160, easing:'ease-out', fill:'forwards' });
-    setTimeout(()=> p.remove(), 540);
+      { duration:(360+Math.random()*160) / s, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> p.remove(), 540 / s);
   }
 }
 
@@ -650,14 +652,20 @@ function attackAnim(who, dmg, crit, onHit, meta){
 
   const doHit = () => {
     if(onHit) onHit();
+    // Trefferfeedback (Flash/Shake/Burst) folgt dem Angriffstempo wie der Schwung;
+    // CSS-Klassen-Animationen zusätzlich per animationDuration stauchen. Die Schadens-
+    // zahl (FLOAT) bleibt am 1×/2×-Regler, damit sie bei hohem Tempo lesbar bleibt.
+    target.style.animationDuration = (FLASH / spd) + 'ms';   // .combatant.hit (.25s)
     target.classList.add('hit');
-    setTimeout(()=> target.classList.remove('hit'), FLASH / combatSpeed);
-    if(!reduce && (crit || Math.random()<.5)){ stage.classList.add('shake');
-      setTimeout(()=> stage.classList.remove('shake'), SHAKE / combatSpeed); }
+    setTimeout(()=> { target.classList.remove('hit'); target.style.animationDuration = ''; }, FLASH / spd);
+    if(!reduce && (crit || Math.random()<.5)){
+      stage.style.animationDuration = (SHAKE / spd) + 'ms';   // .arena-stage.shake (.25s)
+      stage.classList.add('shake');
+      setTimeout(()=> { stage.classList.remove('shake'); stage.style.animationDuration = ''; }, SHAKE / spd); }
     const a = targetAnchor();
     const jitter = Math.round((Math.random()*2-1)*12);
     const hit = { x: a.x + jitter, y: a.y };
-    impactBurst(hit, atk.element, crit, reduce);
+    impactBurst(hit, atk.element, crit, reduce, spd);
     const num = document.createElement('div');
     num.className = 'dmg-num' + (crit?' crit':'') + (isHero ? '' : ' incoming');
     num.textContent = '-'+fmtBig(dmg)+(crit?'!':'');

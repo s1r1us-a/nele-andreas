@@ -985,13 +985,15 @@ function projectileMP(from, to, element, reduce, onArrive, spd){
   setTimeout(()=>{ ball.remove(); if(onArrive) onArrive(); }, dur);
 }
 // Einschlag am Ziel: element-gefärbter Flash + Partikel.
-function impactBurstMP(anchor, element, crit, reduce){
+function impactBurstMP(anchor, element, crit, reduce, spd){
   const layer = $('dmgLayer'); if(!layer || !anchor) return;
+  const s = spd || fightSpeed;
   const P = ATK_ELEM[element] || ATK_ELEM.physical;
   const flash = document.createElement('div'); flash.className = 'impact-burst';
   flash.style.left = anchor.x+'px'; flash.style.top = anchor.y+'px';
   flash.style.setProperty('--ic', P.mid); flash.style.setProperty('--ie', P.core);
-  layer.appendChild(flash); setTimeout(()=> flash.remove(), 420);
+  flash.style.animationDuration = (400 / s) + 'ms';   // CSS .impact-burst (.4s) ans Tempo koppeln
+  layer.appendChild(flash); setTimeout(()=> flash.remove(), 420 / s);
   if(reduce) return;
   const n = crit ? 9 : 6;
   for(let i=0;i<n;i++){ const ang=(Math.PI*2/n)*i+Math.random()*0.5, dist=18+Math.random()*22;
@@ -1000,8 +1002,8 @@ function impactBurstMP(anchor, element, crit, reduce){
     layer.appendChild(p);
     p.animate([ { transform:'translate(-50%,-50%) translate(0,0) scale(1)', opacity:1 },
       { transform:`translate(-50%,-50%) translate(${(Math.cos(ang)*dist).toFixed(1)}px,${(Math.sin(ang)*dist).toFixed(1)}px) scale(0.2)`, opacity:0 } ],
-      { duration:360+Math.random()*160, easing:'ease-out', fill:'forwards' });
-    setTimeout(()=> p.remove(), 540); }
+      { duration:(360+Math.random()*160) / s, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> p.remove(), 540 / s); }
 }
 // Schwebender Text über einem Sprite (Heilung/Ausweichen) – nutzt die vorhandene .dmg-float-Optik.
 function mechFloatMP(imgId, text, color){
@@ -1034,18 +1036,23 @@ function attackAnimMP(ev){
 
   const doHit = () => {
     const timg = $(tgt.img);
+    // Trefferfeedback folgt dem Angriffstempo (CSS-Animationen zusätzlich stauchen);
+    // die Schadenszahl (FLOAT) bleibt am 1×/2×-Regler/lesbar.
     if(!reduce && timg){
+      timg.style.animationDuration = (FLASH / spd) + 'ms';   // .hit (towerHitflash .25s)
       timg.classList.add('hit');
-      setTimeout(() => timg.classList.remove('hit'), FLASH / fightSpeed);
+      setTimeout(() => { timg.classList.remove('hit'); timg.style.animationDuration = ''; }, FLASH / spd);
       if(ev.c || Math.random() < .5){
-        const stage = $('arenaStage'); stage.classList.add('shake');
-        setTimeout(() => stage.classList.remove('shake'), SHAKE / fightSpeed);
+        const stage = $('arenaStage');
+        stage.style.animationDuration = (SHAKE / spd) + 'ms';   // .shake (towerShake .25s)
+        stage.classList.add('shake');
+        setTimeout(() => { stage.classList.remove('shake'); stage.style.animationDuration = ''; }, SHAKE / spd);
       }
     }
     const a = anchorOf(tgt.img);
     const jitter = Math.round((Math.random()*2 - 1) * 12);
     const hit = { x: a.x + jitter, y: a.y };
-    impactBurstMP(hit, element, ev.c, reduce);
+    impactBurstMP(hit, element, ev.c, reduce, spd);
     const num = document.createElement('div');
     num.className = 'dmg-float' + (ev.c ? ' crit' : '') + (ev.s === 'boss' ? ' incoming' : '');
     num.textContent = '-' + fmtBig(ev.d || 0) + (ev.c ? '!' : '');
