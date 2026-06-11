@@ -201,6 +201,38 @@ function offhandOrb(item){
     : inner;
 }
 
+function offhandGraphic(item, uid, opt){
+  if(!item) return '';
+  opt = opt || {};
+  const ty = opt.ty || typeOf(item);
+  const art = ty.art || 'schild';
+  if(art === 'waffe'){
+    return heldWeapon(item, uid, { hx:76, tilt:-16, scale:0.9, noTilt:!!opt.noTilt, noHand:!!opt.noHand, ty, element:opt.element });
+  }
+  if(art === 'orb'){
+    return ty.special ? buildSpecialOffhandOrb(ty.special, item, uid) : offhandOrb(item);
+  }
+  if(ty.special){
+    return buildSpecialShield(ty.special, item, uid);
+  }
+
+  const v=(((item.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
+  const lvl = armorLvl(item.rarity), el = elementOf(item.id), E = ELEM[el];
+  let shp;
+  if(v===1||v===4)      shp=`<circle cx="${cx}" cy="${cy}" r="20" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+  else if(v===2)        shp=`<circle cx="${cx}" cy="${cy}" r="15" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+  else if(v===0||v===3) shp=`<rect x="${cx-17}" y="${cy-22}" width="34" height="46" rx="7" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+  else                  shp=`<path d="M${cx-17} ${cy-20} L${cx+17} ${cy-20} L${cx+17} ${cy-2} Q${cx+17} ${cy+18} ${cx} ${cy+26} Q${cx-17} ${cy+18} ${cx-17} ${cy-2} Z" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
+  let inner = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
+  if(lvl>0){
+    const S=[1,1.18,1.34,1.5][lvl];
+    const halo = `<ellipse cx="${cx}" cy="${cy}" rx="${(24*S).toFixed(1)}" ry="${(27*S).toFixed(1)}" fill="${E.glow}" opacity="${(0.18+lvl*0.08).toFixed(2)}"/>`;
+    const rim = `<ellipse cx="${cx}" cy="${cy}" rx="${(22*S).toFixed(1)}" ry="${(25*S).toFixed(1)}" fill="none" stroke="${E.glow}" stroke-width="2.5" opacity="0.6"/>`;
+    return halo + `<g transform="translate(${cx},${cy}) scale(${S}) translate(${-cx},${-cy})">${inner}</g>` + rim;
+  }
+  return inner;
+}
+
 export function buildHeroSVG(character, tier, gear){
   const c = character || DEFAULT_CHARACTER;
   const gender = c.gender || 'w';
@@ -512,36 +544,12 @@ export function buildHeroSVG(character, tier, gear){
   //   art:'waffe' → Zweitklinge als Klinge in der linken Hand (Schurke),
   //   art:'orb'   → schwebende Magie-Kugel (Heiler/Hexer),
   //   sonst       → klassisches Schild (Episch+ → größer + leuchtend).
-  const sc = eq.schild; let schild = '';
-  if(sc){
-    const art = typeOf(sc).art || 'schild';
-    if(art === 'waffe'){
-      // Zweitwaffe gespiegelt in die linke Hand (hx=76), leicht nach links
-      // gekippt und etwas kleiner als die Hauptwaffe.
-      schild = heldWeapon(sc, uid, { hx:76, tilt:-16, scale:0.9 });
-    } else if(art === 'orb'){
-      // Spezial-Kugel (Tribut-Shop) → eigene Optik, sonst generische Magie-Sphäre.
-      schild = typeOf(sc).special ? buildSpecialOffhandOrb(typeOf(sc).special, sc, uid) : offhandOrb(sc);
-    } else if(typeOf(sc).special){
-      // Spezial-Schild (Tribut-Shop): eigene Optik an der linken Hand.
-      schild = buildSpecialShield(typeOf(sc).special, sc, uid);
-    } else {
-      const v=(((sc.variant|0)%6)+6)%6, m=WEAPON_METAL[v], ms=shade(m,0.5), mh=shade(m,1.2), cx=72, cy=180;
-      const lvl = armorLvl(sc.rarity), el = elementOf(sc.id), E = ELEM[el];
-      let shp;
-      if(v===1||v===4)      shp=`<circle cx="${cx}" cy="${cy}" r="20" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-      else if(v===2)        shp=`<circle cx="${cx}" cy="${cy}" r="15" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-      else if(v===0||v===3) shp=`<rect x="${cx-17}" y="${cy-22}" width="34" height="46" rx="7" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-      else                  shp=`<path d="M${cx-17} ${cy-20} L${cx+17} ${cy-20} L${cx+17} ${cy-2} Q${cx+17} ${cy+18} ${cx} ${cy+26} Q${cx-17} ${cy+18} ${cx-17} ${cy-2} Z" fill="${m}" stroke="${ms}" stroke-width="2"/>`;
-      let inner = shp + `<circle cx="${cx}" cy="${cy}" r="4" fill="${mh}"/>`;
-      if(lvl>0){
-        const S=[1,1.18,1.34,1.5][lvl];
-        const halo = `<ellipse cx="${cx}" cy="${cy}" rx="${(24*S).toFixed(1)}" ry="${(27*S).toFixed(1)}" fill="${E.glow}" opacity="${(0.18+lvl*0.08).toFixed(2)}"/>`;
-        const rim = `<ellipse cx="${cx}" cy="${cy}" rx="${(22*S).toFixed(1)}" ry="${(25*S).toFixed(1)}" fill="none" stroke="${E.glow}" stroke-width="2.5" opacity="0.6"/>`;
-        schild = halo + `<g transform="translate(${cx},${cy}) scale(${S}) translate(${-cx},${-cy})">${inner}</g>` + rim;
-      } else schild = inner;
-    }
-  }
+  const sc = eq.schild;
+  const rawOffhand = (gear && gear.hideOffhand) ? '' : offhandGraphic(sc, uid);
+  const offhandPivot = sc && ((typeOf(sc).art || 'schild') === 'waffe' ? '76 194' : ((typeOf(sc).art || 'schild') === 'orb' ? '74 174' : '72 180'));
+  const schild = (ANIM && rawOffhand && offhandPivot)
+    ? `<g>${rawOffhand}<animateTransform attributeName="transform" type="rotate" values="-1.2 ${offhandPivot};1.2 ${offhandPivot};-1.2 ${offhandPivot}" dur="4.4s" repeatCount="indefinite"/></g>`
+    : rawOffhand;
 
   // Schulterplatten (sonst Tier-Pauldrons). Set-Schultern = großes, abgehobenes
   // Signatur-Ornament (Flammen-Flügel / Klingen / Geweih / Federn) je Theme.
@@ -606,8 +614,8 @@ export function buildHeroSVG(character, tier, gear){
     }
   }
 
-  // hideWeapon: Waffe im Sprite weglassen – sie wird in der Arena als separat
-  // animierte Waffen-Ebene (buildWeaponLayerSVG) deckungsgleich darübergelegt.
+  // hideWeapon/hideOffhand: Kampf-Arenen zeichnen die Hand-Ausrüstung als
+  // separate, animierte Ebenen deckungsgleich darüber.
   const weaponG = (gear && gear.hideWeapon) ? '' : heldWeapon(eq.waffe, uid);
 
   // Zweiter <defs>-Block für die lazy erzeugten Material-Verläufe/-Muster
@@ -659,10 +667,11 @@ export function heroSrc(tier, opts){
   if(state && state.character){
     const hideHelmet = !!(state.settings && state.settings.hideHelmet);
     const hideWeapon = !!(opts && opts.hideWeapon);
-    const key = JSON.stringify([state.character, tier, hideHelmet, hideWeapon, state.equipped || {}]);
+    const hideOffhand = !!(opts && opts.hideOffhand);
+    const key = JSON.stringify([state.character, tier, hideHelmet, hideWeapon, hideOffhand, state.equipped || {}]);
     const hit = _heroCache.get(key);
     if(hit) return hit;
-    const uri = buildHeroSVG(state.character, tier, { equipped: state.equipped || {}, hideHelmet, hideWeapon });
+    const uri = buildHeroSVG(state.character, tier, { equipped: state.equipped || {}, hideHelmet, hideWeapon, hideOffhand });
     if(_heroCache.size > 16) _heroCache.clear();   // selten genutzte Varianten verwerfen
     _heroCache.set(key, uri);
     return uri;
@@ -678,8 +687,19 @@ export function buildWeaponLayerSVG(atk){
   if(!atk || atk.wv == null) return '';
   const element = atk.element === 'ice' ? 'ice' : 'fire';
   const synth = { variant: atk.wv|0, rarity: atk.rarity, id: element==='ice' ? 0 : 1 };
-  const ty = { material: atk.material, orb: atk.orb, variant: atk.wv|0 };
+  const ty = { material: atk.material, orb: atk.orb, variant: atk.wv|0, special:atk.special, art:atk.art || 'waffe', element:atk.element };
   const w = heldWeapon(synth, '_wl', { noTilt:true, noHand:true, ty, element });
+  if(!w) return '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+ w +`</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+export function buildOffhandLayerSVG(atk){
+  if(!atk || atk.wv == null) return '';
+  const element = atk.element === 'ice' ? 'ice' : 'fire';
+  const synth = { variant: atk.wv|0, rarity: atk.rarity, id: element==='ice' ? 0 : 1 };
+  const ty = { material: atk.material, orb: atk.orb, variant: atk.wv|0, special:atk.special, art:atk.art || 'schild', element:atk.element };
+  const w = offhandGraphic(synth, '_ol', { noTilt:true, noHand:true, ty, element });
   if(!w) return '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">`+ w +`</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);

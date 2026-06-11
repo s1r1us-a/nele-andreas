@@ -233,7 +233,7 @@ import { awardSetTokens } from './adventure/js/core/sets.js';
 import { SET_TOKEN, setTokensForKill } from './adventure/js/data/sets.js';
 import { INV_SLOTS, INV_SLOTS_MAX } from './adventure/js/data/tuning.js';
 import { affixLinesHTML } from './adventure/js/ui/tooltip.js';
-import { heroSrc, buildHeroSVG } from './adventure/js/core/avatar.js';
+import { heroSrc, buildHeroSVG, buildWeaponLayerSVG, buildOffhandLayerSVG } from './adventure/js/core/avatar.js';
 import { ATK_ELEM } from './adventure/js/data/attacks.js';
 import { buildDemonSVG } from './adventure/js/core/demon-art.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from './adventure/js/data/classes.js';
@@ -712,8 +712,8 @@ function lookOf(save, stats){
 function spriteFor(look, tier){
   if(look && look.character)
     return buildHeroSVG(look.character, (look.tier != null ? look.tier : tier),
-      { equipped: look.equipped || {}, hideHelmet: !!look.hideHelmet });
-  return heroSrc(tier);
+      { equipped: look.equipped || {}, hideHelmet: !!look.hideHelmet, hideWeapon:true, hideOffhand:true });
+  return heroSrc(tier, { hideWeapon:true, hideOffhand:true });
 }
 
 // Heroes-Knoten (vom Host geschrieben): Aussehen übernehmen & Sprites bauen.
@@ -946,6 +946,55 @@ function handAnchorMP(imgId, isBoss){
   const fx = isBoss ? 0.38 : 0.62, fy = 0.60;
   return { x:r.left - sr.left + fx*r.width, y:r.top - sr.top + fy*r.height, w:r.width, h:r.height };
 }
+function staffTipAnchorMP(imgId, isBoss){
+  const stage = $('arenaStage'), el = $(imgId);
+  if(!stage || !el) return null;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const fx = isBoss ? 0.38 : 0.62, fy = 0.36;
+  return { x:r.left - sr.left + fx*r.width, y:r.top - sr.top + fy*r.height, w:r.width, h:r.height };
+}
+function gearKeyframesMP(kind, profile, offhand, flip){
+  const tf = (deg, tx, ty, sc) => `${flip}translate(${tx||0}px,${ty||0}px) rotate(${deg}deg) scale(${sc||1})`;
+  if(offhand){
+    if(kind === 'orb') return { rest:`${flip}rotate(0deg)`, dur:340,
+      kf:[{transform:tf(0,0,0,1),offset:0},{transform:tf(-5,8,-6,1.12),offset:.45},{transform:tf(0,0,0,1),offset:1}] };
+    if(kind === 'shield') return { rest:`${flip}rotate(-4deg)`, dur:320,
+      kf:[{transform:tf(-4,0,0,1),offset:0},{transform:tf(-10,10,-1,1.04),offset:.42},{transform:tf(-4,0,0,1),offset:1}] };
+    return { rest:`${flip}rotate(-12deg)`, dur:320,
+      kf:[{transform:tf(-12,0,0,1),offset:0},{transform:tf(32,0,0,1),offset:.38},{transform:tf(-12,0,0,1),offset:1}] };
+  }
+  if(kind === 'stab') return { rest:`${flip}rotate(4deg)`, dur:360,
+    kf:[{transform:tf(4,0,0,1),offset:0},{transform:tf(-12,8,0,1),offset:.4},{transform:tf(-6,4,0,1),offset:.72},{transform:tf(4,0,0,1),offset:1}] };
+  const P = ({
+    arc:      { dur:360, a:[[14,0,0,0],[-72,0,0,.25],[58,0,0,.55],[14,0,0,1]] },
+    overhead: { dur:380, a:[[14,0,0,0],[-40,0,0,.28],[96,0,0,.58],[14,0,0,1]] },
+    thrust:   { dur:300, a:[[8,0,0,0],[6,-8,0,.3],[2,34,0,.55],[8,0,0,1]] },
+    flurry:   { dur:300, a:[[14,0,0,0],[-16,0,0,.22],[42,0,0,.45],[2,0,0,.66],[40,0,0,.84],[14,0,0,1]] },
+  })[profile] || { dur:360, a:[[14,0,0,0],[-70,0,0,.25],[56,0,0,.55],[14,0,0,1]] };
+  return { rest:`${flip}rotate(14deg)`, dur:P.dur, kf:P.a.map(([deg,tx,ty,off])=>({ transform:tf(deg,tx,ty,1), offset:off })) };
+}
+function playGearLayerMP(imgId, atk, offhand, reduce, spd){
+  if(!atk || reduce) return;
+  const src = offhand ? buildOffhandLayerSVG(atk) : buildWeaponLayerSVG(atk);
+  if(!src) return;
+  const stage = $('arenaStage'), img = $(imgId), layer = $('dmgLayer');
+  if(!stage || !img || !layer) return;
+  const sr = stage.getBoundingClientRect(), r = img.getBoundingClientRect();
+  const el = document.createElement('img');
+  el.src = src; el.alt = ''; el.draggable = false; el.className = 'tower-gear-layer';
+  el.style.left = (r.left - sr.left) + 'px';
+  el.style.top = (r.top - sr.top) + 'px';
+  el.style.width = r.width + 'px';
+  el.style.height = r.height + 'px';
+  el.style.transformOrigin = offhand ? '38% 60.6%' : '62% 60.6%';
+  layer.appendChild(el);
+  const s = spd || fightSpeed;
+  const flip = imgId === 'spriteBoss' ? 'scaleX(-1) ' : '';
+  const anim = gearKeyframesMP(atk.kind || 'melee', atk.profile || 'arc', !!offhand, flip);
+  el.style.transform = anim.rest;
+  el.animate(anim.kf, { duration:anim.dur/s, easing:'cubic-bezier(.4,.05,.5,1)', fill:'forwards' });
+  setTimeout(()=> { if(el.parentNode) el.remove(); }, (anim.dur + 120) / s);
+}
 // Echter Waffen-Schwung: Waffen-SVG am Hand-Anker, rotiert um den Griff.
 // Sofortiger, gezackter Blitz.
 function lightningBoltMP(from, to, element, reduce, onArrive, spd){
@@ -1033,6 +1082,8 @@ function attackAnimMP(ev){
   const element = atk.element || 'physical';
   const isStab = atk.kind === 'stab' || (!ev.wp && ev.p);   // p-Flag = Stab (Rückwärtskompatibilität)
   const srcIsBoss = ev.s === 'boss';
+  playGearLayerMP(src.img, atk, false, reduce, spd);
+  if(ev.oh) playGearLayerMP(src.img, ev.oh, true, reduce, spd);
 
   const doHit = () => {
     const timg = $(tgt.img);
@@ -1063,7 +1114,7 @@ function attackAnimMP(ev){
 
   if(isStab){
     if(!reduce) lungeMP(src.wrap, src.dir, src.baseY, spd);
-    const fromH = handAnchorMP(src.img, srcIsBoss);
+    const fromH = staffTipAnchorMP(src.img, srcIsBoss) || handAnchorMP(src.img, srcIsBoss);
     const from = fromH ? { x:fromH.x, y:fromH.y } : anchorOf(src.img);
     const to   = anchorOf(tgt.img);
     const sp   = atk.spell || { mode:'projectile', element };

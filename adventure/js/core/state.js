@@ -10,14 +10,16 @@
        { version, activeId, slots: { id: <Spielstand> } }
    Persistenz: Firebase Realtime DB als Quelle, localStorage als Cache.
    ===================================================================== */
-import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS } from '../data/tuning.js';
+import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS, BASE_STAT, ILVL_K } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
+import { AFFIX_DEFS } from '../data/affixes.js';
 import { defaultTypeKey, typeOf, itemDisplayName, materialOf } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
 import { isValidChoice } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
-import { setOf } from '../data/sets.js';
-import { blankMaterials } from '../data/materials.js';
+import { SETS, setOf, setFixedAffixKeys } from '../data/sets.js';
+import { blankMaterials, upgradeAffixFactor } from '../data/materials.js';
+import { rarityOf } from '../data/rarities.js';
 import { blankDyes, dyeColorOf } from '../data/dyes.js';
 import { db, ref, get, set, remove, onValue } from './firebase.js';
 
@@ -93,6 +95,45 @@ function unwearableForClass(item, cls){
   const mat = set ? set.material : materialOf(item);
   if(!mat) return false;
   return !(cls.allowedMaterials || []).includes(mat);
+}
+function fixedAffixValueForMigration(key, ilvl, rarity, roll=1.20){
+  const d = AFFIX_DEFS[key]; if(!d) return 0;
+  let v = (d.base + ilvl*d.perIlvl) * rarity.mult * roll;
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.max(1, Math.round(v)); }
+  return v;
+}
+function scaleAffixForMigration(key, baseV, lvl){
+  const d = AFFIX_DEFS[key]; if(!d) return baseV;
+  let v = baseV * upgradeAffixFactor(lvl || 0);
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.max(1, Math.round(v)); }
+  return v;
+}
+function migrateSetItemStats(it){
+  const set = it && it.setId ? SETS[it.setId] : null;
+  const slotKey = it && (it.setSlot || it.slotKey);
+  const slot = slotKey && SLOTS[slotKey];
+  if(!set || !slot) return;
+  const rarity = rarityOf('legendaer');
+  const ilvl = Math.max(1, it.ilvl|0);
+  const baseAffixes = {};
+  for(const key of setFixedAffixKeys(set, slotKey)){
+    if(AFFIX_DEFS[key]) baseAffixes[key] = fixedAffixValueForMigration(key, ilvl, rarity);
+  }
+  const baseStat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * set.statMult));
+  const lvl = it.upgradeLevel || 0;
+  it.base = { stat: (it.base && it.base.stat) || baseStat, affixes: baseAffixes };
+  const out = {};
+  for(const [k,v] of Object.entries(baseAffixes)) out[k] = scaleAffixForMigration(k, v, lvl);
+  it.affixes = out;
+}
+function migrateSetItemsInSlot(s){
+  const visit = it => migrateSetItemStats(it);
+  (s.inventory || []).forEach(visit);
+  Object.values(s.equipped || {}).forEach(visit);
+  (s.pendingLoot || []).forEach(visit);
+  if(s.expedition && Array.isArray(s.expedition.items)) s.expedition.items.forEach(visit);
 }
 function migrateSlot(s){
   if(typeof s.zone !== 'number') s.zone = 0;
@@ -183,6 +224,7 @@ function migrateSlot(s){
       if(it && unwearableForClass(it, cls)){ s.inventory.push(it); s.equipped[k] = null; }
     }
   }
+  migrateSetItemsInSlot(s);
   s.version = SAVE_VERSION;
   return s;
 }

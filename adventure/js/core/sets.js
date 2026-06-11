@@ -16,7 +16,7 @@ import { AFFIX_DEFS } from '../data/affixes.js';
 import { rarityOf } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
 import { classOf } from '../data/classes.js';
-import { SETS, SET_SLOTS, SET_TOKEN_CAP, setOf, setForClass, setPieceCost, setPieceName } from '../data/sets.js';
+import { SETS, SET_SLOTS, SET_TOKEN_CAP, setOf, setForClass, setPieceCost, setPieceName, setFixedAffixKeys } from '../data/sets.js';
 import { state, nextItemId, saveState } from './state.js';
 import { fixedSetAffixes, ensureItemSprite, giveLoot, itemPower } from './items.js';
 import { buildItemSVG, elementOf } from './item-art.js';
@@ -92,7 +92,7 @@ export function applySetBonuses(s, b){
   b.attackSpeed = Math.min(0.60, b.attackSpeed||0);
   b.lifesteal   = Math.min(AFFIX_DEFS.lifesteal.cap,   b.lifesteal||0);
   b.dodge       = Math.min(AFFIX_DEFS.dodge.cap,       b.dodge||0);
-  b.versatility = Math.min(AFFIX_DEFS.versatility.cap, b.versatility||0);
+  b.versatility = Math.max(0, b.versatility||0);
   return b;
 }
 
@@ -127,7 +127,7 @@ export function createSetPiece(setId, slotKey, ilvl){
     id, slotKey, cat:slot.cat, statType,
     rarity:'legendaer', ilvl, stat, variant:itype.variant, itemType:itype.key,
     quality:100,
-    affixes: fixedSetAffixes(set.fixedAffixes && set.fixedAffixes[slotKey], ilvl, rarity),
+    affixes: fixedSetAffixes(setFixedAffixKeys(set, slotKey), ilvl, rarity),
     proc: null,
     setId, setSlot:slotKey,
     name: setPieceName(set, slotKey),
@@ -153,7 +153,7 @@ export function previewSetPiece(setId, slotKey, ilvl){
     slotKey, cat:slot.cat, statType,
     rarity:'legendaer', ilvl, stat,
     variant: SET_SLOTS.indexOf(slotKey), itemType:'set_'+set.themeKey,
-    quality:100, affixes: fixedSetAffixes(set.fixedAffixes && set.fixedAffixes[slotKey], ilvl, rarity), proc:null,
+    quality:100, affixes: fixedSetAffixes(setFixedAffixKeys(set, slotKey), ilvl, rarity), proc:null,
     setId, setSlot:slotKey,
     name: setPieceName(set, slotKey),
     preview:true,

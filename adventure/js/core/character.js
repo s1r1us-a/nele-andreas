@@ -67,7 +67,7 @@ export function recomputeTotals(){
   b.attackSpeed = Math.min(0.60, b.attackSpeed);
   b.lifesteal   = Math.min(AFFIX_DEFS.lifesteal.cap, b.lifesteal);
   b.dodge       = Math.min(AFFIX_DEFS.dodge.cap, b.dodge);
-  b.versatility = Math.min(AFFIX_DEFS.versatility.cap, b.versatility);
+  b.versatility = Math.max(0, b.versatility);
   // Charakter-Level: dauerhafte Boni oben drauf
   const lb = levelBonus(state.level);
   b.armor += lb.armor; b.damage += lb.dmg; b.maxHp += lb.hp;

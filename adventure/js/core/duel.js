@@ -13,6 +13,7 @@
    ===================================================================== */
 import { db, ref, get, set, update, remove, push, onValue, onDisconnect, userKey } from './firebase.js';
 import { COMBAT } from '../data/tuning.js';
+import { AFFIX_DEFS } from '../data/affixes.js';
 import { abilityOf, abilitiesOf, CLASS_BY_ID } from '../data/classes.js';
 import { computePlayerStats, loadGuestSave, resolveActiveSlot } from './tower.js';
 import { fmtBig } from '../ui/dom.js';
@@ -474,7 +475,7 @@ function strike(att, def, enr){
   if(Math.random() < def.dodge) return { dodged: true };
   const armorRed = def.armor * COMBAT.armorReduction + (def.block || 0);
   dmg = Math.max(1, Math.round(dmg - armorRed));
-  dmg = Math.max(1, Math.round(dmg * (1 - def.vers)));
+  dmg = Math.max(1, Math.round(dmg * (1 - Math.min(AFFIX_DEFS.versatility.defensiveCap || 0.85, def.vers || 0))));
   if(now < def.buffs.dmgReduce.until){
     dmg = Math.max(1, Math.round(dmg * (1 - def.buffs.dmgReduce.val)));
   }

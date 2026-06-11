@@ -46,8 +46,26 @@ export function weaponAtk(w){
   if(materialOf(w) === 'zauberstab'){ const sp = spellOf(w); const ty = typeOf(w);
     // wv/rarity/orb/material zusätzlich, damit auch der Stab als Waffen-Ebene
     // (buildWeaponLayerSVG) gerendert werden kann.
-    return { kind:'stab', spell:sp, element:sp.element, wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material }; }
+    return { kind:'stab', spell:sp, element:sp.element, wv:ty.variant|0, rarity:w.rarity,
+             orb:ty.orb, material:ty.material, special:ty.special || null, art:ty.art || 'waffe' }; }
   const ty = typeOf(w);
   return { kind:'melee', profile:attackProfileOf(ty.variant), element:(elementOf(w.id)==='ice'?'ice':'fire'),
-           wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material };
+           wv:ty.variant|0, rarity:w.rarity, orb:ty.orb, material:ty.material,
+           special:ty.special || null, art:ty.art || 'waffe' };
+}
+
+// Nebenhand-Beschreibung für die separate Kampf-Ebene. Schurken-Zweitwaffen
+// nutzen das normale Nahkampfprofil, Schilde/Orbs bekommen eigene leichte
+// Mitbewegungen im Renderer.
+export function offhandAtk(w){
+  if(!w) return null;
+  const ty = typeOf(w);
+  const art = ty.art || 'schild';
+  if(art === 'waffe'){
+    const atk = weaponAtk(w);
+    return Object.assign({}, atk, { hand:'offhand', art:'waffe' });
+  }
+  const element = ty.element || (ty.orb === 'blau' ? 'ice' : (ty.orb === 'gruen' ? 'nature' : 'fire'));
+  return { kind:art === 'orb' ? 'orb' : 'shield', art, element, wv:ty.variant|0,
+           rarity:w.rarity, orb:ty.orb, material:ty.material, special:ty.special || null };
 }

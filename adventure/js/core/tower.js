@@ -7,10 +7,10 @@
 import { db, ref, get, set, update, remove, push, runTransaction, onValue, onDisconnect } from './firebase.js';
 import { COMBAT, TOWER, animSpeedForInterval } from '../data/tuning.js';
 import { bossFor } from '../data/bosses.js';
-import { AFFIX_KEYS } from '../data/affixes.js';
+import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
-import { weaponAtk } from '../data/attacks.js';
+import { weaponAtk, offhandAtk } from '../data/attacks.js';
 import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
 import { powerOfBundle, rollItem } from './items.js';
@@ -123,7 +123,7 @@ export function computePlayerStats(s){
   b.attackSpeed = Math.min(0.60, b.attackSpeed);
   b.lifesteal   = Math.min(0.40, b.lifesteal);
   b.dodge       = Math.min(0.35, b.dodge);
-  b.versatility = Math.min(0.30, b.versatility);
+  b.versatility = Math.max(0, b.versatility);
   const lb = levelBonus(s.level || 1);
   b.armor  += lb.armor;
   b.damage += lb.dmg;
@@ -152,6 +152,7 @@ export function computePlayerStats(s){
     character: s.character, usesStab,
     // Angriffs-Beschreibung (Profil/Spell/Overlay-Parameter) für die Kampf-FX.
     wpn: weaponAtk(s.equipped && s.equipped.waffe),
+    offhand: offhandAtk(s.equipped && s.equipped.schild),
   };
 }
 
@@ -326,7 +327,7 @@ function takeBossDmg(atk, armor, dodge, versatility, block){
   const K = atk * TOWER.armorK;
   const mitig = Math.min(TOWER.armorMitigCap, defense / (defense + K));
   let dmg = Math.round(atk * rnd(0.15) * (1 - mitig));
-  dmg = Math.round(dmg * (1 - (versatility || 0)));
+  dmg = Math.round(dmg * (1 - Math.min(AFFIX_DEFS.versatility.defensiveCap || 0.85, versatility || 0)));
   return { dmg: Math.max(1, dmg) };
 }
 
@@ -443,6 +444,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontIsHealer: frontStats.classId === 'heiler',
     frontUsesStab: frontStats.usesStab || false,
     frontWpn: frontStats.wpn || null,
+    frontOffhand: frontStats.offhand || null,
     frontName, frontTier: frontStats.tier,
     frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
     frontAbility: abilityOf(frontStats.classId),
@@ -459,6 +461,7 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backHealMult: bs.healMult,
     backUsesStab: bs.usesStab || false,
     backWpn: bs.wpn || null,
+    backOffhand: bs.offhand || null,
     backName: backName || '', backTier: bs.tier || 0,
     backKey: keys.backKey || '', backClass: bs.classId || '',
     backAbility:  solo ? null : abilityOf(bs.classId),
@@ -837,7 +840,7 @@ function exchange(fight){
       fight.bossHp = Math.max(0, fight.bossHp - fd);
       fight.dmgDealt += fd;
       addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}), ...(fight.frontAnimSpeed>1?{a:fight.frontAnimSpeed}:{}) });
+      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}), ...(fight.frontOffhand?{oh:fight.frontOffhand}:{}), ...(fight.frontAnimSpeed>1?{a:fight.frontAnimSpeed}:{}) });
       // Dornen reflektiert
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(fd * 0.15));
@@ -872,7 +875,7 @@ function exchange(fight){
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
       addLog(fight, icon + ' ' + fight.backName + (bc?' ✨KRIT':'') + ': -' + fmtBig(bd) + ' HP', bc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}), ...(fight.backAnimSpeed>1?{a:fight.backAnimSpeed}:{}) });
+      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}), ...(fight.backOffhand?{oh:fight.backOffhand}:{}), ...(fight.backAnimSpeed>1?{a:fight.backAnimSpeed}:{}) });
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(bd * 0.15));
         fight.backHp = Math.max(0, fight.backHp - refl);
