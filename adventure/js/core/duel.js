@@ -138,7 +138,8 @@ function rnd(v){ return 1 + (Math.random()*2 - 1)*v; }
 
 function freshBuffs(){
   return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
-           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0}, reflect:{until:0,val:0} };
+           dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0}, reflect:{until:0,val:0},
+           haste:{until:0,val:0} };
 }
 function makeSide(stats){
   const classId = stats.classId;
@@ -269,6 +270,24 @@ function applyDuelAbility(fight, role, side, opp, name, ab, now){
   } else if(ab.kind === 'critBoost'){
     side.buffs.crit = { until: now + ab.dur, val: ab.critBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.critBonus*100) + '% Krit!', '#ffd24a');
+  } else if(ab.kind === 'haste'){
+    // Klingenrausch: temporärer Angriffstempo-Schub (schnellere Eigen-Schläge).
+    side.buffs.haste = { until: now + ab.dur, val: ab.hasteBonus, src: ab.id };
+    side.castTs = now; side.castAb = ab.id;
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.hasteBonus*100) + '% Angriffstempo!', '#9be7ff');
+  } else if(ab.kind === 'execute'){
+    // Hinrichtung (Meuchelstoß/Seelenfresser): unter der HP-Schwelle massiv verstärkt.
+    const low = opp.hp <= opp.maxHp * (ab.threshold||0.3);
+    const dmg = Math.max(1, Math.round(side.atk * ab.burstMult * (low ? (ab.execMult||2.5) : 1)));
+    opp.hp -= dmg; fight.dmgDealt += dmg;
+    side.burstTs = now; side.burstMagic = side.magic ? 1 : 0; side.burstAb = ab.id;
+    if(ab.heals){ side.hp = Math.min(side.maxHp, side.hp + dmg); }
+    logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ': ' + (low?'HINRICHTUNG ':'') + fmtBig(dmg) + ' Schaden' + (ab.heals?' (+Heilung)':''), low?'#ff3030':'#ffd24a');
+    if(opp.hp <= 0){
+      opp.hp = 0; fight.over = true; fight.winner = role;
+      logLine(fight, '🏆 ' + (role==='host'?fight.hostName:fight.guestName) + ' gewinnt das Duell!', '#ffd24a');
+      clearTimeout(_timer);
+    }
   } else if(ab.kind === 'dmgBoost'){
     side.buffs.dmgBoost = { until: now + ab.dur, val: ab.dmgBonus, src: ab.id };
     logLine(fight, ab.icon + ' ' + name + ' ' + ab.name + ' – +' + Math.round(ab.dmgBonus*100) + '% Schaden!', '#ff8a3d');
@@ -488,11 +507,13 @@ function tick(fight){
     while(now >= att.nextSwingAt && guard < 2){
       // Betäubt (Donnerknall des Gegners) ODER selbst im Nebel verborgen (Nebelschritt):
       // Schlag aussetzen, Takt weiterlaufen lassen.
-      if(now < (att.stunUntil||0) || now < (att.stealthUntil||0)){ att.nextSwingAt += att.interval; guard++; continue; }
+      // Klingenrausch (haste): kürzeres Eigen-Intervall, solange das Fenster läuft.
+      const swingInt = now < att.buffs.haste.until ? att.interval / (1 + att.buffs.haste.val) : att.interval;
+      if(now < (att.stunUntil||0) || now < (att.stealthUntil||0)){ att.nextSwingAt += swingInt; guard++; continue; }
       applyStrike(fight, aKey, dKey, strike(att, fight[dKey], enr), events);
-      att.nextSwingAt += att.interval;
+      att.nextSwingAt += swingInt;
       // Nach langer Pause (z. B. gedrosselter Tab) nicht nachfeuern.
-      if(att.nextSwingAt < now - att.interval) att.nextSwingAt = now + att.interval;
+      if(att.nextSwingAt < now - swingInt) att.nextSwingAt = now + swingInt;
       swung = true; guard++;
       if(fight[dKey].hp <= 0) break;   // keinen bereits Gefallenen mehrfach treffen
     }
@@ -572,8 +593,10 @@ function fxOf(side, now){
     fire:   Math.max(0, side.buffs.dmgBoost.until - now),
     shield: Math.max(0, side.buffs.dmgReduce.until - now),
     blood:  Math.max(0, side.buffs.lifesteal.until - now),
+    haste:  Math.max(0, side.buffs.haste.until - now),
     critSrc: side.buffs.crit.src || '', fireSrc: side.buffs.dmgBoost.src || '',
     shieldSrc: side.buffs.dmgReduce.src || '', bloodSrc: side.buffs.lifesteal.src || '',
+    hasteSrc: side.buffs.haste.src || '',
     burstTs: side.burstTs || 0, burstMagic: side.burstMagic || 0, burstAb: side.burstAb || '',
     healTs: side.healTs || 0, healAb: side.healAb || '',
     drainTs: side.drainTs || 0, drainAb: side.drainAb || '',

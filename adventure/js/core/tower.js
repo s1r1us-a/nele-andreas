@@ -476,8 +476,8 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontCastTs:0, frontCastAb:'', backCastTs:0, backCastAb:'',
     // Talent-Aktive: Cooldown-Maps je Slot + per-Slot-Effekt-Container + Boss-Verwundbarkeit.
     frontCd:{}, backCd:{}, bossVulnUntil:0, bossVulnVal:0,
-    fx:{ front:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0 },
-          back:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0 } },
+    fx:{ front:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0, hasteUntil:0,hasteVal:0 },
+          back:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0, hasteUntil:0,hasteVal:0 } },
     _lastAbilTs:0,
     onUpdate,
   };
@@ -507,7 +507,7 @@ function slotDmgMult(fight, slot, now){
   if(now < (fight.bossVulnUntil||0))    m *= (1 + (fight.bossVulnVal||0));
   return m;
 }
-// Zusätzlicher Lebensraub eines Slots aus Talent-Buffs (Beutejagd/Blutritual).
+// Zusätzlicher Lebensraub eines Slots aus Talent-Buffs (Aderlass-Ritual).
 function slotLifesteal(fight, slot, now){
   const fx = fight.fx && fight.fx[slot];
   return (fx && now < (fx.lifestealUntil||0)) ? (fx.lifestealVal||0) : 0;
@@ -612,6 +612,15 @@ function applyAbility(fight, slot, abilityId){
     if(slot === 'front'){ fight.frontCritUntil = now + ab.dur; fight.frontCritVal = ab.critBonus||0; }
     else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||0; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+'!', '#ff8a3d');
+  } else if(ab.kind === 'haste'){
+    fxs.hasteUntil = now + ab.dur; fxs.hasteVal = ab.hasteBonus||0;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+Math.round((ab.hasteBonus||0)*100)+'% Angriffstempo!', '#9be7ff');
+  } else if(ab.kind === 'execute'){
+    // Hinrichtung (Meuchelstoß/Seelenfresser): unter der HP-Schwelle massiv verstärkt.
+    const low = fight.bossHp <= fight.bossMaxHp * (ab.threshold||0.3);
+    const dmg = dealBoss(ab.burstMult * (low ? (ab.execMult||2.5) : 1));
+    if(ab.heals) slotHeal(dmg);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+(low?'HINRICHTUNG ':'')+fmtBig(dmg)+' Schaden'+(ab.heals?' (+Heilung)':''), low?'#ff3030':'#ffd24a');
   } else if(ab.kind === 'vanish'){
     fight.bossStunUntil = now + ab.dur;
     if(slot === 'front') fight.frontStealthUntil = now + ab.dur; else fight.backStealthUntil = now + ab.dur;
@@ -626,7 +635,7 @@ function applyAbility(fight, slot, abilityId){
     else               { fight.backPetUntil  = now + (ab.petDur||10000); fight.backPetBonus  = ab.petBonus||0.25; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': Teufelswache kämpft '+((ab.petDur||10000)/1000)+'s mit (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden)!', '#9b30ff');
   } else if(ab.kind === 'dmgReduce'){
-    // Schildwall heilt die ganze Gruppe; Talent-Reduce (Verschwinden/Unbeugsam) nur den Slot.
+    // Schildwall (Grundfähigkeit) wirkt auf die ganze Gruppe; etwaige Slot-Reduce nur den Slot.
     if(ab.id === 'schildwall'){ fight.groupDmgReduceUntil = now + ab.dur; fight.groupDmgReducePct = ab.dmgReduce||0; addLog(fight, ab.icon+' '+ab.name+' – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff'); }
     else { fxs.dmgReduceUntil = now + ab.dur; fxs.dmgReduceVal = ab.dmgReduce||0; addLog(fight, ab.icon+' '+name+' – '+ab.name+': −'+Math.round((ab.dmgReduce||0)*100)+'% erlittener Schaden!', '#7fd0ff'); }
   } else if(ab.kind === 'dmgBoost'){
@@ -773,7 +782,13 @@ function startTowerHot(fight, slot, ab, targets){
 }
 
 function scheduleExchange(fight){
-  const iv = Math.min(fight.frontInterval, fight.backInterval || fight.frontInterval);
+  let iv = Math.min(fight.frontInterval, fight.backInterval || fight.frontInterval);
+  // Klingenrausch (haste): schnellere Schlagfolge, solange ein lebender Slot den Tempo-Buff hält.
+  const now = Date.now();
+  let haste = 0;
+  if(fight.frontHp > 0 && now < (fight.fx.front.hasteUntil||0)) haste = Math.max(haste, fight.fx.front.hasteVal||0);
+  if(fight.backHp  > 0 && now < (fight.fx.back.hasteUntil ||0)) haste = Math.max(haste, fight.fx.back.hasteVal ||0);
+  if(haste > 0) iv /= (1 + haste);
   _fightTimer = setTimeout(() => exchange(fight), iv / fight.speed);
 }
 
