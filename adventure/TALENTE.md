@@ -5,11 +5,14 @@
 > Quellen: `js/data/talents.js` (Bäume), `js/data/classes.js` (Grundfähigkeiten),
 > Kampfwirkung in `js/core/duel.js` + `js/core/tower.js#computePlayerStats`.
 
-Die Überarbeitung bleibt **bewusst im bestehenden System**: keine neuen Aktiv-Typen,
-keine Procs/Bedingungseffekte, keine Engine-Änderung. Verbessert wurden **Struktur,
-Balance, Flavor und die Profilschärfe der aktiven Fähigkeiten** innerhalb der
-vorhandenen Bausteine (`heal · burst · drain · critBoost · dmgBoost · dmgReduce ·
-lifesteal`). Layout bleibt 10 Stufen × 3 Optionen, Aktiv-Stufen auf 5 & 9.
+Die Überarbeitung der **24 aktiven Talent-Fähigkeiten** (Stufe 5 & 9) zielt auf
+**Nicht-Redundanz, Klassenidentität und je eine eigene, aufwendige Animation**. Die
+Mechaniken stammen weiter aus den vorhandenen Bausteinen (`heal · burst · drain ·
+critBoost · dmgBoost · dmgReduce · lifesteal · hot · dot · absorb · cleanse · deathsave ·
+reflect · vulnerability · avatar · stun`); **neu** hinzugekommen ist genau **ein**
+Aktiv-Typ `echo` (Soforttreffer + verzögertes Echo, für *Arkanschlag*). Layout bleibt
+10 Stufen × 3 Optionen, Aktiv-Stufen auf 5 & 9. **Alle Talent-IDs bleiben erhalten** –
+bestehende Spielstände sind kompatibel; nur Name/Icon/Wirkung/Animation je Aktive ändern sich.
 
 ---
 
@@ -27,14 +30,15 @@ lifesteal`). Layout bleibt 10 Stufen × 3 Optionen, Aktiv-Stufen auf 5 & 9.
    - `+0,25 critDamage` allein ≈ **1,4 % DPS** – die mit Abstand schwächste Wahl.
    → Die Wahl war oft „offensichtlich", keine echte Entscheidung.
 
-3. **Profillose Aktive.** Die Aktiv-Stufen boten häufig „mehr vom selben Stat", und fast
-   **alle Cooldowns waren 30 s** – kein Entscheidungsdruck zwischen kurzem Nuke und
-   langer Defensive.
+3. **Redundante Aktive über die Klassen hinweg.** Es gab **3× nahezu identische
+   Wiederbelebung** (`deathsave`: Verteidiger/Heiler/Hexer), **2× Lebensraub-Buff**,
+   **2× identische Betäubung**, **2× Schadensreduktion** (plus Grundfähigkeit Schildwall),
+   beim Schurken **zwei gleiche DoTs** und **vier austauschbare „X % Sofortschaden"-Bursts**.
+   Verschiedene Klassen fühlten sich in den Aktiv-Stufen gleich an.
 
-4. **Inkonsistenter Hexer-Drain.** Die Talent-Drains (`hexer_a5_ritual`,
-   `hexer_a9_fresser`) hatten **kein `dur`/`tickMs`** → fielen in `duel.js` durch die
-   Kanal-Logik und wirkten als Einmal-Burst, während die Grundfähigkeit `seelenraub` ein
-   echter Kanal ist. Verwässerte die Hexer-Identität.
+4. **Verwaiste Animations-Einträge.** Im `ABILITY_VFX`-Register lagen ~16 Signaturen aus
+   einer früheren Talent-Iteration, deren IDs es nicht mehr gab → mehrere Aktive fielen
+   auf generische Effekte zurück und hatten **keine eigene Animation**.
 
 ---
 
@@ -74,25 +78,41 @@ daher bleiben bestehende Spielstände kompatibel (siehe `isValidChoice`).
 
 ---
 
-## 3. Aktive Fähigkeiten – Vorher → Nachher
+## 3. Aktive Fähigkeiten – Redesign (Vorher → Nachher)
 
-| Klasse · Stufe | Fähigkeit | Vorher | Nachher | Rolle |
+Ziel: jede Mechanik hat **genau einen klaren Platz**. Es gibt jetzt **nur noch eine
+Wiederbelebung** (Verteidiger), **einen Lebensraub-Buff** (Hexer), **eine Talent-
+Schadensreduktion** (Verteidiger) und **eine Betäubung** (Schurke). Die vier generischen
+Bursts wurden zu Echo-, Kanal- und Meteorschauer-Effekten ausdifferenziert.
+
+| Klasse · Stufe | Fähigkeit | Vorher (kind) | Nachher (kind · Werte) | Warum |
 |---|---|---|---|---|
-| Schurke 5 | Ausweiden | burst (war „Wirbelsturm") | **burst 240 % · CD 20 s** | Nuke (Meucheln) |
-| Schurke 5 | Beutejagd | dmgBoost (war „Kampfrausch") | **lifesteal +30 % / 8 s** | Sustain (Gesetzloser) |
-| Schurke 5 | Schattentanz | critBoost (war „Schlachtwut") | **dmgBoost +40 % / 8 s** | Ramp (Täuschung) |
-| Schurke 9 | Todesstoß | burst (war „Hinrichtung") | **burst 400 % · CD 24 s** | Execute-Nuke |
-| Schurke 9 | Verschwinden | dmgBoost (war „Berserkermodus") | **dmgReduce −60 % / 9 s** | Defensive (Täuschung) |
-| Verteidiger 5 | Schildschlag | burst 200 % · CD 22 s | **burst 200 % · CD 20 s** | Konter (Rächer) |
-| Verteidiger 9 | Schildwucht | burst 300 % · CD 30 s | **burst 300 % · CD 24 s** | Konter-Nuke |
-| Heiler 5 | Arkanschlag | burst 260 % · CD 22 s | **burst 250 % · CD 20 s** | Nuke (Sternenmagier) |
-| Heiler 9 | Sternenregen | burst 400 % · CD 30 s | **burst 380 % · CD 24 s** | Nuke |
-| Hexer 5 | Aderlass-Ritual | **Einmal-Burst** 250 % | **Kanal 65 %/s · 4 s** (heilt) | Drain (Seelensauger) |
-| Hexer 5 | Schattenblitz | lifesteal (war „Blutrausch") | **burst 250 % · CD 20 s** | Nuke (Verderbnis/Weber) |
-| Hexer 9 | Seelenfresser | **Einmal-Burst** 400 % | **Kanal 80 %/s · 5 s** (heilt) | Drain |
+| Schurke 5 | **Tödliche Toxine** | dot | dot 55 %/s · 8 s | Signatur-Gift bleibt |
+| Schurke 5 | **Beutejagd** | lifesteal | **critBoost** +35 % / 8 s | entfernt Lebensraub-Dopplung |
+| Schurke 5 | **Klingensturm** | burst | **dot** 90 %/0,6 s · 2,4 s | rotierender Mehrfachtreffer statt flachem Burst |
+| Schurke 9 | **Aderlass** | dot | **vulnerability** +30 % / 9 s · 160 % Treffer | kein 2. DoT mehr; Wunde aufreißen |
+| Schurke 9 | **Meuchelstoß** | stun | stun 350 % + 3 s | einzige physische Betäubung |
+| Schurke 9 | **Schattentanz** | dmgReduce | **dmgBoost** +55 % / 9 s | entfernt dmgReduce-Dopplung |
+| Verteidiger 5 | **Schildwurf** | vulnerability | vulnerability +30 % + 150 % | unverändert |
+| Verteidiger 5 | **Vergeltung** | reflect | reflect 45 % / 8 s | unverändert |
+| Verteidiger 5 | **Letzte Bastion** | heal | **absorb** 45 % / 10 s | Schild statt Heilung (entzerrt heal) |
+| Verteidiger 9 | **Avatar des Wächters** | avatar | avatar +40 % / −40 % · 8 s | unverändert |
+| Verteidiger 9 | **Letzter Wall** | deathsave | deathsave 30 % | **einzige Wiederbelebung im Spiel** |
+| Verteidiger 9 | **Unbeugsam** | dmgReduce | dmgReduce −70 % / 9 s | einzige Talent-Schadensreduktion |
+| Heiler 5 | **Verjüngung** | hot | hot 8 %/s · 8 s | unverändert |
+| Heiler 5 | **Arkanschlag** | burst | **echo** 160 % + 100 % nach 0,5 s | Doppel-Detonation (neuer Typ) |
+| Heiler 5 | **Schutzschild** | absorb | absorb 40 % / 10 s | unverändert |
+| Heiler 9 | **Engelsgeist** | deathsave | **hot** 18 %/s · 6 s | Notfall-Regen statt 2. Wiederbelebung |
+| Heiler 9 | **Sternenregen** | burst | **dot** 85 %/s · 6 s | Meteorschauer statt flachem Burst |
+| Heiler 9 | **Reinigung** | cleanse | cleanse +25 % Heilung | unverändert |
+| Hexer 5 | **Verderbnis** | drain | drain 70 %/s · 6 s | unverändert |
+| Hexer 5 | **Aderlass-Ritual** | drain | drain 65 %/s · 4 s | unverändert |
+| Hexer 5 | **Schattenblitz** | stun | **burst** 260 % | entfernt Betäubungs-Dopplung |
+| Hexer 9 | **Chaosregen** | burst | **dot** 80 %/s · 7 s | Teufelsregen statt flachem Burst |
+| Hexer 9 | **Seelenfresser** | deathsave | **drain** 95 %/s · 6 s | großer Kanal statt 3. Wiederbelebung |
+| Hexer 9 | **Blutritual** | lifesteal | lifesteal +30 % / 8 s | einziger Lebensraub-Buff im Spiel |
 
-> **Grundfähigkeiten** (`classes.js`): leichte CD-Differenzierung statt überall 30 s –
-> Kaltblütigkeit 28 s, Seelenraub 26 s, Schildwall 32 s (sehr starke Defensive), Heilkreis 30 s.
+> **Grundfähigkeiten** (`classes.js`) bleiben unverändert.
 
 ---
 
@@ -107,11 +127,11 @@ Lesart: **[ Säule 1 · Säule 2 · Säule 3 ]**. Aktiv-Stufen sind **fett** mar
 | 2 | Verstümmeln +4 % Krit · +15 % Krit-Schaden | Säbelhieb +7 % Tempo | Hinterhältig +12 % Schaden |
 | 3 | Scharfe Klingen +7 % Krit | Beutezug +5 % Lebensraub | Zähigkeit +12 % Leben |
 | 4 | Tödliche Präzision +5 % Krit · +20 % Krit-Schaden | Schwertkunst +9 % Tempo | Finsternis +15 % Schaden |
-| **5** | **Ausweiden** burst 240 % | **Beutejagd** +30 % Lebensraub | **Schattentanz** +40 % Schaden |
+| **5** | **Tödliche Toxine** dot 55 %/s · 8 s | **Beutejagd** +35 % Krit / 8 s | **Klingensturm** Kanal 90 %/0,6 s · 2,4 s |
 | 6 | Meistergift +9 % Krit | Freibeuter +7 % Lebensraub | Abgehärtet +18 % Leben |
 | 7 | Auslöschen +6 % Krit · +25 % Krit-Schaden | Klingentanz +10 % Tempo | Schattenklinge +18 % Schaden |
 | 8 | Aufschlitzen +6 % Krit · +30 % Krit-Schaden | Räuberblut +8 % Lebensraub | Meucheltechnik +18 % Schaden |
-| **9** | **Todesstoß** burst 400 % | **Tötungsrausch** +40 % Lebensraub | **Verschwinden** −60 % Schaden / 9 s |
+| **9** | **Aderlass** Verwundbar +30 % / 9 s · 160 % | **Meuchelstoß** burst 350 % + 3 s Betäubung | **Schattentanz** +55 % Schaden / 9 s |
 | 10 | Großmeuchler +18 % Schaden · +12 % Krit · +30 % Krit-Schaden | Freibeuterkönig +15 % Schaden · +12 % Tempo · +10 % Lebensraub | Meister der Schatten +25 % Schaden · +15 % Leben |
 
 ### 🛡️ Verteidiger — Bollwerk · Rächer · Ausweicher
@@ -121,11 +141,11 @@ Lesart: **[ Säule 1 · Säule 2 · Säule 3 ]**. Aktiv-Stufen sind **fett** mar
 | 2 | Schwere Rüstung +10 Block | Vergeltung +8 Dornen | Ausweichen +6 % Ausweichen |
 | 3 | Standhaft +12 Block | Stachelpanzer +10 Dornen | Hohe Konstitution +18 % Leben |
 | 4 | Festung +18 % Rüstung | Gegenwehr +12 % Schaden · +6 Dornen | Wendigkeit +7 % Ausweichen |
-| **5** | **Trotzschlag** −55 % Schaden / 8 s | **Schildschlag** burst 200 % | **Letzte Bastion** Heilung 35 % |
+| **5** | **Schildwurf** Verwundbar +30 % + 150 % | **Vergeltung** Reflektiert 45 % / 8 s | **Letzte Bastion** Schild 45 % / 10 s |
 | 6 | Bollwerk +22 % Rüstung | Klingenwall +14 Dornen | Titanenhaut +22 % Leben |
 | 7 | Bastion +18 Block | Dornenfeld +16 Dornen | Schattenschritt +8 % Ausweichen |
 | 8 | Unbeugsamer Block +20 Block | Vergeltungsdornen +20 Dornen | Koloss +28 % Leben |
-| **9** | **Unbeugsam** −70 % Schaden / 9 s | **Schildwucht** burst 300 % | **Standhalten** Heilung 50 % |
+| **9** | **Avatar des Wächters** +40 % Sch / −40 % · 8 s | **Letzter Wall** Todesrettung 30 % | **Unbeugsam** −70 % Schaden / 9 s |
 | 10 | Festungswall +25 % Rüstung · +20 Block | Dornengott +15 % Rüstung · +12 % Schaden · +24 Dornen | Unerschütterlich +30 % Leben · +20 % Rüstung · +6 % Ausweichen |
 
 ### ✨ Heiler — Lichtwirker · Sternenmagier · Bewahrer
@@ -135,11 +155,11 @@ Lesart: **[ Säule 1 · Säule 2 · Säule 3 ]**. Aktiv-Stufen sind **fett** mar
 | 2 | Aderlass +5 % Lebensraub | Zaubermacht +12 % Schaden | Vielseitig +6 % Vielseitigkeit |
 | 3 | Hohe Lebenskraft +18 % Leben | Konzentration +8 % Magie-Krit | Magieschild +15 % Rüstung |
 | 4 | Lebensquell +7 % Lebensraub | Lichtmagie +15 % Schaden | Harmonie +8 % Vielseitigkeit |
-| **5** | **Lichtblitz** Heilung 40 % | **Arkanschlag** burst 250 % | **Macht-Infusion** +45 % Schaden |
+| **5** | **Verjüngung** HoT 8 %/s · 8 s | **Arkanschlag** Echo 160 % + 100 % | **Schutzschild** Schild 40 % / 10 s |
 | 6 | Unsterblichkeit +20 % Leben | Erleuchtung +10 % Magie-Krit | Gleichmut +10 % Vielseitigkeit |
 | 7 | Lebensbrunnen +9 % Lebensraub | Hohe Magie +18 % Schaden | Geistschild +18 % Rüstung |
 | 8 | Ewiges Leben +25 % Leben | Arkanmeister +6 % Magie-Krit · +30 % Krit-Schaden | Bewahrung +12 % Vielseitigkeit |
-| **9** | **Segen des Lichts** Heilung 60 % | **Sternenregen** burst 380 % | **Arkane Klarheit** +70 % Krit / 8 s |
+| **9** | **Engelsgeist** HoT 18 %/s · 6 s | **Sternenregen** Sternfall-DoT 85 %/s · 6 s | **Reinigung** Reinigt + 25 % Heilung |
 | 10 | Hohepriester +30 % Leben · +12 % Lebensraub | Avatar des Lichts +25 % Schaden · +12 % Magie-Krit | Hüter der Zeit +12 % Schaden · +15 % Rüstung · +12 % Vielseitigkeit |
 
 ### 🔮 Hexer — Verderbnis · Seelensauger · Schattenweber
@@ -149,11 +169,11 @@ Lesart: **[ Säule 1 · Säule 2 · Säule 3 ]**. Aktiv-Stufen sind **fett** mar
 | 2 | Schattenmacht +12 % Schaden | Aderlass +6 % Lebensraub | Verfall +25 % Krit-Schaden |
 | 3 | Fluch der Schwäche +8 % Magie-Krit | Lebensentzug +7 % Lebensraub | Hexenblut +15 % Leben |
 | 4 | Finstere Gewalt +15 % Schaden | Blutpakt +8 % Lebensraub | Seelenfeuer +5 % Magie-Krit · +25 % Krit-Schaden |
-| **5** | **Schattenbrand** +45 % Schaden | **Aderlass-Ritual** Kanal 65 %/s · 4 s | **Schattenblitz** burst 250 % |
+| **5** | **Verderbnis** Kanal 70 %/s · 6 s | **Aderlass-Ritual** Kanal 65 %/s · 4 s | **Schattenblitz** burst 260 % |
 | 6 | Dunkle Magie +18 % Schaden | Vampirismus +9 % Lebensraub | Verdammnis +5 % Magie-Krit · +30 % Krit-Schaden |
 | 7 | Seelenbrand +18 % Schaden | Zähes Blut +10 % Lebensraub | Qual +40 % Krit-Schaden |
 | 8 | Schattenmeister +20 % Schaden | Blutmagie +10 % Lebensraub | Hexenmeister +6 % Magie-Krit · +25 % Krit-Schaden |
-| **9** | **Schattenexplosion** burst 400 % | **Seelenfresser** Kanal 80 %/s · 5 s | **Blutritual** +40 % Lebensraub / 8 s |
+| **9** | **Chaosregen** Teufelsregen-DoT 80 %/s · 7 s | **Seelenfresser** Kanal 95 %/s · 6 s | **Blutritual** +30 % Lebensraub / 8 s |
 | 10 | Seelenherr +25 % Schaden · +12 % Magie-Krit | Blutkönig +15 % Schaden · +28 % Lebensraub | Dämonenfürst +18 % Schaden · +15 % Leben · +40 % Krit-Schaden |
 
 ---
