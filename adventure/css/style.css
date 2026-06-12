@@ -1466,10 +1466,23 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   background:rgba(255,255,255,.02); border:1px solid var(--line); }
 .talent-tier.done { border-color:rgba(55,214,122,.4); }
 .talent-tier.locked { opacity:.85; }
-.talent-tier.mastery { border-color:rgba(154,240,255,.35); background:rgba(71,190,220,.08); }
+.talent-tier.mastery { position:relative; margin-top:28px; margin-bottom:14px; padding:14px 12px 12px;
+  border-color:rgba(154,240,255,.62); border-width:2px;
+  background:linear-gradient(180deg, rgba(71,190,220,.16), rgba(255,255,255,.03));
+  box-shadow:0 0 0 1px rgba(154,240,255,.12), 0 14px 34px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.08); }
+.talent-tier.mastery:before { content:''; position:absolute; left:10px; right:10px; top:-16px;
+  height:1px; background:linear-gradient(90deg, transparent, rgba(154,240,255,.65), transparent); }
+.talent-tier.mastery .talent-tier-label { color:#9af0ff; font-size:11px; letter-spacing:.12em; }
 .talent-tier.mastery.done .talent-tier-state { color:#9af0ff; }
-.talent-node.mastery-node { border-color:rgba(154,240,255,.45); }
-.talent-node.mastery-node.pickable:hover { border-color:#9af0ff; }
+.talent-tier.mastery .talent-row { margin-top:8px; gap:10px; }
+.talent-node.mastery-node { min-height:78px; border-color:rgba(154,240,255,.55);
+  background:linear-gradient(160deg, rgba(70,212,255,.13), rgba(255,255,255,.04));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06); }
+.talent-node.mastery-node .talent-icon { font-size:25px; }
+.talent-node.mastery-node .talent-name { color:#d8fbff; }
+.talent-node.mastery-node.pickable { border-color:rgba(154,240,255,.78); }
+.talent-node.mastery-node.pickable:hover { border-color:#9af0ff; box-shadow:0 0 18px rgba(70,212,255,.28); }
 .talent-tier-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
 .talent-tier-state { font-size:10px; color:var(--txt-mute); text-transform:uppercase; letter-spacing:.05em; }
 .talent-tier.done .talent-tier-state { color:#37d67a; }
