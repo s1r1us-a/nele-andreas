@@ -246,6 +246,36 @@ export function talentNodes(classId){
   return talentTreeFor(classId).flat();
 }
 
+export const MASTERY_DEFS = [
+  { key:'damage', icon:'⚔️', name:'Macht', desc:'+2 % Schaden pro Rang', stat:'damage', perRank:0.02 },
+  { key:'maxHp',  icon:'❤️', name:'Ausdauer', desc:'+2 % Leben pro Rang', stat:'maxHp', perRank:0.02 },
+  { key:'armor',  icon:'🛡️', name:'Panzerung', desc:'+2 % Rüstung pro Rang', stat:'armor', perRank:0.02 },
+];
+
+export function isValidMasteryKey(key){
+  return MASTERY_DEFS.some(m => m.key === key);
+}
+
+export function masteryRanks(state){
+  const raw = (state && state.character && state.character.masteries) || {};
+  const out = {};
+  for(const m of MASTERY_DEFS) out[m.key] = Math.max(0, Math.floor(Number(raw[m.key]) || 0));
+  return out;
+}
+
+export function masteryRankCount(state){
+  const ranks = masteryRanks(state);
+  return MASTERY_DEFS.reduce((sum, m) => sum + ranks[m.key], 0);
+}
+
+export function talentPointEntitlement(level, classId){
+  const treeLen = talentTreeFor(classId).length || 10;
+  const lvl = Math.max(1, Math.floor(Number(level) || 1));
+  const base = Math.min(Math.floor(lvl / 5), treeLen);
+  const endless = Math.max(0, lvl - treeLen * 5);
+  return base + endless;
+}
+
 // Eindeutige Bundle-Keys, die in den Talenten einer Klasse vorkommen.
 export function talentStatKeys(classId){
   const present = new Set();
@@ -300,6 +330,11 @@ export function applyTalents(state, bundle){
   for(const key of Object.keys(ranks)){
     const node = nodeById(classId, ranks[key]);
     if(node && typeof node.effect === 'function') node.effect(bundle);
+  }
+  const masteries = masteryRanks(state);
+  for(const m of MASTERY_DEFS){
+    const rank = masteries[m.key] || 0;
+    if(rank > 0) bundle[m.stat] = (bundle[m.stat] || 0) * (1 + m.perRank * rank);
   }
   // Soft-Clamp: Talente dürfen Gear-Caps überschreiten, aber nicht ins Absurde.
   if(bundle.critPhys  > 0.9)  bundle.critPhys  = 0.9;

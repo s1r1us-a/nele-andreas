@@ -14,6 +14,7 @@ import { materialOf, MATERIAL_LABEL } from '../data/itemTypes.js';
 import { rarityChances, EXPEDITION_MIN_CAP } from '../core/loot.js';
 import { expeditionOf } from '../data/expeditions.js';
 import { SET_TOKEN } from '../data/sets.js';
+import { MASTERY_DEFS, talentPointEntitlement } from '../data/talents.js';
 import { BOSS_DEFS, BOSS_COUNT, bossFor, zoneName, MECH_DEFS } from '../data/bosses.js';
 import { state, saveState, listCharacters, createCharacter,
          switchCharacter, deleteCharacter, canAddCharacter, activeCharId } from '../core/state.js';
@@ -674,9 +675,12 @@ function applyCharacter(){
   else _draftChar.name = _draftChar.name.trim();
   // Talente/Punkte beim Aussehen-Ändern bewahren bzw. neu initialisieren.
   const prevTalents = (state.character && state.character.talents) || {};
+  const prevMasteries = (state.character && state.character.masteries) || {};
+  const masteries = {};
+  MASTERY_DEFS.forEach(m => masteries[m.key] = Math.max(0, Math.floor(Number(prevMasteries[m.key]) || 0)));
   const prevPoints  = (state.character && typeof state.character.talentPoints === 'number')
-    ? state.character.talentPoints : Math.max(0, (state.level||1) - 1);
-  state.character = Object.assign({}, _draftChar, { talents: prevTalents, talentPoints: prevPoints });
+    ? state.character.talentPoints : talentPointEntitlement(state.level || 1, _draftChar.classId);
+  state.character = Object.assign({}, _draftChar, { talents: prevTalents, masteries, talentPoints: prevPoints });
   saveState();
   creatorOverlay().classList.remove('show');
   _creatingNew = false; _prevCharId = null;

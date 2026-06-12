@@ -31,9 +31,9 @@ export let currentFight = null;
 const arenaOverlay = () => $('#arenaOverlay');
 
 // Coin-Belohnung für den Erstkill eines Bosses, skaliert mit dem Boss-Index.
-// Frühe Bosse ~100, späte mehrere Tausend; Endlos-Stufen wachsen weiter. Eine
+// Frühe Bosse ~1000, späte mehrere Zehntausend; Endlos-Stufen wachsen weiter. Eine
 // leicht justierbare Stellschraube. Farmkills geben hiervon 30 % (FARM.coinMult).
-function bossCoinReward(i){ return Math.round(100 + i*50); }
+function bossCoinReward(i){ return Math.round((100 + i*50) * 10); }
 
 // Beute-Karte für den Sieg-Bildschirm: zeigt das gedroppte Item klar mit Icon,
 // Seltenheit, Slot, Primärwert und Affixen (statt nur dem Namen im Fließtext).

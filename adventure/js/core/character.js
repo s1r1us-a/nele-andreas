@@ -4,7 +4,7 @@
 import { COMBAT } from '../data/tuning.js';
 import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { classOf, damageSchool } from '../data/classes.js';
-import { applyTalents } from '../data/talents.js';
+import { applyTalents, talentPointEntitlement } from '../data/talents.js';
 import { state } from './state.js';
 import { powerOfBundle } from './items.js';
 import { applySetBonuses } from './sets.js';
@@ -40,9 +40,10 @@ export function gainXp(amount){
   if(newLevel > oldLevel){
     state.level = newLevel;
     const lb = levelBonus(newLevel);
-    // Pro 5 Level 1 Talentpunkt (erster ab Level 5), nur mit gewählter Klasse.
+    // Bis zum letzten Baum-Talent alle 5 Level, danach jedes Level 1 Talentpunkt.
     if(state.character){
-      const gained = Math.floor(newLevel/5) - Math.floor(oldLevel/5);
+      const cid = state.character.classId;
+      const gained = talentPointEntitlement(newLevel, cid) - talentPointEntitlement(oldLevel, cid);
       if(gained > 0) state.character.talentPoints = (state.character.talentPoints || 0) + gained;
     }
     toast('⭐ Level '+newLevel+'! +'+(lb.hp)+' HP · +'+Math.round(lb.dmg)+' Schaden · +'+lb.armor+' Rüstung');

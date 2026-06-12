@@ -1466,6 +1466,10 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   background:rgba(255,255,255,.02); border:1px solid var(--line); }
 .talent-tier.done { border-color:rgba(55,214,122,.4); }
 .talent-tier.locked { opacity:.85; }
+.talent-tier.mastery { border-color:rgba(154,240,255,.35); background:rgba(71,190,220,.08); }
+.talent-tier.mastery.done .talent-tier-state { color:#9af0ff; }
+.talent-node.mastery-node { border-color:rgba(154,240,255,.45); }
+.talent-node.mastery-node.pickable:hover { border-color:#9af0ff; }
 .talent-tier-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
 .talent-tier-state { font-size:10px; color:var(--txt-mute); text-transform:uppercase; letter-spacing:.05em; }
 .talent-tier.done .talent-tier-state { color:#37d67a; }

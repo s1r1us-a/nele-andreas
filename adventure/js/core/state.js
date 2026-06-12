@@ -15,7 +15,7 @@ import { SLOTS } from '../data/slots.js';
 import { AFFIX_DEFS } from '../data/affixes.js';
 import { defaultTypeKey, typeOf, itemDisplayName, materialOf } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
-import { isValidChoice } from '../data/talents.js';
+import { MASTERY_DEFS, isValidChoice, talentPointEntitlement } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
 import { SETS, setOf, setFixedAffixKeys } from '../data/sets.js';
 import { blankMaterials, upgradeAffixFactor } from '../data/materials.js';
@@ -195,9 +195,13 @@ function migrateSlot(s){
     if(typeof s.character.beardId !== 'string') s.character.beardId = 'kein';
     if(typeof s.character.beardColor !== 'string') s.character.beardColor = '#6b3f1d';
     if(!s.character.talents || typeof s.character.talents !== 'object') s.character.talents = {};
-    if(typeof s.character.talentPoints !== 'number'){
-      s.character.talentPoints = Math.floor((s.level||1) / 5);
-    }
+    if(typeof s.character.talentPoints !== 'number') s.character.talentPoints = 0;
+    else s.character.talentPoints = Math.max(0, Math.floor(s.character.talentPoints));
+    const rawMasteries = (s.character.masteries && typeof s.character.masteries === 'object')
+      ? s.character.masteries : {};
+    const masteries = {};
+    for(const m of MASTERY_DEFS) masteries[m.key] = Math.max(0, Math.floor(Number(rawMasteries[m.key]) || 0));
+    s.character.masteries = masteries;
     // Talent-Migration: nach Baum-Umbau ungültige Wahlen entfernen und die
     // dafür ausgegebenen Punkte zurückerstatten (kein manueller Respec nötig).
     const cid = s.character.classId;
@@ -211,6 +215,11 @@ function migrateSlot(s){
         }
       }
       if(refunded > 0) s.character.talentPoints = (s.character.talentPoints||0) + refunded;
+      const investedTalents = Object.keys(s.character.talents).length;
+      const investedMasteries = MASTERY_DEFS.reduce((sum, m) => sum + (s.character.masteries[m.key] || 0), 0);
+      const currentTotal = investedTalents + investedMasteries + (s.character.talentPoints || 0);
+      const entitled = talentPointEntitlement(s.level || 1, cid);
+      if(entitled > currentTotal) s.character.talentPoints += entitled - currentTotal;
     }
   }
   for(let i=0;i<s.zone;i++){ if(!s.firstClears[i]) s.firstClears[i] = true; }
