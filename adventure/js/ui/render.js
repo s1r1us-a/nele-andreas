@@ -14,7 +14,8 @@ const STAT_HELP = STATHELP.STAT_HELP || {};
 const STAT_INFO = STATHELP.STAT_INFO || {};
 import { classOf, classLabelOf } from '../data/classes.js';
 import { RESPEC_COST } from '../data/tuning.js';
-import { talentTreeFor, chosenTalentId, chosenTalentCount, stufeUnlocked } from '../data/talents.js';
+import { MASTERY_DEFS, talentTreeFor, chosenTalentId, chosenTalentCount,
+         masteryRanks, masteryRankCount, stufeUnlocked } from '../data/talents.js';
 // Klassen-Statkeys lokal ableiten (statt talentStatKeys zu importieren) – die
 // Knoten tragen bereits node.keys, das vermeidet einen weiteren cross-file Import.
 const STAT_ORDER = ['damage','maxHp','armor','critPhys','critMagic','critDamage',
@@ -22,6 +23,7 @@ const STAT_ORDER = ['damage','maxHp','armor','critPhys','critMagic','critDamage'
 function classStatKeys(classId){
   const present = new Set();
   talentTreeFor(classId).flat().forEach(n => (n.keys||[]).forEach(k => present.add(k)));
+  MASTERY_DEFS.forEach(m => present.add(m.stat));
   return STAT_ORDER.filter(k => present.has(k));
 }
 import { bossFor, zoneBg, zoneName, zoneFlavor, MECH_DEFS } from '../data/bosses.js';
@@ -315,16 +317,22 @@ export function renderTalents(){
   if(!tree.length){ box.innerHTML = ''; return; }
   const points = state.character.talentPoints || 0;
   const chosenCount = chosenTalentCount(state);
+  const masteries = masteryRanks(state);
+  const masteryCount = masteryRankCount(state);
+  const investedCount = chosenCount + masteryCount;
+  const hasMastery = chosenCount >= tree.length;
   const esc = s => (s||'').replace(/"/g,'&quot;');
 
   let html = '<div class="talents-head">'+
     '<span class="talents-class">'+cls.icon+' '+classLabelOf(state)+'</span>'+
-    '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+'</span>'+
+    '<span class="talents-progress">Stufe <b>'+chosenCount+'</b> / '+tree.length+
+      (masteryCount>0?' · Meisterschaft <b>'+masteryCount+'</b>':'')+'</span>'+
     '<span class="talent-points">Punkte: <b>'+points+'</b></span>'+
-    '<button class="btn ghost talent-respec" id="respecBtn"'+(chosenCount<=0?' disabled':'')+'>'+
-      '♻️ Zurücksetzen (🪙 '+fmtBig(RESPEC_COST*Math.max(1,chosenCount))+')</button>'+
+    '<button class="btn ghost talent-respec" id="respecBtn"'+(investedCount<=0?' disabled':'')+'>'+
+      '♻️ Zurücksetzen (🪙 '+fmtBig(RESPEC_COST*Math.max(1,investedCount))+')</button>'+
     '</div>'+
-    '<p class="talents-hint"><b>Pro Stufe</b> wählst du <b>genau ein</b> Talent (kostet 1 Punkt). Die nächste Stufe öffnet sich danach.</p>';
+    '<p class="talents-hint"><b>Pro Stufe</b> wählst du <b>genau ein</b> Talent (kostet 1 Punkt). '+
+      'Nach Stufe '+tree.length+' fließen weitere Punkte in endlose Meisterschaften.</p>';
 
   tree.forEach((tier, ti) => {
     const unlocked = stufeUnlocked(state, ti);
@@ -360,6 +368,25 @@ export function renderTalents(){
     html += '</div></div>';
   });
 
+  if(hasMastery){
+    html += '<div class="talent-tier mastery done">'+
+      '<div class="talent-tier-head"><span class="talent-tier-label">Endlose Meisterschaft</span>'+
+        '<span class="talent-tier-state">'+(points>0?'wählbar':'kein Punkt')+'</span></div>'+
+      '<div class="talent-row">';
+    MASTERY_DEFS.forEach(m => {
+      const rank = masteries[m.key] || 0;
+      const canPick = points > 0;
+      const tip = m.desc + '\nAktueller Rang: ' + rank + '\nKostet 1 Talentpunkt';
+      const cssCls = 'talent-node mastery-node' + (canPick ? ' pickable' : ' is-locked');
+      html += '<button class="'+cssCls+'" data-mastery="'+m.key+'" data-pick="'+(canPick?'1':'0')+'"'+
+        (!canPick?' aria-disabled="true"':'')+' data-tip="'+esc(tip)+'" title="'+esc(tip)+'">'+
+        '<span class="talent-icon">'+(m.icon||'✦')+'</span>'+
+        '<span class="talent-name">'+m.name+'</span>'+
+        '<span class="talent-val">'+m.desc+' · Rang '+rank+'</span></button>';
+    });
+    html += '</div></div>';
+  }
+
   // Werte-Legende (immer sichtbar, einklappbar) – erklärt jeden Klassen-Wert.
   const legendRows = classStatKeys(cls.id).map(k => {
     const i = STAT_INFO[k]; if(!i) return '';
@@ -375,6 +402,12 @@ export function renderTalents(){
     btn.addEventListener('click', () => {
       if(btn.dataset.pick === '1') chooseTalent(parseInt(btn.dataset.stufe,10), btn.dataset.talent);
       else toast((btn.dataset.tip || '').replace(/\n+/g, ' · '));  // Touch: Erklärung zeigen
+    });
+  });
+  box.querySelectorAll('.talent-node[data-mastery]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.pick === '1') chooseMastery(btn.dataset.mastery);
+      else toast((btn.dataset.tip || '').replace(/\n+/g, ' · '));
     });
   });
   const respec = box.querySelector('#respecBtn');
@@ -397,26 +430,44 @@ function chooseTalent(stufeIndex, optionId){
   renderAll();
 }
 
+function chooseMastery(key){
+  const cls = classOf(state);
+  const tree = talentTreeFor(cls.id);
+  if(chosenTalentCount(state) < tree.length){ toast('Erst alle Talentstufen abschließen.'); return; }
+  const def = MASTERY_DEFS.find(m => m.key === key);
+  if(!def){ toast('Unbekannte Meisterschaft.'); return; }
+  if((state.character.talentPoints||0) <= 0){ toast('Keine Talentpunkte verfügbar.'); return; }
+  const ranks = state.character.masteries || (state.character.masteries = {});
+  ranks[key] = Math.max(0, Math.floor(Number(ranks[key]) || 0)) + 1;
+  state.character.talentPoints--;
+  saveState();
+  renderAll();
+}
+
 function respecTalents(){
   const chosenCount = chosenTalentCount(state);
-  if(chosenCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
-  // Kosten skalieren pro belegter Talentstufe: RESPEC_COST × Anzahl Stufen.
-  const cost = RESPEC_COST * chosenCount;
+  const masteryCount = masteryRankCount(state);
+  const investedCount = chosenCount + masteryCount;
+  if(investedCount <= 0){ toast('Keine Talente zum Zurücksetzen.'); return; }
+  // Kosten skalieren pro belegter Talent- oder Meisterschaftsstufe.
+  const cost = RESPEC_COST * investedCount;
   if(getCoins() < cost){ toast('Nicht genug Coins ('+fmtBig(cost)+' nötig).'); return; }
   confirmDialog({
     title:'Talente zurücksetzen?',
-    body:'Kostet 🪙 '+fmtBig(cost)+' Coins ('+fmtBig(RESPEC_COST)+' pro Stufe × '+chosenCount+'). Du erhältst alle '+chosenCount+' Punkte zurück.',
+    body:'Kostet 🪙 '+fmtBig(cost)+' Coins ('+fmtBig(RESPEC_COST)+' pro Rang × '+investedCount+'). Du erhältst alle '+investedCount+' Punkte zurück.',
     emoji:'♻️', confirmText:'Zurücksetzen', cancelText:'Abbrechen',
   }).then(async ok => {
     if(!ok) return;
     // Erst zahlen, dann erstatten – schlägt die Transaktion fehl, kein Gratis-Respec.
     const paid = await spendCoins(cost);
     if(!paid){ toast('Zahlung fehlgeschlagen – nicht genug Coins.'); return; }
-    state.character.talentPoints = (state.character.talentPoints||0) + chosenCount;
+    state.character.talentPoints = (state.character.talentPoints||0) + investedCount;
     state.character.talents = {};
+    state.character.masteries = {};
+    MASTERY_DEFS.forEach(m => state.character.masteries[m.key] = 0);
     saveState();
     renderAll();
-    toast('♻️ Talente zurückgesetzt – '+chosenCount+' Punkte zurück.');
+    toast('♻️ Talente zurückgesetzt – '+investedCount+' Punkte zurück.');
   });
 }
 function renderCharStats(t){
