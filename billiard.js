@@ -33,7 +33,7 @@ const OBJECT_IDS = [...SOLID_IDS, 8, ...STRIPE_IDS];
 let currentUser = null, currentCoins = 0;
 let engine = null, mode = null, mpState = null, gameListener = null;
 let engineRacked = false, shownShotTime = 0, controlActive = null, finishedPaidOut = false;
-let liveListener = null, liveActive = false, lastLiveWrite = 0;
+let liveListener = null, liveActive = false, lastLiveWrite = 0, liveWatchdog = null;
 let solo = null;
 
 const $ = (id) => document.getElementById(id);
@@ -90,6 +90,18 @@ function handleLive(v) {
   if (v.player === currentUser || !Array.isArray(v.balls)) return;
   liveActive = true;
   engine.updateBallsLive(v.balls);
+  // Watchdog: bricht der Gegnerstoß mitten im Stream ab (Disconnect), bleiben die
+  // Kugeln sonst auf Interim-Positionen hängen → nach Stille auf den letzten
+  // autoritativen Zustand zurückfallen.
+  if (liveWatchdog) clearTimeout(liveWatchdog);
+  liveWatchdog = setTimeout(() => {
+    if (!liveActive) return;
+    liveActive = false;
+    if (engine) {
+      engine.clearLive();
+      if (mpState && mpState.balls) engine.setBallsState(mpState.balls);
+    }
+  }, 2800);
 }
 function handleShotComplete(result, balls) {
   if (mode === 'solo') return soloShotDone(result, balls);

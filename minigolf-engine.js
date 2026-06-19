@@ -20,12 +20,15 @@ const GRAVITY = -22;
 const REST_SPEED = 0.28;       // Geschwindigkeit, ab der Ball als "ruhend" gilt
 const REST_FRAMES = 22;        // so viele Frames unter REST_SPEED → Stillstand
 const SHOT_TIMEOUT = 13;       // s, danach Zwangs-Stillstand
-const MAX_SPEED = 30;          // Schussgeschwindigkeit bei voller Power
-const MAX_PULL = 6.5;          // Welt-Distanz für volle Power beim Ziehen
+const MAX_SPEED = 40;          // Schussgeschwindigkeit bei voller Power (kräftigere Schläge)
+const MAX_PULL = 11;           // Welt-Distanz für volle Power beim Ziehen (längerer Ziehbereich)
 const CUP_R = 0.55;
 const CAPTURE_SPEED = 5.5;     // max. Tempo, um eingelocht zu werden
 const SAND_DAMPING = 0.92;     // starke Bremsung im Sand
-const BASE_DAMPING = 0.32;     // etwas weniger Rollwiderstand → harte Schläge tragen weiter
+const BASE_DAMPING = 0.40;     // Rollwiderstand → Bälle laufen trotz harter Schläge nicht endlos
+const CUP_MAGNET_R = CUP_R * 1.9;  // Reichweite des Loch-Sogs (entschärft, war 2.6×)
+const CUP_MAGNET_PULL = 8;         // Stärke des Loch-Sogs (entschärft, war 11)
+const CUP_HEIGHT_TOL = 0.45;       // erlaubte Höhendifferenz zur Lochebene (war 0.7)
 
 export const PLAYER_COLORS = {
   andreas: 0xe8738a,
@@ -52,7 +55,7 @@ export class MinigolfEngine {
     this.preShotPos = new CANNON.Vec3();
     this.camYaw = 0;
     this.camPitch = 0.62;
-    this.camDist = 17;
+    this.camDist = 22;
     this.camTarget = new THREE.Vector3();
     this.cupPos = new THREE.Vector3();
     this.club = null;
@@ -83,48 +86,139 @@ export class MinigolfEngine {
     this.renderer = new THREE.WebGLRenderer({ antialias: !this.isMobile, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.5 : 2));
     this.renderer.setSize(w, h);
+    // Filmisches Tonemapping → satter Neon-Glow, ohne dass Details absaufen
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.28;
     this.mount.appendChild(this.renderer.domElement);
     this.renderer.domElement.style.touchAction = 'none';
     this.renderer.domElement.style.display = 'block';
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1c2446);
-    this.scene.fog = new THREE.Fog(0x1c2446, 44, 95);
+    // Wärmerer, satter Nachthimmel-Ton statt flachem Dunkelblau
+    this.scene.background = new THREE.Color(0x2a1f52);
+    this.scene.fog = new THREE.Fog(0x2a1f52, 62, 150);
 
-    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 200);
+    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 260);
 
-    // Licht: hellerer Grundton, Bloom trägt zusätzlich den Neon-Glow
-    this.scene.add(new THREE.AmbientLight(0xaab4ff, 1.05));
-    this.scene.add(new THREE.HemisphereLight(0xc4d2ff, 0x2c365e, 0.85));
-    const dir = new THREE.DirectionalLight(0xffffff, 1.0);
-    dir.position.set(8, 22, 6);
+    // Licht: deutlich heller + warmer Akzent für ein liebevolleres Setting
+    this.scene.add(new THREE.AmbientLight(0xbcc6ff, 1.4));
+    this.scene.add(new THREE.HemisphereLight(0xd6dcff, 0x3a3068, 1.05));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+    dir.position.set(8, 24, 6);
     this.scene.add(dir);
-    const dir2 = new THREE.DirectionalLight(0x9fb4ff, 0.4);
+    const dir2 = new THREE.DirectionalLight(0x9fb4ff, 0.5);
     dir2.position.set(-10, 12, -8);
     this.scene.add(dir2);
+    // Warmes Rosé-Akzentlicht (Andreas/Nele-Palette)
+    const warm = new THREE.PointLight(0xff9ecb, 0.9, 120, 2);
+    warm.position.set(-6, 14, 10);
+    this.scene.add(warm);
+
+    // Stimmungsvoller Sternenhimmel (persistent, lochunabhängig)
+    this._addStarfield();
 
     // Postprocessing (Neon-Glow)
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(w, h),
-      this.isMobile ? 0.55 : 0.85, // strength (dezenter, Szene ist heller)
-      0.5,                         // radius
-      0.2                          // threshold: nur kräftige Neon-Kanten glühen
+      this.isMobile ? 0.5 : 0.72, // strength (Szene ist jetzt heller)
+      0.6,                        // radius (weicher, liebevoller Glow)
+      0.22                        // threshold: nur kräftige Neon-Kanten glühen
     );
     this.composer.addPass(this.bloom);
 
-    // Ziel-/Bahnlinie (leuchtend)
-    this.aimLine = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
-      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 })
-    );
-    this.aimLine.visible = false;
-    this.scene.add(this.aimLine);
+    // Ziel-System (dickes Glow-Band + Punkte + Ziel-Marker)
+    this._initAim();
 
     this._ray = new THREE.Raycaster();
     this._groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   }
+
+  // Sternenhimmel als Punktwolke auf einer großen Kuppel
+  _addStarfield() {
+    const N = this.isMobile ? 320 : 600;
+    const pos = new Float32Array(N * 3);
+    const col = new Float32Array(N * 3);
+    const tint = [
+      [1.0, 0.85, 0.95], // rosé
+      [0.8, 0.85, 1.0],  // blau
+      [0.95, 0.9, 1.0],  // lavendel
+      [1.0, 1.0, 0.95],  // warmweiß
+    ];
+    for (let i = 0; i < N; i++) {
+      const r = 90 + Math.random() * 50;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI * 0.5; // obere Hälfte
+      pos[i * 3]     = Math.cos(theta) * Math.cos(phi) * r;
+      pos[i * 3 + 1] = Math.sin(phi) * r + 8;
+      pos[i * 3 + 2] = Math.sin(theta) * Math.cos(phi) * r;
+      const t = tint[(Math.random() * tint.length) | 0];
+      col[i * 3] = t[0]; col[i * 3 + 1] = t[1]; col[i * 3 + 2] = t[2];
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({
+      size: 1.1, sizeAttenuation: true, vertexColors: true,
+      transparent: true, opacity: 0.9, depthWrite: false,
+    });
+    this.stars = new THREE.Points(geo, mat);
+    this.stars.frustumCulled = false;
+    this.scene.add(this.stars);
+  }
+
+  // Ziel-System: kräftiges Glow-Band + Punktespur + Ziel-Marker am Ende.
+  // Liegt knapp über dem Boden und ignoriert depthTest, damit es nie vom
+  // Boden/Grid verdeckt wird (das alte 1px-Linchen war kaum sichtbar).
+  _initAim() {
+    this.aimGroup = new THREE.Group();
+    this.aimGroup.visible = false;
+    this.aimGroup.renderOrder = 999;
+
+    // Hauptband (leuchtender Balken in Schlagrichtung, Einheitslänge in +Z)
+    this.aimBand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.05, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, depthTest: false, depthWrite: false, fog: false })
+    );
+    this.aimBand.renderOrder = 999;
+    this.aimGroup.add(this.aimBand);
+
+    // Heller Kern für extra Kontrast auf jedem Untergrund
+    this.aimCore = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.06, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false, depthWrite: false, fog: false })
+    );
+    this.aimCore.renderOrder = 1000;
+    this.aimGroup.add(this.aimCore);
+
+    // Punktespur entlang der Zielrichtung
+    this.aimDots = [];
+    const dotGeo = new THREE.SphereGeometry(0.13, 10, 10);
+    for (let i = 0; i < 18; i++) {
+      const dot = new THREE.Mesh(
+        dotGeo,
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, fog: false })
+      );
+      dot.renderOrder = 1001;
+      dot.visible = false;
+      this.aimDots.push(dot);
+      this.aimGroup.add(dot);
+    }
+
+    // Ziel-Marker (leuchtender Ring am Endpunkt)
+    this.aimMarker = new THREE.Mesh(
+      new THREE.TorusGeometry(0.38, 0.08, 10, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false, depthWrite: false, fog: false })
+    );
+    this.aimMarker.rotation.x = -Math.PI / 2;
+    this.aimMarker.renderOrder = 1001;
+    this.aimGroup.add(this.aimMarker);
+
+    this.scene.add(this.aimGroup);
+  }
+
+  _hideAim() { if (this.aimGroup) this.aimGroup.visible = false; }
 
   _initPhysics() {
     this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, GRAVITY, 0) });
@@ -165,24 +259,49 @@ export class MinigolfEngine {
   _buildClub() {
     const club = new THREE.Group();
     const metal = new THREE.MeshStandardMaterial({
-      color: 0xeef2ff, emissive: 0x3a4d80, emissiveIntensity: 0.6,
-      roughness: 0.25, metalness: 0.85,
+      color: 0xf4f7ff, emissive: 0x4a5fa0, emissiveIntensity: 0.7,
+      roughness: 0.18, metalness: 0.92,
     });
     const grip = new THREE.MeshStandardMaterial({
-      color: 0x202840, emissive: 0x101830, emissiveIntensity: 0.3,
-      roughness: 0.6, metalness: 0.2,
+      color: 0x1a2038, emissive: 0x141a36, emissiveIntensity: 0.4,
+      roughness: 0.55, metalness: 0.25,
     });
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.2, 12), metal);
+    // Neon-Akzent (wird pro Spieler eingefärbt) – verleiht dem Putter Leuchtkraft
+    this.clubAccentMat = new THREE.MeshStandardMaterial({
+      color: 0x111426, emissive: 0x4ecdc4, emissiveIntensity: 2.2,
+      roughness: 0.3, metalness: 0.5,
+    });
+
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.052, 2.2, 16), metal);
     shaft.position.set(0, 1.05, -0.62);
     shaft.rotation.x = 0.34;            // nach hinten-oben geneigt
     club.add(shaft);
-    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.5, 12), grip);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.55, 16), grip);
     handle.position.set(0, 2.0, -0.82);
     handle.rotation.x = 0.34;
     club.add(handle);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.3, 0.26), metal);
-    head.position.set(0, 0.16, -0.4);   // hinter dem Ball
+    // Griff-Endkappe mit Glow
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 14), this.clubAccentMat);
+    cap.position.set(0, 2.28, -0.92);
+    club.add(cap);
+    // Hals/Hosel als Übergang zum Kopf
+    const hosel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.34, 12), metal);
+    hosel.position.set(0, 0.34, -0.46);
+    hosel.rotation.x = 0.18;
+    club.add(hosel);
+    // Abgerundeter Putterkopf
+    const head = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.15, 0.15, 0.62, 20, 1, false, 0, Math.PI),
+      metal
+    );
+    head.rotation.z = Math.PI / 2;
+    head.rotation.y = Math.PI / 2;
+    head.position.set(0, 0.15, -0.4);   // hinter dem Ball
     club.add(head);
+    // Leuchtender Streifen auf dem Kopf (Schlagfläche)
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.07, 0.05), this.clubAccentMat);
+    stripe.position.set(0, 0.15, -0.28);
+    club.add(stripe);
     this.clubHead = head;
     club.visible = false;
     this.scene.add(club);
@@ -195,6 +314,11 @@ export class MinigolfEngine {
     if (!this.club || !this.active) { if (this.club) this.club.visible = false; return; }
     // Sichtbar bei Ruhe/Zielen oder während des kurzen Schwungs; aus, während der Ball rollt
     if (this.shotInProgress && !this._swing) { this.club.visible = false; return; }
+
+    // Schläger-Akzent in der Farbe des aktiven Spielers
+    if (this.clubAccentMat) {
+      this.clubAccentMat.emissive.setHex(PLAYER_COLORS[this.active.key] || PLAYER_COLORS.solo);
+    }
 
     const ballPos = this.balls[this.active.key].mesh.position;
     let dir;
@@ -231,9 +355,9 @@ export class MinigolfEngine {
     this.cupPos.set(holeDef.cup.x, holeDef.cup.y || 0, holeDef.cup.z);
     const g = holeDef.ground;
 
-    // Boden
+    // Boden (sattes Violett-Blau, passend zum Nachthimmel)
     this._addBox(0, -0.5, 0, g.w, 1, g.l, {
-      color: 0x2c3a72, emissive: 0x16356f, emissiveIntensity: 0.45,
+      color: 0x35316e, emissive: 0x241f5e, emissiveIntensity: 0.5,
       physMat: this.matGround,
     });
 
@@ -254,7 +378,7 @@ export class MinigolfEngine {
     // Plateaus (erhöhte Plattformen)
     (holeDef.plateaus || []).forEach(p =>
       this._addBox(p.x, p.h / 2, p.z, p.w, p.h, p.l, {
-        color: 0x2c3a72, emissive: 0x16356f, emissiveIntensity: 0.5,
+        color: 0x35316e, emissive: 0x2a2466, emissiveIntensity: 0.55,
         physMat: this.matGround,
       }));
 
@@ -299,6 +423,9 @@ export class MinigolfEngine {
     this.holedAnim = null;
     this._swing = null;
     this.dynObstacles = [];
+    this.cupRing = null;
+    this.cupFlag = null;
+    this._hideAim();
     if (this.club) this.club.visible = false;
     if (this.active && this.active.body) this.world.removeBody(this.active.body);
     this.active = null;
@@ -362,10 +489,14 @@ export class MinigolfEngine {
   }
 
   _addGrid(w, l) {
-    const grid = new THREE.GridHelper(Math.max(w, l), Math.max(w, l), 0x5b8bff, 0x32508f);
+    // Feineres, dezenteres Neon-Raster: kräftige Mittelachsen, zarte Linien
+    const span = Math.max(w, l);
+    const divs = Math.round(span / 1.3);
+    const grid = new THREE.GridHelper(span, divs, 0x7aa0ff, 0x3a5aa8);
     grid.position.y = 0.02;
     grid.material.transparent = true;
-    grid.material.opacity = 0.45;
+    grid.material.opacity = 0.32;
+    grid.material.depthWrite = false;
     this.scene.add(grid);
     this.holeObjects.push({ mesh: grid });
   }
@@ -506,21 +637,34 @@ export class MinigolfEngine {
     ring.position.set(cup.x, y + 0.02, cup.z);
     this.scene.add(ring);
     this.cupRing = ring;
+    // Einladender, weicher Boden-Halo um das Loch
+    const halo = new THREE.Mesh(
+      new THREE.RingGeometry(CUP_R + 0.2, CUP_R + 1.1, 40),
+      new THREE.MeshBasicMaterial({ color: 0x33ff99, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
+    );
+    halo.rotation.x = -Math.PI / 2;
+    halo.position.set(cup.x, y + 0.01, cup.z);
+    this.scene.add(halo);
     // Neon-Fahne
     const pole = new THREE.Mesh(
       new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8),
-      new THREE.MeshStandardMaterial({ color: 0x222244, emissive: 0x6688ff, emissiveIntensity: 1.2 })
+      new THREE.MeshStandardMaterial({ color: 0x222244, emissive: 0x6688ff, emissiveIntensity: 1.4 })
     );
     pole.position.set(cup.x, (cup.y || 0) + 1.2, cup.z);
     this.scene.add(pole);
+    // Wimpel (Dreieck) – leuchtet und weht sanft
+    const flagShape = new THREE.Shape();
+    flagShape.moveTo(0, 0); flagShape.lineTo(0.8, -0.18); flagShape.lineTo(0, -0.45); flagShape.lineTo(0, 0);
     const flag = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.7, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0x330022, emissive: 0xff33aa, emissiveIntensity: 1.8, side: THREE.DoubleSide })
+      new THREE.ShapeGeometry(flagShape),
+      new THREE.MeshStandardMaterial({ color: 0x330022, emissive: 0xff5fb0, emissiveIntensity: 1.9, side: THREE.DoubleSide })
     );
-    flag.position.set(cup.x + 0.37, (cup.y || 0) + 2.1, cup.z);
+    flag.position.set(cup.x + 0.02, (cup.y || 0) + 2.3, cup.z);
     this.scene.add(flag);
+    this.cupFlag = flag;
     this.holeObjects.push({ mesh: hole });
     this.holeObjects.push({ mesh: ring });
+    this.holeObjects.push({ mesh: halo });
     this.holeObjects.push({ mesh: pole });
     this.holeObjects.push({ mesh: flag });
   }
@@ -558,7 +702,7 @@ export class MinigolfEngine {
     if (this.active && this.active.body) this.world.removeBody(this.active.body);
     this.active = null;
     this.aiming = false;
-    this.aimLine.visible = false;
+    this._hideAim();
     this.shotInProgress = false;
     if (!key || !this.balls[key]) { this.inputEnabled = false; return; }
 
@@ -639,7 +783,7 @@ export class MinigolfEngine {
     if (this._pointers.size >= 2) {
       if (this.aiming) {
         this.aiming = false;
-        this.aimLine.visible = false;
+        this._hideAim();
         this.aimRatio = 0;
         if (this.cb.onAim) this.cb.onAim(0, false);
       }
@@ -687,7 +831,7 @@ export class MinigolfEngine {
     const pull = new THREE.Vector3().subVectors(this._aimStart, gp);
     pull.y = 0;
     const dist = Math.min(pull.length(), MAX_PULL);
-    if (dist < 0.001) { this.aimRatio = 0; this.aimLine.visible = false; return; }
+    if (dist < 0.001) { this.aimRatio = 0; this._hideAim(); return; }
     this.aimDir.copy(pull).normalize();
     this.aimRatio = dist / MAX_PULL;
     this._updateAimLine();
@@ -703,7 +847,7 @@ export class MinigolfEngine {
 
     if (!this.aiming) return;
     this.aiming = false;
-    this.aimLine.visible = false;
+    this._hideAim();
     if (this.cb.onAim) this.cb.onAim(0, false);
     if (this.aimRatio > 0.06 && this.active && !this.shotInProgress) {
       this._shoot(this.aimDir.clone(), this.aimRatio);
@@ -713,13 +857,41 @@ export class MinigolfEngine {
 
   _updateAimLine() {
     const p = this.active.body.position;
-    const len = 1 + this.aimRatio * 6;
-    const a = new THREE.Vector3(p.x, 0.1, p.z);
-    const b = new THREE.Vector3(p.x + this.aimDir.x * len, 0.1, p.z + this.aimDir.z * len);
-    this.aimLine.geometry.setFromPoints([a, b]);
-    const col = new THREE.Color().setHSL(0.33 - this.aimRatio * 0.33, 1, 0.55); // grün→rot
-    this.aimLine.material.color = col;
-    this.aimLine.visible = true;
+    const y = BALL_R * 0.7;
+    // Längerer Ziel-/Vorschaubereich, der mit der Power wächst
+    const len = 2 + this.aimRatio * 13;
+    const ang = Math.atan2(this.aimDir.x, this.aimDir.z);
+    const cx = p.x + this.aimDir.x * len / 2;
+    const cz = p.z + this.aimDir.z * len / 2;
+    const ex = p.x + this.aimDir.x * len;
+    const ez = p.z + this.aimDir.z * len;
+    const col = new THREE.Color().setHSL(0.33 - this.aimRatio * 0.33, 1, 0.58); // grün→rot
+
+    // Band + Kern
+    this.aimBand.position.set(cx, y, cz);
+    this.aimBand.rotation.y = ang;
+    this.aimBand.scale.z = len;
+    this.aimBand.material.color.copy(col);
+    this.aimCore.position.set(cx, y + 0.01, cz);
+    this.aimCore.rotation.y = ang;
+    this.aimCore.scale.z = len;
+
+    // Punktespur (Dichte wächst mit Länge)
+    const count = Math.min(this.aimDots.length, Math.max(3, Math.round(len / 1.1)));
+    for (let i = 0; i < this.aimDots.length; i++) {
+      const dot = this.aimDots[i];
+      if (i >= count) { dot.visible = false; continue; }
+      const f = (i + 1) / (count + 1);
+      dot.position.set(p.x + this.aimDir.x * len * f, y + 0.02, p.z + this.aimDir.z * len * f);
+      dot.material.color.copy(col);
+      dot.visible = true;
+    }
+
+    // Ziel-Marker am Endpunkt
+    this.aimMarker.position.set(ex, y + 0.02, ez);
+    this.aimMarker.material.color.copy(col);
+
+    this.aimGroup.visible = true;
   }
 
   _shoot(dir, ratio) {
@@ -816,6 +988,12 @@ export class MinigolfEngine {
       const s = 1 + Math.sin(performance.now() * 0.004) * 0.12;
       this.cupRing.scale.set(s, s, 1);
     }
+    // Wimpel sanft wehen lassen
+    if (this.cupFlag) {
+      this.cupFlag.rotation.y = Math.sin(performance.now() * 0.0022) * 0.35;
+    }
+    // Sternenhimmel ganz langsam drehen
+    if (this.stars) this.stars.rotation.y += dt * 0.006;
 
     // Versenk-Animation
     if (this.holedAnim) {
@@ -890,13 +1068,12 @@ export class MinigolfEngine {
     const cup = this.hole.cup;
     const dx = pos.x - cup.x, dz = pos.z - cup.z;
     const horiz = Math.hypot(dx, dz);
-    const heightOk = Math.abs(pos.y - (cup.y || 0)) < 0.7;
-    if (heightOk && horiz < CUP_R * 2.6) {
+    const heightOk = Math.abs(pos.y - (cup.y || 0)) < CUP_HEIGHT_TOL;
+    if (heightOk && horiz < CUP_MAGNET_R) {
       // Sanfter Sog zur Lochmitte, solange das Tempo nicht zu hoch ist
-      if (speed < CAPTURE_SPEED * 1.7) {
-        const pull = 11;
-        body.velocity.x -= dx * pull * dt;
-        body.velocity.z -= dz * pull * dt;
+      if (speed < CAPTURE_SPEED * 1.4) {
+        body.velocity.x -= dx * CUP_MAGNET_PULL * dt;
+        body.velocity.z -= dz * CUP_MAGNET_PULL * dt;
       }
       // Fallen: nah & beherrschbar – oder Volltreffer mitten ins Loch
       if ((horiz < CUP_R && speed < CAPTURE_SPEED) || horiz < CUP_R * 0.55) {
