@@ -20,12 +20,12 @@ const GRAVITY = -22;
 const REST_SPEED = 0.28;       // Geschwindigkeit, ab der Ball als "ruhend" gilt
 const REST_FRAMES = 22;        // so viele Frames unter REST_SPEED → Stillstand
 const SHOT_TIMEOUT = 13;       // s, danach Zwangs-Stillstand
-const MAX_SPEED = 17;          // Schussgeschwindigkeit bei voller Power
+const MAX_SPEED = 30;          // Schussgeschwindigkeit bei voller Power
 const MAX_PULL = 6.5;          // Welt-Distanz für volle Power beim Ziehen
 const CUP_R = 0.55;
 const CAPTURE_SPEED = 5.5;     // max. Tempo, um eingelocht zu werden
 const SAND_DAMPING = 0.92;     // starke Bremsung im Sand
-const BASE_DAMPING = 0.38;
+const BASE_DAMPING = 0.32;     // etwas weniger Rollwiderstand → harte Schläge tragen weiter
 
 export const PLAYER_COLORS = {
   andreas: 0xe8738a,
