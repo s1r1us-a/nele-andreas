@@ -63,6 +63,7 @@ export class MinigolfEngine {
     this._pointers = new Map();
     this._camPinch = null;
     this._camMouseId = null;
+    this._liveTargets = {};          // key → Vector3 (Echtzeit-Ziel des Gegnerballs)
     this._raf = null;
     this._clock = new THREE.Clock();
     this._initThree();
@@ -71,6 +72,7 @@ export class MinigolfEngine {
     this._buildClub();
     this._onResize = this._resize.bind(this);
     window.addEventListener('resize', this._onResize);
+    window.addEventListener('orientationchange', this._onResize);
   }
 
   // ── Setup ─────────────────────────────────────────────────
@@ -223,6 +225,8 @@ export class MinigolfEngine {
   // ── Loch laden ────────────────────────────────────────────
   loadHole(holeDef, ballsState) {
     this._clearHole();
+    this._replay = null;
+    this._liveTargets = {};
     this.hole = holeDef;
     this.cupPos.set(holeDef.cup.x, holeDef.cup.y || 0, holeDef.cup.z);
     const g = holeDef.ground;
@@ -593,6 +597,22 @@ export class MinigolfEngine {
     this._replay = { ball: b, start, end, t: 0, dur: 0.9 };
   }
 
+  // Echtzeit-Position des Gegnerballs setzen (sanft interpoliert in _update)
+  updateBallLive(key, pos) {
+    const b = this.balls[key];
+    if (!b) return;
+    b.holed = false;
+    b.trail.visible = true;
+    const target = this._liveTargets[key] || new THREE.Vector3();
+    target.set(pos.x, pos.y ?? BALL_R, pos.z);
+    this._liveTargets[key] = target;
+  }
+
+  clearLiveTarget(key) {
+    if (key) { delete this._liveTargets[key]; const b = this.balls[key]; if (b) b.trail.visible = false; }
+    else this._liveTargets = {};
+  }
+
   // ── Eingabe (Slingshot) ───────────────────────────────────
   _ndc(e) {
     const r = this.renderer.domElement.getBoundingClientRect();
@@ -764,8 +784,20 @@ export class MinigolfEngine {
       if (this.shotInProgress) {
         this._followTrail(b, p);
         this._checkPhysics(dt);
+        // Live-Position des eigenen Schusses an Gegner streamen
+        if (this.cb.onShotTick) this.cb.onShotTick(this.active.key, p);
       }
       this.camTarget.lerp(b.mesh.position, 0.1);
+    }
+
+    // Echtzeit-Ghost (Gegnerball während dessen Schuss)
+    for (const key in this._liveTargets) {
+      const b = this.balls[key];
+      if (!b) continue;
+      b.mesh.visible = true;
+      b.mesh.position.lerp(this._liveTargets[key], 0.25);
+      this._followTrail(b, b.mesh.position);
+      if (!this.active || this.active.key !== key) this.camTarget.lerp(b.mesh.position, 0.08);
     }
 
     // Replay (Gegner)
@@ -920,7 +952,8 @@ export class MinigolfEngine {
 
   _resize() {
     const w = this.mount.clientWidth, h = this.mount.clientHeight;
-    if (!w || !h) return;
+    // Layout noch nicht fertig (z.B. direkt nach Fullscreen-Umschaltung) → nächster Frame
+    if (!w || !h) { requestAnimationFrame(this._onResize); return; }
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
@@ -930,6 +963,7 @@ export class MinigolfEngine {
   dispose() {
     this.stop();
     window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('orientationchange', this._onResize);
     this._clearHole();
     this.renderer.dispose();
     if (this.renderer.domElement.parentNode) {

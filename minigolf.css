@@ -208,7 +208,29 @@ body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sa
     color:#fff; border-color:rgba(255,255,255,0.45);
   }
 
+  /* Scorecard im Fullscreen standardmäßig versteckt, per 📊-Button als Overlay einblendbar */
   body.mobile-game .scorecard { display:none !important; }
+  body.mobile-game .scorecard.show {
+    display:block !important;            /* überschreibt inline display:block/none */
+    position:fixed; left:0; right:0; bottom:0; z-index:600;
+    max-height:70vh; overflow:auto;
+    background:rgba(10,10,30,0.96); backdrop-filter:blur(6px);
+    padding:14px; border-radius:18px 18px 0 0;
+    box-shadow:0 -8px 30px rgba(0,0,0,0.5);
+  }
+  body.mobile-game .scorecard.show::before {
+    content:"📊 Spielstand — tippen zum Schließen";
+    display:block; text-align:center;
+    color:rgba(255,255,255,0.6); font-size:11px; margin-bottom:10px;
+  }
+  /* Helle Schrift auf dunklem Overlay (Basis-Farben sind für hellen Grund) */
+  body.mobile-game .scorecard.show th,
+  body.mobile-game .scorecard.show td { color:rgba(255,255,255,0.85); border-bottom-color:rgba(255,255,255,0.12); }
+  body.mobile-game .scorecard.show td.name { color:#fff; }
   body.mobile-game .page-title,
   body.mobile-game .page-subtitle { display:none; }
 }
+
+/* 📊-Button nur im Mobile-Fullscreen UND Multiplayer sichtbar */
+.golf-actions .mobile-only { display:none; }
+body.mobile-game.mp-game .golf-actions .mobile-only { display:block; }
