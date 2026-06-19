@@ -115,9 +115,12 @@ function handleShotComplete(res) {
 //  MODUS-AUSWAHL
 // ============================================================
 function showSection(name) {
+  const isMob = window.matchMedia('(max-width:600px)').matches;
+  document.body.classList.toggle('mobile-game', name === 'game' && isMob);
   $('modeSection').style.display = name === 'mode' ? 'flex' : 'none';
   $('lobbySection').style.display = name === 'lobby' ? 'block' : 'none';
   $('gameSection').style.display = name === 'game' ? 'block' : 'none';
+  if (name === 'game') setTimeout(() => engine && engine._resize(), 0);
 }
 
 function chooseMultiplayer() {
@@ -604,8 +607,6 @@ $('declineBtn').addEventListener('click', declineGame);
 $('surrenderBtn').addEventListener('click', surrenderGame);
 $('leaveBtn').addEventListener('click', leaveGame);
 $('playAgainBtn').addEventListener('click', leaveGame);
-$('camLeftBtn').addEventListener('click', () => engine && engine.rotateCamera(-0.25));
-$('camRightBtn').addEventListener('click', () => engine && engine.rotateCamera(0.25));
 $('betInput').addEventListener('input', function () {
   const val = parseInt(this.value) || 0;
   $('betHint').style.color = val > currentCoins ? '#dc2626' : 'var(--text-mid)';
