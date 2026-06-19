@@ -54,15 +54,15 @@ export const HOLES = [
     bumpers: [], ramps: [], plateaus: [], water: [], sand: [],
   },
 
-  // 4 · Bumper-Feld
+  // 4 · Rotor & Bumper – durch die rotierende Stange timen
   {
     par: 3,
     ground: { w: 13, l: 26 },
     tee: { x: 0, z: -11 },
     cup: { x: 0, z: 11 },
+    spinners: [{ x: 0, z: 1, length: 6, speed: 1.8 }],
     bumpers: [
-      { x: -2.5, z: -3 }, { x: 2.5, z: 0 },
-      { x: -1.8, z: 4 }, { x: 3, z: -6 }, { x: -3, z: 7 },
+      { x: -3, z: -6 }, { x: 3, z: -4 }, { x: -3.5, z: 8 }, { x: 3.5, z: 7 },
     ],
     walls: [], ramps: [], plateaus: [], water: [], sand: [],
   },
@@ -77,7 +77,7 @@ export const HOLES = [
     walls: [], bumpers: [], ramps: [], plateaus: [], water: [],
   },
 
-  // 6 · Wasserslalom – an den Teichen vorbeisteuern
+  // 6 · Wasserslalom mit Schiebe-Gatter
   {
     par: 4,
     ground: { w: 11, l: 30 },
@@ -87,6 +87,7 @@ export const HOLES = [
       { x: -2.8, z: -4, w: 5, l: 6 },
       { x: 2.8, z: 5, w: 5, l: 6 },
     ],
+    movers: [{ x: 0, z: 0.5, w: 3, l: 0.9, axis: 'x', range: 3.5, speed: 2.6 }],
     walls: [], bumpers: [], ramps: [], plateaus: [], sand: [],
   },
 
@@ -101,9 +102,9 @@ export const HOLES = [
     walls: [], bumpers: [], water: [], sand: [],
   },
 
-  // 8 · Enge S-Galerie
+  // 8 · S-Galerie mit beweglichem Gatter
   {
-    par: 3,
+    par: 4,
     ground: { w: 14, l: 26 },
     tee: { x: -4.5, z: -11 },
     cup: { x: 4.5, z: 11 },
@@ -112,20 +113,22 @@ export const HOLES = [
       { x: 3.5, z: 1, w: 9, l: 0.8 },
       { x: -3.5, z: 7, w: 9, l: 0.8 },
     ],
+    movers: [{ x: 0, z: -2, w: 3.5, l: 0.8, axis: 'x', range: 4, speed: 3.2 }],
     bumpers: [], ramps: [], plateaus: [], water: [], sand: [],
   },
 
-  // 9 · Finale – Bumper, Sand & Bande kombiniert
+  // 9 · Finale – Rotor, Bumper, Sand & Bande kombiniert
   {
     par: 5,
     ground: { w: 16, l: 32 },
     tee: { x: 0, z: -14 },
     cup: { x: 0, z: 14 },
-    walls: [{ x: -4.5, z: 1, w: 7, l: 0.8 }],
+    walls: [{ x: -4.5, z: 0, w: 7, l: 0.8 }],
+    spinners: [{ x: 0, z: 4, length: 6, speed: 2.2 }],
     bumpers: [
-      { x: -3.5, z: -5 }, { x: 3.5, z: -1 }, { x: -1.5, z: 6 },
+      { x: -4, z: -6 }, { x: 4, z: -3 }, { x: -4, z: 9 },
     ],
-    sand: [{ x: 4, z: 6, w: 5, l: 6 }],
+    sand: [{ x: 4, z: 8, w: 5, l: 5 }],
     ramps: [], plateaus: [], water: [],
   },
 ];
