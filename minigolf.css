@@ -164,6 +164,9 @@ body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sa
   body.mobile-game .page { overflow:hidden; }
 
   body.mobile-game .golf-wrapper {
+    /* display:flex erzwingen: showSection() setzt inline display:block,
+       wodurch die Arena (flex:1) sonst keine Höhe bekäme. */
+    display:flex !important; flex-direction:column;
     position:fixed; inset:0; z-index:500;
     max-width:none; width:100%; gap:0;
     background:#0d111e;
