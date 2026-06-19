@@ -13,7 +13,7 @@ import { TABLE, BALLS, BALL_R, ballInfo } from './billiard-table.js';
 
 const MAX_SPEED = 30;          // Stoßgeschwindigkeit bei voller Power
 const MAX_PULL = 5.5;          // Zug-Distanz für volle Power
-const REST_SPEED = 0.18;       // darunter gilt eine Kugel als ruhend
+const REST_SPEED = 0.22;       // darunter gilt eine Kugel als ruhend (etwas toleranter)
 const REST_FRAMES = 14;        // so viele Frames müssen ALLE ruhen
 const SHOT_TIMEOUT = 12;       // s, danach Zwangsende
 const LIN_DAMP = 0.42;
@@ -92,13 +92,39 @@ export class BilliardEngine {
     fill.position.set(-12, 10, -10);
     this.scene.add(fill);
 
-    // Ziel-/Stoßlinie auf dem Tuch
-    this.aimLine = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
-      new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.3, gapSize: 0.2, transparent: true, opacity: 0.85 })
+    // Ziel-/Stoßlinie auf dem Tuch: deutlich sichtbares Band + Punktespur.
+    this.aimGroup = new THREE.Group();
+    this.aimGroup.visible = false;
+    this.aimGroup.renderOrder = 998;
+    // Leuchtendes Hauptband (Einheitslänge in +Z)
+    this.aimBand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.02, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, fog: false })
     );
-    this.aimLine.visible = false;
-    this.scene.add(this.aimLine);
+    this.aimBand.renderOrder = 998;
+    this.aimGroup.add(this.aimBand);
+    // Punktespur entlang der Zielrichtung
+    this.aimDots = [];
+    const bdot = new THREE.SphereGeometry(0.06, 8, 8);
+    for (let i = 0; i < 16; i++) {
+      const dot = new THREE.Mesh(
+        bdot,
+        new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.95, depthTest: false, depthWrite: false, fog: false })
+      );
+      dot.renderOrder = 999;
+      dot.visible = false;
+      this.aimDots.push(dot);
+      this.aimGroup.add(dot);
+    }
+    // Ziel-Marker am Ende
+    this.aimMarker = new THREE.Mesh(
+      new THREE.TorusGeometry(0.16, 0.035, 8, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false, depthWrite: false, fog: false })
+    );
+    this.aimMarker.rotation.x = -Math.PI / 2;
+    this.aimMarker.renderOrder = 999;
+    this.aimGroup.add(this.aimMarker);
+    this.scene.add(this.aimGroup);
 
     this._ray = new THREE.Raycaster();
     this._groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BALL_R);
@@ -361,7 +387,7 @@ export class BilliardEngine {
     this.inputEnabled = !!canShoot;
     this.cueReady = !!canShoot;
     this.aiming = false;
-    this.aimLine.visible = false;
+    this._hideAim();
     if (canShoot) this.clearLive();   // eigener Zug: keine Live-Übernahme mehr
   }
   setInputEnabled(v) { this.inputEnabled = v; this.cueReady = v; }
@@ -397,7 +423,7 @@ export class BilliardEngine {
     if (this._pointers.size >= 2) {
       if (this.aiming) {
         this.aiming = false;
-        this.aimLine.visible = false;
+        this._hideAim();
         this.aimRatio = 0;
         if (this.cb.onAim) this.cb.onAim(0, false);
       }
@@ -439,7 +465,7 @@ export class BilliardEngine {
     if (!gp) return;
     const pull = new THREE.Vector3().subVectors(this._aimStart, gp); pull.y = 0;
     const dist = Math.min(pull.length(), MAX_PULL);
-    if (dist < 0.001) { this.aimRatio = 0; this.aimLine.visible = false; return; }
+    if (dist < 0.001) { this.aimRatio = 0; this._hideAim(); return; }
     this.aimDir.copy(pull).normalize();
     this.aimRatio = dist / MAX_PULL;
     this._updateAimLine();
@@ -453,20 +479,37 @@ export class BilliardEngine {
     if (this._pointers.size >= 1 && this._camPinch) return;
 
     if (!this.aiming) return;
-    this.aiming = false; this.aimLine.visible = false;
+    this.aiming = false; this._hideAim();
     if (this.cb.onAim) this.cb.onAim(0, false);
     if (this.aimRatio > 0.05 && !this.shotInProgress) this._shoot(this.aimDir.clone(), this.aimRatio);
     this.aimRatio = 0;
   }
+  _hideAim() { if (this.aimGroup) this.aimGroup.visible = false; }
+
   _updateAimLine() {
     const cue = this.balls[0]; if (!cue || !cue.body) return;
     const p = cue.body.position;
-    const len = 2 + this.aimRatio * 8;
-    const a = new THREE.Vector3(p.x, BALL_R, p.z);
-    const b = new THREE.Vector3(p.x + this.aimDir.x * len, BALL_R, p.z + this.aimDir.z * len);
-    this.aimLine.geometry.setFromPoints([a, b]);
-    this.aimLine.computeLineDistances();
-    this.aimLine.visible = true;
+    const y = BALL_R;
+    const len = 2 + this.aimRatio * 9;
+    const ang = Math.atan2(this.aimDir.x, this.aimDir.z);
+    const cx = p.x + this.aimDir.x * len / 2;
+    const cz = p.z + this.aimDir.z * len / 2;
+
+    this.aimBand.position.set(cx, y, cz);
+    this.aimBand.rotation.y = ang;
+    this.aimBand.scale.z = len;
+
+    const count = Math.min(this.aimDots.length, Math.max(3, Math.round(len / 1.2)));
+    for (let i = 0; i < this.aimDots.length; i++) {
+      const dot = this.aimDots[i];
+      if (i >= count) { dot.visible = false; continue; }
+      const f = (i + 1) / (count + 1);
+      dot.position.set(p.x + this.aimDir.x * len * f, y, p.z + this.aimDir.z * len * f);
+      dot.visible = true;
+    }
+
+    this.aimMarker.position.set(p.x + this.aimDir.x * len, y, p.z + this.aimDir.z * len);
+    this.aimGroup.visible = true;
   }
 
   _shoot(dir, ratio) {
@@ -571,6 +614,14 @@ export class BilliardEngine {
       const b = this.balls[id];
       if (b.pocketed || !b.body) continue;
       const p = b.body.position;
+      // Sicherheitsnetz: unter den Tisch gefallene Kugel als versenkt behandeln
+      if (p.y < -5) {
+        b.pocketed = true;
+        b.mesh.visible = false;
+        this.world.removeBody(b.body); b.body = null;
+        if (this.shotInfo) this.shotInfo.pocketed.push(+id);
+        continue;
+      }
       for (const pk of TABLE.pockets) {
         const dx = p.x - pk.x, dz = p.z - pk.z;
         if (dx * dx + dz * dz < TABLE.pocketR * TABLE.pocketR) {

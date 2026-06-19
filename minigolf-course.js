@@ -19,7 +19,7 @@
 //   water    – [{ x, z, w, l }]  Wasser-Zone → Ball zurück + 1 Strafschlag
 //   sand     – [{ x, z, w, l }]  Sand-Zone → starke Bremsung
 
-export const HOLES = [
+const RAW_HOLES = [
   // 1 · Gerade Bahn zum Aufwärmen
   {
     par: 2,
@@ -132,3 +132,43 @@ export const HOLES = [
     ramps: [], plateaus: [], water: [],
   },
 ];
+
+// ── Feld-Skalierung ─────────────────────────────────────────
+// Alle Bahnen werden gleichmäßig vergrößert, damit das Spielfeld großzügiger
+// wirkt (Ballgröße bleibt gleich → mehr Platz). Geschwindigkeiten (Rotor/Gatter)
+// bleiben unverändert. Wird auf RAW_HOLES angewendet und als HOLES exportiert,
+// damit Engine UND minigolf.js (tee-Positionen) konsistent skaliert sind.
+const FIELD_SCALE = 1.3;
+const s = (v) => v * FIELD_SCALE;
+
+function scaleHole(h) {
+  const out = { par: h.par };
+  out.ground = { w: s(h.ground.w), l: s(h.ground.l) };
+  out.tee = { x: s(h.tee.x), z: s(h.tee.z) };
+  out.cup = { x: s(h.cup.x), z: s(h.cup.z) };
+  if (h.cup.y != null) out.cup.y = s(h.cup.y);
+  out.walls = (h.walls || []).map(w => ({
+    x: s(w.x), z: s(w.z), w: s(w.w), l: s(w.l), ...(w.h != null ? { h: s(w.h) } : {}),
+  }));
+  out.bumpers = (h.bumpers || []).map(b => ({
+    x: s(b.x), z: s(b.z), ...(b.r != null ? { r: s(b.r) } : {}),
+  }));
+  out.ramps = (h.ramps || []).map(r => ({
+    x: s(r.x), z: s(r.z), w: s(r.w), l: s(r.l), h: s(r.h), axis: r.axis,
+  }));
+  out.plateaus = (h.plateaus || []).map(p => ({
+    x: s(p.x), z: s(p.z), w: s(p.w), l: s(p.l), h: s(p.h),
+  }));
+  out.spinners = (h.spinners || []).map(sp => ({
+    x: s(sp.x), z: s(sp.z), length: s(sp.length || 5), speed: sp.speed || 1.8,
+  }));
+  out.movers = (h.movers || []).map(m => ({
+    x: s(m.x), z: s(m.z), w: s(m.w), l: s(m.l), axis: m.axis,
+    range: s(m.range || 3), speed: m.speed || 3,
+  }));
+  out.water = (h.water || []).map(z => ({ x: s(z.x), z: s(z.z), w: s(z.w), l: s(z.l) }));
+  out.sand = (h.sand || []).map(z => ({ x: s(z.x), z: s(z.z), w: s(z.w), l: s(z.l) }));
+  return out;
+}
+
+export const HOLES = RAW_HOLES.map(scaleHole);

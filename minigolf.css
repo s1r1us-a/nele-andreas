@@ -110,13 +110,13 @@ body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sa
 .hole-num { font-family:'Dancing Script',cursive; font-size:22px; font-weight:700; color:var(--gold); }
 .hole-par { font-size:11px; color:var(--text-mid); font-weight:600; }
 
-.arena { position:relative; width:100%; aspect-ratio:16/10; border-radius:22px; overflow:hidden; background:#0a0a18; box-shadow:0 10px 40px rgba(20,10,40,0.45), 0 0 0 2px rgba(167,139,250,0.25); }
+.arena { position:relative; width:100%; aspect-ratio:16/10; border-radius:22px; overflow:hidden; background:#150f33; box-shadow:0 10px 40px rgba(40,20,80,0.5), 0 0 0 2px rgba(167,139,250,0.35), 0 0 30px rgba(167,139,250,0.18); }
 .arena-mount { position:absolute; inset:0; }
 
 /* Power-Meter (Overlay) */
-.power-wrap { position:absolute; left:14px; bottom:14px; width:140px; height:14px; background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.35); border-radius:50px; overflow:hidden; pointer-events:none; opacity:0; transition:opacity 0.2s; }
+.power-wrap { position:absolute; left:14px; bottom:14px; width:150px; height:16px; background:rgba(10,6,30,0.55); border:1px solid rgba(255,255,255,0.45); border-radius:50px; overflow:hidden; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 0 12px rgba(120,90,220,0.4); }
 .power-wrap.show { opacity:1; }
-.power-fill { height:100%; width:0%; background:linear-gradient(90deg,#33ff99,#ffe14d,#ff4d6d); transition:width 0.05s linear; }
+.power-fill { height:100%; width:0%; background:linear-gradient(90deg,#33ff99,#ffe14d,#ff4d6d); box-shadow:0 0 14px rgba(255,120,140,0.6); transition:width 0.05s linear; }
 
 /* Arena-Buttons (Kamera drehen) */
 .arena-btns { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
