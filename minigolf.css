@@ -158,4 +158,54 @@ body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sa
   .golf-header { gap:8px; }
   .player-info { padding:8px 10px; min-width:96px; }
   .mode-card { min-width:140px; }
+
+  /* ── Mobile Fullscreen Game ── */
+  body.mobile-game .top-bar { display:none !important; }
+  body.mobile-game .page { overflow:hidden; }
+
+  body.mobile-game .golf-wrapper {
+    position:fixed; inset:0; z-index:500;
+    max-width:none; width:100%; gap:0;
+    background:#0d111e;
+  }
+
+  body.mobile-game .golf-header {
+    flex-shrink:0; flex-wrap:nowrap;
+    padding:6px 8px; gap:4px;
+    background:rgba(10,10,30,0.88);
+    backdrop-filter:blur(6px);
+    border-radius:0;
+  }
+  body.mobile-game .player-info { padding:5px 6px; min-width:0; border-radius:12px; }
+  body.mobile-game .player-name { font-size:9px; }
+  body.mobile-game .player-strokes { font-size:18px; }
+  body.mobile-game .player-turn-label { font-size:9px; }
+  body.mobile-game .hole-display { min-width:58px; }
+  body.mobile-game .hole-num { font-size:16px; }
+  body.mobile-game .hole-par { font-size:10px; }
+
+  body.mobile-game .arena {
+    flex:1; aspect-ratio:unset;
+    border-radius:0; box-shadow:none;
+  }
+
+  body.mobile-game .golf-actions {
+    flex-shrink:0; flex-direction:row; gap:8px;
+    padding:6px 8px;
+    background:rgba(10,10,30,0.88);
+    backdrop-filter:blur(4px);
+  }
+  body.mobile-game .golf-actions .btn-secondary {
+    padding:10px; font-size:13px; margin-top:0;
+    color:rgba(255,255,255,0.75);
+    border-color:rgba(255,255,255,0.18);
+    background:transparent;
+  }
+  body.mobile-game .golf-actions .btn-secondary:hover {
+    color:#fff; border-color:rgba(255,255,255,0.45);
+  }
+
+  body.mobile-game .scorecard { display:none !important; }
+  body.mobile-game .page-title,
+  body.mobile-game .page-subtitle { display:none; }
 }

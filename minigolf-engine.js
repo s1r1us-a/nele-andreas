@@ -60,6 +60,9 @@ export class MinigolfEngine {
     this._swing = null;
     this.dynObstacles = [];
     this.isMobile = window.matchMedia('(max-width:600px)').matches;
+    this._pointers = new Map();
+    this._camPinch = null;
+    this._camMouseId = null;
     this._raf = null;
     this._clock = new THREE.Clock();
     this._initThree();
@@ -141,9 +144,19 @@ export class MinigolfEngine {
 
   _initInput() {
     const el = this.renderer.domElement;
-    el.addEventListener('pointerdown', (e) => this._onPointerDown(e));
-    el.addEventListener('pointermove', (e) => this._onPointerMove(e));
-    window.addEventListener('pointerup', (e) => this._onPointerUp(e));
+    el.addEventListener('pointerdown',  (e) => this._onPointerDown(e));
+    el.addEventListener('pointermove',  (e) => this._onPointerMove(e));
+    window.addEventListener('pointerup',     (e) => this._onPointerUp(e));
+    window.addEventListener('pointercancel', (e) => this._onPointerUp(e));
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  _pinchMid() {
+    const pts = [...this._pointers.values()];
+    return {
+      x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+      y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+    };
   }
 
   // Sichtbarer Putter (Schaft + Griff + Kopf). Lokales +Z = Schlagrichtung.
@@ -597,6 +610,24 @@ export class MinigolfEngine {
   }
 
   _onPointerDown(e) {
+    this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Rechtsklick (PC): Kamera-Drag
+    if (e.button === 2) { this._camMouseId = e.pointerId; return; }
+
+    // Zweiter Finger (Handy): Kamera-Pinch, laufendes Zielen abbrechen
+    if (this._pointers.size >= 2) {
+      if (this.aiming) {
+        this.aiming = false;
+        this.aimLine.visible = false;
+        this.aimRatio = 0;
+        if (this.cb.onAim) this.cb.onAim(0, false);
+      }
+      this._camPinch = this._pinchMid();
+      return;
+    }
+
+    // Einfacher Klick / Touch: Zielen
     if (!this.inputEnabled || !this.active || this.shotInProgress) return;
     const ballY = this.active.body.position.y;
     const gp = this._groundPoint(e, ballY);
@@ -607,6 +638,28 @@ export class MinigolfEngine {
   }
 
   _onPointerMove(e) {
+    const prev = this._pointers.get(e.pointerId);
+    this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Rechtsklick-Kamera-Drag (PC)
+    if (this._camMouseId === e.pointerId) {
+      if (prev) {
+        this.camYaw  -= (e.clientX - prev.x) * 0.005;
+        this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (e.clientY - prev.y) * 0.005));
+      }
+      return;
+    }
+
+    // Zwei-Finger-Kamera (Handy)
+    if (this._pointers.size >= 2) {
+      if (!this._camPinch) this._camPinch = this._pinchMid();
+      const mid = this._pinchMid();
+      this.camYaw  -= (mid.x - this._camPinch.x) * 0.008;
+      this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (mid.y - this._camPinch.y) * 0.008));
+      this._camPinch = mid;
+      return;
+    }
+
     if (!this.aiming) return;
     const ballY = this.active.body.position.y;
     const gp = this._groundPoint(e, ballY);
@@ -621,7 +674,13 @@ export class MinigolfEngine {
     if (this.cb.onAim) this.cb.onAim(this.aimRatio, true);
   }
 
-  _onPointerUp() {
+  _onPointerUp(e) {
+    this._pointers.delete(e.pointerId);
+
+    if (this._camMouseId === e.pointerId) { this._camMouseId = null; return; }
+    if (this._pointers.size < 2) this._camPinch = null;
+    if (this._pointers.size >= 1 && this._camPinch) return;
+
     if (!this.aiming) return;
     this.aiming = false;
     this.aimLine.visible = false;
