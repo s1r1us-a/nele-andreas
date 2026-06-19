@@ -50,6 +50,7 @@ let finishedPaidOut = false;
 
 // Solo-State
 let solo = null;
+let statsListener = null;     // Live-Abo der eigenen Statistik
 
 const $ = (id) => document.getElementById(id);
 const lc = (n) => (n || '').toLowerCase();
@@ -164,6 +165,8 @@ function showSection(name) {
   const isMob = window.matchMedia('(max-width:600px)').matches;
   document.body.classList.toggle('mobile-game', name === 'game' && isMob);
   $('modeSection').style.display = name === 'mode' ? 'flex' : 'none';
+  const statsPanel = $('statsPanel');
+  if (statsPanel) statsPanel.style.display = name === 'mode' ? 'block' : 'none';
   $('lobbySection').style.display = name === 'lobby' ? 'block' : 'none';
   $('gameSection').style.display = name === 'game' ? 'block' : 'none';
   // Doppeltes rAF: Resize erst nach dem Layout-Reflow (Fullscreen-Umschaltung)
@@ -457,6 +460,29 @@ async function saveStats(player, { strokes, total, holesInOne, played, won, lost
   }
 }
 
+// ── Spieler-Statistik (Live aus Firebase) ──────────────────
+function subscribeMyStats() {
+  if (!currentUser) return;
+  if (statsListener) statsListener();
+  statsListener = onValue(ref(db, `stats/${lc(currentUser)}/minigolf`), snap => {
+    renderStats(snap.val() || {});
+  });
+}
+function renderStats(s) {
+  const grid = $('statsGrid');
+  if (!grid) return;
+  const tiles = [
+    { v: s.gamesWon || 0, l: 'Siege' },
+    { v: s.gamesLost || 0, l: 'Niederlagen' },
+    { v: s.holesInOne || 0, l: 'Hole-in-One' },
+    { v: s.bestRound != null ? s.bestRound : '–', l: 'Bestrunde' },
+    { v: s.roundsPlayed || 0, l: 'Runden' },
+  ];
+  grid.innerHTML = tiles.map(t =>
+    `<div class="stat-tile"><div class="stat-value">${t.v}</div><div class="stat-label">${t.l}</div></div>`
+  ).join('');
+}
+
 // ============================================================
 //  LOBBY-AKTIONEN (Coins) — Muster aus game.html
 // ============================================================
@@ -725,6 +751,7 @@ onAuthStateChanged(auth, user => {
   $('topBar').style.display = 'flex';
   $('mainPage').style.display = 'flex';
   logoutBtn.textContent = currentUser + ' ausloggen';
+  subscribeMyStats();
   showSection('mode');
 
   onValue(ref(db, `coins/${lc(currentUser)}`), snap => {

@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "admin": {
+      "pageLocks":    { ".read": "auth != null", ".write": "auth != null && auth.token.email === 'raederich@outlook.com'" },
+      "announcement": { ".read": "auth != null", ".write": "auth != null && auth.token.email === 'raederich@outlook.com'" }
+    },
+    "redeemCodes":   { ".read": "auth != null", ".write": "auth != null" },
+    "moments":       { ".read": "auth != null", ".write": "auth != null" },
+    "quiz":          { ".read": "auth != null", ".write": "auth != null" },
+    "coins":         { ".read": "auth != null", ".write": "auth != null" },
+    "presence":      { ".read": "auth != null", ".write": "auth != null" },
+    "shop":          { ".read": "auth != null", ".write": "auth != null" },
+    "boosters":      { ".read": "auth != null", ".write": "auth != null" },
+    "comments":      { ".read": "auth != null", ".write": "auth != null" },
+    "slotbadges":    { ".read": "auth != null", ".write": "auth != null" },
+    "loveslots":     { ".read": "auth != null", ".write": "auth != null" },
+    "lootbox":       { ".read": "auth != null", ".write": "auth != null" },
+    "mailbox":       { ".read": "auth != null", ".write": "auth != null" },
+    "stats":         { ".read": "auth != null", ".write": "auth != null" },
+    "xp":            { ".read": "auth != null", ".write": "auth != null" },
+    "game":          { ".read": "auth != null", ".write": "auth != null" },
+    "minigolf":      { ".read": "auth != null", ".write": "auth != null" },
+    "billiard":      { ".read": "auth != null", ".write": "auth != null" },
+    "farm":          { ".read": "auth != null", ".write": "auth != null" },
+    "adventure":     { ".read": "auth != null", ".write": "auth != null" },
+    "tower":         { ".read": "auth != null", ".write": "auth != null" },
+    "duel":          { ".read": "auth != null", ".write": "auth != null" },
+    "dammerpfad":    { ".read": "auth != null", ".write": "auth != null" },
+    "saved_moments": { ".read": "auth != null", ".write": "auth != null" },
+    "aquarium":      { ".read": "auth != null", ".write": "auth != null" },
+    "battleship":    { ".read": "auth != null", ".write": "auth != null" },
+    "uno":           { ".read": "auth != null", ".write": "auth != null" },
+    "gifts":         { ".read": "auth != null", ".write": "auth != null" },
+    "savings":       { ".read": "auth != null", ".write": "auth != null" },
+    "trades":   { ".read": "auth != null", ".write": "auth != null", ".indexOn": ["toUser"] },
+    "treasure": { ".read": "auth != null", ".write": "auth != null", "log": { ".indexOn": ["ts"] } }
+  }
+}

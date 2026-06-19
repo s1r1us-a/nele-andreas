@@ -798,7 +798,6 @@ export class BilliardEngine {
       const z = THREE.MathUtils.lerp(back, through, 1 - Math.pow(1 - p, 3));
       this.cue.position.set(cue ? cue.mesh.position.x : 0, BALL_R, cue ? cue.mesh.position.z : 0);
       this.cue.rotation.y = Math.atan2(this._swing.dir.x, this._swing.dir.z);
-      this.cue.children.forEach(ch => {});
       this.cue.userData.offset = z;
       this.cue.visible = true;
       this._applyCueOffset(z);

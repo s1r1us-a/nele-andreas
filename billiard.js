@@ -35,6 +35,7 @@ let engine = null, mode = null, mpState = null, gameListener = null;
 let engineRacked = false, shownShotTime = 0, controlActive = null, finishedPaidOut = false;
 let liveListener = null, liveActive = false, lastLiveWrite = 0, liveWatchdog = null;
 let solo = null;
+let statsListener = null;     // Live-Abo der eigenen Statistik
 
 const $ = (id) => document.getElementById(id);
 const lc = (n) => (n || '').toLowerCase();
@@ -113,6 +114,8 @@ function showSection(name) {
   const isMob = window.matchMedia('(max-width:600px)').matches;
   document.body.classList.toggle('mobile-game', name === 'game' && isMob);
   $('modeSection').style.display = name === 'mode' ? 'flex' : 'none';
+  const statsPanel = $('statsPanel');
+  if (statsPanel) statsPanel.style.display = name === 'mode' ? 'block' : 'none';
   $('lobbySection').style.display = name === 'lobby' ? 'block' : 'none';
   $('gameSection').style.display = name === 'game' ? 'block' : 'none';
   // Doppeltes rAF: Resize erst nach dem Layout-Reflow (Fullscreen-Umschaltung)
@@ -311,6 +314,29 @@ async function saveStats(player, { strokes, ballsPocketed, played, won, lost }) 
   }
 }
 
+// ── Spieler-Statistik (Live aus Firebase) ──────────────────
+function subscribeMyStats() {
+  if (!currentUser) return;
+  if (statsListener) statsListener();
+  statsListener = onValue(ref(db, `stats/${lc(currentUser)}/billiard`), snap => {
+    renderStats(snap.val() || {});
+  });
+}
+function renderStats(s) {
+  const grid = $('statsGrid');
+  if (!grid) return;
+  const tiles = [
+    { v: s.gamesWon || 0, l: 'Siege' },
+    { v: s.gamesLost || 0, l: 'Niederlagen' },
+    { v: s.bestClear != null ? s.bestClear : '–', l: 'Solo-Bestmarke' },
+    { v: s.ballsPocketed || 0, l: 'Kugeln' },
+    { v: s.soloRounds || 0, l: 'Solo-Runden' },
+  ];
+  grid.innerHTML = tiles.map(t =>
+    `<div class="stat-tile"><div class="stat-value">${t.v}</div><div class="stat-label">${t.l}</div></div>`
+  ).join('');
+}
+
 // ============================================================
 //  LOBBY-AKTIONEN (Coins) — Muster aus minigolf.js
 // ============================================================
@@ -498,6 +524,7 @@ onAuthStateChanged(auth, user => {
   $('topBar').style.display = 'flex';
   $('mainPage').style.display = 'flex';
   logoutBtn.textContent = currentUser + ' ausloggen';
+  subscribeMyStats();
   showSection('mode');
   onValue(ref(db, `coins/${lc(currentUser)}`), snap => {
     currentCoins = Number(snap.val()) || 0;
