@@ -468,12 +468,12 @@ export class MinigolfEngine {
     const hw = g.w / 2, hl = g.l / 2;
     this._addWall(0, hl + WALL_T / 2, g.w + WALL_T * 2, WALL_T);
     this._addWall(0, -hl - WALL_T / 2, g.w + WALL_T * 2, WALL_T);
-    this._addWall(-hw - WALL_T / 2, 0, WALL_T, g.l, true);
-    this._addWall(hw + WALL_T / 2, 0, WALL_T, g.l, true);
+    this._addWall(-hw - WALL_T / 2, 0, WALL_T, g.l);
+    this._addWall(hw + WALL_T / 2, 0, WALL_T, g.l);
 
     // Innere Wände
     (holeDef.walls || []).forEach(wl =>
-      this._addWall(wl.x, wl.z, wl.w, wl.l, false, wl.h || WALL_H));
+      this._addWall(wl.x, wl.z, wl.w, wl.l, wl.h || WALL_H));
 
     // Plateaus (erhöhte Plattformen, ebenfalls Rasen)
     (holeDef.plateaus || []).forEach(p =>
@@ -568,8 +568,8 @@ export class MinigolfEngine {
     return mesh;
   }
 
-  _addWall(x, z, sx, sz, alongZ = false, h = WALL_H) {
-    const w = alongZ ? sx : sx;
+  _addWall(x, z, sx, sz, h = WALL_H) {
+    const w = sx;
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, sz),
       new THREE.MeshStandardMaterial({

@@ -67,6 +67,14 @@ body { min-height: 100vh; background: var(--cream); font-family: 'Quicksand', sa
 .mode-name { font-family:'Dancing Script',cursive; font-size:26px; font-weight:700; color:var(--text-dark); margin-bottom:6px; }
 .mode-desc { font-size:12px; color:var(--text-mid); font-weight:500; line-height:1.5; }
 
+/* ── SPIELER-STATISTIK ── */
+.stats-panel { width:100%; max-width:520px; margin-top:22px; background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:1.5px solid rgba(232,115,138,0.2); border-radius:24px; padding:22px 24px; box-shadow:0 8px 40px rgba(232,115,138,0.12); }
+.stats-panel-title { font-family:'Dancing Script',cursive; font-size:24px; font-weight:700; color:var(--text-dark); text-align:center; margin-bottom:16px; }
+.stats-panel-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:12px; }
+.stat-tile { background:var(--cream); border:1px solid rgba(232,115,138,0.18); border-radius:16px; padding:14px 8px; text-align:center; }
+.stat-value { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--gold); line-height:1.1; }
+.stat-label { font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-mid); font-weight:700; margin-top:4px; }
+
 /* ── LOBBY ── */
 .lobby-card, .waiting-card, .invite-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); border:1.5px solid rgba(232,115,138,0.2); border-radius:28px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 8px 40px rgba(232,115,138,0.12); text-align:center; }
 .lobby-title { font-family:'Dancing Script',cursive; font-size:28px; font-weight:700; color:var(--text-dark); margin-bottom:6px; }
