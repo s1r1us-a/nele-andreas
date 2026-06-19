@@ -40,6 +40,11 @@ export class BilliardEngine {
     this.camDist = 20;
     this.camTarget = new THREE.Vector3();
     this.isMobile = window.matchMedia('(max-width:600px)').matches;
+    this._pointers = new Map();
+    this._camPinch = null;
+    this._camMouseId = null;
+    this._liveActive = false;        // Gegnerstoß wird gerade live gestreamt
+    this._liveTargets = {};          // id → { x, z, pocketed }
     this._raf = null;
     this._clock = new THREE.Clock();
     this._initThree();
@@ -49,6 +54,7 @@ export class BilliardEngine {
     this._initInput();
     this._onResize = this._resize.bind(this);
     window.addEventListener('resize', this._onResize);
+    window.addEventListener('orientationchange', this._onResize);
   }
 
   // ── Setup ─────────────────────────────────────────────────
@@ -218,9 +224,19 @@ export class BilliardEngine {
 
   _initInput() {
     const el = this.renderer.domElement;
-    el.addEventListener('pointerdown', (e) => this._onPointerDown(e));
-    el.addEventListener('pointermove', (e) => this._onPointerMove(e));
-    window.addEventListener('pointerup', () => this._onPointerUp());
+    el.addEventListener('pointerdown',  (e) => this._onPointerDown(e));
+    el.addEventListener('pointermove',  (e) => this._onPointerMove(e));
+    window.addEventListener('pointerup',     (e) => this._onPointerUp(e));
+    window.addEventListener('pointercancel', (e) => this._onPointerUp(e));
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  _pinchMid() {
+    const pts = [...this._pointers.values()];
+    return {
+      x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+      y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+    };
   }
 
   // ── Kugeln racken / setzen ────────────────────────────────
@@ -234,6 +250,7 @@ export class BilliardEngine {
     this.balls = {};
     for (const s of ballsState) this._addBall(s);
     this.shotInProgress = false;
+    this.clearLive();
     this._setCamTargetToCue(true);
   }
 
@@ -332,12 +349,20 @@ export class BilliardEngine {
     }).sort((a, b) => a.id - b.id);
   }
 
+  // Echtzeit-Kugelpositionen des Gegnerstoßes (Spectator) übernehmen
+  updateBallsLive(arr) {
+    this._liveActive = true;
+    for (const s of arr) this._liveTargets[s.id] = { x: s.x, z: s.z, pocketed: !!s.p };
+  }
+  clearLive() { this._liveActive = false; this._liveTargets = {}; }
+
   // ── Aktiver Zug ───────────────────────────────────────────
   setActive(canShoot) {
     this.inputEnabled = !!canShoot;
     this.cueReady = !!canShoot;
     this.aiming = false;
     this.aimLine.visible = false;
+    if (canShoot) this.clearLive();   // eigener Zug: keine Live-Übernahme mehr
   }
   setInputEnabled(v) { this.inputEnabled = v; this.cueReady = v; }
 
@@ -363,12 +388,52 @@ export class BilliardEngine {
     return this._ray.ray.intersectPlane(this._groundPlane, pt) ? pt : null;
   }
   _onPointerDown(e) {
+    this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Rechtsklick (PC): Kamera-Drag
+    if (e.button === 2) { this._camMouseId = e.pointerId; return; }
+
+    // Zweiter Finger (Handy): Kamera-Pinch, laufendes Zielen abbrechen
+    if (this._pointers.size >= 2) {
+      if (this.aiming) {
+        this.aiming = false;
+        this.aimLine.visible = false;
+        this.aimRatio = 0;
+        if (this.cb.onAim) this.cb.onAim(0, false);
+      }
+      this._camPinch = this._pinchMid();
+      return;
+    }
+
+    // Einfacher Klick / Touch: Zielen
     if (!this.inputEnabled || this.shotInProgress) return;
     const gp = this._groundPoint(e);
     if (!gp) return;
     this.aiming = true; this._aimStart = gp;
   }
   _onPointerMove(e) {
+    const prev = this._pointers.get(e.pointerId);
+    this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Rechtsklick-Kamera-Drag (PC)
+    if (this._camMouseId === e.pointerId) {
+      if (prev) {
+        this.camYaw  -= (e.clientX - prev.x) * 0.005;
+        this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (e.clientY - prev.y) * 0.005));
+      }
+      return;
+    }
+
+    // Zwei-Finger-Kamera (Handy)
+    if (this._pointers.size >= 2) {
+      if (!this._camPinch) this._camPinch = this._pinchMid();
+      const mid = this._pinchMid();
+      this.camYaw  -= (mid.x - this._camPinch.x) * 0.008;
+      this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (mid.y - this._camPinch.y) * 0.008));
+      this._camPinch = mid;
+      return;
+    }
+
     if (!this.aiming) return;
     const gp = this._groundPoint(e);
     if (!gp) return;
@@ -380,7 +445,13 @@ export class BilliardEngine {
     this._updateAimLine();
     if (this.cb.onAim) this.cb.onAim(this.aimRatio, true);
   }
-  _onPointerUp() {
+  _onPointerUp(e) {
+    this._pointers.delete(e.pointerId);
+
+    if (this._camMouseId === e.pointerId) { this._camMouseId = null; return; }
+    if (this._pointers.size < 2) this._camPinch = null;
+    if (this._pointers.size >= 1 && this._camPinch) return;
+
     if (!this.aiming) return;
     this.aiming = false; this.aimLine.visible = false;
     if (this.cb.onAim) this.cb.onAim(0, false);
@@ -443,31 +514,56 @@ export class BilliardEngine {
     const dt = Math.min(this._clock.getDelta(), 0.05);
     this.world.step(1 / 60, dt, 6);
 
-    // Mesh-Positionen aus Physik
-    let maxSpeed = 0;
-    for (const id of Object.keys(this.balls)) {
-      const b = this.balls[id];
-      if (b.body && !b.pocketed) {
-        b.mesh.position.copy(b.body.position);
-        b.mesh.quaternion.copy(b.body.quaternion);
-        const s = b.body.velocity.length();
-        if (s > maxSpeed) maxSpeed = s;
+    if (this._liveActive) {
+      // Spectator: Kugel-Meshes weich auf die gestreamten Positionen ziehen
+      this._applyLiveMeshes();
+    } else {
+      // Mesh-Positionen aus Physik
+      let maxSpeed = 0;
+      for (const id of Object.keys(this.balls)) {
+        const b = this.balls[id];
+        if (b.body && !b.pocketed) {
+          b.mesh.position.copy(b.body.position);
+          b.mesh.quaternion.copy(b.body.quaternion);
+          const s = b.body.velocity.length();
+          if (s > maxSpeed) maxSpeed = s;
+        }
       }
-    }
 
-    if (this.shotInProgress) {
-      this._checkPockets();
-      this.shotClock += dt;
-      if (maxSpeed < REST_SPEED) this.restCounter++; else this.restCounter = 0;
-      if (this.restCounter > REST_FRAMES || this.shotClock > SHOT_TIMEOUT) this._settle();
-      // Kamera dem Geschehen folgen (schnellste Kugel grob)
-      const cue = this.balls[0];
-      if (cue && cue.body) this.camTarget.lerp(new THREE.Vector3(cue.mesh.position.x, 0, cue.mesh.position.z), 0.04);
+      if (this.shotInProgress) {
+        this._checkPockets();
+        this.shotClock += dt;
+        if (maxSpeed < REST_SPEED) this.restCounter++; else this.restCounter = 0;
+        if (this.restCounter > REST_FRAMES || this.shotClock > SHOT_TIMEOUT) this._settle();
+        // Kamera dem Geschehen folgen (schnellste Kugel grob)
+        const cue = this.balls[0];
+        if (cue && cue.body) this.camTarget.lerp(new THREE.Vector3(cue.mesh.position.x, 0, cue.mesh.position.z), 0.04);
+        // Eigene Live-Position an den Gegner streamen (Drossel in JS)
+        if (this.cb.onShotTick) this.cb.onShotTick();
+      }
     }
 
     this._updateCue(dt);
     this._updateCamera();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // Spectator-Interpolation: Meshes sanft zu den Live-Zielen, Kamera folgt der Weißen
+  _applyLiveMeshes() {
+    for (const id in this._liveTargets) {
+      const b = this.balls[id];
+      if (!b) continue;
+      const t = this._liveTargets[id];
+      if (t.pocketed) {
+        if (!b.pocketed) { b.pocketed = true; b.mesh.visible = false; if (b.body) { this.world.removeBody(b.body); b.body = null; } }
+        continue;
+      }
+      b.pocketed = false; b.mesh.visible = true;
+      b.mesh.position.x += (t.x - b.mesh.position.x) * 0.3;
+      b.mesh.position.z += (t.z - b.mesh.position.z) * 0.3;
+    }
+    const cue = this.balls[0];
+    if (cue && !cue.pocketed) this.camTarget.lerp(new THREE.Vector3(cue.mesh.position.x, 0, cue.mesh.position.z), 0.04);
   }
 
   _checkPockets() {
@@ -541,14 +637,17 @@ export class BilliardEngine {
 
   _resize() {
     const w = this.mount.clientWidth, h = this.mount.clientHeight;
-    if (!w || !h) return;
+    // Layout noch nicht fertig (z.B. direkt nach Fullscreen-Umschaltung) → nächster Frame
+    if (!w || !h) { requestAnimationFrame(this._onResize); return; }
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
   }
 
   dispose() {
     this.stop();
+    this.clearLive();
     window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('orientationchange', this._onResize);
     this.renderer.dispose();
     if (this.renderer.domElement.parentNode) this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
   }

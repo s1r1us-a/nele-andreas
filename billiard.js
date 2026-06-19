@@ -25,6 +25,7 @@ const db = getDatabase(app);
 const auth = getAuth(app);
 
 const GAME_REF = 'billiard/andreas_vs_nele';
+const LIVE_REF = 'billiard/andreas_vs_nele_live'; // Echtzeit-Kugelpositionen (außerhalb GAME_REF)
 const SOLID_IDS = [1, 2, 3, 4, 5, 6, 7];
 const STRIPE_IDS = [9, 10, 11, 12, 13, 14, 15];
 const OBJECT_IDS = [...SOLID_IDS, 8, ...STRIPE_IDS];
@@ -32,6 +33,7 @@ const OBJECT_IDS = [...SOLID_IDS, 8, ...STRIPE_IDS];
 let currentUser = null, currentCoins = 0;
 let engine = null, mode = null, mpState = null, gameListener = null;
 let engineRacked = false, shownShotTime = 0, controlActive = null, finishedPaidOut = false;
+let liveListener = null, liveActive = false, lastLiveWrite = 0;
 let solo = null;
 
 const $ = (id) => document.getElementById(id);
@@ -64,12 +66,30 @@ function ensureEngine() {
     onShotStart: () => {},
     onShotComplete: handleShotComplete,
     onAim: handleAim,
+    onShotTick: handleShotTick,
   });
   engine.start();
 }
 function handleAim(ratio, aiming) {
   $('powerWrap').classList.toggle('show', aiming && ratio > 0);
   $('powerFill').style.width = Math.round(ratio * 100) + '%';
+}
+// Eigene Kugelpositionen während des Stoßes live an den Gegner streamen (gedrosselt)
+function handleShotTick() {
+  if (mode !== 'mp' || !engine) return;
+  const now = Date.now();
+  if (now - lastLiveWrite < 70) return;
+  lastLiveWrite = now;
+  const r = (v) => Math.round(v * 1000) / 1000;
+  const balls = engine.currentBallsState().map(b => ({ id: b.id, x: r(b.x), z: r(b.z), p: b.pocketed ? 1 : 0 }));
+  set(ref(db, LIVE_REF), { player: currentUser, balls, t: now }).catch(() => {});
+}
+// Eingehende Echtzeit-Positionen des Gegnerstoßes
+function handleLive(v) {
+  if (!v || !engine) return;
+  if (v.player === currentUser || !Array.isArray(v.balls)) return;
+  liveActive = true;
+  engine.updateBallsLive(v.balls);
 }
 function handleShotComplete(result, balls) {
   if (mode === 'solo') return soloShotDone(result, balls);
@@ -78,14 +98,20 @@ function handleShotComplete(result, balls) {
 
 // ── Modus-Auswahl ──────────────────────────────────────────
 function showSection(name) {
+  const isMob = window.matchMedia('(max-width:600px)').matches;
+  document.body.classList.toggle('mobile-game', name === 'game' && isMob);
   $('modeSection').style.display = name === 'mode' ? 'flex' : 'none';
   $('lobbySection').style.display = name === 'lobby' ? 'block' : 'none';
   $('gameSection').style.display = name === 'game' ? 'block' : 'none';
+  // Doppeltes rAF: Resize erst nach dem Layout-Reflow (Fullscreen-Umschaltung)
+  if (name === 'game') requestAnimationFrame(() => requestAnimationFrame(() => engine && engine._resize()));
 }
 function chooseMultiplayer() {
   mode = 'mp';
   if (gameListener) gameListener();
   gameListener = onValue(ref(db, GAME_REF), snap => handleMpState(snap.val()));
+  if (liveListener) liveListener();
+  liveListener = onValue(ref(db, LIVE_REF), snap => handleLive(snap.val()));
 }
 function chooseSolo() {
   mode = 'solo';
@@ -148,10 +174,13 @@ function syncMultiplayer(state) {
     engineRacked = true;
     shownShotTime = state.lastShot ? state.lastShot.time : 0;
     controlActive = null;
+    liveActive = false;
   } else if (state.lastShot && state.lastShot.time > shownShotTime && state.lastShot.player !== me) {
     shownShotTime = state.lastShot.time;
+    if (liveActive) { liveActive = false; engine.clearLive(); } // Live-Stream → autoritativer Endzustand
     engine.setBallsState(state.balls);
   } else if (state.currentTurn !== me || state.status === 'finished') {
+    if (liveActive) { liveActive = false; engine.clearLive(); }
     engine.setBallsState(state.balls);
   }
 
@@ -170,6 +199,7 @@ async function mpShotDone(result, balls) {
   const state = mpState; if (!state) return;
   const me = currentUser, opp = otherPlayer(me);
   engine.setInputEnabled(false);
+  set(ref(db, LIVE_REF), null).catch(() => {}); // Live-Stream beenden, Endzustand folgt
 
   let groups = { Andreas: state.groups?.Andreas || null, Nele: state.groups?.Nele || null };
   const wasOpen = !groups[me];
@@ -323,6 +353,8 @@ async function leaveGame() {
 function resetToMode() {
   if (engine) { engine.dispose(); engine = null; }
   if (gameListener) { gameListener(); gameListener = null; }
+  if (liveListener) { liveListener(); liveListener = null; }
+  liveActive = false;
   mode = null; mpState = null; solo = null; engineRacked = false; controlActive = null;
   $('resultOverlay').classList.remove('open');
   showSection('mode');
@@ -426,8 +458,6 @@ $('declineBtn').addEventListener('click', declineGame);
 $('surrenderBtn').addEventListener('click', surrenderGame);
 $('leaveBtn').addEventListener('click', leaveGame);
 $('playAgainBtn').addEventListener('click', leaveGame);
-$('camLeftBtn').addEventListener('click', () => engine && engine.rotateCamera(-0.25));
-$('camRightBtn').addEventListener('click', () => engine && engine.rotateCamera(0.25));
 $('betInput').addEventListener('input', function () {
   $('betHint').style.color = (parseInt(this.value) || 0) > currentCoins ? '#dc2626' : 'var(--text-mid)';
 });
