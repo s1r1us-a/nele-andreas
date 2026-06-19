@@ -94,8 +94,32 @@ function ensureEngine() {
     onShotComplete: handleShotComplete,
     onAim: handleAim,
     onShotTick: handleShotTick,
+    onAimModeChange: reflectAimMode,
   });
   engine.start();
+}
+
+// Touch-Geräte: ein Finger dreht die Kamera, der Button schaltet zum Schlagen um.
+const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches || ('ontouchstart' in window);
+
+// Aim-Toggle nur einblenden, wenn der lokale Spieler am Zug ist (und Touch).
+function setAimToggleVisible(show) {
+  const btn = $('aimToggleBtn');
+  if (!btn) return;
+  const on = show && IS_TOUCH;
+  btn.style.display = on ? 'block' : 'none';
+  if (!on) { btn.classList.remove('active'); btn.textContent = '🎯 Zielen'; }
+}
+
+// Button-Optik + Hinweistext an den aktuellen Modus angleichen.
+function reflectAimMode(aimOn) {
+  const btn = $('aimToggleBtn');
+  if (!btn) return;
+  btn.classList.toggle('active', aimOn);
+  btn.textContent = aimOn ? '🎮 Kamera' : '🎯 Zielen';
+  if (IS_TOUCH && btn.style.display !== 'none') {
+    setHint(aimOn ? 'Ziehen & loslassen zum Schlagen ⛳' : 'Finger ziehen = Kamera drehen · 🎯 zum Zielen');
+  }
 }
 
 // Eigene Ballposition während des Schusses live an den Gegner streamen (gedrosselt)
@@ -177,6 +201,7 @@ function loadSoloHole(idx) {
   const t = HOLES[idx].tee;
   engine.loadHole(HOLES[idx], { solo: { x: t.x, y: BALL_R, z: t.z, holed: false } });
   engine.setActive('solo');
+  setAimToggleVisible(true);
   updateSoloHud();
   setHint('Loch ' + (idx + 1) + ' · Par ' + HOLES[idx].par + ' — zieh zurück & lass los ⛳');
 }
@@ -188,7 +213,9 @@ function soloShotDone(res) {
   if (res.holed) {
     const s = solo.strokes[solo.hole];
     showToast(holeResultText(s, HOLES[solo.hole].par));
+    awardHoleCoins(currentUser);
     engine.setInputEnabled(false);
+    setAimToggleVisible(false);
     if (solo.hole + 1 >= NUM_HOLES) {
       solo.done = true;
       setTimeout(finishSolo, 900);
@@ -197,18 +224,21 @@ function soloShotDone(res) {
     }
   } else {
     engine.setActive('solo'); // weiterspielen
+    setAimToggleVisible(true);
   }
 }
 
 async function finishSolo() {
   const total = sum(solo.strokes);
   const hio = solo.strokes.filter(s => s === 1).length;
+  const holesPlayed = solo.strokes.filter(s => s > 0).length;
+  const earned = holesPlayed * HOLE_REWARD;
   await saveStats(currentUser, { strokes: solo.strokes, total, holesInOne: hio, played: false });
   showResult({
     emoji: total <= TOTAL_PAR ? '🏆' : '⛳',
     title: 'Runde geschafft!',
     sub: `Gesamt: ${total} Schläge · Par ${TOTAL_PAR}`,
-    coins: scoreVsPar(total - TOTAL_PAR),
+    coins: `+${earned.toLocaleString('de-DE')} 🪙`,
     konfetti: total <= TOTAL_PAR,
   });
 }
@@ -283,6 +313,7 @@ function syncMultiplayer(state) {
     awaitingWrite = false;
   }
   if (myTurn && awaitingWrite) engine.setInputEnabled(false);
+  setAimToggleVisible(myTurn && !awaitingWrite);
 
   updateMpHud(state);
   if (state.status === 'running') {
@@ -298,6 +329,7 @@ async function mpShotDone(res) {
   const me = currentUser, opp = otherPlayer(me);
   awaitingWrite = true;
   engine.setInputEnabled(false);
+  setAimToggleVisible(false);
   set(ref(db, LIVE_REF), null).catch(() => {}); // Live-Stream beenden, Endzustand folgt
 
   const hole = state.currentHole;
@@ -322,7 +354,10 @@ async function mpShotDone(res) {
   const oppHoled = balls[opp].holed;
   const meHoled = balls[me].holed;
 
-  if (res.holed) showToast(holeResultText(strokes[me][hole], HOLES[hole].par));
+  if (res.holed) {
+    showToast(holeResultText(strokes[me][hole], HOLES[hole].par));
+    awardHoleCoins(me);
+  }
 
   if (meHoled && oppHoled) {
     // Loch fertig
@@ -390,6 +425,17 @@ async function finishGameMP(state) {
 async function safeStat(path, fn) {
   try { await runTransaction(ref(db, path), fn); }
   catch (e) { console.warn('Stat-Update fehlgeschlagen', path, e); }
+}
+
+// Belohnung pro eingelochtem Loch: feste 1000 Coins (Solo & Multiplayer).
+// Wird genau einmal pro Loch aufgerufen (beim Einlochen des eigenen Balls).
+const HOLE_REWARD = 1000;
+async function awardHoleCoins(player) {
+  try {
+    await runTransaction(ref(db, `coins/${lc(player)}`), c => (c || 0) + HOLE_REWARD);
+    await safeStat(`stats/${lc(player)}/minigolf/coinsEarned`, c => (c || 0) + HOLE_REWARD);
+    showToast(`+${HOLE_REWARD.toLocaleString('de-DE')} 🪙`);
+  } catch (e) { console.warn('Coin-Belohnung fehlgeschlagen', e); }
 }
 
 // Gemeinsames Statistik-Schreiben (Solo & Multiplayer)
@@ -618,12 +664,6 @@ function holeResultText(strokes, par) {
   if (d === 1) return '🙂 Bogey';
   return `${strokes} Schläge`;
 }
-function scoreVsPar(diff) {
-  if (diff < 0) return `${diff} unter Par 🌟`;
-  if (diff === 0) return 'Genau Par ✅';
-  return `+${diff} über Par`;
-}
-
 function spawnKonfetti() {
   const colors = ['#e8738a', '#f5a3b5', '#d4a061', '#a78bfa', '#4ecdc4', '#fbbf24'];
   for (let i = 0; i < 80; i++) {
@@ -648,6 +688,7 @@ $('declineBtn').addEventListener('click', declineGame);
 $('surrenderBtn').addEventListener('click', surrenderGame);
 $('leaveBtn').addEventListener('click', leaveGame);
 $('playAgainBtn').addEventListener('click', leaveGame);
+$('aimToggleBtn').addEventListener('click', () => { if (engine) engine.setAimMode(!engine.aimMode); });
 $('scoreToggleBtn').addEventListener('click', () => $('scorecard').classList.toggle('show'));
 $('scorecard').addEventListener('click', () => $('scorecard').classList.remove('show')); // Tipp aufs Overlay schließt es
 $('betInput').addEventListener('input', function () {
