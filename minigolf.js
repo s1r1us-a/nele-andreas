@@ -25,6 +25,7 @@ const db = getDatabase(app);
 const auth = getAuth(app);
 
 const GAME_REF = 'minigolf/andreas_vs_nele';
+const LIVE_REF = 'minigolf/andreas_vs_nele_live'; // Echtzeit-Ballposition (außerhalb GAME_REF)
 const BALL_R = 0.35;
 const NUM_HOLES = HOLES.length;
 const TOTAL_PAR = HOLES.reduce((s, h) => s + h.par, 0);
@@ -35,6 +36,9 @@ let engine = null;
 let mode = null;             // 'mp' | 'solo'
 let mpState = null;
 let gameListener = null;
+let liveListener = null;
+let liveActive = false;      // Gegner-Schuss wurde gerade live gestreamt
+let lastLiveWrite = 0;       // Drossel für Live-Writes
 
 // Render-Tracking (Multiplayer)
 let renderedHole = -1;
@@ -89,8 +93,26 @@ function ensureEngine() {
     onShotStart: handleShotStart,
     onShotComplete: handleShotComplete,
     onAim: handleAim,
+    onShotTick: handleShotTick,
   });
   engine.start();
+}
+
+// Eigene Ballposition während des Schusses live an den Gegner streamen (gedrosselt)
+function handleShotTick(key, pos) {
+  if (mode !== 'mp') return;
+  const now = Date.now();
+  if (now - lastLiveWrite < 70) return;
+  lastLiveWrite = now;
+  set(ref(db, LIVE_REF), { player: currentUser, x: pos.x, z: pos.z, t: now }).catch(() => {});
+}
+
+// Eingehende Echtzeit-Position des Gegnerballs
+function handleLive(v) {
+  if (!v || !engine) return;
+  if (v.player === currentUser) return;     // eigener Stream
+  liveActive = true;
+  engine.updateBallLive(lc(v.player), { x: v.x, z: v.z });
 }
 
 function handleAim(ratio, aiming) {
@@ -120,13 +142,16 @@ function showSection(name) {
   $('modeSection').style.display = name === 'mode' ? 'flex' : 'none';
   $('lobbySection').style.display = name === 'lobby' ? 'block' : 'none';
   $('gameSection').style.display = name === 'game' ? 'block' : 'none';
-  if (name === 'game') setTimeout(() => engine && engine._resize(), 0);
+  // Doppeltes rAF: Resize erst nach dem Layout-Reflow (Fullscreen-Umschaltung)
+  if (name === 'game') requestAnimationFrame(() => requestAnimationFrame(() => engine && engine._resize()));
 }
 
 function chooseMultiplayer() {
   mode = 'mp';
   if (gameListener) gameListener();
   gameListener = onValue(ref(db, GAME_REF), snap => handleMpState(snap.val()));
+  if (liveListener) liveListener();
+  liveListener = onValue(ref(db, LIVE_REF), snap => handleLive(snap.val()));
 }
 
 function chooseSolo() {
@@ -223,6 +248,7 @@ function syncMultiplayer(state) {
     engine.loadHole(HOLES[state.currentHole], bs);
     shownShotTime = state.lastShot ? state.lastShot.time : 0;
     controlKey = null;
+    liveActive = false;
     const p = balls[me];
     myShotFrom = { x: p.x, y: p.y ?? BALL_R, z: p.z };
   }
@@ -233,7 +259,15 @@ function syncMultiplayer(state) {
     if (pKey === controlKey) continue; // aktiven Ball besitzt die Engine
     if (state.lastShot && state.lastShot.player === player && state.lastShot.time > shownShotTime) {
       shownShotTime = state.lastShot.time;
-      engine.replayShot(pKey, state.lastShot.from, state.lastShot.to);
+      if (liveActive) {
+        // Schuss wurde live gestreamt → nur auf autoritative Endposition setzen
+        liveActive = false;
+        engine.clearLiveTarget(pKey);
+        engine.updateBallGhost(pKey, balls[player]);
+      } else {
+        // Fallback (keine Live-Daten empfangen): animiertes Nachspielen
+        engine.replayShot(pKey, state.lastShot.from, state.lastShot.to);
+      }
     } else {
       engine.updateBallGhost(pKey, balls[player]);
     }
@@ -264,6 +298,7 @@ async function mpShotDone(res) {
   const me = currentUser, opp = otherPlayer(me);
   awaitingWrite = true;
   engine.setInputEnabled(false);
+  set(ref(db, LIVE_REF), null).catch(() => {}); // Live-Stream beenden, Endzustand folgt
 
   const hole = state.currentHole;
   const strokes = { Andreas: toArr((state.strokesHole || {}).Andreas), Nele: toArr((state.strokesHole || {}).Nele) };
@@ -453,9 +488,12 @@ async function leaveGame() {
 function resetToMode() {
   if (engine) { engine.dispose(); engine = null; }
   if (gameListener) { gameListener(); gameListener = null; }
+  if (liveListener) { liveListener(); liveListener = null; }
+  liveActive = false;
   mode = null; mpState = null; solo = null;
   renderedHole = -1; controlKey = null;
   $('resultOverlay').classList.remove('open');
+  document.body.classList.remove('mp-game');
   showSection('mode');
 }
 
@@ -487,6 +525,8 @@ function setupSoloHud() {
   $('nameMe').textContent = 'Du';
   $('surrenderBtn').style.display = 'none';
   $('scorecard').style.display = 'none';
+  $('scorecard').classList.remove('show');
+  document.body.classList.remove('mp-game');
 }
 
 function updateSoloHud() {
@@ -502,6 +542,7 @@ function setupMpHud() {
   $('nameOpp').textContent = otherPlayer(currentUser);
   $('surrenderBtn').style.display = 'block';
   $('scorecard').style.display = 'block';
+  document.body.classList.add('mp-game');
 }
 
 function updateMpHud(state) {
@@ -607,6 +648,8 @@ $('declineBtn').addEventListener('click', declineGame);
 $('surrenderBtn').addEventListener('click', surrenderGame);
 $('leaveBtn').addEventListener('click', leaveGame);
 $('playAgainBtn').addEventListener('click', leaveGame);
+$('scoreToggleBtn').addEventListener('click', () => $('scorecard').classList.toggle('show'));
+$('scorecard').addEventListener('click', () => $('scorecard').classList.remove('show')); // Tipp aufs Overlay schließt es
 $('betInput').addEventListener('input', function () {
   const val = parseInt(this.value) || 0;
   $('betHint').style.color = val > currentCoins ? '#dc2626' : 'var(--text-mid)';
