@@ -22,8 +22,8 @@ const REST_FRAMES = 22;        // so viele Frames unter REST_SPEED → Stillstan
 const SHOT_TIMEOUT = 13;       // s, danach Zwangs-Stillstand
 const MAX_SPEED = 17;          // Schussgeschwindigkeit bei voller Power
 const MAX_PULL = 6.5;          // Welt-Distanz für volle Power beim Ziehen
-const CUP_R = 0.5;
-const CAPTURE_SPEED = 4.0;     // max. Tempo, um eingelocht zu werden
+const CUP_R = 0.55;
+const CAPTURE_SPEED = 5.5;     // max. Tempo, um eingelocht zu werden
 const SAND_DAMPING = 0.92;     // starke Bremsung im Sand
 const BASE_DAMPING = 0.38;
 
@@ -54,12 +54,18 @@ export class MinigolfEngine {
     this.camPitch = 0.62;
     this.camDist = 17;
     this.camTarget = new THREE.Vector3();
+    this.cupPos = new THREE.Vector3();
+    this.club = null;
+    this.clubHead = null;
+    this._swing = null;
+    this.dynObstacles = [];
     this.isMobile = window.matchMedia('(max-width:600px)').matches;
     this._raf = null;
     this._clock = new THREE.Clock();
     this._initThree();
     this._initPhysics();
     this._initInput();
+    this._buildClub();
     this._onResize = this._resize.bind(this);
     window.addEventListener('resize', this._onResize);
   }
@@ -77,25 +83,29 @@ export class MinigolfEngine {
     this.renderer.domElement.style.display = 'block';
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0a18);
-    this.scene.fog = new THREE.Fog(0x0a0a18, 30, 70);
+    this.scene.background = new THREE.Color(0x1c2446);
+    this.scene.fog = new THREE.Fog(0x1c2446, 44, 95);
 
     this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 200);
 
-    // Licht: dezent, damit der Bloom-Glow trägt
-    this.scene.add(new THREE.AmbientLight(0x4040ff, 0.55));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-    dir.position.set(8, 20, 6);
+    // Licht: hellerer Grundton, Bloom trägt zusätzlich den Neon-Glow
+    this.scene.add(new THREE.AmbientLight(0xaab4ff, 1.05));
+    this.scene.add(new THREE.HemisphereLight(0xc4d2ff, 0x2c365e, 0.85));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.0);
+    dir.position.set(8, 22, 6);
     this.scene.add(dir);
+    const dir2 = new THREE.DirectionalLight(0x9fb4ff, 0.4);
+    dir2.position.set(-10, 12, -8);
+    this.scene.add(dir2);
 
     // Postprocessing (Neon-Glow)
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(w, h),
-      this.isMobile ? 0.8 : 1.25, // strength
-      0.55,                       // radius
-      0.08                        // threshold
+      this.isMobile ? 0.55 : 0.85, // strength (dezenter, Szene ist heller)
+      0.5,                         // radius
+      0.2                          // threshold: nur kräftige Neon-Kanten glühen
     );
     this.composer.addPass(this.bloom);
 
@@ -136,15 +146,77 @@ export class MinigolfEngine {
     window.addEventListener('pointerup', (e) => this._onPointerUp(e));
   }
 
+  // Sichtbarer Putter (Schaft + Griff + Kopf). Lokales +Z = Schlagrichtung.
+  _buildClub() {
+    const club = new THREE.Group();
+    const metal = new THREE.MeshStandardMaterial({
+      color: 0xeef2ff, emissive: 0x3a4d80, emissiveIntensity: 0.6,
+      roughness: 0.25, metalness: 0.85,
+    });
+    const grip = new THREE.MeshStandardMaterial({
+      color: 0x202840, emissive: 0x101830, emissiveIntensity: 0.3,
+      roughness: 0.6, metalness: 0.2,
+    });
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.2, 12), metal);
+    shaft.position.set(0, 1.05, -0.62);
+    shaft.rotation.x = 0.34;            // nach hinten-oben geneigt
+    club.add(shaft);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.5, 12), grip);
+    handle.position.set(0, 2.0, -0.82);
+    handle.rotation.x = 0.34;
+    club.add(handle);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.3, 0.26), metal);
+    head.position.set(0, 0.16, -0.4);   // hinter dem Ball
+    club.add(head);
+    this.clubHead = head;
+    club.visible = false;
+    this.scene.add(club);
+    this.club = club;
+  }
+
+  _easeOut(p) { return 1 - Math.pow(1 - p, 3); }
+
+  _updateClub(dt) {
+    if (!this.club || !this.active) { if (this.club) this.club.visible = false; return; }
+    // Sichtbar bei Ruhe/Zielen oder während des kurzen Schwungs; aus, während der Ball rollt
+    if (this.shotInProgress && !this._swing) { this.club.visible = false; return; }
+
+    const ballPos = this.balls[this.active.key].mesh.position;
+    let dir;
+    if (this.aiming && this.aimRatio > 0.001) {
+      dir = this.aimDir;
+    } else {
+      dir = new THREE.Vector3(this.cupPos.x - ballPos.x, 0, this.cupPos.z - ballPos.z);
+      if (dir.lengthSq() < 1e-4) dir.set(0, 0, 1);
+      dir.normalize();
+    }
+    this.club.position.set(ballPos.x, 0, ballPos.z);
+    this.club.rotation.y = Math.atan2(dir.x, dir.z);
+    this.club.visible = true;
+
+    let headZ;
+    if (this._swing) {
+      this._swing.t += dt;
+      const p = Math.min(this._swing.t / this._swing.dur, 1);
+      headZ = THREE.MathUtils.lerp(-(0.4 + this._swing.cock * 0.85), 0.2, this._easeOut(p));
+      if (p >= 1) { this._swing = null; this.club.visible = false; }
+    } else {
+      const cock = this.aiming ? this.aimRatio : 0;
+      headZ = -(0.4 + cock * 0.85);     // Ausholen proportional zur Power
+    }
+    this.clubHead.position.z = headZ;
+  }
+
   // ── Loch laden ────────────────────────────────────────────
   loadHole(holeDef, ballsState) {
     this._clearHole();
     this.hole = holeDef;
+    this.cupPos.set(holeDef.cup.x, holeDef.cup.y || 0, holeDef.cup.z);
     const g = holeDef.ground;
 
     // Boden
     this._addBox(0, -0.5, 0, g.w, 1, g.l, {
-      color: 0x10162e, emissive: 0x05204a, emissiveIntensity: 0.35,
+      color: 0x2c3a72, emissive: 0x16356f, emissiveIntensity: 0.45,
       physMat: this.matGround,
     });
 
@@ -165,7 +237,7 @@ export class MinigolfEngine {
     // Plateaus (erhöhte Plattformen)
     (holeDef.plateaus || []).forEach(p =>
       this._addBox(p.x, p.h / 2, p.z, p.w, p.h, p.l, {
-        color: 0x10162e, emissive: 0x05204a, emissiveIntensity: 0.4,
+        color: 0x2c3a72, emissive: 0x16356f, emissiveIntensity: 0.5,
         physMat: this.matGround,
       }));
 
@@ -174,6 +246,11 @@ export class MinigolfEngine {
 
     // Bumper (runde Abpraller)
     (holeDef.bumpers || []).forEach(b => this._addBumper(b.x, b.z, b.r || 0.6));
+
+    // Rotierende Hindernisse (Rotor / "Windmühle")
+    (holeDef.spinners || []).forEach(s => this._addSpinner(s));
+    // Bewegliche Schiebe-Gatter
+    (holeDef.movers || []).forEach(m => this._addMover(m));
 
     // Hazards (nur Optik + Zonen-Check im Loop)
     (holeDef.water || []).forEach(z => this._addHazardPad(z, 0x14e0e0));
@@ -203,6 +280,10 @@ export class MinigolfEngine {
   _clearHole() {
     this.shotInProgress = false;
     this.holedAnim = null;
+    this._swing = null;
+    this.dynObstacles = [];
+    if (this.club) this.club.visible = false;
+    if (this.active && this.active.body) this.world.removeBody(this.active.body);
     this.active = null;
     for (const o of this.holeObjects) {
       if (o.mesh) { this.scene.remove(o.mesh); o.mesh.geometry?.dispose?.(); o.mesh.material?.dispose?.(); }
@@ -248,7 +329,7 @@ export class MinigolfEngine {
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, sz),
       new THREE.MeshStandardMaterial({
-        color: 0x101830, emissive: 0x2266ff, emissiveIntensity: 1.4,
+        color: 0x2a3a6e, emissive: 0x3a7bff, emissiveIntensity: 1.3,
         roughness: 0.4, metalness: 0.3,
       })
     );
@@ -264,10 +345,10 @@ export class MinigolfEngine {
   }
 
   _addGrid(w, l) {
-    const grid = new THREE.GridHelper(Math.max(w, l), Math.max(w, l), 0x2266ff, 0x12204a);
+    const grid = new THREE.GridHelper(Math.max(w, l), Math.max(w, l), 0x5b8bff, 0x32508f);
     grid.position.y = 0.02;
     grid.material.transparent = true;
-    grid.material.opacity = 0.35;
+    grid.material.opacity = 0.45;
     this.scene.add(grid);
     this.holeObjects.push({ mesh: grid });
   }
@@ -313,6 +394,66 @@ export class MinigolfEngine {
     body.position.set(x, BALL_R, z);
     this.world.addBody(body);
     this.holeObjects.push({ mesh, body });
+  }
+
+  // Rotor: waagerechte Stange, die um die Y-Achse rotiert und den Ball wegfegt
+  _addSpinner(s) {
+    const len = s.length || 5;
+    const speed = s.speed || 1.8;
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(len, 0.55, 0.4),
+      new THREE.MeshStandardMaterial({
+        color: 0x2a0a3a, emissive: 0xff4df0, emissiveIntensity: 2.0,
+        roughness: 0.3, metalness: 0.4,
+      })
+    );
+    mesh.position.set(s.x, 0.45, s.z);
+    this.scene.add(mesh);
+    // Nabe in der Mitte
+    const hub = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.35, 0.9, 16),
+      new THREE.MeshStandardMaterial({ color: 0x140a2e, emissive: 0x7a3dff, emissiveIntensity: 1.6 })
+    );
+    hub.position.set(s.x, 0.45, s.z);
+    this.scene.add(hub);
+
+    const body = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: this.matWall });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(len / 2, 0.275, 0.2)));
+    body.position.set(s.x, 0.45, s.z);
+    body.angularVelocity.set(0, speed, 0);
+    this.world.addBody(body);
+
+    this.holeObjects.push({ mesh, body });
+    this.holeObjects.push({ mesh: hub });
+    this.dynObstacles.push({ kind: 'spin', mesh, body });
+  }
+
+  // Beweglicher Block, der entlang einer Achse hin- und herfährt
+  _addMover(m) {
+    const h = m.h || WALL_H;
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(m.w, h, m.l),
+      new THREE.MeshStandardMaterial({
+        color: 0x0a2a2a, emissive: 0x18e0e0, emissiveIntensity: 1.6,
+        roughness: 0.4, metalness: 0.3,
+      })
+    );
+    mesh.position.set(m.x, h / 2, m.z);
+    this.scene.add(mesh);
+
+    const body = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: this.matWall });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(m.w / 2, h / 2, m.l / 2)));
+    body.position.set(m.x, h / 2, m.z);
+    this.world.addBody(body);
+
+    const axis = m.axis === 'z' ? 'z' : 'x';
+    const center = axis === 'z' ? m.z : m.x;
+    this.holeObjects.push({ mesh, body });
+    this.dynObstacles.push({
+      kind: 'move', mesh, body, axis,
+      min: center - (m.range || 3), max: center + (m.range || 3),
+      speed: m.speed || 3, dir: 1,
+    });
   }
 
   _addHazardPad(zone, color) {
@@ -504,7 +645,8 @@ export class MinigolfEngine {
 
   _shoot(dir, ratio) {
     const body = this.active.body;
-    const speed = ratio * MAX_SPEED;
+    // Sanfte Power-Kurve mit Mindest-Anstoß: feine Putts + weiches Hochregeln
+    const speed = MAX_SPEED * (0.12 + 0.88 * Math.pow(ratio, 1.4));
     body.wakeUp();
     body.velocity.set(dir.x * speed, 0, dir.z * speed);
     body.angularVelocity.set(0, 0, 0);
@@ -514,6 +656,7 @@ export class MinigolfEngine {
     this.shotClock = 0;
     this.balls[this.active.key].trailPts = [];
     this.balls[this.active.key].trail.visible = true;
+    this._swing = { t: 0, dur: 0.16, cock: ratio };
     if (this.cb.onShotStart) this.cb.onShotStart(this.active.key);
   }
 
@@ -549,7 +692,9 @@ export class MinigolfEngine {
 
   _update() {
     const dt = Math.min(this._clock.getDelta(), 0.05);
+    this._updateObstacles(dt);
     this.world.step(1 / 60, dt, 6);
+    this._syncObstacles();
 
     // Aktiven Ball-Mesh aus Physik übernehmen
     if (this.active) {
@@ -590,8 +735,29 @@ export class MinigolfEngine {
       if (h.t > 0.5) { h.mesh.visible = false; this.holedAnim = null; }
     }
 
+    this._updateClub(dt);
     this._updateCamera();
     this.composer.render();
+  }
+
+  _updateObstacles(dt) {
+    for (const o of this.dynObstacles) {
+      if (o.kind === 'move') {
+        const p = o.body.position[o.axis];
+        if (p >= o.max && o.dir > 0) o.dir = -1;
+        else if (p <= o.min && o.dir < 0) o.dir = 1;
+        o.body.velocity.set(0, 0, 0);
+        o.body.velocity[o.axis] = o.speed * o.dir;
+      }
+      // Spinner: konstante angularVelocity bleibt gesetzt
+    }
+  }
+
+  _syncObstacles() {
+    for (const o of this.dynObstacles) {
+      o.mesh.position.copy(o.body.position);
+      o.mesh.quaternion.copy(o.body.quaternion);
+    }
   }
 
   _followTrail(ball, p) {
@@ -629,13 +795,23 @@ export class MinigolfEngine {
     // Abgrund / aus der Welt gefallen
     if (pos.y < -8) { this._settle({ holed: false, penalty: true, reset: true }); return; }
 
-    // Einlochen
+    // Einlochen mit "Loch-Magnet" für zuverlässiges Fallen
     const cup = this.hole.cup;
     const dx = pos.x - cup.x, dz = pos.z - cup.z;
     const horiz = Math.hypot(dx, dz);
-    if (horiz < CUP_R && Math.abs(pos.y - (cup.y || 0)) < 0.7 && speed < CAPTURE_SPEED) {
-      this._settle({ holed: true, penalty: false });
-      return;
+    const heightOk = Math.abs(pos.y - (cup.y || 0)) < 0.7;
+    if (heightOk && horiz < CUP_R * 2.6) {
+      // Sanfter Sog zur Lochmitte, solange das Tempo nicht zu hoch ist
+      if (speed < CAPTURE_SPEED * 1.7) {
+        const pull = 11;
+        body.velocity.x -= dx * pull * dt;
+        body.velocity.z -= dz * pull * dt;
+      }
+      // Fallen: nah & beherrschbar – oder Volltreffer mitten ins Loch
+      if ((horiz < CUP_R && speed < CAPTURE_SPEED) || horiz < CUP_R * 0.55) {
+        this._settle({ holed: true, penalty: false });
+        return;
+      }
     }
 
     // Stillstand
