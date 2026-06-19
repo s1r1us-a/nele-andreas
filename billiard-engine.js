@@ -8,6 +8,7 @@
 // ============================================================
 
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import * as CANNON from 'cannon-es';
 import { TABLE, BALLS, BALL_R, ballInfo } from './billiard-table.js';
 
@@ -66,29 +67,42 @@ export class BilliardEngine {
     this.renderer.setSize(w, h);
     this.renderer.shadowMap.enabled = !this.isMobile;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Filmisches Tonemapping → warmes, stimmungsvolles Hallenlicht
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.05;
     this.mount.appendChild(this.renderer.domElement);
     this.renderer.domElement.style.touchAction = 'none';
     this.renderer.domElement.style.display = 'block';
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x2a2620);
+    // Warmer Raum-Verlauf (oben gedämpftes Licht → unten dunkles Holz)
+    this.scene.background = this._roomBackdrop();
+
+    // Environment-Map für realistische Reflexe auf Kugeln & Holz
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
 
     this.camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 300);
 
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    const hemi = new THREE.HemisphereLight(0xfff4e0, 0x3a2e22, 0.5);
+    // Grund-Ambiente warm und gedämpft – das Key-Light liefert die Hängelampe
+    this.scene.add(new THREE.AmbientLight(0xfff0d8, 0.32));
+    const hemi = new THREE.HemisphereLight(0xffe9c8, 0x2a1d12, 0.4);
     this.scene.add(hemi);
-    const lamp = new THREE.DirectionalLight(0xfff2d8, 1.0);
-    lamp.position.set(0, 26, 4);
+    // Warmes Pendelleuchten-Licht von oben über dem Tisch (Key-Light + Schatten)
+    const lamp = new THREE.SpotLight(0xffe6b8, 1.5, 60, Math.PI / 4, 0.5, 1.2);
+    lamp.position.set(0, 18, 0);
+    lamp.target.position.set(0, -0.5, 0);
     lamp.castShadow = !this.isMobile;
     if (lamp.shadow) {
       lamp.shadow.mapSize.set(1024, 1024);
-      lamp.shadow.camera.near = 5; lamp.shadow.camera.far = 60;
-      lamp.shadow.camera.left = -16; lamp.shadow.camera.right = 16;
-      lamp.shadow.camera.top = 16; lamp.shadow.camera.bottom = -16;
+      lamp.shadow.camera.near = 4; lamp.shadow.camera.far = 50;
+      lamp.shadow.bias = -0.0004;
     }
     this.scene.add(lamp);
-    const fill = new THREE.DirectionalLight(0xbfd0ff, 0.25);
+    this.scene.add(lamp.target);
+    // Sanftes, kühles Fülllicht für Tiefe an den Rändern
+    const fill = new THREE.DirectionalLight(0xb9c9e8, 0.18);
     fill.position.set(-12, 10, -10);
     this.scene.add(fill);
 
@@ -130,6 +144,115 @@ export class BilliardEngine {
     this._groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BALL_R);
   }
 
+  // Warmer Hallen-Verlauf als Hintergrund (oben gedämpftes Wandlicht → unten Holz)
+  _roomBackdrop() {
+    const c = document.createElement('canvas');
+    c.width = 16; c.height = 256;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0.0, '#3b3226');
+    g.addColorStop(0.4, '#2c2419');
+    g.addColorStop(0.75, '#241a10');
+    g.addColorStop(1.0, '#19120a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 16, 256);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Prozedurale Holz-Textur (Dielen/Vertäfelung) per Canvas
+  _woodTexture(base = '#5a3a1e', repeatX = 6, repeatY = 6) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = base; ctx.fillRect(0, 0, 256, 256);
+    // Dielenfugen + Maserung
+    for (let y = 0; y < 256; y += 32) {
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fillRect(0, y, 256, 2);
+      for (let i = 0; i < 26; i++) {
+        ctx.strokeStyle = `rgba(${20 + Math.random() * 30 | 0},${12 + Math.random() * 18 | 0},6,0.18)`;
+        ctx.lineWidth = 0.6 + Math.random();
+        ctx.beginPath();
+        const yy = y + Math.random() * 32;
+        ctx.moveTo(0, yy); ctx.bezierCurveTo(80, yy + 3, 170, yy - 3, 256, yy + 1); ctx.stroke();
+      }
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeatX, repeatY);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Feine Filz-/Tuchstruktur per Canvas (dezentes Rauschen auf Grundfarbe)
+  _feltTexture(colorHex) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#' + colorHex.toString(16).padStart(6, '0');
+    ctx.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 4000; i++) {
+      const a = Math.random() * 0.10;
+      ctx.fillStyle = Math.random() < 0.5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`;
+      ctx.fillRect(Math.random() * 128, Math.random() * 128, 1, 1);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(4, 6);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Gemütliche Billiardhalle: Holzdielen-Boden, Wandvertäfelung, Hängelampe
+  _buildRoom() {
+    const ROOM = 70, WALL_H = 26;
+    // Holzdielen-Boden
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(ROOM, ROOM),
+      new THREE.MeshStandardMaterial({ map: this._woodTexture('#3c2613', 9, 9), roughness: 0.7, metalness: 0.05 })
+    );
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -2.2; floor.receiveShadow = !this.isMobile;
+    this.scene.add(floor);
+
+    // Wände: unten Holzvertäfelung, oben warmer Wandton (nach innen gerichtet)
+    const wainscot = new THREE.MeshStandardMaterial({ map: this._woodTexture('#4a3018', 8, 2), roughness: 0.6, metalness: 0.08, side: THREE.BackSide });
+    const upper = new THREE.MeshStandardMaterial({ color: 0x6b4a32, roughness: 0.9, side: THREE.BackSide });
+    const wallGeoLow = new THREE.PlaneGeometry(ROOM, 9);
+    const wallGeoHigh = new THREE.PlaneGeometry(ROOM, WALL_H - 9);
+    const half = ROOM / 2;
+    const place = (geo, mat, x, y, z, ry) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z); m.rotation.y = ry;
+      this.scene.add(m);
+    };
+    const lowY = -2.2 + 4.5, highY = -2.2 + 9 + (WALL_H - 9) / 2;
+    // 4 Wände
+    [[0, half, 0], [0, -half, Math.PI], [half, 0, -Math.PI / 2], [-half, 0, Math.PI / 2]].forEach(([x, z, ry]) => {
+      place(wallGeoLow, wainscot, x, lowY, z, ry);
+      place(wallGeoHigh, upper, x, highY, z, ry);
+    });
+
+    // Hängelampe über dem Tisch (Schirm + warm leuchtende Birne)
+    const lampGroup = new THREE.Group();
+    const cord = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0x20160d, roughness: 1 })
+    );
+    cord.position.y = 13; lampGroup.add(cord);
+    const shade = new THREE.Mesh(
+      new THREE.ConeGeometry(3.2, 2.2, 28, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.7, metalness: 0.3, side: THREE.DoubleSide })
+    );
+    shade.position.y = 8.4; lampGroup.add(shade);
+    const bulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 16, 12),
+      new THREE.MeshStandardMaterial({ color: 0xfff2d0, emissive: 0xffdf9c, emissiveIntensity: 2.4 })
+    );
+    bulb.position.y = 7.6; lampGroup.add(bulb);
+    this.scene.add(lampGroup);
+  }
+
   _initPhysics() {
     this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, -20, 0) });
     this.world.broadphase = new CANNON.SAPBroadphase(this.world);
@@ -151,10 +274,10 @@ export class BilliardEngine {
     const { play, cushion, pocketR } = TABLE;
     const hw = play.w / 2, hl = play.l / 2;
 
-    // Tischbett (Tuch)
+    // Tischbett (Tuch mit feiner Filzstruktur)
     const bed = new THREE.Mesh(
       new THREE.BoxGeometry(play.w + 0.2, 1, play.l + 0.2),
-      new THREE.MeshStandardMaterial({ color: CLOTH, roughness: 0.95, metalness: 0.02 })
+      new THREE.MeshStandardMaterial({ color: CLOTH, map: this._feltTexture(CLOTH), roughness: 0.97, metalness: 0.0 })
     );
     bed.position.y = -0.5;
     bed.receiveShadow = true;
@@ -163,8 +286,8 @@ export class BilliardEngine {
     bedBody.position.set(0, -0.5, 0);
     this.world.addBody(bedBody);
 
-    // Holzrahmen rund um den Tisch
-    const wood = new THREE.MeshStandardMaterial({ color: 0x5a3416, roughness: 0.5, metalness: 0.15 });
+    // Holzrahmen rund um den Tisch (edles, gemasertes Holz mit Env-Reflexen)
+    const wood = new THREE.MeshStandardMaterial({ color: 0x6e4422, map: this._woodTexture('#5a3416', 3, 1), roughness: 0.35, metalness: 0.2 });
     const frameH = 0.8, fw = 1.4;
     const frameSpecs = [
       [0, hl + fw / 2 + cushion.t / 2, play.w + fw * 2 + cushion.t * 2, fw],
@@ -222,13 +345,21 @@ export class BilliardEngine {
       this.scene.add(m);
     });
 
-    // Boden unter dem Tisch
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(80, 80),
-      new THREE.MeshStandardMaterial({ color: 0x241c14, roughness: 1 })
-    );
-    floor.rotation.x = -Math.PI / 2; floor.position.y = -2.2; floor.receiveShadow = true;
-    this.scene.add(floor);
+    // Banden-Diamanten (Perlmutt-Inlays auf dem Holzrahmen) – klassisches Detail
+    const diaMat = new THREE.MeshStandardMaterial({ color: 0xf4ecd6, roughness: 0.3, metalness: 0.25 });
+    const diaGeo = new THREE.OctahedronGeometry(0.13);
+    const diaY = frameH - 0.1 + 0.02;
+    const offX = hw + cushion.t + fw / 2, offZ = hl + cushion.t + fw / 2;
+    const addDia = (x, z) => {
+      const m = new THREE.Mesh(diaGeo, diaMat);
+      m.position.set(x, diaY, z); m.scale.y = 0.5; m.rotation.y = Math.PI / 4;
+      this.scene.add(m);
+    };
+    [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75].forEach(f => { addDia(offX, f * hl); addDia(-offX, f * hl); });
+    [-0.66, -0.33, 0.33, 0.66].forEach(f => { addDia(f * hw, offZ); addDia(f * hw, -offZ); });
+
+    // Gemütliche Hallen-Umgebung (Boden, Wände, Hängelampe)
+    this._buildRoom();
   }
 
   _buildCue() {
@@ -284,8 +415,8 @@ export class BilliardEngine {
     const info = ballInfo(state.id);
     const tex = this._ballTexture(info);
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(BALL_R, 28, 28),
-      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.18, metalness: 0.05 })
+      new THREE.SphereGeometry(BALL_R, 32, 32),
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.06, metalness: 0.0, envMapIntensity: 1.1 })
     );
     mesh.castShadow = true;
     mesh.position.set(state.x, BALL_R, state.z);
@@ -344,8 +475,14 @@ export class BilliardEngine {
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(info.id), 64, 66);
     }
+    // Dezentes Glanzlicht für poliert-glänzende Optik
+    const glint = ctx.createRadialGradient(40, 34, 2, 44, 38, 34);
+    glint.addColorStop(0, 'rgba(255,255,255,0.55)');
+    glint.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glint; ctx.fillRect(0, 0, 128, 128);
     const t = new THREE.CanvasTexture(c);
     t.anisotropy = 4;
+    t.colorSpace = THREE.SRGBColorSpace;
     return t;
   }
 

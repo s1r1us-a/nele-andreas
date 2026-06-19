@@ -1,15 +1,12 @@
 // ============================================================
 //  MINIGOLF · ENGINE  🎮
-//  Three.js-Rendering (Neon/Bloom) + cannon-es-Physik.
+//  Three.js-Rendering (freundliches, sonniges Naturfeld) + cannon-es-Physik.
 //  Baut pro Loch Szene UND Physik-Welt aus den HOLES-Daten auf,
 //  simuliert NUR den aktiven Ball lokal und meldet das Ergebnis
 //  per Callback zurück. Kennt Firebase nicht (isoliert testbar).
 // ============================================================
 
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import * as CANNON from 'cannon-es';
 
 // ── Konstanten / Tuning ─────────────────────────────────────
@@ -66,6 +63,8 @@ export class MinigolfEngine {
     this._pointers = new Map();
     this._camPinch = null;
     this._camMouseId = null;
+    this._camTouchId = null;         // Ein-Finger-Kamera (Touch, außerhalb des Ziel-Modus)
+    this.aimMode = false;            // false = Finger dreht Kamera, true = Finger zieht/schießt
     this._liveTargets = {};          // key → Vector3 (Echtzeit-Ziel des Gegnerballs)
     this._raf = null;
     this._clock = new THREE.Clock();
@@ -86,86 +85,187 @@ export class MinigolfEngine {
     this.renderer = new THREE.WebGLRenderer({ antialias: !this.isMobile, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.5 : 2));
     this.renderer.setSize(w, h);
-    // Filmisches Tonemapping → satter Neon-Glow, ohne dass Details absaufen
+    // Filmisches Tonemapping, sonnig-natürlich belichtet
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.28;
+    this.renderer.toneMappingExposure = 1.0;
+    // Weiche Schlagschatten für ein realistisches Tageslicht-Setting (Desktop)
+    this.renderer.shadowMap.enabled = !this.isMobile;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.mount.appendChild(this.renderer.domElement);
     this.renderer.domElement.style.touchAction = 'none';
     this.renderer.domElement.style.display = 'block';
 
     this.scene = new THREE.Scene();
-    // Wärmerer, satter Nachthimmel-Ton statt flachem Dunkelblau
-    this.scene.background = new THREE.Color(0x2a1f52);
-    this.scene.fog = new THREE.Fog(0x2a1f52, 62, 150);
+    // Heller, sonniger Himmel mit Verlauf (Himmelblau oben → blasser Horizont)
+    this.scene.background = this._skyTexture();
+    this.scene.fog = new THREE.Fog(0xdfeefc, 70, 200);
 
-    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 260);
+    this.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 320);
 
-    // Licht: deutlich heller + warmer Akzent für ein liebevolleres Setting
-    this.scene.add(new THREE.AmbientLight(0xbcc6ff, 1.4));
-    this.scene.add(new THREE.HemisphereLight(0xd6dcff, 0x3a3068, 1.05));
-    const dir = new THREE.DirectionalLight(0xffffff, 1.15);
-    dir.position.set(8, 24, 6);
-    this.scene.add(dir);
-    const dir2 = new THREE.DirectionalLight(0x9fb4ff, 0.5);
-    dir2.position.set(-10, 12, -8);
-    this.scene.add(dir2);
-    // Warmes Rosé-Akzentlicht (Andreas/Nele-Palette)
-    const warm = new THREE.PointLight(0xff9ecb, 0.9, 120, 2);
-    warm.position.set(-6, 14, 10);
-    this.scene.add(warm);
+    // Licht: warmes Sonnenlicht + natürliches Himmel/Gras-Ambient
+    this.scene.add(new THREE.HemisphereLight(0xbfe3ff, 0x6a8a3a, 1.05));
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const sun = new THREE.DirectionalLight(0xfff4e0, 2.0);
+    sun.position.set(18, 30, 12);
+    sun.castShadow = !this.isMobile;
+    if (sun.shadow) {
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.camera.near = 5; sun.shadow.camera.far = 120;
+      sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
+      sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
+      sun.shadow.bias = -0.0004;
+    }
+    this.sun = sun;
+    this.scene.add(sun);
+    this.scene.add(sun.target);
+    // Sanftes Fülllicht vom Himmel her
+    const sky = new THREE.DirectionalLight(0xcfe6ff, 0.35);
+    sky.position.set(-14, 18, -10);
+    this.scene.add(sky);
 
-    // Stimmungsvoller Sternenhimmel (persistent, lochunabhängig)
-    this._addStarfield();
+    // Natur-Kulisse (Wiese, Bäume, Büsche, Wolken) – persistent, lochunabhängig
+    this._addScenery();
 
-    // Postprocessing (Neon-Glow)
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(
-      new THREE.Vector2(w, h),
-      this.isMobile ? 0.5 : 0.72, // strength (Szene ist jetzt heller)
-      0.6,                        // radius (weicher, liebevoller Glow)
-      0.22                        // threshold: nur kräftige Neon-Kanten glühen
-    );
-    this.composer.addPass(this.bloom);
-
-    // Ziel-System (dickes Glow-Band + Punkte + Ziel-Marker)
+    // Ziel-System (Band + Punkte + Ziel-Marker)
     this._initAim();
 
     this._ray = new THREE.Raycaster();
     this._groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   }
 
-  // Sternenhimmel als Punktwolke auf einer großen Kuppel
-  _addStarfield() {
-    const N = this.isMobile ? 320 : 600;
-    const pos = new Float32Array(N * 3);
-    const col = new Float32Array(N * 3);
-    const tint = [
-      [1.0, 0.85, 0.95], // rosé
-      [0.8, 0.85, 1.0],  // blau
-      [0.95, 0.9, 1.0],  // lavendel
-      [1.0, 1.0, 0.95],  // warmweiß
-    ];
-    for (let i = 0; i < N; i++) {
-      const r = 90 + Math.random() * 50;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI * 0.5; // obere Hälfte
-      pos[i * 3]     = Math.cos(theta) * Math.cos(phi) * r;
-      pos[i * 3 + 1] = Math.sin(phi) * r + 8;
-      pos[i * 3 + 2] = Math.sin(theta) * Math.cos(phi) * r;
-      const t = tint[(Math.random() * tint.length) | 0];
-      col[i * 3] = t[0]; col[i * 3 + 1] = t[1]; col[i * 3 + 2] = t[2];
+  // Himmel-Verlauf als CanvasTexture (oben kräftiges Blau → unten heller Dunst)
+  _skyTexture() {
+    const c = document.createElement('canvas');
+    c.width = 16; c.height = 256;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0.0, '#5aa9e6');
+    g.addColorStop(0.45, '#8fc9f0');
+    g.addColorStop(0.8, '#d3ecfb');
+    g.addColorStop(1.0, '#eaf6ff');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 16, 256);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Natur-Kulisse: weite Wiese, Bäume/Büsche am Rand, Hügel am Horizont, Wolken.
+  // Persistent (lochunabhängig) – liegt unter/neben den einzelnen Bahnen.
+  _addScenery() {
+    // Weite Graswiese weit über die Bahnen hinaus
+    const meadow = new THREE.Mesh(
+      new THREE.CircleGeometry(170, 48),
+      new THREE.MeshStandardMaterial({ map: this._grassTexture(34, 0x76b24a, 0x6aa342), roughness: 1, metalness: 0 })
+    );
+    meadow.rotation.x = -Math.PI / 2;
+    meadow.position.y = -0.6;
+    meadow.receiveShadow = !this.isMobile;
+    this.scene.add(meadow);
+
+    // Sanfte Hügel am Horizont (gedämpftes Grün)
+    const hillMat = new THREE.MeshStandardMaterial({ color: 0x6fae62, roughness: 1 });
+    const hillCount = this.isMobile ? 7 : 11;
+    for (let i = 0; i < hillCount; i++) {
+      const a = (i / hillCount) * Math.PI * 2 + 0.3;
+      const r = 120 + Math.random() * 30;
+      const s = 14 + Math.random() * 16;
+      const hill = new THREE.Mesh(new THREE.SphereGeometry(s, 14, 10), hillMat);
+      hill.position.set(Math.cos(a) * r, -s * 0.55, Math.sin(a) * r);
+      hill.scale.y = 0.45;
+      this.scene.add(hill);
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    const mat = new THREE.PointsMaterial({
-      size: 1.1, sizeAttenuation: true, vertexColors: true,
-      transparent: true, opacity: 0.9, depthWrite: false,
-    });
-    this.stars = new THREE.Points(geo, mat);
-    this.stars.frustumCulled = false;
-    this.scene.add(this.stars);
+
+    // Bäume & Büsche rundherum (außerhalb des typischen Bahnbereichs)
+    const trees = this.isMobile ? 14 : 26;
+    for (let i = 0; i < trees; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 34 + Math.random() * 70;
+      const x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (Math.random() < 0.7) this._addTree(x, z, 0.8 + Math.random() * 0.7);
+      else this._addBush(x, z, 0.8 + Math.random() * 0.8);
+    }
+
+    // Weiche Schönwetter-Wolken
+    this.clouds = new THREE.Group();
+    const cloudCount = this.isMobile ? 5 : 9;
+    for (let i = 0; i < cloudCount; i++) {
+      this.clouds.add(this._makeCloud(
+        (Math.random() - 0.5) * 220,
+        46 + Math.random() * 26,
+        (Math.random() - 0.5) * 220
+      ));
+    }
+    this.scene.add(this.clouds);
+  }
+
+  // Prozedurale Gras-Textur mit dezenten Mäh-Streifen
+  _grassTexture(size = 24, c1 = 0x76b24a, c2 = 0x6aa342) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    const hex = (v) => '#' + v.toString(16).padStart(6, '0');
+    ctx.fillStyle = hex(c1); ctx.fillRect(0, 0, 128, 128);
+    // Mäh-Streifen
+    ctx.fillStyle = hex(c2);
+    for (let y = 0; y < 128; y += 16) ctx.fillRect(0, y, 128, 8);
+    // Feines Rauschen für Grasstruktur
+    for (let i = 0; i < 1400; i++) {
+      ctx.fillStyle = `rgba(${30 + Math.random() * 40 | 0},${90 + Math.random() * 60 | 0},${30 + Math.random() * 40 | 0},0.20)`;
+      ctx.fillRect(Math.random() * 128, Math.random() * 128, 1.5, 1.5);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(size, size);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  _addTree(x, z, scale = 1) {
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22 * scale, 0.32 * scale, 2.4 * scale, 8),
+      new THREE.MeshStandardMaterial({ color: 0x7a5232, roughness: 0.95 })
+    );
+    trunk.position.set(x, 1.2 * scale - 0.6, z);
+    trunk.castShadow = !this.isMobile;
+    this.scene.add(trunk);
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x4f9d3f, roughness: 0.9 });
+    const crown = new THREE.Group();
+    for (let i = 0; i < 3; i++) {
+      const blob = new THREE.Mesh(new THREE.SphereGeometry((1.3 - i * 0.25) * scale, 12, 10), leafMat);
+      blob.position.set((Math.random() - 0.5) * 0.6 * scale, 2.4 * scale - 0.6 + i * 0.9 * scale, (Math.random() - 0.5) * 0.6 * scale);
+      blob.castShadow = !this.isMobile;
+      crown.add(blob);
+    }
+    crown.position.set(x, 0, z);
+    this.scene.add(crown);
+  }
+
+  _addBush(x, z, scale = 1) {
+    const mat = new THREE.MeshStandardMaterial({ color: 0x5aa84a, roughness: 0.95 });
+    const bush = new THREE.Group();
+    for (let i = 0; i < 3; i++) {
+      const blob = new THREE.Mesh(new THREE.SphereGeometry((0.6 + Math.random() * 0.3) * scale, 10, 8), mat);
+      blob.position.set((Math.random() - 0.5) * 0.9 * scale, 0.1, (Math.random() - 0.5) * 0.9 * scale);
+      blob.castShadow = !this.isMobile;
+      bush.add(blob);
+    }
+    bush.position.set(x, 0, z);
+    this.scene.add(bush);
+  }
+
+  _makeCloud(x, y, z) {
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0xeaf2ff, emissiveIntensity: 0.15 });
+    const g = new THREE.Group();
+    const puffs = 4 + (Math.random() * 3 | 0);
+    for (let i = 0; i < puffs; i++) {
+      const s = 3 + Math.random() * 4;
+      const p = new THREE.Mesh(new THREE.SphereGeometry(s, 10, 8), mat);
+      p.position.set((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 8);
+      p.scale.y = 0.6;
+      g.add(p);
+    }
+    g.position.set(x, y, z);
+    return g;
   }
 
   // Ziel-System: kräftiges Glow-Band + Punktespur + Ziel-Marker am Ende.
@@ -259,17 +359,15 @@ export class MinigolfEngine {
   _buildClub() {
     const club = new THREE.Group();
     const metal = new THREE.MeshStandardMaterial({
-      color: 0xf4f7ff, emissive: 0x4a5fa0, emissiveIntensity: 0.7,
-      roughness: 0.18, metalness: 0.92,
+      color: 0xeef1f6, roughness: 0.25, metalness: 0.9,
     });
     const grip = new THREE.MeshStandardMaterial({
-      color: 0x1a2038, emissive: 0x141a36, emissiveIntensity: 0.4,
-      roughness: 0.55, metalness: 0.25,
+      color: 0x2a2f3a, roughness: 0.7, metalness: 0.1,
     });
-    // Neon-Akzent (wird pro Spieler eingefärbt) – verleiht dem Putter Leuchtkraft
+    // Farbakzent (wird pro Spieler eingefärbt) – dezent, nicht leuchtend
     this.clubAccentMat = new THREE.MeshStandardMaterial({
-      color: 0x111426, emissive: 0x4ecdc4, emissiveIntensity: 2.2,
-      roughness: 0.3, metalness: 0.5,
+      color: 0x4ecdc4, emissive: 0x4ecdc4, emissiveIntensity: 0.35,
+      roughness: 0.35, metalness: 0.4,
     });
 
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.052, 2.2, 16), metal);
@@ -317,7 +415,9 @@ export class MinigolfEngine {
 
     // Schläger-Akzent in der Farbe des aktiven Spielers
     if (this.clubAccentMat) {
-      this.clubAccentMat.emissive.setHex(PLAYER_COLORS[this.active.key] || PLAYER_COLORS.solo);
+      const pc = PLAYER_COLORS[this.active.key] || PLAYER_COLORS.solo;
+      this.clubAccentMat.color.setHex(pc);
+      this.clubAccentMat.emissive.setHex(pc);
     }
 
     const ballPos = this.balls[this.active.key].mesh.position;
@@ -355,13 +455,13 @@ export class MinigolfEngine {
     this.cupPos.set(holeDef.cup.x, holeDef.cup.y || 0, holeDef.cup.z);
     const g = holeDef.ground;
 
-    // Boden (sattes Violett-Blau, passend zum Nachthimmel)
+    // Boden (gemähter Rasen)
     this._addBox(0, -0.5, 0, g.w, 1, g.l, {
-      color: 0x35316e, emissive: 0x241f5e, emissiveIntensity: 0.5,
-      physMat: this.matGround,
+      color: 0x6aa342, map: this._grassTexture(Math.max(g.w, g.l) / 2.2, 0x6fae4e, 0x66a345),
+      physMat: this.matGround, receiveShadow: true,
     });
 
-    // Neon-Bodenraster (nur Optik)
+    // Dezente Fairway-Einfassung (heller Rasenrand)
     this._addGrid(g.w, g.l);
 
     // Perimeter-Banden
@@ -375,11 +475,11 @@ export class MinigolfEngine {
     (holeDef.walls || []).forEach(wl =>
       this._addWall(wl.x, wl.z, wl.w, wl.l, false, wl.h || WALL_H));
 
-    // Plateaus (erhöhte Plattformen)
+    // Plateaus (erhöhte Plattformen, ebenfalls Rasen)
     (holeDef.plateaus || []).forEach(p =>
       this._addBox(p.x, p.h / 2, p.z, p.w, p.h, p.l, {
-        color: 0x35316e, emissive: 0x2a2466, emissiveIntensity: 0.55,
-        physMat: this.matGround,
+        color: 0x6aa342, map: this._grassTexture(Math.max(p.w, p.l) / 2, 0x6fae4e, 0x66a345),
+        physMat: this.matGround, receiveShadow: true,
       }));
 
     // Rampen (geneigte Flächen)
@@ -394,8 +494,8 @@ export class MinigolfEngine {
     (holeDef.movers || []).forEach(m => this._addMover(m));
 
     // Hazards (nur Optik + Zonen-Check im Loop)
-    (holeDef.water || []).forEach(z => this._addHazardPad(z, 0x14e0e0));
-    (holeDef.sand || []).forEach(z => this._addHazardPad(z, 0xe0a030));
+    (holeDef.water || []).forEach(z => this._addHazardPad(z, 0x3aa0d8, 'water'));
+    (holeDef.sand || []).forEach(z => this._addHazardPad(z, 0xd8c08a, 'sand'));
 
     // Loch + Fahne
     this._addCup(holeDef.cup);
@@ -447,13 +547,13 @@ export class MinigolfEngine {
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(sx, sy, sz),
       new THREE.MeshStandardMaterial({
-        color: opt.color ?? 0x1a2348,
-        emissive: opt.emissive ?? 0x000000,
-        emissiveIntensity: opt.emissiveIntensity ?? 1,
-        roughness: 0.6, metalness: 0.2,
+        color: opt.color ?? 0x6aa342,
+        map: opt.map ?? null,
+        roughness: opt.roughness ?? 0.95, metalness: 0,
       })
     );
     mesh.position.set(x, y, z);
+    if (opt.receiveShadow && !this.isMobile) mesh.receiveShadow = true;
     this.scene.add(mesh);
     let body = null;
     if (opt.physMat !== undefined) {
@@ -473,11 +573,12 @@ export class MinigolfEngine {
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, sz),
       new THREE.MeshStandardMaterial({
-        color: 0x2a3a6e, emissive: 0x3a7bff, emissiveIntensity: 1.3,
-        roughness: 0.4, metalness: 0.3,
+        color: 0x9c6b3f, roughness: 0.85, metalness: 0.05,
       })
     );
     mesh.position.set(x, h / 2, z);
+    mesh.castShadow = !this.isMobile;
+    mesh.receiveShadow = !this.isMobile;
     this.scene.add(mesh);
     const body = new CANNON.Body({
       mass: 0, material: this.matWall,
@@ -489,16 +590,15 @@ export class MinigolfEngine {
   }
 
   _addGrid(w, l) {
-    // Feineres, dezenteres Neon-Raster: kräftige Mittelachsen, zarte Linien
-    const span = Math.max(w, l);
-    const divs = Math.round(span / 1.3);
-    const grid = new THREE.GridHelper(span, divs, 0x7aa0ff, 0x3a5aa8);
-    grid.position.y = 0.02;
-    grid.material.transparent = true;
-    grid.material.opacity = 0.32;
-    grid.material.depthWrite = false;
-    this.scene.add(grid);
-    this.holeObjects.push({ mesh: grid });
+    // Dezente helle Fairway-Einfassung (heller gemähter Rand statt Neon-Raster)
+    const frame = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(w - 0.4, l - 0.4)),
+      new THREE.LineBasicMaterial({ color: 0xcdeeb0, transparent: true, opacity: 0.35 })
+    );
+    frame.rotation.x = -Math.PI / 2;
+    frame.position.y = 0.03;
+    this.scene.add(frame);
+    this.holeObjects.push({ mesh: frame });
   }
 
   _addRamp(r) {
@@ -507,12 +607,13 @@ export class MinigolfEngine {
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(r.w, 0.4, len),
       new THREE.MeshStandardMaterial({
-        color: 0x10162e, emissive: 0x2266ff, emissiveIntensity: 0.7,
-        roughness: 0.5, metalness: 0.2,
+        color: 0x8a6a44, roughness: 0.8, metalness: 0.05,
       })
     );
     mesh.position.set(r.x, r.h / 2, r.z);
     mesh.rotation.x = -angle;
+    mesh.castShadow = !this.isMobile;
+    mesh.receiveShadow = !this.isMobile;
     this.scene.add(mesh);
     const body = new CANNON.Body({
       mass: 0, material: this.matGround,
@@ -526,13 +627,21 @@ export class MinigolfEngine {
 
   _addBumper(x, z, radius) {
     const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius, radius, WALL_H, 20),
+      new THREE.CylinderGeometry(radius, radius * 1.1, WALL_H, 20),
       new THREE.MeshStandardMaterial({
-        color: 0x200a2e, emissive: 0xff3df0, emissiveIntensity: 2.0,
-        roughness: 0.3, metalness: 0.4,
+        color: 0xb24a3a, roughness: 0.6, metalness: 0.05,
       })
     );
     mesh.position.set(x, WALL_H / 2, z);
+    mesh.castShadow = !this.isMobile;
+    // Heller Deckel als Akzent (rot-weiß lackierter Prellpfosten)
+    const cap = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 1.05, radius * 1.05, 0.18, 20),
+      new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.5 })
+    );
+    cap.position.set(x, WALL_H + 0.02, z);
+    this.scene.add(cap);
+    this.holeObjects.push({ mesh: cap });
     this.scene.add(mesh);
     // Kollision als Kugel auf Ballhöhe → runder, orientierungs-freier Abprall
     const body = new CANNON.Body({
@@ -551,16 +660,16 @@ export class MinigolfEngine {
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(len, 0.55, 0.4),
       new THREE.MeshStandardMaterial({
-        color: 0x2a0a3a, emissive: 0xff4df0, emissiveIntensity: 2.0,
-        roughness: 0.3, metalness: 0.4,
+        color: 0xd23f3f, roughness: 0.55, metalness: 0.1,
       })
     );
     mesh.position.set(s.x, 0.45, s.z);
+    mesh.castShadow = !this.isMobile;
     this.scene.add(mesh);
     // Nabe in der Mitte
     const hub = new THREE.Mesh(
       new THREE.CylinderGeometry(0.35, 0.35, 0.9, 16),
-      new THREE.MeshStandardMaterial({ color: 0x140a2e, emissive: 0x7a3dff, emissiveIntensity: 1.6 })
+      new THREE.MeshStandardMaterial({ color: 0x7a5232, roughness: 0.8 })
     );
     hub.position.set(s.x, 0.45, s.z);
     this.scene.add(hub);
@@ -582,11 +691,11 @@ export class MinigolfEngine {
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(m.w, h, m.l),
       new THREE.MeshStandardMaterial({
-        color: 0x0a2a2a, emissive: 0x18e0e0, emissiveIntensity: 1.6,
-        roughness: 0.4, metalness: 0.3,
+        color: 0x3a7ac0, roughness: 0.55, metalness: 0.1,
       })
     );
     mesh.position.set(m.x, h / 2, m.z);
+    mesh.castShadow = !this.isMobile;
     this.scene.add(mesh);
 
     const body = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: this.matWall });
@@ -604,16 +713,17 @@ export class MinigolfEngine {
     });
   }
 
-  _addHazardPad(zone, color) {
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(zone.w, zone.l),
-      new THREE.MeshStandardMaterial({
-        color: 0x05080f, emissive: color, emissiveIntensity: 0.9,
-        transparent: true, opacity: 0.85, roughness: 0.2,
-      })
-    );
+  _addHazardPad(zone, color, kind = 'water') {
+    const mat = kind === 'water'
+      ? new THREE.MeshStandardMaterial({
+          color, roughness: 0.12, metalness: 0.35,
+          transparent: true, opacity: 0.82,
+        })
+      : new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0 });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(zone.w, zone.l), mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(zone.x, 0.04, zone.z);
+    mesh.position.set(zone.x, kind === 'water' ? 0.05 : 0.04, zone.z);
+    if (kind === 'sand' && !this.isMobile) mesh.receiveShadow = true;
     this.scene.add(mesh);
     this.holeObjects.push({ mesh });
   }
@@ -623,48 +733,40 @@ export class MinigolfEngine {
     // Loch-Senke
     const hole = new THREE.Mesh(
       new THREE.CircleGeometry(CUP_R, 24),
-      new THREE.MeshBasicMaterial({ color: 0x000000 })
+      new THREE.MeshBasicMaterial({ color: 0x0a0a08 })
     );
     hole.rotation.x = -Math.PI / 2;
     hole.position.set(cup.x, y, cup.z);
     this.scene.add(hole);
-    // Pulsierender Glow-Ring
+    // Heller, metallischer Lochrand (dezent pulsierend)
     const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(CUP_R + 0.08, 0.08, 12, 32),
-      new THREE.MeshStandardMaterial({ color: 0x113322, emissive: 0x33ff99, emissiveIntensity: 2.2 })
+      new THREE.TorusGeometry(CUP_R + 0.07, 0.06, 12, 32),
+      new THREE.MeshStandardMaterial({ color: 0xf3f4f0, roughness: 0.35, metalness: 0.6 })
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(cup.x, y + 0.02, cup.z);
     this.scene.add(ring);
     this.cupRing = ring;
-    // Einladender, weicher Boden-Halo um das Loch
-    const halo = new THREE.Mesh(
-      new THREE.RingGeometry(CUP_R + 0.2, CUP_R + 1.1, 40),
-      new THREE.MeshBasicMaterial({ color: 0x33ff99, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
-    );
-    halo.rotation.x = -Math.PI / 2;
-    halo.position.set(cup.x, y + 0.01, cup.z);
-    this.scene.add(halo);
-    // Neon-Fahne
+    // Schlanker weißer Fahnenmast
     const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8),
-      new THREE.MeshStandardMaterial({ color: 0x222244, emissive: 0x6688ff, emissiveIntensity: 1.4 })
+      new THREE.CylinderGeometry(0.035, 0.035, 2.4, 8),
+      new THREE.MeshStandardMaterial({ color: 0xf0f0ec, roughness: 0.5, metalness: 0.2 })
     );
     pole.position.set(cup.x, (cup.y || 0) + 1.2, cup.z);
+    pole.castShadow = !this.isMobile;
     this.scene.add(pole);
-    // Wimpel (Dreieck) – leuchtet und weht sanft
+    // Stoff-Fahne (rotes Dreieck) – weht sanft
     const flagShape = new THREE.Shape();
-    flagShape.moveTo(0, 0); flagShape.lineTo(0.8, -0.18); flagShape.lineTo(0, -0.45); flagShape.lineTo(0, 0);
+    flagShape.moveTo(0, 0); flagShape.lineTo(0.85, -0.2); flagShape.lineTo(0, -0.5); flagShape.lineTo(0, 0);
     const flag = new THREE.Mesh(
       new THREE.ShapeGeometry(flagShape),
-      new THREE.MeshStandardMaterial({ color: 0x330022, emissive: 0xff5fb0, emissiveIntensity: 1.9, side: THREE.DoubleSide })
+      new THREE.MeshStandardMaterial({ color: 0xe23b3b, roughness: 0.85, metalness: 0, side: THREE.DoubleSide })
     );
     flag.position.set(cup.x + 0.02, (cup.y || 0) + 2.3, cup.z);
     this.scene.add(flag);
     this.cupFlag = flag;
     this.holeObjects.push({ mesh: hole });
     this.holeObjects.push({ mesh: ring });
-    this.holeObjects.push({ mesh: halo });
     this.holeObjects.push({ mesh: pole });
     this.holeObjects.push({ mesh: flag });
   }
@@ -672,15 +774,16 @@ export class MinigolfEngine {
   _addBall(key, state) {
     const color = PLAYER_COLORS[key] || PLAYER_COLORS.solo;
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(BALL_R, 24, 24),
+      new THREE.SphereGeometry(BALL_R, 28, 28),
       new THREE.MeshStandardMaterial({
-        color: 0xffffff, emissive: color, emissiveIntensity: 1.6,
-        roughness: 0.25, metalness: 0.1,
+        color, emissive: color, emissiveIntensity: 0.12,
+        roughness: 0.28, metalness: 0.1,
       })
     );
     const y = state.y ?? BALL_R;
     mesh.position.set(state.x, y, state.z);
     mesh.visible = !state.holed;
+    mesh.castShadow = !this.isMobile;
     this.scene.add(mesh);
 
     // Trail
@@ -704,6 +807,9 @@ export class MinigolfEngine {
     this.aiming = false;
     this._hideAim();
     this.shotInProgress = false;
+    // Zugbeginn: zurück auf Kamera-Modus, damit ein Finger sofort die Kamera dreht
+    this.aimMode = false;
+    if (this.cb.onAimModeChange) this.cb.onAimModeChange(false);
     if (!key || !this.balls[key]) { this.inputEnabled = false; return; }
 
     const ball = this.balls[key];
@@ -721,6 +827,19 @@ export class MinigolfEngine {
   }
 
   setInputEnabled(v) { this.inputEnabled = v; }
+
+  // Ziel-Modus umschalten (Touch): true = Finger zielt/schießt, false = Finger dreht Kamera.
+  // Bricht laufendes Zielen ab, wenn auf Kamera zurückgeschaltet wird.
+  setAimMode(v) {
+    this.aimMode = !!v;
+    if (!this.aimMode && this.aiming) {
+      this.aiming = false;
+      this._hideAim();
+      this.aimRatio = 0;
+      if (this.cb.onAim) this.cb.onAim(0, false);
+    }
+    if (this.cb.onAimModeChange) this.cb.onAimModeChange(this.aimMode);
+  }
 
   // Position eines (nicht aktiven) Balls setzen
   updateBallGhost(key, pos) {
@@ -781,6 +900,7 @@ export class MinigolfEngine {
 
     // Zweiter Finger (Handy): Kamera-Pinch, laufendes Zielen abbrechen
     if (this._pointers.size >= 2) {
+      this._camTouchId = null;          // Ein-Finger-Kamera an Pinch übergeben
       if (this.aiming) {
         this.aiming = false;
         this._hideAim();
@@ -791,7 +911,13 @@ export class MinigolfEngine {
       return;
     }
 
-    // Einfacher Klick / Touch: Zielen
+    // Touch ohne Ziel-Modus: ein Finger dreht die Kamera (entkoppelt vom Schießen)
+    if (e.pointerType === 'touch' && !this.aimMode) {
+      this._camTouchId = e.pointerId;
+      return;
+    }
+
+    // Einfacher Klick (Maus) bzw. Touch im Ziel-Modus: Zielen (voller Screen = Ziehfläche)
     if (!this.inputEnabled || !this.active || this.shotInProgress) return;
     const ballY = this.active.body.position.y;
     const gp = this._groundPoint(e, ballY);
@@ -807,6 +933,15 @@ export class MinigolfEngine {
 
     // Rechtsklick-Kamera-Drag (PC)
     if (this._camMouseId === e.pointerId) {
+      if (prev) {
+        this.camYaw  -= (e.clientX - prev.x) * 0.005;
+        this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (e.clientY - prev.y) * 0.005));
+      }
+      return;
+    }
+
+    // Ein-Finger-Kamera-Drag (Touch, außerhalb des Ziel-Modus)
+    if (this._camTouchId === e.pointerId) {
       if (prev) {
         this.camYaw  -= (e.clientX - prev.x) * 0.005;
         this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (e.clientY - prev.y) * 0.005));
@@ -842,6 +977,7 @@ export class MinigolfEngine {
     this._pointers.delete(e.pointerId);
 
     if (this._camMouseId === e.pointerId) { this._camMouseId = null; return; }
+    if (this._camTouchId === e.pointerId) { this._camTouchId = null; return; }
     if (this._pointers.size < 2) this._camPinch = null;
     if (this._pointers.size >= 1 && this._camPinch) return;
 
@@ -851,6 +987,8 @@ export class MinigolfEngine {
     if (this.cb.onAim) this.cb.onAim(0, false);
     if (this.aimRatio > 0.06 && this.active && !this.shotInProgress) {
       this._shoot(this.aimDir.clone(), this.aimRatio);
+      // Nach dem Schlag zurück auf Kamera-Modus → ein Finger dreht sofort wieder
+      this.setAimMode(false);
     }
     this.aimRatio = 0;
   }
@@ -992,8 +1130,13 @@ export class MinigolfEngine {
     if (this.cupFlag) {
       this.cupFlag.rotation.y = Math.sin(performance.now() * 0.0022) * 0.35;
     }
-    // Sternenhimmel ganz langsam drehen
-    if (this.stars) this.stars.rotation.y += dt * 0.006;
+    // Wolken sanft über den Himmel ziehen lassen
+    if (this.clouds) {
+      this.clouds.children.forEach(cl => {
+        cl.position.x += dt * 0.6;
+        if (cl.position.x > 130) cl.position.x = -130;
+      });
+    }
 
     // Versenk-Animation
     if (this.holedAnim) {
@@ -1006,7 +1149,9 @@ export class MinigolfEngine {
 
     this._updateClub(dt);
     this._updateCamera();
-    this.composer.render();
+    // Sonne dem aktiven Geschehen folgen lassen → Schatten bleiben sinnvoll platziert
+    if (this.sun) this.sun.target.position.copy(this.camTarget);
+    this.renderer.render(this.scene, this.camera);
   }
 
   _updateObstacles(dt) {
@@ -1134,7 +1279,6 @@ export class MinigolfEngine {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
-    this.composer.setSize(w, h);
   }
 
   dispose() {
