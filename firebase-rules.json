@@ -21,6 +21,7 @@
     "game":          { ".read": "auth != null", ".write": "auth != null" },
     "minigolf":      { ".read": "auth != null", ".write": "auth != null" },
     "billiard":      { ".read": "auth != null", ".write": "auth != null" },
+    "bowling":       { ".read": "auth != null", ".write": "auth != null" },
     "farm":          { ".read": "auth != null", ".write": "auth != null" },
     "adventure":     { ".read": "auth != null", ".write": "auth != null" },
     "tower":         { ".read": "auth != null", ".write": "auth != null" },
