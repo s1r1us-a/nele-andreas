@@ -336,6 +336,120 @@ export class BowlingEngine {
       panel.position.set(0, 5.04, z);
       this.scene.add(panel);
     }
+
+    // ── Deko: Teppich, Topfpflanzen, gerahmte Bilder ──
+    this._addRug();
+    for (const s of [-1, 1]) {
+      this._addPlant(s * 2.4, LANE_Z0 + 1.4, 1.15);
+      this._addPlant(s * 2.5, 8.0, 0.95);
+      this._addPicture(s, 3.0, 0);
+      this._addPicture(s, 9.0, 1);
+      this._addPicture(s, 14.0, 2);
+    }
+  }
+
+  // Weicher Teppich im Anlaufbereich hinter der Foul-Linie
+  _addRug() {
+    const rug = new THREE.Mesh(
+      new THREE.PlaneGeometry(LANE_W + GUTTER_W * 2 + 1.8, 3.4),
+      new THREE.MeshStandardMaterial({ color: 0xf3c6d6, roughness: 0.95 })
+    );
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.set(0, -0.79, LANE_Z0 - 1.2);
+    rug.receiveShadow = !this.lowQ;
+    this.scene.add(rug);
+    // Ziernaht
+    const border = new THREE.Mesh(
+      new THREE.RingGeometry((LANE_W + GUTTER_W * 2) / 2 + 0.7, (LANE_W + GUTTER_W * 2) / 2 + 0.78, 4),
+      new THREE.MeshStandardMaterial({ color: 0xe89ab4, roughness: 0.9, side: THREE.DoubleSide })
+    );
+    border.rotation.x = -Math.PI / 2; border.rotation.z = Math.PI / 4;
+    border.position.set(0, -0.785, LANE_Z0 - 1.2);
+    this.scene.add(border);
+  }
+
+  // Topfpflanze (Terrakotta-Topf + Blattwerk)
+  _addPlant(x, z, scale = 1) {
+    const FLOOR_Y = -0.8;
+    const grp = new THREE.Group();
+    const pot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14 * scale, 0.18 * scale, 0.5 * scale, 14),
+      new THREE.MeshStandardMaterial({ color: 0xcf7f5c, roughness: 0.85 })
+    );
+    pot.position.y = FLOOR_Y + 0.25 * scale;
+    pot.castShadow = !this.lowQ;
+    grp.add(pot);
+    const rim = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16 * scale, 0.16 * scale, 0.08 * scale, 14),
+      new THREE.MeshStandardMaterial({ color: 0xe8a07e, roughness: 0.8 })
+    );
+    rim.position.y = FLOOR_Y + 0.5 * scale;
+    grp.add(rim);
+    const leafMats = [
+      new THREE.MeshStandardMaterial({ color: 0x4f9d3f, roughness: 0.85 }),
+      new THREE.MeshStandardMaterial({ color: 0x66bb55, roughness: 0.85 }),
+    ];
+    const blobs = this.lowQ ? 4 : 7;
+    for (let i = 0; i < blobs; i++) {
+      const r = (0.16 + Math.random() * 0.12) * scale;
+      const blob = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), leafMats[i % 2]);
+      blob.position.set(
+        (Math.random() - 0.5) * 0.4 * scale,
+        FLOOR_Y + (0.7 + Math.random() * 0.6) * scale,
+        (Math.random() - 0.5) * 0.4 * scale
+      );
+      blob.scale.y = 1.3;
+      blob.castShadow = !this.lowQ;
+      grp.add(blob);
+    }
+    grp.position.set(x, 0, z);
+    this.scene.add(grp);
+  }
+
+  // Motiv-Textur für ein Wandbild (Pastell, freundlich)
+  _pictureTexture(variant) {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 96;
+    const ctx = c.getContext('2d');
+    const palettes = [['#fde4ef', '#f4a6c0'], ['#e7dcff', '#b9a3f0'], ['#fff1cf', '#f6c453']];
+    const pal = palettes[variant % palettes.length];
+    ctx.fillStyle = pal[0]; ctx.fillRect(0, 0, 128, 96);
+    ctx.fillStyle = pal[1];
+    if (variant % 3 === 0) {            // Herz
+      const cx = 64, cy = 46;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + 22);
+      ctx.bezierCurveTo(cx + 30, cy - 6, cx + 10, cy - 30, cx, cy - 12);
+      ctx.bezierCurveTo(cx - 10, cy - 30, cx - 30, cy - 6, cx, cy + 22);
+      ctx.fill();
+    } else if (variant % 3 === 1) {     // Kreise
+      for (let i = 0; i < 5; i++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(20 + i * 22, 30 + (i % 2) * 30, 12, 0, Math.PI * 2); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } else {                            // sanfte Hügel
+      ctx.beginPath(); ctx.moveTo(0, 96);
+      ctx.lineTo(0, 60); ctx.quadraticCurveTo(40, 30, 70, 55); ctx.quadraticCurveTo(100, 75, 128, 50); ctx.lineTo(128, 96); ctx.fill();
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Gerahmtes Bild an der Seitenwand (s = -1 links, +1 rechts)
+  _addPicture(s, z, variant) {
+    const w = 0.95, h = 0.66;
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, h + 0.12, w + 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xf3e2bd, roughness: 0.5, metalness: 0.3 })
+    );
+    frame.position.set(s * 2.80, 1.7, z);
+    this.scene.add(frame);
+    const pic = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshStandardMaterial({ map: this._pictureTexture(variant), roughness: 0.8 })
+    );
+    pic.position.set(s * 2.758, 1.7, z);
+    pic.rotation.y = -s * Math.PI / 2;
+    this.scene.add(pic);
   }
 
   // Profil-Form eines Bowling-Pins (Lathe), zentriert um die eigene Höhe
