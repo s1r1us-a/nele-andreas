@@ -98,7 +98,7 @@ export class BowlingEngine {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.lowQ ? 1.5 : 2));
     this.renderer.setSize(w, h);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = !this.lowQ;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.mount.appendChild(this.renderer.domElement);
@@ -106,21 +106,22 @@ export class BowlingEngine {
     this.renderer.domElement.style.display = 'block';
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0d12);
-    this.scene.fog = new THREE.Fog(0x0a0d12, 22, 46);
+    // Helle, freundliche Halle (kein dunkler Hintergrund)
+    this.scene.background = new THREE.Color(0xeaf1fb);
+    this.scene.fog = new THREE.Fog(0xeaf1fb, 36, 72);
 
     this.camera = new THREE.PerspectiveCamera(52, w / h, 0.1, 200);
 
-    // Indoor-Licht: gedämpftes Ambient + warmes Deckenlicht, Spots auf Bahn & Pins
-    this.scene.add(new THREE.HemisphereLight(0x55617a, 0x0a0d12, 0.55));
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.16));
+    // Helles, einladendes Licht: kräftiges Himmel-/Boden-Ambient + warmes Deckenlicht
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0xf3e2c8, 1.05));
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-    const ceiling = new THREE.DirectionalLight(0xfff1d8, 0.9);
-    ceiling.position.set(2, 16, 2);
+    const ceiling = new THREE.DirectionalLight(0xfff4e6, 1.25);
+    ceiling.position.set(3, 18, 0);
     ceiling.castShadow = !this.lowQ;
     if (ceiling.shadow) {
       ceiling.shadow.mapSize.set(this.lowQ ? 1024 : 2048, this.lowQ ? 1024 : 2048);
-      ceiling.shadow.camera.near = 2; ceiling.shadow.camera.far = 40;
+      ceiling.shadow.camera.near = 2; ceiling.shadow.camera.far = 44;
       ceiling.shadow.camera.left = -4; ceiling.shadow.camera.right = 4;
       ceiling.shadow.camera.top = 22; ceiling.shadow.camera.bottom = -6;
       ceiling.shadow.bias = -0.0005;
@@ -129,18 +130,18 @@ export class BowlingEngine {
     this.scene.add(ceiling.target);
     ceiling.target.position.set(0, 0, 10);
 
-    // Heller Spot übers Pin-Deck (Deck-Beleuchtung)
-    const deckSpot = new THREE.SpotLight(0xfff6e6, this.lowQ ? 1.6 : 2.4, 28, 0.6, 0.5, 1.2);
-    deckSpot.position.set(0, 9, HEAD_PIN_Z - 1.5);
+    // Weicher Spot übers Pin-Deck (Akzent, unter der Decke)
+    const deckSpot = new THREE.SpotLight(0xffffff, this.lowQ ? 0.9 : 1.4, 30, 0.7, 0.6, 1.0);
+    deckSpot.position.set(0, 4.6, HEAD_PIN_Z - 1.5);
     deckSpot.target.position.set(0, 0, HEAD_PIN_Z + 1);
     deckSpot.castShadow = !this.lowQ;
     if (deckSpot.shadow) deckSpot.shadow.mapSize.set(1024, 1024);
     this.scene.add(deckSpot);
     this.scene.add(deckSpot.target);
 
-    // Kühles Akzentlicht von vorne für die Kugel
-    const fill = new THREE.PointLight(0x88aaff, 0.5, 18);
-    fill.position.set(0, 5, BALL_START_Z - 1);
+    // Warmes Fülllicht vorne für die Kugel
+    const fill = new THREE.PointLight(0xfff0e0, 0.4, 22);
+    fill.position.set(0, 4.5, BALL_START_Z - 1);
     this.scene.add(fill);
 
     this._ray = new THREE.Raycaster();
@@ -218,14 +219,14 @@ export class BowlingEngine {
     c.width = 256; c.height = 128;
     const ctx = c.getContext('2d');
     const g = ctx.createLinearGradient(0, 0, 0, 128);
-    g.addColorStop(0, '#2a1a4a'); g.addColorStop(1, '#120a26');
+    g.addColorStop(0, '#fde4ef'); g.addColorStop(1, '#e7dcff');
     ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 128);
-    // dezente Chevron-Streifen
-    ctx.strokeStyle = 'rgba(120,90,200,0.35)'; ctx.lineWidth = 6;
+    // freundliche Chevron-Streifen in Rosé/Lavendel
+    ctx.strokeStyle = 'rgba(232,115,138,0.4)'; ctx.lineWidth = 6;
     for (let x = -128; x < 256; x += 40) {
       ctx.beginPath(); ctx.moveTo(x, 128); ctx.lineTo(x + 64, 0); ctx.stroke();
     }
-    ctx.fillStyle = 'rgba(255,220,120,0.9)';
+    ctx.fillStyle = '#c85070';
     ctx.font = 'bold 54px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('STRIKE', 128, 80);
     const t = new THREE.CanvasTexture(c);
@@ -237,47 +238,43 @@ export class BowlingEngine {
     const len = LANE_Z1 - LANE_Z0;
     const cz = (LANE_Z0 + LANE_Z1) / 2;
 
-    // Untergrund-Boden der Halle (dunkler Teppich)
-    this._staticBox(0, -1.0, cz, 22, 0.4, len + 24, { color: 0x14110f, roughness: 1, receiveShadow: true });
+    // Heller Hallenboden (freundlicher, warmer Holz-/Teppichton)
+    this._staticBox(0, -1.0, cz, 24, 0.4, len + 28, { color: 0xe7d6b6, roughness: 0.95, receiveShadow: true });
 
-    // Bahn (lackiertes Holz)
+    // Bahn (lackiertes helles Ahorn)
     this._staticBox(0, -0.15, cz, LANE_W, 0.3, len, {
-      map: this._laneTexture(), color: 0xe0bd86, roughness: 0.35, metalness: 0.15,
+      map: this._laneTexture(), color: 0xe7c389, roughness: 0.3, metalness: 0.12,
       physMat: this.matLane, receiveShadow: true,
     });
 
-    // Rinnen (tiefer, dunkel) + Außenwände
+    // Rinnen (mittlerer Grauton, nicht schwarz) + helle Bahnrand-Leisten
     const gx = LANE_W / 2 + GUTTER_W / 2;
     for (const s of [-1, 1]) {
       this._staticBox(s * gx, -0.30, cz, GUTTER_W, 0.3, len, {
-        color: 0x10141b, roughness: 0.6, metalness: 0.2, physMat: this.matLane, receiveShadow: true,
+        color: 0x8e98ac, roughness: 0.5, metalness: 0.25, physMat: this.matLane, receiveShadow: true,
       });
-      // Bahnrand-Leiste
       this._staticBox(s * (LANE_W / 2 + GUTTER_W + 0.06), 0.12, cz, 0.12, 0.5, len, {
-        color: 0x2a2018, roughness: 0.7, physMat: this.matLane,
+        color: 0xc49a5f, roughness: 0.55, physMat: this.matLane,
       });
     }
 
-    // Foul-Linie (heller Streifen quer)
-    this._staticBox(0, 0.011, FOUL_Z, LANE_W, 0.02, 0.08, {
-      color: 0xfff2cc, roughness: 0.4, emissive: 0x554420, emissiveIntensity: 0.4,
-    });
+    // Foul-Linie (roter Streifen quer)
+    this._staticBox(0, 0.011, FOUL_Z, LANE_W, 0.02, 0.08, { color: 0xc23b3b, roughness: 0.5 });
 
-    // Ziel-Pfeile (eingelegte Chevrons)
+    // Ziel-Pfeile (dunkleres Holz-Inlay)
     for (const a of ARROWS) {
       const tri = new THREE.Mesh(
         new THREE.ConeGeometry(0.06, 0.22, 3),
-        new THREE.MeshStandardMaterial({ color: 0x4a2f1a, roughness: 0.5 })
+        new THREE.MeshStandardMaterial({ color: 0x9c6a32, roughness: 0.5 })
       );
       tri.rotation.x = -Math.PI / 2;
       tri.position.set(a.x, 0.012, a.z);
       this.scene.add(tri);
     }
-    // Anlauf-Punkte vor der Foul-Linie
     for (let i = -2; i <= 2; i++) {
       const dot = new THREE.Mesh(
         new THREE.CircleGeometry(0.04, 12),
-        new THREE.MeshStandardMaterial({ color: 0x4a2f1a, roughness: 0.5 })
+        new THREE.MeshStandardMaterial({ color: 0x9c6a32, roughness: 0.5 })
       );
       dot.rotation.x = -Math.PI / 2;
       dot.position.set(i * 0.22, 0.012, FOUL_Z - 1.0);
@@ -286,40 +283,173 @@ export class BowlingEngine {
 
     // Pin-Deck (heller Belag hinter der Bahn)
     this._staticBox(0, -0.14, HEAD_PIN_Z + 1.2, LANE_W + 0.02, 0.3, 3.0, {
-      color: 0xf2ead8, roughness: 0.5, metalness: 0.1, physMat: this.matLane, receiveShadow: true,
+      color: 0xf6efe0, roughness: 0.5, metalness: 0.05, physMat: this.matLane, receiveShadow: true,
     });
 
-    // Grube hinter den Pins (Auffang, damit die Kugel nicht ins Leere fällt)
+    // Grube hinter den Pins (Auffang)
     this._staticBox(0, -0.9, LANE_Z1 + 0.4, LANE_W + GUTTER_W * 2, 0.3, 2.2, {
-      color: 0x05070a, roughness: 1, physMat: this.matLane,
+      color: 0x59606e, roughness: 0.9, physMat: this.matLane,
     });
 
-    // ── Deko-Hintergrund: Bowling-Halle ──
-    // Maskenwand (Masking Unit) hinter dem Pin-Deck
+    // ── Freundliche, helle Bowling-Halle ──
+    // Maskenwand hinter dem Pin-Deck (heller Pastell-Panel)
     const masking = new THREE.Mesh(
-      new THREE.PlaneGeometry(LANE_W + GUTTER_W * 2 + 0.4, 3.2),
-      new THREE.MeshStandardMaterial({ map: this._maskingTexture(), roughness: 0.8,
-        emissive: 0x2a1a4a, emissiveIntensity: 0.35 })
+      new THREE.PlaneGeometry(LANE_W + GUTTER_W * 2 + 0.6, 3.4),
+      new THREE.MeshStandardMaterial({ map: this._maskingTexture(), roughness: 0.7, emissive: 0xffffff, emissiveIntensity: 0.16 })
     );
-    masking.position.set(0, 1.4, LANE_Z1 + 1.4);
+    masking.position.set(0, 1.5, LANE_Z1 + 1.4);
     this.scene.add(masking);
-    // Kickback-Seitenwände am Deck
+
+    // Kickback-Seitenwände am Deck (zartes Lavendel)
     for (const s of [-1, 1]) {
-      this._staticBox(s * (LANE_W / 2 + GUTTER_W + 0.18), 0.8, HEAD_PIN_Z + 1.4, 0.12, 1.8, 3.4,
-        { color: 0x1b1430, roughness: 0.7, metalness: 0.2 });
+      this._staticBox(s * (LANE_W / 2 + GUTTER_W + 0.18), 0.85, HEAD_PIN_Z + 1.4, 0.12, 1.9, 3.4,
+        { color: 0xe8def5, roughness: 0.7 });
     }
-    // Seitliche Hallen-/Trennwände entlang der Bahn
+
+    // Seitliche Hallenwände (hell, mit Pastell-Zierstreifen), weiter außen
     for (const s of [-1, 1]) {
-      this._staticBox(s * 2.1, 1.4, cz, 0.2, 3.4, len, { color: 0x171a22, roughness: 0.85 });
+      this._staticBox(s * 2.9, 1.7, cz, 0.25, 4.0, len, { color: 0xfaf2e6, roughness: 0.95 });
+      this._staticBox(s * 2.77, 1.25, cz, 0.04, 0.34, len,
+        { color: s < 0 ? 0xf3b6c6 : 0xc3b2f0, roughness: 0.6, emissive: s < 0 ? 0xf3b6c6 : 0xc3b2f0, emissiveIntensity: 0.12 });
+      this._staticBox(s * 2.82, 0.18, cz, 0.16, 0.36, len, { color: 0xe2d2b8, roughness: 0.8 });
     }
-    // Ball-Return-Schiene rechts neben der Foul-Linie
+
+    // Helle Rückwand hinter dem Spieler
+    this._staticBox(0, 1.7, LANE_Z0 - 1.2, 6.4, 4.0, 0.25, { color: 0xfaf2e6, roughness: 0.95 });
+
+    // Ball-Return-Schiene (hell-metallisch)
     this._staticBox(LANE_W / 2 + GUTTER_W + 0.4, 0.18, FOUL_Z - 0.5, 0.5, 0.4, 2.4,
-      { color: 0x2b3340, roughness: 0.4, metalness: 0.5 });
-    // Angedeutete Sitzbank hinter dem Spieler
-    this._staticBox(0, 0.25, LANE_Z0 - 2.4, 2.4, 0.5, 0.5, { color: 0x3a2c22, roughness: 0.8 });
-    this._staticBox(0, 0.7, LANE_Z0 - 2.7, 2.4, 0.9, 0.12, { color: 0x2c2018, roughness: 0.85 });
-    // Decke (dunkel, fängt Spotlicht)
-    this._staticBox(0, 6.2, cz, 6, 0.3, len, { color: 0x0c0e14, roughness: 1 });
+      { color: 0xbcc4d4, roughness: 0.4, metalness: 0.5 });
+
+    // Sitzbank hinter dem Spieler (helles Holz)
+    this._staticBox(0, 0.25, LANE_Z0 - 2.4, 2.6, 0.5, 0.5, { color: 0xc8a877, roughness: 0.8 });
+    this._staticBox(0, 0.7, LANE_Z0 - 2.7, 2.6, 0.9, 0.12, { color: 0xb7935f, roughness: 0.85 });
+
+    // Helle Decke mit eingelassenen Lichtpaneelen
+    this._staticBox(0, 5.2, cz, 6.6, 0.3, len, { color: 0xf6f6fb, roughness: 1 });
+    for (let z = LANE_Z0 + 3; z < LANE_Z1; z += 5) {
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.4, 2.4),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff6e0, emissiveIntensity: 0.85 })
+      );
+      panel.rotation.x = Math.PI / 2;
+      panel.position.set(0, 5.04, z);
+      this.scene.add(panel);
+    }
+
+    // ── Deko: Teppich, Topfpflanzen, gerahmte Bilder ──
+    this._addRug();
+    for (const s of [-1, 1]) {
+      this._addPlant(s * 2.4, LANE_Z0 + 1.4, 1.15);
+      this._addPlant(s * 2.5, 8.0, 0.95);
+      this._addPicture(s, 3.0, 0);
+      this._addPicture(s, 9.0, 1);
+      this._addPicture(s, 14.0, 2);
+    }
+  }
+
+  // Weicher Teppich im Anlaufbereich hinter der Foul-Linie
+  _addRug() {
+    const rug = new THREE.Mesh(
+      new THREE.PlaneGeometry(LANE_W + GUTTER_W * 2 + 1.8, 3.4),
+      new THREE.MeshStandardMaterial({ color: 0xf3c6d6, roughness: 0.95 })
+    );
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.set(0, -0.79, LANE_Z0 - 1.2);
+    rug.receiveShadow = !this.lowQ;
+    this.scene.add(rug);
+    // Ziernaht
+    const border = new THREE.Mesh(
+      new THREE.RingGeometry((LANE_W + GUTTER_W * 2) / 2 + 0.7, (LANE_W + GUTTER_W * 2) / 2 + 0.78, 4),
+      new THREE.MeshStandardMaterial({ color: 0xe89ab4, roughness: 0.9, side: THREE.DoubleSide })
+    );
+    border.rotation.x = -Math.PI / 2; border.rotation.z = Math.PI / 4;
+    border.position.set(0, -0.785, LANE_Z0 - 1.2);
+    this.scene.add(border);
+  }
+
+  // Topfpflanze (Terrakotta-Topf + Blattwerk)
+  _addPlant(x, z, scale = 1) {
+    const FLOOR_Y = -0.8;
+    const grp = new THREE.Group();
+    const pot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14 * scale, 0.18 * scale, 0.5 * scale, 14),
+      new THREE.MeshStandardMaterial({ color: 0xcf7f5c, roughness: 0.85 })
+    );
+    pot.position.y = FLOOR_Y + 0.25 * scale;
+    pot.castShadow = !this.lowQ;
+    grp.add(pot);
+    const rim = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16 * scale, 0.16 * scale, 0.08 * scale, 14),
+      new THREE.MeshStandardMaterial({ color: 0xe8a07e, roughness: 0.8 })
+    );
+    rim.position.y = FLOOR_Y + 0.5 * scale;
+    grp.add(rim);
+    const leafMats = [
+      new THREE.MeshStandardMaterial({ color: 0x4f9d3f, roughness: 0.85 }),
+      new THREE.MeshStandardMaterial({ color: 0x66bb55, roughness: 0.85 }),
+    ];
+    const blobs = this.lowQ ? 4 : 7;
+    for (let i = 0; i < blobs; i++) {
+      const r = (0.16 + Math.random() * 0.12) * scale;
+      const blob = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), leafMats[i % 2]);
+      blob.position.set(
+        (Math.random() - 0.5) * 0.4 * scale,
+        FLOOR_Y + (0.7 + Math.random() * 0.6) * scale,
+        (Math.random() - 0.5) * 0.4 * scale
+      );
+      blob.scale.y = 1.3;
+      blob.castShadow = !this.lowQ;
+      grp.add(blob);
+    }
+    grp.position.set(x, 0, z);
+    this.scene.add(grp);
+  }
+
+  // Motiv-Textur für ein Wandbild (Pastell, freundlich)
+  _pictureTexture(variant) {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 96;
+    const ctx = c.getContext('2d');
+    const palettes = [['#fde4ef', '#f4a6c0'], ['#e7dcff', '#b9a3f0'], ['#fff1cf', '#f6c453']];
+    const pal = palettes[variant % palettes.length];
+    ctx.fillStyle = pal[0]; ctx.fillRect(0, 0, 128, 96);
+    ctx.fillStyle = pal[1];
+    if (variant % 3 === 0) {            // Herz
+      const cx = 64, cy = 46;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + 22);
+      ctx.bezierCurveTo(cx + 30, cy - 6, cx + 10, cy - 30, cx, cy - 12);
+      ctx.bezierCurveTo(cx - 10, cy - 30, cx - 30, cy - 6, cx, cy + 22);
+      ctx.fill();
+    } else if (variant % 3 === 1) {     // Kreise
+      for (let i = 0; i < 5; i++) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(20 + i * 22, 30 + (i % 2) * 30, 12, 0, Math.PI * 2); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } else {                            // sanfte Hügel
+      ctx.beginPath(); ctx.moveTo(0, 96);
+      ctx.lineTo(0, 60); ctx.quadraticCurveTo(40, 30, 70, 55); ctx.quadraticCurveTo(100, 75, 128, 50); ctx.lineTo(128, 96); ctx.fill();
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Gerahmtes Bild an der Seitenwand (s = -1 links, +1 rechts)
+  _addPicture(s, z, variant) {
+    const w = 0.95, h = 0.66;
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, h + 0.12, w + 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xf3e2bd, roughness: 0.5, metalness: 0.3 })
+    );
+    frame.position.set(s * 2.80, 1.7, z);
+    this.scene.add(frame);
+    const pic = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshStandardMaterial({ map: this._pictureTexture(variant), roughness: 0.8 })
+    );
+    pic.position.set(s * 2.758, 1.7, z);
+    pic.rotation.y = -s * Math.PI / 2;
+    this.scene.add(pic);
   }
 
   // Profil-Form eines Bowling-Pins (Lathe), zentriert um die eigene Höhe
