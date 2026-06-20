@@ -121,9 +121,15 @@
 
     <div class="arena">
       <div class="arena-mount" id="arenaMount"></div>
-      <div class="arena-hint" id="arenaHint">Zieh zurück &amp; lass los 🎱</div>
+      <div class="arena-hint" id="arenaHint">Drehen zum Zielen · Stärke wählen · Stoß 🎱</div>
       <div class="arena-foul" id="arenaFoul">⚠️ Foul!</div>
-      <div class="power-wrap" id="powerWrap"><div class="power-fill" id="powerFill"></div></div>
+    </div>
+
+    <div class="shot-controls" id="shotControls">
+      <label class="power-label" for="powerSlider">Stärke</label>
+      <input type="range" id="powerSlider" class="power-slider" min="0" max="100" value="70">
+      <span class="power-value" id="powerValue">70%</span>
+      <button class="btn-shot" id="shotBtn">🎱 Stoß</button>
     </div>
 
     <div class="pool-actions">

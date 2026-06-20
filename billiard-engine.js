@@ -44,6 +44,7 @@ export class BilliardEngine {
     this._pointers = new Map();
     this._camPinch = null;
     this._camMouseId = null;
+    this._camTouchId = null;
     this._liveActive = false;        // Gegnerstoß wird gerade live gestreamt
     this._liveTargets = {};          // id → { x, z, pocketed }
     this._raf = null;
@@ -233,23 +234,24 @@ export class BilliardEngine {
       place(wallGeoHigh, upper, x, highY, z, ry);
     });
 
-    // Hängelampe über dem Tisch (Schirm + warm leuchtende Birne)
+    // Dezenter Pendel hoch oben (verdeckt den Tisch nicht mehr).
+    // Die eigentliche Ausleuchtung liefert die separate SpotLight.
     const lampGroup = new THREE.Group();
     const cord = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 8, 6),
+      new THREE.CylinderGeometry(0.03, 0.03, 6, 6),
       new THREE.MeshStandardMaterial({ color: 0x20160d, roughness: 1 })
     );
-    cord.position.y = 13; lampGroup.add(cord);
+    cord.position.y = 18; lampGroup.add(cord);
     const shade = new THREE.Mesh(
-      new THREE.ConeGeometry(3.2, 2.2, 28, 1, true),
+      new THREE.ConeGeometry(1.6, 1.2, 24, 1, true),
       new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.7, metalness: 0.3, side: THREE.DoubleSide })
     );
-    shade.position.y = 8.4; lampGroup.add(shade);
+    shade.position.y = 13.5; lampGroup.add(shade);
     const bulb = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5, 16, 12),
+      new THREE.SphereGeometry(0.35, 16, 12),
       new THREE.MeshStandardMaterial({ color: 0xfff2d0, emissive: 0xffdf9c, emissiveIntensity: 2.4 })
     );
-    bulb.position.y = 7.6; lampGroup.add(bulb);
+    bulb.position.y = 13; lampGroup.add(bulb);
     this.scene.add(lampGroup);
   }
 
@@ -550,36 +552,20 @@ export class BilliardEngine {
     const pt = new THREE.Vector3();
     return this._ray.ray.intersectPlane(this._groundPlane, pt) ? pt : null;
   }
+  // Jeder Drag (Maus / 1 Finger / 2 Finger) dreht die Kamera = Zielen.
+  // Stärke kommt vom Regler (setPower), ausgelöst wird per Knopf (performShot).
   _onPointerDown(e) {
     this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    // Rechtsklick (PC): Kamera-Drag
-    if (e.button === 2) { this._camMouseId = e.pointerId; return; }
-
-    // Zweiter Finger (Handy): Kamera-Pinch, laufendes Zielen abbrechen
-    if (this._pointers.size >= 2) {
-      if (this.aiming) {
-        this.aiming = false;
-        this._hideAim();
-        this.aimRatio = 0;
-        if (this.cb.onAim) this.cb.onAim(0, false);
-      }
-      this._camPinch = this._pinchMid();
-      return;
-    }
-
-    // Einfacher Klick / Touch: Zielen
-    if (!this.inputEnabled || this.shotInProgress) return;
-    const gp = this._groundPoint(e);
-    if (!gp) return;
-    this.aiming = true; this._aimStart = gp;
+    if (e.pointerType === 'mouse') { this._camMouseId = e.pointerId; return; }
+    if (this._pointers.size >= 2) { this._camTouchId = null; this._camPinch = this._pinchMid(); return; }
+    this._camTouchId = e.pointerId;
   }
   _onPointerMove(e) {
     const prev = this._pointers.get(e.pointerId);
     this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    // Rechtsklick-Kamera-Drag (PC)
-    if (this._camMouseId === e.pointerId) {
+    // Einzelner Drag (Maus oder ein Finger) dreht die Kamera
+    if (this._camMouseId === e.pointerId || this._camTouchId === e.pointerId) {
       if (prev) {
         this.camYaw  -= (e.clientX - prev.x) * 0.005;
         this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (e.clientY - prev.y) * 0.005));
@@ -587,39 +573,42 @@ export class BilliardEngine {
       return;
     }
 
-    // Zwei-Finger-Kamera (Handy)
+    // Zwei-Finger-Drag (Handy) dreht ebenfalls die Kamera
     if (this._pointers.size >= 2) {
       if (!this._camPinch) this._camPinch = this._pinchMid();
       const mid = this._pinchMid();
       this.camYaw  -= (mid.x - this._camPinch.x) * 0.008;
       this.camPitch = Math.max(0.1, Math.min(1.4, this.camPitch - (mid.y - this._camPinch.y) * 0.008));
       this._camPinch = mid;
-      return;
     }
-
-    if (!this.aiming) return;
-    const gp = this._groundPoint(e);
-    if (!gp) return;
-    const pull = new THREE.Vector3().subVectors(this._aimStart, gp); pull.y = 0;
-    const dist = Math.min(pull.length(), MAX_PULL);
-    if (dist < 0.001) { this.aimRatio = 0; this._hideAim(); return; }
-    this.aimDir.copy(pull).normalize();
-    this.aimRatio = dist / MAX_PULL;
-    this._updateAimLine();
-    if (this.cb.onAim) this.cb.onAim(this.aimRatio, true);
   }
   _onPointerUp(e) {
     this._pointers.delete(e.pointerId);
-
     if (this._camMouseId === e.pointerId) { this._camMouseId = null; return; }
+    if (this._camTouchId === e.pointerId) { this._camTouchId = null; return; }
     if (this._pointers.size < 2) this._camPinch = null;
-    if (this._pointers.size >= 1 && this._camPinch) return;
+  }
 
-    if (!this.aiming) return;
-    this.aiming = false; this._hideAim();
-    if (this.cb.onAim) this.cb.onAim(0, false);
-    if (this.aimRatio > 0.05 && !this.shotInProgress) this._shoot(this.aimDir.clone(), this.aimRatio);
-    this.aimRatio = 0;
+  // Zielrichtung = Blickrichtung der Kamera (über die weiße Kugel auf den Tisch)
+  _syncAimToCamera() {
+    this.aimDir.set(-Math.sin(this.camYaw), 0, -Math.cos(this.camYaw)).normalize();
+  }
+
+  // Stärke vom Regler (0..1) übernehmen und Ziellinie aktualisieren
+  setPower(ratio) {
+    this.aimRatio = Math.max(0, Math.min(1, ratio));
+    if (this.cueReady && !this.shotInProgress) {
+      this._syncAimToCamera();
+      this._updateAimLine();
+    }
+    if (this.cb.onAim) this.cb.onAim(this.aimRatio, true);
+  }
+
+  // Stoß auslösen (Richtung aus Kamera, Stärke vom Regler)
+  performShot() {
+    if (!this.inputEnabled || this.shotInProgress || this.aimRatio <= 0.02) return;
+    this._syncAimToCamera();
+    this._shoot(this.aimDir.clone(), this.aimRatio);
   }
   _hideAim() { if (this.aimGroup) this.aimGroup.visible = false; }
 
@@ -660,6 +649,7 @@ export class BilliardEngine {
     this.shotInfo = { firstContact: null, railHit: false, pocketed: [] };
     this._swing = { t: 0, dur: 0.14, cock: ratio, dir: dir.clone() };
     this.inputEnabled = false;
+    this._hideAim();
     if (this.cb.onShotStart) this.cb.onShotStart();
   }
 
@@ -721,6 +711,12 @@ export class BilliardEngine {
         // Eigene Live-Position an den Gegner streamen (Drossel in JS)
         if (this.cb.onShotTick) this.cb.onShotTick();
       }
+    }
+
+    // Zielrichtung laufend an die Kamera koppeln und Ziellinie anzeigen
+    if (!this._liveActive && this.cueReady && !this.shotInProgress) {
+      this._syncAimToCamera();
+      this._updateAimLine();
     }
 
     this._updateCue(dt);
@@ -806,13 +802,11 @@ export class BilliardEngine {
     }
     if (!canShow) { this.cue.visible = false; return; }
     const p = cue.body.position;
-    let dir;
-    if (this.aiming && this.aimRatio > 0.001) dir = this.aimDir;
-    else { dir = new THREE.Vector3(0, 0, 1); }
+    const dir = this.aimDir.lengthSq() > 0.0001 ? this.aimDir : new THREE.Vector3(0, 0, 1);
     this.cue.position.set(p.x, BALL_R, p.z);
     this.cue.rotation.y = Math.atan2(dir.x, dir.z);
     this.cue.visible = true;
-    this._applyCueOffset(-(0.5 + (this.aiming ? this.aimRatio : 0) * 1.2));
+    this._applyCueOffset(-(0.5 + this.aimRatio * 1.2));
   }
   _applyCueOffset(z) {
     // Verschiebt Queue entlang seiner lokalen -Z (hinter den Ball), Spitze Richtung Ball
