@@ -70,10 +70,28 @@ function ensureEngine() {
     onShotTick: handleShotTick,
   });
   engine.start();
+  // Stärke-Regler + Stoß-Knopf verdrahten
+  const slider = $('powerSlider'), shotBtn = $('shotBtn');
+  if (slider) {
+    const pushPower = () => {
+      const r = (+slider.value) / 100;
+      $('powerValue').textContent = Math.round(r * 100) + '%';
+      if (engine) engine.setPower(r);
+    };
+    slider.addEventListener('input', pushPower);
+    pushPower();
+  }
+  if (shotBtn) shotBtn.addEventListener('click', () => { if (engine) engine.performShot(); });
 }
-function handleAim(ratio, aiming) {
-  $('powerWrap').classList.toggle('show', aiming && ratio > 0);
-  $('powerFill').style.width = Math.round(ratio * 100) + '%';
+// Stärke vom Engine-Callback im Regler spiegeln (z.B. nach Aktivierung)
+function handleAim(ratio /*, aiming */) {
+  $('powerValue').textContent = Math.round(ratio * 100) + '%';
+}
+// Regler + Knopf nur bei eigenem Zug aktiv
+function setShotControls(active) {
+  const wrap = $('shotControls');
+  if (wrap) wrap.classList.toggle('disabled', !active);
+  if (active && engine) engine.setPower((+$('powerSlider').value) / 100);
 }
 // Eigene Kugelpositionen während des Stoßes live an den Gegner streamen (gedrosselt)
 function handleShotTick() {
@@ -144,8 +162,9 @@ function startSolo() {
   ensureEngine();
   engine.rack(solo.balls);
   engine.setActive(true);
+  setShotControls(true);
   updateSoloHud();
-  setHint('🎱 Break! Zieh zurück & lass los — räum den Tisch leer.');
+  setHint('🎱 Break! Drehen zum Zielen, Stärke wählen, Stoß — räum den Tisch leer.');
 }
 function soloShotDone(result, balls) {
   solo.strokes++;
@@ -155,6 +174,7 @@ function soloShotDone(result, balls) {
   updateSoloHud();
   if (remaining === 0) { setTimeout(finishSolo, 700); return; }
   engine.setActive(true);
+  setShotControls(true);
 }
 async function finishSolo() {
   await saveStats(currentUser, { strokes: solo.strokes, ballsPocketed: 15, played: false });
@@ -201,11 +221,12 @@ function syncMultiplayer(state) {
 
   const myTurn = state.status === 'running' && state.currentTurn === me;
   engine.setActive(myTurn);   // bei eigenem Zug Eingabe (wieder) freischalten
+  setShotControls(myTurn);
   controlActive = myTurn;
 
   updateMpHud(state);
   if (state.status === 'running') {
-    setHint(myTurn ? '🎯 Du bist dran — zieh zurück & lass los' : `⏳ ${state.currentTurn} ist am Zug…`);
+    setHint(myTurn ? '🎯 Du bist dran — drehen zum Zielen, Stärke wählen, Stoß' : `⏳ ${state.currentTurn} ist am Zug…`);
   }
   flashFoul(state.lastShot && state.lastShot.foul && state.lastShot.player !== me);
 }
@@ -214,6 +235,7 @@ async function mpShotDone(result, balls) {
   const state = mpState; if (!state) return;
   const me = currentUser, opp = otherPlayer(me);
   engine.setInputEnabled(false);
+  setShotControls(false);
   set(ref(db, LIVE_REF), null).catch(() => {}); // Live-Stream beenden, Endzustand folgt
 
   let groups = { Andreas: state.groups?.Andreas || null, Nele: state.groups?.Nele || null };

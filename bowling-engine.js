@@ -300,22 +300,21 @@ export class BowlingEngine {
     masking.position.set(0, 1.5, LANE_Z1 + 1.4);
     this.scene.add(masking);
 
-    // Kickback-Seitenwände am Deck (zartes Lavendel)
+    // Kickback-Seitenwände am Deck (zartes Lavendel, niedrig gehalten,
+    // damit die Pins frei lesbar bleiben)
     for (const s of [-1, 1]) {
-      this._staticBox(s * (LANE_W / 2 + GUTTER_W + 0.18), 0.85, HEAD_PIN_Z + 1.4, 0.12, 1.9, 3.4,
+      this._staticBox(s * (LANE_W / 2 + GUTTER_W + 0.18), 0.45, HEAD_PIN_Z + 1.4, 0.12, 1.0, 3.4,
         { color: 0xe8def5, roughness: 0.7 });
     }
 
-    // Seitliche Hallenwände (hell, mit Pastell-Zierstreifen), weiter außen
+    // Statt hoher Seitenwände (Sichttunnel) nur eine niedrige Bodenkante
+    // weit außen – weiche Begrenzung, blockiert die Bahn nicht.
     for (const s of [-1, 1]) {
-      this._staticBox(s * 2.9, 1.7, cz, 0.25, 4.0, len, { color: 0xfaf2e6, roughness: 0.95 });
-      this._staticBox(s * 2.77, 1.25, cz, 0.04, 0.34, len,
-        { color: s < 0 ? 0xf3b6c6 : 0xc3b2f0, roughness: 0.6, emissive: s < 0 ? 0xf3b6c6 : 0xc3b2f0, emissiveIntensity: 0.12 });
-      this._staticBox(s * 2.82, 0.18, cz, 0.16, 0.36, len, { color: 0xe2d2b8, roughness: 0.8 });
+      this._staticBox(s * 3.2, -0.05, cz, 0.16, 0.3, len, { color: 0xe2d2b8, roughness: 0.85 });
     }
 
-    // Helle Rückwand hinter dem Spieler
-    this._staticBox(0, 1.7, LANE_Z0 - 1.2, 6.4, 4.0, 0.25, { color: 0xfaf2e6, roughness: 0.95 });
+    // Niedrige, freundliche Rückwand hinter dem Spieler (kein Tunnel)
+    this._staticBox(0, 0.55, LANE_Z0 - 1.2, 6.4, 1.6, 0.25, { color: 0xfaf2e6, roughness: 0.95 });
 
     // Ball-Return-Schiene (hell-metallisch)
     this._staticBox(LANE_W / 2 + GUTTER_W + 0.4, 0.18, FOUL_Z - 0.5, 0.5, 0.4, 2.4,
@@ -337,15 +336,113 @@ export class BowlingEngine {
       this.scene.add(panel);
     }
 
-    // ── Deko: Teppich, Topfpflanzen, gerahmte Bilder ──
+    // ── Deko: Teppich, Topfpflanzen, Staffelei-Bilder, Festschmuck ──
+    // Alles liegt entweder hoch (oberer Bildrand) oder weit außen am Boden –
+    // die Bahn und die Pins bleiben frei.
     this._addRug();
     for (const s of [-1, 1]) {
-      this._addPlant(s * 2.4, LANE_Z0 + 1.4, 1.15);
-      this._addPlant(s * 2.5, 8.0, 0.95);
-      this._addPicture(s, 3.0, 0);
-      this._addPicture(s, 9.0, 1);
-      this._addPicture(s, 14.0, 2);
+      this._addPlant(s * 2.6, LANE_Z0 + 1.4, 1.15);
+      this._addPlant(s * 2.7, 6.0, 0.95);
+      this._addPlant(s * 2.8, 11.5, 1.05);
+      this._addPicture(s, 4.0, 0);
+      this._addPicture(s, 12.0, 2);
+      this._addBunting(s, cz, len);
+      this._addBalloons(s * 2.7, LANE_Z0 + 0.2);
     }
+    this._addFairyLights(len);
+    this._addNeonHeart();
+  }
+
+  // Wimpelkette längs der Bahn, hoch über der Sichtlinie (y≈3.6)
+  _addBunting(s, cz, len) {
+    const x = s * 2.5;
+    const y = 3.6;
+    const z0 = LANE_Z0 + 1, z1 = LANE_Z1 - 2;
+    // Hängelinie
+    const cord = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.03, z1 - z0),
+      new THREE.MeshStandardMaterial({ color: 0x8a7f9c, roughness: 0.8 })
+    );
+    cord.position.set(x, y + 0.18, (z0 + z1) / 2);
+    this.scene.add(cord);
+    const cols = [0xf6a8c0, 0xb9a3f0, 0xf6d27a, 0x8fd6c8];
+    const step = 0.85;
+    for (let z = z0, i = 0; z <= z1; z += step, i++) {
+      const tri = new THREE.Mesh(
+        new THREE.ConeGeometry(0.16, 0.34, 3),
+        new THREE.MeshStandardMaterial({ color: cols[i % cols.length], roughness: 0.7, side: THREE.DoubleSide })
+      );
+      tri.rotation.x = Math.PI;            // Spitze nach unten
+      tri.rotation.y = Math.PI / 2;        // flache Seite zur Bahn
+      tri.position.set(x, y, z);
+      this.scene.add(tri);
+    }
+  }
+
+  // Lichterkette in sanften Bögen unter der Decke
+  _addFairyLights(len) {
+    const z0 = LANE_Z0 + 1, z1 = LANE_Z1 - 1;
+    const bulbGeo = new THREE.SphereGeometry(0.06, 8, 8);
+    for (const s of [-1, 1]) {
+      const x = s * 1.9;
+      const n = this.lowQ ? 14 : 22;
+      for (let i = 0; i <= n; i++) {
+        const f = i / n;
+        const z = z0 + (z1 - z0) * f;
+        const sag = Math.sin(f * Math.PI * 5) * 0.18;        // Durchhang-Bögen
+        const hue = (i * 0.13) % 1;
+        const col = new THREE.Color().setHSL(hue, 0.7, 0.62);
+        const bulb = new THREE.Mesh(
+          bulbGeo,
+          new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.9 })
+        );
+        bulb.position.set(x, 4.7 - Math.abs(sag), z);
+        this.scene.add(bulb);
+      }
+    }
+  }
+
+  // Glühendes Neon-Herz auf der Maskenwand hinter den Pins
+  _addNeonHeart() {
+    const shape = new THREE.Shape();
+    const x = 0, y = 0;
+    shape.moveTo(x, y + 0.18);
+    shape.bezierCurveTo(x + 0.26, y + 0.46, x + 0.5, y + 0.1, x, y - 0.28);
+    shape.bezierCurveTo(x - 0.5, y + 0.1, x - 0.26, y + 0.46, x, y + 0.18);
+    const geo = new THREE.ShapeGeometry(shape);
+    const heart = new THREE.Mesh(
+      geo,
+      new THREE.MeshStandardMaterial({ color: 0xff5e8a, emissive: 0xff5e8a, emissiveIntensity: 1.1, side: THREE.DoubleSide })
+    );
+    heart.position.set(0, 2.7, LANE_Z1 + 1.36);
+    this.scene.add(heart);
+  }
+
+  // Ballon-Cluster am Boden weit außen (steigt bis y≈2.6)
+  _addBalloons(x, z) {
+    const grp = new THREE.Group();
+    const cols = [0xf6a8c0, 0xb9a3f0, 0xf6d27a, 0x8fd6c8, 0xffffff];
+    const offsets = [[0, 2.4], [0.28, 2.05], [-0.26, 2.15], [0.12, 1.78]];
+    for (let i = 0; i < offsets.length; i++) {
+      const [ox, oy] = offsets[i];
+      const col = cols[i % cols.length];
+      const balloon = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 12, 12),
+        new THREE.MeshStandardMaterial({ color: col, roughness: 0.35, emissive: col, emissiveIntensity: 0.08 })
+      );
+      balloon.scale.y = 1.2;
+      balloon.position.set(ox, oy, 0);
+      grp.add(balloon);
+      // Schnur
+      const string = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.006, 0.006, oy, 5),
+        new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.9 })
+      );
+      string.position.set(ox * 0.4, oy / 2, 0);
+      grp.add(string);
+    }
+    grp.position.set(x, -0.8, z);
+    this.scene.add(grp);
   }
 
   // Weicher Teppich im Anlaufbereich hinter der Foul-Linie
@@ -434,22 +531,39 @@ export class BowlingEngine {
     return t;
   }
 
-  // Gerahmtes Bild an der Seitenwand (s = -1 links, +1 rechts)
+  // Freistehendes gerahmtes Bild auf einer Staffelei am Boden,
+  // seitlich der Bahn (s = -1 links, +1 rechts). Niedrig → blockiert nicht.
   _addPicture(s, z, variant) {
-    const w = 0.95, h = 0.66;
+    const FLOOR_Y = -0.8;
+    const w = 0.8, h = 0.56;
+    const grp = new THREE.Group();
+    const cy = FLOOR_Y + 1.0;            // Bildmitte ~1.0 über dem Boden
     const frame = new THREE.Mesh(
       new THREE.BoxGeometry(0.05, h + 0.12, w + 0.12),
       new THREE.MeshStandardMaterial({ color: 0xf3e2bd, roughness: 0.5, metalness: 0.3 })
     );
-    frame.position.set(s * 2.80, 1.7, z);
-    this.scene.add(frame);
+    frame.position.set(0, cy, 0);
+    grp.add(frame);
     const pic = new THREE.Mesh(
       new THREE.PlaneGeometry(w, h),
       new THREE.MeshStandardMaterial({ map: this._pictureTexture(variant), roughness: 0.8 })
     );
-    pic.position.set(s * 2.758, 1.7, z);
+    pic.position.set(-s * 0.03, cy, 0);
     pic.rotation.y = -s * Math.PI / 2;
-    this.scene.add(pic);
+    grp.add(pic);
+    // Drei Holzbeine als Staffelei
+    const legMat = new THREE.MeshStandardMaterial({ color: 0xb7935f, roughness: 0.85 });
+    const legGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.5, 6);
+    for (const [lz, tilt] of [[0.18, 0.18], [-0.18, -0.18], [0, 0]]) {
+      const leg = new THREE.Mesh(legGeo, legMat);
+      leg.position.set(lz === 0 ? -s * 0.12 : 0, FLOOR_Y + 0.72, lz);
+      leg.rotation.x = lz === 0 ? 0 : tilt;
+      leg.rotation.z = lz === 0 ? s * 0.2 : 0;
+      grp.add(leg);
+    }
+    grp.position.set(s * 2.55, 0, z);
+    grp.rotation.y = s < 0 ? 0.25 : -0.25;     // leicht zur Bahn gedreht
+    this.scene.add(grp);
   }
 
   // Profil-Form eines Bowling-Pins (Lathe), zentriert um die eigene Höhe
