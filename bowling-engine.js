@@ -313,16 +313,12 @@ export class BowlingEngine {
       this._staticBox(s * 3.2, -0.05, cz, 0.16, 0.3, len, { color: 0xe2d2b8, roughness: 0.85 });
     }
 
-    // Niedrige, freundliche Rückwand hinter dem Spieler (kein Tunnel)
-    this._staticBox(0, 0.55, LANE_Z0 - 1.2, 6.4, 1.6, 0.25, { color: 0xfaf2e6, roughness: 0.95 });
+    // (Keine Rückwand/Sitzbank hinter dem Spieler: die Kamera orbitet beim
+    //  Zielen hinter der Kugel, zentrale Objekte hier verdeckten sonst die Bahn.)
 
     // Ball-Return-Schiene (hell-metallisch)
     this._staticBox(LANE_W / 2 + GUTTER_W + 0.4, 0.18, FOUL_Z - 0.5, 0.5, 0.4, 2.4,
       { color: 0xbcc4d4, roughness: 0.4, metalness: 0.5 });
-
-    // Sitzbank hinter dem Spieler (helles Holz)
-    this._staticBox(0, 0.25, LANE_Z0 - 2.4, 2.6, 0.5, 0.5, { color: 0xc8a877, roughness: 0.8 });
-    this._staticBox(0, 0.7, LANE_Z0 - 2.7, 2.6, 0.9, 0.12, { color: 0xb7935f, roughness: 0.85 });
 
     // Helle Decke mit eingelassenen Lichtpaneelen
     this._staticBox(0, 5.2, cz, 6.6, 0.3, len, { color: 0xf6f6fb, roughness: 1 });

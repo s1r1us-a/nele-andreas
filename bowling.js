@@ -202,6 +202,7 @@ function startSolo() {
   engine.setBallColor('solo');
   engine.newRack(fullRack());
   engine.armBall();
+  setAimToggleVisible(true);
   updateSoloHud();
   setHint('Frame 1 — zieh zurück & lass los 🎳');
 }
@@ -227,10 +228,10 @@ function soloShotDone(res) {
     solo.frameIdx++;
     solo.frames[solo.frameIdx] = [];
     solo.standing = fullRack();
-    setTimeout(() => { engine.newRack(fullRack()); engine.armBall(); setHint('Frame ' + (solo.frameIdx + 1) + ' 🎳'); }, 1100);
+    setTimeout(() => { engine.newRack(fullRack()); engine.armBall(); setAimToggleVisible(true); setHint('Frame ' + (solo.frameIdx + 1) + ' 🎳'); }, 1100);
   } else {
     solo.standing = allDown(res.standing) ? fullRack() : res.standing;
-    setTimeout(() => { engine.newRack(solo.standing); engine.armBall(); }, 1100);
+    setTimeout(() => { engine.newRack(solo.standing); engine.armBall(); setAimToggleVisible(true); }, 1100);
   }
 }
 
