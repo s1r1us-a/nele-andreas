@@ -2591,6 +2591,15 @@
     <div id="farmTradeBadge" style="display:none; position:absolute; top:-10px; right:10px; background: linear-gradient(135deg, #ef4444, #dc2626); color:white; font-family:'Quicksand',sans-serif; font-size:12px; font-weight:700; padding:5px 12px; border-radius:50px; box-shadow: 0 3px 12px rgba(239,68,68,0.5); letter-spacing:0.5px; animation: badgePulse 1.8s ease-in-out infinite; white-space:nowrap; pointer-events:none;"></div>
   </div>
   <div style="position: relative; width: 100%; margin-top: 16px;">
+    <a href="bowling.html" id="bowlingBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #c084fc 0%, #7e22ce 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(126,34,206,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎳 Bowling</a>
+  </div>
+  <div style="position: relative; width: 100%; margin-top: 16px;">
+    <a href="minigolf.html" id="minigolfBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #6ee7b7 0%, #059669 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(5,150,105,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">⛳ Minigolf</a>
+  </div>
+  <div style="position: relative; width: 100%; margin-top: 16px;">
+    <a href="billiard.html" id="billiardBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%); border: none; border-radius: 50px; padding: 18px; font-family: 'Quicksand', sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(20,184,166,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🎱 Billiard</a>
+  </div>
+  <div style="position: relative; width: 100%; margin-top: 16px;">
     <a href="abenteuer.html" id="abenteuerBtn" class="menu-btn" style="display: block; width: 100%; background: linear-gradient(135deg, #9b7b56 0%, #6d5a44 100%); border: none; border-radius: 50px; padding: 18px; font-family: Quicksand, sans-serif; font-size: 16px; font-weight: 700; color: white; text-align: center; text-decoration: none; letter-spacing: 0.5px; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(120,90,40,0.4);" onmouseover="this.style.transform='scale(1.03) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">🗡️ Dämmerpfad</a>
   </div>
   <div style="position: relative; width: 100%; margin-top: 16px;">
@@ -2637,6 +2646,36 @@
         <div class="game-invite-sub">Schiffe Versenken – Tippe zum Annehmen</div>
       </div>
       <div class="game-invite-bet" id="battleshipInviteBet"></div>
+    </a>
+  </div>
+  <div class="game-invite-banner" id="minigolfInviteBanner">
+    <a href="minigolf.html" class="game-invite-inner">
+      <span class="game-invite-emoji">⛳</span>
+      <div class="game-invite-text">
+        <div class="game-invite-title" id="minigolfInviteTitle">fordert dich heraus!</div>
+        <div class="game-invite-sub">Minigolf – Tippe zum Annehmen</div>
+      </div>
+      <div class="game-invite-bet" id="minigolfInviteBet"></div>
+    </a>
+  </div>
+  <div class="game-invite-banner" id="billiardInviteBanner">
+    <a href="billiard.html" class="game-invite-inner">
+      <span class="game-invite-emoji">🎱</span>
+      <div class="game-invite-text">
+        <div class="game-invite-title" id="billiardInviteTitle">fordert dich heraus!</div>
+        <div class="game-invite-sub">Billiard – Tippe zum Annehmen</div>
+      </div>
+      <div class="game-invite-bet" id="billiardInviteBet"></div>
+    </a>
+  </div>
+  <div class="game-invite-banner" id="bowlingInviteBanner">
+    <a href="bowling.html" class="game-invite-inner">
+      <span class="game-invite-emoji">🎳</span>
+      <div class="game-invite-text">
+        <div class="game-invite-title" id="bowlingInviteTitle">fordert dich heraus!</div>
+        <div class="game-invite-sub">Bowling – Tippe zum Annehmen</div>
+      </div>
+      <div class="game-invite-bet" id="bowlingInviteBet"></div>
     </a>
   </div>
   <div class="shop-btn-wrap" style="margin-top: 16px; max-width: 420px; width: 100%;">
@@ -3077,6 +3116,45 @@
         if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
           document.getElementById('battleshipInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
           document.getElementById('battleshipInviteBet').textContent = game.bet.toLocaleString('de-DE') + ' 🪙';
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      });
+
+      // Minigolf Invite live lauschen
+      onValue(ref(db, 'minigolf/andreas_vs_nele'), snap => {
+        const game = snap.val();
+        const banner = document.getElementById('minigolfInviteBanner');
+        if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
+          document.getElementById('minigolfInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
+          document.getElementById('minigolfInviteBet').textContent = (game.bet || 0).toLocaleString('de-DE') + ' 🪙';
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      });
+
+      // Billiard Invite live lauschen
+      onValue(ref(db, 'billiard/andreas_vs_nele'), snap => {
+        const game = snap.val();
+        const banner = document.getElementById('billiardInviteBanner');
+        if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
+          document.getElementById('billiardInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
+          document.getElementById('billiardInviteBet').textContent = (game.bet || 0).toLocaleString('de-DE') + ' 🪙';
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      });
+
+      // Bowling Invite live lauschen
+      onValue(ref(db, 'bowling/andreas_vs_nele'), snap => {
+        const game = snap.val();
+        const banner = document.getElementById('bowlingInviteBanner');
+        if (game && game.status === 'waiting' && game.createdBy !== window.currentUser) {
+          document.getElementById('bowlingInviteTitle').textContent = game.createdBy + ' fordert dich heraus!';
+          document.getElementById('bowlingInviteBet').textContent = (game.bet || 0).toLocaleString('de-DE') + ' 🪙';
           banner.style.display = 'block';
         } else {
           banner.style.display = 'none';

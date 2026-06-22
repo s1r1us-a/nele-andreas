@@ -269,5 +269,13 @@ export const setsForClass = classId => SET_LIST.filter(s => s.classId === classI
 export const setOf = item => (item && item.setId ? (SETS[item.setId] || null) : null);
 // Visual-Theme eines Items (oder null) – für die Renderer (item-art/avatar).
 export const setThemeOf = item => { const s = setOf(item); return s ? s.themeKey : null; };
+// Feste Affix-Reihenfolge je Set-Teil. Vielseitigkeit ist bewusst immer der
+// zweite Stat, damit Set-Teile endlos sinnvoll weiter skaliert werden können.
+export function setFixedAffixKeys(set, slotKey){
+  const raw = (set && set.fixedAffixes && set.fixedAffixes[slotKey]) || [];
+  const first = raw.find(k => k && k !== 'versatility') || set.flavorAffix || 'armor';
+  const rest = raw.filter(k => k && k !== first && k !== 'versatility');
+  return [first, 'versatility', ...rest].slice(0, Math.max(3, raw.length || 3));
+}
 // Genus für den Teil-Namen je Slot (korrekte Anzeige „· Brustpanzer" etc.).
 export const setPieceName = (set, slotKey) => set.name + ' · ' + ((SLOTS[slotKey] && SLOTS[slotKey].base) || 'Teil');

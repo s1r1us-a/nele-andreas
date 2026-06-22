@@ -2,18 +2,19 @@
    BOSS-KAMPF-ENGINE. Phase 1 (#7,#12,#13,#16,#17) + Phase 2 (#20,#22)
    + Phase 3 (#26 Kampflog/DPS-Meter).
    ===================================================================== */
-import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM } from '../data/tuning.js';
+import { COMBAT, HEAL_PCT, BASE_STAT, ILVL_K, FARM, animSpeedForInterval } from '../data/tuning.js';
 import { RARITIES, rarityByIndex, rarityOf, rarityIndex } from '../data/rarities.js';
 import { SLOTS } from '../data/slots.js';
+import { AFFIX_DEFS } from '../data/affixes.js';
 import { rollAffixes } from '../core/items.js';
 import { materialOf, typeOf } from '../data/itemTypes.js';
-import { ATK_ELEM, weaponAtk } from '../data/attacks.js';
+import { ATK_ELEM, weaponAtk, offhandAtk } from '../data/attacks.js';
 import { classOf, abilitiesOf } from '../data/classes.js';
 import { bossFor, zoneBg, guaranteedRarityIndex, MECH_DEFS } from '../data/bosses.js';
 import { rollDyeDrop, DYE_BY_KEY, dyeTextColor } from '../data/dyes.js';
 import { state, saveState } from './state.js';
 import { recomputeTotals, heroCombat, heroTier, gainXp } from './character.js';
-import { heroSrc, buildWeaponLayerSVG } from './avatar.js';
+import { heroSrc, buildWeaponLayerSVG, buildOffhandLayerSVG } from './avatar.js';
 import { buildDemonSVG } from './demon-art.js';
 import { rollItem, addLog, recordDrop, giveLoot } from './items.js';
 import { awardSetTokens } from './sets.js';
@@ -30,9 +31,9 @@ export let currentFight = null;
 const arenaOverlay = () => $('#arenaOverlay');
 
 // Coin-Belohnung für den Erstkill eines Bosses, skaliert mit dem Boss-Index.
-// Frühe Bosse ~100, späte mehrere Tausend; Endlos-Stufen wachsen weiter. Eine
+// Frühe Bosse ~1000, späte mehrere Zehntausend; Endlos-Stufen wachsen weiter. Eine
 // leicht justierbare Stellschraube. Farmkills geben hiervon 30 % (FARM.coinMult).
-function bossCoinReward(i){ return Math.round(100 + i*50); }
+function bossCoinReward(i){ return Math.round((100 + i*50) * 10); }
 
 // Beute-Karte für den Sieg-Bildschirm: zeigt das gedroppte Item klar mit Icon,
 // Seltenheit, Slot, Primärwert und Affixen (statt nur dem Namen im Fließtext).
@@ -94,8 +95,8 @@ export function startBossFight(bossIndex){
   const boss = bossFor(bossIndex);
   const stage = $('#arenaStage');
   stage.style.setProperty('--arena-bg', "url('"+zoneBg(bossIndex)+"')");
-  // Held waffenlos rendern – die Waffe kommt als separat animierte Ebene darüber.
-  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true });
+  // Held ohne Hand-Ausrüstung rendern – Mainhand/Offhand kommen als separate Ebenen darüber.
+  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true, hideOffhand:true });
   $('#bossSprite').src = boss.sprite;
   $('#heroBarName').textContent = 'Held';
   $('#bossBarName').textContent = (isFarm ? '↻ ' : '') + boss.name;
@@ -133,9 +134,11 @@ export function startBossFight(bossIndex){
     buffs: freshBuffs(),           // temporäre Buff-Fenster (Krit/Schaden/etc.)
   };
   currentFight = fight;
-  // Waffen-Ebene des Helden (echte ausgerüstete Waffe); PvE-Boss = Monster → keine.
+  // Hand-Ebenen des Helden (echte Ausrüstung); PvE-Boss = Monster → keine.
   fight.heroWeaponEl = setWeaponLayer('hero', weaponAtk(state.equipped && state.equipped.waffe));
+  fight.heroOffhandEl = setOffhandLayer('hero', offhandAtk(state.equipped && state.equipped.schild));
   setWeaponLayer('boss', null); fight.bossWeaponEl = null;
+  setOffhandLayer('boss', null); fight.bossOffhandEl = null;
   updateHpBars(fight);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
@@ -180,6 +183,8 @@ function scheduleExchange(fight){
   if(fight.frostTurns > 0){ interval *= 1.4; fight.frostTurns--; }   // Frost verlangsamt
   if(fight.curseTurns > 0){ interval *= 1.3; }                       // Fluch verlangsamt
   if(fight.zornTurns  > 0){ interval *= 0.7; fight.zornTurns--; }    // Proc „Zorn" beschleunigt
+  // Klingenrausch (haste): kürzeres Schlagintervall, solange das Fenster läuft.
+  if(Date.now() < fight.buffs.haste.until) interval /= (1 + fight.buffs.haste.val);
   combatTimer = setTimeout(()=> exchange(fight), interval / combatSpeed);
 }
 
@@ -315,7 +320,7 @@ function exchange(fight){
     } else {
       const armorRed = ignoreArmor ? 0 : (fight.heroArmor*COMBAT.armorReduction + fight.heroBlock);
       let bd = Math.max(1, Math.round((atk * rnd(0.15) * mult) - armorRed));
-      bd = Math.round(bd * (1 - fight.versatility));   // Vielseitigkeit senkt erlittenen Schaden
+      bd = Math.round(bd * (1 - Math.min(AFFIX_DEFS.versatility.defensiveCap || 0.85, fight.versatility || 0)));   // Vielseitigkeit senkt erlittenen Schaden
       // Schadensreduktions-Buff (Schildwall / Trotzschlag / Unbeugsam …).
       if(Date.now() < fight.buffs.dmgReduce.until){ bd = Math.max(1, Math.round(bd * (1 - fight.buffs.dmgReduce.val))); }
       if(Date.now() < (fight.bossVulnUntil||0)){ /* Verwundbarkeit betrifft nur Boss-Schaden, nicht Helden */ }
@@ -391,7 +396,8 @@ export function updateHpBars(f){
 
 // ---- Animationen ----------------------------------------------------
 const HIT_DELAY=150, FLASH=240, SHAKE=240, FLOAT=1000;
-function lunge(el, isBoss){
+function lunge(el, isBoss, spd){
+  const s = spd || combatSpeed;
   const base = isBoss ? 'scaleX(-1) ' : '';
   // Deutlicher Schwung: Vorwärts-Stoß kombiniert mit einer Drehung der Figur.
   el.animate(
@@ -399,17 +405,18 @@ function lunge(el, isBoss){
       { transform: base+'translateX(58px) rotate(-18deg)', offset:0.35 },
       { transform: base+'translateX(64px) rotate(12deg)', offset:0.55 },
       { transform: base+'translateX(0) rotate(0deg)' } ],
-    { duration: 220 / combatSpeed, easing:'ease-out' }
+    { duration: 220 / s, easing:'ease-out' }
   );
 }
 // Stab-Cast: Held lehnt sich deutlich nach vorne und hält den Stab dem Boss entgegen.
-function staffCast(el){
+function staffCast(el, spd){
+  const s = spd || combatSpeed;
   el.animate(
     [ { transform:'translateX(0) rotate(0deg)' },
       { transform:'translateX(40px) rotate(-9deg)', offset:0.35 },
       { transform:'translateX(34px) rotate(-7deg)', offset:0.7 },
       { transform:'translateX(0) rotate(0deg)' } ],
-    { duration: 340 / combatSpeed, easing:'ease-out' }
+    { duration: 340 / s, easing:'ease-out' }
   );
 }
 function mechFloat(who, text, color){
@@ -488,6 +495,14 @@ function handAnchor(spriteId){
   const fx = isBoss ? 0.38 : 0.62, fy = 0.60;   // Hand im viewBox ~ (124,194)/(200,320)
   return { x: r.left - sr.left + fx*r.width, y: r.top - sr.top + fy*r.height, w:r.width, h:r.height, isBoss };
 }
+function staffTipAnchor(spriteId){
+  const stage = $('#arenaStage'), el = $('#'+spriteId);
+  if(!stage || !el) return null;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const isBoss = spriteId === 'bossSprite';
+  const fx = isBoss ? 0.38 : 0.62, fy = 0.36;
+  return { x: r.left - sr.left + fx*r.width, y: r.top - sr.top + fy*r.height, w:r.width, h:r.height, isBoss };
+}
 // ---- Persistente Waffen-Ebene (echte Waffe, schwingt sauber) --------
 // Eine eigene, deckungsgleiche <img>-Ebene über dem Sprite (gleiche viewBox/Box).
 // which: 'hero' (Slot hero-c) | 'boss' (Slot boss-c, gespiegelt). atk=null → entfernen.
@@ -511,8 +526,28 @@ function setWeaponLayer(which, atk){
   el.style.transform = el.dataset.rest;
   return el;
 }
+function setOffhandLayer(which, atk){
+  const stage = $('#arenaStage'); if(!stage) return null;
+  const id = which==='hero' ? 'heroOffhand' : 'bossOffhand';
+  let el = document.getElementById(id);
+  const src = atk ? buildOffhandLayerSVG(atk) : '';
+  if(!src){ if(el) el.remove(); return null; }
+  if(!el){
+    el = document.createElement('img'); el.id = id; el.alt=''; el.draggable=false;
+    el.className = 'combatant weapon-layer offhand-layer ' + (which==='hero' ? 'hero-c' : 'boss-c');
+    el.style.transformOrigin = '38% 60.6%';
+    stage.appendChild(el);
+  }
+  el.src = src;
+  const flip = which==='hero' ? '' : 'scaleX(-1) ';
+  const restDeg = atk.kind === 'orb' ? 0 : (atk.kind === 'shield' ? -4 : -12);
+  el.dataset.flip = flip; el.dataset.kind = atk.kind || 'shield'; el.dataset.profile = atk.profile || 'arc';
+  el.dataset.rest = `${flip}rotate(${restDeg}deg)`;
+  el.style.transform = el.dataset.rest;
+  return el;
+}
 function removeWeaponLayers(){
-  ['heroWeapon','bossWeapon'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+  ['heroWeapon','bossWeapon','heroOffhand','bossOffhand'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
 }
 // Keyframes für den Schwung der Waffen-Ebene je Profil (Rotation um den Griff).
 function swingKeyframes(profile, kind, flip){
@@ -530,24 +565,56 @@ function swingKeyframes(profile, kind, flip){
   return { rest:`${flip}rotate(14deg)`, dur:P.dur, kf:P.a.map(([deg,tx,off])=>({ transform:tf(deg,tx), offset:off })) };
 }
 // Die persistente Waffen-Ebene schwingen lassen + 1–2 blasse Nachzieh-Klone (Bewegungsunschärfe).
-function playSwing(layerEl, reduce){
+function playSwing(layerEl, reduce, spd){
   if(!layerEl) return;
+  const s = spd || combatSpeed;
   const flip = layerEl.dataset.flip || '';
   const { rest, dur, kf } = swingKeyframes(layerEl.dataset.profile, layerEl.dataset.kind, flip);
   layerEl.style.transform = rest;
-  layerEl.animate(kf, { duration: dur/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
+  layerEl.animate(kf, { duration: dur/s, easing:'cubic-bezier(.4,.05,.5,1)' });
   if(reduce) return;
   const stage = layerEl.parentNode; if(!stage) return;
   for(let i=1;i<=2;i++){
     const g = layerEl.cloneNode(false); g.classList.add('weapon-ghost'); g.removeAttribute('id');
     stage.appendChild(g);
-    g.animate(kf, { duration: dur/combatSpeed, delay: (i*34)/combatSpeed, easing:'cubic-bezier(.4,.05,.5,1)' });
-    g.animate([{opacity:0.3},{opacity:0}], { duration:(dur+i*34)/combatSpeed, easing:'ease-out', fill:'forwards' });
-    setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + i*34 + 90)/combatSpeed);
+    g.animate(kf, { duration: dur/s, delay: (i*34)/s, easing:'cubic-bezier(.4,.05,.5,1)' });
+    g.animate([{opacity:0.3},{opacity:0}], { duration:(dur+i*34)/s, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + i*34 + 90)/s);
   }
 }
+function offhandKeyframes(kind, profile, flip){
+  const tf = (deg, tx, ty, sc) => `${flip}translate(${tx||0}px,${ty||0}px) rotate(${deg}deg) scale(${sc||1})`;
+  if(kind === 'orb'){
+    return { rest:`${flip}rotate(0deg)`, dur:340,
+      kf:[ {transform:tf(0,0,0,1),offset:0},{transform:tf(-5,8,-6,1.12),offset:0.45},{transform:tf(0,0,0,1),offset:1} ] };
+  }
+  if(kind === 'shield'){
+    return { rest:`${flip}rotate(-4deg)`, dur:320,
+      kf:[ {transform:tf(-4,0,0,1),offset:0},{transform:tf(-10,10,-1,1.04),offset:0.42},{transform:tf(-4,0,0,1),offset:1} ] };
+  }
+  const P = profile === 'flurry'
+    ? [ [-12,0,0,0], [24,0,0,0.32], [-28,0,0,0.62], [-12,0,0,1] ]
+    : [ [-12,0,0,0], [34,0,0,0.38], [-18,0,0,0.72], [-12,0,0,1] ];
+  return { rest:`${flip}rotate(-12deg)`, dur:320, kf:P.map(([deg,tx,ty,off])=>({ transform:tf(deg,tx,ty,1), offset:off })) };
+}
+function playOffhand(layerEl, reduce, spd){
+  if(!layerEl) return;
+  const s = spd || combatSpeed;
+  const flip = layerEl.dataset.flip || '';
+  const { rest, dur, kf } = offhandKeyframes(layerEl.dataset.kind, layerEl.dataset.profile, flip);
+  layerEl.style.transform = rest;
+  layerEl.animate(kf, { duration: dur/s, easing:'cubic-bezier(.4,.05,.5,1)' });
+  if(reduce || layerEl.dataset.kind !== 'melee') return;
+  const stage = layerEl.parentNode; if(!stage) return;
+  const g = layerEl.cloneNode(false); g.classList.add('weapon-ghost'); g.removeAttribute('id');
+  stage.appendChild(g);
+  g.animate(kf, { duration: dur/s, delay: 34/s, easing:'cubic-bezier(.4,.05,.5,1)' });
+  g.animate([{opacity:0.22},{opacity:0}], { duration:(dur+34)/s, easing:'ease-out', fill:'forwards' });
+  setTimeout(()=> { if(g.parentNode) g.remove(); }, (dur + 120)/s);
+}
 // Sofortiger, gezackter Blitz vom Angreifer zum Ziel.
-function lightningBolt(from, to, layer, element, reduce, onArrive){
+function lightningBolt(from, to, layer, element, reduce, onArrive, spd){
+  const s = spd || combatSpeed;
   const P = ATK_ELEM[element] || ATK_ELEM.lightning;
   const dx = to.x-from.x, dy = to.y-from.y, len = Math.hypot(dx,dy) || 1;
   const nx = -dy/len, ny = dx/len, segs = 7;
@@ -561,21 +628,22 @@ function lightningBolt(from, to, layer, element, reduce, onArrive){
                   `<polyline points="${pts}" fill="none" stroke="${P.mid}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`+
                   `<polyline points="${pts}" fill="none" stroke="${P.core}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`;
   layer.appendChild(svg);
-  const dur = (reduce ? 140 : 210)/combatSpeed;
+  const dur = (reduce ? 140 : 210)/s;
   svg.animate([{opacity:0},{opacity:1,offset:0.15},{opacity:0.55,offset:0.5},{opacity:1,offset:0.72},{opacity:0}],
     { duration:dur, easing:'steps(5,end)' });
   setTimeout(()=>{ if(onArrive) onArrive(); }, Math.min(90, dur*0.4));
   setTimeout(()=> { if(svg.parentNode) svg.remove(); }, dur+40);
 }
 // Fliegendes Projektil mit Schweif (Element-gefärbt) – ersetzt staffProjectileAnim.
-function projectile(from, to, layer, element, reduce, onArrive){
+function projectile(from, to, layer, element, reduce, onArrive, spd){
+  const s = spd || combatSpeed;
   const cls = { fire:'proj-fire', ice:'proj-ice', nature:'proj-nature', lightning:'proj-ice' }[element] || 'proj-fire';
   const ball = document.createElement('div');
   ball.className = 'staff-projectile ' + cls;
   ball.style.left = from.x+'px'; ball.style.top = (from.y-8)+'px';
   layer.appendChild(ball);
   const dx = to.x-from.x, dy = (to.y) - (from.y-8);
-  const dur = Math.max(90, (reduce?160:240)/combatSpeed);
+  const dur = Math.max(90, (reduce?160:240)/s);
   ball.animate([ { transform:'translate(0,0) scale(1)', opacity:1 },
                  { transform:`translate(${dx}px,${dy}px) scale(0.5)`, opacity:0.85 } ],
     { duration:dur, easing:'ease-in', fill:'forwards' });
@@ -591,15 +659,17 @@ function projectile(from, to, layer, element, reduce, onArrive){
   setTimeout(()=>{ ball.remove(); if(onArrive) onArrive(); }, dur);
 }
 // Einschlag am Ziel: element-gefärbter Flash + Partikel.
-function impactBurst(anchor, element, crit, reduce){
+function impactBurst(anchor, element, crit, reduce, spd){
   const layer = $('#dmgLayer'); if(!layer || !anchor) return;
+  const s = spd || combatSpeed;
   const P = ATK_ELEM[element] || ATK_ELEM.physical;
   const flash = document.createElement('div');
   flash.className = 'impact-burst';
   flash.style.left = anchor.x+'px'; flash.style.top = anchor.y+'px';
   flash.style.setProperty('--ic', P.mid); flash.style.setProperty('--ie', P.core);
+  flash.style.animationDuration = (400 / s) + 'ms';   // CSS .impact-burst (.4s) ans Tempo koppeln
   layer.appendChild(flash);
-  setTimeout(()=> flash.remove(), 420);
+  setTimeout(()=> flash.remove(), 420 / s);
   if(reduce) return;
   const n = crit ? 9 : 6;
   for(let i=0;i<n;i++){
@@ -611,8 +681,8 @@ function impactBurst(anchor, element, crit, reduce){
     layer.appendChild(p);
     p.animate([ { transform:'translate(-50%,-50%) translate(0,0) scale(1)', opacity:1 },
                 { transform:`translate(-50%,-50%) translate(${(Math.cos(ang)*dist).toFixed(1)}px,${(Math.sin(ang)*dist).toFixed(1)}px) scale(0.2)`, opacity:0 } ],
-      { duration:360+Math.random()*160, easing:'ease-out', fill:'forwards' });
-    setTimeout(()=> p.remove(), 540);
+      { duration:(360+Math.random()*160) / s, easing:'ease-out', fill:'forwards' });
+    setTimeout(()=> p.remove(), 540 / s);
   }
 }
 
@@ -625,26 +695,41 @@ function attackAnim(who, dmg, crit, onHit, meta){
   const stage = $('#arenaStage'), layer = $('#dmgLayer');
   const atk = resolveAttack(isHero, meta);
   const isStab = atk.kind === 'stab';
+  // Animationstempo des Angreifers: skaliert die Schwung-/Treffer-Dauern, damit sie
+  // bei hohem Angriffstempo ins kürzere Schlagintervall passen (multiplikativ zum
+  // 1×/2×-Regler). Boss hat kein Tempo-Stat → Faktor 1. Im Duell stammen die Intervalle
+  // aus dem Snapshot (host/guestInterval); Solo nutzt currentFight.heroInterval.
+  const af = animSpeedForInterval(attackerInterval(isHero));
+  const spd = combatSpeed * af;
   // Echte Waffe schwingt: persistente Waffen-Ebene des Angreifers animieren
   // (Held bzw. Duell-Gegner). PvE-Boss = Monster ohne Ebene → Körper-Ausfall.
   const layerEl = isHero ? (currentFight && currentFight.heroWeaponEl)
                          : (currentFight && currentFight.bossWeaponEl);
-  if(layerEl) playSwing(layerEl, reduce);
-  else if(isStab) staffCast(attacker);
-  else lunge(attacker, !isHero);
+  const offhandEl = isHero ? (currentFight && currentFight.heroOffhandEl)
+                           : (currentFight && currentFight.bossOffhandEl);
+  if(layerEl) playSwing(layerEl, reduce, spd);
+  else if(isStab) staffCast(attacker, spd);
+  else lunge(attacker, !isHero, spd);
+  if(offhandEl) playOffhand(offhandEl, reduce, spd);
 
   const targetAnchor = () => (currentFight && currentFight.anchor[targetId]) || { x: stage.clientWidth/2, y: stage.clientHeight/2 };
 
   const doHit = () => {
     if(onHit) onHit();
+    // Trefferfeedback (Flash/Shake/Burst) folgt dem Angriffstempo wie der Schwung;
+    // CSS-Klassen-Animationen zusätzlich per animationDuration stauchen. Die Schadens-
+    // zahl (FLOAT) bleibt am 1×/2×-Regler, damit sie bei hohem Tempo lesbar bleibt.
+    target.style.animationDuration = (FLASH / spd) + 'ms';   // .combatant.hit (.25s)
     target.classList.add('hit');
-    setTimeout(()=> target.classList.remove('hit'), FLASH / combatSpeed);
-    if(!reduce && (crit || Math.random()<.5)){ stage.classList.add('shake');
-      setTimeout(()=> stage.classList.remove('shake'), SHAKE / combatSpeed); }
+    setTimeout(()=> { target.classList.remove('hit'); target.style.animationDuration = ''; }, FLASH / spd);
+    if(!reduce && (crit || Math.random()<.5)){
+      stage.style.animationDuration = (SHAKE / spd) + 'ms';   // .arena-stage.shake (.25s)
+      stage.classList.add('shake');
+      setTimeout(()=> { stage.classList.remove('shake'); stage.style.animationDuration = ''; }, SHAKE / spd); }
     const a = targetAnchor();
     const jitter = Math.round((Math.random()*2-1)*12);
     const hit = { x: a.x + jitter, y: a.y };
-    impactBurst(hit, atk.element, crit, reduce);
+    impactBurst(hit, atk.element, crit, reduce, spd);
     const num = document.createElement('div');
     num.className = 'dmg-num' + (crit?' crit':'') + (isHero ? '' : ' incoming');
     num.textContent = '-'+fmtBig(dmg)+(crit?'!':'');
@@ -654,14 +739,25 @@ function attackAnim(who, dmg, crit, onHit, meta){
   };
 
   if(isStab){
-    const fromH = handAnchor(attackerId);
+    const fromH = staffTipAnchor(attackerId) || handAnchor(attackerId);
     const from = fromH ? { x: fromH.x, y: fromH.y } : ((currentFight && currentFight.anchor[attackerId]) || { x: stage.clientWidth/4, y: stage.clientHeight/2 });
     const to   = targetAnchor();
-    if(atk.spell && atk.spell.mode === 'bolt') lightningBolt(from, to, layer, atk.element, reduce, doHit);
-    else projectile(from, to, layer, atk.element, reduce, doHit);
+    if(atk.spell && atk.spell.mode === 'bolt') lightningBolt(from, to, layer, atk.element, reduce, doHit, spd);
+    else projectile(from, to, layer, atk.element, reduce, doHit, spd);
   } else {
-    setTimeout(doHit, HIT_DELAY / combatSpeed);
+    setTimeout(doHit, HIT_DELAY / spd);
   }
+}
+// Schlagintervall (ms) des Angreifers für das Animationstempo. Boss (PvE) hat kein
+// Tempo-Stat → undefined ⇒ Faktor 1. Im Duell stammen die Intervalle aus dem Snapshot.
+function attackerInterval(isHero){
+  const f = currentFight; if(!f) return undefined;
+  if(f.isDuel){
+    const mine = f.role === 'host' ? f.hostInterval : f.guestInterval;
+    const opp  = f.role === 'host' ? f.guestInterval : f.hostInterval;
+    return isHero ? mine : opp;
+  }
+  return isHero ? f.heroInterval : undefined;
 }
 
 // ---- Heiltrank im Kampf --------------------------------------------
@@ -693,7 +789,7 @@ export function usePotion(){
 function freshBuffs(){
   return { crit:{until:0,val:0}, dmgBoost:{until:0,val:0},
            dmgReduce:{until:0,val:0}, lifesteal:{until:0,val:0},
-           reflect:{until:0,val:0} };
+           reflect:{until:0,val:0}, haste:{until:0,val:0} };
 }
 let _abilityTicker = null;
 // Mehrere Fähigkeits-Knöpfe rendern/aktualisieren (eigener Cooldown je Knopf).
@@ -742,6 +838,7 @@ function refreshAuras(f){
   applyBuffAura('heroSprite', 'crit',      f.buffs.crit,      now);
   applyBuffAura('heroSprite', 'dmgBoost',  f.buffs.dmgBoost,  now);
   applyBuffAura('heroSprite', 'lifesteal', f.buffs.lifesteal, now);
+  applyBuffAura('heroSprite', 'haste',     f.buffs.haste,     now);
   applyDefenseAura('heroSprite', f.buffs.dmgReduce, now);
   // Nebelschritt: solange das Fenster läuft, ist der Held vollständig unsichtbar.
   setSpriteClass('heroSprite', 'vanished', now < (f.stealthUntil||0));
@@ -823,10 +920,47 @@ function applyAbilityEffect(f, ab){
     updateHpBars(f); updateMeter(f);
     addCombatLog(f, ab.icon+' '+ab.name+': '+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
     if(f.bossHp <= 0){ endFight(f, true); return; }
+  } else if(ab.kind === 'echo'){
+    // Arkanschlag: Soforttreffer + ein verzögertes arkanes Echo (zweiter Treffer).
+    const first = abilityDamage(f, ab.burstMult);
+    f.bossHp = Math.max(0, f.bossHp - first.dmg); f.dmgDealt += first.dmg;
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    mechFloat('boss', (first.crit?'✸ ':'💥 ')+'-'+fmtBig(first.dmg), '#9be7ff');
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': '+(first.crit?'KRIT ':'')+fmtBig(first.dmg)+' Schaden', '#9be7ff');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
+    setTimeout(()=>{
+      if(currentFight !== f || f.over) return;
+      const e = abilityDamage(f, ab.echoMult || ab.burstMult);
+      f.bossHp = Math.max(0, f.bossHp - e.dmg); f.dmgDealt += e.dmg;
+      const echoVfx = ABILITY_VFX[ab.id+'_echo'] || ABILITY_VFX.heiler_a5_arkan_echo;
+      if(echoVfx) echoVfx('heroSprite', 'bossSprite');
+      mechFloat('boss', (e.crit?'✸ ':'💥 ')+'-'+fmtBig(e.dmg), '#cdeeff');
+      addCombatLog(f, '✨ Echo: '+(e.crit?'KRIT ':'')+fmtBig(e.dmg)+' Schaden', '#cdeeff');
+      updateHpBars(f); updateMeter(f);
+      if(f.bossHp <= 0){ endFight(f, true); }
+    }, (ab.echoDelay || 500) / combatSpeed);
   } else if(ab.kind === 'critBoost'){
     f.buffs.crit = { until: now+ab.dur, val: ab.critBonus, src: ab.id };
     playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
     addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.critBonus*100)+'% Krit für '+(ab.dur/1000)+'s!', '#ffd24a');
+  } else if(ab.kind === 'haste'){
+    // Klingenrausch (Schurke): temporärer Angriffstempo-Schub.
+    f.buffs.haste = { until: now+ab.dur, val: ab.hasteBonus, src: ab.id };
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    addCombatLog(f, ab.icon+' '+ab.name+' – +'+Math.round(ab.hasteBonus*100)+'% Angriffstempo für '+(ab.dur/1000)+'s!', '#9be7ff');
+  } else if(ab.kind === 'execute'){
+    // Hinrichtung (Meuchelstoß/Seelenfresser): Treffer, der unter der HP-Schwelle massiv verstärkt wird.
+    const low = f.bossHp <= f.bossMaxHp * (ab.threshold||0.3);
+    const { dmg, crit } = abilityDamage(f, ab.burstMult * (low ? (ab.execMult||2.5) : 1));
+    f.bossHp = Math.max(0, f.bossHp - dmg); f.dmgDealt += dmg;
+    if(ab.heals){ const heal = Math.round(dmg * healMult * (f.healDebuff||1)); f.heroHp = Math.min(f.heroMaxHp, f.heroHp + heal); mechFloat('hero', '🩸 +'+fmtBig(heal), '#b06bff'); }
+    playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
+    if(low){ screenVignette('#c0306b', 460); bigShake(); }
+    mechFloat('boss', (low?'☠ ':(crit?'✸ ':'💥 '))+'-'+fmtBig(dmg), low?'#ff3030':'#ffd24a');
+    updateHpBars(f); updateMeter(f);
+    addCombatLog(f, ab.icon+' '+ab.name+': '+(low?'HINRICHTUNG ':'')+(crit?'KRIT ':'')+fmtBig(dmg)+' Schaden'+(ab.heals?' (+Heilung)':''), low?'#ff3030':'#ffd24a');
+    if(f.bossHp <= 0){ endFight(f, true); return; }
   } else if(ab.kind === 'dmgBoost'){
     f.buffs.dmgBoost = { until: now+ab.dur, val: ab.dmgBonus, src: ab.id };
     playAbilityVfx(ab, 'heroSprite', 'bossSprite', magic);
@@ -936,8 +1070,10 @@ function applyAbilityEffect(f, ab){
 function startDotChannel(f, ab){
   const tickMs = ab.tickMs || 1000;
   const ticks  = Math.max(1, Math.round((ab.dur||5000) / tickMs));
-  const glyph = ab.id && ab.id.indexOf('gift') >= 0 ? '☠️' : '🩸';
-  const col   = glyph === '☠️' ? '#9acd32' : '#e0466e';
+  let glyph = '🩸', col = '#e0466e';
+  if(ab.id && ab.id.indexOf('gift') >= 0){ glyph = '☠️'; col = '#9acd32'; }
+  else if(ab.id === 'heiler_a9_stern'){   glyph = '⭐'; col = '#9be7ff'; }
+  else if(ab.id === 'hexer_a9_chaos'){     glyph = '☄️'; col = '#9bff5a'; }
   let i = 0;
   const tick = () => {
     if(currentFight !== f || f.over) return;
@@ -1120,14 +1256,100 @@ function spawnSlashCombo(spriteId){
   }
 }
 // Meteor stürzt von oben in die Arena + Explosion (magischer Burst).
-function spawnMeteor(spriteId, color){
+// dx verschiebt den Einschlag seitlich (für Meteorschauer).
+function spawnMeteor(spriteId, color, dx){
   const a = anchorOf(spriteId), layer = $('#dmgLayer');
   const m = document.createElement('div');
   m.className = 'vfx-meteor';
-  m.style.left = a.x+'px'; m.style.top = a.y+'px';
+  m.style.left = (a.x + (dx||0))+'px'; m.style.top = a.y+'px';
   m.style.setProperty('--mcol', color || '#9be7ff');
   layer.appendChild(m);
   setTimeout(()=>{ m.remove(); spawnShockwave(spriteId, color); }, 470);
+}
+// Meteorschauer: mehrere gestaffelte Meteore mit seitlichem Versatz – das
+// Marquee für Sternenregen (Heiler) und Chaosregen (Hexer).
+function spawnMeteorShower(spriteId, color, count, stagger){
+  count = count || 6; stagger = stagger || 120;
+  for(let i = 0; i < count; i++){
+    const dx = Math.round((Math.random()*2 - 1) * 90);
+    setTimeout(()=> spawnMeteor(spriteId, color, dx), (i*stagger) / combatSpeed);
+  }
+}
+// Rotierender Klingenkranz um den Helden + getaktete Hiebe/Schockwellen am Ziel
+// (Klingensturm). Lebt `dur` ms; ohne reduzierte Bewegung.
+function spawnBladestormRing(heroId, bossId, dur){
+  dur = dur || 2400;
+  spawnGroundRune(heroId, { color:'#bfe3ff' });
+  spawnOrbit(heroId, { glyph:'🗡️', color:'#bfe3ff', count:6, radius:46, period:500, dur });
+  const hits = Math.max(2, Math.round(dur / 600));
+  for(let k = 0; k < hits; k++){
+    setTimeout(()=>{
+      spawnSlashArc(bossId, { color: k%2 ? '#ffffff' : '#bfe3ff', angle:-40 + (k*30)%80 });
+      spawnShockwave(bossId, '#bfe3ff');
+    }, (k*600) / combatSpeed);
+  }
+  setTimeout(()=>{ spawnNova(bossId, '#bfe3ff'); bigShake(); }, (dur-100) / combatSpeed);
+}
+// Rote Bruch-Signatur am Gegner für Verwundbarkeits-Effekte (Aderlass/Schildwurf).
+function spawnExposeCrack(bossId){
+  spawnSigilFlash(bossId, { glyph:'🩸', color:'#ff3030' });
+  spawnGroundRune(bossId, { color:'#ff3030' });
+  flashSpriteClass(bossId, 'vuln-tint', 800);
+}
+// Nachzieh-Schemen (Klingenrausch): geklonte, verblassende Geist-Sprites mit Versatz.
+function spawnAfterImages(spriteId, color){
+  if(reducedMotion()) return;
+  const el = $('#'+spriteId), stage = $('#arenaStage'), layer = $('#dmgLayer');
+  if(!el || !stage || !layer) return;
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  for(let i=1;i<=3;i++){
+    const g = el.cloneNode(true); g.removeAttribute('id');
+    g.className = 'vfx-afterimage';
+    g.style.position = 'absolute';
+    g.style.left = (r.left - sr.left - i*16)+'px'; g.style.top = (r.top - sr.top)+'px';
+    g.style.width = r.width+'px'; g.style.height = r.height+'px';
+    g.style.setProperty('--ai-col', color || '#9be7ff');
+    g.style.animationDelay = (i*60)+'ms';
+    layer.appendChild(g);
+    setTimeout(()=> g.remove(), 620);
+  }
+}
+// Tempo-Linien (Klingenrausch): horizontale Streifen, die seitlich wegschießen.
+function spawnSpeedLines(spriteId, color){
+  if(reducedMotion()) return;
+  const a = anchorOf(spriteId), layer = $('#dmgLayer'); if(!layer) return;
+  for(let i=0;i<6;i++){
+    const l = document.createElement('div'); l.className = 'vfx-speedline';
+    const jy = Math.round((Math.random()*2-1)*36);
+    l.style.left = a.x+'px'; l.style.top = (a.y+jy)+'px';
+    l.style.setProperty('--sl-col', color || '#bfe3ff');
+    l.style.animationDelay = (i*45)+'ms';
+    layer.appendChild(l);
+    setTimeout(()=> l.remove(), 520);
+  }
+}
+// Hinrichtungs-Mal (Meuchelstoß/Seelenfresser): pulsierendes Todes-Symbol über dem Ziel.
+function spawnExecuteMark(spriteId, color){
+  const a = anchorOf(spriteId), layer = $('#dmgLayer'); if(!layer) return;
+  const m = document.createElement('div'); m.className = 'vfx-execmark'; m.textContent = '☠';
+  m.style.left = a.x+'px'; m.style.top = a.y+'px';
+  m.style.setProperty('--exec-col', color || '#c0306b');
+  layer.appendChild(m);
+  setTimeout(()=> m.remove(), 640);
+}
+// Zickzack-Blitz zwischen zwei Sprites (Arkan-Echo).
+function spawnChainLightning(fromId, toId, color){
+  const f = anchorOf(fromId), t = anchorOf(toId);
+  const dx = t.x - f.x, dy = t.y - f.y;
+  const len = Math.max(1, Math.hypot(dx, dy));
+  const ang = Math.atan2(dy, dx) * 180/Math.PI;
+  const b = document.createElement('div');
+  b.className = 'vfx-chain';
+  b.style.left = f.x+'px'; b.style.top = f.y+'px';
+  b.style.width = len+'px'; b.style.transform = 'rotate('+ang+'deg)';
+  b.style.setProperty('--chain-col', color || '#cdeeff');
+  $('#dmgLayer').appendChild(b);
+  setTimeout(()=> b.remove(), 360);
 }
 // Leuchtender Seelen-Strahl zwischen zwei Sprites mit fließenden Orbs.
 function spawnBeam(fromId, toId, color){
@@ -1347,19 +1569,17 @@ const DEFAULT_SIG = {
   crit:      { aura:'aura-crit' },
   dmgBoost:  { aura:'aura-fire' },
   lifesteal: { aura:'aura-blood' },
+  haste:     { aura:'aura-haste' },
 };
 const BUFF_SIG = {
   // critBoost
-  kaltblut:        { aura:'aura-steel',  orbit:{ glyph:'🗡️', color:'#bfe3ff', count:3, radius:52 } },
-  heiler_a9_klar:  { aura:'aura-arcane', orbit:{ glyph:'✨',  color:'#cdeeff', count:4, radius:54 } },
+  kaltblut:         { aura:'aura-steel',  orbit:{ glyph:'🗡️', color:'#bfe3ff', count:3, radius:52 } },
+  // haste (Klingenrausch): wirbelnde Klingen + Tempo-Schimmer
+  schurke_a5_beute: { aura:'aura-haste',  orbit:{ glyph:'🗡️', color:'#9be7ff', count:4, radius:46 } },
   // dmgBoost
-  schurke_a5_tanz: { aura:'aura-shadow', orbit:{ color:'#b06bff', count:3, radius:50 }, rune:'#9b30ff' },
-  heiler_a5_inf:   { aura:'aura-arcane', orbit:{ glyph:'🔮', color:'#9be7ff', count:3, radius:52 } },
-  hexer_a5_brand:  { aura:'aura-shadow', orbit:{ glyph:'🔥', color:'#b06bff', count:3, radius:50 } },
-  // lifesteal
-  schurke_a5_beute:   { aura:'aura-blood',        orbit:{ glyph:'🩸', color:'#ff6a8a', count:3, radius:50 } },
-  schurke_a9_toetung: { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 } },
-  hexer_a9_orgie:     { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 }, rune:'#c0306b' },
+  schurke_a9_versch: { aura:'aura-shadow', orbit:{ glyph:'🌑', color:'#b06bff', count:4, radius:52 }, rune:'#9b30ff' },
+  // lifesteal (Aderlass-Ritual): Blutaura
+  hexer_a5_ritual:    { aura:'aura-blood-strong', orbit:{ glyph:'🩸', color:'#ff5a7a', count:4, radius:54 }, rune:'#c0306b' },
 };
 
 // Toggelt Aura-Klasse + persistente Deko (Orbit/Rune) eines Buffs an einem Sprite.
@@ -1381,13 +1601,6 @@ function applyDefenseAura(spriteId, buff, now, domeId, domeDir){
   const active = !!buff && now < (buff.until || 0);
   const src = buff && buff.src;
   const runeId = 'sig-rune-'+spriteId+'-def';
-  if(active && src === 'schurke_a9_versch'){
-    setSpriteClass(spriteId, 'stealth', true);
-    removeShieldDome(domeId); setSpriteClass(spriteId, 'aura-shield', false);
-    clearById(runeId);
-    return;
-  }
-  setSpriteClass(spriteId, 'stealth', false);
   if(active){
     if(!$('#'+domeId)) spawnShieldDome(spriteId, domeId, domeDir);
     const dome = $('#'+domeId);
@@ -1438,61 +1651,74 @@ function applyDemonAura(spriteId, active){
 // ---- Signatur-Renderer je Fähigkeit (Cast-Moment) -----------------------
 // hero = Wirker-Sprite, boss = Ziel-Sprite (im Duell ggf. getauscht).
 const ABILITY_VFX = {
-  // ---- SCHURKE ----
+  // ---- SCHURKE (Grundfähigkeiten) ----
   kaltblut(hero){ spawnGroundRune(hero, { color:'#bfe3ff' }); spawnParticles(hero, { count:10, glyph:'❄', color:'#bfe3ff', spread:46, rise:30 }); flashSpriteClass(hero, 'aura-steel', 700); },
-  schurke_a5_ausweid(hero, boss){ spawnSlashArc(boss, { color:'#ff5a5a', angle:-32 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:34 }), 90); spawnParticles(boss, { count:10, glyph:'🩸', color:'#e0466e', spread:58 }); flashSpriteClass(boss, 'freeze', 280); flashSpriteClass(boss, 'hit', 300); bigShake(); },
-  schurke_a5_beute(hero){ spawnGroundRune(hero, { color:'#ff6a8a' }); spawnParticles(hero, { count:10, glyph:'🩸', color:'#ff6a8a', spread:44, rise:30 }); },
-  schurke_a5_tanz(hero){ spawnGroundRune(hero, { color:'#9b30ff' }); spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#b06bff', spread:46, rise:24 }); },
-  schurke_a9_todes(hero, boss){ spawnSlashArc(boss, { color:'#ffffff', angle:-28 }); spawnSigilFlash(boss, { glyph:'💀', color:'#ff5a5a' }); flashSpriteClass(boss, 'freeze', 380); spawnParticles(boss, { count:14, glyph:'🩸', color:'#e0466e', spread:70 }); screenVignette('#c0306b', 700); screenFlash('#ffffff', 170); bigShake(); },
-  schurke_a9_toetung(hero){ spawnGroundRune(hero, { color:'#ff5a7a' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); screenVignette('#c0306b', 480); },
-  schurke_a9_versch(hero){ spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#9b6bff', spread:50, rise:18 }); },
   nebelschritt(hero){ spawnSmoke(hero); spawnSmoke(hero); spawnGroundRune(hero, { color:'#6b4bff' }); spawnParticles(hero, { count:16, glyph:'🌫️', color:'#9b6bff', spread:70, rise:14 }); },
   nebelschritt_ambush(hero, boss){ spawnSmoke(hero); spawnParticles(hero, { count:8, glyph:'🌑', color:'#9b6bff', spread:46, rise:10 }); spawnSlashArc(boss, { color:'#b6a0ff', angle:-30 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:32 }), 90); spawnSigilFlash(boss, { glyph:'🗡️', color:'#cdbcff' }); spawnParticles(boss, { count:12, glyph:'✦', color:'#cdbcff', spread:58 }); flashSpriteClass(boss, 'hit', 300); screenFlash('#b6a0ff', 150); bigShake(); },
-  // ---- VERTEIDIGER ----
-  schildwall(hero){ spawnGroundRune(hero, { color:'#7fd0ff' }); spawnParticles(hero, { count:8, glyph:'🛡', color:'#7fd0ff', spread:42, rise:20 }); },
-  verteidiger_a5_trotz(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#7fd0ff' }); spawnGroundRune(hero, { color:'#7fd0ff' }); },
-  verteidiger_a5_schild(hero, boss){ spawnShockwave(boss, '#ffffff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); spawnOrbit(boss, { glyph:'⭐', color:'#ffe066', count:4, radius:46, period:1400, dur:1300 }); spawnParticles(boss, { count:8, glyph:'✦', color:'#bfe3ff', spread:60 }); flashSpriteClass(boss, 'hit', 300); bigShake(); },
-  verteidiger_a5_bastion(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#7fd0ff' }); },
-  verteidiger_a9_unbeug(hero){ spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); screenFlash('#bfe3ff', 150); },
-  verteidiger_a9_wucht(hero, boss){ spawnImpact(boss, '#bfe3ff'); spawnNova(boss, '#7fd0ff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); screenFlash('#ffffff', 180); bigShake(); },
-  verteidiger_a9_halten(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#7fd0ff', count:4, radius:54, period:1600, dur:1400 }); },
-  donnerknall(hero, boss){ spawnImpact(boss, '#bfe3ff'); spawnShockwave(boss, '#ffffff'); spawnNova(boss, '#7fd0ff'); spawnSigilFlash(boss, { glyph:'⚡', color:'#ffe066' }); flashSpriteClass(boss, 'freeze', 600); spawnOrbit(boss, { glyph:'💫', color:'#ffe066', count:4, radius:42, period:900, dur:1700 }); screenFlash('#ffffff', 160); bigShake(); setTimeout(bigShake, 130); },
-  // ---- HEILER ----
-  heilkreis(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); },
-  heiler_a5_blitz(hero){ vfxHeal(hero); screenFlash('#ffe9a8', 150); },
-  heiler_a5_arkan(hero, boss){ spawnMeteor(boss, '#9be7ff'); spawnParticles(boss, { count:14, glyph:'✦', color:'#9be7ff', spread:78 }); screenFlash('#9be7ff', 200); bigShake(); },
-  heiler_a5_inf(hero){ spawnGroundRune(hero, { color:'#9be7ff' }); spawnParticles(hero, { count:10, glyph:'🔮', color:'#9be7ff', spread:46, rise:26 }); },
-  heiler_a9_segen(hero){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); const pil = document.createElement('div'); pil.className = 'vfx-pillar'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; pil.style.filter = 'hue-rotate(-12deg) brightness(1.15)'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 900); spawnParticles(hero, { count:16, glyph:'✦', color:'#ffe9a8', spread:54, rise:80 }); screenVignette('#ffe9a8', 480); },
-  heiler_a9_stern(hero, boss){ spawnProjectileVolley(hero, boss, { count:6, color:'#9be7ff', glyph:'⭐', stagger:120, fromTop:true }); setTimeout(()=>{ screenFlash('#9be7ff', 220); bigShake(); }, 360); },
-  heiler_a9_klar(hero){ spawnGroundRune(hero, { color:'#cdeeff' }); spawnOrbit(hero, { glyph:'✨', color:'#cdeeff', count:4, radius:52, period:1500, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✨', color:'#cdeeff', spread:44, rise:28 }); },
-  lichtsaeule(hero, boss){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar vfx-pillar-gold'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 950); } spawnGroundRune(hero, { color:'#ffe9a8' }); spawnProjectileVolley(hero, boss, { count:5, color:'#ffe9a8', glyph:'⭐', stagger:90, fromTop:true }); setTimeout(()=>{ spawnNova(boss, '#ffe9a8'); spawnParticles(boss, { count:14, glyph:'✦', color:'#ffe9a8', spread:80 }); screenFlash('#fff3c8', 200); bigShake(); }, 320); screenVignette('#ffe9a8', 600); },
-  // ---- HEXER (Seelenraub-Strahl bleibt unverändert) ----
-  hexer_a5_brand(hero){ spawnGroundRune(hero, { color:'#9b30ff' }); spawnParticles(hero, { count:10, glyph:'🔥', color:'#b06bff', spread:46, rise:26 }); },
-  hexer_a5_rausch(hero, boss){ spawnBeam(hero, boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnParticles(boss, { count:10, glyph:'🌑', color:'#b06bff', spread:60 }); }, 200); bigShake(); },
-  hexer_a9_explo(hero, boss){ spawnVortex(boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnShockwave(boss, '#b06bff'); spawnParticles(boss, { count:16, glyph:'🌑', color:'#b06bff', spread:90 }); screenFlash('#9b30ff', 220); bigShake(); }, 240); },
-  hexer_a9_orgie(hero){ spawnGroundRune(hero, { color:'#c0306b' }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
-  teufelswache(hero){ spawnGroundRune(hero, { color:'#7CFC00' }); spawnNova(hero, '#7CFC00'); spawnSigilFlash(hero, { glyph:'😈', color:'#9bff5a' }); spawnParticles(hero, { count:14, glyph:'🔥', color:'#9bff5a', spread:60, rise:20 }); applyDemonAura(hero, true); },
-  // ---- NEUE TALENT-AKTIVE ----
-  // Schurke
+  // ---- SCHURKE (Talent-Aktive) ----
+  // Tödliche Toxine (Gift-DoT)
   schurke_a5_gift(hero, boss){ spawnSlashArc(boss, { color:'#9acd32', angle:-28 }); spawnParticles(boss, { count:12, glyph:'☠️', color:'#9acd32', spread:54, rise:8 }); flashSpriteClass(boss, 'desat', 500); },
-  schurke_a5_wirbel(hero, boss){ for(let k=0;k<4;k++) setTimeout(()=> spawnSlashArc(boss, { color: k%2?'#ffffff':'#bfe3ff', angle:-40 + k*28 }), k*80); spawnOrbit(hero, { glyph:'🗡️', color:'#bfe3ff', count:4, radius:42, period:600, dur:900 }); spawnParticles(boss, { count:10, glyph:'✦', color:'#bfe3ff', spread:60 }); bigShake(); },
-  schurke_a9_aderlass(hero, boss){ spawnSlashArc(boss, { color:'#e0466e', angle:-30 }); spawnParticles(boss, { count:12, glyph:'🩸', color:'#e0466e', spread:56, rise:6 }); screenVignette('#c0306b', 420); },
-  schurke_a9_meuchel(hero, boss){ spawnSmoke(hero); spawnSlashArc(boss, { color:'#b6a0ff', angle:-32 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ffffff', angle:30 }), 90); spawnSigilFlash(boss, { glyph:'🗡️', color:'#cdbcff' }); flashSpriteClass(boss, 'freeze', 380); spawnOrbit(boss, { glyph:'💫', color:'#ffe066', count:3, radius:34, period:900, dur:1500 }); screenFlash('#b6a0ff', 150); bigShake(); },
-  // Verteidiger
-  verteidiger_a5_wurf(hero, boss){ spawnProjectileVolley(hero, boss, { count:1, color:'#bfe3ff', glyph:'🛡️', stagger:0 }); setTimeout(()=>{ spawnShockwave(boss, '#ffffff'); spawnSigilFlash(boss, { glyph:'🛡️', color:'#bfe3ff' }); spawnParticles(boss, { count:10, glyph:'✦', color:'#ff8a3d', spread:60 }); flashSpriteClass(boss, 'hit', 280); bigShake(); }, 360); },
+  // Klingenrausch (Angriffstempo-Schub): Nachzieh-Schemen + Tempo-Linien + Klingen-Orbit
+  schurke_a5_beute(hero){ spawnAfterImages(hero, '#9be7ff'); spawnSpeedLines(hero, '#bfe3ff'); spawnGroundRune(hero, { color:'#9be7ff' }); flashSpriteClass(hero, 'aura-haste', 800); spawnOrbit(hero, { glyph:'🗡️', color:'#bfe3ff', count:4, radius:46, period:500, dur:1300 }); spawnParticles(hero, { count:12, glyph:'➤', color:'#9be7ff', spread:54, rise:8 }); },
+  // Klingensturm (Wirbel-Doppeltreffer: Schlag + Echo)
+  schurke_a5_wirbel(hero, boss){ spawnBladestormRing(hero, boss, 1000); spawnSlashArc(boss, { color:'#bfe3ff', angle:-36 }); spawnParticles(boss, { count:8, glyph:'✦', color:'#bfe3ff', spread:60 }); },
+  schurke_a5_wirbel_echo(hero, boss){ spawnSlashArc(boss, { color:'#ffffff', angle:40 }); spawnShockwave(boss, '#bfe3ff'); spawnParticles(boss, { count:9, glyph:'🗡️', color:'#bfe3ff', spread:56 }); bigShake(); },
+  // Aderlass (Wunde aufreißen – Verwundbarkeit)
+  schurke_a9_aderlass(hero, boss){ spawnSlashArc(boss, { color:'#e0466e', angle:-30 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ff3030', angle:28 }), 90); spawnExposeCrack(boss); spawnParticles(boss, { count:12, glyph:'🩸', color:'#e0466e', spread:56, rise:6 }); screenVignette('#c0306b', 420); },
+  // Meuchelstoß (Hinrichtung): Schatten-Sichel + Hinrichtungs-Mal
+  schurke_a9_meuchel(hero, boss){ spawnSmoke(hero); spawnExecuteMark(boss, '#c0306b'); spawnSlashArc(boss, { color:'#b6a0ff', angle:-34 }); setTimeout(()=> spawnSlashArc(boss, { color:'#ff3030', angle:34 }), 80); spawnSigilFlash(boss, { glyph:'🗡️', color:'#ff6a6a' }); flashSpriteClass(boss, 'hit', 320); spawnParticles(boss, { count:12, glyph:'☠', color:'#c0306b', spread:58 }); screenFlash('#b6a0ff', 150); bigShake(); },
+  // Schattentanz (Schaden-Buff)
+  schurke_a9_versch(hero){ spawnSmoke(hero); spawnGroundRune(hero, { color:'#9b30ff' }); flashSpriteClass(hero, 'aura-shadow', 700); spawnOrbit(hero, { glyph:'🌑', color:'#b06bff', count:4, radius:52, period:900, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✦', color:'#b06bff', spread:48, rise:24 }); },
+  // ---- VERTEIDIGER (Grundfähigkeiten) ----
+  schildwall(hero){ spawnGroundRune(hero, { color:'#7fd0ff' }); spawnParticles(hero, { count:8, glyph:'🛡', color:'#7fd0ff', spread:42, rise:20 }); },
+  donnerknall(hero, boss){ spawnImpact(boss, '#bfe3ff'); spawnShockwave(boss, '#ffffff'); spawnNova(boss, '#7fd0ff'); spawnSigilFlash(boss, { glyph:'⚡', color:'#ffe066' }); flashSpriteClass(boss, 'freeze', 600); spawnOrbit(boss, { glyph:'💫', color:'#ffe066', count:4, radius:42, period:900, dur:1700 }); screenFlash('#ffffff', 160); bigShake(); setTimeout(bigShake, 130); },
+  // ---- VERTEIDIGER (Talent-Aktive) ----
+  // Schildwurf (Verwundbarkeit + Treffer)
+  verteidiger_a5_wurf(hero, boss){ spawnProjectileVolley(hero, boss, { count:1, color:'#bfe3ff', glyph:'🛡️', stagger:0 }); setTimeout(()=>{ spawnShockwave(boss, '#ffffff'); spawnExposeCrack(boss); spawnParticles(boss, { count:10, glyph:'✦', color:'#ff8a3d', spread:60 }); flashSpriteClass(boss, 'hit', 280); bigShake(); }, 360); },
+  // Vergeltung (Schadensreflexion)
   verteidiger_a5_vergelt(hero){ spawnSigilFlash(hero, { glyph:'🪞', color:'#b6d0ff' }); spawnNova(hero, '#b6d0ff'); spawnGroundRune(hero, { color:'#b6d0ff' }); spawnOrbit(hero, { glyph:'🪞', color:'#b6d0ff', count:3, radius:48, period:1500, dur:1300 }); },
-  verteidiger_a9_avatar(hero){ spawnSigilFlash(hero, { glyph:'🌟', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnNova(hero, '#ffd24a'); screenVignette('#ffe9a8', 480); screenFlash('#bfe3ff', 150); },
-  verteidiger_a9_wall(hero){ spawnSigilFlash(hero, { glyph:'✨', color:'#ffe9a8' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#ffe9a8', count:4, radius:52, period:1500, dur:1400 }); screenVignette('#ffe9a8', 520); },
-  // Heiler
+  // Letzte Bastion (Absorb-Schild)
+  verteidiger_a5_bastion(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnSigilFlash(hero, { glyph:'🐂', color:'#7fd0ff' }); spawnGroundRune(hero, { color:'#7fd0ff' }); spawnParticles(hero, { count:10, glyph:'🛡', color:'#7fd0ff', spread:46, rise:20 }); screenFlash('#bfe3ff', 140); },
+  // Avatar des Wächters (Schaden + Reduktion)
+  verteidiger_a9_avatar(hero){ spawnSigilFlash(hero, { glyph:'🌟', color:'#ffd24a' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnNova(hero, '#ffd24a'); spawnOrbit(hero, { glyph:'⚜️', color:'#ffe9a8', count:4, radius:54, period:1500, dur:1500 }); screenVignette('#ffe9a8', 480); screenFlash('#bfe3ff', 150); },
+  // Letzter Wall (Wiederbelebung)
+  verteidiger_a9_wall(hero){ spawnSigilFlash(hero, { glyph:'✨', color:'#ffe9a8' }); spawnGroundRune(hero, { color:'#ffd24a' }); spawnOrbit(hero, { glyph:'🛡', color:'#ffe9a8', count:4, radius:52, period:1500, dur:1400 }); spawnProjectileVolley(hero, hero, { count:6, color:'#ffe9a8', glyph:'✦', stagger:70, fromTop:true }); screenVignette('#ffe9a8', 520); },
+  // Zweiter Wind (Regeneration): erdgolden-runische Heilsäule + aufsteigende Schild-Motes
+  verteidiger_a9_unbeug(hero){ vfxHeal(hero); spawnSigilFlash(hero, { glyph:'🌿', color:'#9be07a' }); spawnGroundRune(hero, { color:'#bfe07a' }); spawnOrbit(hero, { glyph:'🛡', color:'#bfe07a', count:4, radius:50, period:1500, dur:1400 }); spawnParticles(hero, { count:14, glyph:'✦', color:'#cdf09a', spread:50, rise:64 }); screenVignette('#bfe07a', 420); },
+  // ---- HEILER (Grundfähigkeiten) ----
+  heilkreis(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); },
+  lichtsaeule(hero, boss){ vfxHeal(hero); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar vfx-pillar-gold'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 950); } spawnGroundRune(hero, { color:'#ffe9a8' }); spawnProjectileVolley(hero, boss, { count:5, color:'#ffe9a8', glyph:'⭐', stagger:90, fromTop:true }); setTimeout(()=>{ spawnNova(boss, '#ffe9a8'); spawnParticles(boss, { count:14, glyph:'✦', color:'#ffe9a8', spread:80 }); screenFlash('#fff3c8', 200); bigShake(); }, 320); screenVignette('#ffe9a8', 600); },
+  // ---- HEILER (Talent-Aktive) ----
+  // Verjüngung (Heilung über Zeit)
   heiler_a5_verjueng(hero){ vfxHeal(hero); spawnGroundRune(hero, { color:'#9dffc4' }); spawnOrbit(hero, { glyph:'🍃', color:'#9dffc4', count:4, radius:50, period:1600, dur:1400 }); },
-  heiler_a5_schild(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnSigilFlash(hero, { glyph:'🛡️', color:'#ffe9a8' }); spawnParticles(hero, { count:10, glyph:'✦', color:'#ffe9a8', spread:46, rise:20 }); },
-  heiler_a9_engel(hero){ vfxHeal(hero); spawnSigilFlash(hero, { glyph:'😇', color:'#ffe9a8' }); spawnProjectileVolley(hero, hero, { count:8, color:'#ffe9a8', glyph:'✦', stagger:60, fromTop:true }); screenVignette('#ffe9a8', 560); },
+  // Arkanschlag (Echo – erster Treffer)
+  heiler_a5_arkan(hero, boss){ spawnMeteor(boss, '#9be7ff'); spawnParticles(boss, { count:12, glyph:'✦', color:'#9be7ff', spread:70 }); screenFlash('#9be7ff', 180); },
+  // Arkanschlag (Echo – zweiter Treffer)
+  heiler_a5_arkan_echo(hero, boss){ spawnChainLightning(hero, boss, '#cdeeff'); setTimeout(()=>{ spawnNova(boss, '#cdeeff'); spawnShockwave(boss, '#ffffff'); spawnParticles(boss, { count:12, glyph:'✨', color:'#cdeeff', spread:64 }); bigShake(); }, 120); },
+  // Spiegelschild (Reflexion): heilig-goldene Spiegelscherben + Bann-Rune
+  heiler_a5_schild(hero){ spawnSigilFlash(hero, { glyph:'🪞', color:'#ffe9a8' }); spawnNova(hero, '#ffe9a8'); spawnGroundRune(hero, { color:'#ffe9a8' }); spawnOrbit(hero, { glyph:'🪞', color:'#ffe9a8', count:4, radius:50, period:1400, dur:1400 }); spawnParticles(hero, { count:10, glyph:'✦', color:'#fff3c8', spread:46, rise:20 }); },
+  // Engelsgeist (Engels-Aegis): Schutzkuppel + Federn + Heiligenschein
+  heiler_a9_engel(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnSigilFlash(hero, { glyph:'😇', color:'#ffe9a8' }); spawnNova(hero, '#fff3c8'); const a = anchorOf(hero), layer = $('#dmgLayer'); if(layer){ const pil = document.createElement('div'); pil.className = 'vfx-pillar'; pil.style.left = a.x+'px'; pil.style.top = a.y+'px'; pil.style.filter = 'hue-rotate(-12deg) brightness(1.15)'; layer.appendChild(pil); setTimeout(()=> pil.remove(), 900); } spawnOrbit(hero, { glyph:'🪶', color:'#ffe9a8', count:5, radius:54, period:1600, dur:1600 }); spawnParticles(hero, { count:14, glyph:'🪶', color:'#fff3c8', spread:54, rise:60 }); screenVignette('#ffe9a8', 520); },
+  // Sternenregen (Meteorschauer-DoT)
+  heiler_a9_stern(hero, boss){ spawnGroundRune(boss, { color:'#9be7ff' }); spawnMeteorShower(boss, '#9be7ff', 7, 130); setTimeout(()=>{ screenFlash('#9be7ff', 200); bigShake(); }, 700); },
+  // Reinigung (Schwäche entfernen + Heilung)
   heiler_a9_rein(hero){ vfxHeal(hero); spawnNova(hero, '#cdeeff'); spawnParticles(hero, { count:12, glyph:'✦', color:'#cdeeff', spread:48, rise:26 }); screenFlash('#cdeeff', 140); },
-  // Hexer
-  hexer_a5_verderb(hero, boss){ spawnBeam(hero, boss, '#9b30ff'); spawnParticles(boss, { count:10, glyph:'🟣', color:'#b06bff', spread:54, rise:8 }); spawnGroundRune(boss, { color:'#9b30ff' }); },
-  hexer_a5_furcht(hero, boss){ spawnSigilFlash(boss, { glyph:'💀', color:'#b06bff' }); spawnVortex(boss, '#9b30ff'); spawnOrbit(boss, { glyph:'💫', color:'#b06bff', count:3, radius:34, period:900, dur:1700 }); screenVignette('#6b4a8f', 560); flashSpriteClass(boss, 'freeze', 380); },
-  hexer_a9_chaos(hero, boss){ spawnProjectileVolley(hero, boss, { count:6, color:'#7CFC00', glyph:'☄️', stagger:110, fromTop:true }); setTimeout(()=>{ spawnImpact(boss, '#7CFC00'); spawnNova(boss, '#9bff5a'); spawnParticles(boss, { count:16, glyph:'🔥', color:'#9bff5a', spread:90 }); screenFlash('#7CFC00', 200); bigShake(); }, 380); },
-  hexer_a9_stein(hero){ spawnSigilFlash(hero, { glyph:'💜', color:'#b06bff' }); spawnGroundRune(hero, { color:'#9b30ff' }); spawnOrbit(hero, { glyph:'💜', color:'#b06bff', count:4, radius:50, period:1500, dur:1500 }); screenVignette('#6b4a8f', 480); },
+  // ---- HEXER (Grundfähigkeiten) ----
+  teufelswache(hero){ spawnGroundRune(hero, { color:'#7CFC00' }); spawnNova(hero, '#7CFC00'); spawnSigilFlash(hero, { glyph:'😈', color:'#9bff5a' }); spawnParticles(hero, { count:14, glyph:'🔥', color:'#9bff5a', spread:60, rise:20 }); applyDemonAura(hero, true); },
+  // ---- HEXER (Talent-Aktive) ----
+  // Verderbnis (Schattenflamme-Echo: Detonation + verzögerte Zweitdetonation)
+  hexer_a5_verderb(hero, boss){ spawnVortex(boss, '#9b30ff'); spawnNova(boss, '#b06bff'); spawnParticles(boss, { count:12, glyph:'🟣', color:'#b06bff', spread:60, rise:8 }); spawnGroundRune(boss, { color:'#9b30ff' }); screenFlash('#9b30ff', 150); },
+  hexer_a5_verderb_echo(hero, boss){ spawnSigilFlash(boss, { glyph:'💀', color:'#b06bff' }); spawnShockwave(boss, '#b06bff'); spawnParticles(boss, { count:10, glyph:'🌑', color:'#b06bff', spread:64 }); bigShake(); },
+  // Aderlass-Ritual (Lebensraub-Buff): Blutkreis + Blutaura
+  hexer_a5_ritual(hero){ spawnGroundRune(hero, { color:'#c0306b' }); flashSpriteClass(hero, 'aura-blood-strong', 700); spawnOrbit(hero, { glyph:'🩸', color:'#ff5a7a', count:4, radius:54, period:1500, dur:1400 }); spawnParticles(hero, { count:12, glyph:'🩸', color:'#ff5a7a', spread:48, rise:30 }); },
+  // Schattenblitz (Schatten-Nuke)
+  hexer_a5_furcht(hero, boss){ spawnVortex(boss, '#9b30ff'); setTimeout(()=>{ spawnNova(boss, '#9b30ff'); spawnSigilFlash(boss, { glyph:'💀', color:'#b06bff' }); spawnParticles(boss, { count:14, glyph:'🌑', color:'#b06bff', spread:80 }); screenFlash('#9b30ff', 200); bigShake(); }, 200); },
+  // Chaosregen (Teufelsregen-DoT)
+  hexer_a9_chaos(hero, boss){ spawnGroundRune(boss, { color:'#7CFC00' }); spawnMeteorShower(boss, '#7CFC00', 6, 140); setTimeout(()=>{ spawnImpact(boss, '#7CFC00'); spawnNova(boss, '#9bff5a'); screenFlash('#7CFC00', 180); bigShake(); }, 720); },
+  // Seelenfresser (Hinrichtung): Seelen-Strang reißt eine glühende Seele heraus
+  hexer_a9_stein(hero, boss){ spawnExecuteMark(boss, '#9b30ff'); spawnBeam(boss, hero, '#b06bff'); spawnVortex(boss, '#9b30ff'); spawnSigilFlash(boss, { glyph:'💜', color:'#c08bff' }); spawnParticles(boss, { count:14, glyph:'👻', color:'#c08bff', spread:60, rise:30 }); spawnParticles(hero, { count:8, glyph:'💜', color:'#c08bff', spread:40, rise:24 }); screenFlash('#9b30ff', 170); bigShake(); },
+  // Blutritual (Dunkler Pakt – Blutschild)
+  hexer_a9_orgie(hero){ spawnShieldDome(hero, 'absorbDome', 1); spawnGroundRune(hero, { color:'#c0306b' }); spawnSigilFlash(hero, { glyph:'🩸', color:'#ff5a7a' }); spawnOrbit(hero, { glyph:'🩸', color:'#ff5a7a', count:4, radius:54, period:1500, dur:1400 }); spawnParticles(hero, { count:12, glyph:'🛡', color:'#ff5a7a', spread:48, rise:24 }); },
 };
 
 // Spielt die Signatur einer Fähigkeit; fehlt sie, greift der kind-basierte Fallback.
@@ -1500,7 +1726,7 @@ function playAbilityVfx(ab, heroId, bossId, magic){
   if(ab && ABILITY_VFX[ab.id]){ ABILITY_VFX[ab.id](heroId, bossId); return; }
   if(!ab) return;
   if(ab.kind === 'heal') vfxHeal(heroId);
-  else if(ab.kind === 'burst') vfxBurst(bossId, !!magic, magic ? '#9be7ff' : '#ffd24a');
+  else if(ab.kind === 'burst' || ab.kind === 'echo') vfxBurst(bossId, !!magic, magic ? '#9be7ff' : '#ffd24a');
   else if(ab.kind === 'drain') vfxDrain(bossId, heroId);
   else spawnParticles(heroId, { count:8, glyph:'✦', color:'#fff', spread:40, rise:20 });
 }
@@ -1520,7 +1746,6 @@ function startDrainChannel(f, ab){
   const tickMs = ab.tickMs || 1000;
   const ticks  = Math.max(1, Math.round(ab.dur / tickMs));
   startDrainBeam('bossSprite', 'heroSprite', ab.dur, ab);
-  if(ab.id === 'hexer_a9_fresser') spawnSigilFlash('bossSprite', { glyph:'💀', color:'#b06bff' });
   let i = 0;
   const healMult = classOf(state).healMult || 1;
   const tick = () => {
@@ -1558,13 +1783,9 @@ function startDrainBeam(fromId, toId, dur, ab){
   const ang = Math.atan2(dy, dx) * 180/Math.PI;
   const real = dur / combatSpeed;
   const b = document.createElement('div');
-  // Seelenraub (Grundfähigkeit) = Referenz-Strahl. Talent-Kanäle sind verwandte
-  // Varianten: Aderlass-Ritual dünner, Seelenfresser dicker & dunkler.
-  const id = ab && ab.id;
-  let beamCol = '#c0306b';
-  b.className = 'vfx-beam drain-beam' +
-    (id === 'hexer_a5_ritual' ? ' drain-small' : id === 'hexer_a9_fresser' ? ' drain-big' : '');
-  if(id === 'hexer_a9_fresser') beamCol = '#7a1fb0';
+  // Seelenraub (Hexer-Grundfähigkeit) ist der einzige kanalisierte Drain-Strahl.
+  const beamCol = '#c0306b';
+  b.className = 'vfx-beam drain-beam';
   b.id = 'drainBeam';
   b.style.left = a.x+'px'; b.style.top = a.y+'px';
   b.style.width = len+'px'; b.style.transform = 'rotate('+ang+'deg)';
@@ -1748,7 +1969,7 @@ export function openDuelArena(cfg){
   const t = recomputeTotals();
   const stage = $('#arenaStage');
   stage.style.setProperty('--arena-bg', "url('"+zoneBg(state.zone)+"')");
-  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true });
+  $('#heroSprite').src = heroSrc(heroTier(t.power), { hideWeapon:true, hideOffhand:true });
   $('#bossSprite').src = cfg.oppSrc;   // wird in modals.js bereits waffenlos gebaut
   $('#heroBarName').textContent = cfg.myName || 'Du';
   $('#bossBarName').textContent = '🆚 ' + (cfg.oppName || 'Gegner');
@@ -1762,11 +1983,14 @@ export function openDuelArena(cfg){
     _animTurn: -1, _lastHealTs: 0, _ended: false, _fxSeen: {},
     // Gegnerwaffe einmalig auflösen → Gegner schwingt/zaubert passend zu SEINER Waffe.
     oppAtk: atkFromWeapon((cfg.oppEquipped || {}).waffe),
+    oppOffhandAtk: offhandAtk((cfg.oppEquipped || {}).schild),
   };
   currentFight = fight;
-  // Beide Kämpfer schwingen ihre echte Waffe: eigene Ebene + Gegner-Ebene (oppAtk).
+  // Beide Kämpfer schwingen ihre echte Hand-Ausrüstung.
   fight.heroWeaponEl = setWeaponLayer('hero', weaponAtk(state.equipped && state.equipped.waffe));
+  fight.heroOffhandEl = setOffhandLayer('hero', offhandAtk(state.equipped && state.equipped.schild));
   fight.bossWeaponEl = setWeaponLayer('boss', fight.oppAtk);
+  fight.bossOffhandEl = setOffhandLayer('boss', fight.oppOffhandAtk);
   $('#arenaResult').className = 'arena-result';
   $('#arenaResult').classList.remove('show');
   $('#arena').classList.remove('fight-over');   // Kampf-UI wieder einblenden
@@ -1797,6 +2021,8 @@ export function applyDuelSnapshot(snap){
 
   f.heroMaxHp = snap[me+'MaxHp'] || 1; f.heroHp = snap[me+'Hp'] || 0;
   f.bossMaxHp = snap[opp+'MaxHp'] || 1; f.bossHp = snap[opp+'Hp'] || 0;
+  // Schlagintervalle beider Seiten → Animationstempo (attackerInterval/animSpeedForInterval).
+  f.hostInterval = snap.hostInterval; f.guestInterval = snap.guestInterval;
   updateHpBars(f);
 
   const sec = Math.max(0.5, (Date.now() - (snap.startedAt || Date.now()))/1000);
@@ -1858,6 +2084,8 @@ function applyDuelFx(fx, me){
   applyBuffAura('heroSprite', 'crit',      { until: now + (mine.crit||0),    src: mine.critSrc  }, now);
   applyBuffAura('heroSprite', 'dmgBoost',  { until: now + (mine.fire||0),    src: mine.fireSrc  }, now);
   applyBuffAura('heroSprite', 'lifesteal', { until: now + (mine.blood||0),   src: mine.bloodSrc }, now);
+  applyBuffAura('heroSprite', 'haste',     { until: now + (mine.haste||0),   src: mine.hasteSrc }, now);
+  applyBuffAura('bossSprite', 'haste',     { until: now + (theirs.haste||0), src: theirs.hasteSrc }, now);
   applyBuffAura('bossSprite', 'crit',      { until: now + (theirs.crit||0),  src: theirs.critSrc  }, now);
   applyBuffAura('bossSprite', 'dmgBoost',  { until: now + (theirs.fire||0),  src: theirs.fireSrc  }, now);
   applyBuffAura('bossSprite', 'lifesteal', { until: now + (theirs.blood||0), src: theirs.bloodSrc }, now);

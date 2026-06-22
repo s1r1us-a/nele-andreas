@@ -15,7 +15,7 @@ export const AFFIX_DEFS = {
   lifesteal:   { label:'Lebensraub',      pct:true,  base:0.02, perIlvl:0.0010, cap:0.40 },
   dodge:       { label:'Ausweichen',      pct:true,  base:0.02, perIlvl:0.0008, cap:0.35 },
   block:       { label:'Block',           pct:false, base:2,    perIlvl:0.4 },
-  versatility: { label:'Vielseitigkeit',  pct:true,  base:0.02, perIlvl:0.0009, cap:0.30 },
+  versatility: { label:'Vielseitigkeit',  pct:true,  base:0.02, perIlvl:0.0009, defensiveCap:0.85 },
   thorns:      { label:'Dornen',          pct:false, base:3,    perIlvl:0.5 },
 };
 export const AFFIX_KEYS = Object.keys(AFFIX_DEFS);

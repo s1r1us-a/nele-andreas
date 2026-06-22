@@ -10,14 +10,16 @@
        { version, activeId, slots: { id: <Spielstand> } }
    Persistenz: Firebase Realtime DB als Quelle, localStorage als Cache.
    ===================================================================== */
-import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS } from '../data/tuning.js';
+import { SAVE_KEY, SAVE_VERSION, MAX_CHARACTERS, BASE_STAT, ILVL_K } from '../data/tuning.js';
 import { SLOTS } from '../data/slots.js';
+import { AFFIX_DEFS } from '../data/affixes.js';
 import { defaultTypeKey, typeOf, itemDisplayName, materialOf } from '../data/itemTypes.js';
 import { buildItemSVG, elementOf } from './item-art.js';
-import { isValidChoice } from '../data/talents.js';
+import { MASTERY_DEFS, isValidChoice, talentPointEntitlement } from '../data/talents.js';
 import { CLASS_BY_ID } from '../data/classes.js';
-import { setOf } from '../data/sets.js';
-import { blankMaterials } from '../data/materials.js';
+import { SETS, setOf, setFixedAffixKeys } from '../data/sets.js';
+import { blankMaterials, upgradeAffixFactor } from '../data/materials.js';
+import { rarityOf } from '../data/rarities.js';
 import { blankDyes, dyeColorOf } from '../data/dyes.js';
 import { db, ref, get, set, remove, onValue } from './firebase.js';
 
@@ -94,6 +96,45 @@ function unwearableForClass(item, cls){
   if(!mat) return false;
   return !(cls.allowedMaterials || []).includes(mat);
 }
+function fixedAffixValueForMigration(key, ilvl, rarity, roll=1.20){
+  const d = AFFIX_DEFS[key]; if(!d) return 0;
+  let v = (d.base + ilvl*d.perIlvl) * rarity.mult * roll;
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.max(1, Math.round(v)); }
+  return v;
+}
+function scaleAffixForMigration(key, baseV, lvl){
+  const d = AFFIX_DEFS[key]; if(!d) return baseV;
+  let v = baseV * upgradeAffixFactor(lvl || 0);
+  if(d.pct){ v = Math.round(v*1000)/1000; if(d.cap) v = Math.min(d.cap, v); }
+  else { v = Math.max(1, Math.round(v)); }
+  return v;
+}
+function migrateSetItemStats(it){
+  const set = it && it.setId ? SETS[it.setId] : null;
+  const slotKey = it && (it.setSlot || it.slotKey);
+  const slot = slotKey && SLOTS[slotKey];
+  if(!set || !slot) return;
+  const rarity = rarityOf('legendaer');
+  const ilvl = Math.max(1, it.ilvl|0);
+  const baseAffixes = {};
+  for(const key of setFixedAffixKeys(set, slotKey)){
+    if(AFFIX_DEFS[key]) baseAffixes[key] = fixedAffixValueForMigration(key, ilvl, rarity);
+  }
+  const baseStat = Math.max(1, Math.round(BASE_STAT[slot.statType] * rarity.mult * (1 + ilvl*ILVL_K) * set.statMult));
+  const lvl = it.upgradeLevel || 0;
+  it.base = { stat: (it.base && it.base.stat) || baseStat, affixes: baseAffixes };
+  const out = {};
+  for(const [k,v] of Object.entries(baseAffixes)) out[k] = scaleAffixForMigration(k, v, lvl);
+  it.affixes = out;
+}
+function migrateSetItemsInSlot(s){
+  const visit = it => migrateSetItemStats(it);
+  (s.inventory || []).forEach(visit);
+  Object.values(s.equipped || {}).forEach(visit);
+  (s.pendingLoot || []).forEach(visit);
+  if(s.expedition && Array.isArray(s.expedition.items)) s.expedition.items.forEach(visit);
+}
 function migrateSlot(s){
   if(typeof s.zone !== 'number') s.zone = 0;
   if(typeof s.gold !== 'number') s.gold = 0;
@@ -154,9 +195,13 @@ function migrateSlot(s){
     if(typeof s.character.beardId !== 'string') s.character.beardId = 'kein';
     if(typeof s.character.beardColor !== 'string') s.character.beardColor = '#6b3f1d';
     if(!s.character.talents || typeof s.character.talents !== 'object') s.character.talents = {};
-    if(typeof s.character.talentPoints !== 'number'){
-      s.character.talentPoints = Math.floor((s.level||1) / 5);
-    }
+    if(typeof s.character.talentPoints !== 'number') s.character.talentPoints = 0;
+    else s.character.talentPoints = Math.max(0, Math.floor(s.character.talentPoints));
+    const rawMasteries = (s.character.masteries && typeof s.character.masteries === 'object')
+      ? s.character.masteries : {};
+    const masteries = {};
+    for(const m of MASTERY_DEFS) masteries[m.key] = Math.max(0, Math.floor(Number(rawMasteries[m.key]) || 0));
+    s.character.masteries = masteries;
     // Talent-Migration: nach Baum-Umbau ungültige Wahlen entfernen und die
     // dafür ausgegebenen Punkte zurückerstatten (kein manueller Respec nötig).
     const cid = s.character.classId;
@@ -170,6 +215,11 @@ function migrateSlot(s){
         }
       }
       if(refunded > 0) s.character.talentPoints = (s.character.talentPoints||0) + refunded;
+      const investedTalents = Object.keys(s.character.talents).length;
+      const investedMasteries = MASTERY_DEFS.reduce((sum, m) => sum + (s.character.masteries[m.key] || 0), 0);
+      const currentTotal = investedTalents + investedMasteries + (s.character.talentPoints || 0);
+      const entitled = talentPointEntitlement(s.level || 1, cid);
+      if(entitled > currentTotal) s.character.talentPoints += entitled - currentTotal;
     }
   }
   for(let i=0;i<s.zone;i++){ if(!s.firstClears[i]) s.firstClears[i] = true; }
@@ -183,6 +233,7 @@ function migrateSlot(s){
       if(it && unwearableForClass(it, cls)){ s.inventory.push(it); s.equipped[k] = null; }
     }
   }
+  migrateSetItemsInSlot(s);
   s.version = SAVE_VERSION;
   return s;
 }
@@ -225,7 +276,7 @@ function hydrateItems(){
     // (Vorher fälschlich nur die Slot-art → Nebenhand-Waffen/Kugeln wurden beim
     //  Laden als Schild neu gerendert.)
     const art = t.art || (SLOTS[it.slotKey] && SLOTS[it.slotKey].art) || it.slotKey;
-    it.sprite = buildItemSVG(art, it.variant, it.rarity, elementOf(it.id), t.orb, t.material, dyeColorOf(it));
+    it.sprite = buildItemSVG(art, it.variant, it.rarity, t.element || elementOf(it.id), t.orb, t.material, dyeColorOf(it), null, t.special);
   }
 }
 

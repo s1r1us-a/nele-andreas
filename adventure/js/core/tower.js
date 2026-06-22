@@ -5,12 +5,12 @@
    Koop: tritt der Partner einer Wartelobby bei, gilt der Spielstand des Hosts.
    ===================================================================== */
 import { db, ref, get, set, update, remove, push, runTransaction, onValue, onDisconnect } from './firebase.js';
-import { COMBAT, TOWER } from '../data/tuning.js';
+import { COMBAT, TOWER, animSpeedForInterval } from '../data/tuning.js';
 import { bossFor } from '../data/bosses.js';
-import { AFFIX_KEYS } from '../data/affixes.js';
+import { AFFIX_DEFS, AFFIX_KEYS } from '../data/affixes.js';
 import { CLASS_BY_ID, DEFAULT_CLASS_ID, abilityOf, ability2Of, abilitiesOf } from '../data/classes.js';
 import { materialOf } from '../data/itemTypes.js';
-import { weaponAtk } from '../data/attacks.js';
+import { weaponAtk, offhandAtk } from '../data/attacks.js';
 import { applyTalents } from '../data/talents.js';
 import { levelBonus, heroTier } from './character.js';
 import { powerOfBundle, rollItem } from './items.js';
@@ -123,7 +123,7 @@ export function computePlayerStats(s){
   b.attackSpeed = Math.min(0.60, b.attackSpeed);
   b.lifesteal   = Math.min(0.40, b.lifesteal);
   b.dodge       = Math.min(0.35, b.dodge);
-  b.versatility = Math.min(0.30, b.versatility);
+  b.versatility = Math.max(0, b.versatility);
   const lb = levelBonus(s.level || 1);
   b.armor  += lb.armor;
   b.damage += lb.dmg;
@@ -152,6 +152,7 @@ export function computePlayerStats(s){
     character: s.character, usesStab,
     // Angriffs-Beschreibung (Profil/Spell/Overlay-Parameter) für die Kampf-FX.
     wpn: weaponAtk(s.equipped && s.equipped.waffe),
+    offhand: offhandAtk(s.equipped && s.equipped.schild),
   };
 }
 
@@ -326,7 +327,7 @@ function takeBossDmg(atk, armor, dodge, versatility, block){
   const K = atk * TOWER.armorK;
   const mitig = Math.min(TOWER.armorMitigCap, defense / (defense + K));
   let dmg = Math.round(atk * rnd(0.15) * (1 - mitig));
-  dmg = Math.round(dmg * (1 - (versatility || 0)));
+  dmg = Math.round(dmg * (1 - Math.min(AFFIX_DEFS.versatility.defensiveCap || 0.85, versatility || 0)));
   return { dmg: Math.max(1, dmg) };
 }
 
@@ -436,12 +437,14 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontAtk:   frontStats.atk,  frontArmor: frontStats.armor,
     frontCrit:  frontStats.critChance, frontCritMult: frontStats.critMult,
     frontInterval: frontStats.interval, frontDodge: frontStats.dodge,
+    frontAnimSpeed: animSpeedForInterval(frontStats.interval),   // Animationstempo (an Clients gesendet)
     frontVers:  frontStats.versatility, frontLifesteal: frontStats.lifesteal,
     frontBlock: frontStats.block || 0, frontThorns: frontStats.thorns || 0,
     frontHealMult: frontStats.healMult,
     frontIsHealer: frontStats.classId === 'heiler',
     frontUsesStab: frontStats.usesStab || false,
     frontWpn: frontStats.wpn || null,
+    frontOffhand: frontStats.offhand || null,
     frontName, frontTier: frontStats.tier,
     frontKey: keys.frontKey || '', frontClass: frontStats.classId || '',
     frontAbility: abilityOf(frontStats.classId),
@@ -451,12 +454,14 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     backAtk:    bs.atk || 0,     backArmor: bs.armor || 0,
     backCrit:   bs.critChance || 0, backCritMult: bs.critMult || 0,
     backInterval:  bs.interval || frontStats.interval, backDodge: bs.dodge || 0,
+    backAnimSpeed: animSpeedForInterval(bs.interval || frontStats.interval),
     backVers:   bs.versatility || 0, backLifesteal: bs.lifesteal || 0,
     backBlock:  bs.block || 0, backThorns: bs.thorns || 0,
     backIsHealer: bs.classId === 'heiler',
     backHealMult: bs.healMult,
     backUsesStab: bs.usesStab || false,
     backWpn: bs.wpn || null,
+    backOffhand: bs.offhand || null,
     backName: backName || '', backTier: bs.tier || 0,
     backKey: keys.backKey || '', backClass: bs.classId || '',
     backAbility:  solo ? null : abilityOf(bs.classId),
@@ -476,8 +481,8 @@ export function startTowerFight(lobbyId, floor, frontStats, backStats, frontName
     frontCastTs:0, frontCastAb:'', backCastTs:0, backCastAb:'',
     // Talent-Aktive: Cooldown-Maps je Slot + per-Slot-Effekt-Container + Boss-Verwundbarkeit.
     frontCd:{}, backCd:{}, bossVulnUntil:0, bossVulnVal:0,
-    fx:{ front:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0 },
-          back:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0 } },
+    fx:{ front:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0, hasteUntil:0,hasteVal:0 },
+          back:{ dmgBoostUntil:0,dmgBoostVal:0, dmgReduceUntil:0,dmgReduceVal:0, lifestealUntil:0,lifestealVal:0, reflectUntil:0,reflectVal:0, shield:0,shieldUntil:0, deathUntil:0,reviveHp:0, hasteUntil:0,hasteVal:0 } },
     _lastAbilTs:0,
     onUpdate,
   };
@@ -507,7 +512,7 @@ function slotDmgMult(fight, slot, now){
   if(now < (fight.bossVulnUntil||0))    m *= (1 + (fight.bossVulnVal||0));
   return m;
 }
-// Zusätzlicher Lebensraub eines Slots aus Talent-Buffs (Beutejagd/Blutritual).
+// Zusätzlicher Lebensraub eines Slots aus Talent-Buffs (Aderlass-Ritual).
 function slotLifesteal(fight, slot, now){
   const fx = fight.fx && fight.fx[slot];
   return (fx && now < (fx.lifestealUntil||0)) ? (fx.lifestealVal||0) : 0;
@@ -612,6 +617,15 @@ function applyAbility(fight, slot, abilityId){
     if(slot === 'front'){ fight.frontCritUntil = now + ab.dur; fight.frontCritVal = ab.critBonus||0; }
     else               { fight.backCritUntil  = now + ab.dur; fight.backCritVal  = ab.critBonus||0; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+'!', '#ff8a3d');
+  } else if(ab.kind === 'haste'){
+    fxs.hasteUntil = now + ab.dur; fxs.hasteVal = ab.hasteBonus||0;
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': +'+Math.round((ab.hasteBonus||0)*100)+'% Angriffstempo!', '#9be7ff');
+  } else if(ab.kind === 'execute'){
+    // Hinrichtung (Meuchelstoß/Seelenfresser): unter der HP-Schwelle massiv verstärkt.
+    const low = fight.bossHp <= fight.bossMaxHp * (ab.threshold||0.3);
+    const dmg = dealBoss(ab.burstMult * (low ? (ab.execMult||2.5) : 1));
+    if(ab.heals) slotHeal(dmg);
+    addLog(fight, ab.icon+' '+name+' – '+ab.name+': '+(low?'HINRICHTUNG ':'')+fmtBig(dmg)+' Schaden'+(ab.heals?' (+Heilung)':''), low?'#ff3030':'#ffd24a');
   } else if(ab.kind === 'vanish'){
     fight.bossStunUntil = now + ab.dur;
     if(slot === 'front') fight.frontStealthUntil = now + ab.dur; else fight.backStealthUntil = now + ab.dur;
@@ -626,7 +640,7 @@ function applyAbility(fight, slot, abilityId){
     else               { fight.backPetUntil  = now + (ab.petDur||10000); fight.backPetBonus  = ab.petBonus||0.25; }
     addLog(fight, ab.icon+' '+name+' – '+ab.name+': Teufelswache kämpft '+((ab.petDur||10000)/1000)+'s mit (+'+Math.round((ab.petBonus||0.25)*100)+'% Schaden)!', '#9b30ff');
   } else if(ab.kind === 'dmgReduce'){
-    // Schildwall heilt die ganze Gruppe; Talent-Reduce (Verschwinden/Unbeugsam) nur den Slot.
+    // Schildwall (Grundfähigkeit) wirkt auf die ganze Gruppe; etwaige Slot-Reduce nur den Slot.
     if(ab.id === 'schildwall'){ fight.groupDmgReduceUntil = now + ab.dur; fight.groupDmgReducePct = ab.dmgReduce||0; addLog(fight, ab.icon+' '+ab.name+' – Gruppe erleidet '+Math.round(ab.dmgReduce*100)+'% weniger Schaden!', '#7fd0ff'); }
     else { fxs.dmgReduceUntil = now + ab.dur; fxs.dmgReduceVal = ab.dmgReduce||0; addLog(fight, ab.icon+' '+name+' – '+ab.name+': −'+Math.round((ab.dmgReduce||0)*100)+'% erlittener Schaden!', '#7fd0ff'); }
   } else if(ab.kind === 'dmgBoost'){
@@ -686,6 +700,16 @@ function applyAbility(fight, slot, abilityId){
     const dmg = dealBoss(ab.burstMult || 2);
     if(ab.kind === 'drain') slotHeal(dmg);
     addLog(fight, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden'+(ab.kind==='drain'?' (+Heilung)':''), '#ffd24a');
+  } else if(ab.kind === 'echo'){
+    // Arkanschlag: Soforttreffer + verzögertes Echo.
+    const dmg = dealBoss(ab.burstMult || 1.6);
+    addLog(fight, ab.icon+' '+ab.name+': '+fmtBig(dmg)+' Schaden', '#9be7ff');
+    setTimeout(()=>{
+      if(fight.over || _fight !== fight) return;
+      const e = dealBoss(ab.echoMult || ab.burstMult || 1);
+      addLog(fight, '✨ Echo: '+fmtBig(e)+' Schaden', '#cdeeff');
+      syncFight(fight);
+    }, ab.echoDelay || 500);
   }
   syncFight(fight);
 }
@@ -763,7 +787,13 @@ function startTowerHot(fight, slot, ab, targets){
 }
 
 function scheduleExchange(fight){
-  const iv = Math.min(fight.frontInterval, fight.backInterval || fight.frontInterval);
+  let iv = Math.min(fight.frontInterval, fight.backInterval || fight.frontInterval);
+  // Klingenrausch (haste): schnellere Schlagfolge, solange ein lebender Slot den Tempo-Buff hält.
+  const now = Date.now();
+  let haste = 0;
+  if(fight.frontHp > 0 && now < (fight.fx.front.hasteUntil||0)) haste = Math.max(haste, fight.fx.front.hasteVal||0);
+  if(fight.backHp  > 0 && now < (fight.fx.back.hasteUntil ||0)) haste = Math.max(haste, fight.fx.back.hasteVal ||0);
+  if(haste > 0) iv /= (1 + haste);
   _fightTimer = setTimeout(() => exchange(fight), iv / fight.speed);
 }
 
@@ -810,7 +840,7 @@ function exchange(fight){
       fight.bossHp = Math.max(0, fight.bossHp - fd);
       fight.dmgDealt += fd;
       addLog(fight, '⚔️ ' + fight.frontName + (fc?' ✨KRIT':'') + ': -' + fmtBig(fd) + ' HP', fc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}) });
+      events.push({ s:'front', t:'boss', d:fd, ...(fc?{c:1}:{}), ...(fight.frontUsesStab?{p:1}:{}), ...(fight.frontWpn?{wp:fight.frontWpn}:{}), ...(fight.frontOffhand?{oh:fight.frontOffhand}:{}), ...(fight.frontAnimSpeed>1?{a:fight.frontAnimSpeed}:{}) });
       // Dornen reflektiert
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(fd * 0.15));
@@ -845,7 +875,7 @@ function exchange(fight){
       fight.dmgDealt += bd;
       const icon = fight.backIsHealer ? '✨' : '⚔️';
       addLog(fight, icon + ' ' + fight.backName + (bc?' ✨KRIT':'') + ': -' + fmtBig(bd) + ' HP', bc ? '#ffd24a' : '#cfc6dd');
-      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}) });
+      events.push({ s:'back', t:'boss', d:bd, ...(bc?{c:1}:{}), ...(fight.backUsesStab?{p:1}:{}), ...(fight.backWpn?{wp:fight.backWpn}:{}), ...(fight.backOffhand?{oh:fight.backOffhand}:{}), ...(fight.backAnimSpeed>1?{a:fight.backAnimSpeed}:{}) });
       if(mechs.includes('dornen')){
         const refl = Math.max(1, Math.round(bd * 0.15));
         fight.backHp = Math.max(0, fight.backHp - refl);

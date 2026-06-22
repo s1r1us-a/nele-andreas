@@ -47,6 +47,23 @@ export const COMBAT = {
   hardEnrageRamp: 1.12,
 };
 
+// ---- Angriffstempo → Animationstempo --------------------------------
+// Angriffstempo verkürzt das Schlagintervall; ohne Anpassung bleibt die
+// Schwung-Animation aber fix lang und überlappt bei hohem Tempo. Dieser
+// Faktor (≥ 1) staucht die Schwung-Animation, sodass sie ins Intervall passt.
+export const ANIM = {
+  swingNominalMs: 380,   // längster realer Schwung (overhead) → deckt alle Profile ab
+  occupancy:      0.85,  // Anteil des Intervalls, den die Animation füllen darf
+  maxFactor:      2.2,   // Obergrenze, damit es nie nervös flackert
+};
+// Bildet ein Schlagintervall (ms) auf einen Animationstempo-Faktor ≥ 1 ab.
+// interval=750 (attackSpeed=0) → 1.0 (unverändert); kürzer → schnellere Animation.
+export function animSpeedForInterval(intervalMs){
+  if(!(intervalMs > 0)) return 1;
+  const fit = ANIM.swingNominalMs / (intervalMs * ANIM.occupancy);
+  return Math.min(ANIM.maxFactor, Math.max(1, fit));
+}
+
 // ---- Endlos-Skalierung (#14): gestaffelt statt global flach ---------
 export const ENDLESS = {
   // Faktor pro Stufe jenseits des letzten definierten Bosses.

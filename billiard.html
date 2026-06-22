@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Billiard 🎱 – Nele & Andreas</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="princess-theme.css">
+<link rel="stylesheet" href="billiard.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<div class="auth-loading" id="authLoading"><div class="auth-spinner"></div></div>
+
+<!-- LOGIN -->
+<div class="modal-overlay" id="modalOverlay" style="display:flex;">
+  <div class="modal-card">
+    <span class="modal-emoji">🎱</span>
+    <div class="modal-title">Billiard</div>
+    <div class="modal-subtitle">Bitte einloggen</div>
+    <input class="login-field" type="email" id="loginEmail" placeholder="E-Mail" autocomplete="email">
+    <input class="login-field" type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Einloggen 🌸</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- TOP BAR -->
+<div class="top-bar" id="topBar">
+  <a href="index.html" class="top-bar-btn">← Zurück</a>
+  <div class="coin-display">🪙 <span class="coin-num" id="coinCount">0</span></div>
+  <button class="top-bar-btn" id="logoutBtn">Ausloggen</button>
+</div>
+
+<div class="bg-gradient"></div>
+
+<!-- MAIN -->
+<div class="page" id="mainPage" style="display:none;">
+  <h1 class="page-title">🎱 Billiard 💜</h1>
+  <p class="page-subtitle">8-Ball für Andreas &amp; Nele</p>
+
+  <!-- MODUS-AUSWAHL -->
+  <div id="modeSection" class="mode-grid" style="display:none;">
+    <div class="mode-card" id="modeMpBtn">
+      <span class="mode-emoji">⚔️</span>
+      <div class="mode-name">Multiplayer</div>
+      <div class="mode-desc">Abwechselnd 8-Ball mit Coin-Einsatz. Wer die schwarze 8 regulär versenkt, gewinnt den Pot.</div>
+    </div>
+    <div class="mode-card" id="modeSoloBtn">
+      <span class="mode-emoji">🎯</span>
+      <div class="mode-name">Einzelspieler</div>
+      <div class="mode-desc">Übung: räum den Tisch allein leer und sammle deine Bestmarke (wenigste Schläge).</div>
+    </div>
+  </div>
+
+  <!-- STATISTIK (eingeloggter Spieler) -->
+  <div id="statsPanel" class="stats-panel" style="display:none;">
+    <div class="stats-panel-title">📊 Deine Statistik</div>
+    <div class="stats-panel-grid" id="statsGrid"></div>
+  </div>
+
+  <!-- LOBBY -->
+  <div id="lobbySection" style="width:100%;max-width:400px;display:none;">
+    <div class="lobby-card" id="createCard">
+      <div class="lobby-title">Neues Spiel 🎱</div>
+      <div class="lobby-sub">Setze deinen Einsatz und fordere den anderen heraus</div>
+      <div class="bet-label">Dein Einsatz</div>
+      <input class="bet-input" type="number" id="betInput" placeholder="500" min="50" step="50">
+      <div class="bet-hint" id="betHint">Mindestens 50 🪙</div>
+      <button class="btn-primary" id="createGameBtn">Spiel erstellen ⚔️</button>
+    </div>
+
+    <div class="waiting-card" id="waitingCard" style="display:none;">
+      <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+      <div class="lobby-title">Warten auf <span id="waitingForName"></span>…</div>
+      <div class="lobby-sub" style="margin:12px 0 20px;">Einsatz: <strong id="waitingBetDisplay" style="color:var(--gold);font-family:'Dancing Script',cursive;font-size:20px;"></strong> 🪙</div>
+      <div class="waiting-dots"><span></span><span></span><span></span></div>
+      <button class="btn-secondary" id="cancelGameBtn" style="margin-top:20px;">Spiel abbrechen</button>
+    </div>
+
+    <div class="invite-card" id="inviteCard" style="display:none;">
+      <span class="invite-emoji">🎱</span>
+      <div class="invite-title"><span id="inviterName"></span> fordert dich heraus!</div>
+      <div class="invite-bet" id="inviteBetDisplay"></div>
+      <div class="invite-sub">🪙 Coins werden sofort abgezogen<br>Der Gewinner bekommt alles!</div>
+      <button class="btn-accept" id="acceptBtn">Annehmen ✅</button>
+      <button class="btn-decline" id="declineBtn">Ablehnen ❌</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="gameSection" class="pool-wrapper" style="display:none;">
+    <div class="pool-header">
+      <div class="player-info" id="infoMe">
+        <div class="player-name" id="nameMe">Du</div>
+        <div class="player-group" id="groupMe"></div>
+        <div class="player-turn-label" id="turnLabelMe"></div>
+      </div>
+      <div class="center-display">
+        <div class="center-label" id="centerLabel">8-Ball</div>
+        <div class="center-main" id="centerMain">🎱</div>
+        <div class="center-sub" id="centerSub"></div>
+      </div>
+      <div class="player-info" id="infoOpp" style="display:none;">
+        <div class="player-name" id="nameOpp">Gegner</div>
+        <div class="player-group" id="groupOpp"></div>
+        <div class="player-turn-label" id="turnLabelOpp"></div>
+      </div>
+    </div>
+
+    <div class="arena">
+      <div class="arena-mount" id="arenaMount"></div>
+      <div class="arena-hint" id="arenaHint">Drehen zum Zielen · Stärke wählen · Stoß 🎱</div>
+      <div class="arena-foul" id="arenaFoul">⚠️ Foul!</div>
+    </div>
+
+    <div class="shot-controls" id="shotControls">
+      <label class="power-label" for="powerSlider">Stärke</label>
+      <input type="range" id="powerSlider" class="power-slider" min="0" max="100" value="70">
+      <span class="power-value" id="powerValue">70%</span>
+      <button class="btn-shot" id="shotBtn">🎱 Stoß</button>
+    </div>
+
+    <div class="pool-actions">
+      <button class="btn-secondary" id="surrenderBtn">🏳️ Aufgeben</button>
+      <button class="btn-secondary" id="leaveBtn">← Verlassen</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <span class="result-emoji" id="resultEmoji">🏆</span>
+    <div class="result-title" id="resultTitle">Gewonnen!</div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-coins" id="resultCoins"></div>
+    <button class="btn-play-again" id="playAgainBtn">Nochmal 🎱</button>
+  </div>
+</div>
+
+<script type="module" src="billiard.js"></script>
+<script type="module" src="maintenance.js"></script>
+<script type="module" src="presence.js"></script>
+<script type="module" src="message-notify.js"></script>
+<script type="module" src="announcement.js"></script>
+</body>
+</html>

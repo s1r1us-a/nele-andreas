@@ -1211,6 +1211,29 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
 .combatant.vuln-tint { filter:drop-shadow(0 0 12px #ff5a3c) saturate(1.5) brightness(1.06);
   animation:ablazePulse .5s ease-in-out infinite alternate; }
 .combatant.freeze { animation:none !important; filter:brightness(1.6) saturate(.4) drop-shadow(0 0 12px #fff); }
+/* Klingenrausch (haste): schneller Tempo-Schimmer. */
+.combatant.aura-haste { filter:drop-shadow(0 0 12px #9be7ff) drop-shadow(0 0 22px #4aa0ff) brightness(1.16) saturate(1.3);
+  animation:critRagePulse .32s ease-in-out infinite alternate; }
+
+/* Nachzieh-Schemen (Klingenrausch): verblassende Geist-Kopie des Sprites. */
+.vfx-afterimage { pointer-events:none; z-index:8; opacity:.55; mix-blend-mode:screen;
+  filter:brightness(1.4) hue-rotate(8deg) drop-shadow(0 0 8px var(--ai-col,#9be7ff));
+  animation:afterImageFade .55s ease-out forwards; }
+@keyframes afterImageFade { 0%{ opacity:.55; } 100%{ opacity:0; transform:translateX(-12px); } }
+/* Tempo-Linien (Klingenrausch). */
+.vfx-speedline { position:absolute; width:64px; height:3px; pointer-events:none; z-index:10;
+  background:linear-gradient(90deg, transparent, var(--sl-col,#bfe3ff)); transform:translate(-50%,-50%);
+  filter:drop-shadow(0 0 6px var(--sl-col,#bfe3ff)); opacity:0; animation:speedLine .5s ease-out forwards; }
+@keyframes speedLine { 0%{ opacity:0; transform:translate(-10%,-50%) scaleX(.4); }
+  30%{ opacity:1; } 100%{ opacity:0; transform:translate(-180%,-50%) scaleX(1.3); } }
+/* Hinrichtungs-Mal (Meuchelstoß/Seelenfresser). */
+.vfx-execmark { position:absolute; pointer-events:none; z-index:12; transform:translate(-50%,-50%);
+  font-size:46px; color:var(--exec-col,#c0306b); opacity:0;
+  text-shadow:0 0 14px var(--exec-col,#c0306b), 0 0 26px #fff; animation:execMark .62s ease-out forwards; }
+@keyframes execMark { 0%{ opacity:0; transform:translate(-50%,-50%) scale(.3) rotate(-12deg); }
+  40%{ opacity:1; transform:translate(-50%,-50%) scale(1.15) rotate(0deg); }
+  70%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1.4); } }
 
 /* Goldene Avatar-Kuppel (Unbeugsam). */
 .magic-barrier.dome-gold { border-color:rgba(255,210,80,.85);
@@ -1219,12 +1242,29 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
       rgba(255,170,40,.05) 78%, rgba(255,170,40,0) 100%);
   box-shadow:0 0 36px 12px rgba(255,180,40,.55), inset 0 0 30px 12px rgba(255,220,150,.4); }
 
+/* Zickzack-Blitz (Arkanschlag-Echo): geknickter, flackernder Lichtstrahl. */
+.vfx-chain { position:absolute; height:12px; transform-origin:0 50%; pointer-events:none; z-index:10;
+  background:linear-gradient(90deg, transparent, var(--chain-col,#cdeeff) 12%, #ffffff 50%, var(--chain-col,#cdeeff) 88%, transparent);
+  clip-path:polygon(0 45%, 14% 10%, 28% 70%, 42% 18%, 56% 78%, 70% 22%, 84% 66%, 100% 40%,
+    100% 60%, 84% 86%, 70% 42%, 56% 98%, 42% 38%, 28% 90%, 14% 30%, 0 65%);
+  filter:drop-shadow(0 0 8px var(--chain-col,#cdeeff)) drop-shadow(0 0 14px #ffffff);
+  opacity:0; animation:chainFlicker .36s steps(4,end) forwards; }
+@keyframes chainFlicker {
+  0% { opacity:0; }
+  15% { opacity:1; }
+  40% { opacity:.55; }
+  70% { opacity:1; }
+  100% { opacity:0; } }
+
 @media(prefers-reduced-motion: reduce){
   .vfx-rune-ring, .vfx-rune-ring::before, .vfx-rune-ring::after,
   .vfx-orbit-g, .vfx-orbit-i, .vfx-proj, .vfx-arc, .vfx-nova, .vfx-crater, .vfx-crater::before,
-  .vfx-sigil, .vfx-vortex, .vfx-smoke, .arena-vignette,
-  .combatant.aura-steel, .combatant.aura-arcane, .combatant.aura-blood-strong { animation:none; }
+  .vfx-sigil, .vfx-vortex, .vfx-smoke, .arena-vignette, .vfx-chain,
+  .vfx-afterimage, .vfx-speedline, .vfx-execmark,
+  .combatant.aura-steel, .combatant.aura-arcane, .combatant.aura-blood-strong,
+  .combatant.aura-haste { animation:none; }
   .vfx-rune-ring, .vfx-rune-ring.persist, .vfx-sigil, .vfx-arc, .vfx-nova, .vfx-crater { opacity:1; }
+  .vfx-chain { opacity:0; }
 }
 
 /* Fähigkeits-Leiste (mehrere Kampf-Knöpfe). */
@@ -1426,6 +1466,23 @@ body.modal-open { position:fixed; left:0; right:0; width:100%;
   background:rgba(255,255,255,.02); border:1px solid var(--line); }
 .talent-tier.done { border-color:rgba(55,214,122,.4); }
 .talent-tier.locked { opacity:.85; }
+.talent-tier.mastery { position:relative; margin-top:28px; margin-bottom:14px; padding:14px 12px 12px;
+  border-color:rgba(154,240,255,.62); border-width:2px;
+  background:linear-gradient(180deg, rgba(71,190,220,.16), rgba(255,255,255,.03));
+  box-shadow:0 0 0 1px rgba(154,240,255,.12), 0 14px 34px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.08); }
+.talent-tier.mastery:before { content:''; position:absolute; left:10px; right:10px; top:-16px;
+  height:1px; background:linear-gradient(90deg, transparent, rgba(154,240,255,.65), transparent); }
+.talent-tier.mastery .talent-tier-label { color:#9af0ff; font-size:11px; letter-spacing:.12em; }
+.talent-tier.mastery.done .talent-tier-state { color:#9af0ff; }
+.talent-tier.mastery .talent-row { margin-top:8px; gap:10px; }
+.talent-node.mastery-node { min-height:78px; border-color:rgba(154,240,255,.55);
+  background:linear-gradient(160deg, rgba(70,212,255,.13), rgba(255,255,255,.04));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06); }
+.talent-node.mastery-node .talent-icon { font-size:25px; }
+.talent-node.mastery-node .talent-name { color:#d8fbff; }
+.talent-node.mastery-node.pickable { border-color:rgba(154,240,255,.78); }
+.talent-node.mastery-node.pickable:hover { border-color:#9af0ff; box-shadow:0 0 18px rgba(70,212,255,.28); }
 .talent-tier-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
 .talent-tier-state { font-size:10px; color:var(--txt-mute); text-transform:uppercase; letter-spacing:.05em; }
 .talent-tier.done .talent-tier-state { color:#37d67a; }

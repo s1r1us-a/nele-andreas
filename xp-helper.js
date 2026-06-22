@@ -18,15 +18,15 @@ export const XP_VALUES = {
   slot_spin:           1,
   slot_jackpot:      200,
   slot_bigwin:        30,
-  farm_feed:           2,
-  farm_beehive:       50,
-  farm_animal_bought: 40,
-  farm_harvest:        3,
-  farm_bakery:         8,
-  farm_weaving:        8,
-  farm_forge:          8,
-  farm_mine_ore:       5,
-  farm_breeding:     200,
+  farm_feed:          20,
+  farm_beehive:      500,
+  farm_animal_bought:400,
+  farm_harvest:       30,
+  farm_bakery:        80,
+  farm_weaving:       80,
+  farm_forge:         80,
+  farm_mine_ore:      50,
+  farm_breeding:    2000,
   booster_bought:    150,
   booster_used:      100,
   box_bought:         50,
@@ -37,19 +37,19 @@ export const XP_VALUES = {
 // (z. B. abhängig von Wachstumszeit oder Bet-Multiplikator). Wird vom Modal
 // bevorzugt vor `+XP_VALUES[k]` angezeigt.
 export const XP_DISPLAY = {
-  farm_harvest:  '1–24 (je 5 Min Wachstumszeit)',
-  farm_breeding: '200–5000 (je nach Seltenheit)',
+  farm_harvest:  '10–240 (je 5 Min Wachstumszeit)',
+  farm_breeding: '2000–50000 (je nach Seltenheit)',
   slot_spin:    '1 × Bet-Multiplikator',
   slot_jackpot: '200 × Bet-Multiplikator',
   slot_bigwin:  '30 × Bet-Multiplikator'
 };
 
-// XP pro geernteter Pflanze, skaliert mit Wachstumszeit (1 XP je 5 Min,
-// mindestens 1). Hält die Belohnung fair: Radieschen (5 Min) → 1 XP,
-// Blaubeere (2 h) → 24 XP.
+// XP pro geernteter Pflanze, skaliert mit Wachstumszeit (10 XP je 5 Min,
+// mindestens 10). Hält die Belohnung fair: Radieschen (5 Min) → 10 XP,
+// Blaubeere (2 h) → 240 XP.
 export function xpForHarvest(growTimeSec) {
   const sec = Number(growTimeSec) || 0;
-  return Math.max(1, Math.round(sec / 300));
+  return Math.max(1, Math.round(sec / 300)) * 10;
 }
 
 // Deutsche Anzeigetexte für das XP-Info-Modal.
